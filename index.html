@@ -639,7 +639,7 @@
   <!-- STUDENT BOTTOM NAV -->
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchStudentTab('home',this)"><span class="nav-icon">🏠</span><span class="nt" data-pt="Início" data-en="Home">Home</span></button>
-
+    <button class="nav-item" onclick="openAIChat()"><span class="nav-icon">✦</span><span class="nt" data-pt="Flin" data-en="Flin">Flin</span></button>
     <button class="nav-item" onclick="switchStudentTab('bookclub',this)"><span class="nav-icon">📖</span><span class="nt" data-pt="Book Club" data-en="Book Club">Book Club</span></button>
     <button class="nav-item" onclick="switchStudentTab('mais',this)"><span class="nav-icon">⋯</span><span class="nt" data-pt="Mais" data-en="More">Mais</span></button>
   </div>
@@ -3731,16 +3731,6 @@ function renderExercicio(challenge){
 }
 
 function openAIChat(){
-  var now = new Date();
-  var jan1 = new Date(now.getFullYear(),0,1);
-  var weekNum = Math.ceil(((now-jan1)/86400000+jan1.getDay()+1)/7);
-  var weekKey = now.getFullYear()+'-W'+weekNum;
-  aiChatChallenge = null;
-  for(var i=0;i<WEEKLY_CHALLENGES.length;i++){
-    if(WEEKLY_CHALLENGES[i].week===weekKey){ aiChatChallenge=WEEKLY_CHALLENGES[i]; break; }
-  }
-  if(!aiChatChallenge && WEEKLY_CHALLENGES.length) aiChatChallenge = WEEKLY_CHALLENGES[WEEKLY_CHALLENGES.length-1];
-
   aiChatHistory = [];
   aiChatLoading = false;
 
@@ -3751,71 +3741,20 @@ function openAIChat(){
 
   var badgeEl = document.getElementById('ai-chat-badge');
   var titleEl = document.getElementById('ai-chat-title');
-  if(badgeEl) badgeEl.textContent = '✦ Prática semanal · ISR';
-  if(titleEl) titleEl.textContent = aiChatChallenge ? aiChatChallenge.titulo : 'Praticar em inglês';
+  if(badgeEl) badgeEl.textContent = '✦ Flin · ISR';
+  if(titleEl) titleEl.textContent = 'Praticar inglês';
 
   showScreen('ai-chat');
-
-  // Pre-load exercise as visible context card at top of chat
-  var ex = aiChatChallenge && aiChatChallenge.exercicio ? aiChatChallenge.exercicio : null;
-  if(ex && messagesEl){
-    var contextCard = document.createElement('div');
-    contextCard.className = 'msg system-context';
-    var itemsHTML = '';
-    if(ex.itens && ex.itens.length){
-      itemsHTML = ex.itens.map(function(it){
-        return '<div style="background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.5">'
-          + it.frase
-          + '<div style="color:rgba(255,255,255,0.6);margin-top:3px">💡 '+it.dica+'</div></div>';
-      }).join('');
-    }
-    contextCard.innerHTML =
-      '<div style="background:linear-gradient(135deg,var(--teal),var(--accent));border-radius:14px;padding:14px 16px;color:#fff;font-size:13px;line-height:1.55">'
-      +'<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:6px">📋 Exercício desta semana</div>'
-      +'<div style="font-weight:700;font-size:15px;margin-bottom:6px">'+ex.titulo+'</div>'
-      +'<div style="color:rgba(255,255,255,0.85);margin-bottom:'+(itemsHTML?'10':'0')+'px">'+ex.instrucoes+'</div>'
-      +itemsHTML
-      +'</div>';
-    var typing = document.getElementById('typing-indicator');
-    if(typing) messagesEl.insertBefore(contextCard, typing);
-    else messagesEl.appendChild(contextCard);
-  }
-
-  var u = state.user;
-  var userName = u ? u.nome.split(' ')[0] : 'you';
-  var turma = u && u.turma ? u.turma : '';
-  var nivel = u && u.nivel ? u.nivel : '';
-
-  var systemPrompt =
-    'You are a warm, encouraging English teacher at ISR (Inglês sem Roteiro), a Brazilian online English school. '
-    +'The student name is '+userName+'. '
-    +(turma ? 'Their class: '+turma+'. ' : '')
-    +(nivel ? 'Level: '+nivel+'. ' : '')
-    +'This week theme: "'+(aiChatChallenge ? aiChatChallenge.titulo : 'general conversation')+'". '
-    +(ex ? 'This week exercise: '+ex.instrucoes+' ' : '')
-    +'Rules: '
-    +'Always respond in English. '
-    +'Never use grammatical terminology — focus on real usage and fluency. '
-    +'When you spot an error, gently reformulate the correct version at the end of your reply, wrapped in *asterisks*. '
-    +'Be warm, natural, conversational. Max 3-4 sentences per reply to keep the pace. '
-    +'Your goal: make the student speak, not lecture them.';
-
-  var openingMsg = ex && ex.promptIA
-    ? ex.promptIA
-    : 'Hi '+userName+"! I've loaded this week's exercise above — take a look and type your first answer in English. I'm here to help! 😊";
-
-  callAI(systemPrompt, openingMsg, true);
+  callAI(true);
 }
 
 function closeAIChat(){
   var u = state.user;
-  if(u && u.role === 'student'){
-    showScreen('app');
-  } else {
-    showScreen('community');
-    var navBtns = document.querySelectorAll('#screen-community .nav-item');
-    if(navBtns[1]) switchCommunityTab('cmdesafio', navBtns[1]);
-  }
+  if(!u){ showScreen('login'); return; }
+  if(u.role==='student') showScreen('app');
+  else if(u.role==='imersao') showScreen('imersao');
+  else if(u.role==='community') showScreen('community');
+  else showScreen('prof');
 }
 
 function sendChatMessage(){
@@ -3824,22 +3763,12 @@ function sendChatMessage(){
   var text = input.value.trim();
   input.value = '';
   input.style.height = '';
-
   appendMessage('user', text);
-
-  // Build system prompt
-  var u = state.user;
-  var userName = u ? u.nome.split(' ')[0] : 'você';
-  var systemPrompt = 'Você é uma professora de inglês da Comunidade ISR (Inglês sem Roteiro). '
-    + 'O aluno se chama '+userName+'. Tema: "'+( aiChatChallenge ? aiChatChallenge.titulo : 'conversação geral')+'".\n'
-    + 'Responda sempre em inglês. Corrija erros gentilmente reformulando entre asteriscos. '
-    + 'Seja encorajadora e natural. Máximo 3-4 frases por resposta.';
-
   aiChatHistory.push({role:'user', content:text});
-  callAI(systemPrompt, null, false);
+  callAI(false);
 }
 
-function callAI(systemPrompt, openingMsg, isOpening){
+function callAI(isOpening){
   aiChatLoading = true;
   var sendBtn = document.getElementById('chat-send-btn');
   var inputEl = document.getElementById('chat-input');
@@ -3849,32 +3778,24 @@ function callAI(systemPrompt, openingMsg, isOpening){
   var typingEl = document.getElementById('typing-indicator');
   if(typingEl) typingEl.classList.add('visible');
 
-  // Build messages array
-  var messages = [];
-  if(isOpening){
-    messages = [{role:'user', content: '(Start the conversation with your opening message.)'}];
-  } else {
-    messages = aiChatHistory.slice();
-  }
+  var u = state.user;
+  var messages = isOpening
+    ? [{role:'user', content:'(Start the conversation with your opening message.)'}]
+    : aiChatHistory.slice();
 
-  fetch('https://api.anthropic.com/v1/messages', {
+  fetch('/.netlify/functions/chat', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      system: systemPrompt,
       messages: messages,
+      studentName: u ? u.nome.split(' ')[0] : '',
+      nivel: u ? (u.nivel||'') : '',
+      turma: u ? (u.turma||'') : ''
     })
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
-    var reply = '';
-    if(data.content && data.content[0] && data.content[0].text){
-      reply = data.content[0].text;
-    } else if(data.error){
-      reply = '(Erro na API: '+data.error.message+')';
-    }
+    var reply = data.reply || data.error || 'Something went wrong.';
     aiChatHistory.push({role:'assistant', content: reply});
     if(typingEl) typingEl.classList.remove('visible');
     appendMessage('assistant', reply);
@@ -3882,7 +3803,7 @@ function callAI(systemPrompt, openingMsg, isOpening){
     if(sendBtn) sendBtn.disabled = false;
     if(inputEl){ inputEl.disabled = false; inputEl.focus(); }
   })
-  .catch(function(err){
+  .catch(function(){
     if(typingEl) typingEl.classList.remove('visible');
     appendMessage('assistant', 'Oops! Something went wrong. Try again in a moment. 😊');
     aiChatLoading = false;
