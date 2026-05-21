@@ -542,11 +542,18 @@
 
     /* AI CHAT */
     #screen-ai-chat{max-width:430px;margin:0 auto;width:100%;background:var(--bg);}
-    /* All sub-screens overlay screen-app — position:fixed escapes parent flex flow */
+    /* All sub-screens overlay screen-app */
     #screen-detail,#screen-settings,#screen-ai-chat,#screen-renewal,#screen-renewal-done,
     #screen-certificate,#screen-prof,#screen-imersao,#screen-community{
       position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;overflow-y:auto;
     }
+    /* Hide student UI when a role/overlay screen is active */
+    #screen-app.has-overlay > .app-header,
+    #screen-app.has-overlay > .bottom-nav,
+    #screen-app.has-overlay > .stab{
+      display:none !important;
+    }
+    #screen-onboarding,#screen-blocked,#screen-loading{max-width:430px;margin:0 auto;width:100%;}
     .chat-header{background:var(--teal);padding:52px 20px 18px;position:relative;flex-shrink:0;}
     .chat-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--coral),var(--accent));}
     .chat-context-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:50px;background:rgba(255,255,255,0.12);font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:10px;}
@@ -592,19 +599,15 @@
     <div class="login-sub">Students, teachers, immersion & community — all in one place.</div>
   </div>
   <div class="login-card">
-    <div class="login-card-title">Demo — escolha um perfil</div>
-    <div class="demo-label">👩‍🎓 Alunas</div>
-    <div class="demo-profiles" id="dp-students"></div>
-    <div class="demo-label" style="margin-top:8px">👩‍🏫 Professores &amp; Admin</div>
-    <div class="demo-profiles" id="dp-profs"></div>
-    <div class="demo-label" style="margin-top:8px">🔥 Imersão</div>
-    <div class="demo-profiles" id="dp-imersao"></div>
-    <div class="demo-label" style="margin-top:8px">✦ Comunidade ISR</div>
-    <div class="demo-profiles" id="dp-community"></div>
-    <div class="demo-label" style="margin-top:8px">🔒 Inativo</div>
-    <div class="demo-profiles" id="dp-blocked"></div>
-    <div class="divider"></div>
-    <button class="enter-btn" id="enter-btn" disabled>Selecione um perfil acima</button>
+    <div class="login-card-title" data-pt="Acesse sua área" data-en="Access your area">Acesse sua área</div>
+    <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" inputmode="email"
+      style="width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-family:inherit;color:var(--teal);background:var(--bg);outline:none;margin-bottom:10px;"
+      oninput="document.getElementById('enter-btn').disabled=!this.value.trim();document.getElementById('login-error').style.display='none';"
+      onkeydown="if(event.key==='Enter')document.getElementById('enter-btn').click()"/>
+    <div id="login-error" style="display:none;font-size:13px;color:var(--red);margin-bottom:8px;text-align:center;"></div>
+    <button class="enter-btn" id="enter-btn" disabled onclick="doLogin(document.getElementById('login-email').value.trim())">
+      Entrar →
+    </button>
   </div>
 </div>
 
@@ -622,6 +625,26 @@
   <div class="blocked-email" id="blocked-email"></div>
   <button class="blocked-cta" onclick="window.open('https://wa.me/message/OIHHXQGMGK4AI1','_blank')" data-pt="Falar com a equipe ISR" data-en="Contact ISR team">Contact ISR team</button>
   <span class="blocked-back" onclick="signOut()" data-pt="Voltar" data-en="Go back">Go back</span>
+</div>
+
+<!-- ONBOARDING GATE -->
+<div id="screen-onboarding" class="screen" style="background:var(--teal);align-items:center;justify-content:center;padding:48px 28px;text-align:center;">
+  <img src="https://d1yei2z3i6k35z.cloudfront.net/10277034/69b287e3c48d6_logograndeISR_logo2_01.png" style="width:56px;filter:brightness(0) invert(1);margin-bottom:28px;"/>
+  <div class="onb-name" style="font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;">Olá!</div>
+  <div style="font-size:15px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:32px;max-width:300px;">
+    Seu acesso estará disponível após o onboarding com a Érika. Aqui está o que foi agendado para você:
+  </div>
+  <div style="background:rgba(255,255,255,0.1);border-radius:16px;padding:20px 24px;width:100%;max-width:320px;margin-bottom:24px;text-align:left;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:6px;">DATA</div>
+    <div class="onb-date" style="font-size:17px;font-weight:600;color:#fff;margin-bottom:16px;">—</div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:6px;">HORÁRIO</div>
+    <div class="onb-time" style="font-size:17px;font-weight:600;color:#fff;">—</div>
+  </div>
+  <a class="onb-link" href="#" target="_blank"
+    style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:320px;padding:15px;border-radius:14px;background:var(--coral);color:var(--teal);font-size:15px;font-weight:700;text-decoration:none;margin-bottom:16px;">
+    📅 Abrir convite no Google Agenda
+  </a>
+  <span onclick="signOut()" style="font-size:13px;color:rgba(255,255,255,0.35);cursor:pointer;text-decoration:underline;">Sair</span>
 </div>
 
 <!-- STUDENT APP -->
@@ -1825,6 +1848,13 @@ function showScreen(name){
     void el.offsetHeight; // force reflow (iOS Safari)
     el.getBoundingClientRect();
   }
+  // Hide student header/nav/tabs when showing overlay screens
+  var overlayScreens = ['prof','imersao','community','settings','detail','ai-chat','renewal','renewal-done','certificate'];
+  var appEl = document.getElementById('screen-app');
+  if(appEl){
+    if(overlayScreens.indexOf(name) !== -1) appEl.classList.add('has-overlay');
+    else appEl.classList.remove('has-overlay');
+  }
   try{ window.scrollTo(0,0); }catch(_){}
   if(name==='settings') try{ renderSettings(); }catch(e){ console.error('renderSettings error:',e); }
 }
@@ -1893,26 +1923,56 @@ function selectProfile(el,email){
 }
 
 function doLogin(email){
+  if(!email) return;
+  email = email.toLowerCase().trim();
   showScreen('loading');
-  setTimeout(function(){
-    var u=USERS[email];
-    if(!u||u.role==='blocked'){
-      var bEl=document.getElementById('blocked-email');
-      if(bEl) bEl.textContent=email;
-      showScreen('blocked');
-    } else {
-      // Set state directly — don't rely on save/load round-trip (Safari iOS fix)
-      state.user=Object.assign({email:email},u);
-      save(); // best-effort
+  fetch('/.netlify/functions/data?email='+encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.error === 'user not found'){
+        showScreen('login');
+        var errEl = document.getElementById('login-error');
+        if(errEl){ errEl.textContent = 'Email não encontrado. Verifique e tente novamente.'; errEl.style.display='block'; }
+        return;
+      }
+      if(data.error){
+        showScreen('login');
+        var errEl = document.getElementById('login-error');
+        if(errEl){ errEl.textContent = 'Erro ao conectar. Tente novamente.'; errEl.style.display='block'; }
+        return;
+      }
+      // Merge spreadsheet data into user object
+      var u = data.user;
+      u.appData = data; // store events, bookclub, avisos, ciclo, onboarding
+      if(!u.ativa && u.role === 'student'){
+        var bEl=document.getElementById('blocked-email');
+        if(bEl) bEl.textContent=email;
+        showScreen('blocked');
+        return;
+      }
+      state.user = u;
+      save();
       enterApp();
-    }
-  },1600);
+    })
+    .catch(function(err){
+      console.error('login error', err);
+      showScreen('login');
+      var errEl = document.getElementById('login-error');
+      if(errEl){ errEl.textContent = 'Sem conexão. Tente novamente.'; errEl.style.display='block'; }
+    });
 }
 
 function enterApp(){
   try{
     var u=state.user;
-    if(u.role==='student') showStudentApp();
+    if(u.role==='student'){
+      var ob = u.appData && u.appData.onboarding;
+      if(ob && ob.conteudoLiberado === false){
+        showOnboardingGate(ob);
+        return;
+      }
+      showStudentApp();
+    }
     else if(u.role==='imersao') showImersaoApp();
     else if(u.role==='community') showCommunityApp();
     else showProfApp();
@@ -1920,6 +1980,41 @@ function enterApp(){
     console.error('ISR enterApp error:', e.message, e.stack);
     try { state.user=null; showScreen('login'); showToast('Erro ao carregar. Tente outro perfil.'); } catch(_){}
   }
+}
+
+function showOnboardingGate(ob){
+  var u = state.user;
+  var nome = u.nome ? u.nome.split(' ')[0] : '';
+  var data = ob.dataOnboarding || '';
+  var horNL = ob.horarioNL || '';
+  var horBR = ob.horarioBR || '';
+  var link  = ob.linkConvite || '';
+
+  // Format date nicely
+  var dataStr = '';
+  if(data){
+    try{
+      var d = new Date(data+'T12:00:00');
+      dataStr = d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+      dataStr = dataStr.charAt(0).toUpperCase()+dataStr.slice(1);
+    }catch(_){ dataStr = data; }
+  }
+
+  var el = document.getElementById('screen-onboarding');
+  if(el){
+    var nameEl = el.querySelector('.onb-name');
+    if(nameEl) nameEl.textContent = nome ? 'Olá, '+nome+'!' : 'Olá!';
+    var dateEl = el.querySelector('.onb-date');
+    if(dateEl) dateEl.textContent = dataStr || 'Data a confirmar';
+    var timeEl = el.querySelector('.onb-time');
+    if(timeEl) timeEl.textContent = (horNL ? horNL+' (NL)' : '') + (horBR ? ' · '+horBR+' (BR)' : '');
+    var linkEl = el.querySelector('.onb-link');
+    if(linkEl){
+      if(link){ linkEl.href=link; linkEl.style.display='flex'; }
+      else linkEl.style.display='none';
+    }
+  }
+  showScreen('onboarding');
 }
 
 function signOut(){
