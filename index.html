@@ -3023,15 +3023,12 @@ function renderHoje(){
   var todayIdx=new Date().getDay();
   var todayPt=dayNames[todayIdx];
   var todayEn=dayEn[todayIdx];
-  var schedMap={};
-  (u.turmaSchedules||[]).forEach(function(ts){ schedMap[ts.turma]=ts; });
+  // Use turmaSchedules directly (already filtered by prof in Apps Script)
   var todayTurmas=[];
-  (u.turmas||[]).forEach(function(tName){
-    var live=schedMap[tName]||{};
-    var td=TURMA_SCHEDULES[tName]||{};
-    var horario=(live.horario||td.horario||'').toLowerCase();
+  (u.turmaSchedules||[]).forEach(function(ts){
+    var horario=(ts.horario||'').toLowerCase();
     if(horario.indexOf(todayPt)>=0||horario.indexOf(todayEn)>=0){
-      todayTurmas.push({tName:tName, horario:live.horario||td.horario||'—', meetLink:live.meetLink||u.meetLink||'#'});
+      todayTurmas.push({tName:ts.turma, horario:ts.horario||'—', meetLink:ts.meetLink||u.meetLink||'#'});
     }
   });
   if(!todayTurmas.length){ section.style.display='none'; return; }
@@ -3061,17 +3058,21 @@ function renderParticulares(){
     var div=document.createElement('div');
     div.className='particular-row';
     div.dataset.search=(p.nome||'').toLowerCase()+' '+(p.nivel||'').toLowerCase();
-    var btns='';
-    if(p.linkMeet&&p.linkMeet!=='#') btns+='<a class="part-btn" href="'+p.linkMeet+'" target="_blank">📹 Meet</a>';
-    if(p.linkCaderno&&p.linkCaderno!=='#') btns+='<a class="part-btn" href="'+p.linkCaderno+'" target="_blank">📓</a>';
-    if(p.linkSlides&&p.linkSlides!=='#') btns+='<a class="part-btn" href="'+p.linkSlides+'" target="_blank">📊</a>';
+    function partBtn(link, icon, label){
+      var hasLink=link&&link!=='#';
+      var style=hasLink?'':'opacity:0.35;pointer-events:none;cursor:default;';
+      var tag=hasLink?'a':'span';
+      var href=hasLink?' href="'+link+'" target="_blank"':'';
+      return '<'+tag+' class="part-btn" '+href+' style="'+style+'">'+icon+(label?' '+label:'')+'</'+tag+'>';
+    }
+    var btns=partBtn(p.linkMeet,'📹','Meet')+partBtn(p.linkCaderno,'📓','')+partBtn(p.linkSlides,'📊','');
     div.innerHTML=
       '<div class="particular-av">'+(p.nome||'?')[0]+'</div>'+
       '<div class="particular-info">'+
         '<div class="particular-name">'+(p.nome||'—')+'</div>'+
         '<div class="particular-meta">'+(p.nivel||'')+(p.horario?' · '+p.horario:'')+'</div>'+
       '</div>'+
-      (btns?'<div class="particular-actions">'+btns+'</div>':'');
+      '<div class="particular-actions">'+btns+'</div>';
     container.appendChild(div);
   });
 }
