@@ -968,9 +968,13 @@
   </div>
   <div class="ptab active" id="ptab-turmas">
     <div class="prof-search-wrap"><input class="prof-search-input" id="prof-search" type="text" placeholder="🔍  Buscar aluno ou turma..." oninput="filterProfSearch()"/></div>
-    <div id="hoje-section">
+    <div id="hoje-section" style="display:none">
       <div class="slabel">Hoje</div>
       <div id="hoje-list"></div>
+    </div>
+    <div id="embreve-section" style="display:none">
+      <div class="slabel">Em breve</div>
+      <div id="embreve-list"></div>
     </div>
     <div class="slabel">Minhas turmas</div>
     <div id="turmas-list"></div>
@@ -1049,16 +1053,36 @@
     <div class="recados-feed" id="recados-feed"></div>
   </div>
 
-  <!-- PROF TAB: DESAFIO & CONFIRMAÇÕES -->
+  <!-- PROF TAB: NOTAS (feedback + reunião + desafio) -->
   <div class="ptab" id="ptab-desafio">
+
+    <!-- Reunião pedagógica -->
+    <div id="reuniao-card" style="display:none;margin:16px 20px 0;background:linear-gradient(135deg,var(--teal) 0%,#2a6b6b 100%);border-radius:14px;padding:14px 16px;color:#fff">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;opacity:0.7;margin-bottom:4px">Reunião Pedagógica</div>
+      <div style="font-size:15px;font-weight:700" id="reuniao-texto">—</div>
+    </div>
+
+    <!-- Feedback de aula -->
+    <div class="slabel" style="margin-top:16px">Feedback da aula</div>
+    <div style="margin:0 20px 10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Registre o que aconteceu na aula para guiar nossas reuniões pedagógicas.</div>
+      <select id="fb-turma" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px"></select>
+      <input type="date" id="fb-data" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box"/>
+      <textarea id="fb-topico" placeholder="Tópico abordado — o que foi trabalhado?" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;resize:none;height:60px;line-height:1.5;margin-bottom:8px;box-sizing:border-box"></textarea>
+      <textarea id="fb-bem" placeholder="O que foi bem? (dinâmica, engajamento...)" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;resize:none;height:60px;line-height:1.5;margin-bottom:8px;box-sizing:border-box"></textarea>
+      <textarea id="fb-atencao" placeholder="Pontos de atenção (ausências, dificuldades...)" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;resize:none;height:60px;line-height:1.5;margin-bottom:8px;box-sizing:border-box"></textarea>
+      <textarea id="fb-prox" placeholder="Próximos passos / o que preparar" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;resize:none;height:60px;line-height:1.5;margin-bottom:10px;box-sizing:border-box"></textarea>
+      <button onclick="submitFeedback()" style="width:100%;padding:12px;border-radius:11px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Salvar feedback →</button>
+      <div id="fb-status" style="font-size:12px;margin-top:8px;font-weight:600;text-align:center"></div>
+    </div>
+
+    <!-- Desafio da semana -->
     <div class="slabel">Desafio da semana</div>
-    <!-- Desafio atual -->
     <div style="margin:0 20px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px" id="prof-desafio-atual">
       <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Desafio ativo</div>
       <div style="font-size:15px;font-weight:700;color:var(--teal);margin-bottom:4px" id="prof-desafio-titulo">—</div>
       <div style="font-size:12px;color:var(--muted)" id="prof-desafio-meta">—</div>
     </div>
-    <!-- Propor novo desafio -->
     <div style="margin:0 20px 10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
       <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px">Propor desafio para próxima semana</div>
       <input type="text" id="desafio-titulo-input" placeholder="Título do desafio" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px"/>
@@ -1078,9 +1102,9 @@
 
   <div class="bottom-nav">
     <button class="nav-item active" onclick="switchProfTab('turmas',this)"><span class="nav-icon">🏫</span><span>Classes</span></button>
-    <button class="nav-item" onclick="switchProfTab('chamada',this)"><span class="nav-icon">✅</span><span>Attendance</span></button>
-    <button class="nav-item" onclick="switchProfTab('recados',this)"><span class="nav-icon">💬</span><span>Messages</span></button>
-    <button class="nav-item" onclick="switchProfTab('desafio',this)"><span class="nav-icon">🎯</span><span>Desafio</span></button>
+    <button class="nav-item" onclick="switchProfTab('chamada',this)"><span class="nav-icon">✅</span><span>Chamada</span></button>
+    <button class="nav-item" onclick="switchProfTab('recados',this)"><span class="nav-icon">💬</span><span>Recados</span></button>
+    <button class="nav-item" onclick="switchProfTab('desafio',this)"><span class="nav-icon">📝</span><span>Notas</span></button>
   </div>
 </div>
 
@@ -2869,8 +2893,10 @@ function showProfApp(){
   var badge=document.getElementById('p-role-badge');
   if(badge){ badge.className=u.role==='admin'?'rbadge-adm':'rbadge-prof'; badge.textContent=u.role==='admin'?'⚙️ Admin':'👩‍🏫 Teacher'; }
   renderHoje();
+  renderEmBreve();
   renderTurmas();
   renderParticulares();
+  setupFeedbackTab();
   renderExtrasProfList();
   setupChamada();
   renderRecados();
@@ -2959,7 +2985,7 @@ function switchProfTab(name,el){
   document.querySelectorAll('#screen-prof .nav-item').forEach(function(n){n.classList.remove('active');});
   document.getElementById('ptab-'+name).classList.add('active');
   el.classList.add('active');
-  if(name==='desafio') renderProfDesafioTab();
+  if(name==='desafio'){ renderProfDesafioTab(); setupFeedbackTab(); }
 }
 
 function renderTurmas(){
@@ -2970,6 +2996,7 @@ function renderTurmas(){
   (u.turmaSchedules||[]).forEach(function(ts){ schedMap[ts.turma]=ts; });
 
   (u.turmas||[]).forEach(function(tName){
+    if(tName.toLowerCase()==='private') return; // shown separately in Particulares
     var live=schedMap[tName]||{};
     var td=TURMA_SCHEDULES[tName]||{horario:'—',alunos:[],notebook:'#',teacherGuide:'#',syllabus:'#',calendar:'#'};
     var horario=live.horario||td.horario||'—';
@@ -3023,24 +3050,88 @@ function renderHoje(){
   var todayIdx=new Date().getDay();
   var todayPt=dayNames[todayIdx];
   var todayEn=dayEn[todayIdx];
-  // Use turmaSchedules directly (already filtered by prof in Apps Script)
-  var todayTurmas=[];
+  // Turmas today (from turmaSchedules, already filtered by prof)
+  var todayItems=[];
   (u.turmaSchedules||[]).forEach(function(ts){
     var horario=(ts.horario||'').toLowerCase();
     if(horario.indexOf(todayPt)>=0||horario.indexOf(todayEn)>=0){
-      todayTurmas.push({tName:ts.turma, horario:ts.horario||'—', meetLink:ts.meetLink||u.meetLink||'#'});
+      todayItems.push({label:ts.turma, horario:ts.horario||'—', meetLink:ts.meetLink||u.meetLink||'#', type:'turma'});
     }
   });
-  if(!todayTurmas.length){ section.style.display='none'; return; }
+  // Particulares today (check horario field)
+  (u.particulares||[]).forEach(function(p){
+    var horario=(p.horario||'').toLowerCase();
+    if(!horario) return;
+    if(horario.indexOf(todayPt)>=0||horario.indexOf(todayEn)>=0){
+      todayItems.push({label:p.nome, horario:p.horario, meetLink:p.linkMeet||'#', type:'particular'});
+    }
+  });
+  if(!todayItems.length){ section.style.display='none'; return; }
   section.style.display='';
-  todayTurmas.forEach(function(t){
-    var initials=t.tName.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('');
+  todayItems.forEach(function(t){
+    var initials=t.label.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('');
+    var isParticular=t.type==='particular';
     var div=document.createElement('div');
     div.className='hoje-card';
     div.innerHTML=
-      '<div class="hoje-av">'+initials+'</div>'+
-      '<div class="hoje-info"><div class="hoje-name">'+t.tName+'</div><div class="hoje-meta">'+t.horario+'</div></div>'+
+      '<div class="hoje-av" style="'+(isParticular?'background:var(--accent)':'')+'">'+initials+'</div>'+
+      '<div class="hoje-info">'+
+        '<div class="hoje-name">'+t.label+(isParticular?' <span style="font-size:10px;background:var(--cream);color:var(--accent);padding:2px 6px;border-radius:6px;font-weight:700;vertical-align:middle">particular</span>':'')+'</div>'+
+        '<div class="hoje-meta">'+t.horario+'</div>'+
+      '</div>'+
       (t.meetLink&&t.meetLink!=='#'?'<a class="hoje-meet-btn" href="'+t.meetLink+'" target="_blank">Meet →</a>':'');
+    container.appendChild(div);
+  });
+}
+
+function parseDayIdx(horario){
+  var h=(horario||'').toLowerCase();
+  var map={dom:0,sun:0,seg:1,mon:1,ter:2,tue:2,qua:3,wed:3,qui:4,thu:4,sex:5,fri:5,'sáb':6,sab:6,sat:6};
+  for(var k in map){ if(h.indexOf(k)>=0) return map[k]; }
+  return -1;
+}
+
+function renderEmBreve(){
+  var u=state.user;
+  var section=document.getElementById('embreve-section');
+  var container=document.getElementById('embreve-list');
+  if(!section||!container) return;
+  container.innerHTML='';
+  var todayIdx=new Date().getDay();
+  var candidates=[];
+  (u.turmaSchedules||[]).forEach(function(ts){
+    var dayIdx=parseDayIdx(ts.horario);
+    if(dayIdx<0) return;
+    var diff=(dayIdx-todayIdx+7)%7;
+    if(diff===0) return; // today shown in Hoje
+    candidates.push({label:ts.turma, horario:ts.horario, meetLink:ts.meetLink||u.meetLink||'#', diff:diff, type:'turma'});
+  });
+  (u.particulares||[]).forEach(function(p){
+    if(!p.horario) return;
+    var dayIdx=parseDayIdx(p.horario);
+    if(dayIdx<0) return;
+    var diff=(dayIdx-todayIdx+7)%7;
+    if(diff===0) return;
+    candidates.push({label:p.nome, horario:p.horario, meetLink:p.linkMeet||'#', diff:diff, type:'particular'});
+  });
+  if(!candidates.length){ section.style.display='none'; return; }
+  // Show only the closest day
+  var minDiff=candidates.reduce(function(m,c){return Math.min(m,c.diff);},999);
+  var next=candidates.filter(function(c){return c.diff===minDiff;});
+  section.style.display='';
+  next.forEach(function(t){
+    var initials=t.label.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('');
+    var inDays=t.diff===1?'amanhã':'em '+t.diff+' dias';
+    var div=document.createElement('div');
+    div.className='hoje-card';
+    div.style.borderColor='var(--border)';
+    div.innerHTML=
+      '<div class="hoje-av" style="background:var(--muted)">'+initials+'</div>'+
+      '<div class="hoje-info">'+
+        '<div class="hoje-name">'+t.label+'</div>'+
+        '<div class="hoje-meta">'+t.horario+' · <strong>'+inDays+'</strong></div>'+
+      '</div>'+
+      (t.meetLink&&t.meetLink!=='#'?'<a class="hoje-meet-btn" style="background:var(--muted)" href="'+t.meetLink+'" target="_blank">Meet →</a>':'');
     container.appendChild(div);
   });
 }
@@ -3086,6 +3177,68 @@ function filterProfSearch(){
   document.querySelectorAll('#particulares-list .particular-row').forEach(function(row){
     var text=row.dataset.search||row.textContent.toLowerCase();
     row.style.display=(q&&text.indexOf(q)<0)?'none':'';
+  });
+}
+
+function setupFeedbackTab(){
+  var u=state.user;
+  // Populate turma select
+  var sel=document.getElementById('fb-turma');
+  if(sel){
+    sel.innerHTML='<option value="">Selecionar turma / aluno...</option>';
+    (u.turmas||[]).forEach(function(t){
+      if(t.toLowerCase()==='private') return;
+      var o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o);
+    });
+    (u.particulares||[]).forEach(function(p){
+      var o=document.createElement('option'); o.value='particular:'+p.nome; o.textContent='👤 '+p.nome+' (particular)'; sel.appendChild(o);
+    });
+  }
+  // Default date = today
+  var dateEl=document.getElementById('fb-data');
+  if(dateEl && !dateEl.value){
+    var now=new Date(); var y=now.getFullYear(); var m=String(now.getMonth()+1).padStart(2,'0'); var d=String(now.getDate()).padStart(2,'0');
+    dateEl.value=y+'-'+m+'-'+d;
+  }
+  // Reunião pedagógica
+  var reuCard=document.getElementById('reuniao-card');
+  var reuTexto=document.getElementById('reuniao-texto');
+  if(u.reuniaoPedagogica && reuCard && reuTexto){
+    reuTexto.textContent=u.reuniaoPedagogica;
+    reuCard.style.display='';
+  }
+}
+
+function submitFeedback(){
+  var u=state.user;
+  var turma=document.getElementById('fb-turma').value;
+  var data=document.getElementById('fb-data').value;
+  var topico=document.getElementById('fb-topico').value.trim();
+  var bem=document.getElementById('fb-bem').value.trim();
+  var atencao=document.getElementById('fb-atencao').value.trim();
+  var prox=document.getElementById('fb-prox').value.trim();
+  var status=document.getElementById('fb-status');
+  if(!turma||!data||!topico){
+    if(status){status.textContent='Preencha turma, data e tópico.';status.style.color='var(--red)';}
+    return;
+  }
+  if(status){status.textContent='Salvando…';status.style.color='var(--muted)';}
+  fetch('/.netlify/functions/save-feedback',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({turma:turma,data:data,topico:topico,bem:bem,atencao:atencao,proximosPassos:prox,profNome:u.nome,profEmail:u.email})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.ok){
+      if(status){status.textContent='✓ Feedback salvo!';status.style.color='var(--green)';}
+      document.getElementById('fb-topico').value='';
+      document.getElementById('fb-bem').value='';
+      document.getElementById('fb-atencao').value='';
+      document.getElementById('fb-prox').value='';
+    } else {
+      if(status){status.textContent='Erro ao salvar. Tente novamente.';status.style.color='var(--red)';}
+    }
+  }).catch(function(){
+    if(status){status.textContent='Sem conexão.';status.style.color='var(--red)';}
   });
 }
 
