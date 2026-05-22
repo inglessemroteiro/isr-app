@@ -1968,9 +1968,21 @@ function doLogin(email){
         if(errEl){ errEl.textContent = 'Erro ao conectar. Tente novamente.'; errEl.style.display='block'; }
         return;
       }
-      // Merge spreadsheet data into user object
-      var u = data.user;
-      u.appData = data; // store events, bookclub, avisos, ciclo, onboarding
+      // Apps Script returns user flat — map into u + u.appData
+      var u = data;
+      u.appData = {
+        onboarding: data.onboardingData ? {
+          conteudoLiberado: data.onboardingData.liberado,
+          dataOnboarding: data.onboardingData.data,
+          horarioNL: data.onboardingData.horaNL,
+          horarioBR: data.onboardingData.horaBR
+        } : (data.conteudoLiberado === false ? { conteudoLiberado: false } : null),
+        imersao: data.imersao || null,
+        atividades: data.atividades || [],
+        bookClubs: data.bookClubs || [],
+        ciclo: data.ciclo || null,
+        recados: data.recados || []
+      };
       if(!u.ativa && u.role === 'student'){
         var bEl=document.getElementById('blocked-email');
         if(bEl) bEl.textContent=email;
