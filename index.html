@@ -1092,6 +1092,16 @@
       <div id="desafio-submit-feedback" style="font-size:12px;margin-top:6px;font-weight:600"></div>
     </div>
 
+    <!-- Push notifications (admin only) -->
+    <div id="push-admin-section" style="display:none">
+      <div class="slabel">Notificações push</div>
+      <div style="margin:0 20px 10px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Envia notificação push para todos os alunos ativos.</div>
+        <button onclick="sendReenrollPush()" style="width:100%;padding:12px;border-radius:11px;border:none;background:var(--teal);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:8px">🎓 Anunciar rematrícula</button>
+        <div id="push-admin-status" style="font-size:12px;font-weight:600;text-align:center;margin-top:4px"></div>
+      </div>
+    </div>
+
     <!-- Confirmações do encontro da comunidade -->
     <div class="slabel">Confirmações — Encontro da Comunidade</div>
     <div style="margin:0 20px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px" id="prof-enc-conf">
@@ -2034,10 +2044,60 @@ function enterApp(){
     else if(u.role==='imersao') showImersaoApp();
     else if(u.role==='comunidade') showCommunityApp();
     else showProfApp();
+    // Register push after entering app (non-blocking)
+    setTimeout(function(){ registerPush(); }, 2000);
   } catch(e){
     console.error('ISR enterApp error:', e.message, e.stack);
     try { state.user=null; showScreen('login'); showToast('Erro ao carregar. Tente outro perfil.'); } catch(_){}
   }
+}
+
+// ---- WEB PUSH ----
+var VAPID_PUBLIC_KEY = 'BKnoT7ke0uzJsLNFNl2xbZ9VWrVWfKC_nab7Apb96gm1cyIhCMOTATfQHRbRQIPEod4_fCby2bOrvnXxHYK8jWo';
+
+function registerPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  navigator.serviceWorker.register('/sw.js').then(function(reg){
+    // Ask permission only if not yet granted
+    if(Notification.permission === 'granted'){
+      subscribePush(reg);
+    } else if(Notification.permission !== 'denied'){
+      Notification.requestPermission().then(function(perm){
+        if(perm === 'granted') subscribePush(reg);
+      });
+    }
+  }).catch(function(e){ console.warn('SW register failed:', e); });
+}
+
+function urlBase64ToUint8Array(base64String){
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var rawData = window.atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for(var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function subscribePush(reg){
+  reg.pushManager.getSubscription().then(function(existing){
+    if(existing){ saveSubscription(existing); return; }
+    reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    }).then(function(sub){
+      saveSubscription(sub);
+    }).catch(function(e){ console.warn('Push subscribe failed:', e); });
+  });
+}
+
+function saveSubscription(subscription){
+  var u = state.user;
+  if(!u || !u.email) return;
+  fetch('/.netlify/functions/subscribe-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: u.email, subscription: subscription.toJSON() })
+  }).catch(function(){});
 }
 
 function showOnboardingGate(ob){
@@ -3195,6 +3255,9 @@ function setupFeedbackTab(){
     var now=new Date(); var y=now.getFullYear(); var m=String(now.getMonth()+1).padStart(2,'0'); var d=String(now.getDate()).padStart(2,'0');
     dateEl.value=y+'-'+m+'-'+d;
   }
+  // Admin-only push section
+  var pushSection=document.getElementById('push-admin-section');
+  if(pushSection) pushSection.style.display=(u.role==='admin'?'':'none');
   // Reunião pedagógica
   var reuCard=document.getElementById('reuniao-card');
   var reuTexto=document.getElementById('reuniao-texto');
@@ -3234,6 +3297,29 @@ function submitFeedback(){
     }
   }).catch(function(){
     if(status){status.textContent='Sem conexão.';status.style.color='var(--red)';}
+  });
+}
+
+function sendReenrollPush(){
+  var statusEl=document.getElementById('push-admin-status');
+  if(statusEl){statusEl.textContent='Enviando…';statusEl.style.color='var(--muted)';}
+  fetch('/.netlify/functions/send-push',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      emails: null, // broadcast to all
+      title: '🎓 Rematrícula ISR aberta!',
+      message: 'As vagas para o próximo ciclo estão abertas. Garante a sua!',
+      tag: 'rematricula',
+      data: { url: 'https://inglessemroteiro.com' }
+    })
+  }).then(function(r){return r.json();}).then(function(res){
+    if(statusEl){
+      statusEl.textContent = res.sent ? '✓ Enviado para '+res.sent+' alunos!' : '✓ Enviado ('+JSON.stringify(res)+')';
+      statusEl.style.color = 'var(--green)';
+    }
+  }).catch(function(){
+    if(statusEl){statusEl.textContent='Erro ao enviar.';statusEl.style.color='var(--red)';}
   });
 }
 
