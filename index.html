@@ -892,7 +892,7 @@
             <div style="background:var(--cream);border-radius:10px;padding:12px">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Frequência</div>
               <div style="font-size:22px;font-weight:700;color:var(--teal)" id="cert-stat-pct">—</div>
-              <div style="font-size:10px;color:var(--muted)" data-pt="mín. 75%" data-en="min. 75%">mín. 75%</div>
+              <div style="font-size:10px;color:var(--muted)" data-pt="mín. 8 aulas" data-en="min. 8 classes">mín. 8 aulas</div>
             </div>
             <div style="background:var(--cream);border-radius:10px;padding:12px">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Extras</div>
@@ -918,7 +918,7 @@
             <button onclick="openCertificate()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer" data-pt="🎓 Gerar meu certificado →" data-en="🎓 Generate my certificate →">🎓 Gerar meu certificado →</button>
           </div>
           <div id="cert-cta-pending">
-            <div style="font-size:12px;color:var(--muted);line-height:1.5" id="cert-pending-msg" data-pt="Continue participando. Com 75% de frequência, o certificado fica disponível aqui." data-en="Keep attending classes. With 75% attendance, your certificate will be available here.">Continue participando. Com 75% de frequência, o certificado fica disponível aqui.</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5" id="cert-pending-msg" data-pt="Continue participando. Com 8 aulas o certificado fica disponível aqui." data-en="Keep attending classes. With 8 classes your certificate will be available here.">Continue participando. Com 8 aulas o certificado fica disponível aqui.</div>
           </div>
         </div>
       </div>
@@ -1443,10 +1443,18 @@
   <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
     <canvas id="cert-canvas" style="width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.12);background:#fff"></canvas>
 
-    <!-- Download buttons -->
+    <!-- Download & email buttons -->
     <div style="display:flex;gap:10px">
       <button onclick="downloadCertificate('png')" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">⬇ Baixar PNG</button>
       <button onclick="downloadCertificate('pdf')" style="flex:1;padding:14px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">⬇ Baixar PDF</button>
+    </div>
+    <button onclick="emailCertificate()" id="cert-email-btn" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--teal);background:transparent;color:var(--teal);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📧 Receber no e-mail</button>
+    <div id="cert-email-status" style="font-size:12px;font-weight:600;text-align:center;color:var(--teal);display:none"></div>
+
+    <!-- Admin: send certificates to all eligible students -->
+    <div id="cert-admin-section" style="display:none">
+      <button onclick="sendAllCertificates()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--community);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">🎓 Enviar certificados para todos os elegíveis</button>
+      <div id="cert-admin-status" style="font-size:12px;font-weight:600;text-align:center;margin-top:6px"></div>
     </div>
 
     <!-- Share tip -->
@@ -1855,14 +1863,44 @@ var RECADOS_SENT = [
 var RECADO_ATIVO = {de:'Gabi',msg:"Hi! Don't forget: next Tuesday class starts 15 min later — 19h15 CET. See you there! 🎉"};
 
 var CHAMADA = {};
+// Weeks of the current cycle — update each new cycle
+// startDate = actual class date (ISO) used when saving to sheet
 var WEEKS = {
-  11:{label:'Week 11 — Apr 13–17',editable:false},
-  12:{label:'Week 12 — Apr 20–24',editable:false},
-  13:{label:'Week 13 — Apr 27–May 01',editable:true},
-  14:{label:'Week 14 — May 04–08',editable:true},
-  15:{label:'Week 15 — May 11–15',editable:true},
+  1: {label:'Aula 1 — 17 Mar', startDate:'2026-03-17', editable:false},
+  2: {label:'Aula 2 — 24 Mar', startDate:'2026-03-24', editable:false},
+  3: {label:'Aula 3 — 31 Mar', startDate:'2026-03-31', editable:false},
+  4: {label:'Aula 4 — 07 Abr', startDate:'2026-04-07', editable:false},
+  5: {label:'Aula 5 — 14 Abr', startDate:'2026-04-14', editable:false},
+  6: {label:'Aula 6 — 28 Abr', startDate:'2026-04-28', editable:false},
+  7: {label:'Aula 7 — 05 Mai', startDate:'2026-05-05', editable:true},
+  8: {label:'Aula 8 — 12 Mai', startDate:'2026-05-12', editable:true},
+  9: {label:'Aula 9 — 19 Mai', startDate:'2026-05-19', editable:true},
+  10:{label:'Aula 10 — 26 Mai', startDate:'2026-05-26', editable:true},
 };
-var currentWeek = 13;
+var currentWeek = 7;
+
+// Cycle metadata — used in certificates
+var CYCLE_INFO = {
+  name: '2026.2',
+  startDate: '17 de março de 2026',
+  endDate: '26 de maio de 2026',
+  totalClasses: 10,
+};
+
+// Syllabus topics per cycle (shown on certificate)
+// Update each cycle with actual topics covered
+var SYLLABUS_TOPICS = [
+  'Present Simple & Continuous — rotinas e ações em andamento',
+  'Past Simple & Continuous — experiências e narrativas',
+  'Future forms — planos, previsões e ofertas (will / going to)',
+  'Modal verbs — can, could, should, must — obrigação e conselho',
+  'Vocabulário: Trabalho & Carreira — inglês profissional',
+  'Habilidades de leitura — skimming, scanning e inferência',
+  'Fluência na fala — técnicas de conversação e conectores',
+  'Escrita — emails formais e informais',
+  'Compreensão auditiva — sotaques e fala natural',
+  'Revisão & consolidação — estruturas-chave do ciclo',
+];
 var currentChamadaTurma = '';
 var currentActivity = null;
 var prevScreenForRenewal = 'app';
@@ -2455,10 +2493,10 @@ function renderCertificadoTab(){
     if(eligibleEl) eligibleEl.style.display = 'none';
     if(pendingEl)  pendingEl.style.display  = '';
     if(pendingMsg){
-      var needed = h.fixedTotal > 0 ? Math.ceil(h.fixedTotal*0.75) - (h.fixedPresent||0) : null;
-      pendingMsg.textContent = needed !== null && needed > 0
-        ? 'Faltam ' + needed + ' aula' + (needed>1?'s':'') + ' para atingir 75% de frequência e liberar o certificado.'
-        : 'Continue participando. O certificado ficará disponível quando atingir 75% de frequência.';
+      var needed = CERT_MIN_CLASSES - (h.fixedPresent||0);
+      pendingMsg.textContent = needed > 0
+        ? 'Faltam ' + needed + ' aula' + (needed>1?'s':'') + ' para liberar o certificado (mínimo ' + CERT_MIN_CLASSES + ' aulas).'
+        : 'Continue participando — o certificado será liberado ao completar ' + CERT_MIN_CLASSES + ' aulas.';
     }
   }
 }
@@ -2636,7 +2674,8 @@ function renderConfirmBtn(act){
 function confirmPresence(act){
   try {
     if(!state.confirmations[act.id]) state.confirmations[act.id]=[];
-    var nome=state.user&&state.user.nome;
+    var u=state.user;
+    var nome=u&&u.nome;
     if(!nome) return;
     if(state.confirmations[act.id].indexOf(nome)<0){
       state.confirmations[act.id].push(nome);
@@ -2644,6 +2683,17 @@ function confirmPresence(act){
       renderConfirmed(act);
       renderConfirmBtn(act);
       showToast(t('✓ Confirmada! Até lá, ','✓ Confirmed! See you, ')+nome.split(' ')[0]+'!');
+      // Persist confirmation to Apps Script so professors can see it in chamada
+      fetch('/.netlify/functions/save-confirmation', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          activityId: act.id,
+          activityTitle: act.title,
+          nome: nome,
+          email: u.email || ''
+        })
+      }).catch(function(){});
     }
   } catch(e) {
     showToast(state.lang==='en'?'⚠ Try again':'⚠ Tente novamente');
@@ -3446,7 +3496,10 @@ function updateWeekUI(){
 }
 
 function changeWeek(d){
-  currentWeek=Math.min(15,Math.max(11,currentWeek+d));
+  var keys=Object.keys(WEEKS).map(Number).sort(function(a,b){return a-b;});
+  var idx=keys.indexOf(currentWeek)+d;
+  idx=Math.max(0,Math.min(keys.length-1,idx));
+  currentWeek=keys[idx];
   updateWeekUI();renderChamadaRows();
 }
 
@@ -3514,7 +3567,32 @@ function setupExtraChamada(){
     opt.textContent = a.title + ' · ' + a.day+'/'+a.month;
     sel.appendChild(opt);
   });
+  // Load latest confirmations from Apps Script for all activities
+  fetchConfirmationsForProf(myActs.map(function(a){return a.id;}));
   renderExtraChamadaRows();
+}
+
+function fetchConfirmationsForProf(activityIds){
+  // Fetch confirmations from Apps Script so the prof sees who confirmed
+  var params = new URLSearchParams({
+    action: 'getConfirmations',
+    activityIds: activityIds.join(',')
+  });
+  fetch('/.netlify/functions/get-confirmations?' + params)
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    // data: { confirmations: { 'actId': ['Nome1','Nome2', ...], ... } }
+    var confs = data.confirmations || {};
+    Object.keys(confs).forEach(function(actId){
+      if(!state.confirmations[actId]) state.confirmations[actId] = [];
+      confs[actId].forEach(function(nome){
+        if(state.confirmations[actId].indexOf(nome) < 0) state.confirmations[actId].push(nome);
+      });
+    });
+    save();
+    renderExtraChamadaRows(); // re-render with fresh data
+  })
+  .catch(function(){}); // silent — fall back to local state
 }
 
 function renderExtraChamadaRows(){
@@ -3523,20 +3601,21 @@ function renderExtraChamadaRows(){
   var container = document.getElementById('cham-extra-rows');
   if(!container) return;
   if(!actId){ container.innerHTML='<div style="padding:14px;font-size:13px;color:var(--muted)">Selecione uma atividade.</div>'; return; }
-  // Get all students across all turmas for this prof (or all turmas if admin)
-  var u = state.user;
-  var allStudents = [];
+
   var act = ACTIVITIES.find(function(a){return a.id===actId;});
   if(!act){ container.innerHTML=''; return; }
-  // For all-levels activities use all students; else by level
-  Object.keys(TURMA_SCHEDULES).forEach(function(tName){
-    var td = TURMA_SCHEDULES[tName];
-    if(u.role!=='admin' && (u.turmas||[]).indexOf(tName) < 0) return;
-    (td.alunos||[]).forEach(function(s){ if(allStudents.indexOf(s)<0) allStudents.push(s); });
-  });
+
+  // Only show students who confirmed presence for this activity
+  var confirmed = state.confirmations[actId] || [];
+
+  if(!confirmed.length){
+    container.innerHTML='<div style="padding:14px;font-size:13px;color:var(--muted);font-style:italic">Nenhuma confirmação ainda para esta atividade.</div>';
+    return;
+  }
+
   container.innerHTML = '';
   var icons={present:'✓',absent:'✗',excused:'⚠',tardy:'⏱'};
-  allStudents.forEach(function(s){
+  confirmed.forEach(function(s){
     var key='extra|'+actId+'|'+s;
     var cur=CHAMADA[key]||'';
     var row=document.createElement('div');
@@ -3573,17 +3652,23 @@ function saveChamada(mode){
       }
     });
   } else {
+    var wkDate = WEEKS[currentWeek] ? WEEKS[currentWeek].startDate : '';
     document.querySelectorAll('#cham-rows .cham-row').forEach(function(row){
       var studentEl = row.querySelector('.cham-student');
       var activeBtn = row.querySelector('.cs-btn[class*="sel-"]');
       if(studentEl && activeBtn){
-        records.push({turma:currentChamadaTurma, semana:String(currentWeek), aluno:studentEl.textContent.trim(), status:activeBtn.dataset.val});
+        records.push({
+          turma: currentChamadaTurma,
+          semana: WEEKS[currentWeek] ? WEEKS[currentWeek].label : String(currentWeek),
+          date: wkDate,
+          aluno: studentEl.textContent.trim(),
+          status: activeBtn.dataset.val
+        });
       }
     });
   }
 
-  // Sync to sheet if API configured
-  if(records.length && PUBLIC_API_URL){
+  if(records.length){
     syncChamadaToSheet(records);
   }
 
@@ -3595,26 +3680,20 @@ function saveChamada(mode){
 
 function syncChamadaToSheet(records){
   var u = state.user;
-  // Apps Script doPost endpoint (same URL as GET, Google routes by method)
-  fetch(PUBLIC_API_URL, {
+  fetch('/.netlify/functions/save-chamada', {
     method:'POST',
-    mode:'no-cors', // Google Apps Script requires no-cors for anonymous POST
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      action:'saveChamada',
-      token: PRIVATE_API_TOKEN,
-      savedBy: u ? u.nome : 'app',
-      savedAt: new Date().toISOString(),
-      data: records
-    })
-  }).catch(function(){}); // silent — data already in localStorage
+    body: JSON.stringify({ savedBy: u ? u.nome : 'app', data: records })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(res){ if(res.ok || res.saved) showToast('☁ Sincronizado!'); })
+  .catch(function(){}); // silent — local data already saved
 }
 
 // ─── HOURS CALCULATION ──────────────────────────────────────────
 var HOURS_PER_CLASS = 1;       // regular class = 1h
 var HOURS_PER_EXTRA = 1.5;     // extra activity = 1.5h
-var CERT_MIN_PCT   = 0.75;     // 75% attendance required
-var CYCLE_TOTAL_CLASSES = Object.keys(WEEKS).length; // total weeks in cycle
+var CERT_MIN_CLASSES = 8;      // minimum 8 of 10 classes to earn certificate
 
 function computeAndSaveHours(){
   // For each student across all turmas, calculate hours
@@ -3647,7 +3726,7 @@ function computeAndSaveHours(){
     var h = studentHours[s];
     h.totalHours = h.fixedPresent*HOURS_PER_CLASS + h.extraPresent*HOURS_PER_EXTRA;
     h.pct = h.fixedTotal>0 ? h.fixedPresent/h.fixedTotal : 0;
-    h.eligible = h.pct >= CERT_MIN_PCT;
+    h.eligible = h.fixedPresent >= CERT_MIN_CLASSES;
   });
   // Save to state
   state.studentHours = studentHours;
@@ -3700,11 +3779,12 @@ function openCertificate(){
   var u = state.user;
   var hours = state.studentHours || {};
   var myHours = hours[u.nome] || {totalHours:0,pct:0,fixedPresent:0,fixedTotal:0,extraPresent:0};
-  document.getElementById('cert-subtitle').textContent = 'Ciclo 2026.2 · Inglês sem Roteiro';
+  document.getElementById('cert-subtitle').textContent = 'Ciclo ' + CYCLE_INFO.name + ' · Inglês sem Roteiro';
   // Stats section
   var statsEl = document.getElementById('cert-stats');
   if(statsEl) statsEl.innerHTML = [
-    {icon:'🏫',label:'Aulas fixas', val:(myHours.fixedPresent||0)+'/'+(myHours.fixedTotal||0)+' aulas'},
+    {icon:'📅',label:'Período', val:CYCLE_INFO.startDate + ' → ' + CYCLE_INFO.endDate},
+    {icon:'🏫',label:'Aulas fixas', val:(myHours.fixedPresent||0)+' de '+(CYCLE_INFO.totalClasses||10)+' aulas'},
     {icon:'⭐',label:'Atividades extras', val:(myHours.extraPresent||0)+' sessão'+(myHours.extraPresent!==1?'s':'')},
     {icon:'⏱',label:'Total de horas', val:myHours.totalHours.toFixed(1)+'h'},
     {icon:'📊',label:'Frequência', val:Math.round((myHours.pct||0)*100)+'%'},
@@ -3715,8 +3795,10 @@ function openCertificate(){
       +'<div style="font-size:14px;font-weight:600;color:var(--teal)">'+item.val+'</div></div>'
       +'</div>';
   }).join('');
+  // Show admin send-all section
+  var adminSection = document.getElementById('cert-admin-section');
+  if(adminSection) adminSection.style.display = (u.role==='admin') ? '' : 'none';
   showScreen('certificate');
-  // Draw certificate on canvas
   setTimeout(function(){ drawCertificate(u, myHours); }, 100);
 }
 
@@ -3725,135 +3807,159 @@ function goBackFromCertificate(){ showScreen(certPrevScreen); }
 function drawCertificate(user, hours){
   var canvas = document.getElementById('cert-canvas');
   if(!canvas) return;
-  // A4 landscape proportions: 1122 x 794 px @96dpi
+  // A4 landscape: 1122 x 794 px
   var W = 1122, H = 794;
   canvas.width = W; canvas.height = H;
   canvas.style.width = '100%';
   canvas.style.height = 'auto';
   var ctx = canvas.getContext('2d');
 
-  // Background
+  // ── Background ──────────────────────────────────────────────────
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0,0,W,H);
 
-  // Top bar — teal
+  // Decorative circles (subtle, behind content)
+  ctx.fillStyle = 'rgba(252,144,130,0.06)';
+  ctx.beginPath(); ctx.arc(W-100, H/2-60, 220, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(34,144,144,0.04)';
+  ctx.beginPath(); ctx.arc(W-60, H/2+100, 150, 0, Math.PI*2); ctx.fill();
+
+  // ── Top bar ─────────────────────────────────────────────────────
   ctx.fillStyle = '#164951';
   ctx.fillRect(0,0,W,90);
-
-  // Bottom bar — teal
-  ctx.fillStyle = '#164951';
-  ctx.fillRect(0,H-70,W,70);
-
-  // Accent stripe on top bar
-  var grad = ctx.createLinearGradient(0,88,W,88);
+  // Accent gradient stripe under top bar
+  var grad = ctx.createLinearGradient(0,0,W,0);
   grad.addColorStop(0,'#fc9082'); grad.addColorStop(1,'#229090');
   ctx.fillStyle = grad;
   ctx.fillRect(0,87,W,6);
 
-  // Accent stripe on bottom bar
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,H-70,W,5);
-
-  // ISR logo text in top bar
+  // ISR name in top bar
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 22px Inter, sans-serif';
-  ctx.fillText('INGLÊS SEM ROTEIRO', 48, 52);
-  ctx.font = '14px Inter, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillText('inglessemroteiro.com.br', 48, 72);
-
-  // "CERTIFICADO" label top-right
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.font = 'bold 22px Georgia, serif';
+  ctx.fillText('INGLÊS SEM ROTEIRO', 48, 50);
+  ctx.font = '13px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText('inglessemroteiro.com.br', 48, 70);
+  // Certificate label top-right
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = 'bold 11px Inter, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', W-48, 52);
+  ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', W-48, 50);
   ctx.textAlign = 'left';
 
-  // Left decorative block
-  ctx.fillStyle = '#f5f5f0';
-  ctx.beginPath();
-  ctx.roundRect(48, 130, 4, 540, 2);
-  ctx.fill();
+  // ── Left accent stripe ──────────────────────────────────────────
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.roundRect(48, 125, 4, 560, 2); ctx.fill();
 
-  // Main content
-  ctx.fillStyle = '#4a7880';
-  ctx.font = '16px Inter, sans-serif';
-  ctx.fillText('Certificamos que', 72, 175);
+  // ── Main left content ───────────────────────────────────────────
+  ctx.fillStyle = '#6a9298';
+  ctx.font = '15px Inter, sans-serif';
+  ctx.fillText('Certificamos que', 72, 170);
 
-  // Student name — big
+  // Student name
   ctx.fillStyle = '#164951';
-  ctx.font = 'bold 52px Inter, sans-serif';
+  ctx.font = 'bold 48px Georgia, serif';
   var name = user.nome || 'Aluna ISR';
-  ctx.fillText(name, 72, 245);
-
-  // Underline
+  ctx.fillText(name, 72, 234);
   var nameW = ctx.measureText(name).width;
   ctx.fillStyle = '#fc9082';
-  ctx.fillRect(72, 256, Math.min(nameW, W-144), 3);
+  ctx.fillRect(72, 244, Math.min(nameW, 540), 3);
 
   // Body text
   ctx.fillStyle = '#4a7880';
-  ctx.font = '18px Inter, sans-serif';
-  var turma = user.turma || '';
+  ctx.font = '16px Inter, sans-serif';
+  var turma = user.turma || user.nivel || '';
   var hrsText = (hours.totalHours||0).toFixed(1);
   var pctText = Math.round((hours.pct||0)*100);
-  ctx.fillText('participou do programa de inglês', 72, 305);
-  ctx.fillStyle = '#164951';
-  ctx.font = 'bold 18px Inter, sans-serif';
-  ctx.fillText(turma + ' — Ciclo 2026.2', 72, 333);
-  ctx.fillStyle = '#4a7880';
-  ctx.font = '18px Inter, sans-serif';
-  ctx.fillText('com ' + hrsText + ' horas de aula e ' + pctText + '% de frequência.', 72, 361);
-
-  // Stats boxes
-  var boxes = [
-    {label:'HORAS DE AULA', value: hrsText+'h'},
-    {label:'FREQUÊNCIA', value: pctText+'%'},
-    {label:'TURMA', value: (turma.split('(')[0]||turma).trim()},
-    {label:'CICLO', value: '2026.2'},
-  ];
-  var bx = 72, by = 420, bw = 210, bh = 90, bgap = 20;
-  boxes.forEach(function(box, i){
-    var x = bx + i*(bw+bgap);
-    ctx.fillStyle = '#f5f5f0';
-    ctx.beginPath();
-    ctx.roundRect(x, by, bw, bh, 8);
-    ctx.fill();
-    ctx.fillStyle = '#229090';
-    ctx.font = 'bold 11px Inter, sans-serif';
-    ctx.fillText(box.label, x+16, by+24);
-    ctx.fillStyle = '#164951';
-    ctx.font = 'bold 28px Inter, sans-serif';
-    ctx.fillText(box.value, x+16, by+68);
-  });
-
-  // Signature area
-  var sigX = 72, sigY = 570;
+  ctx.fillText('concluiu o ciclo de inglês', 72, 284);
   ctx.fillStyle = '#164951';
   ctx.font = 'bold 16px Inter, sans-serif';
-  ctx.fillText('Gabriela Souza', sigX, sigY);
+  ctx.fillText((turma ? turma + ' — ' : '') + 'Ciclo ' + CYCLE_INFO.name, 72, 308);
   ctx.fillStyle = '#4a7880';
+  ctx.font = '16px Inter, sans-serif';
+  ctx.fillText('com ' + hrsText + 'h de aula e ' + pctText + '% de presença.', 72, 332);
+  // Cycle dates
   ctx.font = '13px Inter, sans-serif';
-  ctx.fillText('Fundadora · Inglês sem Roteiro', sigX, sigY+20);
-  // Signature line
-  ctx.strokeStyle = '#164951';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(sigX, sigY-14); ctx.lineTo(sigX+180, sigY-14); ctx.stroke();
+  ctx.fillStyle = '#8aacb0';
+  ctx.fillText(CYCLE_INFO.startDate + '  →  ' + CYCLE_INFO.endDate, 72, 356);
 
-  // Date bottom right
+  // ── Stats boxes ─────────────────────────────────────────────────
+  var boxes = [
+    {label:'AULAS', value:(hours.fixedPresent||0)+'/'+CYCLE_INFO.totalClasses},
+    {label:'EXTRAS', value:(hours.extraPresent||0)+' sessão'+(hours.extraPresent!==1?'s':'')},
+    {label:'HORAS', value:hrsText+'h'},
+    {label:'PRESENÇA', value:pctText+'%'},
+  ];
+  var bx=72, by=390, bw=118, bh=76, bgap=14;
+  boxes.forEach(function(box,i){
+    var x=bx+i*(bw+bgap);
+    ctx.fillStyle='#f5f5f0';
+    ctx.beginPath(); ctx.roundRect(x,by,bw,bh,8); ctx.fill();
+    ctx.fillStyle='#229090'; ctx.font='bold 9px Inter, sans-serif';
+    ctx.fillText(box.label,x+10,by+20);
+    ctx.fillStyle='#164951'; ctx.font='bold 24px Inter, sans-serif';
+    ctx.fillText(box.value,x+10,by+58);
+  });
+
+  // ── Signature ───────────────────────────────────────────────────
+  var sigX=72, sigY=538;
+  ctx.strokeStyle='#164951'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(sigX,sigY-12); ctx.lineTo(sigX+160,sigY-12); ctx.stroke();
+  ctx.fillStyle='#164951'; ctx.font='bold 14px Inter, sans-serif';
+  ctx.fillText('Gabriela Souza', sigX, sigY);
+  ctx.fillStyle='#8aacb0'; ctx.font='11px Inter, sans-serif';
+  ctx.fillText('Fundadora · Inglês sem Roteiro', sigX, sigY+16);
+
+  // ── Syllabus topics — right panel ───────────────────────────────
+  var rxStart = 560; // right section starts here
+  var rx = rxStart + 20;
+  // Right section background
+  ctx.fillStyle = '#f9f9f6';
+  ctx.beginPath(); ctx.roundRect(rxStart, 125, W-rxStart-48, H-125-70, 10); ctx.fill();
+
+  ctx.fillStyle = '#229090'; ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.fillText('CONTEÚDO DO CICLO', rx, 155);
+
+  var topics = SYLLABUS_TOPICS || [];
+  var ty = 178;
+  topics.forEach(function(topic, i){
+    if(ty > H-130) return; // don't overflow
+    ctx.fillStyle = '#fc9082'; ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.fillText('·', rx, ty);
+    ctx.fillStyle = '#164951'; ctx.font = '11px Inter, sans-serif';
+    // Wrap long topic text
+    var maxW = W - rxStart - 68;
+    var words = topic.split(' ');
+    var line = ''; var lineY = ty;
+    words.forEach(function(word){
+      var test = line + (line ? ' ' : '') + word;
+      if(ctx.measureText(test).width > maxW && line) {
+        ctx.fillText(line, rx+10, lineY);
+        line = word; lineY += 14;
+      } else { line = test; }
+    });
+    if(line) ctx.fillText(line, rx+10, lineY);
+    ty = lineY + 18;
+  });
+
+  // ── Bottom bar ──────────────────────────────────────────────────
+  ctx.fillStyle = '#164951';
+  ctx.fillRect(0, H-70, W, 70);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H-70, W, 4);
+
+  // CNPJ / KVK / date in bottom bar
   var today = new Date();
   var dateStr = today.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '13px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.fillText('CNPJ 53.132.120/0001-09  ·  KVK 42029556', 48, H-42);
+  ctx.fillText('Emitido em ' + dateStr, 48, H-22);
   ctx.textAlign = 'right';
-  ctx.fillText('Emitido em ' + dateStr, W-48, H-22);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.fillText('INGLÊS SEM ROTEIRO · inglessemroteiro.com.br', W-48, H-28);
   ctx.textAlign = 'left';
-
-  // Decorative coral circle
-  ctx.fillStyle = 'rgba(252,144,130,0.08)';
-  ctx.beginPath(); ctx.arc(W-120, H/2-40, 200, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = 'rgba(34,144,144,0.05)';
-  ctx.beginPath(); ctx.arc(W-80, H/2+80, 140, 0, Math.PI*2); ctx.fill();
 }
 
 function downloadCertificate(format){
@@ -3883,6 +3989,60 @@ function downloadCertificate(format){
     pdfWindow.document.close();
     showToast('🖨 Use Imprimir → Salvar como PDF');
   }
+}
+
+function emailCertificate(){
+  var canvas = document.getElementById('cert-canvas');
+  var u = state.user;
+  if(!canvas || !u || !u.email) { showToast('E-mail não encontrado na sua conta 😕'); return; }
+  var statusEl = document.getElementById('cert-email-status');
+  var btn = document.getElementById('cert-email-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+  if(statusEl){ statusEl.style.display=''; statusEl.textContent='Gerando certificado...'; }
+
+  // Compress to JPEG to keep size manageable
+  var certBase64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+
+  fetch('/.netlify/functions/send-certificate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      email: u.email,
+      nome: u.nome,
+      turma: u.turma || u.nivel || '',
+      ciclo: CYCLE_INFO.name,
+      certBase64: certBase64
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(statusEl){ statusEl.textContent = '✅ Certificado enviado para ' + u.email + '!'; }
+    if(btn){ btn.disabled = false; btn.textContent = '📧 Receber no e-mail'; }
+    showToast('✅ Enviado para ' + u.email + '!');
+  })
+  .catch(function(){
+    if(statusEl){ statusEl.textContent = '⚠ Erro ao enviar. Tente baixar o PNG.'; }
+    if(btn){ btn.disabled = false; btn.textContent = '📧 Receber no e-mail'; }
+  });
+}
+
+function sendAllCertificates(){
+  var statusEl = document.getElementById('cert-admin-status');
+  if(statusEl){ statusEl.textContent = '⏳ Disparando emails...'; }
+  fetch('/.netlify/functions/send-certificate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ sendAll: true, ciclo: CYCLE_INFO.name })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var msg = data.sent ? '✅ ' + data.sent + ' certificados enviados!' : '✅ Processando — Apps Script enviará os emails.';
+    if(statusEl){ statusEl.textContent = msg; }
+    showToast(msg);
+  })
+  .catch(function(){
+    if(statusEl){ statusEl.textContent = '⚠ Erro ao disparar. Verifique o Apps Script.'; }
+  });
 }
 
 function renderRecados(){
