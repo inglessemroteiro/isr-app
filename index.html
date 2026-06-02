@@ -599,6 +599,29 @@
     .chat-send-btn{width:40px;height:40px;border-radius:50%;border:none;background:var(--teal);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .chat-send-btn:disabled{background:var(--muted);cursor:default;}
     .chat-send-btn:not(:disabled):active{background:var(--accent);}
+    /* FLIN ACTIVITY SELECTOR */
+    #flin-selector{flex:1;overflow-y:auto;padding:28px 20px 40px;display:flex;flex-direction:column;align-items:center;}
+    .flin-sel-avatar{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,var(--teal),#2a8080);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px;box-shadow:0 8px 24px rgba(55,107,107,0.25);}
+    .flin-sel-hello{font-size:21px;font-weight:700;color:var(--teal);text-align:center;margin-bottom:6px;}
+    .flin-sel-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px;line-height:1.5;}
+    .flin-activity-cards{display:flex;flex-direction:column;gap:11px;width:100%;}
+    .flin-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color 0.15s,transform 0.1s,box-shadow 0.15s;}
+    .flin-card:active{transform:scale(0.98);border-color:var(--accent);box-shadow:0 4px 16px rgba(0,0,0,0.08);}
+    .flin-card-icon{font-size:30px;flex-shrink:0;width:44px;text-align:center;}
+    .flin-card-body{flex:1;}
+    .flin-card-title{font-size:15px;font-weight:700;color:var(--teal);margin-bottom:2px;}
+    .flin-card-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+    .flin-card-arrow{font-size:20px;color:var(--muted);}
+    /* FLIN EXTRA BUTTONS */
+    .chat-extra-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--teal);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .chat-extra-btn:active{background:var(--cream);}
+    .chat-extra-btn.recording{background:var(--red,#d94f4f);border-color:var(--red,#d94f4f);color:#fff;animation:recPulse 1s ease-in-out infinite;}
+    @keyframes recPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+    /* IMAGE PREVIEW */
+    #chat-img-preview-wrap{padding:6px 16px 0;display:flex;align-items:center;gap:10px;}
+    .chat-img-thumb{width:64px;height:64px;object-fit:cover;border-radius:10px;border:2px solid var(--accent);}
+    .chat-img-remove{background:var(--teal);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    #flin-chat-area{flex:1;overflow:hidden;flex-direction:column;}
 
     .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(80px);background:var(--teal);color:#fff;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.2);transition:transform 0.3s ease;white-space:nowrap;z-index:9999;pointer-events:none;}
     .toast.show{transform:translateX(-50%) translateY(0);}
@@ -1543,19 +1566,71 @@
 <!-- AI CHAT SCREEN -->
 <div id="screen-ai-chat" class="screen">
   <div class="chat-header">
-    <div class="back-btn" onclick="closeAIChat()">← Voltar</div>
-    <div class="chat-context-badge" id="ai-chat-badge">✦ Comunidade ISR · IA de prática</div>
-    <div class="chat-title" id="ai-chat-title">Praticar em inglês</div>
+    <div class="back-btn" id="flin-back-btn" onclick="closeAIChat()">← Voltar</div>
+    <div class="chat-context-badge" id="ai-chat-badge">✦ Flin · ISR</div>
+    <div class="chat-title" id="ai-chat-title">Praticar inglês</div>
   </div>
-  <div class="chat-messages" id="chat-messages">
-    <div class="typing-indicator" id="typing-indicator">
-      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+
+  <!-- ACTIVITY SELECTOR -->
+  <div id="flin-selector">
+    <div class="flin-sel-avatar">🤖</div>
+    <div class="flin-sel-hello">Olá, <span id="flin-sel-name"></span>! 👋</div>
+    <div class="flin-sel-sub">O que você quer praticar hoje?<br>Escolha uma atividade ou comece a digitar.</div>
+    <div class="flin-activity-cards">
+      <div class="flin-card" onclick="selectActivity('homework')">
+        <div class="flin-card-icon">📝</div>
+        <div class="flin-card-body">
+          <div class="flin-card-title">Correção de tarefa</div>
+          <div class="flin-card-desc">Mande sua tarefa (texto ou foto) e o Flin corrige com você</div>
+        </div>
+        <div class="flin-card-arrow">›</div>
+      </div>
+      <div class="flin-card" onclick="selectActivity('vocabulary')">
+        <div class="flin-card-icon">🔤</div>
+        <div class="flin-card-body">
+          <div class="flin-card-title">Prática de vocabulário</div>
+          <div class="flin-card-desc">Explore palavras novas em contexto real</div>
+        </div>
+        <div class="flin-card-arrow">›</div>
+      </div>
+      <div class="flin-card" onclick="selectActivity('chat')">
+        <div class="flin-card-icon">💬</div>
+        <div class="flin-card-body">
+          <div class="flin-card-title">Prática de conversação</div>
+          <div class="flin-card-desc">Conversa livre em inglês com feedback natural</div>
+        </div>
+        <div class="flin-card-arrow">›</div>
+      </div>
+      <div class="flin-card" onclick="selectActivity('free')">
+        <div class="flin-card-icon">✨</div>
+        <div class="flin-card-body">
+          <div class="flin-card-title">Livre</div>
+          <div class="flin-card-desc">Comece do jeito que quiser — Flin acompanha</div>
+        </div>
+        <div class="flin-card-arrow">›</div>
+      </div>
     </div>
   </div>
-  <div class="chat-input-area">
-    <textarea class="chat-input" id="chat-input" placeholder="Type in English..." rows="1"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
-    <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">↑</button>
+
+  <!-- CHAT AREA (hidden until activity selected) -->
+  <div id="flin-chat-area" style="display:none;">
+    <div class="chat-messages" id="chat-messages">
+      <div class="typing-indicator" id="typing-indicator">
+        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+      </div>
+    </div>
+    <div id="chat-img-preview-wrap" style="display:none;">
+      <img class="chat-img-thumb" id="chat-img-thumb" src="" alt="preview"/>
+      <button class="chat-img-remove" onclick="removeImage()">✕</button>
+    </div>
+    <div class="chat-input-area">
+      <button class="chat-extra-btn" id="voice-btn" onclick="toggleVoice()" title="Enviar áudio">🎙️</button>
+      <button class="chat-extra-btn" onclick="triggerImageUpload()" title="Enviar foto ou arquivo">📎</button>
+      <input type="file" id="chat-file-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)"/>
+      <textarea class="chat-input" id="chat-input" placeholder="Type in English..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+      <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">↑</button>
+    </div>
   </div>
 </div>
 
@@ -4245,6 +4320,9 @@ function formatDisplayDate(isoStr) {
 var aiChatHistory = [];
 var aiChatChallenge = null;
 var aiChatLoading = false;
+var aiCurrentActivity = null;
+var aiPendingImage = null;
+var aiSpeechRec = null;
 
 function renderExercicio(challenge){
   if(!challenge || !challenge.exercicio) return;
@@ -4268,22 +4346,72 @@ function renderExercicio(challenge){
 function openAIChat(){
   aiChatHistory = [];
   aiChatLoading = false;
+  aiCurrentActivity = null;
+  aiPendingImage = null;
 
+  // Show selector, hide chat area
+  var selector = document.getElementById('flin-selector');
+  var chatArea = document.getElementById('flin-chat-area');
+  if(selector) selector.style.display = 'flex';
+  if(chatArea) chatArea.style.display = 'none';
+
+  // Back button exits to main app
+  var backBtn = document.getElementById('flin-back-btn');
+  if(backBtn) backBtn.onclick = closeAIChat;
+
+  // Set student name in selector greeting
+  var u = state.user;
+  var nameEl = document.getElementById('flin-sel-name');
+  if(nameEl && u) nameEl.textContent = u.nome ? u.nome.split(' ')[0] : '';
+
+  var titleEl = document.getElementById('ai-chat-title');
+  if(titleEl) titleEl.textContent = 'Praticar inglês';
+
+  showScreen('ai-chat');
+}
+
+function selectActivity(activity){
+  aiCurrentActivity = activity;
+  aiChatHistory = [];
+  aiChatLoading = false;
+  aiPendingImage = null;
+
+  // Switch from selector to chat
+  var selector = document.getElementById('flin-selector');
+  var chatArea = document.getElementById('flin-chat-area');
+  if(selector) selector.style.display = 'none';
+  if(chatArea) chatArea.style.display = 'flex';
+
+  // Update header title
+  var labels = {homework:'📝 Correção de tarefa', vocabulary:'🔤 Vocabulário', chat:'💬 Conversação', free:'✨ Livre'};
+  var titleEl = document.getElementById('ai-chat-title');
+  if(titleEl) titleEl.textContent = labels[activity] || 'Praticar inglês';
+
+  // Back button → returns to activity selector (not main app)
+  var backBtn = document.getElementById('flin-back-btn');
+  if(backBtn) backBtn.onclick = function(){
+    if(aiSpeechRec){ aiSpeechRec.stop(); aiSpeechRec = null; }
+    var sel = document.getElementById('flin-selector');
+    var chat = document.getElementById('flin-chat-area');
+    if(sel) sel.style.display = 'flex';
+    if(chat) chat.style.display = 'none';
+    var tEl = document.getElementById('ai-chat-title');
+    if(tEl) tEl.textContent = 'Praticar inglês';
+    var btn = document.getElementById('flin-back-btn');
+    if(btn) btn.onclick = closeAIChat;
+  };
+
+  // Reset messages
   var messagesEl = document.getElementById('chat-messages');
   if(messagesEl){
     messagesEl.innerHTML = '<div class="typing-indicator" id="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
   }
-
-  var badgeEl = document.getElementById('ai-chat-badge');
-  var titleEl = document.getElementById('ai-chat-title');
-  if(badgeEl) badgeEl.textContent = '✦ Flin · ISR';
-  if(titleEl) titleEl.textContent = 'Praticar inglês';
-
-  showScreen('ai-chat');
+  removeImage();
   callAI(true);
 }
 
 function closeAIChat(){
+  if(aiSpeechRec){ aiSpeechRec.stop(); aiSpeechRec = null; }
   var u = state.user;
   if(!u){ showScreen('login'); return; }
   if(u.role==='student') showScreen('app');
@@ -4292,14 +4420,97 @@ function closeAIChat(){
   else showScreen('prof');
 }
 
+// ── VOICE ──────────────────────────────────────────
+function toggleVoice(){
+  var btn = document.getElementById('voice-btn');
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRec){ showToast('Voz não suportada neste navegador 😕'); return; }
+
+  if(aiSpeechRec){
+    aiSpeechRec.stop();
+    aiSpeechRec = null;
+    if(btn) btn.classList.remove('recording');
+    return;
+  }
+
+  var rec = new SpeechRec();
+  rec.lang = 'en-US';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  aiSpeechRec = rec;
+  if(btn) btn.classList.add('recording');
+
+  rec.onresult = function(e){
+    var transcript = e.results[0][0].transcript;
+    var input = document.getElementById('chat-input');
+    if(input) input.value = (input.value ? input.value + ' ' : '') + transcript;
+  };
+  rec.onend = function(){
+    aiSpeechRec = null;
+    if(btn) btn.classList.remove('recording');
+  };
+  rec.onerror = function(){
+    aiSpeechRec = null;
+    if(btn) btn.classList.remove('recording');
+    showToast('Não foi possível capturar o áudio 🎙️');
+  };
+  rec.start();
+}
+
+// ── IMAGE / FILE ───────────────────────────────────
+function triggerImageUpload(){
+  var input = document.getElementById('chat-file-input');
+  if(input) input.click();
+}
+
+function handleImageUpload(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var dataUrl = e.target.result;
+    var base64 = dataUrl.split(',')[1];
+    aiPendingImage = {base64: base64, mediaType: file.type || 'image/jpeg'};
+    var wrap = document.getElementById('chat-img-preview-wrap');
+    var thumb = document.getElementById('chat-img-thumb');
+    if(thumb) thumb.src = dataUrl;
+    if(wrap) wrap.style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeImage(){
+  aiPendingImage = null;
+  var wrap = document.getElementById('chat-img-preview-wrap');
+  var thumb = document.getElementById('chat-img-thumb');
+  if(wrap) wrap.style.display = 'none';
+  if(thumb) thumb.src = '';
+}
+
+// ── SEND & CALL ────────────────────────────────────
 function sendChatMessage(){
   var input = document.getElementById('chat-input');
-  if(!input || !input.value.trim() || aiChatLoading) return;
+  if(!input || aiChatLoading) return;
   var text = input.value.trim();
+  if(!text && !aiPendingImage) return;
+
   input.value = '';
   input.style.height = '';
-  appendMessage('user', text);
-  aiChatHistory.push({role:'user', content:text});
+
+  var content;
+  if(aiPendingImage){
+    content = [];
+    if(text) content.push({type:'text', text: text});
+    content.push({type:'image', source:{type:'base64', media_type: aiPendingImage.mediaType, data: aiPendingImage.base64}});
+    appendMessage('user', text || '📎 [imagem enviada]');
+    removeImage();
+  } else {
+    content = text;
+    appendMessage('user', text);
+  }
+
+  aiChatHistory.push({role:'user', content: content});
   callAI(false);
 }
 
@@ -4315,7 +4526,7 @@ function callAI(isOpening){
 
   var u = state.user;
   var messages = isOpening
-    ? [{role:'user', content:'(Start the conversation with your opening message.)'}]
+    ? [{role:'user', content:'(Start — send your opening message for this activity.)'}]
     : aiChatHistory.slice();
 
   fetch('/.netlify/functions/chat', {
@@ -4325,7 +4536,8 @@ function callAI(isOpening){
       messages: messages,
       studentName: u ? u.nome.split(' ')[0] : '',
       nivel: u ? (u.nivel||'') : '',
-      turma: u ? (u.turma||'') : ''
+      turma: u ? (u.turma||'') : '',
+      activity: aiCurrentActivity || 'free'
     })
   })
   .then(function(r){ return r.json(); })
@@ -4359,11 +4571,9 @@ function appendMessage(role, text){
     .replace(/\*([^*]+)\*/g,'<em style="color:var(--accent);font-style:normal;font-weight:600">$1</em>')
     .replace(/\n\n+/g,'</p><p style="margin:6px 0 0">').replace(/\n/g,'<br>');
   div.innerHTML = '<div class="msg-bubble"><p style="margin:0">'+formatted+'</p></div><div class="msg-time">'+timeStr+'</div>';
-  // Insert before typing indicator
   var typing = document.getElementById('typing-indicator');
   if(typing) container.insertBefore(div, typing);
   else container.appendChild(div);
-  // Scroll to bottom
   container.scrollTop = container.scrollHeight;
 }
 
