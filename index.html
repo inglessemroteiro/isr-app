@@ -162,11 +162,25 @@
     /* Doc viewer overlay */
     #doc-viewer{position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;background:#111;}
     #doc-viewer.open{display:flex;}
+    .dv-modal{display:flex;flex-direction:column;flex:1;width:100%;overflow:hidden;}
     .dv-header{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--teal);color:#fff;flex-shrink:0;}
     .dv-title{flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .dv-ext-btn{font-size:11px;font-weight:600;color:#fff;opacity:0.85;text-decoration:none;border:1px solid rgba(255,255,255,0.4);border-radius:7px;padding:5px 10px;white-space:nowrap;}
     .dv-close-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;line-height:1;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    #doc-viewer iframe{flex:1;border:none;width:100%;background:#fff;}
+    #dv-iframe{flex:1;border:none;width:100%;background:#fff;}
+
+    /* ── Desktop layout ─────────────────────────── */
+    @media(min-width:640px){
+      body{background:#dde8e8;}
+      #screen-app,#screen-detail,#screen-prof,#screen-imersao,
+      #screen-community,#screen-renewal,#screen-settings,#screen-ai-chat,
+      #screen-onboarding,#screen-blocked,#screen-loading{max-width:600px;}
+      .login-card{max-width:480px;}
+      /* Doc viewer as centered modal on desktop */
+      #doc-viewer{background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:40px 24px;}
+      .dv-modal{flex:none;width:100%;max-width:940px;height:min(88vh,820px);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.45);}
+      .dv-header{border-radius:0;}
+    }
 
     .recado-banner{margin:16px 20px 0;padding:14px 16px;border-radius:14px;background:var(--teal);color:#fff;display:flex;gap:12px;align-items:flex-start;}
     .recado-banner.hidden{display:none;}
@@ -2385,11 +2399,10 @@ function renderMyClassCard(user){
     var matEl = document.getElementById('mc-materials-inner');
     matEl.innerHTML = '';
     var materials = [
-      {key:'individualNotebook',icon:'✏️', labelEn:'My Activities',    labelPt:'Minhas Atividades',  viewer:true},
-      {key:'notebook',          icon:'📓', labelEn:'Class Notebook',   labelPt:'Caderno da Turma',   viewer:true},
-      {key:'recordings',        icon:'🎥', labelEn:'Recordings',       labelPt:'Gravações',          viewer:false},
-      {key:'schoolCalendar',    icon:'📅', labelEn:'School Calendar',  labelPt:'Calendário',         viewer:true},
-      {key:'teacherGuide',      icon:'📋', labelEn:"Teacher's Guide",  labelPt:'Guia do Professor',  viewer:true},
+      {key:'individualNotebook',icon:'✏️', labelEn:'My Activities',   labelPt:'Minhas Atividades', viewer:true,  readonly:false},
+      {key:'notebook',          icon:'📓', labelEn:'Class Notebook',  labelPt:'Caderno da Turma',  viewer:true,  readonly:false},
+      {key:'recordings',        icon:'🎥', labelEn:'Recordings',      labelPt:'Gravações',         viewer:false, readonly:false},
+      {key:'schoolCalendar',    icon:'📅', labelEn:'School Calendar', labelPt:'Calendário',        viewer:true,  readonly:true},
     ];
     var hasAny = false;
     materials.forEach(function(m){
@@ -2401,7 +2414,7 @@ function renderMyClassCard(user){
         a.className = 'mc-material-btn';
         if(m.viewer){
           a.href = '#';
-          a.onclick = (function(url, title){ return function(e){ e.preventDefault(); openDocViewer(url, title); }; })(link, en ? m.labelEn : m.labelPt);
+          a.onclick = (function(url, title, ro){ return function(e){ e.preventDefault(); openDocViewer(url, title, ro); }; })(link, en ? m.labelEn : m.labelPt, m.readonly);
         } else {
           a.href = link;
           a.target = '_blank';
@@ -5229,24 +5242,29 @@ function appendMessage(role, text){
 
 init();
 
-function makeDocEmbedUrl(url){
+function makeDocEmbedUrl(url, readonly){
   if(!url) return url;
-  // Remove existing rm param then add rm=minimal
   var u = url.replace(/[?&]rm=[^&]*/,'');
-  u += (u.indexOf('?') >= 0 ? '&' : '?') + 'rm=minimal';
-  // Ensure /edit path for Google Docs so editing works
-  u = u.replace(/\/(preview|pub)(\?|$)/, '/edit$2');
+  if(readonly){
+    // Preview mode — no editing
+    u = u.replace(/\/(edit|pub)(\?|$)/, '/preview$2');
+    u += (u.indexOf('?') >= 0 ? '&' : '?') + 'rm=minimal';
+  } else {
+    // Edit mode — allow changes
+    u = u.replace(/\/(preview|pub)(\?|$)/, '/edit$2');
+    u += (u.indexOf('?') >= 0 ? '&' : '?') + 'rm=minimal';
+  }
   return u;
 }
 
-function openDocViewer(url, title){
+function openDocViewer(url, title, readonly){
   var overlay = document.getElementById('doc-viewer');
   if(!overlay) return;
   document.getElementById('dv-title').textContent = title || '';
   var extBtn = document.getElementById('dv-ext-btn');
   extBtn.href = url;
   var iframe = document.getElementById('dv-iframe');
-  iframe.src = makeDocEmbedUrl(url);
+  iframe.src = makeDocEmbedUrl(url, readonly);
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -5261,13 +5279,15 @@ function closeDocViewer(){
 </script>
 
 <!-- Google Docs in-app viewer -->
-<div id="doc-viewer">
-  <div class="dv-header">
-    <button class="dv-close-btn" onclick="closeDocViewer()">✕</button>
-    <span class="dv-title" id="dv-title"></span>
-    <a class="dv-ext-btn" id="dv-ext-btn" href="#" target="_blank">Open in tab ↗</a>
+<div id="doc-viewer" onclick="if(event.target===this)closeDocViewer()">
+  <div class="dv-modal">
+    <div class="dv-header">
+      <button class="dv-close-btn" onclick="closeDocViewer()">✕</button>
+      <span class="dv-title" id="dv-title"></span>
+      <a class="dv-ext-btn" id="dv-ext-btn" href="#" target="_blank">Open in tab ↗</a>
+    </div>
+    <iframe id="dv-iframe" src="about:blank" allow="microphone" allowfullscreen></iframe>
   </div>
-  <iframe id="dv-iframe" src="about:blank" allow="microphone" allowfullscreen></iframe>
 </div>
 
 </body>
