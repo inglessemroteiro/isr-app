@@ -584,7 +584,7 @@
     /* Book Club tab — iframe fills the whole tab area */
     @keyframes spin{to{transform:rotate(360deg);}}
     #stab-bookclub{overflow:hidden;padding:0;}
-    #stab-bookclub.active{display:flex;flex-direction:column;}
+    #stab-bookclub.active{display:flex;flex-direction:column;flex:1;min-height:0;}
     /* All sub-screens overlay screen-app */
     #screen-detail,#screen-settings,#screen-ai-chat,#screen-renewal,#screen-renewal-done,
     #screen-certificate,#screen-prof,#screen-imersao,#screen-community{
@@ -2295,7 +2295,22 @@ function switchBookClub(name, el){
 // STUDENT APP
 // ════════════════════════════════
 function renderMyClassCard(user){
+  // Prefer live Apps Script data, fall back to hardcoded demo data
   var td = STUDENT_TURMA_DATA[user.turma];
+  // If td is missing but we have basic info from the login response, build a minimal td
+  if(!td && (user.meetLink || user.linkMeet || user.horario)){
+    td = {
+      prof:     user.prof      || user.professor || '',
+      horario:  user.horario   || '',
+      meet:     user.meetLink  || user.linkMeet  || '#',
+      nextDate: user.nextDate  || '',
+      nextFormat: '',
+      nextTopic:  '',
+      notebook:   user.linkCaderno || user.caderno || '',
+      individualNotebook: user.linkCadernoIndividual || user.cadernoIndividual || '',
+      recordings: user.linkGravacoes || '',
+    };
+  }
   var initials = (user.turma||'').split(' ').slice(0,2).join(' ');
   var en = state.lang === 'en';
 
@@ -2305,8 +2320,11 @@ function renderMyClassCard(user){
   btn.textContent = en ? 'Join →' : 'Entrar →';
 
   if(td){
-    document.getElementById('mc-meta').textContent = '👩‍🏫 '+td.prof+' · 🕖 '+td.horario;
-    btn.href = td.meet; btn.classList.remove('no-link');
+    var metaParts = [];
+    if(td.prof)    metaParts.push('👩‍🏫 '+td.prof);
+    if(td.horario) metaParts.push('🕖 '+td.horario);
+    document.getElementById('mc-meta').textContent = metaParts.join(' · ') || user.turma||'';
+    btn.href = td.meet||'#'; if(td.meet && td.meet!=='#') btn.classList.remove('no-link'); else btn.classList.add('no-link');
     document.getElementById('mc-next-date').textContent = td.nextDate+' · '+td.nextFormat;
     document.getElementById('mc-next-topic').textContent = td.nextTopic+(td.nextSkill?' — '+td.nextSkill:'');
     var hwRow = document.getElementById('mc-hw-row');
@@ -2466,8 +2484,10 @@ function renderCertificadoTab(){
   var u = state.user;
   if(!u) return;
   var hours = state.studentHours || {};
-  var h = hours[u.nome] || {fixedPresent:0, fixedTotal:0, extraPresent:0, totalHours:0, pct:0, eligible:false};
-  var pct = Math.round((h.pct||0)*100);
+  var cycleTotal = CYCLE_INFO.totalClasses || 10;
+  var h = hours[u.nome] || {fixedPresent:0, fixedTotal:cycleTotal, extraPresent:0, totalHours:0, pct:0, eligible:false};
+  if(h.fixedTotal === 0) h.fixedTotal = cycleTotal;
+  var pct = Math.round(((h.fixedPresent||0) / h.fixedTotal)*100);
 
   // Stats
   var aulaEl = document.getElementById('cert-stat-aulas');
@@ -2478,9 +2498,9 @@ function renderCertificadoTab(){
   var barEl  = document.getElementById('cert-progress-bar');
   var barPct = document.getElementById('cert-bar-pct');
 
-  if(aulaEl) aulaEl.textContent = (h.fixedPresent||0) + '/' + (h.fixedTotal||0);
-  if(aulaSubEl) aulaSubEl.textContent = (h.fixedTotal||0) > 0 ? 'aulas presentes' : 'aguardando chamada';
-  if(pctEl)  pctEl.textContent  = (h.fixedTotal||0) > 0 ? pct + '%' : '—';
+  if(aulaEl) aulaEl.textContent = (h.fixedPresent||0) + '/' + h.fixedTotal;
+  if(aulaSubEl) aulaSubEl.textContent = 'aulas presentes';
+  if(pctEl)  pctEl.textContent  = pct + '%';
   if(extEl)  extEl.textContent  = (h.extraPresent||0);
   if(totEl)  totEl.textContent  = (h.totalHours||0).toFixed(1) + 'h';
   if(barEl)  barEl.style.width  = Math.min(100, pct) + '%';
@@ -3897,14 +3917,17 @@ function renderProgressCard(user){
   var myHours = hours[user.nome];
   var card = document.getElementById('progress-card');
   if(!card) return;
-  // Show card only if there's any attendance data for this student
-  if(!myHours || myHours.fixedTotal===0){ card.style.display='none'; return; }
+  // Always show card — use cycle total (10) as denominator when no chamada data yet
+  var cycleTotal = CYCLE_INFO.totalClasses || 10;
+  if(!myHours) myHours = {fixedPresent:0, fixedTotal:cycleTotal, extraPresent:0, totalHours:0, pct:0};
+  // If chamada hasn't run yet fixedTotal may be 0 — use cycleTotal
+  var total = myHours.fixedTotal > 0 ? myHours.fixedTotal : cycleTotal;
   card.style.display='';
-  var pct = myHours.pct || 0;
+  var pct = total > 0 ? (myHours.fixedPresent||0) / total : 0;
   var pctDisplay = Math.round(pct*100);
-  document.getElementById('progress-label').textContent = myHours.totalHours.toFixed(1)+'h de aulas no ciclo';
+  document.getElementById('progress-label').textContent = (myHours.fixedPresent||0)+' aula'+(myHours.fixedPresent===1?'':'s')+' presente'+(myHours.fixedPresent===1?'':'s')+ ' no ciclo';
   document.getElementById('progress-bar').style.width = Math.min(100,pctDisplay)+'%';
-  document.getElementById('progress-pct').textContent = pctDisplay+'% de presença ('+(myHours.fixedPresent||0)+'/'+myHours.fixedTotal+' aulas)';
+  document.getElementById('progress-pct').textContent = (myHours.fixedPresent||0)+'/'+total+' aulas · '+pctDisplay+'% de presença';
   var certBtn = document.getElementById('cert-btn');
   var eligible = (myHours.fixedPresent || 0) >= CERT_MIN_CLASSES;
   if(certBtn) certBtn.style.display = eligible ? '' : 'none';
