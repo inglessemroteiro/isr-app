@@ -988,10 +988,11 @@
   </div>
   <div class="ptab" id="ptab-chamada">
     <div class="slabel">Attendance</div>
-    <!-- Mode selector: fixed classes or extras -->
+    <!-- Mode selector: fixed classes, extras, or particulares -->
     <div style="display:flex;gap:8px;padding:0 20px 12px;flex-shrink:0">
-      <button class="bc-tab active" id="cham-mode-fixed" onclick="setChamadaMode('fixed',this)" style="flex:1">🏫 Aulas fixas</button>
-      <button class="bc-tab" id="cham-mode-extra" onclick="setChamadaMode('extra',this)" style="flex:1">⭐ Atividades extras</button>
+      <button class="bc-tab active" id="cham-mode-fixed" onclick="setChamadaMode('fixed',this)" style="flex:1">🏫 Fixas</button>
+      <button class="bc-tab" id="cham-mode-extra" onclick="setChamadaMode('extra',this)" style="flex:1">⭐ Extras</button>
+      <button class="bc-tab" id="cham-mode-particular" onclick="setChamadaMode('particular',this)" style="flex:1">👤 Particular</button>
     </div>
     <!-- Fixed classes panel -->
     <div id="cham-panel-fixed">
@@ -1032,6 +1033,26 @@
         <div id="cham-extra-rows"></div>
       </div>
       <button class="save-cham-btn" style="margin-top:12px" onclick="saveChamada('extra')">Salvar presença</button>
+    </div>
+
+    <!-- Particular chamada panel -->
+    <div id="cham-panel-particular" style="display:none">
+      <div class="week-nav-row">
+        <button class="wn-btn" onclick="changeWeek(-1)">‹</button>
+        <div class="wn-label" id="wn-label-part"></div>
+        <button class="wn-btn" onclick="changeWeek(1)">›</button>
+      </div>
+      <!-- Student selector (one card per student) -->
+      <div id="cham-part-sel" style="display:flex;flex-direction:column;gap:8px;padding:0 20px 10px"></div>
+      <div class="cham-table" id="cham-part-table" style="margin:0 20px">
+        <div class="cham-table-header">
+          <div class="cth">Aluno</div>
+          <div class="cth">✓</div><div class="cth">✗</div>
+          <div class="cth">⚠</div><div class="cth">⏱</div>
+        </div>
+        <div id="cham-part-rows"></div>
+      </div>
+      <button class="save-cham-btn" style="margin:12px 20px 0" onclick="saveChamada('particular')">Salvar presença</button>
     </div>
 
     <!-- Hours summary (admin only) -->
@@ -3599,13 +3620,21 @@ function setupChamada(){
   var myTurmas=u.turmas||[];
   currentChamadaTurma=myTurmas[0]||'';
   updateWeekUI();
+
+  // Show/hide Particular tab based on whether prof has particulares
+  var partBtn = document.getElementById('cham-mode-particular');
+  if(partBtn) partBtn.style.display = (u.particulares && u.particulares.length) ? '' : 'none';
+
   var sel=document.getElementById('cham-turma-sel');
   if(!sel) return;
   sel.innerHTML='';
   myTurmas.forEach(function(tname,i){
     var btn=document.createElement('div');
     btn.className='ct-btn'+(i===0?' active':'');
-    btn.textContent=tname;
+    // Show turma name; if turmaSchedules has a codigo for it, show that too
+    var schedEntry = (u.turmaSchedules||[]).find(function(ts){ return ts.turma===tname; });
+    btn.textContent = tname + (schedEntry&&schedEntry.codigo?' · '+schedEntry.codigo:'');
+    btn.dataset.turma = tname;
     btn.addEventListener('click',function(){
       document.querySelectorAll('.ct-btn').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');currentChamadaTurma=tname;renderChamadaRows();
@@ -3669,20 +3698,72 @@ function renderChamadaRows(){
 }
 
 // ─── CHAMADA MODE ────────────────────────────────────────────────
-var chamadaMode = 'fixed'; // 'fixed' | 'extra'
+var chamadaMode = 'fixed'; // 'fixed' | 'extra' | 'particular'
 
 function setChamadaMode(mode, el){
   chamadaMode = mode;
   document.querySelectorAll('#ptab-chamada .bc-tab').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');
-  document.getElementById('cham-panel-fixed').style.display = mode==='fixed'?'':'none';
-  document.getElementById('cham-panel-extra').style.display = mode==='extra'?'':'none';
-  if(mode==='extra') setupExtraChamada();
+  document.getElementById('cham-panel-fixed').style.display      = mode==='fixed'?'':'none';
+  document.getElementById('cham-panel-extra').style.display      = mode==='extra'?'':'none';
+  document.getElementById('cham-panel-particular').style.display = mode==='particular'?'':'none';
+  if(mode==='extra')      setupExtraChamada();
+  if(mode==='particular') renderParticularesChamadaRows();
   // Show hours summary for admin
   var u = state.user;
   var sumEl = document.getElementById('cham-hours-summary');
   if(sumEl) sumEl.style.display = (u&&u.role==='admin') ? '' : 'none';
   if(u&&u.role==='admin') renderHoursSummary();
+}
+
+function renderParticularesChamadaRows(){
+  var u = state.user;
+  var parts = u ? (u.particulares || []) : [];
+  var wk = WEEKS[currentWeek];
+  var editable = wk ? wk.editable : true;
+
+  // Week label
+  var wlEl = document.getElementById('wn-label-part');
+  if(wlEl) wlEl.textContent = wk ? wk.label : 'Week ' + currentWeek;
+
+  var container = document.getElementById('cham-part-rows');
+  if(!container) return;
+  container.innerHTML = '';
+
+  if(!parts.length){
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">Nenhum aluno particular cadastrado.</div>';
+    return;
+  }
+
+  parts.forEach(function(p){
+    var nome = p.nome || p.name || '?';
+    var key  = 'particular|' + currentWeek + '|' + nome;
+    var cur  = CHAMADA[key] || '';
+    var row  = document.createElement('div');
+    row.className = 'cham-row' + (editable ? '' : ' readonly');
+    var btns = ['present','absent','excused','tardy'];
+    var icons = {present:'✓', absent:'✗', excused:'⚠', tardy:'⏱'};
+    // Sub-label shows schedule/level
+    var meta = [p.horario, p.nivel].filter(Boolean).join(' · ');
+    row.innerHTML =
+      '<div class="cham-student" style="display:flex;flex-direction:column">' +
+        '<span>' + nome + '</span>' +
+        (meta ? '<span style="font-size:10px;color:var(--muted);font-weight:400">' + meta + '</span>' : '') +
+      '</div>' +
+      btns.map(function(v){
+        return '<button class="cs-btn'+(cur===v?' sel-'+v:'')+'" data-val="'+v+'"'+(editable?'':' disabled')+'>'+icons[v]+'</button>';
+      }).join('');
+    if(editable){
+      row.querySelectorAll('.cs-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          CHAMADA[key] = btn.dataset.val;
+          row.querySelectorAll('.cs-btn').forEach(function(b){ b.className='cs-btn'; });
+          btn.classList.add('sel-'+btn.dataset.val);
+        });
+      });
+    }
+    container.appendChild(row);
+  });
 }
 
 function setupExtraChamada(){
@@ -3788,8 +3869,23 @@ function saveChamada(mode){
         records.push({turma:currentChamadaTurma, semana:'extra-'+actId, aluno:studentEl.textContent.trim(), status:activeBtn.dataset.val});
       }
     });
-  } else {
+  } else if(m === 'particular'){
     var wkDate = WEEKS[currentWeek] ? WEEKS[currentWeek].startDate : '';
+    document.querySelectorAll('#cham-part-rows .cham-row').forEach(function(row){
+      var studentEl = row.querySelector('.cham-student');
+      var activeBtn = row.querySelector('.cs-btn[class*="sel-"]');
+      if(studentEl && activeBtn){
+        records.push({
+          turma: 'particular',
+          semana: WEEKS[currentWeek] ? WEEKS[currentWeek].label : String(currentWeek),
+          date: wkDate,
+          aluno: studentEl.querySelector('span') ? studentEl.querySelector('span').textContent.trim() : studentEl.textContent.trim(),
+          status: activeBtn.dataset.val
+        });
+      }
+    });
+  } else {
+    var wkDate2 = WEEKS[currentWeek] ? WEEKS[currentWeek].startDate : '';
     document.querySelectorAll('#cham-rows .cham-row').forEach(function(row){
       var studentEl = row.querySelector('.cham-student');
       var activeBtn = row.querySelector('.cs-btn[class*="sel-"]');
@@ -3797,7 +3893,7 @@ function saveChamada(mode){
         records.push({
           turma: currentChamadaTurma,
           semana: WEEKS[currentWeek] ? WEEKS[currentWeek].label : String(currentWeek),
-          date: wkDate,
+          date: wkDate2,
           aluno: studentEl.textContent.trim(),
           status: activeBtn.dataset.val
         });

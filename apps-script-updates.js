@@ -151,7 +151,8 @@ function getTurmaSchedules(ss, profName) {
     var horario  = col(row, headers, ['horario', 'horário', 'schedule', 'dia', 'day', 'hora']) || '';
     var meetLink = col(row, headers, ['meet', 'link meet', 'linkmeet', 'linkMeet', 'link_meet']) || '';
     var codigo   = col(row, headers, ['codigo', 'código', 'code', 'turma_code', 'cod']) || '';
-    var alunos   = getAlunosByTurma(ss, turma);
+    // Use code for student lookup if available — more reliable than name
+    var alunos = getAlunosByTurma(ss, codigo || turma);
 
     result.push({ turma: turma, horario: horario, meetLink: meetLink, codigo: codigo, alunos: alunos });
   }
@@ -161,19 +162,36 @@ function getTurmaSchedules(ss, profName) {
 
 
 // ── Helper: fetch alunos for a specific turma ────────────────────
-function getAlunosByTurma(ss, turma) {
+// Matches by turma CODE first (reliable), then falls back to turma NAME.
+// turmaRef can be a code like "AI-MON-07" or a name like "Essentials (A2)".
+function getAlunosByTurma(ss, turmaRef) {
   var sheet = ss.getSheetByName('1. Alunos');
   if (!sheet) return [];
   var data = sheet.getDataRange().getValues();
   if (data.length < 3) return [];
   var headers = data[1];
+  var refLower = (turmaRef || '').toString().trim().toLowerCase();
   var alunos = [];
+
+  // First pass: try exact code match
+  var byCode = [];
   for (var i = 2; i < data.length; i++) {
     var row = data[i];
-    var t = col(row, headers, ['turma', 'turmas', 'class', 'grupo']) || '';
-    if (t.trim() === turma.trim()) {
+    var cod = col(row, headers, ['codigo', 'código', 'code', 'cod']) || '';
+    if (cod.trim().toLowerCase() === refLower) {
       var nome = col(row, headers, ['nome', 'name', 'aluno', 'student']) || '';
-      if (nome) alunos.push(nome.trim());
+      if (nome) byCode.push(nome.trim());
+    }
+  }
+  if (byCode.length) return byCode;
+
+  // Second pass: match by turma name
+  for (var j = 2; j < data.length; j++) {
+    var r = data[j];
+    var t = col(r, headers, ['turma', 'turmas', 'class', 'grupo']) || '';
+    if (t.trim().toLowerCase() === refLower) {
+      var n = col(r, headers, ['nome', 'name', 'aluno', 'student']) || '';
+      if (n) alunos.push(n.trim());
     }
   }
   return alunos;
