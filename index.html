@@ -173,8 +173,8 @@
     @media(min-width:640px){
       body{background:#dde8e8;}
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
-      #screen-community,#screen-renewal,#screen-settings,#screen-ai-chat,
-      #screen-onboarding,#screen-blocked,#screen-loading{max-width:600px;}
+      #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,#screen-ai-chat,
+      #screen-onboarding,#screen-blocked,#screen-loading,#screen-certificate{max-width:600px;}
       .login-card{max-width:480px;}
       /* Doc viewer as centered modal on desktop */
       #doc-viewer{background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:40px 24px;}
@@ -1910,7 +1910,10 @@ var RECADOS_SENT = [
 
 var RECADO_ATIVO = {de:'Gabi',msg:"Hi! Don't forget: next Tuesday class starts 15 min later — 19h15 CET. See you there! 🎉"};
 
-var CHAMADA = {};
+var CHAMADA = (function(){
+  try{var v=localStorage.getItem('isr_chamada');return v?JSON.parse(v):{};}catch(e){return {};}
+})();
+function _saveChamadaLocal(){try{localStorage.setItem('isr_chamada',JSON.stringify(CHAMADA));}catch(e){}}
 // Weeks of the current cycle — update each new cycle
 // startDate = actual class date (ISO) used when saving to sheet
 var WEEKS = {
@@ -1925,7 +1928,22 @@ var WEEKS = {
   9: {label:'Aula 9 — 19 Mai', startDate:'2026-05-19', editable:true},
   10:{label:'Aula 10 — 26 Mai', startDate:'2026-05-26', editable:true},
 };
-var currentWeek = 7;
+var currentWeek = (function(){
+  var today = new Date(); today.setHours(0,0,0,0);
+  var best = 1, bestDiff = Infinity;
+  Object.keys(WEEKS).forEach(function(k){
+    var d = new Date(WEEKS[k].startDate); d.setHours(0,0,0,0);
+    var diff = today - d; // positive = past, negative = future
+    // prefer closest past/current date; if all future pick nearest future
+    if(diff >= 0 && diff < bestDiff){ bestDiff = diff; best = parseInt(k); }
+  });
+  // if no past week found yet, pick the first week
+  if(bestDiff === Infinity){
+    var keys = Object.keys(WEEKS).map(Number).sort(function(a,b){return a-b;});
+    best = keys[0];
+  }
+  return best;
+})();
 
 // Cycle metadata — used in certificates
 var CYCLE_INFO = {
@@ -3759,6 +3777,7 @@ function renderChamadaRows(){
       row.querySelectorAll('.cs-btn').forEach(function(btn){
         btn.addEventListener('click',function(){
           CHAMADA[key]=btn.dataset.val;
+          _saveChamadaLocal();
           row.querySelectorAll('.cs-btn').forEach(function(b){b.className='cs-btn';});
           btn.classList.add('sel-'+btn.dataset.val);
         });
@@ -3828,6 +3847,7 @@ function renderParticularesChamadaRows(){
       row.querySelectorAll('.cs-btn').forEach(function(btn){
         btn.addEventListener('click', function(){
           CHAMADA[key] = btn.dataset.val;
+          _saveChamadaLocal();
           row.querySelectorAll('.cs-btn').forEach(function(b){ b.className='cs-btn'; });
           btn.classList.add('sel-'+btn.dataset.val);
         });
@@ -3915,6 +3935,7 @@ function renderExtraChamadaRows(){
     row.querySelectorAll('.cs-btn').forEach(function(btn){
       btn.addEventListener('click',function(){
         CHAMADA[key]=btn.dataset.val;
+        _saveChamadaLocal();
         row.querySelectorAll('.cs-btn').forEach(function(b){b.className='cs-btn';});
         btn.classList.add('sel-'+btn.dataset.val);
       });
@@ -3990,8 +4011,8 @@ function syncChamadaToSheet(records){
     body: JSON.stringify({ savedBy: u ? u.nome : 'app', data: records })
   })
   .then(function(r){ return r.json(); })
-  .then(function(res){ if(res.ok || res.saved) showToast('☁ Sincronizado!'); })
-  .catch(function(){}); // silent — local data already saved
+  .then(function(res){ if(res.ok || res.saved) showToast('☁ Sincronizado!'); else showToast('⚠ Erro ao salvar: '+(res.error||'verifique a conexão')); })
+  .catch(function(e){ showToast('⚠ Sem conexão — chamada salva localmente'); });
 }
 
 // ─── HOURS CALCULATION ──────────────────────────────────────────
