@@ -1644,18 +1644,11 @@
     <div class="bc-app-sub" id="bc-app-subtitle">A Long Walk to Water · Blue Club</div>
     <div id="bc-app-user" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:5px"></div>
   </div>
-  <!-- Fallback: botão abrir em nova aba (aparece se iframe não carregar) -->
-  <a id="bc-open-ext-btn" href="#" target="_blank" class="bc-open-ext" style="display:none">
-    🔗 Abrir Book Club no navegador →
-  </a>
   <iframe id="bc-iframe"
     src=""
     allow="microphone; camera; clipboard-write"
     allowfullscreen
-    loading="lazy"
-    title="Book Club ISR"
-    onload="bcIframeLoaded(this)"
-    onerror="bcIframeError(this)"></iframe>
+    title="Book Club ISR"></iframe>
 </div>
 
 <div id="screen-ai-chat" class="screen">
@@ -4947,53 +4940,20 @@ function openBookClubApp(clubName){
   // Header: subtitle
   var subtitle = document.getElementById('bc-app-subtitle');
   if(subtitle){
-    if(clubName === 'green') subtitle.textContent = 'The Alchemist · Green Club';
-    else subtitle.textContent = 'A Long Walk to Water · Blue Club';
+    subtitle.textContent = clubName === 'green' ? 'The Alchemist · Green Club' : 'A Long Walk to Water · Blue Club';
   }
   // Header: nome e turma do aluno
   var userEl = document.getElementById('bc-app-user');
   if(userEl && u) userEl.textContent = u.nome + (u.turma ? ' · ' + u.turma : '');
 
-  // Botão externo (fallback visível desde o início para o caso do iframe ser bloqueado)
-  var extBtn = document.getElementById('bc-open-ext-btn');
-  var target = BC_APP_URL + (clubName === 'green' ? '?club=green' : '');
-  if(extBtn){ extBtn.href = target; extBtn.style.display = ''; }
-
-  // Load iframe (lazy — only set src once, or when switching club)
+  // Load iframe — lazy, only once per club
   var iframe = document.getElementById('bc-iframe');
   if(iframe && iframe.dataset.club !== (clubName||'blue')){
-    iframe.style.display = '';
-    iframe.src = target;
+    iframe.src = BC_APP_URL + (clubName === 'green' ? '?club=green' : '');
     iframe.dataset.club = clubName||'blue';
   }
 
   showScreen('bookclub-app');
-}
-
-function bcIframeLoaded(iframe){
-  // If the iframe loaded successfully and isn't empty, hide the fallback button
-  try {
-    // If same origin loaded (ISR app in iframe), show warning and external link instead
-    var loaded = iframe.contentDocument || iframe.contentWindow.document;
-    if(loaded && loaded.title && loaded.title.indexOf('Book Club') < 0){
-      bcIframeError(iframe); // treat as error — wrong content
-    } else {
-      var extBtn = document.getElementById('bc-open-ext-btn');
-      if(extBtn) extBtn.style.display = 'none';
-    }
-  } catch(e) {
-    // Cross-origin — iframe loaded a different origin, that's correct
-    var extBtn = document.getElementById('bc-open-ext-btn');
-    if(extBtn) extBtn.style.display = 'none';
-  }
-}
-
-function bcIframeError(iframe){
-  // Iframe failed (blocked by X-Frame-Options or wrong URL) — show external button
-  if(iframe) iframe.style.display = 'none';
-  var extBtn = document.getElementById('bc-open-ext-btn');
-  if(extBtn) extBtn.style.display = '';
-  showToast('💡 Abrindo no navegador — toque no link acima');
 }
 
 function closeBookClubApp(){
