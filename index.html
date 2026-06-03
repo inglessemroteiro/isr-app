@@ -419,6 +419,26 @@
     .nsc-btn{display:inline-block;padding:10px 20px;background:var(--coral);color:var(--teal);border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;border:none;font-family:inherit;}
     .material-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 20px;padding:16px 18px;display:flex;gap:14px;align-items:center;text-decoration:none;}
     .material-card + .material-card{margin-top:10px;}
+    .ob-bump-card{margin:16px 20px 0;background:linear-gradient(135deg,#0d3540,#1a5060);border-radius:14px;padding:18px 20px;color:#fff;border:1.5px solid rgba(252,144,130,0.3);}
+    .ob-bump-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--coral);margin-bottom:6px;}
+    .ob-bump-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+    .ob-bump-sub{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;margin-bottom:14px;}
+    .ob-bump-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--coral);color:var(--teal);border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;border:none;font-family:inherit;}
+    /* Interest modal */
+    @keyframes fadeInBg{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    #interest-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end;animation:fadeInBg 0.2s ease;}
+    #interest-modal{background:var(--card);border-radius:22px 22px 0 0;padding:24px 22px calc(24px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto;animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);}
+    .im-modal-pill{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+    .im-modal-title{font-size:18px;font-weight:700;color:var(--teal);margin-bottom:6px;}
+    .im-modal-sub{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:18px;}
+    .im-modal-field{margin-bottom:12px;}
+    .im-modal-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;}
+    .im-modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;color:var(--teal);background:var(--bg);outline:none;box-sizing:border-box;}
+    .im-modal-input:focus{border-color:var(--accent);}
+    .im-modal-submit{width:100%;padding:14px;border-radius:14px;border:none;background:var(--teal);color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:6px;}
+    .im-modal-submit:disabled{opacity:0.5;cursor:default;}
+    .im-modal-cancel{display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--muted);cursor:pointer;padding:6px;}
     .material-card:active{border-color:var(--accent);}
     .mat-icon{width:40px;height:40px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
     .mat-body{flex:1;}
@@ -1165,62 +1185,64 @@
   <!-- Agenda Tab -->
   <div class="itab active" id="itab-agenda">
     <div class="countdown-card" id="im-countdown">
-      <div class="countdown-num" id="im-days-left">3</div>
-      <div class="countdown-label">dias restantes</div>
+      <div class="countdown-num" id="im-days-left">—</div>
+      <div class="countdown-label">dias para a imersão</div>
     </div>
-    <div class="slabel">Programa da Imersão</div>
+    <div class="slabel">Programa da Imersão · Julho 2026</div>
     <!-- Dia 1 -->
     <div class="dia-card" id="dia-card-1">
       <div class="dia-header">
-        <div class="dia-num done">1</div>
+        <div class="dia-num soon" id="dia-num-1">1</div>
         <div class="dia-info">
           <div class="dia-titulo">Quebrando o gelo</div>
-          <div class="dia-data">Dom, 18/Mai · 19h00 CET</div>
+          <div class="dia-data">Seg, 06/Jul · 19h30 CET</div>
         </div>
-        <span class="dia-status-badge done">✓ Concluído</span>
+        <span class="dia-status-badge soon" id="dia-badge-1">Em breve</span>
       </div>
       <div class="dia-body" id="dia-body-1">
-        <p style="font-size:13px;color:var(--muted);line-height:1.55">Você se apresentou, ouviu histórias e praticou sem se preocupar em errar. Foi o começo de tudo.</p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.55">Você vai se apresentar, ouvir histórias e praticar sem se preocupar em errar. O começo de tudo.</p>
+        <a class="dia-join-btn" id="dia-join-1" href="https://meet.google.com/isr-imersao-jul26" target="_blank" style="display:none">🎥 Entrar na aula →</a>
       </div>
     </div>
     <!-- Dia 2 -->
     <div class="dia-card" id="dia-card-2" style="margin-top:10px">
       <div class="dia-header">
-        <div class="dia-num hoje">2</div>
+        <div class="dia-num soon" id="dia-num-2">2</div>
         <div class="dia-info">
           <div class="dia-titulo">Encontrando seu ritmo</div>
-          <div class="dia-data">Ter, 20/Mai · 19h00 CET</div>
+          <div class="dia-data">Qua, 08/Jul · 19h30 CET</div>
         </div>
-        <span class="dia-status-badge hoje">🔴 Hoje</span>
+        <span class="dia-status-badge soon" id="dia-badge-2">Em breve</span>
       </div>
-      <div class="dia-body open" id="dia-body-2">
-        <p style="font-size:13px;color:var(--muted);line-height:1.55">Hoje você vai praticar situações reais e descobrir que já tem mais inglês do que imagina.</p>
-        <a class="dia-join-btn" href="https://meet.google.com/isr-imersao-2026" target="_blank">🎥 Entrar na aula →</a>
+      <div class="dia-body" id="dia-body-2">
+        <p style="font-size:13px;color:var(--muted);line-height:1.55">Situações reais de conversação. Você vai descobrir que já tem mais inglês do que imagina.</p>
+        <a class="dia-join-btn" id="dia-join-2" href="https://meet.google.com/isr-imersao-jul26" target="_blank" style="display:none">🎥 Entrar na aula →</a>
       </div>
     </div>
     <!-- Dia 3 -->
     <div class="dia-card" id="dia-card-3" style="margin-top:10px">
       <div class="dia-header">
-        <div class="dia-num soon">3</div>
+        <div class="dia-num soon" id="dia-num-3">3</div>
         <div class="dia-info">
           <div class="dia-titulo">Você consegue</div>
-          <div class="dia-data">Qui, 21/Mai · 19h00 CET</div>
+          <div class="dia-data">Qui, 09/Jul · 19h30 CET</div>
         </div>
-        <span class="dia-status-badge soon">Em breve</span>
+        <span class="dia-status-badge soon" id="dia-badge-3">Em breve</span>
       </div>
       <div class="dia-body" id="dia-body-3">
         <p style="font-size:13px;color:var(--muted);line-height:1.55">O último dia da imersão. Você vai sair diferente de como entrou.</p>
+        <a class="dia-join-btn" id="dia-join-3" href="https://meet.google.com/isr-imersao-jul26" target="_blank" style="display:none">🎥 Entrar na aula →</a>
       </div>
     </div>
     <div class="followup-notice" style="margin-top:10px">
       <div class="followup-label">🗓 Semana de Acompanhamento</div>
-      <div class="followup-text">22–25/Mai: continue praticando nos grupos de WhatsApp. A Gabi vai mandar desafios diários para manter o ritmo.</div>
+      <div class="followup-text">10–13/Jul: continue praticando nos grupos de WhatsApp. A Gabi vai mandar desafios diários para manter o ritmo.</div>
     </div>
     <div class="next-step-card">
-      <div class="nsc-label">Próximo passo</div>
-      <div class="nsc-title">Comunidade ISR</div>
-      <div class="nsc-sub">Continue praticando sem perder o ritmo. A Comunidade ISR é o espaço de quem quer manter o inglês vivo — com desafios semanais, conversas e apoio.</div>
-      <button class="nsc-btn" onclick="showCommunityTeaser()">Quero continuar →</button>
+      <div class="nsc-label">✦ Próximo passo</div>
+      <div class="nsc-title">Aulas na ISR — Agosto 2026</div>
+      <div class="nsc-sub">Quer continuar aprendendo inglês de verdade? Nosso próximo ciclo começa em agosto. Turmas pequenas, metodologia sem roteiro e professores que te conhecem pelo nome.</div>
+      <button class="nsc-btn" onclick="showCicloInterestModal()">Quero uma vaga →</button>
     </div>
     <div style="height:32px"></div>
   </div>
@@ -1240,12 +1262,14 @@
       <div class="slabel" style="margin-top:8px">Gravações</div>
       <div id="im-gravacoes-list"></div>
     </div>
-    <!-- Sem order bump -->
-    <div id="im-mat-sem-ob" style="display:none;margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;text-align:center;">
-      <div style="font-size:20px;margin-bottom:8px">🎥</div>
-      <div style="font-size:14px;font-weight:600;color:var(--teal);margin-bottom:4px">Gravações das aulas</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5">As gravações fazem parte do pacote completo da imersão. Quer ter acesso? Fala com a equipe ISR.</div>
-      <a href="https://wa.me/message/OIHHXQGMGK4AI1" target="_blank" style="display:inline-block;margin-top:12px;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none">→ Falar com a equipe</a>
+    <!-- Sem order bump → upsell card -->
+    <div id="im-mat-sem-ob" style="display:none">
+      <div class="ob-bump-card">
+        <div class="ob-bump-label">🎥 Gravações das aulas</div>
+        <div class="ob-bump-title">Reveja cada sessão no seu ritmo</div>
+        <div class="ob-bump-sub">Acesse as gravações completas das 3 aulas da imersão para sempre — assista quando quiser, quantas vezes quiser.</div>
+        <a class="ob-bump-btn" href="https://buy.stripe.com/PLACEHOLDER_LINK" target="_blank" id="im-ob-stripe-link">🎬 Quero as gravações →</a>
+      </div>
     </div>
     <div style="height:32px"></div>
   </div>
@@ -1263,12 +1287,35 @@
       </a>
     </div>
     <div class="next-step-card" style="margin-top:16px">
-      <div class="nsc-label">Próximo passo</div>
-      <div class="nsc-title">Comunidade ISR — €25/mês</div>
-      <div class="nsc-sub">Quando esse grupo encerrar, continue praticando na Comunidade ISR. Desafios semanais, Speak Here e uma galera que leva o inglês a sério.</div>
-      <button class="nsc-btn" onclick="showCommunityTeaser()">Quero continuar →</button>
+      <div class="nsc-label">✦ Próximo passo</div>
+      <div class="nsc-title">Aulas na ISR — Agosto 2026</div>
+      <div class="nsc-sub">Quer continuar praticando com estrutura e professores? O próximo ciclo começa em agosto — turmas pequenas, horários flexíveis.</div>
+      <button class="nsc-btn" onclick="showCicloInterestModal()">Quero uma vaga →</button>
     </div>
     <div style="height:32px"></div>
+  </div>
+</div>
+
+<!-- INTEREST MODAL (cycle lead capture) -->
+<div id="interest-modal-overlay" style="display:none" onclick="closeInterestModal(event)">
+  <div id="interest-modal">
+    <div class="im-modal-pill"></div>
+    <div class="im-modal-title">✦ Próximo ciclo — Agosto 2026</div>
+    <div class="im-modal-sub">Deixa seu contato e a gente te avisa sobre os horários disponíveis. Nada automático — a Gabi faz o primeiro contato pessoalmente 💚</div>
+    <div class="im-modal-field">
+      <div class="im-modal-label">Seu nome</div>
+      <input class="im-modal-input" id="interest-nome" type="text" placeholder="Como quer ser chamado(a)?"/>
+    </div>
+    <div class="im-modal-field">
+      <div class="im-modal-label">E-mail</div>
+      <input class="im-modal-input" id="interest-email" type="email" placeholder="seu@email.com"/>
+    </div>
+    <div class="im-modal-field">
+      <div class="im-modal-label">Qual horário funciona melhor? (opcional)</div>
+      <input class="im-modal-input" id="interest-nota" type="text" placeholder="Ex: manhãs de segunda, noites de terça…"/>
+    </div>
+    <button class="im-modal-submit" id="interest-submit-btn" onclick="submitCicloInterest()">Tenho interesse →</button>
+    <span class="im-modal-cancel" onclick="closeInterestModalDirect()">Agora não</span>
   </div>
 </div>
 
@@ -1674,8 +1721,8 @@ var USERS = {
   'carlaprof@isr.com': {nome:'Carla (Prof)',      role:'teacher', turmas:['A1 - Hol Tue 11h','A1 - Wed 19'],            meetLinks:{'A1 - Hol Tue 11h':'https://meet.google.com/nnn-oooo-ppp','A1 - Wed 19':'https://meet.google.com/qqq-rrrr-sss'}},
   'gabi@isr.com':      {nome:'Gabi ✦',            role:'admin',   turmas:['B2 - Mon 8h','Private','A1 - Mon 7h'],       meetLinks:{'B2 - Mon 8h':'https://meet.google.com/ttt-uuuu-vvv','Private':'https://meet.google.com/www-xxxx-yyy','A1 - Mon 7h':'https://meet.google.com/zzz-aaaa-bbb'}},
   'erika@isr.com':     {nome:'Érika',             role:'admin',   turmas:['A2 - Wed14','A1 - Carnaval'],                meetLinks:{'A2 - Wed14':'https://meet.google.com/ccc-dddd-eee','A1 - Carnaval':'https://meet.google.com/fff-gggg-hhh'}},
-  'ana@imersao.com':   {nome:'Ana Beatriz Costa', role:'imersao', edicao:'Maio 2026', dataFim:'2026-05-25'},
-  'sofia@imersao.com': {nome:'Sofia Mendes',      role:'imersao', edicao:'Maio 2026', dataFim:'2026-05-25'},
+  'ana@imersao.com':   {nome:'Ana Beatriz Costa', role:'imersao', edicao:'Julho 2026', linkMeet:'https://meet.google.com/isr-imersao-jul26', linkCaderno:'#', orderBump:'nao'},
+  'sofia@imersao.com': {nome:'Sofia Mendes',      role:'imersao', edicao:'Julho 2026', linkMeet:'https://meet.google.com/isr-imersao-jul26', linkCaderno:'#', orderBump:'sim', linkGravacoes:'#'},
   'paula@isr.com':     {nome:'Paula Ferreira',    role:'comunidade', desde:'2026-04-01', semanas:5, origem:'imersao'},
   'renata@isr.com':    {nome:'Renata Alves',      role:'comunidade', desde:'2026-03-15', semanas:7, origem:'instagram'},
   'pedro@isr.com':     {nome:'Pedro Gonçalves',   role:'blocked', turma:'Ex-aluno'},
@@ -2486,7 +2533,8 @@ function renderCertificadoTab(){
   var eligibleEl = document.getElementById('cert-cta-eligible');
   var pendingEl  = document.getElementById('cert-cta-pending');
   var pendingMsg = document.getElementById('cert-pending-msg');
-  if(h.eligible){
+  var eligible = (h.fixedPresent || 0) >= CERT_MIN_CLASSES;
+  if(eligible){
     if(eligibleEl) eligibleEl.style.display = '';
     if(pendingEl)  pendingEl.style.display  = 'none';
   } else {
@@ -2710,20 +2758,67 @@ function showImersaoApp(){
   var grEl=document.getElementById('im-greeting'); if(grEl) grEl.textContent=first;
   var avEl=document.getElementById('im-avatar-btn'); if(avEl) avEl.textContent=first[0];
 
-  // Dados da planilha (14. Imersão) ou fallback nos dados do usuário
-  var im = (u.appData && u.appData.imersao) || {};
-  var edicao = im.edicao || u.edicao || '';
-  var dataFim = im.dataFim || u.dataFim || '';
+  // Dados da planilha (14. Imersão) — Apps Script pode retornar campos
+  // tanto em u.appData.imersao (nested) quanto direto em u (flat).
+  // Normalizamos aqui para sempre ter um objeto `im` com todos os campos.
+  var imNested = (u.appData && u.appData.imersao) || {};
+  var im = {
+    edicao:        imNested.edicao        || u.edicao        || '',
+    linkMeet:      imNested.linkMeet      || u.linkMeet      || '',
+    linkCaderno:   imNested.linkCaderno   || u.linkCaderno   || '',
+    orderBump:     imNested.orderBump     || u.orderBump     || 'nao',
+    linkGravacoes: imNested.linkGravacoes || u.linkGravacoes || '',
+    // Datas opcionais das sessões (Apps Script pode sobrescrever)
+    dia1: imNested.dia1 || u.dia1 || '2026-07-06',
+    dia2: imNested.dia2 || u.dia2 || '2026-07-08',
+    dia3: imNested.dia3 || u.dia3 || '2026-07-09',
+    hora: imNested.hora || u.hora || '19:30',
+  };
 
   var bdEl=document.getElementById('im-edicao-badge');
-  if(bdEl) bdEl.textContent='🔥 Imersão '+(edicao||'');
+  if(bdEl) bdEl.textContent='🔥 Imersão '+(im.edicao||'Julho 2026');
 
-  // Countdown
-  if(dataFim){
-    var fim=new Date(dataFim);
-    var hoje=new Date();
-    var diff=Math.max(0,Math.ceil((fim-hoje)/(1000*60*60*24)));
-    var dlEl=document.getElementById('im-days-left'); if(dlEl) dlEl.textContent=diff;
+  // Countdown — usa as datas do perfil com fallback para Jul 6/8/9
+  var horaParts = (im.hora||'19:30').split(':');
+  var hH = parseInt(horaParts[0])||19, hM = parseInt(horaParts[1])||30;
+  var IM_DATES = [
+    {dateStr: im.dia1, hour: hH, min: hM},
+    {dateStr: im.dia2, hour: hH, min: hM},
+    {dateStr: im.dia3, hour: hH, min: hM},
+  ];
+  var IM_MEET = im.linkMeet || 'https://meet.google.com/isr-imersao-jul26';
+  var now = new Date();
+  // Update each dia card dynamically
+  IM_DATES.forEach(function(d, i){
+    var idx = i+1;
+    var start = new Date(d.dateStr+'T'+String(d.hour).padStart(2,'0')+':'+String(d.min).padStart(2,'0')+':00');
+    var end = new Date(start.getTime() + 90*60*1000); // 90min class
+    var numEl = document.getElementById('dia-num-'+idx);
+    var badgeEl = document.getElementById('dia-badge-'+idx);
+    var joinEl = document.getElementById('dia-join-'+idx);
+    var bodyEl = document.getElementById('dia-body-'+idx);
+    if(!numEl) return;
+    if(joinEl) joinEl.href = IM_MEET;
+    if(now > end){
+      // done
+      numEl.className='dia-num done'; badgeEl.className='dia-status-badge done'; badgeEl.textContent='✓ Concluído';
+      if(joinEl) joinEl.style.display='none';
+    } else if(now >= new Date(start.getTime() - 15*60*1000)){
+      // happening now (open 15min before)
+      numEl.className='dia-num hoje'; badgeEl.className='dia-status-badge hoje'; badgeEl.textContent='🔴 Hoje';
+      if(joinEl){ joinEl.style.display=''; }
+      if(bodyEl) bodyEl.classList.add('open');
+    } else {
+      numEl.className='dia-num soon'; badgeEl.className='dia-status-badge soon'; badgeEl.textContent='Em breve';
+      if(joinEl) joinEl.style.display='none';
+    }
+  });
+  // Countdown to first upcoming session
+  var nextDate = IM_DATES.map(function(d){ return new Date(d.dateStr+'T'+String(d.hour).padStart(2,'0')+':'+String(d.min).padStart(2,'0')+':00'); }).find(function(d){ return d > now; });
+  var dlEl=document.getElementById('im-days-left');
+  if(dlEl){
+    if(nextDate){ var diffDays=Math.ceil((nextDate-now)/(1000*60*60*24)); dlEl.textContent=diffDays; }
+    else { dlEl.textContent='🎉'; document.querySelector('#im-countdown .countdown-label').textContent='imersão concluída!'; }
   }
 
   // Caderno link
@@ -2739,13 +2834,18 @@ function showImersaoApp(){
   var semObEl=document.getElementById('im-mat-sem-ob');
   if(gravEl) gravEl.style.display = hasOB ? '' : 'none';
   if(semObEl) semObEl.style.display = hasOB ? 'none' : '';
+  // Update Stripe link if Apps Script provides one
+  var stripeBtn = document.getElementById('im-ob-stripe-link');
+  if(stripeBtn && (imNested.linkStripe || u.linkStripe)){
+    stripeBtn.href = imNested.linkStripe || u.linkStripe;
+  }
   if(hasOB && im.linkGravacoes){
     var list=document.getElementById('im-gravacoes-list');
     if(list){
       list.innerHTML='<a class="material-card" href="'+im.linkGravacoes+'" target="_blank">'
         +'<div class="mat-icon">🎥</div>'
         +'<div class="mat-body"><div class="mat-name">Gravações da Imersão</div>'
-        +'<div class="mat-desc">Acesso completo às '+(edicao||'')+'</div></div>'
+        +'<div class="mat-desc">Acesso completo às '+(im.edicao||'Imersão')+'</div></div>'
         +'<div class="mat-arrow">›</div></a>';
     }
   }
@@ -2776,6 +2876,58 @@ function switchImersaoTab(name,el){
 
 function showCommunityTeaser(){
   showToast('✦ Comunidade ISR — em breve!');
+}
+
+// ── Ciclo interest lead capture ──────────────────────────────────
+function showCicloInterestModal(){
+  var u = state.user;
+  var nomeEl = document.getElementById('interest-nome');
+  var emailEl = document.getElementById('interest-email');
+  var notaEl = document.getElementById('interest-nota');
+  var btn = document.getElementById('interest-submit-btn');
+  if(nomeEl && u) nomeEl.value = u.nome || '';
+  if(emailEl && u) emailEl.value = u.email || '';
+  if(notaEl) notaEl.value = '';
+  if(btn){ btn.textContent='Tenho interesse →'; btn.disabled=false; }
+  var overlay = document.getElementById('interest-modal-overlay');
+  if(overlay){
+    overlay.style.display='none'; // force reflow so animation replays
+    void overlay.offsetWidth;
+    overlay.style.display='flex';
+  }
+}
+
+function closeInterestModal(e){
+  if(e && e.target !== document.getElementById('interest-modal-overlay')) return;
+  closeInterestModalDirect();
+}
+
+function closeInterestModalDirect(){
+  var overlay = document.getElementById('interest-modal-overlay');
+  if(overlay) overlay.style.display='none';
+}
+
+function submitCicloInterest(){
+  var nome = (document.getElementById('interest-nome')||{}).value || '';
+  var email = (document.getElementById('interest-email')||{}).value || '';
+  var nota = (document.getElementById('interest-nota')||{}).value || '';
+  var btn = document.getElementById('interest-submit-btn');
+  if(!nome){ showToast('Coloca seu nome 😊'); return; }
+  if(btn){ btn.textContent='Enviando…'; btn.disabled=true; }
+  fetch('/.netlify/functions/save-interest', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({nome:nome, email:email, nota:nota, source:'Imersão Julho 2026'})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(){
+    closeInterestModalDirect();
+    showToast('💚 Recebido! A Gabi vai entrar em contato em breve.');
+  })
+  .catch(function(){
+    closeInterestModalDirect();
+    showToast('💚 Obrigada! A Gabi vai entrar em contato em breve.');
+  });
 }
 
 // ════════════════════════════════
@@ -3506,7 +3658,14 @@ function changeWeek(d){
 function renderChamadaRows(){
   var wk=WEEKS[currentWeek];
   var editable=wk?wk.editable:true;
-  var students=(TURMA_SCHEDULES[currentChamadaTurma]||{alunos:[]}).alunos;
+  // Prefer dynamic students from Apps Script data; fall back to hardcoded TURMA_SCHEDULES
+  var students = [];
+  var u = state.user;
+  if(u && u.turmaSchedules){
+    var ts = u.turmaSchedules.find(function(t){ return t.turma === currentChamadaTurma; });
+    if(ts && ts.alunos && ts.alunos.length) students = ts.alunos;
+  }
+  if(!students.length) students = (TURMA_SCHEDULES[currentChamadaTurma]||{alunos:[]}).alunos;
   var container=document.getElementById('cham-rows');
   if(!container) return;
   container.innerHTML='';
@@ -3696,36 +3855,58 @@ var HOURS_PER_EXTRA = 1.5;     // extra activity = 1.5h
 var CERT_MIN_CLASSES = 8;      // minimum 8 of 10 classes to earn certificate
 
 function computeAndSaveHours(){
-  // For each student across all turmas, calculate hours
-  var studentHours = {}; // { name: { fixedPresent, fixedTotal, extraPresent, totalHours } }
-  // Fixed classes
+  var CYCLE_TOTAL = CYCLE_INFO ? (CYCLE_INFO.totalClasses || 10) : 10;
+  var studentHours = {};
+
+  // Collect all unique student-turma pairs from TURMA_SCHEDULES AND loaded turmaSchedules
+  var u = state.user;
+  var allTurmaAlunos = {}; // { tName: [alunos] }
   Object.keys(TURMA_SCHEDULES).forEach(function(tName){
-    var alunos = TURMA_SCHEDULES[tName].alunos || [];
+    allTurmaAlunos[tName] = (TURMA_SCHEDULES[tName].alunos || []).slice();
+  });
+  // Merge dynamic student lists from professor's loaded data
+  if(u && u.turmaSchedules){
+    u.turmaSchedules.forEach(function(ts){
+      if(ts.alunos && ts.alunos.length){
+        var existing = allTurmaAlunos[ts.turma] || [];
+        ts.alunos.forEach(function(s){
+          if(existing.indexOf(s) < 0) existing.push(s);
+        });
+        allTurmaAlunos[ts.turma] = existing;
+      }
+    });
+  }
+
+  // Count fixed class attendance
+  Object.keys(allTurmaAlunos).forEach(function(tName){
+    var alunos = allTurmaAlunos[tName] || [];
     alunos.forEach(function(s){
-      if(!studentHours[s]) studentHours[s]={fixedPresent:0,fixedTotal:0,extraPresent:0,totalHours:0};
+      if(!studentHours[s]) studentHours[s]={fixedPresent:0,fixedTotal:CYCLE_TOTAL,extraPresent:0,totalHours:0};
       Object.keys(WEEKS).forEach(function(wk){
         var key = tName+'|'+wk+'|'+s;
-        if(CHAMADA[key]) studentHours[s].fixedTotal++;
         if(CHAMADA[key]==='present'||CHAMADA[key]==='tardy') studentHours[s].fixedPresent++;
       });
     });
   });
-  // Extra activities
+
+  // Count extra activity attendance
   ACTIVITIES.forEach(function(act){
-    Object.keys(TURMA_SCHEDULES).forEach(function(tName){
-      var alunos = TURMA_SCHEDULES[tName].alunos || [];
+    Object.keys(allTurmaAlunos).forEach(function(tName){
+      var alunos = allTurmaAlunos[tName] || [];
       alunos.forEach(function(s){
-        if(!studentHours[s]) studentHours[s]={fixedPresent:0,fixedTotal:0,extraPresent:0,totalHours:0};
+        if(!studentHours[s]) studentHours[s]={fixedPresent:0,fixedTotal:CYCLE_TOTAL,extraPresent:0,totalHours:0};
         var key='extra|'+act.id+'|'+s;
         if(CHAMADA[key]==='present'||CHAMADA[key]==='tardy') studentHours[s].extraPresent++;
       });
     });
   });
-  // Compute totals
+
+  // Compute totals — pct always uses cycle total (10), never just recorded weeks
   Object.keys(studentHours).forEach(function(s){
     var h = studentHours[s];
+    h.fixedTotal = CYCLE_TOTAL; // always 10, regardless of how many weeks recorded
     h.totalHours = h.fixedPresent*HOURS_PER_CLASS + h.extraPresent*HOURS_PER_EXTRA;
-    h.pct = h.fixedTotal>0 ? h.fixedPresent/h.fixedTotal : 0;
+    h.pct = h.fixedPresent / CYCLE_TOTAL;
     h.eligible = h.fixedPresent >= CERT_MIN_CLASSES;
   });
   // Save to state
@@ -3768,7 +3949,8 @@ function renderProgressCard(user){
   document.getElementById('progress-bar').style.width = Math.min(100,pctDisplay)+'%';
   document.getElementById('progress-pct').textContent = pctDisplay+'% de presença ('+(myHours.fixedPresent||0)+'/'+myHours.fixedTotal+' aulas)';
   var certBtn = document.getElementById('cert-btn');
-  if(certBtn) certBtn.style.display = myHours.eligible ? '' : 'none';
+  var eligible = (myHours.fixedPresent || 0) >= CERT_MIN_CLASSES;
+  if(certBtn) certBtn.style.display = eligible ? '' : 'none';
 }
 
 // ─── CERTIFICATE GENERATION ─────────────────────────────────────
@@ -3804,161 +3986,294 @@ function openCertificate(){
 
 function goBackFromCertificate(){ showScreen(certPrevScreen); }
 
+// Polyfill roundRect for browsers that don't have it (Safari < 15.4, older Android)
+(function(){
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      var radii = Array.isArray(r) ? r : [r,r,r,r];
+      var tl=radii[0]||0, tr=radii[1]||radii[0]||0, br=radii[2]||radii[0]||0, bl=radii[3]||radii[0]||0;
+      this.moveTo(x+tl,y);
+      this.lineTo(x+w-tr,y); this.quadraticCurveTo(x+w,y,x+w,y+tr);
+      this.lineTo(x+w,y+h-br); this.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
+      this.lineTo(x+bl,y+h); this.quadraticCurveTo(x,y+h,x,y+h-bl);
+      this.lineTo(x,y+tl); this.quadraticCurveTo(x,y,x+tl,y);
+      this.closePath();
+      return this;
+    };
+  }
+})();
+
 function drawCertificate(user, hours){
   var canvas = document.getElementById('cert-canvas');
   if(!canvas) return;
-  // A4 landscape: 1122 x 794 px
+
+  // A4 landscape — 1122 × 794
   var W = 1122, H = 794;
   canvas.width = W; canvas.height = H;
   canvas.style.width = '100%';
   canvas.style.height = 'auto';
   var ctx = canvas.getContext('2d');
 
-  // ── Background ──────────────────────────────────────────────────
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,W,H);
+  // ── Palette ─────────────────────────────────────────────────────
+  var TEAL    = '#164951';
+  var ACCENT  = '#229090';
+  var CORAL   = '#fc9082';
+  var BG      = '#f8f7f3'; // --bg
+  var CREAM   = '#f0ede6'; // --cream darker
+  var MUTED   = '#7a9ea4';
+  var WHITE   = '#ffffff';
 
-  // Decorative circles (subtle, behind content)
-  ctx.fillStyle = 'rgba(252,144,130,0.06)';
-  ctx.beginPath(); ctx.arc(W-100, H/2-60, 220, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = 'rgba(34,144,144,0.04)';
-  ctx.beginPath(); ctx.arc(W-60, H/2+100, 150, 0, Math.PI*2); ctx.fill();
-
-  // ── Top bar ─────────────────────────────────────────────────────
-  ctx.fillStyle = '#164951';
-  ctx.fillRect(0,0,W,90);
-  // Accent gradient stripe under top bar
+  // ── Gradient (coral → teal, used as stripe throughout) ──────────
   var grad = ctx.createLinearGradient(0,0,W,0);
-  grad.addColorStop(0,'#fc9082'); grad.addColorStop(1,'#229090');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,87,W,6);
+  grad.addColorStop(0, CORAL); grad.addColorStop(1, ACCENT);
 
-  // ISR name in top bar
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 22px Georgia, serif';
-  ctx.fillText('INGLÊS SEM ROTEIRO', 48, 50);
-  ctx.font = '13px Inter, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText('inglessemroteiro.com.br', 48, 70);
-  // Certificate label top-right
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = 'bold 11px Inter, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', W-48, 50);
+  // ═══════════════════════════════════════════════════════════════
+  // BACKGROUND
+  // ═══════════════════════════════════════════════════════════════
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle blob — top-right decorative circle
+  ctx.fillStyle = 'rgba(34,144,144,0.06)';
+  ctx.beginPath(); ctx.arc(W-20, -20, 280, 0, Math.PI*2); ctx.fill();
+  // bottom-left blob
+  ctx.fillStyle = 'rgba(252,144,130,0.06)';
+  ctx.beginPath(); ctx.arc(30, H+10, 220, 0, Math.PI*2); ctx.fill();
+
+  // ═══════════════════════════════════════════════════════════════
+  // LEFT PANEL — full-height teal sidebar (92 px wide)
+  // ═══════════════════════════════════════════════════════════════
+  ctx.fillStyle = TEAL;
+  ctx.fillRect(0, 0, 92, H);
+
+  // Gradient strip on right edge of sidebar
+  var sideGrad = ctx.createLinearGradient(0, 0, 0, H);
+  sideGrad.addColorStop(0, CORAL); sideGrad.addColorStop(1, ACCENT);
+  ctx.fillStyle = sideGrad;
+  ctx.fillRect(88, 0, 4, H);
+
+  // ISR monogram — rotated text in sidebar
+  ctx.save();
+  ctx.translate(46, H/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 13px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '0.25em';
+  ctx.fillText('INGLÊS SEM ROTEIRO', 0, 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '10px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('inglessemroteiro.com.br', 0, 18);
+  ctx.restore();
+
+  // ═══════════════════════════════════════════════════════════════
+  // HEADER BAR — top strip across the content area
+  // ═══════════════════════════════════════════════════════════════
+  var HX = 92; // content starts after sidebar
+  ctx.fillStyle = TEAL;
+  ctx.fillRect(HX, 0, W-HX, 72);
+
+  // gradient strip under header
+  ctx.fillStyle = grad;
+  ctx.fillRect(HX, 69, W-HX, 4);
+
+  // ISR wordmark in header
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 16px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('ISR', HX+24, 30);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '12px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('Escola de Inglês', HX+24, 50);
+
+  // "Certificado de Participação" chip — top right
+  var chipW = 228, chipH = 28, chipX = W-chipW-24, chipY = 22;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath(); ctx.roundRect(chipX, chipY, chipW, chipH, 14); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = 'bold 10px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', chipX + chipW/2, chipY+18);
   ctx.textAlign = 'left';
 
-  // ── Left accent stripe ──────────────────────────────────────────
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.roundRect(48, 125, 4, 560, 2); ctx.fill();
+  // ═══════════════════════════════════════════════════════════════
+  // MAIN CONTENT — left/center column (HX+20 … ~630)
+  // ═══════════════════════════════════════════════════════════════
+  var MX = HX + 36;
 
-  // ── Main left content ───────────────────────────────────────────
-  ctx.fillStyle = '#6a9298';
-  ctx.font = '15px Inter, sans-serif';
-  ctx.fillText('Certificamos que', 72, 170);
+  // "Certificamos que" label
+  ctx.fillStyle = MUTED;
+  ctx.font = '14px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('Certificamos que', MX, 124);
 
-  // Student name
-  ctx.fillStyle = '#164951';
-  ctx.font = 'bold 48px Georgia, serif';
+  // ── Student name ──────────────────────────────────────────────
   var name = user.nome || 'Aluna ISR';
-  ctx.fillText(name, 72, 234);
+  ctx.fillStyle = TEAL;
+  ctx.font = 'bold 50px Georgia, "Times New Roman", serif';
+  ctx.fillText(name, MX, 188);
+  // Coral underline beneath name
   var nameW = ctx.measureText(name).width;
-  ctx.fillStyle = '#fc9082';
-  ctx.fillRect(72, 244, Math.min(nameW, 540), 3);
+  ctx.fillStyle = CORAL;
+  ctx.beginPath();
+  ctx.roundRect(MX, 197, Math.min(nameW, 490), 3, 2);
+  ctx.fill();
 
-  // Body text
-  ctx.fillStyle = '#4a7880';
-  ctx.font = '16px Inter, sans-serif';
-  var turma = user.turma || user.nivel || '';
+  // ── Body paragraph ────────────────────────────────────────────
+  var turma   = user.turma || user.nivel || '';
   var hrsText = (hours.totalHours||0).toFixed(1);
   var pctText = Math.round((hours.pct||0)*100);
-  ctx.fillText('concluiu o ciclo de inglês', 72, 284);
-  ctx.fillStyle = '#164951';
-  ctx.font = 'bold 16px Inter, sans-serif';
-  ctx.fillText((turma ? turma + ' — ' : '') + 'Ciclo ' + CYCLE_INFO.name, 72, 308);
-  ctx.fillStyle = '#4a7880';
-  ctx.font = '16px Inter, sans-serif';
-  ctx.fillText('com ' + hrsText + 'h de aula e ' + pctText + '% de presença.', 72, 332);
-  // Cycle dates
-  ctx.font = '13px Inter, sans-serif';
-  ctx.fillStyle = '#8aacb0';
-  ctx.fillText(CYCLE_INFO.startDate + '  →  ' + CYCLE_INFO.endDate, 72, 356);
 
-  // ── Stats boxes ─────────────────────────────────────────────────
+  ctx.fillStyle = '#4a7880';
+  ctx.font = '15px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('concluiu com sucesso o ciclo de inglês', MX, 234);
+
+  ctx.fillStyle = TEAL;
+  ctx.font = 'bold 15px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText((turma ? turma + '  ·  ' : '') + 'Ciclo ' + CYCLE_INFO.name, MX, 258);
+
+  ctx.fillStyle = '#4a7880';
+  ctx.font = '14px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('com ' + hrsText + 'h de aula e ' + pctText + '% de presença.', MX, 280);
+
+  ctx.fillStyle = MUTED;
+  ctx.font = '12px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(CYCLE_INFO.startDate + '  →  ' + CYCLE_INFO.endDate, MX, 302);
+
+  // ── Stats row — 4 cards ───────────────────────────────────────
   var boxes = [
-    {label:'AULAS', value:(hours.fixedPresent||0)+'/'+CYCLE_INFO.totalClasses},
-    {label:'EXTRAS', value:(hours.extraPresent||0)+' sessão'+(hours.extraPresent!==1?'s':'')},
-    {label:'HORAS', value:hrsText+'h'},
+    {label:'AULAS',    value:(hours.fixedPresent||0)+'/'+CYCLE_INFO.totalClasses},
+    {label:'EXTRAS',   value:String(hours.extraPresent||0)},
+    {label:'HORAS',    value:hrsText+'h'},
     {label:'PRESENÇA', value:pctText+'%'},
   ];
-  var bx=72, by=390, bw=118, bh=76, bgap=14;
+  var bx=MX, by=330, bw=106, bh=68, bgap=10;
   boxes.forEach(function(box,i){
-    var x=bx+i*(bw+bgap);
-    ctx.fillStyle='#f5f5f0';
-    ctx.beginPath(); ctx.roundRect(x,by,bw,bh,8); ctx.fill();
-    ctx.fillStyle='#229090'; ctx.font='bold 9px Inter, sans-serif';
-    ctx.fillText(box.label,x+10,by+20);
-    ctx.fillStyle='#164951'; ctx.font='bold 24px Inter, sans-serif';
-    ctx.fillText(box.value,x+10,by+58);
+    var x = bx + i*(bw+bgap);
+    // Card background
+    ctx.fillStyle = WHITE;
+    ctx.beginPath(); ctx.roundRect(x, by, bw, bh, 10); ctx.fill();
+    // Card border (subtle)
+    ctx.strokeStyle = 'rgba(22,73,81,0.1)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x, by, bw, bh, 10); ctx.stroke();
+    // Top accent line
+    ctx.fillStyle = (i===0) ? CORAL : ACCENT;
+    ctx.beginPath(); ctx.roundRect(x+10, by+1, 30, 3, 2); ctx.fill();
+    // Label
+    ctx.fillStyle = ACCENT;
+    ctx.font = 'bold 8px -apple-system, "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(box.label, x+10, by+20);
+    // Value
+    ctx.fillStyle = TEAL;
+    ctx.font = 'bold 22px -apple-system, "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(box.value, x+10, by+54);
   });
 
-  // ── Signature ───────────────────────────────────────────────────
-  var sigX=72, sigY=538;
-  ctx.strokeStyle='#164951'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(sigX,sigY-12); ctx.lineTo(sigX+160,sigY-12); ctx.stroke();
-  ctx.fillStyle='#164951'; ctx.font='bold 14px Inter, sans-serif';
-  ctx.fillText('Gabriela Souza', sigX, sigY);
-  ctx.fillStyle='#8aacb0'; ctx.font='11px Inter, sans-serif';
-  ctx.fillText('Fundadora · Inglês sem Roteiro', sigX, sigY+16);
+  // ── Signature ─────────────────────────────────────────────────
+  var sigX=MX, sigY=460;
+  ctx.strokeStyle = 'rgba(22,73,81,0.25)'; ctx.lineWidth = 1;
+  ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(sigX, sigY); ctx.lineTo(sigX+170, sigY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = TEAL;
+  ctx.font = 'bold 14px Georgia, "Times New Roman", serif';
+  ctx.fillText('Gabriela Souza', sigX, sigY+18);
+  ctx.fillStyle = MUTED;
+  ctx.font = '11px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('Fundadora · Inglês sem Roteiro', sigX, sigY+34);
 
-  // ── Syllabus topics — right panel ───────────────────────────────
-  var rxStart = 560; // right section starts here
-  var rx = rxStart + 20;
-  // Right section background
-  ctx.fillStyle = '#f9f9f6';
-  ctx.beginPath(); ctx.roundRect(rxStart, 125, W-rxStart-48, H-125-70, 10); ctx.fill();
+  // ── Cert seal (circle with checkmark) ────────────────────────
+  var sealX = 570, sealY = 430, sealR = 52;
+  ctx.fillStyle = TEAL;
+  ctx.beginPath(); ctx.arc(sealX, sealY, sealR, 0, Math.PI*2); ctx.fill();
+  // Coral ring
+  ctx.strokeStyle = CORAL; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(sealX, sealY, sealR+6, 0, Math.PI*2); ctx.stroke();
+  // Checkmark
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(sealX-18, sealY+2);
+  ctx.lineTo(sealX-6, sealY+14);
+  ctx.lineTo(sealX+20, sealY-16);
+  ctx.stroke();
+  ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  // Seal label
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 8px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ISR', sealX, sealY-20);
+  ctx.font = '7px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.fillText('CERTIFICADO', sealX, sealY+28);
+  ctx.textAlign = 'left';
 
-  ctx.fillStyle = '#229090'; ctx.font = 'bold 10px Inter, sans-serif';
-  ctx.fillText('CONTEÚDO DO CICLO', rx, 155);
+  // ═══════════════════════════════════════════════════════════════
+  // RIGHT PANEL — syllabus card
+  // ═══════════════════════════════════════════════════════════════
+  var RX = 650, RW = W-RX-24, RY = 75, RH = H-RY-52;
 
+  // Card background
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.roundRect(RX, RY, RW, RH, 14); ctx.fill();
+  // Card border
+  ctx.strokeStyle = 'rgba(22,73,81,0.1)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(RX, RY, RW, RH, 14); ctx.stroke();
+
+  // Card header (teal mini-bar)
+  ctx.fillStyle = TEAL;
+  ctx.beginPath(); ctx.roundRect(RX, RY, RW, 38, [14,14,0,0]); ctx.fill();
+  // gradient stripe below card header
+  ctx.fillStyle = grad;
+  ctx.fillRect(RX, RY+35, RW, 3);
+
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 10px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('CONTEÚDO DO CICLO', RX+16, RY+23);
+
+  // Topics list
   var topics = SYLLABUS_TOPICS || [];
-  var ty = 178;
-  topics.forEach(function(topic, i){
-    if(ty > H-130) return; // don't overflow
-    ctx.fillStyle = '#fc9082'; ctx.font = 'bold 11px Inter, sans-serif';
-    ctx.fillText('·', rx, ty);
-    ctx.fillStyle = '#164951'; ctx.font = '11px Inter, sans-serif';
-    // Wrap long topic text
-    var maxW = W - rxStart - 68;
+  var ty = RY + 58;
+  var topicMaxW = RW - 32;
+  topics.forEach(function(topic){
+    if(ty > RY+RH-16) return;
+    // Bullet dot
+    ctx.fillStyle = CORAL;
+    ctx.beginPath(); ctx.arc(RX+16, ty-4, 3, 0, Math.PI*2); ctx.fill();
+    // Topic text (with wrapping)
+    ctx.fillStyle = TEAL;
+    ctx.font = '11px -apple-system, "Helvetica Neue", Arial, sans-serif';
     var words = topic.split(' ');
-    var line = ''; var lineY = ty;
+    var line = ''; var lx = RX+26; var lineY = ty;
     words.forEach(function(word){
-      var test = line + (line ? ' ' : '') + word;
-      if(ctx.measureText(test).width > maxW && line) {
-        ctx.fillText(line, rx+10, lineY);
-        line = word; lineY += 14;
+      var test = line + (line?' ':'')+word;
+      if(ctx.measureText(test).width > topicMaxW-10 && line){
+        ctx.fillText(line, lx, lineY);
+        line = word; lineY += 13;
       } else { line = test; }
     });
-    if(line) ctx.fillText(line, rx+10, lineY);
-    ty = lineY + 18;
+    if(line) ctx.fillText(line, lx, lineY);
+    ty = lineY + 17;
   });
 
-  // ── Bottom bar ──────────────────────────────────────────────────
-  ctx.fillStyle = '#164951';
-  ctx.fillRect(0, H-70, W, 70);
+  // ═══════════════════════════════════════════════════════════════
+  // BOTTOM BAR
+  // ═══════════════════════════════════════════════════════════════
+  ctx.fillStyle = TEAL;
+  ctx.fillRect(0, H-48, W, 48);
+  // gradient top stripe
   ctx.fillStyle = grad;
-  ctx.fillRect(0, H-70, W, 4);
+  ctx.fillRect(0, H-48, W, 3);
 
-  // CNPJ / KVK / date in bottom bar
   var today = new Date();
   var dateStr = today.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.font = '11px Inter, sans-serif';
-  ctx.fillText('CNPJ 53.132.120/0001-09  ·  KVK 42029556', 48, H-42);
-  ctx.fillText('Emitido em ' + dateStr, 48, H-22);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '10px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('CNPJ 53.132.120/0001-09  ·  KVK 42029556  ·  Emitido em ' + dateStr, HX+24, H-18);
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = 'bold 10px Inter, sans-serif';
-  ctx.fillText('INGLÊS SEM ROTEIRO · inglessemroteiro.com.br', W-48, H-28);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = 'bold 9px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('INGLÊS SEM ROTEIRO · inglessemroteiro.com.br', W-24, H-18);
   ctx.textAlign = 'left';
 }
 
