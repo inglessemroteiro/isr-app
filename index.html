@@ -581,17 +581,10 @@
 
     /* AI CHAT */
     #screen-ai-chat{max-width:430px;margin:0 auto;width:100%;background:var(--bg);}
-    /* Book Club inline activities view (inside the tab, not a separate screen) */
+    /* Book Club tab — iframe fills the whole tab area */
     @keyframes spin{to{transform:rotate(360deg);}}
-    #bc-activities-view{display:none;flex-direction:column;height:calc(100dvh - 56px - 60px);overflow:hidden;}
-    #bc-activities-view.visible{display:flex;}
-    #bc-act-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--teal);flex-shrink:0;}
-    #bc-act-back{background:none;border:none;color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;font-family:inherit;display:flex;align-items:center;gap:4px;}
-    #bc-act-back:hover{color:#fff;}
-    #bc-act-title{font-size:13px;font-weight:600;color:#fff;flex:1;}
-    #bc-act-open{font-size:11px;color:rgba(255,255,255,0.55);text-decoration:none;}
-    #bc-act-open:hover{color:#fff;}
-    #bc-iframe{flex:1;border:none;width:100%;min-height:0;background:#fff;}
+    #stab-bookclub{overflow:hidden;padding:0;}
+    #stab-bookclub.active{display:flex;flex-direction:column;}
     /* All sub-screens overlay screen-app */
     #screen-detail,#screen-settings,#screen-ai-chat,#screen-renewal,#screen-renewal-done,
     #screen-certificate,#screen-prof,#screen-imersao,#screen-community{
@@ -841,103 +834,21 @@
     <footer><a href="https://www.inglessemroteiro.com.br">inglessemroteiro.com.br</a><br><br>© 2026 Inglês sem Roteiro</footer>
   </div>
 
-  <!-- BOOK CLUB TAB -->
-  <div class="stab" id="stab-bookclub">
-
-    <!-- ── ACTIVITIES VIEW (proxy iframe, shown when user taps "Abrir atividades") ── -->
-    <div id="bc-activities-view">
-      <div id="bc-act-header">
-        <button id="bc-act-back" onclick="closeBookClubApp()">← Voltar</button>
-        <span id="bc-act-title">Atividades da sessão</span>
-        <a id="bc-act-open" href="https://app.inglessemroteiro.com.br/" target="_blank">↗ abrir</a>
-      </div>
-      <div id="bc-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:13px;">
-        <div style="width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
-        Carregando Book Club…
-      </div>
-      <a id="bc-fallback-link" href="https://app.inglessemroteiro.com.br/" target="_blank"
-         style="display:none;margin:auto 20px 24px;padding:14px 20px;border-radius:13px;background:var(--teal);color:#fff;font-size:14px;font-weight:600;text-align:center;text-decoration:none;">
-        📖 Abrir Book Club no navegador →
-      </a>
-      <iframe id="bc-iframe"
-        style="display:none;"
-        allow="microphone; camera; clipboard-write; autoplay"
-        allowfullscreen
-        title="Book Club ISR"></iframe>
+  <!-- BOOK CLUB TAB — iframe carrega direto quando a aba é aberta -->
+  <div class="stab" id="stab-bookclub" style="overflow:hidden;padding:0;">
+    <div id="bc-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:13px;">
+      <div style="width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+      Carregando Book Club…
     </div>
-
-    <!-- ── INFO VIEW (default, shows book info and session details) ── -->
-    <div id="bc-info-view">
-    <div class="slabel" data-pt="ISR Book Club" data-en="ISR Book Club">ISR Book Club</div>
-
-    <!-- Club selector -->
-    <div class="bc-selector">
-      <div class="bc-tab active" onclick="switchBookClub('blue',this)" data-pt="🔵 Blue Club" data-en="🔵 Blue Club">🔵 Blue Club</div>
-      <div class="bc-tab" onclick="switchBookClub('green',this)" data-pt="🟢 Green Club" data-en="🟢 Green Club">🟢 Green Club</div>
-    </div>
-
-    <!-- BLUE CLUB — Beginner / Essentials -->
-    <div class="bc-panel active reading-section" id="bc-blue">
-      <div class="book-card">
-        <div class="book-cover" style="background:linear-gradient(135deg,#1a6b7a,#229090)">📘</div>
-        <div class="book-body">
-          <div class="book-label" data-pt="🔵 Blue Club · Iniciante & Essentials" data-en="🔵 Blue Club · Beginner & Essentials">🔵 Blue Club · Beginner &amp; Essentials</div>
-          <div class="book-title">A Long Walk to Water</div>
-          <div class="book-author">Linda Sue Park</div>
-        </div>
-      </div>
-      <div class="chapter-card" style="background:linear-gradient(135deg,#1a6b7a,#229090)">
-        <div class="chapter-label" data-pt="Lendo agora" data-en="Reading now">Reading now</div>
-        <div class="chapter-title" data-pt="Capítulos 10 – 12" data-en="Chapters 10 – 12">Chapters 10 – 12</div>
-        <div class="chapter-sub" data-pt="Salva e Nya enfrentam desafios opostos — mas ambas buscam a mesma coisa: água. Uma história real e poderosa sobre sobrevivência." data-en="Salva and Nya face opposite challenges — both searching for water. A powerful true story about survival.">Salva and Nya face opposite challenges — both searching for water. A powerful true story about survival.</div>
-      </div>
-      <div class="next-session">
-        <div class="ns-label" data-pt="Próxima sessão" data-en="Next session">Next session</div>
-        <div class="ns-row" style="gap:14px;flex-wrap:wrap;">
-          <div class="ns-row"><div class="ns-icon">📅</div><div class="ns-val" data-pt="Qua, 21 de Mai" data-en="Wed, May 21">Wed, May 21</div></div>
-          <div class="ns-row"><div class="ns-icon">🕖</div><div class="ns-val">19h00 CET</div></div>
-          <div class="ns-row"><div class="ns-icon">📍</div><div class="ns-val">Den Haag</div></div>
-        </div>
-        <a class="wa-join-btn" href="https://chat.whatsapp.com/LZRm6YzlAMM4YAM3Rfv55O" target="_blank" style="background:#1a6b7a" data-pt="Entrar no grupo do Blue Club →" data-en="Join the Blue Club group →">Join the Blue Club group →</a>
-      </div>
-      <!-- CTA to open full Book Club app -->
-      <button onclick="openBookClubApp('blue')" style="margin:14px 0 0;width:100%;padding:14px;border-radius:14px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-        📖 Abrir atividades da sessão →
-      </button>
-    </div>
-
-    <!-- GREEN CLUB — Intermediate / Advanced -->
-    <div class="bc-panel reading-section" id="bc-green">
-      <div class="book-card">
-        <div class="book-cover" style="background:linear-gradient(135deg,#1e7a3a,#27ae60)">📗</div>
-        <div class="book-body">
-          <div class="book-label" data-pt="🟢 Green Club · Intermediário & Avançado" data-en="🟢 Green Club · Intermediate & Advanced">🟢 Green Club · Intermediate &amp; Advanced</div>
-          <div class="book-title">The Alchemist</div>
-          <div class="book-author">Paulo Coelho</div>
-        </div>
-      </div>
-      <div class="chapter-card" style="background:linear-gradient(135deg,#1e7a3a,#27ae60)">
-        <div class="chapter-label" data-pt="Lendo agora" data-en="Reading now">Reading now</div>
-        <div class="chapter-title" data-pt="Part Two — página 80 a 120" data-en="Part Two — pages 80 to 120">Part Two — pages 80 to 120</div>
-        <div class="chapter-sub" data-pt="Santiago segue sua Lenda Pessoal pelo deserto. O que significa realmente ouvir seu coração?" data-en="Santiago follows his Personal Legend through the desert. What does it truly mean to listen to your heart?">Santiago follows his Personal Legend through the desert. What does it truly mean to listen to your heart?</div>
-      </div>
-      <div class="next-session">
-        <div class="ns-label" data-pt="Próxima sessão" data-en="Next session">Next session</div>
-        <div class="ns-row" style="gap:14px;flex-wrap:wrap;">
-          <div class="ns-row"><div class="ns-icon">📅</div><div class="ns-val" data-pt="Qua, 14 de Mai" data-en="Wed, May 14">Wed, May 14</div></div>
-          <div class="ns-row"><div class="ns-icon">🕖</div><div class="ns-val">18h30 CET</div></div>
-          <div class="ns-row"><div class="ns-icon">📍</div><div class="ns-val">Den Haag</div></div>
-        </div>
-        <a class="wa-join-btn" href="https://chat.whatsapp.com/LZRm6YzlAMM4YAM3Rfv55O" target="_blank" style="background:#1e7a3a" data-pt="Entrar no grupo do Green Club →" data-en="Join the Green Club group →">Join the Green Club group →</a>
-      </div>
-      <!-- CTA to open full Book Club app -->
-      <button onclick="openBookClubApp('green')" style="margin:14px 0 0;width:100%;padding:14px;border-radius:14px;border:none;background:#1e7a3a;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-        📗 Abrir atividades da sessão →
-      </button>
-    </div>
-
-    <div style="height:32px"></div>
-    </div><!-- /bc-info-view -->
+    <a id="bc-fallback-link" href="https://app.inglessemroteiro.com.br/" target="_blank"
+       style="display:none;margin:auto 20px 24px;padding:14px 20px;border-radius:13px;background:var(--teal);color:#fff;font-size:14px;font-weight:600;text-align:center;text-decoration:none;">
+      📖 Abrir Book Club no navegador →
+    </a>
+    <iframe id="bc-iframe"
+      style="display:none;flex:1;border:none;width:100%;min-height:0;"
+      allow="microphone; camera; clipboard-write; autoplay"
+      allowfullscreen
+      title="Book Club ISR"></iframe>
   </div>
 
   <!-- MAIS TAB -->
@@ -2484,7 +2395,8 @@ function switchStudentTab(name,el){
   document.querySelectorAll('#screen-app .nav-item').forEach(function(n){n.classList.remove('active');});
   document.getElementById('stab-'+name).classList.add('active');
   el.classList.add('active');
-  if(name==='mais'){ renderCertificadoTab(); renderMaisPartners(); }
+  if(name==='mais')    { renderCertificadoTab(); renderMaisPartners(); }
+  if(name==='bookclub'){ loadBookClubTab(); }
 }
 
 function renderStudentDesafio(){
@@ -4939,51 +4851,34 @@ function closeAIChat(){
   else showScreen('prof');
 }
 
-// ── BOOK CLUB — inline activities (inside the tab) ──────────────────
+// ── BOOK CLUB — carrega direto na aba ──────────────────────────────
 var BC_APP_URL = 'https://app.inglessemroteiro.com.br/';
 var _bcHtmlCache = null;
 
-function openBookClubApp(clubName){
-  var actView  = document.getElementById('bc-activities-view');
-  var infoView = document.getElementById('bc-info-view');
-  if(!actView || !infoView) return;
-
-  // Update header title
-  var titleEl = document.getElementById('bc-act-title');
-  if(titleEl) titleEl.textContent = clubName === 'green' ? '📗 Atividades · Green Club' : '📘 Atividades · Blue Club';
-
-  // Switch views (no screen transition — stays in the tab)
-  infoView.style.display = 'none';
-  actView.classList.add('visible');
-
-  // Already loaded? Nothing more to do
-  var iframe = document.getElementById('bc-iframe');
+// Chamado pelo switchStudentTab quando a aba bookclub é aberta
+function loadBookClubTab(){
+  var iframe  = document.getElementById('bc-iframe');
+  var loading = document.getElementById('bc-loading');
+  var fallback= document.getElementById('bc-fallback-link');
   if(!iframe) return;
-  if(iframe.dataset.club === (clubName||'blue') && iframe.srcdoc) return;
+  if(iframe.srcdoc) return; // já carregado
 
-  // Reset state
-  var loading  = document.getElementById('bc-loading');
-  var fallback = document.getElementById('bc-fallback-link');
   if(loading)  loading.style.display  = 'flex';
   if(fallback) fallback.style.display = 'none';
   iframe.style.display = 'none';
 
-  // Reuse cached HTML if available
   if(_bcHtmlCache){
     iframe.srcdoc = _bcHtmlCache;
-    iframe.dataset.club = clubName||'blue';
     iframe.style.display = 'block';
     if(loading) loading.style.display = 'none';
     return;
   }
 
-  // Fetch via proxy (server-side fetch, no CORS / X-Frame-Options issues)
   fetch('/.netlify/functions/bc-proxy')
     .then(function(r){ return r.text(); })
     .then(function(html){
       _bcHtmlCache = html;
       iframe.srcdoc = html;
-      iframe.dataset.club = clubName||'blue';
       iframe.style.display = 'block';
       if(loading) loading.style.display = 'none';
     })
@@ -4993,13 +4888,9 @@ function openBookClubApp(clubName){
       if(fallback) fallback.style.display = 'block';
     });
 }
-
-function closeBookClubApp(){
-  var actView  = document.getElementById('bc-activities-view');
-  var infoView = document.getElementById('bc-info-view');
-  if(actView)  actView.classList.remove('visible');
-  if(infoView) infoView.style.display = '';
-}
+// kept for any remaining callers
+function openBookClubApp(){ loadBookClubTab(); }
+function closeBookClubApp(){}
 
 // ── VOICE ──────────────────────────────────────────
 function toggleVoice(){
