@@ -159,6 +159,15 @@
     .mc-material-btn:active{border-color:var(--accent);}
     .mc-material-btn.soon{color:var(--muted);border-style:dashed;cursor:default;pointer-events:none;opacity:0.6;}
 
+    /* Doc viewer overlay */
+    #doc-viewer{position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;background:#111;}
+    #doc-viewer.open{display:flex;}
+    .dv-header{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--teal);color:#fff;flex-shrink:0;}
+    .dv-title{flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .dv-ext-btn{font-size:11px;font-weight:600;color:#fff;opacity:0.85;text-decoration:none;border:1px solid rgba(255,255,255,0.4);border-radius:7px;padding:5px 10px;white-space:nowrap;}
+    .dv-close-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;line-height:1;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    #doc-viewer iframe{flex:1;border:none;width:100%;background:#fff;}
+
     .recado-banner{margin:16px 20px 0;padding:14px 16px;border-radius:14px;background:var(--teal);color:#fff;display:flex;gap:12px;align-items:flex-start;}
     .recado-banner.hidden{display:none;}
     .rb-icon{width:32px;height:32px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px;}
@@ -2320,17 +2329,23 @@ function renderMyClassCard(user){
   // Prefer live Apps Script data, fall back to hardcoded demo data
   var td = STUDENT_TURMA_DATA[user.turma];
   // If td is missing but we have basic info from the login response, build a minimal td
-  if(!td && (user.meetLink || user.linkMeet || user.horario)){
+  if(!td && (user.meetLink || user.linkMeet || user.horario || user.linkAtividades || user.linkCaderno)){
+    // New Apps Script returns linkAtividades (individual) + linkCaderno (class shared)
+    // Old Apps Script returns only linkCaderno (individual) — detect by presence of linkAtividades
+    var hasNewScript = user.linkAtividades !== undefined || user.teacherGuide !== undefined;
     td = {
-      prof:     user.prof      || user.professor || '',
-      horario:  user.horario   || '',
-      meet:     user.meetLink  || user.linkMeet  || '#',
-      nextDate: user.nextDate  || '',
-      nextFormat: '',
-      nextTopic:  '',
-      notebook:   user.linkCaderno || user.caderno || '',
-      individualNotebook: user.linkCadernoIndividual || user.cadernoIndividual || '',
-      recordings: user.linkGravacoes || '',
+      prof:               user.prof            || user.professor    || '',
+      horario:            user.horario          || '',
+      meet:               user.meetLink         || user.linkMeet     || '#',
+      nextDate:           user.nextDate         || '',
+      nextFormat:         '',
+      nextTopic:          user.nextTopic        || '',
+      notebook:           hasNewScript ? (user.linkCaderno || '') : '',
+      individualNotebook: user.linkAtividades   || user.linkCadernoIndividual || (!hasNewScript ? user.linkCaderno : '') || '',
+      recordings:         user.linkGravacoes    || '',
+      teacherGuide:       user.teacherGuide     || '',
+      schoolCalendar:     user.schoolCalendar   || '',
+      syllabus:           user.syllabus         || '',
     };
   }
   var initials = (user.turma||'').split(' ').slice(0,2).join(' ');
@@ -2347,8 +2362,19 @@ function renderMyClassCard(user){
     if(td.horario) metaParts.push('🕖 '+td.horario);
     document.getElementById('mc-meta').textContent = metaParts.join(' · ') || user.turma||'';
     btn.href = td.meet||'#'; if(td.meet && td.meet!=='#') btn.classList.remove('no-link'); else btn.classList.add('no-link');
-    document.getElementById('mc-next-date').textContent = td.nextDate+' · '+td.nextFormat;
-    document.getElementById('mc-next-topic').textContent = td.nextTopic+(td.nextSkill?' — '+td.nextSkill:'');
+    var nextDateEl = document.getElementById('mc-next-date');
+    if(nextDateEl){
+      var dateText = td.nextDate ? (td.nextDate + (td.nextFormat?' · '+td.nextFormat:'')) : '';
+      nextDateEl.textContent = dateText;
+      nextDateEl.closest && nextDateEl.closest('.mc-next-row') && (nextDateEl.closest('.mc-next-row').style.display = dateText ? '' : 'none');
+    }
+    var nextTopicEl = document.getElementById('mc-next-topic');
+    if(nextTopicEl){
+      var topicText = td.nextTopic || '';
+      if(td.nextSkill) topicText += (topicText?' — ':'')+td.nextSkill;
+      nextTopicEl.textContent = topicText;
+      nextTopicEl.style.display = topicText ? '' : 'none';
+    }
     var hwRow = document.getElementById('mc-hw-row');
     if(td.homework){
       document.getElementById('mc-homework').textContent = td.homework;
@@ -2359,20 +2385,28 @@ function renderMyClassCard(user){
     var matEl = document.getElementById('mc-materials-inner');
     matEl.innerHTML = '';
     var materials = [
-      {key:'notebook',          icon:'📓', labelEn:'Class Notebook',  labelPt:'Caderno da Turma'},
-      {key:'individualNotebook',icon:'✏️', labelEn:'My Activities',   labelPt:'Minhas Atividades'},
-      {key:'recordings',        icon:'🎥', labelEn:'Recordings',      labelPt:'Gravações'},
+      {key:'individualNotebook',icon:'✏️', labelEn:'My Activities',    labelPt:'Minhas Atividades',  viewer:true},
+      {key:'notebook',          icon:'📓', labelEn:'Class Notebook',   labelPt:'Caderno da Turma',   viewer:true},
+      {key:'recordings',        icon:'🎥', labelEn:'Recordings',       labelPt:'Gravações',          viewer:false},
+      {key:'schoolCalendar',    icon:'📅', labelEn:'School Calendar',  labelPt:'Calendário',         viewer:true},
+      {key:'teacherGuide',      icon:'📋', labelEn:"Teacher's Guide",  labelPt:'Guia do Professor',  viewer:true},
     ];
     var hasAny = false;
     materials.forEach(function(m){
       var link = td ? td[m.key] : null;
       if(link && link !== '#'){
         hasAny = true;
+        var label = m.icon + ' ' + (en ? m.labelEn : m.labelPt);
         var a = document.createElement('a');
         a.className = 'mc-material-btn';
-        a.href = link;
-        a.target = '_blank';
-        a.innerHTML = m.icon + ' ' + (en ? m.labelEn : m.labelPt);
+        if(m.viewer){
+          a.href = '#';
+          a.onclick = (function(url, title){ return function(e){ e.preventDefault(); openDocViewer(url, title); }; })(link, en ? m.labelEn : m.labelPt);
+        } else {
+          a.href = link;
+          a.target = '_blank';
+        }
+        a.innerHTML = label;
         matEl.appendChild(a);
       }
     });
@@ -3323,38 +3357,57 @@ function renderTurmas(){
   var u=state.user, container=document.getElementById('turmas-list');
   if(!container) return;
   container.innerHTML='';
-  var schedMap={};
-  (u.turmaSchedules||[]).forEach(function(ts){ schedMap[ts.turma]=ts; });
 
-  (u.turmas||[]).forEach(function(tName){
+  // Use turmaSchedules as the authoritative list — already filtered by this professor's name
+  // in getTurmaSchedules(). Fall back to u.turmas only if turmaSchedules is absent.
+  var schedules = u.turmaSchedules || [];
+  var turmaNames = schedules.length
+    ? schedules.map(function(ts){ return ts.turma; })
+    : (u.turmas || []);
+  var schedMap={};
+  schedules.forEach(function(ts){ schedMap[ts.turma]=ts; });
+
+  turmaNames.forEach(function(tName){
     if(tName.toLowerCase()==='private') return; // shown separately in Particulares
     var live=schedMap[tName]||{};
     var td=TURMA_SCHEDULES[tName]||{horario:'—',alunos:[],notebook:'#',teacherGuide:'#',syllabus:'#',calendar:'#'};
     var horario=live.horario||td.horario||'—';
     var meetLink=live.meetLink||u.meetLink||'#';
+    // Prefer live data from Apps Script; fall back to hardcoded TURMA_SCHEDULES
+    var alunos = (live.alunos && live.alunos.length) ? live.alunos : (td.alunos || []);
+    var notebook      = live.notebook      || (td.notebook     !=='#'?td.notebook:'')     || '';
+    var teacherGuide  = live.teacherGuide  || (td.teacherGuide !=='#'?td.teacherGuide:'') || '';
+    var syllabus      = live.syllabus      || (td.syllabus     !=='#'?td.syllabus:'')     || '';
+    var schoolCalendar= live.schoolCalendar|| (td.calendar     !=='#'?td.calendar:'')     || '';
+    var nextTopic     = live.nextTopic     || '';
+
     var initials=tName.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0];}).join('');
     var card=document.createElement('div');
     card.className='turma-card';
-    card.dataset.search=tName.toLowerCase()+' '+(td.alunos||[]).join(' ').toLowerCase();
-    var studHtml=(td.alunos||[]).map(function(s){
+    card.dataset.search=tName.toLowerCase()+' '+alunos.join(' ').toLowerCase();
+    var studHtml=alunos.map(function(s){
       return '<div class="student-row"><div class="student-av">'+s[0]+'</div>'+s+'</div>';
     }).join('');
     var matsHtml='';
-    if(td.notebook&&td.notebook!=='#') matsHtml+='<a href="'+td.notebook+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📓</span> Caderno da turma</a>';
-    if(td.teacherGuide&&td.teacherGuide!=='#') matsHtml+='<a href="'+td.teacherGuide+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📋</span> Teacher\'s Guide</a>';
-    if(td.syllabus&&td.syllabus!=='#') matsHtml+='<a href="'+td.syllabus+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📄</span> Syllabus</a>';
-    if(td.calendar&&td.calendar!=='#') matsHtml+='<a href="'+td.calendar+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📅</span> Calendário</a>';
+    if(notebook)       matsHtml+='<a href="'+notebook+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📓</span> Caderno da turma</a>';
+    if(teacherGuide)   matsHtml+='<a href="'+teacherGuide+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📋</span> Teacher\'s Guide</a>';
+    if(syllabus)       matsHtml+='<a href="'+syllabus+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📄</span> Syllabus</a>';
+    if(schoolCalendar) matsHtml+='<a href="'+schoolCalendar+'" target="_blank" class="tir-link" style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">📅</span> Calendário</a>';
+    var nextTopicHtml = nextTopic
+      ? '<div class="turma-divider"></div><div class="turma-students-label">Próxima aula</div><div style="font-size:13px;color:var(--text);padding:2px 0 6px">'+nextTopic+'</div>'
+      : '';
     card.innerHTML=
       '<div class="turma-header">'+
         '<div class="turma-av">'+initials+'</div>'+
-        '<div style="flex:1;min-width:0"><div class="turma-name">'+tName+'</div><div class="turma-meta">'+((td.alunos||[]).length)+' aluno'+((td.alunos||[]).length!==1?'s':'')+' · '+horario+'</div></div>'+
+        '<div style="flex:1;min-width:0"><div class="turma-name">'+tName+'</div><div class="turma-meta">'+alunos.length+' aluno'+(alunos.length!==1?'s':'')+' · '+horario+'</div></div>'+
         '<span class="turma-chevron">›</span>'+
       '</div>'+
       '<div class="turma-body">'+
         '<div class="turma-info-row"><div class="tir-icon">🕖</div><div><div class="tir-label">Horário</div><div class="tir-val">'+horario+'</div></div></div>'+
         '<div class="turma-info-row"><div class="tir-icon">🔗</div><div><div class="tir-label">Meet</div>'+(meetLink&&meetLink!=='#'?'<a class="tir-link" href="'+meetLink+'" target="_blank">Abrir Google Meet →</a>':'<span style="font-size:13px;color:var(--muted)">Não configurado</span>')+'</div></div>'+
+        nextTopicHtml+
         (matsHtml?'<div class="turma-divider"></div><div class="turma-students-label">Materiais — Ciclo 2026.2</div><div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">'+matsHtml+'</div>':'')+
-        '<div class="turma-divider"></div><div class="turma-students-label">Alunos ('+((td.alunos||[]).length)+')</div>'+
+        '<div class="turma-divider"></div><div class="turma-students-label">Alunos ('+alunos.length+')</div>'+
         (studHtml||'<div style="font-size:13px;color:var(--muted);font-style:italic">Nenhum aluno cadastrado ainda.</div>')+
       '</div>';
     card.querySelector('.turma-header').addEventListener('click',function(){
@@ -3365,7 +3418,7 @@ function renderTurmas(){
     });
     container.appendChild(card);
   });
-  if(!(u.turmas||[]).length){
+  if(!turmaNames.length){
     container.innerHTML='<div class="empty-state" style="padding:20px"><div class="empty-icon">🏫</div>Nenhuma turma atribuída.</div>';
   }
 }
@@ -3617,7 +3670,12 @@ function renderExtrasProfList(){
 
 function setupChamada(){
   var u=state.user;
-  var myTurmas=u.turmas||[];
+  // Use turmaSchedules as the authoritative list — it's already filtered by professor name
+  // in the Apps Script. Fall back to u.turmas only if turmaSchedules is absent.
+  var schedules = u.turmaSchedules || [];
+  var myTurmas = schedules.length
+    ? schedules.map(function(ts){ return ts.turma; })
+    : (u.turmas || []);
   currentChamadaTurma=myTurmas[0]||'';
   updateWeekUI();
 
@@ -3631,8 +3689,8 @@ function setupChamada(){
   myTurmas.forEach(function(tname,i){
     var btn=document.createElement('div');
     btn.className='ct-btn'+(i===0?' active':'');
-    // Show turma name; if turmaSchedules has a codigo for it, show that too
-    var schedEntry = (u.turmaSchedules||[]).find(function(ts){ return ts.turma===tname; });
+    // Show turma name and code (from turmaSchedules)
+    var schedEntry = schedules.find(function(ts){ return ts.turma===tname; });
     btn.textContent = tname + (schedEntry&&schedEntry.codigo?' · '+schedEntry.codigo:'');
     btn.dataset.turma = tname;
     btn.addEventListener('click',function(){
@@ -5170,6 +5228,47 @@ function appendMessage(role, text){
 }
 
 init();
+
+function makeDocEmbedUrl(url){
+  if(!url) return url;
+  // Remove existing rm param then add rm=minimal
+  var u = url.replace(/[?&]rm=[^&]*/,'');
+  u += (u.indexOf('?') >= 0 ? '&' : '?') + 'rm=minimal';
+  // Ensure /edit path for Google Docs so editing works
+  u = u.replace(/\/(preview|pub)(\?|$)/, '/edit$2');
+  return u;
+}
+
+function openDocViewer(url, title){
+  var overlay = document.getElementById('doc-viewer');
+  if(!overlay) return;
+  document.getElementById('dv-title').textContent = title || '';
+  var extBtn = document.getElementById('dv-ext-btn');
+  extBtn.href = url;
+  var iframe = document.getElementById('dv-iframe');
+  iframe.src = makeDocEmbedUrl(url);
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDocViewer(){
+  var overlay = document.getElementById('doc-viewer');
+  if(!overlay) return;
+  overlay.classList.remove('open');
+  document.getElementById('dv-iframe').src = 'about:blank';
+  document.body.style.overflow = '';
+}
 </script>
+
+<!-- Google Docs in-app viewer -->
+<div id="doc-viewer">
+  <div class="dv-header">
+    <button class="dv-close-btn" onclick="closeDocViewer()">✕</button>
+    <span class="dv-title" id="dv-title"></span>
+    <a class="dv-ext-btn" id="dv-ext-btn" href="#" target="_blank">Open in tab ↗</a>
+  </div>
+  <iframe id="dv-iframe" src="about:blank" allow="microphone" allowfullscreen></iframe>
+</div>
+
 </body>
 </html>
