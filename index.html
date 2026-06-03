@@ -588,6 +588,7 @@
     .bc-app-title{font-size:17px;font-weight:700;color:#fff;margin-top:8px;}
     .bc-app-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;}
     #bc-iframe{flex:1;border:none;width:100%;min-height:0;background:#fff;}
+    @keyframes spin{to{transform:rotate(360deg);}}
     .bc-open-ext{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 20px;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:var(--card);color:var(--teal);font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;}
     /* All sub-screens overlay screen-app */
     #screen-detail,#screen-settings,#screen-ai-chat,#screen-renewal,#screen-renewal-done,
@@ -1644,9 +1645,17 @@
     <div class="bc-app-sub" id="bc-app-subtitle">A Long Walk to Water · Blue Club</div>
     <div id="bc-app-user" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:5px"></div>
   </div>
+  <div id="bc-loading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:13px;">
+    <div style="width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+    Carregando Book Club…
+  </div>
+  <a id="bc-fallback-link" href="https://app.inglessemroteiro.com.br/" target="_blank"
+     style="display:none;margin:auto 20px 24px;padding:14px 20px;border-radius:13px;background:var(--teal);color:#fff;font-size:14px;font-weight:600;text-align:center;text-decoration:none;">
+    📖 Abrir Book Club no navegador →
+  </a>
   <iframe id="bc-iframe"
-    src=""
-    allow="microphone; camera; clipboard-write"
+    style="display:none;"
+    allow="microphone; camera; clipboard-write; autoplay"
     allowfullscreen
     title="Book Club ISR"></iframe>
 </div>
@@ -4929,9 +4938,8 @@ function closeAIChat(){
 // ── BOOK CLUB APP (iframe) ──────────────────────────
 var bcPrevScreen = 'app';
 
-// URL do Book Club app — SEPARADO do ISR app (hospedado em outro lugar)
-// Se app.inglessemroteiro.com.br for o mesmo Netlify, cole aqui a URL correta do Book Club
 var BC_APP_URL = 'https://app.inglessemroteiro.com.br/';
+var _bcHtmlCache = null; // cached proxy HTML
 
 function openBookClubApp(clubName){
   var u = state.user;
@@ -4946,14 +4954,47 @@ function openBookClubApp(clubName){
   var userEl = document.getElementById('bc-app-user');
   if(userEl && u) userEl.textContent = u.nome + (u.turma ? ' · ' + u.turma : '');
 
-  // Load iframe — lazy, only once per club
+  showScreen('bookclub-app');
+
+  // Load via proxy + srcdoc — avoids all X-Frame-Options / cross-origin issues
   var iframe = document.getElementById('bc-iframe');
-  if(iframe && iframe.dataset.club !== (clubName||'blue')){
-    iframe.src = BC_APP_URL + (clubName === 'green' ? '?club=green' : '');
+  if(!iframe) return;
+
+  // Already loaded the same club? Nothing to do
+  if(iframe.dataset.club === (clubName||'blue') && iframe.srcdoc) return;
+
+  // Show loading spinner
+  var loading = document.getElementById('bc-loading');
+  var fallback = document.getElementById('bc-fallback-link');
+  if(loading) loading.style.display = 'flex';
+  if(fallback) fallback.style.display = 'none';
+  iframe.style.display = 'none';
+
+  // If we already have the HTML (from a previous load), reuse it
+  if(_bcHtmlCache){
+    iframe.srcdoc = _bcHtmlCache;
     iframe.dataset.club = clubName||'blue';
+    iframe.style.display = 'block';
+    if(loading) loading.style.display = 'none';
+    return;
   }
 
-  showScreen('bookclub-app');
+  // Fetch proxied HTML from our own Netlify function (no CORS issues)
+  fetch('/.netlify/functions/bc-proxy')
+    .then(function(r){ return r.text(); })
+    .then(function(html){
+      _bcHtmlCache = html;
+      iframe.srcdoc = html;
+      iframe.dataset.club = clubName||'blue';
+      iframe.style.display = 'block';
+      if(loading) loading.style.display = 'none';
+    })
+    .catch(function(err){
+      console.warn('bc-proxy fetch failed:', err);
+      // Fallback: show direct link button
+      if(loading) loading.style.display = 'none';
+      if(fallback) fallback.style.display = 'block';
+    });
 }
 
 function closeBookClubApp(){
