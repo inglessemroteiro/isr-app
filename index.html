@@ -582,12 +582,13 @@
     /* AI CHAT */
     #screen-ai-chat{max-width:430px;margin:0 auto;width:100%;background:var(--bg);}
     /* Book Club iframe screen */
-    #screen-bookclub-app{max-width:430px;margin:0 auto;width:100%;display:flex;flex-direction:column;}
+    #screen-bookclub-app{max-width:430px;margin:0 auto;width:100%;display:flex;flex-direction:column;background:var(--bg);}
     .bc-app-header{background:var(--teal);padding:52px 20px 16px;flex-shrink:0;position:relative;}
     .bc-app-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--coral),var(--accent));}
     .bc-app-title{font-size:17px;font-weight:700;color:#fff;margin-top:8px;}
     .bc-app-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;}
-    #bc-iframe{flex:1;border:none;width:100%;min-height:0;}
+    #bc-iframe{flex:1;border:none;width:100%;min-height:0;background:#fff;}
+    .bc-open-ext{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 20px;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:var(--card);color:var(--teal);font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;}
     /* All sub-screens overlay screen-app */
     #screen-detail,#screen-settings,#screen-ai-chat,#screen-renewal,#screen-renewal-done,
     #screen-certificate,#screen-prof,#screen-imersao,#screen-community,#screen-bookclub-app{
@@ -1641,13 +1642,20 @@
     <div class="back-btn" onclick="closeBookClubApp()">← Voltar</div>
     <div class="bc-app-title">📖 Book Club ISR</div>
     <div class="bc-app-sub" id="bc-app-subtitle">A Long Walk to Water · Blue Club</div>
+    <div id="bc-app-user" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:5px"></div>
   </div>
+  <!-- Fallback: botão abrir em nova aba (aparece se iframe não carregar) -->
+  <a id="bc-open-ext-btn" href="#" target="_blank" class="bc-open-ext" style="display:none">
+    🔗 Abrir Book Club no navegador →
+  </a>
   <iframe id="bc-iframe"
     src=""
     allow="microphone; camera; clipboard-write"
     allowfullscreen
     loading="lazy"
-    title="Book Club ISR"></iframe>
+    title="Book Club ISR"
+    onload="bcIframeLoaded(this)"
+    onerror="bcIframeError(this)"></iframe>
 </div>
 
 <div id="screen-ai-chat" class="screen">
@@ -4928,30 +4936,64 @@ function closeAIChat(){
 // ── BOOK CLUB APP (iframe) ──────────────────────────
 var bcPrevScreen = 'app';
 
+// URL do Book Club app — SEPARADO do ISR app (hospedado em outro lugar)
+// Se app.inglessemroteiro.com.br for o mesmo Netlify, cole aqui a URL correta do Book Club
+var BC_APP_URL = 'https://isr-bookclub.netlify.app/'; // ← AJUSTE SE NECESSÁRIO
+
 function openBookClubApp(clubName){
   var u = state.user;
   bcPrevScreen = u ? (u.role==='student'?'app':u.role==='imersao'?'imersao':u.role==='comunidade'?'community':'prof') : 'app';
 
-  // Set subtitle based on club
+  // Header: subtitle
   var subtitle = document.getElementById('bc-app-subtitle');
   if(subtitle){
     if(clubName === 'green') subtitle.textContent = 'The Alchemist · Green Club';
     else subtitle.textContent = 'A Long Walk to Water · Blue Club';
   }
+  // Header: nome e turma do aluno
+  var userEl = document.getElementById('bc-app-user');
+  if(userEl && u) userEl.textContent = u.nome + (u.turma ? ' · ' + u.turma : '');
+
+  // Botão externo (fallback visível desde o início para o caso do iframe ser bloqueado)
+  var extBtn = document.getElementById('bc-open-ext-btn');
+  var target = BC_APP_URL + (clubName === 'green' ? '?club=green' : '');
+  if(extBtn){ extBtn.href = target; extBtn.style.display = ''; }
 
   // Load iframe (lazy — only set src once, or when switching club)
   var iframe = document.getElementById('bc-iframe');
-  if(iframe){
-    var baseUrl = 'http://app.inglessemroteiro.com.br/';
-    var target = baseUrl + (clubName === 'green' ? '?club=green' : '');
-    // Only reload if src is empty or club changed
-    if(!iframe.src || iframe.src === 'about:blank' || iframe.dataset.club !== (clubName||'blue')){
-      iframe.src = target;
-      iframe.dataset.club = clubName||'blue';
-    }
+  if(iframe && iframe.dataset.club !== (clubName||'blue')){
+    iframe.style.display = '';
+    iframe.src = target;
+    iframe.dataset.club = clubName||'blue';
   }
 
   showScreen('bookclub-app');
+}
+
+function bcIframeLoaded(iframe){
+  // If the iframe loaded successfully and isn't empty, hide the fallback button
+  try {
+    // If same origin loaded (ISR app in iframe), show warning and external link instead
+    var loaded = iframe.contentDocument || iframe.contentWindow.document;
+    if(loaded && loaded.title && loaded.title.indexOf('Book Club') < 0){
+      bcIframeError(iframe); // treat as error — wrong content
+    } else {
+      var extBtn = document.getElementById('bc-open-ext-btn');
+      if(extBtn) extBtn.style.display = 'none';
+    }
+  } catch(e) {
+    // Cross-origin — iframe loaded a different origin, that's correct
+    var extBtn = document.getElementById('bc-open-ext-btn');
+    if(extBtn) extBtn.style.display = 'none';
+  }
+}
+
+function bcIframeError(iframe){
+  // Iframe failed (blocked by X-Frame-Options or wrong URL) — show external button
+  if(iframe) iframe.style.display = 'none';
+  var extBtn = document.getElementById('bc-open-ext-btn');
+  if(extBtn) extBtn.style.display = '';
+  showToast('💡 Abrindo no navegador — toque no link acima');
 }
 
 function closeBookClubApp(){
