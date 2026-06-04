@@ -151,7 +151,7 @@
     /* STUDENT APP TABS */
     #screen-app{max-width:430px;margin:0 auto;width:100%;}
     .stab{display:none;flex-direction:column;}
-    .stab.active{display:flex;}
+    .stab.active{display:flex;padding-bottom:28px;}
 
     /* MY CLASS CARD */
     .my-class-card{margin:16px 20px 0;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;border-top:3px solid var(--coral);}
@@ -190,11 +190,11 @@
 
     /* ── Desktop layout: medium (tablet) ────────── */
     @media(min-width:640px){
-      body{background:#d5e3e3;display:flex;flex-direction:column;align-items:center;}
+      body{background:var(--bg);display:flex;flex-direction:column;align-items:center;}
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
       #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,#screen-ai-chat,
       #screen-onboarding,#screen-blocked,#screen-loading,#screen-certificate{
-        max-width:660px;width:100%;box-shadow:0 4px 40px rgba(22,73,81,0.13);
+        max-width:680px;width:100%;box-shadow:0 8px 48px rgba(22,73,81,0.10);border-radius:0 0 20px 20px;
       }
       .login-card{max-width:480px;}
       #doc-viewer{background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:32px 20px;}
@@ -202,81 +202,111 @@
       .dv-modal{flex:none;width:100%;max-width:980px;height:min(90vh,860px);border-radius:16px;overflow:hidden;box-shadow:0 32px 100px rgba(0,0,0,0.5);}
       .dv-header{border-radius:0;}
     }
-    /* ── Desktop layout: large (full-width app) ── */
+    /* ── Desktop layout: large ── */
     @media(min-width:1024px){
       body{display:block;background:var(--bg);}
 
-      /* ── All screens: full width, no card shadow ── */
+      /* All screens: full width */
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
       #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,
       #screen-ai-chat,#screen-onboarding,#screen-blocked,#screen-loading,
       #screen-certificate{max-width:100%;width:100%;box-shadow:none;}
 
-      /* ── All headers → compact 60px horizontal bar ── */
+      /* ── EDITORIAL HEADER: tall, big Fraunces greeting ── */
       .app-header,.imersao-header,.community-header{
-        flex-direction:row;align-items:center;gap:20px;
-        padding:0 56px;min-height:60px;
+        padding:44px 64px 28px;
+        /* stays flex-direction:column — not compressed */
       }
-      .header-top{margin-bottom:0;flex:1;}
-      .header-greeting{font-family:'Inter',sans-serif;font-style:normal;font-size:13px;color:rgba(255,255,255,0.88);
-        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      .header-greeting br{display:none;}
-      #s-greeting-sub{display:none;}
-      .badges{margin-top:0;flex-shrink:0;}
+      .header-top{margin-bottom:12px;}
+      .header-greeting{
+        font-size:52px;
+        white-space:normal;overflow:visible;text-overflow:clip;
+      }
+      .header-greeting br{display:inline;}
+      #s-greeting-sub{display:flex;}
+      .badges{margin-top:8px;}
 
-      /* ── All bottom-navs → horizontal tab bar below header ── */
+      /* ── Nav: horizontal underline tabs below header ── */
       .bottom-nav{
         position:static;flex-direction:row;justify-content:flex-start;
-        padding:0 52px;gap:0;height:auto;
-        border-top:none;border-bottom:1px solid var(--border);background:#fff;
+        padding:0 60px;gap:0;height:auto;
+        border-top:none;border-bottom:2px solid var(--border);background:#fff;
       }
       .nav-item{
-        flex-direction:row;gap:8px;padding:14px 22px;height:auto;flex:none;
-        font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;
-        border-bottom:2px solid transparent;border-radius:0;color:var(--muted);
+        flex-direction:row;gap:8px;padding:14px 24px;height:auto;flex:none;
+        font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;
+        border-bottom:3px solid transparent;border-radius:0;color:var(--muted);
+        margin-bottom:-2px;
       }
-      .nav-item.active{color:var(--teal);border-bottom-color:var(--teal);}
-      .nav-icon{font-size:17px;}
+      .nav-item.active{color:var(--teal);border-bottom-color:var(--coral);}
+      .nav-icon{font-size:18px;}
       .nt{display:block;}
 
-      /* ── Professor: bottom-nav is at end of DOM → move above ptabs ── */
+      /* ── Professor: nav at end of DOM → CSS order fix ── */
       #screen-prof{flex-direction:column;}
       #screen-prof .app-header{order:1;}
       #screen-prof .bottom-nav{order:2;}
       #screen-prof .ptab{order:3;}
 
-      /* ── Tab content: full width with 56px lateral padding ── */
-      .stab.active,.ctab.active,.itab.active{padding:0 56px;overflow-y:auto;}
-      .ptab.active{padding:0 56px 48px;padding-bottom:48px;}
+      /* ── HOME TAB: 2-column magazine layout ── */
+      #stab-home.active{
+        display:grid;
+        grid-template-columns:360px 1fr;
+        gap:0 32px;
+        padding:28px 64px 48px;
+        align-items:start;
+        overflow-y:auto;
+      }
+      /* Left column: class card + banners */
+      #stab-home > :nth-child(1){grid-column:1;margin:0;} /* recado-banner */
+      #stab-home > :nth-child(2){grid-column:1;margin:0;} /* my-class-card */
+      #stab-home > :nth-child(3){grid-column:1;margin:0;} /* rematricula-banner */
+      #stab-home > :nth-child(4){grid-column:1;margin:0;} /* progress-card */
+      /* Right column: filter + activities */
+      #stab-home > :nth-child(5){grid-column:2;padding:0;} /* filter-tabs */
+      #stab-home > :nth-child(6){grid-column:2;margin:16px 0 10px;} /* slabel */
+      #stab-home > :nth-child(7){grid-column:2;padding:0;} /* cards */
+      #stab-home > :nth-child(8){grid-column:2;margin:20px 0 10px;} /* slabel notices */
+      #stab-home > :nth-child(9){grid-column:2;padding:0;} /* notices */
+      /* Full width: help + footer */
+      #stab-home > :nth-child(10){grid-column:1 / -1;}
+      #stab-home > :nth-child(11){grid-column:1 / -1;}
 
-      /* ── Remove the extra 20px inner margin/padding (now handled by stab/ptab) ── */
-      .stab .my-class-card,.ctab .my-class-card{margin-left:0;margin-right:0;}
-      .stab .slabel,.ptab .slabel,.ctab .slabel,.itab .slabel{margin-left:0;margin-right:0;}
-      .stab .cards,.ptab .cards,.ctab .cards{padding-left:0;padding-right:0;}
-      .stab .filter-tabs,.ctab .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
-      .stab .notices,.ctab .notices{padding-left:0;padding-right:0;}
-      .stab .recado-banner,.ptab .recado-banner{margin-left:0;margin-right:0;}
-      .stab .banner,.ptab .banner{margin-left:0;margin-right:0;}
+      /* ── Other tabs: single column with lateral padding ── */
+      .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:0 64px;overflow-y:auto;}
+      .ptab.active{padding:0 64px 48px;}
+
+      /* Strip inner mobile margins */
+      .stab .my-class-card:not(#stab-home .my-class-card),.ctab .my-class-card{margin-left:0;margin-right:0;}
+      .stab .slabel:not(#stab-home .slabel),.ptab .slabel,.ctab .slabel,.itab .slabel{margin-left:0;margin-right:0;}
+      .stab .cards:not(#stab-home .cards),.ptab .cards,.ctab .cards{padding-left:0;padding-right:0;}
+      .stab .filter-tabs:not(#stab-home .filter-tabs),.ctab .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
+      .stab .notices:not(#stab-home .notices),.ctab .notices{padding-left:0;padding-right:0;}
+      .stab .recado-banner:not(#stab-home .recado-banner),.ptab .recado-banner{margin-left:0;margin-right:0;}
+      .stab .banner:not(#stab-home .banner),.ptab .banner{margin-left:0;margin-right:0;}
       .ptab .prof-search-wrap{padding-left:0;padding-right:0;}
 
-      /* ── Mais tab: strip inline padding from inner wrapper div ── */
+      /* ── Mais tab ── */
       #stab-mais > div{padding-left:0!important;padding-right:0!important;}
 
-      /* ── Book club tab: no padding, fill height ── */
+      /* ── Book club ── */
       #stab-bookclub.active{padding:0;flex:1;min-height:0;}
 
-      /* ── Detail screen: center content with max-width ── */
-      .detail-header,.detail-body,.presence-cta{max-width:760px;margin:0 auto;}
+      /* ── Detail screen ── */
+      .detail-header,.detail-body,.presence-cta{max-width:800px;margin:0 auto;}
 
-      /* ── Settings screen: center content ── */
+      /* ── Settings ── */
       .settings-header,.settings-body{max-width:640px;margin:0 auto;}
 
-      /* ── Renewal screens: center content ── */
+      /* ── Renewal ── */
       .renewal-inner,.renewal-done-inner{max-width:600px;margin:0 auto;}
 
-      /* ── Chamada: wider mark buttons ── */
-      .cham-row{grid-template-columns:1fr repeat(4,48px);}
-      .cs-btn{width:44px;height:44px;}
+      /* ── Chamada ── */
+      .cham-row{grid-template-columns:1fr repeat(4,52px);}
+      .cs-btn{width:48px;height:48px;}
+
+      /* ── Section label: editorial on desktop ── */
+      .slabel{font-size:11px;letter-spacing:0.2em;}
     }
 
     .recado-banner{margin:16px 20px 0;padding:14px 16px;border-radius:14px;background:var(--teal);color:#fff;display:flex;gap:12px;align-items:flex-start;}
@@ -360,8 +390,8 @@
 
     /* NOTICES */
     .notices{padding:0 20px;display:flex;flex-direction:column;gap:10px;}
-    .notice{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 14px;}
-    .notice.info{border-left-color:var(--muted);}
+    .notice{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:14px 16px;}
+    .notice.info{border-left-color:var(--coral);}
     .notice-text{font-size:13px;font-weight:500;color:var(--teal);line-height:1.5;margin-bottom:3px;}
     .notice-date{font-size:11px;color:var(--muted);}
     .empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-size:14px;line-height:1.6;}
@@ -513,7 +543,7 @@
     .countdown-card{margin:16px 20px 0;background:var(--coral);border-radius:18px;padding:20px 18px;color:var(--teal);text-align:center;position:relative;overflow:hidden;}
     .countdown-card::before{content:'✦';position:absolute;top:12px;right:18px;font-size:20px;color:rgba(22,73,81,0.2);pointer-events:none;}
     .countdown-card::after{content:'✴';position:absolute;bottom:10px;left:16px;font-size:13px;color:rgba(22,73,81,0.15);pointer-events:none;}
-    .countdown-num{font-family:var(--display);font-size:64px;font-weight:700;line-height:1;color:var(--teal);}
+    .countdown-num{font-family:var(--display);font-size:56px;font-weight:700;line-height:1.1;color:var(--teal);}
     .countdown-label{font-size:12px;color:rgba(22,73,81,0.7);margin-top:4px;text-transform:uppercase;letter-spacing:0.1em;}
     .dia-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 20px;overflow:hidden;cursor:pointer;}
     .dia-card + .dia-card{margin-top:10px;}
@@ -537,7 +567,7 @@
     .followup-text{font-size:13px;color:var(--teal);line-height:1.55;}
     .next-step-card{margin:16px 20px 0;background:var(--teal);border-radius:14px;padding:16px 18px;color:#fff;}
     .nsc-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--coral);margin-bottom:4px;}
-    .nsc-title{font-family:var(--display);font-size:20px;font-weight:700;font-style:italic;margin-bottom:6px;}
+    .nsc-title{font-family:var(--display);font-size:18px;font-weight:700;font-style:italic;margin-bottom:6px;}
     .nsc-sub{font-size:13px;color:rgba(255,255,255,0.65);line-height:1.5;margin-bottom:12px;}
     .nsc-btn{display:inline-block;padding:10px 20px;background:var(--coral);color:var(--teal);border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;border:none;font-family:inherit;}
     .material-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:0 20px;padding:16px 18px;display:flex;gap:14px;align-items:center;text-decoration:none;}
