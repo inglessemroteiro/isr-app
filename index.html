@@ -183,62 +183,59 @@
     .dv-close-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;line-height:1;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     #dv-iframe{flex:1;border:none;width:100%;background:#fff;}
 
-    /* ── Desktop layout ── */
+    /* ── Desktop layout (≥800px) ── */
     @media(min-width:800px){
 
-      /* ─── Screen = viewport: header+nav fixed, content scrolls ─── */
       body{background:var(--bg);}
-      .screen.active{
-        height:100vh;height:100dvh;
-        overflow:hidden;
-        flex-direction:column;
-      }
 
-      /* All screens full width */
+      /* All screens full width, no card shadow */
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
       #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,
       #screen-ai-chat,#screen-onboarding,#screen-blocked,#screen-loading,
       #screen-certificate{max-width:100%;width:100%;box-shadow:none;}
 
-      /* ─── HEADER: compact horizontal bar ─── */
+      /* ─── HEADER: sticky compact bar ─── */
       .app-header,.imersao-header,.community-header{
         display:flex;flex-direction:row;align-items:center;gap:16px;
-        padding:0 40px;min-height:60px;flex-shrink:0;
+        padding:0 40px;height:60px;flex-shrink:0;
+        position:sticky;top:0;z-index:200;
       }
-      .app-header::before{display:none;} /* remove decorative star */
-      .header-top{margin-bottom:0;flex:1;min-width:0;}
+      /* Hide logo text — keep only the icon */
+      .logo-name,.logo-tagline{display:none;}
+      .logo-img{width:30px;height:30px;}
+      .logo-wrap{gap:0;}
+      .app-header::before{display:none;}
+      /* Greeting becomes single line label */
+      .header-top{margin-bottom:0;flex:none;}
       .header-greeting{font-size:14px;font-weight:600;color:rgba(255,255,255,0.95);
-        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
       .header-greeting strong{color:var(--coral);}
       .header-greeting br{display:none;}
       #s-greeting-sub{display:none;}
       .badges{margin-top:0;flex-shrink:0;gap:4px;}
 
-      /* ─── NAV: horizontal tab bar ─── */
+      /* ─── NAV: sticky horizontal tab bar below header ─── */
       .bottom-nav{
-        position:static;flex-direction:row;justify-content:flex-start;
-        padding:0 36px;gap:0;height:auto;flex-shrink:0;
+        position:sticky;top:60px;z-index:199;
+        flex-direction:row;justify-content:flex-start;
+        padding:0 36px;gap:0;height:auto;
         border-top:none;border-bottom:1px solid var(--border);
-        background:#fff;padding-bottom:0;
+        background:#fff;overflow-x:auto;
       }
       .nav-item{
-        flex-direction:row;gap:7px;padding:13px 20px;height:auto;flex:none;
+        flex-direction:row;gap:7px;padding:12px 20px;height:auto;flex:none;
         font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;
         border-bottom:2px solid transparent;border-radius:0;color:var(--muted);
-        margin-bottom:-1px;transition:color 0.15s;
+        margin-bottom:-1px;transition:color 0.15s;white-space:nowrap;
       }
       .nav-item.active{color:var(--teal);border-bottom-color:var(--teal);}
       .nav-item:hover:not(.active){color:var(--teal);}
       .nav-icon{font-size:16px;}
       .nt{display:block;}
 
-      /* ─── CONTENT AREAS: fill remaining height, scroll independently ─── */
-      .stab.active,.ctab.active,.itab.active,.ptab.active{
-        flex:1;min-height:0;overflow-y:auto;padding-bottom:48px;
-      }
-      /* Padding dentro de cada tab */
-      .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:0 40px 48px;}
-      .ptab.active{padding:0 40px 48px;}
+      /* ─── CONTENT: natural page scroll, good padding ─── */
+      .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:24px 40px 48px;}
+      .ptab.active{padding:24px 40px 48px;}
 
       /* ─── HOME TAB: 2 colunas ─── */
       #stab-home.active{
