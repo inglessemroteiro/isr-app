@@ -186,22 +186,26 @@
     /* ── Desktop layout: large (full-width app) ── */
     @media(min-width:1024px){
       body{display:block;background:#eaeef0;}
-      /* All screens go full-width */
+
+      /* ── All screens: full width, no card shadow ── */
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
       #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,
       #screen-ai-chat,#screen-onboarding,#screen-blocked,#screen-loading,
       #screen-certificate{max-width:100%;width:100%;box-shadow:none;}
-      /* Header → compact horizontal bar (logo + greeting + avatar in one row) */
-      .app-header{
+
+      /* ── All headers → compact 60px horizontal bar ── */
+      .app-header,.imersao-header,.community-header{
         flex-direction:row;align-items:center;gap:20px;
         padding:0 56px;min-height:60px;
       }
       .header-top{margin-bottom:0;flex:1;}
-      .header-greeting{font-size:13px;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .header-greeting{font-size:13px;color:rgba(255,255,255,0.88);
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .header-greeting br{display:none;}
       #s-greeting-sub{display:none;}
       .badges{margin-top:0;flex-shrink:0;}
-      /* Bottom nav → clean horizontal tab bar */
+
+      /* ── All bottom-navs → horizontal tab bar below header ── */
       .bottom-nav{
         position:static;flex-direction:row;justify-content:flex-start;
         padding:0 52px;gap:0;height:auto;
@@ -215,14 +219,43 @@
       .nav-item.active{color:var(--teal);border-bottom-color:var(--teal);}
       .nav-icon{font-size:17px;}
       .nt{display:block;}
-      /* Tab content areas */
-      .stab.active{padding:32px 56px;overflow-y:auto;}
-      .ptab.active{padding:32px 56px 48px;}
-      /* Single-column home tab (no broken grid) */
-      #stab-home.active{display:flex;flex-direction:column;padding:32px 56px;}
-      /* Filter tabs wrap properly */
-      .filter-tabs{flex-wrap:wrap;}
-      /* Chamada: wider buttons */
+
+      /* ── Professor: bottom-nav is at end of DOM → move above ptabs ── */
+      #screen-prof{flex-direction:column;}
+      #screen-prof .app-header{order:1;}
+      #screen-prof .bottom-nav{order:2;}
+      #screen-prof .ptab{order:3;}
+
+      /* ── Tab content: full width with 56px lateral padding ── */
+      .stab.active,.ctab.active,.itab.active{padding:0 56px;overflow-y:auto;}
+      .ptab.active{padding:0 56px 48px;padding-bottom:48px;}
+
+      /* ── Remove the extra 20px inner margin/padding (now handled by stab/ptab) ── */
+      .stab .my-class-card,.ctab .my-class-card{margin-left:0;margin-right:0;}
+      .stab .slabel,.ptab .slabel,.ctab .slabel,.itab .slabel{margin-left:0;margin-right:0;}
+      .stab .cards,.ptab .cards,.ctab .cards{padding-left:0;padding-right:0;}
+      .stab .filter-tabs,.ctab .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
+      .stab .notices,.ctab .notices{padding-left:0;padding-right:0;}
+      .stab .recado-banner,.ptab .recado-banner{margin-left:0;margin-right:0;}
+      .stab .banner,.ptab .banner{margin-left:0;margin-right:0;}
+      .ptab .prof-search-wrap{padding-left:0;padding-right:0;}
+
+      /* ── Mais tab: strip inline padding from inner wrapper div ── */
+      #stab-mais > div{padding-left:0!important;padding-right:0!important;}
+
+      /* ── Book club tab: no padding, fill height ── */
+      #stab-bookclub.active{padding:0;flex:1;min-height:0;}
+
+      /* ── Detail screen: center content with max-width ── */
+      .detail-header,.detail-body,.presence-cta{max-width:760px;margin:0 auto;}
+
+      /* ── Settings screen: center content ── */
+      .settings-header,.settings-body{max-width:640px;margin:0 auto;}
+
+      /* ── Renewal screens: center content ── */
+      .renewal-inner,.renewal-done-inner{max-width:600px;margin:0 auto;}
+
+      /* ── Chamada: wider mark buttons ── */
       .cham-row{grid-template-columns:1fr repeat(4,48px);}
       .cs-btn{width:44px;height:44px;}
     }
