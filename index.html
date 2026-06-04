@@ -183,124 +183,145 @@
     .dv-close-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;line-height:1;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     #dv-iframe{flex:1;border:none;width:100%;background:#fff;}
 
-    /* ── Desktop layout: medium (tablet) ────────── */
-    @media(min-width:640px) and (max-width:799px){
-      body{background:var(--bg);display:flex;flex-direction:column;align-items:center;}
-      #screen-app,#screen-detail,#screen-prof,#screen-imersao,
-      #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,#screen-ai-chat,
-      #screen-onboarding,#screen-blocked,#screen-loading,#screen-certificate{
-        max-width:640px;width:100%;box-shadow:0 8px 48px rgba(22,73,81,0.10);border-radius:0 0 20px 20px;
-      }
-      .login-card{max-width:480px;}
-      #doc-viewer{background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:32px 20px;}
-      #doc-viewer.open{display:flex;}
-      .dv-modal{flex:none;width:100%;max-width:980px;height:min(90vh,860px);border-radius:16px;overflow:hidden;box-shadow:0 32px 100px rgba(0,0,0,0.5);}
-      .dv-header{border-radius:0;}
-    }
-    /* ── Desktop layout: large ── */
+    /* ── Desktop layout ── */
     @media(min-width:800px){
-      body{display:block;background:var(--bg);}
 
-      /* All screens: full width */
+      /* ─── Screen = viewport: header+nav fixed, content scrolls ─── */
+      body{background:var(--bg);}
+      .screen.active{
+        height:100vh;height:100dvh;
+        overflow:hidden;
+        flex-direction:column;
+      }
+
+      /* All screens full width */
       #screen-app,#screen-detail,#screen-prof,#screen-imersao,
       #screen-community,#screen-renewal,#screen-renewal-done,#screen-settings,
       #screen-ai-chat,#screen-onboarding,#screen-blocked,#screen-loading,
       #screen-certificate{max-width:100%;width:100%;box-shadow:none;}
 
-      /* ── HEADER: horizontal bar, compact ── */
+      /* ─── HEADER: compact horizontal bar ─── */
       .app-header,.imersao-header,.community-header{
-        flex-direction:row;align-items:center;gap:20px;
-        padding:0 48px;min-height:64px;
+        flex-direction:row;align-items:center;gap:16px;
+        padding:0 40px;min-height:60px;flex-shrink:0;
       }
-      .header-top{margin-bottom:0;flex:1;}
-      .header-greeting{font-size:14px;color:rgba(255,255,255,0.9);
+      .app-header::before{display:none;} /* remove decorative star */
+      .header-top{margin-bottom:0;flex:1;min-width:0;}
+      .header-greeting{font-size:14px;font-weight:600;color:rgba(255,255,255,0.95);
         white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .header-greeting strong{color:var(--coral);}
       .header-greeting br{display:none;}
       #s-greeting-sub{display:none;}
-      .badges{margin-top:0;flex-shrink:0;}
+      .badges{margin-top:0;flex-shrink:0;gap:4px;}
 
-      /* ── Nav: horizontal underline tabs below header ── */
+      /* ─── NAV: horizontal tab bar ─── */
       .bottom-nav{
         position:static;flex-direction:row;justify-content:flex-start;
-        padding:0 60px;gap:0;height:auto;
-        border-top:none;border-bottom:2px solid var(--border);background:#fff;
+        padding:0 36px;gap:0;height:auto;flex-shrink:0;
+        border-top:none;border-bottom:1px solid var(--border);
+        background:#fff;padding-bottom:0;
       }
       .nav-item{
-        flex-direction:row;gap:8px;padding:14px 24px;height:auto;flex:none;
-        font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;
-        border-bottom:3px solid transparent;border-radius:0;color:var(--muted);
-        margin-bottom:-2px;
+        flex-direction:row;gap:7px;padding:13px 20px;height:auto;flex:none;
+        font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;
+        border-bottom:2px solid transparent;border-radius:0;color:var(--muted);
+        margin-bottom:-1px;transition:color 0.15s;
       }
-      .nav-item.active{color:var(--teal);border-bottom-color:var(--coral);}
-      .nav-icon{font-size:18px;}
+      .nav-item.active{color:var(--teal);border-bottom-color:var(--teal);}
+      .nav-item:hover:not(.active){color:var(--teal);}
+      .nav-icon{font-size:16px;}
       .nt{display:block;}
 
-      /* ── Professor: nav at end of DOM → CSS order fix ── */
+      /* ─── CONTENT AREAS: fill remaining height, scroll independently ─── */
+      .stab.active,.ctab.active,.itab.active,.ptab.active{
+        flex:1;min-height:0;overflow-y:auto;padding-bottom:48px;
+      }
+      /* Padding dentro de cada tab */
+      .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:0 40px 48px;}
+      .ptab.active{padding:0 40px 48px;}
+
+      /* ─── HOME TAB: 2 colunas ─── */
+      #stab-home.active{
+        display:grid;
+        grid-template-columns:minmax(280px,320px) 1fr;
+        gap:0 28px;
+        padding:24px 40px 48px;
+        align-items:start;
+      }
+      #stab-home > :nth-child(1){grid-column:1;margin:0;}   /* recado-banner */
+      #stab-home > :nth-child(2){grid-column:1;margin:0;}   /* my-class-card */
+      #stab-home > :nth-child(3){grid-column:1;margin:8px 0 0;}  /* rematricula-banner */
+      #stab-home > :nth-child(4){grid-column:1;margin:8px 0 0;}  /* progress-card */
+      #stab-home > :nth-child(5){grid-column:2;padding:0;margin-top:4px;}  /* filter-tabs */
+      #stab-home > :nth-child(6){grid-column:2;margin:14px 0 8px;}  /* slabel atividades */
+      #stab-home > :nth-child(7){grid-column:2;padding:0;}  /* cards */
+      #stab-home > :nth-child(8){grid-column:2;margin:18px 0 8px;}  /* slabel avisos */
+      #stab-home > :nth-child(9){grid-column:2;padding:0;}  /* notices */
+      #stab-home > :nth-child(10){grid-column:1 / -1;}      /* help link */
+      #stab-home > :nth-child(11){grid-column:1 / -1;}      /* footer */
+      /* strip mobile margins from home children */
+      #stab-home .my-class-card{margin-left:0;margin-right:0;}
+      #stab-home .recado-banner{margin-left:0;margin-right:0;}
+      #stab-home .banner{margin-left:0;margin-right:0;}
+      #stab-home .cards{padding-left:0;padding-right:0;}
+      #stab-home .slabel{margin-left:0;margin-right:0;}
+      #stab-home .notices{padding-left:0;padding-right:0;}
+      #stab-home .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
+
+      /* ─── STRIP mobile margins from other tabs ─── */
+      .stab .my-class-card,.ctab .my-class-card{margin-left:0;margin-right:0;}
+      .stab .slabel,.ptab .slabel,.ctab .slabel,.itab .slabel{margin-left:0;margin-right:0;}
+      .stab .cards,.ptab .cards,.ctab .cards{padding-left:0;padding-right:0;}
+      .stab .filter-tabs,.ctab .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
+      .stab .notices,.ctab .notices{padding-left:0;padding-right:0;}
+      .stab .recado-banner,.ptab .recado-banner,.stab .banner,.ptab .banner{margin-left:0;margin-right:0;}
+      .ptab .prof-search-wrap{padding-left:0;padding-right:0;}
+      #stab-mais > div{padding-left:0!important;padding-right:0!important;}
+
+      /* ─── IMERSÃO: agenda cards em 2 colunas ─── */
+      .itab.active .dia-card{margin-left:0;margin-right:0;}
+      #itab-agenda.active{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        align-items:start;
+      }
+      #itab-agenda .countdown-card{grid-column:1 / -1;margin-left:0;margin-right:0;}
+      #itab-agenda .slabel{grid-column:1 / -1;margin-left:0;margin-right:0;}
+      #itab-agenda .followup-notice{grid-column:1 / -1;margin-left:0;margin-right:0;}
+      #itab-agenda .next-step-card{grid-column:1 / -1;margin-left:0;margin-right:0;}
+      #itab-agenda .dia-card{margin-left:0;margin-right:0;}
+
+      /* ─── BOOK CLUB ─── */
+      #stab-bookclub.active{padding:0;flex:1;min-height:0;}
+
+      /* ─── PROFESSOR: nav no fim do DOM → order fix ─── */
       #screen-prof{flex-direction:column;}
       #screen-prof .app-header{order:1;}
       #screen-prof .bottom-nav{order:2;}
       #screen-prof .ptab{order:3;}
 
-      /* ── HOME TAB: 2-column magazine layout ── */
-      #stab-home.active{
-        display:grid;
-        grid-template-columns:360px 1fr;
-        gap:0 32px;
-        padding:28px 64px 48px;
-        align-items:start;
-        overflow-y:auto;
-      }
-      /* Left column: class card + banners */
-      #stab-home > :nth-child(1){grid-column:1;margin:0;} /* recado-banner */
-      #stab-home > :nth-child(2){grid-column:1;margin:0;} /* my-class-card */
-      #stab-home > :nth-child(3){grid-column:1;margin:0;} /* rematricula-banner */
-      #stab-home > :nth-child(4){grid-column:1;margin:0;} /* progress-card */
-      /* Right column: filter + activities */
-      #stab-home > :nth-child(5){grid-column:2;padding:0;} /* filter-tabs */
-      #stab-home > :nth-child(6){grid-column:2;margin:16px 0 10px;} /* slabel */
-      #stab-home > :nth-child(7){grid-column:2;padding:0;} /* cards */
-      #stab-home > :nth-child(8){grid-column:2;margin:20px 0 10px;} /* slabel notices */
-      #stab-home > :nth-child(9){grid-column:2;padding:0;} /* notices */
-      /* Full width: help + footer */
-      #stab-home > :nth-child(10){grid-column:1 / -1;}
-      #stab-home > :nth-child(11){grid-column:1 / -1;}
+      /* ─── DETAIL / SETTINGS / RENEWAL: max-width centered ─── */
+      .detail-header,.detail-body,.presence-cta{max-width:760px;margin-left:auto;margin-right:auto;}
+      .settings-header,.settings-body{max-width:600px;margin-left:auto;margin-right:auto;}
+      .renewal-inner,.renewal-done-inner{max-width:560px;margin-left:auto;margin-right:auto;}
 
-      /* ── Other tabs: single column with lateral padding ── */
-      .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:0 64px;overflow-y:auto;}
-      .ptab.active{padding:0 64px 48px;}
-
-      /* Strip inner mobile margins */
-      .stab .my-class-card:not(#stab-home .my-class-card),.ctab .my-class-card{margin-left:0;margin-right:0;}
-      .stab .slabel:not(#stab-home .slabel),.ptab .slabel,.ctab .slabel,.itab .slabel{margin-left:0;margin-right:0;}
-      .stab .cards:not(#stab-home .cards),.ptab .cards,.ctab .cards{padding-left:0;padding-right:0;}
-      .stab .filter-tabs:not(#stab-home .filter-tabs),.ctab .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
-      .stab .notices:not(#stab-home .notices),.ctab .notices{padding-left:0;padding-right:0;}
-      .stab .recado-banner:not(#stab-home .recado-banner),.ptab .recado-banner{margin-left:0;margin-right:0;}
-      .stab .banner:not(#stab-home .banner),.ptab .banner{margin-left:0;margin-right:0;}
-      .ptab .prof-search-wrap{padding-left:0;padding-right:0;}
-
-      /* ── Mais tab ── */
-      #stab-mais > div{padding-left:0!important;padding-right:0!important;}
-
-      /* ── Book club ── */
-      #stab-bookclub.active{padding:0;flex:1;min-height:0;}
-
-      /* ── Detail screen ── */
-      .detail-header,.detail-body,.presence-cta{max-width:800px;margin:0 auto;}
-
-      /* ── Settings ── */
-      .settings-header,.settings-body{max-width:640px;margin:0 auto;}
-
-      /* ── Renewal ── */
-      .renewal-inner,.renewal-done-inner{max-width:600px;margin:0 auto;}
-
-      /* ── Chamada ── */
+      /* ─── CHAMADA: botões maiores ─── */
       .cham-row{grid-template-columns:1fr repeat(4,52px);}
       .cs-btn{width:48px;height:48px;}
 
-      /* ── Section label: editorial on desktop ── */
-      .slabel{font-size:11px;letter-spacing:0.2em;}
+      /* ─── DOC VIEWER ─── */
+      #doc-viewer{background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:32px 20px;}
+      #doc-viewer.open{display:flex;}
+      .dv-modal{flex:none;width:100%;max-width:980px;height:min(90vh,860px);border-radius:16px;overflow:hidden;box-shadow:0 32px 100px rgba(0,0,0,0.5);}
+
+      /* ─── LARGE SCREENS (1280px+): max content width ─── */
+      @media(min-width:1280px){
+        #stab-home.active{grid-template-columns:340px 1fr;padding:28px 64px 48px;gap:0 36px;}
+        .stab.active:not(#stab-home),.ctab.active,.itab.active,.ptab.active{padding:0 64px 48px;}
+        .app-header,.imersao-header,.community-header{padding:0 60px;}
+        .bottom-nav{padding:0 56px;}
+      }
     }
 
     .recado-banner{margin:16px 20px 0;padding:14px 16px;border-radius:14px;background:var(--teal);color:#fff;display:flex;gap:12px;align-items:flex-start;}
