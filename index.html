@@ -904,9 +904,10 @@
 
   <!-- STUDENT BOTTOM NAV -->
   <div class="bottom-nav">
-    <button class="nav-item active" onclick="switchStudentTab('home',this)"><span class="nav-icon">🏠</span><span class="nt" data-pt="Início" data-en="Home">Home</span></button>
+    <button class="nav-item active" onclick="switchStudentTab('home',this)"><span class="nav-icon">🏠</span><span class="nt" data-pt="Início" data-en="Home">Início</span></button>
+    <button class="nav-item" onclick="switchStudentTab('bookclub',this)"><span class="nav-icon">📚</span><span class="nt" data-pt="Materiais" data-en="Materials">Materiais</span></button>
+    <button class="nav-item" id="nav-comunidade-btn" onclick="openStudentCommunity(this)"><span class="nav-icon">💬</span><span class="nt" data-pt="Comunidade" data-en="Community">Comunidade</span></button>
     <button class="nav-item" onclick="openAIChat()"><span class="nav-icon">✦</span><span class="nt" data-pt="Flin" data-en="Flin">Flin</span></button>
-    <button class="nav-item" onclick="switchStudentTab('bookclub',this)"><span class="nav-icon">📖</span><span class="nt" data-pt="Book Club" data-en="Book Club">Book Club</span></button>
     <button class="nav-item" onclick="switchStudentTab('mais',this)"><span class="nav-icon">⋯</span><span class="nt" data-pt="Mais" data-en="More">Mais</span></button>
   </div>
 
@@ -1462,6 +1463,7 @@
 <!-- COMMUNITY APP (Priority 4) -->
 <div id="screen-community" class="screen">
   <div class="community-header">
+    <div class="back-btn" id="cm-back-btn" onclick="closeCommunityToStudent()" style="display:none">← Voltar</div>
     <div class="header-top">
       <div class="logo-wrap">
         <img class="logo-img" src="https://d1yei2z3i6k35z.cloudfront.net/10277034/69b287e3c48d6_logograndeISR_logo2_01.png" alt="ISR" style="filter:brightness(0) invert(1)"/>
@@ -2643,6 +2645,24 @@ function switchStudentTab(name,el){
   if(name==='bookclub'){ loadBookClubTab(); }
 }
 
+function openStudentCommunity(el){
+  document.querySelectorAll('#screen-app .nav-item').forEach(function(n){n.classList.remove('active');});
+  el.classList.add('active');
+  var backBtn = document.getElementById('cm-back-btn');
+  if(backBtn) backBtn.style.display = '';
+  showCommunityApp();
+  showScreen('community');
+}
+
+function closeCommunityToStudent(){
+  var backBtn = document.getElementById('cm-back-btn');
+  if(backBtn) backBtn.style.display = 'none';
+  showScreen('app');
+  document.querySelectorAll('#screen-app .nav-item').forEach(function(n){n.classList.remove('active');});
+  var homeBtn = document.querySelector('#screen-app .nav-item');
+  if(homeBtn) homeBtn.classList.add('active');
+}
+
 function renderStudentDesafio(){
   // Find current week challenge
   var now = new Date();
@@ -3138,6 +3158,11 @@ function submitCicloInterest(){
 // ════════════════════════════════
 function showCommunityApp(){
   var u=state.user;
+  // If community role user (not a student), hide back button
+  if(u.role==='comunidade'){
+    var cmBack=document.getElementById('cm-back-btn');
+    if(cmBack) cmBack.style.display='none';
+  }
   var first=u.nome.split(' ')[0];
   var cmGr=document.getElementById('cm-greeting'); if(cmGr) cmGr.textContent=first;
   var cmAv=document.getElementById('cm-avatar-btn'); if(cmAv) cmAv.textContent=first[0];
