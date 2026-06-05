@@ -6,13 +6,14 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: '{}' };
 
   try {
-    const { nome, email, nota, source } = JSON.parse(event.body);
+    const { nome, email, whatsapp, nota, source } = JSON.parse(event.body);
     if (!nome) return { statusCode: 400, headers, body: JSON.stringify({ error: 'missing nome' }) };
 
     const params = new URLSearchParams({
       action: 'saveInterest',
       nome,
       email: email || '',
+      whatsapp: whatsapp || '',
       nota: nota || '',
       source: source || '',
       createdAt: new Date().toISOString()

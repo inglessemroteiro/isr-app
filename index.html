@@ -1477,6 +1477,10 @@
       <input class="im-modal-input" id="interest-email" type="email" placeholder="seu@email.com"/>
     </div>
     <div class="im-modal-field">
+      <div class="im-modal-label">WhatsApp</div>
+      <input class="im-modal-input" id="interest-whatsapp" type="tel" placeholder="+55 11 99999-9999"/>
+    </div>
+    <div class="im-modal-field">
       <div class="im-modal-label">Qual horário funciona melhor? (opcional)</div>
       <input class="im-modal-input" id="interest-nota" type="text" placeholder="Ex: manhãs de segunda, noites de terça…"/>
     </div>
@@ -3158,14 +3162,16 @@ function closeInterestModalDirect(){
 function submitCicloInterest(){
   var nome = (document.getElementById('interest-nome')||{}).value || '';
   var email = (document.getElementById('interest-email')||{}).value || '';
+  var whatsapp = (document.getElementById('interest-whatsapp')||{}).value || '';
   var nota = (document.getElementById('interest-nota')||{}).value || '';
   var btn = document.getElementById('interest-submit-btn');
   if(!nome){ showToast('Coloca seu nome 😊'); return; }
+  if(!whatsapp){ showToast('Coloca seu WhatsApp 📱'); return; }
   if(btn){ btn.textContent='Enviando…'; btn.disabled=true; }
   fetch('/.netlify/functions/save-interest', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({nome:nome, email:email, nota:nota, source:'Imersão Julho 2026'})
+    body: JSON.stringify({nome:nome, email:email, whatsapp:whatsapp, nota:nota, source:'Agosto 2026'})
   })
   .then(function(r){ return r.json(); })
   .then(function(){
