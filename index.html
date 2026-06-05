@@ -112,6 +112,10 @@
     .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
     .nav-item.active{color:var(--teal);}
     .nav-icon{font-size:19px;line-height:1;}
+    /* Student nav: 5 itens → só ícone no mobile (texto desktop vem no @media) */
+    #screen-app .bottom-nav .nt{display:none;}
+    #screen-app .bottom-nav .nav-icon{font-size:26px;}
+    #screen-app .bottom-nav .nav-item{padding:14px 4px;}
 
     /* SECTION LABEL */
     .slabel{margin:20px 20px 10px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;}
@@ -194,39 +198,54 @@
       #screen-ai-chat,#screen-onboarding,#screen-blocked,#screen-loading,
       #screen-certificate{max-width:100%;width:100%;box-shadow:none;}
 
-      /* ─── HEADER: sticky, mais alto, logo + texto + greeting + avatar ─── */
-      .app-header,.imersao-header,.community-header{
+      /* ─── HEADERS HORIZONTAIS: Imersão, Community, Professor (80px) ─── */
+      .imersao-header,.community-header,#screen-prof .app-header{
         display:flex;flex-direction:row;align-items:center;
         padding:0 40px;height:80px;flex-shrink:0;
         position:sticky;top:0;z-index:200;
       }
-      .app-header::before{display:none;}
-      /* Logo: icon + nome visível */
+      .imersao-header .header-top,.community-header .header-top,#screen-prof .app-header .header-top{
+        margin-bottom:0;flex:none;justify-content:flex-start;}
+      .imersao-header .header-greeting,.community-header .header-greeting,#screen-prof .app-header .header-greeting{
+        flex:1;padding:0 24px;font-size:18px;font-weight:700;
+        color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .imersao-header .header-actions,.community-header .header-actions,#screen-prof .app-header .header-actions{
+        position:absolute;right:40px;top:50%;transform:translateY(-50%);
+        display:flex;gap:10px;align-items:center;}
+
+      /* ─── STUDENT HEADER: vertical, espaçoso ─── */
+      #screen-app .app-header{
+        display:flex;flex-direction:column;justify-content:center;
+        padding:0 60px;height:160px;flex-shrink:0;
+        position:sticky;top:0;z-index:200;
+      }
+      #screen-app .app-header::before{display:none;}
+      #screen-app .app-header .header-top{margin-bottom:12px;flex:none;justify-content:space-between;align-items:center;}
+      #screen-app .app-header .header-greeting{
+        font-size:22px;font-weight:700;color:#fff;
+        white-space:normal;padding:0;line-height:1.3;}
+      #screen-app .app-header .header-actions{position:static;transform:none;display:flex;gap:10px;align-items:center;}
+      #s-greeting-sub{font-size:14px;font-weight:400;opacity:0.7;display:inline;}
+      /* Logo (todos os headers) */
       .logo-img{width:36px;height:36px;}
       .logo-name{display:block;font-size:12px;font-weight:700;letter-spacing:0.1em;}
       .logo-tagline{display:block;font-size:9px;}
       .logo-wrap{gap:10px;flex-shrink:0;}
-      /* header-top: logo à esquerda, sem space-between */
-      .header-top{margin-bottom:0;flex:none;justify-content:flex-start;}
-      /* Greeting no centro */
-      .header-greeting{flex:1;padding:0 24px;font-size:18px;font-weight:700;
-        color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .header-greeting strong{color:var(--coral);}
-      .header-greeting br{display:none;}
-      #s-greeting-sub{display:none;}
-      .badges{display:none;}/* badges ficam apenas no mobile */
-      /* Avatar e ações à direita */
-      .header-actions{position:absolute;right:40px;top:50%;transform:translateY(-50%);
-        display:flex;gap:10px;align-items:center;}
+      .badges{display:none;}
 
       /* ─── NAV: sticky abaixo do header, todos os itens visíveis ─── */
       .bottom-nav{
-        position:sticky;top:80px;z-index:199;
+        position:sticky;z-index:199;
         display:flex;flex-direction:row;justify-content:stretch;
         padding:0;gap:0;height:auto;flex-shrink:0;
         border-top:none;border-bottom:2px solid var(--border);
         background:#fff;overflow:visible;
       }
+      /* Student nav: abaixo do header de 160px */
+      #screen-app .bottom-nav{top:160px;}
+      /* Outros screens: header 80px */
+      #screen-imersao .bottom-nav,#screen-prof .bottom-nav,#screen-community .bottom-nav{top:80px;}
       .nav-item{
         display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;
         padding:14px 8px;height:auto;flex:1;/* igual para todos */
@@ -238,6 +257,10 @@
       .nav-item:hover:not(.active){color:var(--teal);}
       .nav-icon{font-size:18px;}
       .nt{display:block;}
+      /* Restaurar texto do nav do aluno no desktop (override do mobile icon-only) */
+      #screen-app .bottom-nav .nt{display:block;}
+      #screen-app .bottom-nav .nav-icon{font-size:18px;}
+      #screen-app .bottom-nav .nav-item{padding:14px 8px;}
 
       /* ─── CONTENT: natural page scroll, good padding ─── */
       .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:24px 40px 48px;}
@@ -315,8 +338,10 @@
       @media(min-width:1280px){
         #stab-home.active{grid-template-columns:340px 1fr;padding:28px 64px 48px;gap:0 36px;}
         .stab.active:not(#stab-home),.ctab.active,.itab.active,.ptab.active{padding:0 64px 48px;}
-        .app-header,.imersao-header,.community-header{padding:0 60px;}
-        .bottom-nav{padding:0 56px;}
+        .imersao-header,.community-header,#screen-prof .app-header{padding:0 60px;}
+        #screen-app .app-header{padding:0 96px;}
+        #screen-imersao .bottom-nav,#screen-prof .bottom-nav,#screen-community .bottom-nav{padding:0 56px;}
+        #screen-app .bottom-nav{top:160px;}
       }
     }
 
