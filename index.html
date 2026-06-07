@@ -249,33 +249,32 @@
       .stab.active:not(#stab-home),.ctab.active,.itab.active{padding:20px 28px 40px;}
       .ptab.active{padding:20px 28px 40px;}
 
-      /* ─── HOME TAB: 2 colunas ─── */
-      #stab-home.active{
-        display:grid;
-        grid-template-columns:minmax(280px,320px) 1fr;
-        gap:0 24px;
-        padding:20px 28px 40px;
-        align-items:start;
-      }
-      #stab-home > :nth-child(1){grid-column:1;margin:0;}   /* recado-banner */
-      #stab-home > :nth-child(2){grid-column:1;margin:0;}   /* my-class-card */
-      #stab-home > :nth-child(3){grid-column:1;margin:8px 0 0;}  /* rematricula-banner */
-      #stab-home > :nth-child(4){grid-column:1;margin:8px 0 0;}  /* progress-card */
-      #stab-home > :nth-child(5){grid-column:2;padding:0;margin-top:4px;}  /* filter-tabs */
-      #stab-home > :nth-child(6){grid-column:2;margin:14px 0 8px;}  /* slabel atividades */
-      #stab-home > :nth-child(7){grid-column:2;padding:0;}  /* cards */
-      #stab-home > :nth-child(8){grid-column:2;margin:18px 0 8px;}  /* slabel avisos */
-      #stab-home > :nth-child(9){grid-column:2;padding:0;}  /* notices */
-      #stab-home > :nth-child(10){grid-column:1 / -1;}      /* help link */
-      #stab-home > :nth-child(11){grid-column:1 / -1;}      /* footer */
-      /* strip mobile margins from home children */
+      /* ─── HOME TAB: 2 colunas (float + BFC) ─── */
+      #stab-home.active{display:block;overflow:hidden;padding:20px 28px 40px;}
+      /* Left column: stacked floats (class card, banner, etc.) */
+      #stab-home > :nth-child(1),
+      #stab-home > :nth-child(2),
+      #stab-home > :nth-child(3),
+      #stab-home > :nth-child(4){float:left;clear:left;width:300px;margin-bottom:16px;}
+      /* Right column: overflow:hidden creates BFC → flows beside float, margin for gap */
+      #stab-home > :nth-child(5),
+      #stab-home > :nth-child(6),
+      #stab-home > :nth-child(7),
+      #stab-home > :nth-child(8),
+      #stab-home > :nth-child(9){overflow:hidden;margin-left:324px;}  /* 300px + 24px gap */
+      /* Full-width items clear the floats */
+      #stab-home > :nth-child(10),
+      #stab-home > :nth-child(11){clear:both;}
+      /* Strip mobile margins from home children (BEFORE float rules so float margin-left wins) */
       #stab-home .my-class-card{margin-left:0;margin-right:0;}
       #stab-home .recado-banner{margin-left:0;margin-right:0;}
       #stab-home .banner{margin-left:0;margin-right:0;}
       #stab-home .cards{padding-left:0;padding-right:0;}
-      #stab-home .slabel{margin-left:0;margin-right:0;}
       #stab-home .notices{padding-left:0;padding-right:0;}
       #stab-home .filter-tabs{padding-left:0;padding-right:0;flex-wrap:wrap;overflow-x:visible;}
+      /* slabel margin: keep top/bottom, override left/right AFTER strip so margin-left:324px wins */
+      #stab-home > :nth-child(6){margin-top:14px;margin-bottom:8px;}
+      #stab-home > :nth-child(8){margin-top:18px;margin-bottom:8px;}
 
       /* ─── STRIP mobile margins from other tabs ─── */
       .stab .my-class-card,.ctab .my-class-card{margin-left:0;margin-right:0;}
@@ -326,7 +325,16 @@
 
       /* ─── LARGE SCREENS (1280px+): mais padding ─── */
       @media(min-width:1280px){
-        #stab-home.active{grid-template-columns:340px 1fr;padding:24px 56px 40px;gap:0 32px;}
+        #stab-home.active{padding:24px 56px 40px;}
+        #stab-home > :nth-child(1),
+        #stab-home > :nth-child(2),
+        #stab-home > :nth-child(3),
+        #stab-home > :nth-child(4){width:340px;}
+        #stab-home > :nth-child(5),
+        #stab-home > :nth-child(6),
+        #stab-home > :nth-child(7),
+        #stab-home > :nth-child(8),
+        #stab-home > :nth-child(9){margin-left:372px;}  /* 340px + 32px gap */
         .stab.active:not(#stab-home),.ctab.active,.itab.active,.ptab.active{padding:0 56px 40px;}
         .app-header,.imersao-header,.community-header{padding:36px 80px 28px;}
         .bottom-nav{padding:0 40px;}
