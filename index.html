@@ -250,14 +250,12 @@
       .ptab.active{padding:20px 28px 40px;}
 
       /* ─── HOME TAB: 2 colunas (float + BFC) ─── */
-      #stab-home.active{display:flow-root;padding:20px 28px 40px;}
+      #stab-home.active{display:block;overflow:hidden;padding:20px 28px 40px;}
       /* Left column: stacked floats (class card, banner, etc.) */
       #stab-home > :nth-child(1),
       #stab-home > :nth-child(2),
       #stab-home > :nth-child(3),
       #stab-home > :nth-child(4){float:left;clear:left;width:300px;margin-bottom:16px;}
-      /* Class card sticky in left column on desktop */
-      #stab-home > :nth-child(2){position:sticky;top:204px;}
       /* Right column: overflow:hidden creates BFC → flows beside float, margin for gap */
       #stab-home > :nth-child(5),
       #stab-home > :nth-child(6),
@@ -336,7 +334,6 @@
         #stab-home > :nth-child(2),
         #stab-home > :nth-child(3),
         #stab-home > :nth-child(4){width:340px;}
-        #stab-home > :nth-child(2){top:220px;}
         #stab-home > :nth-child(5),
         #stab-home > :nth-child(6),
         #stab-home > :nth-child(7),
@@ -994,7 +991,7 @@
         <div class="mc-materials-inner" id="mc-materials-inner"></div>
       </div>
     </div>
-    <div class="banner" id="rematricula-banner">
+    <div class="banner" id="rematricula-banner" style="display:none">
       <div class="banner-icon">✦</div>
       <div class="banner-body">
         <div class="banner-label">Re-enrollment open</div>
@@ -2250,8 +2247,8 @@ function init(){
     load();
     buildLoginUI();
     applyLang();
-    if(state.user && state.user.email && USERS[state.user.email]){
-      enterApp();
+    if(state.user && state.user.email && state.user.role){
+      enterApp();   // session is valid — skip login
     } else {
       state.user=null;
       showScreen('login');
@@ -2261,6 +2258,16 @@ function init(){
     try { showScreen('login'); } catch(_){}
   }
 }
+
+// ── History API: browser back navigates within the app ──
+var _histNavPop = false;
+window.addEventListener('popstate', function(e){
+  if(e.state && e.state.isrScreen){
+    _histNavPop = true;
+    showScreen(e.state.isrScreen);
+    _histNavPop = false;
+  }
+});
 
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
@@ -2284,6 +2291,10 @@ function showScreen(name){
   }
   try{ window.scrollTo(0,0); }catch(_){}
   if(name==='settings') try{ renderSettings(); }catch(e){ console.error('renderSettings error:',e); }
+  // Push to browser history so back button navigates within app
+  if(!_histNavPop && name !== 'loading'){
+    try{ history.pushState({isrScreen: name}, '', window.location.pathname); } catch(_){}
+  }
 }
 
 function goBackFromSettings(){
