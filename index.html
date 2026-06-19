@@ -850,14 +850,14 @@
       /* Constrain imersão & community content to readable width */
       .itab.active{max-width:820px;margin-left:auto;margin-right:auto;width:100%;}
       .ctab.active{max-width:820px;margin-left:auto;margin-right:auto;width:100%;}
-      /* Flin header: ID+class specificity wins over base .chat-header */
+      /* Flin header: !important overrides base .chat-header regardless of order */
       #screen-ai-chat .chat-header{
-        padding:32px 60px 24px;min-height:140px;height:auto;
-        display:flex;flex-direction:column;justify-content:center;
-        position:sticky;top:0;z-index:200;flex-shrink:0;
+        padding:32px 60px 24px!important;min-height:140px!important;height:auto!important;
+        display:flex!important;flex-direction:column!important;justify-content:center!important;
+        position:relative!important;flex-shrink:0!important;
       }
       /* Flin screen: flex column so chat area fills remaining height */
-      #screen-ai-chat{display:flex;flex-direction:column;overflow:hidden;}
+      #screen-ai-chat{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
       /* Flin: constrain content to readable column */
       #flin-selector{max-width:720px;margin-left:auto;margin-right:auto;padding-left:0;padding-right:0;}
       #flin-chat-area{display:flex;flex:1;flex-direction:column;overflow:hidden;}
@@ -5235,10 +5235,14 @@ function openAIChat(){
   var backBtn = document.getElementById('flin-back-btn');
   if(backBtn) backBtn.onclick = closeAIChat;
 
-  // Set student name in selector greeting
+  // Set student name in selector greeting — fallback to already-rendered #s-greeting
   var u = state.user;
   var nameEl = document.getElementById('flin-sel-name');
-  if(nameEl && u) nameEl.textContent = u.nome ? u.nome.split(' ')[0] : '';
+  if(nameEl){
+    var fn = (u && (u.nome || u.name || u.firstName || '')) || '';
+    if(!fn){ var sg=document.getElementById('s-greeting'); fn=sg?sg.textContent.replace('!','').trim():''; }
+    nameEl.textContent = fn ? fn.split(' ')[0] : '';
+  }
 
   var titleEl = document.getElementById('ai-chat-title');
   if(titleEl) titleEl.textContent = 'Praticar inglês';
