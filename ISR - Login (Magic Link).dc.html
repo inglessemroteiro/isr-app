@@ -32,8 +32,11 @@
       <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 24px;">
         <label style="display: block; font-size: 11px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">Seu email</label>
         <input ref="{{ inputRef }}" type="email" placeholder="voce@email.com" onkeydown="{{ onKey }}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; outline: none; margin-bottom: 16px;" />
-        <button onclick="{{ submit }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">Enviar link de acesso →</button>
-        <p style="margin: 16px 0 0; font-size: 11px; color: #9b8b7e; line-height: 1.6; text-align: center;">Sem senha. Use o email cadastrado na sua matrícula — alunos e professores entram pelo mesmo acesso.</p>
+        <sc-if value="{{ error }}">
+          <p style="margin: 0 0 10px; font-size: 12px; color: #e05a4b; text-align: center;">{{ error }}</p>
+        </sc-if>
+        <button onclick="{{ submit }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">{{ loading ? "Verificando…" : "Entrar →" }}</button>
+        <p style="margin: 16px 0 0; font-size: 11px; color: #9b8b7e; line-height: 1.6; text-align: center;">Use o email cadastrado na sua matrícula.</p>
       </div>
     </sc-if>
 
@@ -45,22 +48,36 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { sent: false, email: "" };
+  state = { loading: false, error: "" };
   inputRef = React.createRef();
   renderVals() {
-    const submit = () => {
-      const v = (this.inputRef.current && this.inputRef.current.value || "").trim();
+    const submit = async () => {
+      const v = (this.inputRef.current && this.inputRef.current.value || "").trim().toLowerCase();
       if (!v) return;
-      this.setState({ sent: true, email: v });
+      this.setState({ loading: true, error: "" });
+      try {
+        const r = await fetch("/.netlify/functions/data?email=" + encodeURIComponent(v));
+        const data = await r.json();
+        if (data.error) {
+          this.setState({ loading: false, error: "Email não encontrado. Verifique e tente novamente." });
+          return;
+        }
+        localStorage.setItem("isr_user", JSON.stringify(data));
+        window.location.href = "ISR%20-%20Home%20v7%20(Brand%20Correct).dc.html";
+      } catch (e) {
+        this.setState({ loading: false, error: "Sem conexão. Tente novamente." });
+      }
     };
     return {
-      sent: this.state.sent,
-      notSent: !this.state.sent,
-      email: this.state.email,
+      sent: false,
+      notSent: true,
+      email: "",
       inputRef: this.inputRef,
+      loading: this.state.loading,
+      error: this.state.error,
       submit,
       onKey: (e) => { if (e.key === "Enter") submit(); },
-      reset: () => this.setState({ sent: false }),
+      reset: () => this.setState({ error: "" }),
     };
   }
 }
