@@ -42,13 +42,13 @@
 
           <!-- Texto -->
           <div style="padding: 14px 16px;">
-            <h2 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #2c3e50; letter-spacing: -0.2px;">Sua aula é HOJE</h2>
-            <p style="margin: 0 0 2px 0; font-size: 11px; color: #7d6d63;">Terça, 19h00 BRL (em 3h)</p>
-            <p style="margin: 0 0 12px 0; font-size: 10px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">Speaking Group • Prof. Agatha</p>
-            
+            <h2 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #2c3e50; letter-spacing: -0.2px;">{{ nextClassLabel }}</h2>
+            <p style="margin: 0 0 2px 0; font-size: 11px; color: #7d6d63;">{{ nextClassDate }}</p>
+            <p style="margin: 0 0 12px 0; font-size: 10px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ turma }}{{ profLabel }}</p>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <button style="background: #f5f3f0; border: 1px solid #ddd; color: #2c3e50; padding: 8px; font-size: 10px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 2px;">Material</button>
-              <button style="background: #4a8fa0; border: none; color: #fff; padding: 8px; font-size: 10px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 6px rgba(74,143,160,0.2);">Entrar</button>
+              <a href="{{ meetLink }}" target="_blank" style="background: #4a8fa0; border: none; color: #fff; padding: 8px; font-size: 10px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 6px rgba(74,143,160,0.2); text-align: center; text-decoration: none;">Entrar</a>
             </div>
           </div>
 
@@ -213,10 +213,19 @@ class Component extends DCLogic {
   renderVals() {
     let user = {};
     try { user = JSON.parse(localStorage.getItem("isr_user") || "{}"); } catch(e) {}
-    const firstName = (user.nome || user.name || "").split(" ")[0] || "João";
+    const firstName = (user.nome || user.name || "").split(" ")[0] || "—";
+    const prof = user.prof || user.professor || "";
+    const meet = user.meetLink || user.linkMeet || "#";
+    const nextDate = user.nextDate || user.horario || "";
+    const nextLabel = nextDate.toLowerCase().includes("hoje") ? "Sua aula é HOJE" : (nextDate ? "Sua próxima aula" : "Sem aula agendada");
     return {
       userName: firstName,
-      userLevel: user.nivel || user.level || "Essentials"
+      userLevel: user.nivel || user.turma || "—",
+      turma: user.turma || "",
+      profLabel: prof ? " • Prof. " + prof.split(" ")[0] : "",
+      nextClassLabel: nextLabel,
+      nextClassDate: nextDate,
+      meetLink: meet,
     };
   }
 }
