@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #efece6; color: #1a1a1a; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d4d0c8; border-radius: 3px; }
+  </style>
+</helmet>
+
+<div style="min-height: 100vh; padding: 48px 24px; display: flex; justify-content: center;">
+  <div style="width: 100%; max-width: 720px;">
+
+    <div style="margin-bottom: 28px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #348a8e;">Caderno do Aluno · Importação</div>
+      <h1 style="font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-top: 6px;">Importar do Google Docs</h1>
+      <p style="font-size: 15px; color: #6b6b6b; margin-top: 8px; line-height: 1.5;">Cada <strong style="color: #1a1a1a;">Título 1</strong> do documento vira uma <strong style="color: #1a1a1a;">aula</strong> no app. Confira a divisão antes de publicar.</p>
+    </div>
+
+    <sc-if value="{{ showConnect }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); padding: 34px 32px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+          <span style="width: 30px; height: 30px; border-radius: 7px; background: #e8f0fe; color: #1a73e8; font-size: 16px; display: flex; align-items: center; justify-content: center;">📄</span>
+          <div style="font-size: 16px; font-weight: 700;">Documento do Google Docs</div>
+        </div>
+        <p style="font-size: 13px; color: #6b6b6b; margin: 6px 0 20px; line-height: 1.5;">Cole o link do documento (com acesso de leitura) ou conecte sua conta Google.</p>
+
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9b8b7e;">Link do Google Docs</label>
+        <input ref="{{ linkRef }}" onKeyDown="{{ onKey }}" placeholder="https://docs.google.com/document/d/…" style="width: 100%; margin-top: 6px; padding: 13px 14px; font-size: 14px; font-family: inherit; color: #1a1a1a; border: 1px solid #ddd; border-radius: 10px; outline: none;" />
+
+        <div style="display: flex; gap: 12px; align-items: center; margin-top: 18px; flex-wrap: wrap;">
+          <button onClick="{{ importLink }}" style="background: #fc9082; color: #fff; border: none; border-radius: 10px; padding: 13px 22px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;">Importar documento</button>
+          <span style="color: #9b8b7e; font-size: 12px;">ou</span>
+          <button onClick="{{ connectDrive }}" style="background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 13px 18px; font-size: 13px; font-weight: 700; color: #444; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 8px;">🔗 Conectar Google Drive</button>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 16px;">
+        <button onClick="{{ useSample }}" style="background: none; border: none; color: #348a8e; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; font-family: inherit;">Ver com um documento de exemplo</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showReview }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); overflow: hidden; animation: fadeUp .3s ease;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #f0ede7; background: #faf9f6;">
+          <span style="width: 30px; height: 30px; border-radius: 7px; background: #e8f0fe; color: #1a73e8; font-size: 16px; display: flex; align-items: center; justify-content: center; flex: none;">📄</span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 14px; font-weight: 700;">{{ fileName }}</div>
+            <div style="font-size: 12px; color: #6b6b6b;">{{ summary }}</div>
+          </div>
+          <button onClick="{{ reset }}" style="background: #f0ede7; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; color: #6b6b6b; cursor: pointer; font-family: inherit;">Trocar documento</button>
+        </div>
+        <div style="padding: 10px;">
+          <sc-for list="{{ aulas }}" as="a" hint-placeholder-count="4">
+            <div style="display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-bottom: 1px solid #f6f3ee;">
+              <div style="width: 34px; height: 34px; border-radius: 9px; background: rgba(52,138,142,.12); color: #348a8e; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex: none;">{{ a.n }}</div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9b8b7e;">Título 1 → Aula {{ a.n }}</div>
+                <input value="{{ a.title }}" onInput="{{ a.onTitle }}" style="width: 100%; border: none; font-size: 16px; font-weight: 700; font-family: inherit; color: #1a1a1a; padding: 3px 0; outline: none; background: none;" />
+                <div style="font-size: 13px; color: #6b6b6b; margin-top: 2px; line-height: 1.45;">{{ a.preview }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 18px 22px; border-top: 1px solid #f0ede7;">
+          <button onClick="{{ publish }}" style="background: #fc9082; color: #fff; border: none; border-radius: 10px; padding: 14px 24px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;">{{ publishLabel }}</button>
+          <span style="font-size: 12px; color: #6b6b6b;">As aulas entram na Turma A, prontas para editar.</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showDone }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #fff; border-radius: 16px; padding: 48px 32px; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,.06); animation: fadeUp .3s ease;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(158,201,112,.2); color: #5a9a2e; font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">✓</div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-top: 18px;">{{ doneTitle }}</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin-top: 8px; line-height: 1.5;">As aulas já aparecem na navegação do caderno, prontas para revisar.</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 24px; flex-wrap: wrap;">
+          <a href="ISR - Tela de Aula (Editor Colaborativo).dc.html?role=prof&turma=Turma%20A" style="text-decoration: none; background: #348a8e; color: #fff; border-radius: 10px; padding: 12px 22px; font-size: 13px; font-weight: 700;">Abrir o caderno</a>
+          <button onClick="{{ reset }}" style="background: #f0ede7; border: none; border-radius: 10px; padding: 12px 22px; font-size: 13px; font-weight: 700; color: #6b6b6b; cursor: pointer; font-family: inherit;">Importar outro</button>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;760px&quot;, &quot;height&quot;: &quot;680px&quot;}}">
+class Component extends DCLogic {
+  state = { stage: 'connect', fileName: '', aulas: [] };
+  linkRef = React.createRef();
+
+  sample = () => ([
+    { title: 'Quem sou eu — apresentações', preview: 'Aquecimento: cada aluno se apresenta em três frases. Verbo to be e vocabulário pessoal.' },
+    { title: 'Minha rotina e horários', preview: 'Present simple, advérbios de frequência e como falar sobre o dia a dia.' },
+    { title: 'Comida e preferências', preview: 'Like / dislike, contáveis e incontáveis, e um diálogo no restaurante.' },
+    { title: 'A célula: a mitocôndria', preview: 'Leitura guiada, glossário e produção escrita sobre as organelas.' },
+  ]);
+
+  loadDoc = (name) => {
+    this.setState({ fileName: name, aulas: this.sample(), stage: 'review' });
+  };
+
+  publishAulas = () => {
+    try {
+      localStorage.setItem('isr_aulas_importadas', JSON.stringify({
+        turma: 'Turma A',
+        aulas: this.state.aulas.map(a => a.title),
+        em: new Date().toISOString(),
+      }));
+    } catch (e) {}
+    this.setState({ stage: 'done' });
+  };
+
+  renderVals() {
+    const n = this.state.aulas.length;
+    return {
+      showConnect: this.state.stage === 'connect',
+      showReview: this.state.stage === 'review',
+      showDone: this.state.stage === 'done',
+      fileName: this.state.fileName || 'Documento do Google Docs',
+      summary: n + ' Título 1 encontrados → ' + n + ' aulas',
+      publishLabel: 'Publicar ' + n + (n === 1 ? ' aula' : ' aulas') + ' no app',
+      doneTitle: n + (n === 1 ? ' aula publicada' : ' aulas publicadas') + ' na Turma A',
+      linkRef: this.linkRef,
+      onKey: (e) => { if (e.key === 'Enter') this.loadDoc('Caderno — Turma A · Google Docs'); },
+      importLink: () => this.loadDoc('Caderno — Turma A · Google Docs'),
+      connectDrive: () => this.loadDoc('Caderno — Turma A · Google Docs'),
+      useSample: () => this.loadDoc('Caderno de exemplo · Google Docs'),
+      reset: () => this.setState({ stage: 'connect', aulas: [], fileName: '' }),
+      publish: () => this.publishAulas(),
+      aulas: this.state.aulas.map((a, i) => ({
+        n: i + 1,
+        title: a.title,
+        preview: a.preview,
+        onTitle: (e) => {
+          const v = e.target.value;
+          this.setState(s => {
+            const arr = s.aulas.slice();
+            arr[i] = Object.assign({}, arr[i], { title: v });
+            return { aulas: arr };
+          });
+        },
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; display: flex; flex-direction: column;">
+
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 32px 28px; max-width: 420px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+
+    <div style="text-align: center; margin-bottom: 36px;">
+      <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" style="height: 52px; width: auto; margin-bottom: 24px;" alt="ISR" />
+      <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px;">Área do Aluno</h1>
+      <p style="margin: 0; font-size: 13px; color: #9b8b7e; line-height: 1.5;">Inglês sem Roteiro</p>
+    </div>
+
+    <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-top: 3px solid #2a9d8f; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 28px 24px; text-align: center;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(42,157,143,0.12); color: #2a9d8f; font-size: 26px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">✓</div>
+        <h2 style="margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #164951;">Link enviado!</h2>
+        <p style="margin: 0 0 4px; font-size: 13px; color: #666; line-height: 1.6;">Enviamos um link de acesso para</p>
+        <p style="margin: 0 0 20px; font-size: 13px; font-weight: 700; color: #164951;">{{ email }}</p>
+        <p style="margin: 0 0 20px; font-size: 12px; color: #9b8b7e; line-height: 1.6;">Abra o email e toque no botão para entrar. O link expira em 15 minutos.</p>
+        <button onclick="{{ reset }}" style="background: none; border: none; color: #2a9d8f; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; cursor: pointer;">Usar outro email</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 24px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">Seu email</label>
+        <input ref="{{ inputRef }}" type="email" placeholder="voce@email.com" onkeydown="{{ onKey }}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; outline: none; margin-bottom: 16px;" />
+        <button onclick="{{ submit }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">Enviar link de acesso →</button>
+        <p style="margin: 16px 0 0; font-size: 11px; color: #9b8b7e; line-height: 1.6; text-align: center;">Sem senha. Use o email cadastrado na sua matrícula — alunos e professores entram pelo mesmo acesso.</p>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <footer style="text-align: center; padding: 20px; font-size: 10px; color: #b5a99c; letter-spacing: 0.3px;">inglessemroteiro.com.br</footer>
+
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { sent: false, email: "" };
+  inputRef = React.createRef();
+  renderVals() {
+    const submit = () => {
+      const v = (this.inputRef.current && this.inputRef.current.value || "").trim();
+      if (!v) return;
+      this.setState({ sent: true, email: v });
+    };
+    return {
+      sent: this.state.sent,
+      notSent: !this.state.sent,
+      email: this.state.email,
+      inputRef: this.inputRef,
+      submit,
+      onKey: (e) => { if (e.key === "Enter") submit(); },
+      reset: () => this.setState({ sent: false }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/styles.css">
+<style>
+  @keyframes isr-spin { to { transform: rotate(360deg); } }
+  * { box-sizing: border-box; }
+</style>
+</helmet>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+
+  <!-- ===== LOGIN ===== -->
+  <sc-if value="{{ scLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 32px 28px; max-width: 420px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" style="height: 50px; width: auto; margin-bottom: 20px;" alt="ISR" />
+        <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.4px;">Área do Aluno</h1>
+        <p style="margin: 0; font-size: 13px; color: #9b8b7e;">Inglês sem Roteiro</p>
+      </div>
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 24px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">Seu email</label>
+        <input ref="{{ emailRef }}" type="email" placeholder="voce@email.com" onkeydown="{{ onKey }}" style="width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; outline: none; margin-bottom: 14px;" />
+        <button onclick="{{ submitLogin }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 12px;">Entrar →</button>
+        <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 14px 0 0; font-size: 12px; color: #c95a4a; text-align: center; line-height: 1.5;">{{ error }}</p>
+        </sc-if>
+        <p style="margin: 14px 0 0; font-size: 11px; color: #9b8b7e; line-height: 1.6; text-align: center;">Use o email cadastrado na matrícula. Alunos e professores entram pelo mesmo acesso.</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== LOADING ===== -->
+  <sc-if value="{{ scLoading }}" hint-placeholder-val="{{ false }}">
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;">
+      <div style="width: 34px; height: 34px; border: 3px solid #e0dcd6; border-top-color: #2a9d8f; border-radius: 50%; animation: isr-spin 0.8s linear infinite;"></div>
+      <p style="margin: 0; font-size: 13px; color: #9b8b7e;">Conectando à sua conta…</p>
+    </div>
+  </sc-if>
+
+  <!-- ===== APP ===== -->
+  <sc-if value="{{ scApp }}" hint-placeholder-val="{{ false }}">
+
+    <!-- HEADER -->
+    <header style="background: #164951; padding: 18px 16px 0;">
+      <div style="max-width: 480px; margin: 0 auto;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center;">{{ initial }}</div>
+          <div style="flex: 1;">
+            <p style="margin: 0; font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.2px;">{{ nome }}</p>
+            <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">{{ subtitle }}</p>
+          </div>
+          <sc-if value="{{ isAluno }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button onclick="{{ goMiles }}" style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); border: none; color: #fff; padding: 6px 12px 6px 7px; border-radius: 999px; cursor: pointer; font-weight: 800; font-size: 13px;">
+                <svg width="18" height="18" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#fc9082"/><path d="M32 15 C33 24.5 39.5 31 49 32 C39.5 33 33 39.5 32 49 C31 39.5 24.5 33 15 32 C24.5 31 31 24.5 32 15Z" fill="#164951"/></svg>
+                {{ coinBalance }}
+              </button>
+              <button onclick="{{ goNotif }}" style="background: rgba(255,255,255,0.12); border: none; color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+              </button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isProf }}" hint-placeholder-val="{{ false }}">
+            <button onclick="{{ logout }}" style="background: rgba(255,255,255,0.12); border: none; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 7px 11px; border-radius: 12px; cursor: pointer;">Sair</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ isProf }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 4px;">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <button onclick="{{ t.go }}" style="flex: 1; border: none; background: none; color: {{ t.color }}; font-size: 12px; font-weight: 700; padding: 12px 4px; cursor: pointer; border-bottom: 2px solid {{ t.border }};">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isProf }}" hint-placeholder-val="{{ false }}"><div style="height: 0;"></div></sc-if>
+      </div>
+      <sc-if value="{{ isAluno }}" hint-placeholder-val="{{ true }}"><div style="height: 18px;"></div></sc-if>
+    </header>
+
+    <div style="padding: 20px 16px 90px; max-width: 480px; margin: 0 auto;">
+
+      <!-- ============ ALUNO ============ -->
+      <sc-if value="{{ isAluno }}" hint-placeholder-val="{{ true }}">
+
+        <!-- ----- HOME ----- -->
+        <sc-if value="{{ stHome }}" hint-placeholder-val="{{ true }}">
+        <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 18px; position: relative;">
+          <div style="position: relative; height: 130px; background: #f0ede7; overflow: hidden;">
+            <img src="uploads/downloaded-image (1).png" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" alt="" />
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.25));"></div>
+            <span style="position: absolute; top: 12px; left: 12px; background: #e07856; color: #fff; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 9px; border-radius: 12px;">Próxima aula</span>
+          </div>
+          <div style="padding: 16px; border-left: 4px solid #e07856;">
+            <h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 700;">{{ proxTopic }}</h2>
+            <p style="margin: 0 0 14px; font-size: 12px; color: #9b8b7e;">{{ proxInfo }}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <a href="{{ editorUrl }}" style="text-decoration: none; text-align: center; background: #f5f3f0; border: 1px solid #ddd; color: #164951; padding: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 12px;">Material</a>
+              <a href="{{ meetLink }}" target="_blank" style="text-decoration: none; text-align: center; background: #e07856; color: #fff; padding: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 12px;">Entrar na aula</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- AULAS EXTRAS -->
+        <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Aulas extras</h3>
+        <sc-if value="{{ hasAtividades }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px;">
+            <sc-for list="{{ atividades }}" as="a" hint-placeholder-count="2">
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #2a9d8f; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 700; color: #333;">{{ a.titulo }}</h4>
+                  <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ a.quando }}</p>
+                </div>
+                <button onclick="{{ a.toggle }}" style="flex: none; border: none; background: {{ a.confirmBg }}; color: {{ a.confirmFg }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 12px; border-radius: 12px; cursor: pointer; white-space: nowrap;">{{ a.confirmLabel }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noAtividades }}" hint-placeholder-val="{{ true }}">
+          <div style="background: #fff; border: 1px dashed #d8d2c8; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 22px;">
+            <p style="margin: 0; font-size: 12px; color: #9b8b7e;">Nenhuma aula extra no momento. Avisamos quando abrir vagas ✨</p>
+          </div>
+        </sc-if>
+
+        <!-- PRÓXIMOS PASSOS -->
+        <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Seus próximos passos</h3>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px;">
+          <a href="{{ editorUrl }}" style="text-decoration: none; background: #fff; border: 1px solid #e0dcd6; border-left: 3px solid #e07856; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div><h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #164951;">Minha tarefa</h4><p style="margin: 0; font-size: 11px; color: #9b8b7e;">Abrir o caderno de atividades</p></div>
+            <span style="font-size: 18px; color: #ccc;">›</span>
+          </a>
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-left: 3px solid #6b5b95; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="{{ goFlin }}">
+            <div><h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #164951;">Praticar com Flin</h4><p style="margin: 0; font-size: 11px; color: #9b8b7e;">Correção · Conversação · Vocabulário</p></div>
+            <span style="font-size: 18px; color: #ccc;">›</span>
+          </div>
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-left: 3px solid #2a9d8f; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="{{ goComunidade }}">
+            <div><h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #164951;">Desafio da Comunidade</h4><p style="margin: 0; font-size: 11px; color: #9b8b7e;">Participe do desafio da semana</p></div>
+            <span style="font-size: 18px; color: #ccc;">›</span>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasRecados }}" hint-placeholder-val="{{ false }}">
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Recados</h3>
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 22px;">
+            <sc-for list="{{ recados }}" as="r" hint-placeholder-count="2">
+              <div style="padding: 14px 16px; border-bottom: 1px solid #f0ede8;">
+                <p style="margin: 0 0 3px; font-size: 13px; color: #333; line-height: 1.5;">{{ r.msg }}</p>
+                <p style="margin: 0; font-size: 10px; color: #b5a99c; text-transform: uppercase; letter-spacing: 0.3px;">{{ r.meta }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        </sc-if><!-- /stHome -->
+
+        <!-- ----- AULAS ----- -->
+        <sc-if value="{{ stAulas }}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin: 0 0 18px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Suas aulas</h2>
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Próxima aula</h3>
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 14px;">
+            <div style="position: relative; height: 190px; overflow: hidden; background: #f0ede7; border-bottom: 1px solid #e0dcd6;">
+              <iframe src="{{ editorUrl }}" scrolling="no" tabindex="-1" style="position: absolute; top: 0; left: 0; width: 920px; height: 640px; border: 0; transform: scale(0.43); transform-origin: top left; pointer-events: none;"></iframe>
+              <a href="{{ editorUrl }}" style="position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: flex-end; padding: 10px; text-decoration: none; background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28));">
+                <span style="background: #fff; color: #164951; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 6px 12px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">⤢ Ampliar caderno</span>
+              </a>
+            </div>
+            <div style="padding: 14px 16px;">
+              <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ proxTopic }}</h3>
+              <p style="margin: 0; font-size: 12px; color: #9b8b7e;">{{ proxInfo }}</p>
+            </div>
+          </div>
+          <a href="{{ meetLink }}" target="_blank" style="display: block; text-decoration: none; text-align: center; background: #e07856; color: #fff; padding: 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px; box-shadow: 0 4px 12px rgba(224,120,86,0.25); margin-bottom: 26px;">▶ Entrar na aula</a>
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Seu progresso</h3>
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 26px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 12px; font-weight: 700; color: #164951;">Ciclo {{ cicloNome }}</h4>
+              <span style="font-size: 16px; font-weight: 700; color: #2a9d8f;">{{ pctText }}</span>
+            </div>
+            <div style="background: #f0ede8; height: 6px; border-radius: 999px; overflow: hidden; margin-bottom: 6px;">
+              <div style="background: linear-gradient(90deg, #2a9d8f, #164951); height: 100%; width: {{ pctText }};"></div>
+            </div>
+            <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ semanaLabel }}</p>
+          </section>
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Aulas passadas</h3>
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+            <sc-for list="{{ aulasPassadas }}" as="a" hint-placeholder-count="3">
+              <div style="padding: 13px 16px; border-bottom: 1px solid #f0ede8; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="flex: 1;"><h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #333;">{{ a.titulo }}</h4><p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ a.data }}</p></div>
+                <a href="{{ a.gravacao }}" target="_blank" style="flex: none; text-decoration: none; background: {{ a.recBg }}; color: {{ a.recFg }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 12px; border-radius: 12px;">{{ a.recLabel }}</a>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- ----- FLIN ----- -->
+        <sc-if value="{{ stFlin }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ flinPicker }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #2a9d8f, #164951); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 700;">F</div>
+              <div>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Flin</h2>
+                <p style="margin: 0; font-size: 12px; color: #9b8b7e;">Sua IA pessoal de inglês</p>
+              </div>
+            </div>
+            <p style="margin: 14px 0 16px; font-size: 13px; color: #666; line-height: 1.5;">Escolha um modo e comece a praticar agora mesmo.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <sc-for list="{{ flinModeCards }}" as="m" hint-placeholder-count="4">
+                <div onclick="{{ m.go }}" style="cursor: pointer; background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ m.color }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+                  <div style="flex: 1;">
+                    <h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #164951;">{{ m.title }}</h4>
+                    <p style="margin: 0; font-size: 12px; color: #9b8b7e;">{{ m.desc }}</p>
+                  </div>
+                  <span style="font-size: 18px; color: #ccc;">›</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ flinActive }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+              <button onclick="{{ flinBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 20px; cursor: pointer; padding: 0; width: 24px;">←</button>
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: {{ flinColor }}; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 700;">F</div>
+              <div style="flex: 1;"><p style="margin: 0; font-size: 14px; font-weight: 700; color: #164951;">Flin</p><p style="margin: 0; font-size: 10px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.4px;">{{ flinTitle }}</p></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+              <sc-for list="{{ flinMsgs }}" as="m" hint-placeholder-count="1">
+                <div style="display: flex; justify-content: {{ m.align }};">
+                  <div style="max-width: 82%; background: {{ m.bg }}; color: {{ m.fg }}; border: 1px solid {{ m.border }}; border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap;">{{ m.text }}</div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ flinBusy }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; justify-content: flex-start;">
+                  <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 14px; padding: 10px 14px; font-size: 13px; color: #9b8b7e;">Flin está digitando…</div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-end;">
+              <textarea ref="{{ flinInputRef }}" onkeydown="{{ flinKey }}" placeholder="Escreva em inglês…" style="flex: 1; box-sizing: border-box; border: 1px solid #ddd; border-radius: 14px; background: #fff; padding: 11px 14px; font-size: 13px; font-family: inherit; color: #333; min-height: 44px; max-height: 120px; resize: none; line-height: 1.4;"></textarea>
+              <button onclick="{{ flinSend }}" style="flex: none; background: {{ flinColor }}; border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;">↑</button>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <!-- ----- COMUNIDADE ----- -->
+        <sc-if value="{{ stComunidade }}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin: 0 0 18px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px;">Comunidade</h2>
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #d4a5a5; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #164951;">Desafio desta semana</h3>
+            <p style="margin: 0 0 12px; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">Encerra em 3 dias</p>
+            <p style="margin: 0 0 14px; font-size: 12px; color: #666; line-height: 1.5;">Fale sobre um lugar que você quer visitar em 30 segundos. Pode ser qualquer local!</p>
+            <button onclick="{{ openComposer }}" style="background: #d4a5a5; border: none; color: #fff; padding: 10px 16px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 12px; width: 100%;">Responder ao desafio</button>
+          </section>
+
+          <sc-if value="{{ composerOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px; margin-bottom: 16px;">
+              <textarea ref="{{ postRef }}" placeholder="Escreva sua resposta em inglês…" style="width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; min-height: 70px; resize: vertical; line-height: 1.5; margin-bottom: 10px;"></textarea>
+              <button onclick="{{ submitPost }}" style="width: 100%; background: #2a9d8f; border: none; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">Publicar resposta</button>
+            </div>
+          </sc-if>
+
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Respostas da comunidade</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <sc-for list="{{ communityPosts }}" as="p" hint-placeholder-count="3">
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px;">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                  <div style="width: 36px; height: 36px; background: {{ p.avBg }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 15px;">{{ p.initial }}</div>
+                  <div style="flex: 1;"><p style="margin: 0 0 1px; font-size: 12px; font-weight: 700; color: #333;">{{ p.autor }}</p><p style="margin: 0; font-size: 10px; color: #b5a99c;">{{ p.time }}</p></div>
+                </div>
+                <p style="margin: 0 0 10px; font-size: 12px; color: #666; line-height: 1.4;">{{ p.text }}</p>
+                <div style="display: flex; gap: 14px; font-size: 12px;">
+                  <button onclick="{{ p.toggleLike }}" style="background: none; border: none; color: {{ p.likeColor }}; cursor: pointer; font-weight: 600; padding: 0;">👍 {{ p.likes }}</button>
+                  <button onclick="{{ p.openComment }}" style="background: none; border: none; color: #9b8b7e; cursor: pointer; padding: 0;">Comentar</button>
+                </div>
+                <sc-if value="{{ p.hasComments }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top: 10px; border-top: 1px solid #f0ede8; padding-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                    <sc-for list="{{ p.comments }}" as="cm" hint-placeholder-count="1">
+                      <p style="margin: 0; font-size: 12px; color: #555; line-height: 1.4;"><strong style="color: #164951;">{{ cm.autor }}:</strong> {{ cm.text }}</p>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.commenting }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <input ref="{{ p.commentRef }}" placeholder="Comentar…" style="flex: 1; box-sizing: border-box; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; padding: 8px 12px; font-size: 12px; font-family: inherit; color: #333;" />
+                    <button onclick="{{ p.submitComment }}" style="flex: none; background: #164951; border: none; color: #fff; padding: 8px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 12px; cursor: pointer;">Enviar</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <h3 style="margin: 24px 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Mural da turma</h3>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #9b8b7e; line-height: 1.5;">Serviços, trocas e vendas entre alunos da ISR.</p>
+          <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px;">
+            <sc-for list="{{ classFilters }}" as="f" hint-placeholder-count="4">
+              <button onclick="{{ f.go }}" style="flex: none; border: 1px solid {{ f.border }}; background: {{ f.bg }}; color: {{ f.fg }}; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap;">{{ f.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <sc-for list="{{ classificados }}" as="cl" hint-placeholder-count="3">
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span style="background: {{ cl.tagBg }}; color: {{ cl.tagFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 8px; border-radius: 999px;">{{ cl.tagLabel }}</span>
+                  <span style="font-size: 11px; color: #b5a99c;">{{ cl.autor }}</span>
+                </div>
+                <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 700; color: #333;">{{ cl.titulo }}</h4>
+                <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.4;">{{ cl.desc }}</p>
+              </div>
+            </sc-for>
+          </div>
+          <button style="margin-top: 12px; width: 100%; background: #fff; border: 1px solid #2a9d8f; color: #2a9d8f; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">+ Publicar anúncio</button>
+        </sc-if>
+
+        <!-- ----- CONTA ----- -->
+        <sc-if value="{{ stConta }}" hint-placeholder-val="{{ false }}">
+
+          <sc-if value="{{ cvMenu }}" hint-placeholder-val="{{ true }}">
+            <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px;">
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: #164951; color: #fff; font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center;">{{ initial }}</div>
+              <div style="flex: 1;">
+                <h2 style="margin: 0 0 2px; font-size: 17px; font-weight: 700; color: #164951;">{{ nome }}</h2>
+                <p style="margin: 0; font-size: 12px; color: #9b8b7e;">{{ subtitle }}</p>
+              </div>
+            </section>
+            <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 18px;">
+              <sc-for list="{{ contaRows }}" as="row" hint-placeholder-count="5">
+                <div onclick="{{ row.go }}" style="display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid #f0ede8; cursor: pointer;">
+                  <div style="flex: 1;">
+                    <p style="margin: 0 0 1px; font-size: 14px; font-weight: 700; color: #164951;">{{ row.label }}</p>
+                    <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ row.desc }}</p>
+                  </div>
+                  <span style="font-size: 18px; color: #ccc;">›</span>
+                </div>
+              </sc-for>
+            </div>
+            <button onclick="{{ logout }}" style="width: 100%; background: #fff; border: 1px solid #e0dcd6; color: #c95a4a; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">Sair</button>
+          </sc-if>
+
+          <sc-if value="{{ cvMiles }}" hint-placeholder-val="{{ false }}">
+          <button onclick="{{ contaBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 14px;">← Conta</button>
+          <section style="background: linear-gradient(135deg, #164951, #2a6d7e); border-radius: 12px; padding: 24px; color: #fff; text-align: center; margin-bottom: 22px; box-shadow: 0 6px 18px rgba(22,73,81,0.2); position: relative; overflow: hidden;">
+            <div style="position: absolute; right: -30px; top: -30px; width: 120px; height: 120px; border-radius: 50%; border: 6px solid #348a8e; opacity: .3;"></div>
+            <svg width="48" height="48" viewBox="0 0 64 64" style="margin-bottom: 6px;"><circle cx="32" cy="32" r="30" fill="#fc9082"/><circle cx="32" cy="32" r="23" fill="none" stroke="#164951" stroke-width="1.6" stroke-dasharray="1.5 5" opacity="0.45"/><path d="M32 14 C33.2 24.5 39.5 30.8 50 32 C39.5 33.2 33.2 39.5 32 50 C30.8 39.5 24.5 33.2 14 32 C24.5 30.8 30.8 24.5 32 14 Z" fill="#164951"/></svg>
+            <p style="margin: 0 0 2px; font-size: 34px; font-weight: 800; letter-spacing: -1px;">{{ coinBalance }}</p>
+            <p style="margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.75);">ISR Miles</p>
+          </section>
+
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Como ganhar</h3>
+          <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+            <sc-for list="{{ coinEarnGroups }}" as="g" hint-placeholder-count="3">
+              <div>
+                <div style="font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: {{ g.color }}; margin-bottom: 8px;">{{ g.label }}</div>
+                <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+                  <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="3">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f0ede8;">
+                      <span style="font-size: 13px; color: #164951;">{{ e.label }}</span>
+                      <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 800; color: #3f8f4e; white-space: nowrap;">{{ e.val }} <svg width="14" height="14" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#fc9082"/><path d="M32 15 C33 24.5 39.5 31 49 32 C39.5 33 33 39.5 32 49 C31 39.5 24.5 33 15 32 C24.5 31 31 24.5 32 15Z" fill="#164951"/></svg></span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Resgatar</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <sc-for list="{{ coinRewards }}" as="r" hint-placeholder-count="4">
+              <div style="background: {{ r.cardBg }}; border: 1px solid {{ r.border }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+                <div style="flex: 1;">
+                  <span style="display: inline-block; background: {{ r.catBg }}; color: {{ r.catFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 3px 8px; border-radius: 7px; margin-bottom: 6px;">{{ r.cat }}</span>
+                  <h4 style="margin: 0 0 4px; font-size: 13px; font-weight: 700; color: {{ r.titleColor }};">{{ r.nome }}</h4>
+                  <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; color: {{ r.costColor }};"><svg width="15" height="15" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#fc9082"/><path d="M32 15 C33 24.5 39.5 31 49 32 C39.5 33 33 39.5 32 49 C31 39.5 24.5 33 15 32 C24.5 31 31 24.5 32 15Z" fill="#164951"/></svg>{{ r.cost }}</span>
+                </div>
+                <button style="flex: none; border: none; background: {{ r.btnBg }}; color: {{ r.btnFg }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 9px 12px; border-radius: 12px; cursor: pointer; white-space: nowrap;">{{ r.btnLabel }}</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-top: 22px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 18px;">📄</span>
+              <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #164951;">Carta de recomendação</h4>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.6;">PDF personalizado com seu nome, o projeto apresentado no ciclo, uma habilidade específica observada pela professora e assinatura. Ideal para LinkedIn ou currículo.</p>
+          </section>
+          </sc-if>
+
+          <sc-if value="{{ cvCert }}" hint-placeholder-val="{{ false }}">
+            <button onclick="{{ contaBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 14px;">← Conta</button>
+            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Certificado</h2>
+            <sc-if value="{{ certElegivel }}" hint-placeholder-val="{{ true }}">
+              <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #2a9d8f; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(42,157,143,0.14); color: #2a9d8f; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✓</div>
+                <p style="margin: 0; font-size: 12px; color: #164951;"><strong>Certificado liberado</strong> — {{ certAulas }} aulas concluídas (mínimo 8).</p>
+              </section>
+              <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                <button onclick="{{ goCertFront }}" style="flex: 1; border: none; background: {{ cfFrontBg }}; color: {{ cfFrontFg }}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 9px; border-radius: 10px; cursor: pointer;">Front</button>
+                <button onclick="{{ goCertBack }}" style="flex: 1; border: none; background: {{ cfBackBg }}; color: {{ cfBackFg }}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 9px; border-radius: 10px; cursor: pointer;">Back · Syllabus</button>
+              </div>
+              <sc-if value="{{ certSideFront }}" hint-placeholder-val="{{ true }}">
+              <p style="margin: 0 0 7px; font-size: 10px; color: #9b8b7e; letter-spacing: 0.3px;">Front · landscape (A4)</p>
+              <!-- LANDSCAPE FRONT -->
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; box-shadow: 0 8px 24px rgba(22,73,81,0.12); overflow: hidden; margin-bottom: 16px; display: flex; min-height: 232px;">
+                <!-- teal rail -->
+                <div style="width: 39%; background: #164951; padding: 16px 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                  <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #e07856, #2a9d8f);"></div>
+                  <div>
+                    <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" alt="Inglês sem Roteiro" style="height: 19px; width: auto; filter: brightness(0) invert(1); display: block; margin-bottom: 6px;" />
+                    <p style="margin: 0; color: rgba(255,255,255,0.72); font-weight: 700; letter-spacing: 0.2px; font-size: 8px; text-transform: uppercase;">Inglês sem Roteiro</p>
+                  </div>
+                  <div>
+                    <span style="display: inline-block; background: #9ec970; color: #164951; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.3px;">CEFR {{ cefrLevel }}</span>
+                    <p style="margin: 12px 0 0; font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.6);">Certificate of</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.4px; color: #fff;">Completion</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 26px; font-weight: 800; color: #fff; line-height: 1;">{{ certHorasTotal }}<span style="font-size: 14px;">h</span></p>
+                    <p style="margin: 1px 0 8px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.6);">Total hours</p>
+                    <p style="margin: 0; font-size: 8.5px; color: rgba(255,255,255,0.78); line-height: 1.5;">Classes {{ certHorasAulas }}h · Book club {{ certHorasBookClub }}h · Extras {{ certHorasExtras }}h</p>
+                  </div>
+                </div>
+                <!-- content -->
+                <div style="flex: 1; padding: 18px 18px 14px; display: flex; flex-direction: column;">
+                  <div style="flex: 1;">
+                    <p style="margin: 0 0 6px; font-size: 10px; color: #9b8b7e;">This is to certify that</p>
+                    <h2 style="margin: 0 0 4px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #164951; line-height: 1.1;">{{ certNome }}</h2>
+                    <div style="width: 38px; height: 2px; background: #e07856; margin: 0 0 12px;"></div>
+                    <p style="margin: 0 0 10px; font-size: 11px; color: #4a4a4a; line-height: 1.6;">has successfully completed the <strong>{{ cicloNome }}</strong> cycle of the conversational English programme <strong>{{ certProgram }}</strong>, level <strong>CEFR {{ cefrLevel }}</strong>, in the <strong>{{ turmaNome }}</strong> group.</p>
+                    <p style="margin: 0; display: inline-block; background: #faf8f3; border-radius: 6px; padding: 4px 10px; font-size: 9.5px; color: #9b8b7e; letter-spacing: 0.3px;">{{ cicloInicio }} — {{ cicloFim }}</p>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 12px; border-top: 1px solid #f0ede8;">
+                    <div style="text-align: left;">
+                      <p style="margin: 0 0 1px; font-family: Georgia, serif; font-style: italic; font-size: 15px; color: #164951;">Gabriela Ferreira de Souza</p>
+                      <p style="margin: 0; font-size: 7.5px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Founder · ISR</p>
+                    </div>
+                    <div style="text-align: right;">
+                      <p style="margin: 0 0 1px; font-size: 10px; font-weight: 700; color: #164951;">{{ certData }}</p>
+                      <p style="margin: 0; font-size: 7.5px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Issued on</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p style="margin: 0 0 16px; font-size: 9px; color: #b0aaa0; text-align: center; letter-spacing: 0.2px;">CNPJ 53.132.120/0001-09 · KVK 42029556 · inglessemroteiro.com.br</p>
+              </sc-if>
+              <sc-if value="{{ certSideBack }}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0 0 7px; font-size: 10px; color: #9b8b7e; letter-spacing: 0.3px;">Back · portrait (A4)</p>
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; box-shadow: 0 8px 24px rgba(22,73,81,0.12); overflow: hidden; margin-bottom: 16px; min-height: 600px; display: flex; flex-direction: column;">
+                <div style="background: #164951; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="display: inline-flex; align-items: center; gap: 9px;"><img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" alt="Inglês sem Roteiro" style="height: 22px; width: auto; filter: brightness(0) invert(1);" /><span style="color: #fff; font-weight: 800; letter-spacing: 0.3px; font-size: 11px;">INGLÊS SEM ROTEIRO</span></span>
+                  <span style="background: #9ec970; color: #164951; font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 999px;">CEFR {{ cefrLevel }}</span>
+                </div>
+                <div style="height: 4px; background: linear-gradient(90deg, #e07856, #2a9d8f);"></div>
+                <div style="padding: 22px; flex: 1;">
+                  <p style="margin: 0 0 4px; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9b8b7e;">Programme</p>
+                  <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 800; color: #164951; font-family: Georgia, serif;">{{ certProgram }}</h3>
+                  <p style="margin: 0 0 18px; font-size: 12px; color: #4a4a4a; line-height: 1.6;">{{ certProgramDesc }}</p>
+                  <p style="margin: 0 0 10px; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #2a9d8f;">By the end of this cycle, the learner can</p>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <sc-for list="{{ certCompetencies }}" as="c" hint-placeholder-count="6">
+                      <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <span style="color: #2a9d8f; font-weight: 800; flex: none; font-size: 13px;">✓</span>
+                        <span style="font-size: 12px; color: #164951; line-height: 1.45;">{{ c }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background: #f7f6f2; padding: 9px 18px; font-size: 8px; color: #b0aaa0; text-align: center; letter-spacing: 0.2px;">Aligned with the Common European Framework of Reference (CEFR)</div>
+              </div>
+              </sc-if>
+              <div style="display: flex; gap: 8px;">
+                <button onclick="{{ printCert }}" style="flex: 1; background: #164951; border: none; color: #fff; padding: 13px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 12px; cursor: pointer;">⬇ Download PDF</button>
+                <button style="flex: none; background: #f5f3f0; border: 1px solid #e0dcd6; color: #164951; padding: 13px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 12px; cursor: pointer;">Share</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ certNaoElegivel }}" hint-placeholder-val="{{ false }}">
+              <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #d4a574; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px;">
+                <h4 style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #164951;">Quase lá!</h4>
+                <p style="margin: 0; font-size: 12px; color: #9b8b7e;">{{ certAulas }} de 8 aulas — faltam {{ certFaltam }} para liberar o certificado.</p>
+              </section>
+            </sc-if>
+          </sc-if>
+
+          <sc-if value="{{ cvFaturas }}" hint-placeholder-val="{{ false }}">
+            <button onclick="{{ contaBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 14px;">← Conta</button>
+            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Faturas & renovação</h2>
+            <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #e07856; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+              <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 700; color: #164951;">Fatura vence em {{ fatDias }} dias</h4>
+              <p style="margin: 0 0 12px; font-size: 12px; color: #666;">{{ fatValor }} · vence {{ fatVence }}</p>
+              <button style="background: #e07856; border: none; color: #fff; padding: 10px 16px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">Pagar agora</button>
+            </section>
+            <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #2a9d8f; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px;">
+              <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 700; color: #164951;">Renovação de ciclo</h4>
+              <p style="margin: 0 0 12px; font-size: 12px; color: #666;">Garanta sua vaga na próxima turma ao concluir as 10 aulas.</p>
+              <button style="background: #fff; border: 1px solid #2a9d8f; color: #2a9d8f; padding: 10px 16px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">Renovar matrícula</button>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ cvNotif }}" hint-placeholder-val="{{ false }}">
+            <button onclick="{{ contaBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 14px;">← Conta</button>
+            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Notificações</h2>
+            <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+              <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="3">
+                <div style="padding: 14px 16px; border-bottom: 1px solid #f0ede8;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+                    <p style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #164951;">{{ n.titulo }}</p>
+                    <span style="font-size: 10px; color: #b5a99c; white-space: nowrap;">{{ n.time }}</span>
+                  </div>
+                  <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.4;">{{ n.msg }}</p>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cvPerfil }}" hint-placeholder-val="{{ false }}">
+            <button onclick="{{ contaBack }}" style="background: none; border: none; color: #9b8b7e; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; margin-bottom: 14px;">← Conta</button>
+            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Meus dados</h2>
+            <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0ede8;"><span style="font-size: 12px; color: #9b8b7e;">Nome</span><span style="font-size: 13px; font-weight: 600; color: #164951;">{{ nome }}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0ede8;"><span style="font-size: 12px; color: #9b8b7e;">Nível</span><span style="font-size: 13px; font-weight: 600; color: #164951;">{{ nivel }}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0ede8;"><span style="font-size: 12px; color: #9b8b7e;">Turma</span><span style="font-size: 13px; font-weight: 600; color: #164951;">{{ turmaNome }}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 14px 16px;"><span style="font-size: 12px; color: #9b8b7e;">Email</span><span style="font-size: 13px; font-weight: 600; color: #164951;">{{ email }}</span></div>
+            </div>
+          </sc-if>
+
+        </sc-if>
+
+      </sc-if>
+
+      <!-- ============ PROFESSOR: INÍCIO ============ -->
+      <sc-if value="{{ showInicio }}" hint-placeholder-val="{{ true }}">
+
+        <h2 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: #164951;">Olá, {{ profFirstName }} 👋</h2>
+        <p style="margin: 0 0 22px; font-size: 13px; color: #9b8b7e;">Aqui está o seu dia.</p>
+
+        <!-- Tarefas para corrigir -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px;">
+          <h3 style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Tarefas para corrigir</h3>
+          <span style="background: #e07856; color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 2px 8px;">{{ corrigirCount }}</span>
+        </div>
+        <sc-if value="{{ hasCorrigir }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 24px;">
+            <sc-for list="{{ corrigir }}" as="t" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-bottom: 1px solid #f0ede8;">
+                <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(224,120,86,0.14); color: #e07856; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ t.initial }}</div>
+                <div style="flex: 1;">
+                  <p style="margin: 0 0 1px; font-size: 13px; font-weight: 700; color: #333;">{{ t.aluno }}</p>
+                  <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ t.info }}</p>
+                </div>
+                <button onclick="{{ goFeedback }}" style="background: #e07856; border: none; color: #fff; padding: 7px 12px; font-size: 10px; font-weight: 700; cursor: pointer; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 12px;">Corrigir</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noCorrigir }}" hint-placeholder-val="{{ true }}">
+          <div style="background: #fff; border: 1px dashed #d8d2c8; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 24px;">
+            <p style="margin: 0; font-size: 12px; color: #9b8b7e;">Nenhuma tarefa aguardando correção 🎉</p>
+          </div>
+        </sc-if>
+
+        <!-- Aulas de hoje -->
+        <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Aulas de hoje</h3>
+        <sc-if value="{{ hasHoje }}" hint-placeholder-val="{{ true }}">
+          <sc-for list="{{ turmasHoje }}" as="c" hint-placeholder-count="1">
+            <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                  <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ c.turma }}</h3>
+                  <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.sub }}</p>
+                </div>
+                <span style="background: {{ c.badgeBg }}; color: {{ c.badgeFg }}; padding: 3px 9px; font-size: 9px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
+              </div>
+              <sc-if value="{{ c.hasTopic }}" hint-placeholder-val="{{ false }}">
+                <div style="background: #faf8f3; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;">
+                  <p style="margin: 0 0 1px; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Próximo tópico</p>
+                  <p style="margin: 0; font-size: 12px; font-weight: 700; color: #333;">{{ c.nextTopic }}</p>
+                </div>
+              </sc-if>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="3">
+                  <a href="{{ ch.href }}" target="_blank" style="text-decoration: none; font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 6px 10px; border-radius: 12px; font-weight: 600;">{{ ch.label }}</a>
+                </sc-for>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <a href="{{ c.editorUrl }}" style="flex: 1; text-decoration: none; text-align: center; background: #fff; border: 1px solid #2a9d8f; color: #2a9d8f; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">✏️ Abrir aula</a>
+                <a href="{{ c.meetLink }}" target="_blank" style="flex: 1; text-decoration: none; text-align: center; background: #2a9d8f; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">▶ Meet</a>
+              </div>
+            </section>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ noHoje }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #fff; border: 1px dashed #d8d2c8; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 24px;">
+            <p style="margin: 0; font-size: 12px; color: #9b8b7e;">Nenhuma aula hoje</p>
+          </div>
+        </sc-if>
+
+        <!-- Próximas aulas -->
+        <h3 style="margin: 24px 0 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Próximas aulas</h3>
+        <sc-for list="{{ turmasProximas }}" as="c" hint-placeholder-count="2">
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+              <div>
+                <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ c.turma }}</h3>
+                <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.sub }}</p>
+              </div>
+              <span style="background: {{ c.badgeBg }}; color: {{ c.badgeFg }}; padding: 3px 9px; font-size: 9px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
+            </div>
+            <sc-if value="{{ c.hasTopic }}" hint-placeholder-val="{{ false }}">
+              <div style="background: #faf8f3; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;">
+                <p style="margin: 0 0 1px; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Próximo tópico</p>
+                <p style="margin: 0; font-size: 12px; font-weight: 700; color: #333;">{{ c.nextTopic }}</p>
+              </div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="3">
+                <a href="{{ ch.href }}" target="_blank" style="text-decoration: none; font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 6px 10px; border-radius: 12px; font-weight: 600;">{{ ch.label }}</a>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a href="{{ c.editorUrl }}" style="flex: 1; text-decoration: none; text-align: center; background: #fff; border: 1px solid #2a9d8f; color: #2a9d8f; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">✏️ Abrir aula</a>
+              <a href="{{ c.meetLink }}" target="_blank" style="flex: 1; text-decoration: none; text-align: center; background: #2a9d8f; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">▶ Meet</a>
+            </div>
+          </section>
+        </sc-for>
+
+      </sc-if>
+
+      <!-- ============ PROFESSOR: TURMAS ============ -->
+      <sc-if value="{{ showTurmas }}" hint-placeholder-val="{{ false }}">
+
+        <div style="display: flex; align-items: center; gap: 10px; margin: 0 0 14px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Turmas regulares</h3>
+          <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+          <span style="font-size: 11px; color: #9b8b7e;">{{ regCount }}</span>
+        </div>
+        <sc-for list="{{ turmasRegulares }}" as="c" hint-placeholder-count="3">
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+              <div>
+                <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ c.turma }}</h3>
+                <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.sub }}</p>
+              </div>
+              <span style="background: {{ c.badgeBg }}; color: {{ c.badgeFg }}; padding: 3px 9px; font-size: 9px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
+            </div>
+            <sc-if value="{{ c.hasTopic }}" hint-placeholder-val="{{ false }}">
+              <div style="background: #faf8f3; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;">
+                <p style="margin: 0 0 1px; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Próximo tópico</p>
+                <p style="margin: 0; font-size: 12px; font-weight: 700; color: #333;">{{ c.nextTopic }}</p>
+              </div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="3">
+                <a href="{{ ch.href }}" target="_blank" style="text-decoration: none; font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 6px 10px; border-radius: 12px; font-weight: 600;">{{ ch.label }}</a>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a href="{{ c.editorUrl }}" style="flex: 1; text-decoration: none; text-align: center; background: #fff; border: 1px solid #2a9d8f; color: #2a9d8f; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">✏️ Abrir aula</a>
+              <a href="{{ c.meetLink }}" target="_blank" style="flex: 1; text-decoration: none; text-align: center; background: #2a9d8f; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">▶ Meet</a>
+            </div>
+          </section>
+        </sc-for>
+
+        <sc-if value="{{ hasParticulares }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 10px; margin: 24px 0 14px;">
+            <h3 style="margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Aulas particulares</h3>
+            <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+            <span style="font-size: 11px; color: #9b8b7e;">{{ partCount }}</span>
+          </div>
+          <sc-for list="{{ particularesList }}" as="c" hint-placeholder-count="2">
+            <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div>
+                  <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ c.turma }}</h3>
+                  <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.sub }}</p>
+                </div>
+                <span style="background: {{ c.badgeBg }}; color: {{ c.badgeFg }}; padding: 3px 9px; font-size: 9px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="2">
+                  <a href="{{ ch.href }}" target="_blank" style="text-decoration: none; font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 6px 10px; border-radius: 12px; font-weight: 600;">{{ ch.label }}</a>
+                </sc-for>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <a href="{{ c.editorUrl }}" style="flex: 1; text-decoration: none; text-align: center; background: #fff; border: 1px solid #d4a574; color: #b07d3a; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">✏️ Abrir aula</a>
+                <a href="{{ c.meetLink }}" target="_blank" style="flex: 1; text-decoration: none; text-align: center; background: #d4a574; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px;">▶ Meet</a>
+              </div>
+            </section>
+          </sc-for>
+        </sc-if>
+
+        <div style="display: flex; align-items: center; gap: 10px; margin: 24px 0 14px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Aulas extras</h3>
+          <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+        </div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #9b8b7e; line-height: 1.5;">Aulas pontuais que você abre além da grade (workshops, plantões, conversação). Os alunos veem na home e confirmam presença.</p>
+        <sc-if value="{{ hasProfExtras }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ profExtras }}" as="e" hint-placeholder-count="2">
+            <div style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #6b5b95; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 14px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <div style="flex: 1;">
+                <h4 style="margin: 0 0 2px; font-size: 13px; font-weight: 700; color: #333;">{{ e.titulo }}</h4>
+                <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ e.quando }}</p>
+              </div>
+              <a href="{{ e.meet }}" target="_blank" style="flex: none; text-decoration: none; background: #6b5b95; color: #fff; padding: 8px 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; border-radius: 12px;">▶ Meet</a>
+            </div>
+          </sc-for>
+        </sc-if>
+        <button style="width: 100%; background: #fff; border: 1px dashed #9b8fb8; color: #6b5b95; padding: 13px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 12px; margin-top: 4px;">+ Criar aula extra</button>
+      </sc-if>
+
+      <!-- ============ PROFESSOR: CHAMADA ============ -->
+      <sc-if value="{{ showChamada }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 2px;">
+          <sc-for list="{{ turmaChips }}" as="chip" hint-placeholder-count="3">
+            <button onclick="{{ chip.go }}" style="flex: none; border: 1px solid {{ chip.border }}; background: {{ chip.bg }}; color: {{ chip.fg }}; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap;">{{ chip.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <p style="margin: 0; font-size: 12px; color: #9b8b7e;">{{ chamadaDate }}</p>
+          <p style="margin: 0; font-size: 14px; font-weight: 700; color: #2a9d8f;">{{ presentCount }}/{{ totalAlunos }} presentes</p>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 16px;">
+          <sc-for list="{{ chamada }}" as="a" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #f0ede8;">
+              <div style="width: 30px; height: 30px; border-radius: 50%; background: {{ a.avBg }}; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ a.initial }}</div>
+              <span style="flex: 1; font-size: 13px; font-weight: 600; color: #333;">{{ a.nome }}</span>
+              <div style="display: flex; gap: 4px;">
+                <button onclick="{{ a.setPresent }}" style="width: 30px; height: 30px; border-radius: 12px; border: 1px solid {{ a.pBorder }}; background: {{ a.pBg }}; color: {{ a.pFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✓</button>
+                <button onclick="{{ a.setTardy }}" style="width: 30px; height: 30px; border-radius: 12px; border: 1px solid {{ a.tBorder }}; background: {{ a.tBg }}; color: {{ a.tFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">⏱</button>
+                <button onclick="{{ a.setAbsent }}" style="width: 30px; height: 30px; border-radius: 12px; border: 1px solid {{ a.aBorder }}; background: {{ a.aBg }}; color: {{ a.aFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✕</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <button onclick="{{ saveChamada }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 12px;">{{ chamadaBtn }}</button>
+      </sc-if>
+
+      <!-- ============ PROFESSOR: FEEDBACK ============ -->
+      <sc-if value="{{ showFeedback }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ fbSaved }}" hint-placeholder-val="{{ false }}">
+          <div style="background: rgba(42,157,143,0.1); border: 1px solid rgba(42,157,143,0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: #164951; font-weight: 600;">✓ Feedback salvo na planilha.</div>
+        </sc-if>
+        <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px;">
+          <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Turma</label>
+          <select ref="{{ fbTurmaRef }}" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 14px;">
+            <sc-for list="{{ turmaOptions }}" as="o" hint-placeholder-count="3">
+              <option value="{{ o.value }}">{{ o.label }}</option>
+            </sc-for>
+          </select>
+          <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Aluno</label>
+          <input ref="{{ fbAlunoRef }}" placeholder="Nome do aluno" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 14px;" />
+          <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Tópico</label>
+          <input ref="{{ fbTopicoRef }}" placeholder="Tópico da aula" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 14px;" />
+          <label style="display: block; font-size: 10px; font-weight: 700; color: #2a9d8f; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">✓ O que foi bem</label>
+          <textarea ref="{{ fbBemRef }}" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 14px; min-height: 56px; resize: vertical; line-height: 1.5;"></textarea>
+          <label style="display: block; font-size: 10px; font-weight: 700; color: #e07856; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">⚠ Pontos de atenção</label>
+          <textarea ref="{{ fbAtencaoRef }}" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 14px; min-height: 56px; resize: vertical; line-height: 1.5;"></textarea>
+          <label style="display: block; font-size: 10px; font-weight: 700; color: #6b5b95; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">→ Próximos passos</label>
+          <textarea ref="{{ fbProxRef }}" style="width: 100%; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 12px; background: #faf8f3; margin-bottom: 18px; min-height: 56px; resize: vertical; line-height: 1.5;"></textarea>
+          <button onclick="{{ saveFeedback }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 12px;">{{ fbBtn }}</button>
+        </section>
+      </sc-if>
+
+    </div>
+
+    <!-- ALUNO bottom nav -->
+    <sc-if value="{{ isAluno }}" hint-placeholder-val="{{ true }}">
+      <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e0dcd6; display: flex; justify-content: space-around; height: 64px; z-index: 10; max-width: 480px; margin: 0 auto;">
+        <button onclick="{{ goHome }}" style="flex: 1; border: none; background: none; color: {{ cHome }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7M6 9.5V20h12V9.5"/></svg>
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Início</span>
+        </button>
+        <button onclick="{{ goAulas }}" style="flex: 1; border: none; background: none; color: {{ cAulas }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5 2 9l10 4 10-4-10-4Z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Aulas</span>
+        </button>
+        <button onclick="{{ goFlin }}" style="flex: 1; border: none; background: none; color: {{ cFlin }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4 3v-3H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg>
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Flin</span>
+        </button>
+        <button onclick="{{ goComunidade }}" style="flex: 1; border: none; background: none; color: {{ cComun }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3"/><path d="M6.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="4.8" cy="10" r="2.1"/><path d="M2 17.4a3.6 3.6 0 0 1 3.2-2.7"/><circle cx="19.2" cy="10" r="2.1"/><path d="M22 17.4a3.6 3.6 0 0 0-3.2-2.7"/></svg>
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Comunidade</span>
+        </button>
+        <button onclick="{{ goConta }}" style="flex: 1; border: none; background: none; color: {{ cConta }}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>
+          <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Conta</span>
+        </button>
+      </nav>
+    </sc-if>
+
+  </sc-if>
+
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;390px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  EXEC = "https://script.google.com/macros/s/AKfycbxbSGZZNXurmADDAW_5Lp3PRcSmnYXiapWyYHLpfaH2AoKcErgRsC3K9ScKAp6RftSXwg/exec";
+  state = { screen: "boot", error: "", user: null, tab: "turmas", studentTab: "home", activeTurma: 0, cham: {}, chamSaving: false, chamSaved: false, fbSaving: false, fbSaved: false, confAtiv: {}, classFilter: "todos", posts: [], comments: {}, composerOpen: false, likes: {}, activeCommentId: null, flinMode: null, flinMsgs: [], flinBusy: false, contaView: "menu", certSide: "front" };
+  emailRef = React.createRef();
+  fbTurmaRef = React.createRef(); fbAlunoRef = React.createRef(); fbTopicoRef = React.createRef();
+  fbBemRef = React.createRef(); fbAtencaoRef = React.createRef(); fbProxRef = React.createRef();
+  postRef = React.createRef(); commentRef = React.createRef(); flinRef = React.createRef();
+  avColors = ["#e07856", "#2a9d8f", "#6b5b95", "#d4a574", "#d4a5a5", "#164951"];
+  flinModes = [
+    { id: "correcao", title: "Correção de tarefa", desc: "Cole um texto e receba correção detalhada", color: "#e07856", greeting: "Hi! Paste the text you'd like me to correct and I'll give you detailed, friendly feedback. \ud83d\udcdd", prompt: "You are Flin, a warm English tutor for a Brazilian student. The student pastes a text; correct grammar, vocabulary and naturalness, briefly explain the key fixes in Portuguese, and stay encouraging. Keep it concise." },
+    { id: "conversa", title: "Conversação livre", desc: "Converse sobre qualquer tema em inglês", color: "#2a9d8f", greeting: "Hey! What would you like to talk about today? I'm all ears. \ud83d\ude0a", prompt: "You are Flin, a friendly English conversation partner for a Brazilian student. Chat naturally in English, keep replies short, ask a follow-up question, and gently model better phrasing when useful." },
+    { id: "vocab", title: "Treino de vocabulário", desc: "Aprenda palavras com exemplos e contexto", color: "#6b5b95", greeting: "Let's grow your vocabulary! Give me a theme or a word and I'll teach you useful expressions. \ud83d\udcda", prompt: "You are Flin, an English vocabulary coach for a Brazilian student. Teach useful words/expressions with one example sentence each and a short Portuguese gloss. Keep it focused and practical." },
+    { id: "pronuncia", title: "Pronúncia & listening", desc: "Pratique sons e pronúncia", color: "#d4a5a5", greeting: "Ready to practice pronunciation? Send me a word or sentence and I'll break down the sounds for you. \ud83d\udd0a", prompt: "You are Flin, an English pronunciation coach for a Brazilian student. Help with pronunciation using simple phonetic hints and tips. Be concise and encouraging." },
+  ];
+
+  componentDidMount() {
+    const saved = localStorage.getItem("isr_email");
+    if (saved) this.doLogin(saved); else this.setState({ screen: "login" });
+  }
+
+  async doLogin(email) {
+    email = (email || "").toLowerCase().trim();
+    if (!email) return;
+    this.setState({ screen: "loading", error: "" });
+    try {
+      const res = await fetch(this.EXEC + "?email=" + encodeURIComponent(email));
+      const data = await res.json();
+      if (!data || data.error) {
+        localStorage.removeItem("isr_email");
+        this.setState({ screen: "login", error: data && data.error === "user not found" ? "Email não encontrado na base. Confira com a coordenação." : (data && data.error) || "Resposta inválida" });
+        return;
+      }
+      localStorage.setItem("isr_email", email);
+      const isProf = data.role === "admin" || data.role === "teacher";
+      this.setState({ screen: "app", user: data, tab: isProf ? "inicio" : "home", activeTurma: 0, cham: {}, chamSaved: false, fbSaved: false });
+    } catch (e) {
+      this.setState({ screen: "login", error: "Falha de conexão: " + (e.message || e) });
+    }
+  }
+
+  logout() { localStorage.removeItem("isr_email"); this.setState({ screen: "login", user: null, error: "" }); }
+
+  setStatus(aluno, s) {
+    const key = this.state.activeTurma + "|" + aluno;
+    this.setState(st => ({ cham: Object.assign({}, st.cham, { [key]: s }), chamSaved: false }));
+  }
+
+  async saveChamada() {
+    const u = this.state.user, t = (u.turmaSchedules || [])[this.state.activeTurma];
+    if (!t) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const semana = (u.ciclo && u.ciclo.semanaAtual) || "";
+    const recs = (t.alunos || []).map(a => ({ turma: t.turma, semana, date: today, aluno: a, status: this.state.cham[this.state.activeTurma + "|" + a] || "absent" }));
+    this.setState({ chamSaving: true });
+    try {
+      await fetch(this.EXEC + "?action=saveChamada&savedBy=" + encodeURIComponent(localStorage.getItem("isr_email") || "app") + "&data=" + encodeURIComponent(JSON.stringify(recs)));
+      this.setState({ chamSaving: false, chamSaved: true });
+    } catch (e) { this.setState({ chamSaving: false, error: "Erro ao salvar chamada" }); }
+  }
+
+  async saveFeedback() {
+    const v = r => (r.current && r.current.value || "").trim();
+    const u = this.state.user;
+    const params = new URLSearchParams({
+      action: "saveFeedback", data: new Date().toISOString().slice(0, 10),
+      profNome: u.nome || "", profEmail: localStorage.getItem("isr_email") || "",
+      turma: v(this.fbTurmaRef), topico: v(this.fbTopicoRef),
+      bem: v(this.fbBemRef), atencao: v(this.fbAtencaoRef), proximosPassos: v(this.fbProxRef),
+    });
+    const aluno = v(this.fbAlunoRef);
+    if (aluno) params.set("turma", v(this.fbTurmaRef) + " · " + aluno);
+    this.setState({ fbSaving: true });
+    try {
+      await fetch(this.EXEC + "?" + params.toString());
+      this.setState({ fbSaving: false, fbSaved: true });
+      [this.fbBemRef, this.fbAtencaoRef, this.fbProxRef, this.fbTopicoRef, this.fbAlunoRef].forEach(r => { if (r.current) r.current.value = ""; });
+    } catch (e) { this.setState({ fbSaving: false, error: "Erro ao salvar feedback" }); }
+  }
+
+  async sendFlin() {
+    const ref = this.flinRef.current;
+    const v = (ref && ref.value || "").trim();
+    if (!v || this.state.flinBusy) return;
+    const mode = this.flinModes.find(m => m.id === this.state.flinMode) || this.flinModes[0];
+    const msgs = this.state.flinMsgs.concat([{ role: "user", text: v }]);
+    this.setState({ flinMsgs: msgs, flinBusy: true });
+    if (ref) ref.value = "";
+    try {
+      const convo = msgs.map(m => (m.role === "user" ? "Student" : "Flin") + ": " + m.text).join("\n");
+      const prompt = mode.prompt + "\n\nConversation so far:\n" + convo + "\n\nReply as Flin (do not prefix with 'Flin:'):";
+      let reply;
+      if (window.claude && window.claude.complete) {
+        reply = await window.claude.complete(prompt);
+      } else {
+        reply = "(modo demo) Nice! In the live app I'd reply using AI. Keep practicing \u2014 tell me more!";
+      }
+      this.setState(st => ({ flinMsgs: st.flinMsgs.concat([{ role: "flin", text: (reply || "").trim() }]), flinBusy: false }));
+    } catch (e) {
+      this.setState(st => ({ flinMsgs: st.flinMsgs.concat([{ role: "flin", text: "Tive um problema para responder agora. Tenta de novo? \ud83d\ude45" }]), flinBusy: false }));
+    }
+  }
+
+  renderVals() {
+    const s = this.state, u = s.user || {};
+    const role = u.role || "student";
+    const isProf = role === "admin" || role === "teacher";
+    const submitLogin = () => this.doLogin(this.emailRef.current && this.emailRef.current.value);
+    const EDITOR = "ISR - Tela de Aula (Editor Colaborativo).dc.html";
+    const editorUrl = (r, turma, topic) => encodeURI(EDITOR) + "?role=" + r + "&turma=" + encodeURIComponent(turma || "") + "&topic=" + encodeURIComponent(topic || "");
+
+    // base
+    const out = {
+      scLogin: s.screen === "login", scLoading: s.screen === "loading", scApp: s.screen === "app",
+      hasError: !!s.error, error: s.error,
+      emailRef: this.emailRef, submitLogin, onKey: e => { if (e.key === "Enter") submitLogin(); },
+      logout: () => this.logout(),
+      isProf, isAluno: !isProf,
+      nome: u.nome || "", initial: (u.nome || "?")[0],
+      subtitle: isProf ? ("Painel · " + (role === "admin" ? "Admin" : "Professor")) : ((u.nivel ? u.nivel + " · " : "") + "Ciclo " + ((u.ciclo && u.ciclo.nome) || "2026.2")),
+    };
+
+    if (!isProf) {
+      const sm = parseInt(u.ciclo && u.ciclo.semanaAtual, 10);
+      const pct = !isNaN(sm) ? Math.min(100, Math.round(sm / 10 * 100)) : 60;
+      const recados = (u.recados || []).filter(r => r.mensagem).map(r => ({ msg: r.mensagem, meta: [r.de, r.enviadoEm].filter(Boolean).join(" · ") }));
+      const ativ = (u.atividades || []).map((a, i) => {
+        const done = !!s.confAtiv[i];
+        return { titulo: a.titulo, quando: [a.data, a.horario].filter(Boolean).join(" · ") || (a.tipo || ""),
+          confirmed: done, confirmLabel: done ? "✓ Confirmado" : "Confirmar",
+          confirmBg: done ? "rgba(42,157,143,0.14)" : "#e07856", confirmFg: done ? "#2a9d8f" : "#fff",
+          toggle: () => this.setState(st => ({ confAtiv: Object.assign({}, st.confAtiv, { [i]: !st.confAtiv[i] }) })) };
+      });
+      Object.assign(out, {
+        cicloNome: (u.ciclo && u.ciclo.nome) || "2026.2",
+        pctText: pct + "%",
+        semanaLabel: !isNaN(sm) ? ("Semana " + sm + " de 10") : "Ciclo em andamento",
+        proxTopic: u.nextTopic || "Sua próxima aula",
+        proxInfo: [u.horario, u.professor || u.turma].filter(Boolean).join(" · ") || "Confira o calendário",
+        caderno: u.linkCaderno || u.linkAtividades || "#",
+        atividadesLink: u.linkAtividades || u.linkCaderno || "#",
+        meetLink: u.meetLink || "#", gravacoes: u.linkGravacoes || "#", calendar: u.schoolCalendar || "#",
+        editorUrl: editorUrl("aluno", u.turma || "", u.nextTopic || ""),
+        recados, hasRecados: recados.length > 0,
+        atividades: ativ, hasAtividades: ativ.length > 0, noAtividades: ativ.length === 0,
+      });
+      const stab = s.studentTab || "home";
+      const goTab = k => () => this.setState({ studentTab: k, contaView: k === "conta" ? "menu" : s.contaView, flinMode: k === "flin" ? s.flinMode : null });
+      out.stHome = stab === "home"; out.stAulas = stab === "aulas"; out.stFlin = stab === "flin"; out.stComunidade = stab === "comunidade"; out.stConta = stab === "conta";
+      const navIcon = k => ({ home: "home", aulas: "book", flin: "flin", comunidade: "people", conta: "user" }[k]);
+      out.navItems = ["home","aulas","flin","comunidade","conta"].map(k => ({ key: k, label: { home: "Início", aulas: "Aulas", flin: "Flin", comunidade: "Comunidade", conta: "Conta" }[k], icon: navIcon(k), go: goTab(k), color: stab === k ? "#164951" : "#c3bdb4" }));
+      out.goHome = goTab("home"); out.goAulas = goTab("aulas"); out.goFlin = goTab("flin"); out.goComunidade = goTab("comunidade"); out.goConta = goTab("conta");
+      const navC = k => stab === k ? "#164951" : "#c3bdb4";
+      out.cHome = navC("home"); out.cAulas = navC("aulas"); out.cFlin = navC("flin"); out.cComun = navC("comunidade"); out.cConta = navC("conta");
+      out.goMiles = () => this.setState({ studentTab: "conta", contaView: "miles" });
+      out.goNotif = () => this.setState({ studentTab: "conta", contaView: "notif" });
+
+      // Conta — sub-telas
+      const cv = s.contaView || "menu";
+      out.cvMenu = cv === "menu"; out.cvMiles = cv === "miles"; out.cvCert = cv === "certificado"; out.cvFaturas = cv === "faturas"; out.cvNotif = cv === "notif"; out.cvPerfil = cv === "perfil";
+      out.contaBack = () => this.setState({ contaView: "menu" });
+      out.contaRows = [
+        { key: "miles", icon: "coin", label: "ISR Miles", desc: "Saldo, como ganhar e resgatar" },
+        { key: "certificado", icon: "award", label: "Certificado", desc: "Disponível com 8+ aulas" },
+        { key: "faturas", icon: "card", label: "Faturas & renovação", desc: "Pagamentos e próximo ciclo" },
+        { key: "notif", icon: "bell", label: "Notificações", desc: "Lembretes e avisos" },
+        { key: "perfil", icon: "user", label: "Meus dados", desc: "Perfil, nível e turma" },
+      ].map(r => ({ label: r.label, desc: r.desc, icon: r.icon, go: () => this.setState({ contaView: r.key }) }));
+
+      // Aulas passadas (próprias) — virá do backend (aulasPassadas + gravação)
+      out.aulasPassadas = (u.aulasPassadas || [
+        { titulo: u.nextTopic || "Speaking & Storytelling", data: "Semana passada", gravacao: u.linkGravacoes || "" },
+        { titulo: "Grammar Review — Past Perfect", data: "Há 2 semanas", gravacao: u.linkGravacoes || "" },
+        { titulo: "Pronunciation Lab", data: "Há 3 semanas", gravacao: "" },
+      ]).map(a => { const tem = !!a.gravacao; return { titulo: a.titulo, data: a.data, gravacao: a.gravacao || "#", tem, recLabel: tem ? "▶ Gravação" : "Em breve", recBg: tem ? "#2a9d8f" : "#f0ede8", recFg: tem ? "#fff" : "#9b8b7e" }; });
+
+      // Certificado
+      out.certAulas = u.aulasConcluidas != null ? u.aulasConcluidas : 9;
+      out.certElegivel = out.certAulas >= 8;
+      out.certNaoElegivel = out.certAulas < 8;
+      out.certFaltam = Math.max(0, 8 - out.certAulas);
+      out.email = u.email || (localStorage.getItem("isr_email") || "");
+      out.certData = u.certData || new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+      out.printCert = () => { try {
+        const orient = (s.certSide === "back") ? "portrait" : "landscape";
+        let st = document.getElementById("isr-print-page");
+        if (!st) { st = document.createElement("style"); st.id = "isr-print-page"; document.head.appendChild(st); }
+        st.textContent = "@page { size: A4 " + orient + "; margin: 12mm; }";
+        window.print();
+      } catch (e) {} };
+      out.certHabilidades = (u.habilidades && u.habilidades.length) ? u.habilidades : [
+        "Conversação espontânea",
+        "Storytelling e fluência",
+        "Past & present tenses",
+        "Pronúncia e listening",
+        "Vocabulário do cotidiano",
+      ];
+      out.certHorasAulas = u.horasAulas != null ? u.horasAulas : out.certAulas;
+      out.certHorasBookClub = u.horasBookClub != null ? u.horasBookClub : 4;
+      out.certHorasExtras = u.horasExtras != null ? u.horasExtras : 3;
+      out.certHorasTotal = out.certHorasAulas + out.certHorasBookClub + out.certHorasExtras;
+      out.cicloInicio = (u.ciclo && u.ciclo.inicio) || "01 Abr 2026";
+      out.cicloFim = (u.ciclo && u.ciclo.fim) || "20 Jun 2026";
+      out.certNome = u.nomeCompleto || u.nome || "Gabriela Ferreira de Souza";
+      out.certProgram = u.programa || "My People Map";
+      out.cefrLevel = u.cefr || "A1";
+      out.certProgramDesc = u.programaDesc || "My People Map teaches learners to introduce themselves and the people in their world using real English structures \u2014 not translations. Across ten sessions, each adding one building block, learners build up to a live presentation of their own People Map.";
+      out.certCompetencies = u.competencias || [
+        "Introduce themselves with name, nationality and profession",
+        "Give personal information: age, address and phone number",
+        "Describe their work or studies (\u201cI work at\u2026 / I am a\u2026\u201d)",
+        "Introduce another person using possessives (his / her)",
+        "Describe what other people do (third-person present simple)",
+        "Express likes and dislikes (do / does in negatives)",
+        "Describe personality using adjectives",
+        "Write a short profile linking ideas with and / but / also",
+        "Ask and answer simple questions about people",
+        "Give a 3\u20135 minute presentation about themselves and others",
+      ];
+      const cside = s.certSide || "front";
+      out.certSideFront = cside === "front"; out.certSideBack = cside === "back";
+      out.goCertFront = () => this.setState({ certSide: "front" });
+      out.goCertBack = () => this.setState({ certSide: "back" });
+      out.cfFrontBg = cside === "front" ? "#164951" : "#fff"; out.cfFrontFg = cside === "front" ? "#fff" : "#9b8b7e";
+      out.cfBackBg = cside === "back" ? "#164951" : "#fff"; out.cfBackFg = cside === "back" ? "#fff" : "#9b8b7e";
+      out.nivel = u.nivel || "—";
+      out.turmaNome = u.turma || "—";
+
+      // Faturas
+      const fat = u.fatura || { valor: "R$ 297,00", vence: "24 Jun 2026", dias: 3 };
+      out.fatValor = fat.valor; out.fatVence = fat.vence; out.fatDias = fat.dias;
+
+      // Notificações
+      out.notifs = u.notificacoes || [
+        { titulo: "Sua aula começa em 30 min", msg: (u.nextTopic || "Speaking") + " · " + (u.professor || u.turma || ""), time: "Hoje" },
+        { titulo: "Certificado disponível!", msg: "Você concluiu 8+ aulas do ciclo.", time: "Ontem" },
+        { titulo: "Fatura vence em 3 dias", msg: fat.valor + " · vence " + fat.vence, time: "Há 2 dias" },
+      ];
+
+      // ---- Moedas ISR ----
+      const balance = (u.moedas != null ? u.moedas : (u.coins != null ? u.coins : 130));
+      out.coinBalance = balance;
+      out.coinEarnGroups = [
+        { label: "Aulas", color: "#2a9d8f", items: [
+          { label: "Presença em aula", val: "+10" },
+          { label: "Tarefa entregue no prazo", val: "+8" },
+          { label: "Presença em aula extra", val: "+15" },
+          { label: "Book club semanal", val: "+20" },
+        ] },
+        { label: "Comunidade", color: "#e07856", items: [
+          { label: "Completou o desafio da semana", val: "+10" },
+          { label: "Melhor resposta do desafio", val: "+10" },
+          { label: "Respondeu um colega", val: "+5" },
+          { label: "Compartilhou post da ISR", val: "+5" },
+        ] },
+        { label: "Indicações", color: "#8a7465", items: [
+          { label: "Indicou um amigo", val: "+20" },
+          { label: "Trouxe convidado pra apresentação", val: "+60" },
+          { label: "Indicação virou matrícula", val: "+200" },
+        ] },
+      ];
+      const rewards = [
+        { nome: "Escolhe o tema da próxima aula", cat: "aula", cost: 80 },
+        { nome: "Caderno de atividades personalizado", cat: "material", cost: 120 },
+        { nome: "30 min de bate-papo com a Gabi", cat: "mentoria", cost: 200 },
+        { nome: "Traz um convidado pra aula regular", cat: "comunidade", cost: 250 },
+        { nome: "Nomeia um colega (+20 bônus)", cat: "comunidade", cost: 300 },
+        { nome: "Featured no Instagram da escola", cat: "reconhecimento", cost: 350 },
+        { nome: "Carta de recomendação em inglês", cat: "carreira", cost: 400 },
+        { nome: "€10 de desconto na mensalidade", cat: "desconto", cost: 600 },
+        { nome: "Sessão de preparação pra entrevista", cat: "carreira", cost: 900 },
+        { nome: "1 mês no grupo VIP de conversação", cat: "topo", cost: 1200, vip: true },
+      ];
+      out.coinRewards = rewards.map(r => {
+        const ok = balance >= r.cost; const vip = !!r.vip;
+        return { nome: r.nome, cat: r.cat, cost: String(r.cost), can: ok,
+          btnLabel: ok ? "Resgatar" : ("Faltam " + (r.cost - balance)),
+          btnBg: ok ? "#fc9082" : (vip ? "rgba(255,255,255,0.15)" : "#f0ede8"), btnFg: ok ? "#164951" : (vip ? "#fff" : "#9b8b7e"),
+          cardBg: vip ? "#164951" : "#fff", titleColor: vip ? "#fff" : "#164951", costColor: vip ? "#fff" : "#164951",
+          catBg: vip ? "#9ec970" : "#f1ece5", catFg: vip ? "#164951" : "#8a7465", border: vip ? "#164951" : "#e0dcd6" };
+      });
+
+      // ---- Classificados (por categoria) ----
+      const CATS = {
+        servico: { label: "Serviço", bg: "rgba(42,157,143,0.14)", fg: "#2a9d8f" },
+        troca: { label: "Troca", bg: "rgba(107,91,149,0.14)", fg: "#6b5b95" },
+        venda: { label: "Venda", bg: "rgba(224,120,86,0.14)", fg: "#e07856" },
+      };
+      const rawClass = u.classificados || [
+        { cat: "servico", titulo: "Aulas de violão para iniciantes", autor: "Marina O.", desc: "Online, R$40/h. Aceito trocar por prática de speaking." },
+        { cat: "servico", titulo: "Revisão de currículo em inglês", autor: "Pedro L.", desc: "Ajudo a revisar CV e LinkedIn. Valor a combinar." },
+        { cat: "troca", titulo: "Troco conversação por ajuda com design", autor: "João S.", desc: "Pratico speaking com você e te ajudo com Canva/Figma." },
+        { cat: "troca", titulo: "Parceiro para praticar speaking", autor: "Ana C.", desc: "Quero treinar 2x/semana, nível intermediário." },
+        { cat: "venda", titulo: "Vendo 'English Grammar in Use'", autor: "Carla R.", desc: "Edição com respostas, seminovo. R$ 60." },
+      ];
+      const cFilter = s.classFilter || "todos";
+      const filteredClass = rawClass.filter(c => cFilter === "todos" || c.cat === cFilter);
+      out.classFilters = [["todos", "Todos"], ["servico", "Serviços"], ["troca", "Trocas"], ["venda", "Vendas"]].map(([id, label]) => ({
+        label, go: () => this.setState({ classFilter: id }),
+        bg: cFilter === id ? "#164951" : "#fff", fg: cFilter === id ? "#fff" : "#9b8b7e", border: cFilter === id ? "#164951" : "#e0dcd6",
+      }));
+      out.classificados = filteredClass.map(c => { const cat = CATS[c.cat] || CATS.servico; return {
+        titulo: c.titulo, autor: c.autor, desc: c.desc, tagLabel: cat.label, tagBg: cat.bg, tagFg: cat.fg, initial: (c.autor || "?")[0] }; });
+      out.hasClassificados = filteredClass.length > 0; out.noClassificados = filteredClass.length === 0;
+
+      // ---- Comunidade interativa ----
+      const seed = [
+        { id: "s1", autor: "Maria Silva", initial: "M", avBg: "#e07856", time: "há 2 horas", text: "I would love to visit Japan because it has amazing food and beautiful temples.", baseLikes: 5 },
+        { id: "s2", autor: "João Santos", initial: "J", avBg: "#6b5b95", time: "há 5 horas", text: "My dream destination is New Zealand. The landscapes are incredible!", baseLikes: 8 },
+        { id: "s3", autor: "Ana Costa", initial: "A", avBg: "#d4a574", time: "há 8 horas", text: "I want to visit Paris! The culture and history fascinate me.", baseLikes: 12 },
+      ];
+      const mine = (s.posts || []).map(p => ({ id: p.id, autor: u.nome || "Você", initial: (u.nome || "V")[0], avBg: "#2a9d8f", time: "agora", text: p.text, baseLikes: 0 }));
+      out.communityPosts = mine.concat(seed).map(p => {
+        const liked = !!s.likes[p.id];
+        const cms = s.comments[p.id] || [];
+        return { id: p.id, autor: p.autor, initial: p.initial, avBg: p.avBg, time: p.time, text: p.text,
+          likes: p.baseLikes + (liked ? 1 : 0), likeColor: liked ? "#e07856" : "#2a9d8f",
+          toggleLike: () => this.setState(st => ({ likes: Object.assign({}, st.likes, { [p.id]: !st.likes[p.id] }) })),
+          openComment: () => this.setState({ activeCommentId: s.activeCommentId === p.id ? null : p.id }),
+          commenting: s.activeCommentId === p.id,
+          commentRef: this.commentRef,
+          submitComment: () => { const v = (this.commentRef.current && this.commentRef.current.value || "").trim(); if (!v) return; this.setState(st => ({ comments: Object.assign({}, st.comments, { [p.id]: (st.comments[p.id] || []).concat({ autor: u.nome || "Você", text: v }) }), activeCommentId: null })); },
+          comments: cms, hasComments: cms.length > 0 };
+      });
+      out.composerOpen = s.composerOpen; out.postRef = this.postRef;
+      out.openComposer = () => this.setState({ composerOpen: true });
+      out.submitPost = () => { const v = (this.postRef.current && this.postRef.current.value || "").trim(); if (!v) return; this.setState(st => ({ posts: [{ id: "p" + Date.now(), text: v }].concat(st.posts), composerOpen: false })); };
+
+      // ---- Flin (chat) ----
+      out.flinActive = !!s.flinMode; out.flinPicker = !s.flinMode;
+      out.flinModeCards = this.flinModes.map(m => ({ title: m.title, desc: m.desc, color: m.color,
+        go: () => this.setState({ flinMode: m.id, flinMsgs: [{ role: "flin", text: m.greeting }] }) }));
+      const curFlin = this.flinModes.find(m => m.id === s.flinMode);
+      out.flinTitle = curFlin ? curFlin.title : "Flin";
+      out.flinColor = curFlin ? curFlin.color : "#2a9d8f";
+      out.flinMsgs = (s.flinMsgs || []).map(m => ({ text: m.text,
+        align: m.role === "user" ? "flex-end" : "flex-start",
+        bg: m.role === "user" ? "#164951" : "#fff", fg: m.role === "user" ? "#fff" : "#333",
+        border: m.role === "user" ? "#164951" : "#e0dcd6" }));
+      out.flinBusy = s.flinBusy; out.flinInputRef = this.flinRef;
+      out.flinBack = () => this.setState({ flinMode: null, flinMsgs: [] });
+      out.flinSend = () => this.sendFlin();
+      out.flinKey = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.sendFlin(); } };
+      return out;
+    }
+
+    // professor tabs
+    const tab = s.tab;
+    const mkTab = (id, label) => ({ label, go: () => this.setState({ tab: id }), color: tab === id ? "#fff" : "rgba(255,255,255,0.55)", border: tab === id ? "#e07856" : "transparent" });
+    out.tabs = [mkTab("inicio", "Início"), mkTab("turmas", "Turmas"), mkTab("chamada", "Chamada"), mkTab("feedback", "Feedback")];
+    out.showInicio = tab === "inicio"; out.showTurmas = tab === "turmas"; out.showChamada = tab === "chamada"; out.showFeedback = tab === "feedback";
+    out.profFirstName = (u.nome || "").split(" ")[0] || (u.nome || "Professor");
+
+    const scheds = u.turmaSchedules || [];
+    const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const PT = { Sun: "Dom", Mon: "Seg", Tue: "Ter", Wed: "Qua", Thu: "Qui", Fri: "Sex", Sat: "Sáb" };
+    const todayIdx = new Date().getDay();
+    const todayAbbr = DAYS[todayIdx];
+    const parseDay = h => { const m = (h || "").trim().match(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/i); return m ? (m[1][0].toUpperCase() + m[1].slice(1, 3).toLowerCase()) : ""; };
+    const parseTime = h => { const m = (h || "").match(/\d{1,2}h\d{0,2}/); return m ? m[0] : ""; };
+    const dist = abbr => { const i = DAYS.indexOf(abbr); return i < 0 ? 99 : (i - todayIdx + 7) % 7; };
+    const chip = (label, href) => ({ label, href: href || "#" });
+    const turmaCard = (t) => {
+      const today = parseDay(t.horario) === todayAbbr;
+      const dl = [PT[parseDay(t.horario)] || "", parseTime(t.horario)].filter(Boolean).join(" · ") || (t.horario || "");
+      return {
+        turma: t.turma || "Turma",
+        sub: (dl ? dl + " · " : "") + (t.alunos || []).length + " alunos",
+        accent: today ? "#e07856" : "#2a9d8f",
+        badge: today ? "Hoje" : (PT[parseDay(t.horario)] || "Em breve"),
+        badgeBg: today ? "#e07856" : "rgba(42,157,143,0.12)", badgeFg: today ? "#fff" : "#2a9d8f",
+        hasTopic: !!t.nextTopic, nextTopic: t.nextTopic || "",
+        chips: [chip("📓 Caderno", t.notebook), chip("📖 Guia", t.teacherGuide), chip("📅 Calendário", t.schoolCalendar)],
+        editorUrl: editorUrl("prof", t.turma || "", t.nextTopic || ""), meetLink: t.meetLink || "#",
+        _day: parseDay(t.horario), _today: today,
+      };
+    };
+    const partCard = (p) => {
+      const today = parseDay(p.horario) === todayAbbr;
+      const dl = [PT[parseDay(p.horario)] || "", parseTime(p.horario)].filter(Boolean).join(" · ") || (p.horario || "");
+      return {
+        turma: p.nome || "Particular",
+        sub: (dl ? dl + " · " : "") + (p.nivel || "Aula particular"),
+        accent: "#d4a574",
+        badge: today ? "Hoje · Particular" : (PT[parseDay(p.horario)] ? PT[parseDay(p.horario)] + " · Part." : "Particular"),
+        badgeBg: today ? "#d4a574" : "rgba(212,165,116,0.18)", badgeFg: today ? "#fff" : "#b07d3a",
+        hasTopic: false, nextTopic: "",
+        chips: [chip("📓 Caderno", p.linkCaderno), chip("🖼 Slides", p.linkSlides)],
+        editorUrl: editorUrl("prof", p.nome || "", ""), meetLink: p.linkMeet || "#",
+        _day: parseDay(p.horario), _today: today,
+      };
+    };
+    const allCards = scheds.map(turmaCard).concat((u.particulares || []).map(partCard));
+    const hojeCards = allCards.filter(c => c._today);
+    const proxCards = allCards.filter(c => !c._today).sort((a, b) => dist(a._day) - dist(b._day));
+    out.turmasHoje = hojeCards; out.turmasProximas = proxCards;
+    out.hasHoje = hojeCards.length > 0; out.noHoje = hojeCards.length === 0;
+    out.turmasRegulares = scheds.map(turmaCard);
+    out.particularesList = (u.particulares || []).map(partCard);
+    out.hasParticulares = out.particularesList.length > 0;
+    out.regCount = scheds.length + (scheds.length === 1 ? " turma" : " turmas");
+    out.partCount = out.particularesList.length + (out.particularesList.length === 1 ? " aluno" : " alunos");
+    out.profExtras = (u.aulasExtras || []).map(a => ({ titulo: a.titulo || a.nome || "Aula extra", quando: [a.data, a.horario].filter(Boolean).join(" · ") || (a.tipo || "A definir"), meet: a.linkMeet || a.meetLink || "#" }));
+    out.hasProfExtras = out.profExtras.length > 0; out.noProfExtras = out.profExtras.length === 0;
+
+    // tarefas para corrigir (vem do backend quando exposto)
+    const corrigirRaw = u.tarefasParaCorrigir || u.correcoes || u.tarefasCorrigir || [];
+    out.corrigir = corrigirRaw.map(x => ({
+      aluno: x.aluno || x.nome || "Aluno", initial: (x.aluno || x.nome || "?")[0],
+      info: [x.turma, x.tarefa || x.topico, x.enviadoEm].filter(Boolean).join(" · ") || "Aguardando correção",
+    }));
+    out.corrigirCount = out.corrigir.length;
+    out.hasCorrigir = out.corrigir.length > 0; out.noCorrigir = out.corrigir.length === 0;
+    out.goFeedback = () => this.setState({ tab: "feedback" });
+
+    // chamada
+    const active = scheds[s.activeTurma] || {};
+    out.turmaChips = scheds.map((t, i) => ({
+      label: t.turma || ("Turma " + (i + 1)), go: () => this.setState({ activeTurma: i, chamSaved: false }),
+      bg: i === s.activeTurma ? "#164951" : "#fff", fg: i === s.activeTurma ? "#fff" : "#9b8b7e", border: i === s.activeTurma ? "#164951" : "#e0dcd6",
+    }));
+    out.chamadaDate = (active.turma || "") + " · hoje";
+    const palette = { present: ["#2a9d8f", "rgba(42,157,143,0.14)", "#2a9d8f"], tardy: ["#d4a574", "rgba(212,165,116,0.18)", "#b07d3a"], absent: ["#c95a4a", "rgba(201,90,74,0.14)", "#c95a4a"] };
+    const cell = (on, k) => on ? { bg: palette[k][1], fg: palette[k][2], border: palette[k][0] } : { bg: "#fff", fg: "#ccc", border: "#e6e1d9" };
+    const alunos = active.alunos || [];
+    out.chamada = alunos.map((n, i) => {
+      const st = s.cham[s.activeTurma + "|" + n];
+      const p = cell(st === "present", "present"), t = cell(st === "tardy", "tardy"), a = cell(st === "absent", "absent");
+      return { nome: n, initial: (n || "?")[0], avBg: this.avColors[i % this.avColors.length],
+        setPresent: () => this.setStatus(n, "present"), setTardy: () => this.setStatus(n, "tardy"), setAbsent: () => this.setStatus(n, "absent"),
+        pBg: p.bg, pFg: p.fg, pBorder: p.border, tBg: t.bg, tFg: t.fg, tBorder: t.border, aBg: a.bg, aFg: a.fg, aBorder: a.border };
+    });
+    out.totalAlunos = alunos.length;
+    out.presentCount = alunos.filter(n => { const st = s.cham[s.activeTurma + "|" + n]; return st === "present" || st === "tardy"; }).length;
+    out.chamadaBtn = s.chamSaving ? "Salvando…" : (s.chamSaved ? "✓ Chamada salva" : "Salvar chamada");
+    out.saveChamada = () => this.saveChamada();
+
+    // feedback
+    out.fbTurmaRef = this.fbTurmaRef; out.fbAlunoRef = this.fbAlunoRef; out.fbTopicoRef = this.fbTopicoRef;
+    out.fbBemRef = this.fbBemRef; out.fbAtencaoRef = this.fbAtencaoRef; out.fbProxRef = this.fbProxRef;
+    out.turmaOptions = scheds.map(t => ({ value: t.turma || "", label: t.turma || "Turma" }));
+    out.fbBtn = s.fbSaving ? "Salvando…" : "Salvar feedback";
+    out.fbSaved = s.fbSaved;
+    out.saveFeedback = () => this.saveFeedback();
+
+    return out;
+  }
+}
+</script>
+</body>
+</html>

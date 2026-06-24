@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caderno do Aluno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #348a8e;
+      --accent: #fc9082;
+      --secondary: #9ec970;
+      --bg: #f5f5f0;
+      --white: #ffffff;
+      --text: #1a1a1a;
+      --gray: #525252;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); overflow: hidden; }
+    .container { display: flex; height: 100vh; }
+    
+    .sidebar { width: 260px; background: var(--white); border-right: 1px solid #f0f0f0; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; }
+    .sidebar h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--gray); margin-bottom: 16px; }
+    .nav-item { padding: 12px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--gray); }
+    .nav-item.active { background: rgba(52, 138, 142, 0.12); font-weight: 600; }
+
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: var(--white); border-bottom: 1px solid #f0f0f0; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+    .breadcrumb { display: flex; gap: 12px; font-size: 13px; color: var(--gray); }
+    .breadcrumb span { color: var(--primary); font-weight: 600; }
+
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: var(--white); }
+    .btn-secondary { background: #e5f2f6; color: var(--primary); }
+
+    .tabs { background: var(--white); border-bottom: 1px solid #f0f0f0; padding: 0 32px; display: flex; height: 48px; }
+    .tab-btn { border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gray); border-bottom: 3px solid transparent; padding: 12px 16px; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .editor-area { flex: 1; display: flex; overflow: hidden; }
+    .canvas { flex: 1; overflow-y: auto; padding: 48px 32px; background: var(--bg); display: none; }
+    .canvas.active { display: flex; }
+    .content { max-width: 900px; background: var(--white); border-radius: 8px; padding: 48px; flex: 1; }
+
+    .content h1 { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+    .content h2 { font-size: 24px; font-weight: 700; margin-top: 32px; margin-bottom: 16px; }
+    .content h3 { font-size: 18px; font-weight: 600; margin-top: 24px; margin-bottom: 12px; }
+    .content p { font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+    .content ul { margin-left: 24px; margin-bottom: 16px; }
+    .content li { font-size: 15px; margin-bottom: 8px; }
+    .content table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+    .content th { background: #e5f2f6; padding: 12px 16px; text-align: left; border: 1px solid #a5cfd6; font-weight: 600; }
+    .content td { padding: 12px 16px; border: 1px solid #f0f0f0; }
+
+    .edit-block { outline: none; padding: 4px 8px; }
+    .edit-block:focus { background: #e5f2f6; border-radius: 4px; }
+
+    .cols-container { display: grid; gap: 24px; margin: 24px 0; }
+    .cols-container.col2 { grid-template-columns: 1fr 1fr; }
+    .cols-container.col3 { grid-template-columns: 1fr 1fr 1fr; }
+    .col { background: #f5f5f0; padding: 24px; border-radius: 6px; border: 1px solid #f0f0f0; }
+
+    .media-box { background: linear-gradient(135deg, #e5f2f6 0%, #ddf0d0 100%); border: 2px dashed #a5cfd6; padding: 48px; text-align: center; border-radius: 6px; color: var(--primary); margin: 24px 0; }
+
+    .sep { border: none; border-top: 3px dashed var(--accent); margin: 48px 0; }
+
+    .menu { position: fixed; background: var(--white); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; min-width: 200px; display: none; }
+    .menu.visible { display: block; }
+    .menu-item { padding: 10px 16px; cursor: pointer; font-size: 12px; color: var(--text); border-bottom: 1px solid #f0f0f0; }
+    .menu-item:hover { background: #e5f2f6; }
+    .menu-item:last-child { border-bottom: none; }
+
+    .side-panel { width: 240px; background: var(--white); border-left: 1px solid #f0f0f0; padding: 24px 16px; overflow-y: auto; display: flex; flex-direction: column; }
+    .side-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gray); margin-bottom: 12px; margin-top: 16px; }
+    .side-title:first-child { margin-top: 0; }
+    .side-item { padding: 10px 12px; background: #f5f5f0; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--gray); margin-bottom: 8px; }
+    .side-item:hover { background: #e5f2f6; color: var(--primary); }
+
+    .task-item { background: linear-gradient(135deg, rgba(252, 144, 130, 0.08) 0%, rgba(158, 201, 112, 0.08) 100%); border: 2px solid var(--accent); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+    .task-title { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .task-meta { font-size: 12px; color: var(--accent); }
+    .task-desc { font-size: 14px; color: var(--text); margin-top: 12px; }
+
+    .save-ind { position: fixed; top: 16px; right: 16px; font-size: 12px; color: var(--gray); opacity: 0; }
+    .save-ind.show { opacity: 1; }
+
+    .fullscreen-mode { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 2000; display: none; flex-direction: column; }
+    .fullscreen-mode.active { display: flex; }
+    .fullscreen-content { flex: 1; overflow-y: auto; padding: 48px 32px; display: flex; justify-content: center; }
+    .fullscreen-toolbar { position: fixed; bottom: 24px; right: 24px; background: var(--white); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 12px; display: flex; gap: 8px; z-index: 2001; }
+    .fs-btn { width: 40px; height: 40px; border: none; background: #f5f5f0; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .fs-btn:hover { background: #e5f2f6; }
+
+    .slide { width: 100%; max-width: 900px; background: var(--white); border-radius: 8px; padding: 48px; min-height: 80vh; margin-bottom: 48px; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+  </style>
+</helmet>
+
+<div class="container" id="container">
+  <div class="sidebar">
+    <h2>📚 Navegação</h2>
+    <div class="nav-item active">Turma A / Aula 3</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb"><span>Turma A</span> / <span>Projeto 1</span> / <span>Aula 3</span></div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="save-ind" id="saveInd">✓ Salvo</div>
+        <button class="btn btn-secondary" onclick="{{ toggleFullscreen }}">⛶ Fullscreen</button>
+        <button class="btn btn-primary">💾 Salvar</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="{{ switchTab('aula') }}">📚 Aula</button>
+      <button class="tab-btn" onclick="{{ switchTab('tarefas') }}">✓ Tarefas</button>
+      <button class="tab-btn" id="profBtn" onclick="{{ switchTab('prof') }}" style="display: none;">📖 Guia Prof</button>
+    </div>
+
+    <div class="editor-area">
+      <div id="tab-aula" class="canvas active">
+        <div class="content" id="content">
+          <h1 class="edit-block" contenteditable="true">Aula 3: Mitocôndria</h1>
+          <p class="edit-block" contenteditable="true">Digite <strong>/</strong> para inserir elementos.</p>
+        </div>
+      </div>
+
+      <div id="tab-tarefas" class="canvas">
+        <div class="content">
+          <h1 style="color: var(--accent); margin-bottom: 24px;">📋 Tarefas de Casa</h1>
+          <div id="taskList">
+            <div class="task-item">
+              <div class="task-title">✓ Descrever Mitocôndria</div>
+              <div class="task-meta">📅 Vencimento: 27 de junho</div>
+              <div class="task-desc">Escreva uma descrição sobre a mitocôndria</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="{{ createTask }}" style="margin-top: 24px;">➕ Criar Tarefa</button>
+        </div>
+      </div>
+
+      <div id="tab-prof" class="canvas">
+        <div class="content">
+          <h1 style="color: var(--accent); margin-bottom: 24px;">📖 Guia do Professor</h1>
+          <div class="edit-block" contenteditable="true" style="font-size: 14px; line-height: 1.6; padding: 16px; background: #f5f5f0; border-radius: 6px;">
+            <strong>Preparação:</strong><br/>
+            • Revisar o material com antecedência<br/>
+            • Testar compartilhamento de tela<br/>
+            • Preparar exemplos práticos<br/><br/>
+
+            <strong>Durante a Aula:</strong><br/>
+            • Comece com uma pergunta provocadora<br/>
+            • Use o "/" para inserir imagens e vídeos<br/>
+            • Crie tarefas direto na aula com "/task"<br/>
+            • Deixe espaço para discussão<br/><br/>
+
+            <strong>Pós-Aula:</strong><br/>
+            • Revise as tarefas criadas<br/>
+            • Adicione comentários nos blocos<br/>
+            • O conteúdo salva automaticamente
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="side-title">✨ Ações</div>
+        <div class="side-item" onclick="{{ toggleFullscreen }}">⛶ Tela Cheia</div>
+        <div class="side-item" onclick="{{ createTask }}">➕ Tarefa</div>
+        <div class="side-item" id="profLink" onclick="{{ showProfGuide }}" style="display: none;">📖 Guia do Prof</div>
+
+        <div class="side-title">💡 Dica</div>
+        <p style="font-size: 12px; color: var(--gray); line-height: 1.5;">Digite "/" para inserir blocos, tabelas, imagens, vídeos e mais.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fullscreen-mode" id="fullscreenMode">
+  <div class="fullscreen-content" id="fullscreenContent"></div>
+  <div class="fullscreen-toolbar">
+    <button class="fs-btn" title="Anterior">⬅️</button>
+    <button class="fs-btn" title="Próximo">➡️</button>
+    <button class="fs-btn" onclick="{{ toggleFullscreen }}" title="Sair">✕</button>
+  </div>
+</div>
+
+<div class="menu" id="menu">
+  <div class="menu-item" data-cmd="p">📝 Parágrafo</div>
+  <div class="menu-item" data-cmd="h2">🏷️ Heading 2</div>
+  <div class="menu-item" data-cmd="h3">🏷️ Heading 3</div>
+  <div class="menu-item" data-cmd="ul">📋 Lista</div>
+  <div class="menu-item" data-cmd="table">📊 Tabela</div>
+  <div class="menu-item" data-cmd="img">📸 Imagem</div>
+  <div class="menu-item" data-cmd="video">🎬 Vídeo</div>
+  <div class="menu-item" data-cmd="col2">📐 2 Colunas</div>
+  <div class="menu-item" data-cmd="col3">📐 3 Colunas</div>
+  <div class="menu-item" data-cmd="sep">➖ Separador</div>
+  <div class="menu-item" data-cmd="task">✓ Tarefa</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1920px&quot;, &quot;height&quot;: &quot;1080px&quot;}}">
+class Component extends DCLogic {
+  state = { cursorEl: null, fullscreen: false, isProfessor: true };
+
+  componentDidMount() {
+    const content = document.getElementById('content');
+    const menu = document.getElementById('menu');
+    
+    // Mostrar botão prof se for professor
+    if (this.state.isProfessor) {
+      document.getElementById('profBtn').style.display = 'block';
+      document.getElementById('profLink').style.display = 'block';
+    }
+    
+    content.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !menu.classList.contains('visible')) {
+        e.preventDefault();
+        this.setState({ cursorEl: document.activeElement });
+        
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+          const range = sel.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          menu.classList.add('visible');
+          menu.style.top = Math.min(rect.bottom + window.scrollY + 10, window.innerHeight - 400) + 'px';
+          menu.style.left = rect.left + window.scrollX + 'px';
+        }
+      }
+      
+      if ((e.key === 'Escape' || e.key === 'Enter' || e.key === 'Backspace') && menu.classList.contains('visible')) {
+        menu.classList.remove('visible');
+      }
+    });
+
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('.menu-item');
+      if (item) {
+        this.insertEl(item.dataset.cmd);
+        menu.classList.remove('visible');
+      }
+    });
+
+    content.addEventListener('input', () => this.autoSave());
+    content.addEventListener('blur', () => this.autoSave(), true);
+    setInterval(() => this.autoSave(), 10000);
+
+    const saved = localStorage.getItem('aulaContent');
+    if (saved) content.innerHTML = saved;
+  }
+
+  insertEl = (type) => {
+    const content = document.getElementById('content');
+    const cursorEl = this.state.cursorEl;
+    let el = null;
+
+    if (type === 'p') {
+      el = document.createElement('p');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo parágrafo...';
+    } else if (type === 'h2') {
+      el = document.createElement('h2');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo Heading 2';
+    } else if (type === 'h3') {
+      el = document.createElement('h3');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo Heading 3';
+    } else if (type === 'ul') {
+      el = document.createElement('ul');
+      const li = document.createElement('li');
+      li.className = 'edit-block';
+      li.contentEditable = 'true';
+      li.textContent = 'Item';
+      el.appendChild(li);
+    } else if (type === 'table') {
+      el = document.createElement('table');
+      for (let i = 0; i < 2; i++) {
+        const tr = document.createElement('tr');
+        for (let j = 0; j < 3; j++) {
+          const cell = i === 0 ? document.createElement('th') : document.createElement('td');
+          cell.className = 'edit-block';
+          cell.contentEditable = 'true';
+          cell.textContent = i === 0 ? 'Col ' + (j+1) : 'Dado';
+          tr.appendChild(cell);
+        }
+        el.appendChild(tr);
+      }
+    } else if (type === 'img') {
+      el = document.createElement('div');
+      el.className = 'media-box';
+      el.textContent = '📸 Clique ou arraste uma imagem';
+    } else if (type === 'video') {
+      el = document.createElement('div');
+      el.className = 'media-box';
+      el.textContent = '🎬 Cole URL do vídeo aqui';
+    } else if (type === 'col2' || type === 'col3') {
+      el = document.createElement('div');
+      el.className = 'cols-container ' + (type === 'col2' ? 'col2' : 'col3');
+      const count = type === 'col2' ? 2 : 3;
+      for (let i = 0; i < count; i++) {
+        const col = document.createElement('div');
+        col.className = 'col edit-block';
+        col.contentEditable = 'true';
+        col.textContent = 'Coluna ' + (i+1);
+        el.appendChild(col);
+      }
+    } else if (type === 'sep') {
+      el = document.createElement('hr');
+      el.className = 'sep';
+    } else if (type === 'task') {
+      el = document.createElement('div');
+      el.className = 'task-item';
+      el.innerHTML = '<div class="task-title">✓ Nova Tarefa</div><div class="task-meta">📅 Vencimento: ' + this.getDeadline() + '</div><div class="task-desc edit-block" contenteditable="true">Descrição da tarefa...</div>';
+    }
+
+    if (el && cursorEl && cursorEl !== content) {
+      cursorEl.parentNode.insertBefore(el, cursorEl.nextSibling);
+    } else if (el) {
+      content.appendChild(el);
+    }
+
+    setTimeout(() => {
+      const firstEdit = el?.querySelector('.edit-block') || (el?.contentEditable === 'true' ? el : null);
+      if (firstEdit) firstEdit.focus();
+      this.autoSave();
+    }, 50);
+  }
+
+  getDeadline = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 6);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+  }
+
+  autoSave = () => {
+    const content = document.getElementById('content');
+    localStorage.setItem('aulaContent', content.innerHTML);
+    const ind = document.getElementById('saveInd');
+    if (ind) {
+      ind.classList.add('show');
+      setTimeout(() => ind.classList.remove('show'), 2000);
+    }
+  }
+
+  renderVals() {
+    return {
+      switchTab: (tab) => {
+        document.querySelectorAll('.canvas').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        event.target.classList.add('active');
+      },
+      toggleFullscreen: () => {
+        this.setState(s => ({ fullscreen: !s.fullscreen }));
+        const fsMode = document.getElementById('fullscreenMode');
+        const content = document.getElementById('content');
+        
+        if (this.state.fullscreen) {
+          // Cria slides a partir dos separadores
+          const slides = [];
+          let currentSlide = document.createElement('div');
+          currentSlide.className = 'slide';
+          
+          Array.from(content.childNodes).forEach(node => {
+            if (node.classList && node.classList.contains('sep')) {
+              if (currentSlide.innerHTML) {
+                slides.push(currentSlide.cloneNode(true));
+              }
+              currentSlide = document.createElement('div');
+              currentSlide.className = 'slide';
+            } else {
+              currentSlide.appendChild(node.cloneNode(true));
+            }
+          });
+          if (currentSlide.innerHTML) slides.push(currentSlide);
+          
+          // Mostra fullscreen
+          const fsContent = document.getElementById('fullscreenContent');
+          fsContent.innerHTML = '';
+          slides.forEach(slide => fsContent.appendChild(slide));
+          fsMode.classList.add('active');
+        } else {
+          fsMode.classList.remove('active');
+        }
+      },
+      showProfGuide: () => {
+        this.renderVals().switchTab('prof');
+      },
+      createTask: () => {
+        alert('Nova tarefa criada! Vencimento: ' + this.getDeadline());
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif;">
+
+  <!-- demo toggle -->
+  <div style="position: fixed; top: 10px; right: 10px; z-index: 50; display: flex; background: #fff; border: 1px solid #e0dcd6; border-radius: 999px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <button onclick="{{ setLocked }}" style="border: none; background: {{ lockedBg }}; color: {{ lockedFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 6px 12px; cursor: pointer;">Bloqueado</button>
+    <button onclick="{{ setOpen }}" style="border: none; background: {{ openBg }}; color: {{ openFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 6px 12px; cursor: pointer;">Liberado</button>
+  </div>
+
+  <header style="padding: 28px 16px 20px; background: #fff; border-bottom: 1px solid #e0dcd6;">
+    <div style="max-width: 420px; margin: 0 auto;">
+      <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" style="height: 30px; width: auto; margin-bottom: 14px;" alt="ISR" />
+      <h1 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #164951; letter-spacing: -0.4px;">Olá, {{ nome }}! 👋</h1>
+      <p style="margin: 0; font-size: 13px; color: #9b8b7e;">Que bom ter você no Inglês sem Roteiro.</p>
+    </div>
+  </header>
+
+  <div style="padding: 20px 16px 40px; max-width: 420px; margin: 0 auto;">
+
+    <!-- STATUS CARD -->
+    <sc-if value="{{ locked }}" hint-placeholder-val="{{ true }}">
+      <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #d4a574; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 20px; margin-bottom: 16px;">
+        <span style="display: inline-block; background: rgba(212,165,116,0.18); color: #b07d3a; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 9px; border-radius: 2px; margin-bottom: 12px;">🔒 Conteúdo em preparação</span>
+        <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 700; color: #164951;">Seu acesso completo abre em</h2>
+        <p style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #d4a574; letter-spacing: -0.5px;">{{ dataLiberacao }}</p>
+        <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.6;">Antes disso, você participa da sua <strong>sessão de boas-vindas ao vivo</strong> — onde a gente conhece seu nível e explica como tudo funciona.</p>
+      </section>
+
+      <!-- ONBOARDING SESSION -->
+      <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 1px;">Sua sessão de onboarding</h3>
+        <div style="display: flex; gap: 14px; margin-bottom: 14px;">
+          <div style="flex: 1; background: rgba(42,157,143,0.08); border-radius: 2px; padding: 12px; text-align: center;">
+            <div style="font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px;">🇧🇷 Brasil</div>
+            <div style="font-size: 18px; font-weight: 700; color: #164951;">{{ horaBR }}</div>
+          </div>
+          <div style="flex: 1; background: rgba(184,168,217,0.12); border-radius: 2px; padding: 12px; text-align: center;">
+            <div style="font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px;">🇳🇱 Holanda</div>
+            <div style="font-size: 18px; font-weight: 700; color: #6b5b95;">{{ horaNL }}</div>
+          </div>
+        </div>
+        <button style="width: 100%; background: #2a9d8f; border: none; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 2px;">📅 Adicionar ao calendário</button>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+      <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid #2a9d8f; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 22px; margin-bottom: 24px; text-align: center;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(42,157,143,0.12); color: #2a9d8f; font-size: 26px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">🎉</div>
+        <h2 style="margin: 0 0 6px; font-size: 17px; font-weight: 700; color: #164951;">Tudo pronto!</h2>
+        <p style="margin: 0 0 18px; font-size: 13px; color: #666; line-height: 1.6;">Seu conteúdo está liberado. Sua primeira aula e o caderno já estão te esperando.</p>
+        <button style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">Entrar na área do aluno →</button>
+      </section>
+    </sc-if>
+
+    <!-- CHECKLIST -->
+    <h3 style="margin: 0 0 12px; font-size: 11px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 1px;">Comece por aqui</h3>
+    <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden;">
+      <sc-for list="{{ steps }}" as="step" hint-placeholder-count="3">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f0ede8;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: {{ step.bg }}; color: {{ step.fg }}; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ step.icon }}</div>
+          <div style="flex: 1;">
+            <p style="margin: 0 0 1px; font-size: 13px; font-weight: 700; color: #333;">{{ step.title }}</p>
+            <p style="margin: 0; font-size: 11px; color: #9b8b7e;">{{ step.desc }}</p>
+          </div>
+          <span style="font-size: 16px; color: #ccc;">›</span>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}, &quot;liberado&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;}, &quot;nome&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Marina&quot;, &quot;tsType&quot;: &quot;string&quot;}, &quot;dataLiberacao&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;06 Jul 2026&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { liberado: null };
+  renderVals() {
+    const liberado = this.state.liberado === null ? (this.props.liberado ?? false) : this.state.liberado;
+    const on = "#164951", off = "transparent", onText = "#fff", offText = "#9b8b7e";
+    return {
+      nome: this.props.nome ?? "Marina",
+      dataLiberacao: this.props.dataLiberacao ?? "06 Jul 2026",
+      horaBR: this.props.horaBR ?? "19h30",
+      horaNL: this.props.horaNL ?? "00h30",
+      locked: !liberado,
+      open: liberado,
+      setLocked: () => this.setState({ liberado: false }),
+      setOpen: () => this.setState({ liberado: true }),
+      lockedBg: !liberado ? on : off, lockedFg: !liberado ? onText : offText,
+      openBg: liberado ? on : off, openFg: liberado ? onText : offText,
+      steps: [
+        { icon: "🎯", title: "Confirme seu nível", desc: "Faça o teste rápido de 5 min", bg: "rgba(224,120,86,0.12)", fg: "#e07856" },
+        { icon: "🤖", title: "Conheça o Flin", desc: "Sua IA pessoal de prática", bg: "rgba(107,91,149,0.12)", fg: "#6b5b95" },
+        { icon: "💬", title: "Entre na comunidade", desc: "Desafios e prática com colegas", bg: "rgba(42,157,143,0.12)", fg: "#2a9d8f" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

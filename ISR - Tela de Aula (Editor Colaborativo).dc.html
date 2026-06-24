@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caderno do Aluno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #348a8e;
+      --accent: #fc9082;
+      --secondary: #9ec970;
+      --bg: #f5f5f0;
+      --white: #ffffff;
+      --text: #1a1a1a;
+      --gray: #525252;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); overflow: hidden; }
+    .container { display: flex; height: 100vh; }
+    
+    .sidebar { width: 260px; background: var(--white); border-right: 1px solid #f0f0f0; overflow-y: auto; padding: 24px 16px; display: flex; flex-direction: column; }
+    .sidebar h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--gray); margin-bottom: 16px; }
+    .nav-item { padding: 12px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--gray); }
+    .nav-item.active { background: rgba(52, 138, 142, 0.12); font-weight: 600; }
+
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: var(--white); border-bottom: 1px solid #f0f0f0; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+    .breadcrumb { display: flex; gap: 12px; font-size: 13px; color: var(--gray); }
+    .breadcrumb span { color: var(--primary); font-weight: 600; }
+
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: var(--white); }
+    .btn-secondary { background: #e5f2f6; color: var(--primary); }
+
+    .tabs { background: var(--white); border-bottom: 1px solid #f0f0f0; padding: 14px 32px; display: flex; gap: 10px; align-items: center; }
+    .tab-btn { border: 1px solid #ece9e2; background: #f5f5f0; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--gray); border-radius: 10px; padding: 12px 22px; display: flex; align-items: center; gap: 8px; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .tab-btn.active { color: #fff; background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 12px rgba(252,144,130,0.35); }
+
+    .editor-area { flex: 1; display: flex; overflow: hidden; }
+    .canvas { flex: 1; overflow-y: auto; padding: 32px 40px; background: #efece6; display: none; }
+    .canvas.active { display: flex; justify-content: center; align-items: flex-start; }
+    .content { width: 100%; max-width: 800px; background: var(--white); border-radius: 14px; padding: 48px 56px; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 12px 32px rgba(0,0,0,0.06); flex: none; min-height: auto; }
+
+    .content h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; margin-top: 0; }
+    .content h2 { font-size: 22px; font-weight: 700; margin-top: 28px; margin-bottom: 14px; }
+    .content h3 { font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 10px; }
+    .content p { font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
+    .content ul { margin-left: 20px; margin-bottom: 12px; margin-top: 0; }
+    .content li { font-size: 14px; margin-bottom: 6px; line-height: 1.4; }
+    .content table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .content th { background: #e5f2f6; padding: 12px 16px; text-align: left; border: 1px solid #a5cfd6; font-weight: 600; }
+    .content td { padding: 12px 16px; border: 1px solid #f0f0f0; }
+
+    .edit-block { outline: none; padding: 4px 8px; }
+    .edit-block:focus { background: #e5f2f6; border-radius: 4px; }
+
+    .cols-container { display: grid; gap: 16px; margin: 16px 0; }
+    .cols-container.col2 { grid-template-columns: 1fr 1fr; }
+    .cols-container.col3 { grid-template-columns: 1fr 1fr 1fr; }
+    .col { background: #f5f5f0; padding: 16px; border-radius: 6px; border: 1px solid #f0f0f0; }
+
+    .media-box { background: repeating-linear-gradient(45deg, #faf9f6, #faf9f6 10px, #f2efe9 10px, #f2efe9 20px); border: 1px dashed #cfcabf; padding: 36px; text-align: center; border-radius: 10px; color: #8a8275; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; letter-spacing: 0.2px; margin: 16px 0; }
+
+    .sep { border: none; border-top: 2px dashed var(--accent); margin: 32px 0; page-break-after: always; }
+
+    .menu { position: fixed; background: var(--white); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; min-width: 200px; display: none; }
+    .menu.visible { display: block; }
+    .menu-item { padding: 10px 16px; cursor: pointer; font-size: 12px; color: var(--text); border-bottom: 1px solid #f0f0f0; }
+    .menu-item:hover { background: #e5f2f6; }
+    .menu-item:last-child { border-bottom: none; }
+
+    .side-panel { width: 240px; background: var(--white); border-left: 1px solid #f0f0f0; padding: 24px 16px; overflow-y: auto; display: flex; flex-direction: column; }
+    .side-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gray); margin-bottom: 12px; margin-top: 16px; }
+    .side-title:first-child { margin-top: 0; }
+    .side-item { padding: 10px 12px; background: #f5f5f0; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--gray); margin-bottom: 8px; }
+    .side-item:hover { background: #e5f2f6; color: var(--primary); }
+    .side-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .side-collapse { border: none; background: #f0ede7; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; color: var(--gray); font-size: 13px; line-height: 1; }
+    .side-collapse:hover { background: #e5f2f6; color: var(--primary); }
+    .side-panel.hidden { display: none; }
+    #actionsToggle { position: fixed; right: 18px; bottom: 22px; display: none; z-index: 500; background: var(--accent); color: #fff; border: none; border-radius: 999px; padding: 12px 18px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(252,144,130,0.4); align-items: center; gap: 8px; }
+    #actionsToggle.show { display: inline-flex; }
+    #actionsToggle:hover { filter: brightness(0.96); }
+
+    .task-item { background: linear-gradient(135deg, rgba(252, 144, 130, 0.08) 0%, rgba(158, 201, 112, 0.08) 100%); border: 2px solid var(--accent); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+    .task-title { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .task-meta { font-size: 12px; color: var(--accent); }
+    .task-desc { font-size: 14px; color: var(--text); margin-top: 12px; }
+    .task-actions { margin-top: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .task-send { padding: 12px 20px; font-size: 13px; }
+    .task-sent-badge { display: none; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #5a9a2e; }
+    .task-item.sent .task-send { display: none; }
+    .task-item.sent .task-sent-badge { display: inline-flex; }
+    .task-item.sent { border-color: var(--secondary); background: linear-gradient(135deg, rgba(158,201,112,0.12) 0%, rgba(158,201,112,0.06) 100%); }
+    .task-status { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; background: rgba(252,144,130,0.15); color: var(--accent); }
+    .task-item.todo { border-color: #dcd8d0; background: #faf9f6; }
+    .task-item.todo .task-title, .task-item.todo .task-meta { color: var(--text); }
+    .task-item.todo .task-status { background: #ece9e2; color: var(--gray); }
+    .task-item.todo .task-send { display: none; }
+    .task-item.sent .task-status { background: rgba(158,201,112,0.22); color: #5a9a2e; }
+    .task-date { font-family: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid #e0dcd6; border-radius: 6px; color: var(--text); }
+    .task-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .task-head .task-title { margin-bottom: 0; }
+    .task-head .task-status { margin-bottom: 0; margin-left: auto; }
+    .task-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c7c2b8; background: #fff; flex: none; position: relative; }
+    .task-item:not(.todo) .task-check { border-color: var(--accent); background: var(--accent); }
+    .task-item:not(.todo) .task-check:after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .task-item.sent .task-check { border-color: var(--secondary); background: var(--secondary); }
+    .task-hint { font-size: 12px; color: var(--gray); margin-top: 10px; font-style: italic; }
+    .task-item:not(.todo) .task-hint { display: none; }
+
+    /* Tela individual da tarefa */
+    #taskView { display: none; flex: 1; flex-direction: column; background: var(--bg); overflow: hidden; }
+    .tv-top { padding: 16px 32px; background: var(--white); border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 18px; }
+    .tv-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .tv-meta { font-size: 12px; color: var(--gray); margin-top: 2px; }
+    .tv-badge { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--primary); background: rgba(52,138,142,0.12); padding: 6px 12px; border-radius: 999px; }
+    .tv-body { flex: 1; overflow-y: auto; display: flex; justify-content: center; padding: 32px; }
+    .tv-inner { max-width: 760px; width: 100%; }
+    .tv-desc { background: var(--white); border-left: 3px solid var(--accent); padding: 16px 20px; border-radius: 8px; font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 24px; }
+    .tv-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gray); margin-bottom: 8px; }
+    .tv-answer { background: var(--white); border-radius: 8px; padding: 24px; min-height: 300px; font-size: 15px; line-height: 1.6; outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+    .tv-answer:focus { border-color: #a5cfd6; }
+    .tv-answer:empty:before { content: 'Escreva aqui a sua resposta…'; color: #bbb; }
+    .tv-actions { display: flex; align-items: center; gap: 16px; margin-top: 22px; flex-wrap: wrap; }
+    #taskSubmit { padding: 14px 26px; font-size: 14px; }
+    #taskSubmit:disabled { cursor: default; opacity: 0.6; }
+    .tv-saved { font-size: 12px; color: var(--gray); }
+
+    .save-ind { position: fixed; top: 16px; right: 16px; font-size: 12px; color: var(--gray); opacity: 0; }
+    .save-ind.show { opacity: 1; }
+
+    .fullscreen-mode { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 2000; display: none; flex-direction: column; }
+    .fullscreen-mode.active { display: flex; }
+    .fullscreen-content { flex: 1; overflow-y: auto; padding: 48px 32px; display: flex; justify-content: center; align-items: flex-start; }
+    .fullscreen-toolbar { position: fixed; bottom: 24px; right: 24px; background: var(--white); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 12px; display: flex; gap: 8px; z-index: 2001; }
+    .fs-btn { width: 40px; height: 40px; border: none; background: #f5f5f0; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .fs-btn:hover { background: #e5f2f6; }
+
+    .slide { width: 100%; max-width: 900px; background: var(--white); border-radius: 8px; padding: 56px 64px; min-height: 78vh; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+
+    /* --- Aula Extra (ao vivo) --- */
+    .extra-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(252,144,130,0.14); color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; margin-bottom: 16px; }
+    .extra-meta { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 24px 0 8px; }
+    .extra-meta-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); }
+    .extra-meta-item .em-ico { width: 36px; height: 36px; border-radius: 9px; background: #e5f2f6; display: flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
+    .extra-meta-item .em-k { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; }
+    .extra-meta-item .em-v { font-size: 14px; font-weight: 600; }
+    .extra-panel { margin-top: 32px; border-top: 1px solid #ece9e2; padding-top: 28px; }
+
+    .pres-cta { display: flex; align-items: center; gap: 16px; background: #f5f5f0; border: 1px solid #ece9e2; border-radius: 14px; padding: 20px 24px; }
+    .pres-cta.confirmed { background: rgba(158,201,112,0.14); border-color: rgba(158,201,112,0.5); }
+    .pres-btn { padding: 14px 26px; border: none; border-radius: 10px; background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(252,144,130,0.35); }
+    .pres-btn:hover { filter: brightness(0.97); }
+    .pres-confirmed-pill { display: inline-flex; align-items: center; gap: 8px; color: #4f8a2e; font-weight: 700; font-size: 15px; }
+    .pres-count { font-size: 13px; color: var(--gray); margin-top: 14px; }
+
+    .chamada-stat { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
+    .chamada-stat .cs-num { font-size: 34px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+    .chamada-stat .cs-lab { font-size: 14px; color: var(--gray); }
+    .chamada-list { display: flex; flex-direction: column; gap: 8px; }
+    .chamada-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: #f5f5f0; font-size: 14px; }
+    .chamada-row.present { background: rgba(158,201,112,0.12); }
+    .chamada-row.absent { opacity: 0.55; }
+    .chamada-row .ch-ava { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none; }
+    .chamada-row .ch-name { font-weight: 600; flex: 1; }
+    .chamada-row .ch-mark { font-size: 13px; font-weight: 700; }
+    .chamada-row.present .ch-mark { color: #4f8a2e; }
+    .chamada-row.absent .ch-mark { color: #b0b0b0; font-weight: 500; }
+
+    @media (max-width: 860px) {
+      .sidebar, .side-panel { display: none; }
+      .topbar { padding: 12px 16px; height: auto; flex-wrap: wrap; gap: 8px; }
+      .tabs { padding: 0 12px; }
+      .canvas { padding: 20px 12px; }
+      .content { padding: 24px 18px; }
+      .breadcrumb { font-size: 12px; }
+    }
+    .sel-toolbar { position: fixed; display: none; gap: 2px; align-items: center; background: #1f2937; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.28); padding: 4px 6px; z-index: 3000; }
+    .sel-toolbar.visible { display: flex; }
+    .st-btn { border: none; background: none; color: #fff; font-size: 13px; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; line-height: 1; }
+    .st-btn:hover { background: rgba(255,255,255,0.15); }
+    .st-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.22); margin: 0 4px; }
+    .st-color { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.45); cursor: pointer; padding: 0; margin: 0 1px; }
+    .st-color:hover { transform: scale(1.12); }
+    .content img { max-width: 100%; height: auto; }
+
+    .side-brand { padding: 4px 8px 0; }
+    .side-brand-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent); }
+    .side-brand-turma { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 2px; line-height: 1.2; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; line-height: 1.3; }
+    .aula-num { font-size: 9px; font-weight: 700; letter-spacing: 0.6px; color: var(--gray); opacity: 0.75; }
+    .nav-item.active .aula-num { color: var(--primary); opacity: 1; }
+    .aula-topic { font-size: 13px; color: var(--text); }
+    .aula-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+    .btn-newaula { margin-top: 8px; padding: 10px; border: 1px dashed #d0d0c8; background: none; border-radius: 8px; color: var(--gray); font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; }
+    .btn-newaula:hover { border-color: var(--primary); color: var(--primary); background: rgba(52,138,142,0.05); }
+    .side-back { margin-top: auto; padding: 12px 8px 2px; font-size: 12px; color: var(--gray); text-decoration: none; }
+    .side-back:hover { color: var(--primary); }
+    p.edit-block:empty:before { content: 'Escreva, ou digite "/" para inserir um bloco'; color: #c4c4bd; pointer-events: none; }
+    .edit-block:empty { min-height: 1.45em; }
+
+    @media print {
+      .sidebar, .topbar, .tabs, .side-panel, #actionsToggle, #taskView, .menu, .sel-toolbar, .save-ind { display: none !important; }
+      .canvas.active { display: block !important; padding: 0 !important; overflow: visible !important; }
+      .content { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; border-radius: 0 !important; min-height: 0 !important; }
+      body, .container, .main, .editor-area { background: #fff !important; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+
+    @media print {
+      * { margin: 0; padding: 0; }
+      body { font-size: 11pt; line-height: 1.5; color: #1a1a1a; background: white; }
+      .sidebar, .topbar, .tabs, .side-panel, #actionsToggle, .selToolbar, #menu { display: none !important; }
+      .main, .editor-area, .canvas { all: unset; display: block !important; }
+      .canvas.active { display: block !important; }
+      .content { max-width: none; width: 100%; padding: 40mm 20mm; border-radius: 0; box-shadow: none; page-break-inside: avoid; min-height: auto; background: white; }
+      .content h1 { font-size: 24pt; margin-bottom: 6pt; margin-top: 0; page-break-after: avoid; }
+      .content h2 { font-size: 16pt; margin-top: 14pt; margin-bottom: 8pt; page-break-after: avoid; }
+      .content h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 6pt; page-break-after: avoid; }
+      .content p { font-size: 11pt; margin-bottom: 8pt; widows: 2; orphans: 2; }
+      .content li { font-size: 11pt; margin-bottom: 4pt; }
+      .content ul { margin-left: 14mm; margin-bottom: 8pt; margin-top: 0; }
+      .cols-container { display: block; }
+      .col { background: white; border: 0.5pt solid #d4d4d4; padding: 6mm; margin-bottom: 6pt; page-break-inside: avoid; }
+      .media-box { border: 1pt dashed #999; padding: 18pt; margin: 12pt 0; page-break-inside: avoid; }
+      .sep { border-top: 1pt dashed #999; margin: 18pt 0; page-break-after: always; }
+      .task-item { border: 1pt solid #ddd; padding: 12pt; margin-bottom: 12pt; background: white; page-break-inside: avoid; }
+      table { width: 100%; border-collapse: collapse; margin: 10pt 0; }
+      th, td { border: 0.5pt solid #999; padding: 6pt; text-align: left; }
+      th { background: #efefef; font-weight: bold; }
+      @page { size: A4; margin: 20mm; }
+    }
+  </style>
+</helmet>
+
+<div class="container" id="container">
+  <div class="sidebar">
+    <div class="side-brand">
+      <div class="side-brand-label">Caderno</div>
+      <div class="side-brand-turma" id="navTurma">Turma A</div>
+    </div>
+    <h2 style="margin-top: 22px;">Aulas</h2>
+    <div id="aulaList" style="display: flex; flex-direction: column; gap: 2px; flex: 1;"></div>
+    <button class="btn-newaula" id="newAulaBtn" style="display: none;">＋ Nova aula</button>
+    <a class="side-back" href="ISR App (Conectado).dc.html">← Voltar ao app</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display: flex; gap: 14px; align-items: center;">
+        <a class="btn btn-secondary" href="ISR App (Conectado).dc.html" style="text-decoration: none;">← App</a>
+        <div class="breadcrumb" id="breadcrumb"><span>Turma A</span> / <span>Aula 3</span></div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="save-ind" id="saveInd">✓ Salvo</div>
+        <button class="btn btn-secondary" onclick="{{ toggleFullscreen }}">⛶ Fullscreen</button>
+        <button class="btn btn-primary" id="saveBtn">💾 Salvar</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="aula">📚 Aula</button>
+      <button class="tab-btn" data-tab="tarefas">📋 Tarefas</button>
+      <button class="tab-btn" id="profBtn" data-tab="prof" style="display: none;">📖 Guia do Prof</button>
+    </div>
+
+    <div class="editor-area">
+      <div id="tab-aula" class="canvas active">
+        <div class="content" id="content">
+          <h1 class="edit-block" id="lessonTitle" contenteditable="true">Aula 3: Mitocôndria</h1>
+          <p class="edit-block" contenteditable="true">Digite <strong>/</strong> para inserir elementos.</p>
+        </div>
+      </div>
+
+      <div id="tab-tarefas" class="canvas">
+        <div class="content">
+          <h1 style="color: var(--accent); margin-bottom: 8px;">📋 Tarefas de Casa</h1>
+          <p style="font-size: 14px; color: var(--gray); margin-bottom: 24px;">Faça a tarefa no caderno e envie para a professora corrigir.</p>
+          <div id="taskList">
+            <div class="task-item todo" data-task="t2">
+              <div class="task-head">
+                <span class="task-check"></span>
+                <div class="task-title">Ler o capítulo 4 e anotar 3 dúvidas</div>
+                <span class="task-status">A fazer</span>
+              </div>
+              <div class="task-meta">📅 Vencimento: 24 de junho</div>
+              <div class="task-desc">Leia o capítulo e traga suas dúvidas para a próxima aula.</div>
+              <p class="task-hint">Você ainda não fez esta tarefa.</p>
+              <div class="task-actions">
+                <button class="btn btn-primary task-do" data-task="t2">✏️ Fazer a tarefa</button>
+                <span class="task-sent-badge">✓ Enviada — aguardando correção</span>
+              </div>
+            </div>
+            <div class="task-item sent" data-task="t1">
+              <div class="task-head">
+                <span class="task-check"></span>
+                <div class="task-title">Descrever Mitocôndria</div>
+                <span class="task-status">Enviada</span>
+              </div>
+              <div class="task-meta">📅 Vencimento: 20 de junho</div>
+              <div class="task-desc">Escreva uma descrição sobre a mitocôndria.</div>
+              <div class="task-actions">
+                <button class="btn btn-secondary task-do" data-task="t1">👁 Ver minha resposta</button>
+                <span class="task-sent-badge">✓ Enviada — aguardando correção</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="createTaskBtn" onclick="{{ createTask }}" style="margin-top: 24px; display: none;">➕ Criar Tarefa</button>
+        </div>
+      </div>
+
+      <div id="tab-prof" class="canvas">
+        <div class="content">
+          <h1 style="color: var(--accent); margin-bottom: 24px;">📖 Guia do Professor</h1>
+          <div class="edit-block" contenteditable="true" style="font-size: 14px; line-height: 1.6; padding: 16px; background: #f5f5f0; border-radius: 6px;">
+            <strong>Preparação:</strong><br/>
+            • Revisar o material com antecedência<br/>
+            • Testar compartilhamento de tela<br/>
+            • Preparar exemplos práticos<br/><br/>
+
+            <strong>Durante a Aula:</strong><br/>
+            • Comece com uma pergunta provocadora<br/>
+            • Use o "/" para inserir imagens e vídeos<br/>
+            • Crie tarefas direto na aula com "/task"<br/>
+            • Deixe espaço para discussão<br/><br/>
+
+            <strong>Pós-Aula:</strong><br/>
+            • Revise as tarefas criadas<br/>
+            • Adicione comentários nos blocos<br/>
+            • O conteúdo salva automaticamente
+          </div>
+        </div>
+      </div>
+
+      <div class="side-panel" id="sidePanel">
+        <div class="side-head">
+          <div class="side-title" style="margin-bottom: 0;">✨ Ações</div>
+          <button class="side-collapse" id="sideCollapse" title="Ocultar painel">✕</button>
+        </div>
+        <div class="side-item" onclick="{{ toggleFullscreen }}">⛶ Tela Cheia</div>
+        <div class="side-item" onclick="{{ downloadPdf }}">⬇️ Baixar PDF</div>
+        <div class="side-item" id="sideTask" onclick="{{ createTask }}">➕ Tarefa</div>
+        <div class="side-item" id="profLink" onclick="{{ showProfGuide }}" style="display: none;">📖 Guia do Prof</div>
+
+        <div id="dicaBlock">
+          <div class="side-title">💡 Dica</div>
+          <p style="font-size: 12px; color: var(--gray); line-height: 1.5;">Digite "/" para inserir blocos, tabelas, imagens, vídeos e mais.</p>
+        </div>
+      </div>
+    </div>
+
+    <button id="actionsToggle">✨ Ações</button>
+
+    <!-- Tela INDIVIDUAL da tarefa (espaço de resposta do aluno, separado do caderno do grupo) -->
+    <div id="taskView">
+      <div class="tv-top">
+        <button class="btn btn-secondary" id="taskBack">← Voltar às tarefas</button>
+        <div>
+          <div id="taskViewTitle" class="tv-title">Tarefa</div>
+          <div id="taskViewMeta" class="tv-meta">📅 Vencimento</div>
+        </div>
+        <span class="tv-badge">Tarefa individual</span>
+      </div>
+      <div class="tv-body">
+        <div class="tv-inner">
+          <div id="taskViewDesc" class="tv-desc"></div>
+          <div class="tv-label">Sua resposta</div>
+          <div id="taskAnswer" class="tv-answer" contenteditable="true"></div>
+          <div class="tv-actions">
+            <button class="btn btn-primary" id="taskSubmit">✓ Concluir e enviar para correção</button>
+            <span class="tv-saved">As respostas salvam automaticamente.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fullscreen-mode" id="fullscreenMode">
+  <div class="fullscreen-content" id="fullscreenContent"></div>
+  <div class="fullscreen-toolbar">
+    <button class="fs-btn" id="fsPrev" onclick="{{ prevSlide }}" title="Anterior">⬅️</button>
+    <div id="fsCounter" style="display: flex; align-items: center; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--gray);">1 / 1</div>
+    <button class="fs-btn" id="fsNext" onclick="{{ nextSlide }}" title="Próximo">➡️</button>
+    <button class="fs-btn" onclick="{{ toggleFullscreen }}" title="Sair">✕</button>
+  </div>
+</div>
+
+<div class="menu" id="menu">
+  <div class="menu-item" data-cmd="p">📝 Parágrafo</div>
+  <div class="menu-item" data-cmd="h2">🏷️ Heading 2</div>
+  <div class="menu-item" data-cmd="h3">🏷️ Heading 3</div>
+  <div class="menu-item" data-cmd="ul">📋 Lista</div>
+  <div class="menu-item" data-cmd="table">📊 Tabela</div>
+  <div class="menu-item" data-cmd="img">📸 Imagem</div>
+  <div class="menu-item" data-cmd="video">🎬 Vídeo</div>
+  <div class="menu-item" data-cmd="col2">📐 2 Colunas</div>
+  <div class="menu-item" data-cmd="col3">📐 3 Colunas</div>
+  <div class="menu-item" data-cmd="sep">➖ Separador</div>
+  <div class="menu-item" data-cmd="task">✓ Tarefa</div>
+</div>
+
+<div class="sel-toolbar" id="selToolbar">
+  <button class="st-btn" data-cmd="bold" title="Negrito" style="font-weight: 800;">B</button>
+  <button class="st-btn" data-cmd="italic" title="Itálico" style="font-style: italic;">I</button>
+  <button class="st-btn" data-cmd="underline" title="Sublinhado" style="text-decoration: underline;">U</button>
+  <button class="st-btn" data-cmd="strikeThrough" title="Tachado" style="text-decoration: line-through;">S</button>
+  <span class="st-sep"></span>
+  <button class="st-color" data-color="#1a1a1a" title="Preto" style="background: #1a1a1a;"></button>
+  <button class="st-color" data-color="#348a8e" title="Teal" style="background: #348a8e;"></button>
+  <button class="st-color" data-color="#fc9082" title="Coral" style="background: #fc9082;"></button>
+  <button class="st-color" data-color="#9ec970" title="Verde" style="background: #9ec970;"></button>
+  <button class="st-color" data-color="#e0a020" title="Âmbar" style="background: #e0a020;"></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1920px&quot;, &quot;height&quot;: &quot;1080px&quot;}}">
+class Component extends DCLogic {
+  state = { cursorEl: null, fullscreen: false, isProfessor: false };
+
+  componentDidMount() {
+    const content = document.getElementById('content');
+    const menu = document.getElementById('menu');
+
+    // Navega slides com as setas do teclado em fullscreen
+    this._fsKey = (e) => {
+      if (!this.state.fullscreen) return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); this.gotoSlide(1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); this.gotoSlide(-1); }
+      else if (e.key === 'Escape') { this.renderVals().toggleFullscreen(); }
+    };
+    window.addEventListener('keydown', this._fsKey);
+    
+    // --- Contexto vindo do app (parâmetros da URL) ---
+    const params = new URLSearchParams(location.search);
+    this.turma = params.get('turma') || '';
+    this.topic = params.get('topic') || '';
+    const role = params.get('role');
+    if (role === 'prof' || role === 'professor') this.state.isProfessor = true;
+    else this.state.isProfessor = false; // padrão seguro: aluno (somente leitura)
+    this.esc = (str) => (str || '').replace(/</g, '&lt;');
+
+    // Monta a lista de aulas da turma e a navegação lateral
+    this.buildAulas();
+    this.renderSidebar();
+
+    // Abas (religadas via JS — onclick com argumento não resolve em template)
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.switchTab(btn.dataset.tab, btn));
+    });
+
+    const newBtn = document.getElementById('newAulaBtn');
+    if (newBtn) newBtn.addEventListener('click', () => this.newAula());
+
+    // Painel de Ações recolhível (libera espaço)
+    const sidePanel = document.getElementById('sidePanel');
+    const sideCollapse = document.getElementById('sideCollapse');
+    const actionsToggle = document.getElementById('actionsToggle');
+    const setPanel = (open) => {
+      if (!sidePanel || !actionsToggle) return;
+      sidePanel.classList.toggle('hidden', !open);
+      actionsToggle.classList.toggle('show', !open);
+      try { localStorage.setItem('isr_actions_open', open ? '1' : '0'); } catch (e) {}
+    };
+    if (sideCollapse) sideCollapse.addEventListener('click', () => setPanel(false));
+    if (actionsToggle) actionsToggle.addEventListener('click', () => setPanel(true));
+    const actOpen = localStorage.getItem('isr_actions_open');
+    setPanel(actOpen === null ? true : actOpen === '1');
+
+    // Abrir a tela individual da tarefa
+    document.querySelectorAll('.task-do').forEach(b => {
+      b.addEventListener('click', () => this.doTask(b));
+    });
+    // Tela individual: voltar, salvar resposta e concluir/enviar
+    const tBack = document.getElementById('taskBack');
+    if (tBack) tBack.addEventListener('click', () => this.closeTaskView());
+    const tSubmit = document.getElementById('taskSubmit');
+    if (tSubmit) tSubmit.addEventListener('click', () => this.submitTask());
+    const tAns = document.getElementById('taskAnswer');
+    if (tAns) tAns.addEventListener('input', () => this.saveAnswer());
+    this.restoreTaskStates();
+
+    // Visibilidade por papel (aluno x professor)
+    this.applyRole();
+    
+    content.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !menu.classList.contains('visible')) {
+        e.preventDefault();
+        this.setState({ cursorEl: document.activeElement });
+        
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+          const range = sel.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          menu.classList.add('visible');
+          menu.style.top = Math.min(rect.bottom + window.scrollY + 10, window.innerHeight - 400) + 'px';
+          menu.style.left = rect.left + window.scrollX + 'px';
+        }
+      }
+      
+      if ((e.key === 'Escape' || e.key === 'Enter' || e.key === 'Backspace') && menu.classList.contains('visible')) {
+        menu.classList.remove('visible');
+      }
+
+      // Enter cria um novo parágrafo (novo bloco) ao final do bloco de texto atual
+      if (e.key === 'Enter' && !e.shiftKey && !menu.classList.contains('visible')) {
+        const a = document.activeElement;
+        if (a && content.contains(a) && a.classList && a.classList.contains('edit-block') && ['H1','P','H2','H3'].indexOf(a.tagName) !== -1) {
+          e.preventDefault();
+          const p = this.makeParagraph();
+          a.parentNode.insertBefore(p, a.nextSibling);
+          this.placeCaret(p);
+          this.autoSave();
+        }
+      }
+    });
+
+    // Clicar no espaço vazio do documento posiciona o cursor para continuar escrevendo
+    content.addEventListener('click', (e) => {
+      if (e.target === content) {
+        const last = content.lastElementChild;
+        if (last && last.tagName === 'P' && last.classList.contains('edit-block') && !last.textContent.trim()) {
+          this.placeCaret(last);
+        } else {
+          const p = this.makeParagraph();
+          content.appendChild(p);
+          this.placeCaret(p);
+        }
+      }
+    });
+
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('.menu-item');
+      if (item) {
+        this.insertEl(item.dataset.cmd);
+        menu.classList.remove('visible');
+      }
+    });
+
+    // --- Colar imagem (Ctrl/Cmd+V) ---
+    content.addEventListener('paste', (e) => {
+      const cd = e.clipboardData || window.clipboardData;
+      if (!cd) return;
+      const items = cd.items || [];
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (it.type && it.type.indexOf('image') === 0) {
+          e.preventDefault();
+          const file = it.getAsFile();
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            document.execCommand('insertImage', false, ev.target.result);
+            const imgs = content.querySelectorAll('img');
+            const img = imgs[imgs.length - 1];
+            if (img) { img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.borderRadius = '6px'; img.style.margin = '12px 0'; }
+            this.autoSave();
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+      }
+    });
+
+    // --- Barra de formatação ao selecionar texto ---
+    const toolbar = document.getElementById('selToolbar');
+    const showToolbar = () => {
+      if (!toolbar) return;
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) { toolbar.classList.remove('visible'); return; }
+      const anchor = sel.anchorNode;
+      if (!anchor || !content.contains(anchor)) { toolbar.classList.remove('visible'); return; }
+      const rect = sel.getRangeAt(0).getBoundingClientRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) { toolbar.classList.remove('visible'); return; }
+      toolbar.classList.add('visible');
+      const tb = toolbar.getBoundingClientRect();
+      let top = rect.top - tb.height - 10;
+      if (top < 8) top = rect.bottom + 10;
+      let left = rect.left + rect.width / 2 - tb.width / 2;
+      left = Math.max(8, Math.min(left, window.innerWidth - tb.width - 8));
+      toolbar.style.top = top + 'px';
+      toolbar.style.left = left + 'px';
+    };
+    content.addEventListener('mouseup', () => setTimeout(showToolbar, 0));
+    content.addEventListener('keyup', () => setTimeout(showToolbar, 0));
+    document.addEventListener('selectionchange', () => {
+      const sel = window.getSelection();
+      if ((!sel || sel.isCollapsed) && toolbar) toolbar.classList.remove('visible');
+    });
+    if (toolbar) {
+      toolbar.addEventListener('mousedown', (e) => e.preventDefault());
+      toolbar.addEventListener('click', (e) => {
+        const cmdBtn = e.target.closest('[data-cmd]');
+        const colBtn = e.target.closest('[data-color]');
+        if (cmdBtn) {
+          document.execCommand(cmdBtn.dataset.cmd, false, null);
+        } else if (colBtn) {
+          document.execCommand('styleWithCSS', false, true);
+          document.execCommand('foreColor', false, colBtn.dataset.color);
+        }
+        this.autoSave();
+        setTimeout(showToolbar, 0);
+      });
+    }
+
+    content.addEventListener('input', () => this.autoSave());
+    content.addEventListener('blur', () => this.autoSave(), true);
+    setInterval(() => this.autoSave(), 10000);
+
+    // Carrega a aula ativa (conteúdo salvo ou template padrão)
+    this.loadAula(this.activeAula);
+  }
+
+  buildAulas = () => {
+    this.aulas = [
+      { id: 'a1', n: 1, topic: 'Apresentações', task: false },
+      { id: 'a2', n: 2, topic: 'Minha rotina', task: false },
+      { id: 'a3', n: 3, topic: this.topic || 'Aula atual', task: true },
+      { id: 'extra1', n: '★', topic: 'Conversação ao vivo', task: false, extra: true,
+        when: 'Quinta, 26 de junho · 19h00', format: 'Online (Google Meet)', prof: 'Profa. Marina',
+        desc: 'Encontro extra opcional para praticar conversação. Confirme presença para a professora organizar os grupos.' },
+    ];
+    this.studentName = 'João Silva';
+    this.activeAula = this.aulas[2];
+  }
+
+  extraRoster = () => ['Maria Santos', 'Pedro Lima', 'Ana Costa', 'Lucas Reis', 'João Silva', 'Beatriz Nunes', 'Rafael Dias'];
+  presenceKey = (a) => 'isr_presenca__' + encodeURIComponent(this.turma || 'default') + '__' + a.id;
+  getPresence = (a) => {
+    try {
+      const raw = localStorage.getItem(this.presenceKey(a));
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return ['Maria Santos', 'Pedro Lima'];
+  }
+  confirmPresence = (a) => {
+    const list = this.getPresence(a);
+    if (list.indexOf(this.studentName) === -1) list.push(this.studentName);
+    try { localStorage.setItem(this.presenceKey(a), JSON.stringify(list)); } catch (e) {}
+    this.renderExtraAula(a);
+  }
+
+  renderSidebar = () => {
+    const nav = document.getElementById('navTurma');
+    if (nav) nav.textContent = this.turma || 'Minha turma';
+    const list = document.getElementById('aulaList');
+    if (list) {
+      list.innerHTML = '';
+      this.aulas.forEach(a => {
+        const item = document.createElement('div');
+        item.className = 'nav-item' + (a === this.activeAula ? ' active' : '') + (a.extra ? ' nav-extra' : '');
+        const dot = a.task ? '<span class="aula-dot" title="Tarefa pendente"></span>' : '';
+        const label = a.extra ? 'AULA EXTRA' : ('AULA ' + a.n);
+        const ico = a.extra ? '🔴 ' : '';
+        item.innerHTML = '<div><div class="aula-num">' + label + '</div><div class="aula-topic">' + ico + this.esc(a.topic) + '</div></div>' + dot;
+        item.addEventListener('click', () => this.loadAula(a));
+        list.appendChild(item);
+      });
+    }
+    const nb = document.getElementById('newAulaBtn');
+    if (nb) nb.style.display = this.state.isProfessor ? 'block' : 'none';
+  }
+
+  loadAula = (a) => {
+    if (this.activeAula && this.storeKey && !this.activeAula.extra) this.autoSave();
+    this.activeAula = a;
+    this.storeKey = 'aulaContent__' + encodeURIComponent(this.turma || 'default') + '__' + a.id;
+    const content = document.getElementById('content');
+
+    // Aba aula sempre ativa ao trocar de aula
+    this.switchTab('aula');
+
+    if (a.extra) {
+      this.renderExtraAula(a);
+      const bc = document.getElementById('breadcrumb');
+      if (bc) bc.innerHTML = '<span>' + this.esc(this.turma || 'Turma') + '</span> / <span>Aula Extra</span>';
+      this.renderSidebar();
+      return;
+    }
+
+    const saved = localStorage.getItem(this.storeKey);
+    if (saved) {
+      content.innerHTML = saved;
+    } else {
+      const intro = 'Digite <strong>/</strong> para inserir elementos.';
+      content.innerHTML = '<h1 class="edit-block" id="lessonTitle" contenteditable="true">' + this.esc(a.topic) + '</h1>' +
+        '<p class="edit-block" contenteditable="true">' + intro + '</p>';
+    }
+    const bc = document.getElementById('breadcrumb');
+    if (bc) bc.innerHTML = '<span>' + this.esc(this.turma || 'Turma') + '</span> / <span>Aula ' + a.n + '</span>';
+    this.renderSidebar();
+    this.applyReadOnly();
+  }
+
+  newAula = () => {
+    const n = this.aulas.length + 1;
+    const a = { id: 'a_' + Date.now(), n: n, topic: 'Nova aula', task: false };
+    this.aulas.push(a);
+    this.loadAula(a);
+    setTimeout(() => { const t = document.getElementById('lessonTitle'); if (t) this.placeCaret(t); }, 60);
+  }
+
+  switchTab = (tab, btnEl) => {
+    const tv = document.getElementById('taskView'); if (tv) tv.style.display = 'none';
+    const ea = document.querySelector('.editor-area'); if (ea) ea.style.display = 'flex';
+    document.querySelectorAll('.canvas').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById('tab-' + tab);
+    if (panel) panel.classList.add('active');
+    const btn = btnEl || document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+    if (btn) btn.classList.add('active');
+  }
+
+  applyRole = () => {
+    const prof = this.state.isProfessor;
+    const set = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+    set('profBtn', prof);     // aba Guia do Prof
+    set('profLink', prof);    // atalho lateral
+    set('newAulaBtn', prof);  // criar nova aula
+    set('sideTask', prof);    // atalho lateral + Tarefa
+    set('createTaskBtn', prof); // criar tarefa na aba Tarefas
+  }
+
+  sentKey = () => 'isr_tarefas_enviadas__' + encodeURIComponent(this.turma || 'default');
+  doneKey = () => 'isr_tarefas_feitas__' + encodeURIComponent(this.turma || 'default');
+
+  answerKey = (id) => 'isr_resposta__' + encodeURIComponent(this.turma || 'default') + '__' + id;
+
+  // Abre a tela INDIVIDUAL da tarefa (espaço de resposta do próprio aluno)
+  doTask = (btn) => { this.openTaskView(btn.dataset.task || 't'); }
+
+  openTaskView = (id) => {
+    const item = document.querySelector('.task-item[data-task="' + id + '"]');
+    if (!item) return;
+    this.currentTaskId = id;
+    const txt = (sel) => { const e = item.querySelector(sel); return e ? e.textContent : ''; };
+    document.getElementById('taskViewTitle').textContent = txt('.task-title').trim() || 'Tarefa';
+    document.getElementById('taskViewMeta').textContent = txt('.task-meta').trim();
+    document.getElementById('taskViewDesc').textContent = txt('.task-desc').trim();
+    const ans = document.getElementById('taskAnswer');
+    ans.innerHTML = localStorage.getItem(this.answerKey(id)) || '';
+    const sent = item.classList.contains('sent');
+    const submit = document.getElementById('taskSubmit');
+    submit.textContent = sent ? '✓ Enviada — aguardando correção' : '✓ Concluir e enviar para correção';
+    submit.disabled = sent;
+    ans.setAttribute('contenteditable', sent ? 'false' : 'true');
+    document.querySelector('.editor-area').style.display = 'none';
+    document.getElementById('taskView').style.display = 'flex';
+    if (!sent) setTimeout(() => this.placeCaret(ans), 60);
+  }
+
+  closeTaskView = () => {
+    document.getElementById('taskView').style.display = 'none';
+    document.querySelector('.editor-area').style.display = 'flex';
+    this.switchTab('tarefas');
+  }
+
+  saveAnswer = () => {
+    if (!this.currentTaskId) return;
+    try { localStorage.setItem(this.answerKey(this.currentTaskId), document.getElementById('taskAnswer').innerHTML); } catch (e) {}
+  }
+
+  // "Concluir e enviar" — avisa a professora que a tarefa está feita
+  submitTask = () => {
+    const id = this.currentTaskId;
+    if (!id) return;
+    this.saveAnswer();
+    const item = document.querySelector('.task-item[data-task="' + id + '"]');
+    if (item) {
+      item.classList.remove('todo');
+      item.classList.add('sent');
+      const st = item.querySelector('.task-status'); if (st) st.textContent = 'Enviada';
+    }
+    try {
+      const out = JSON.parse(localStorage.getItem('isr_correcoes') || '[]');
+      out.push({ turma: this.turma || 'Turma', aluno: 'Aluno', tarefa: (item && item.querySelector('.task-title').textContent) || 'Tarefa', enviadoEm: new Date().toLocaleDateString('pt-BR') });
+      localStorage.setItem('isr_correcoes', JSON.stringify(out));
+    } catch (e) {}
+    try {
+      const sent = JSON.parse(localStorage.getItem(this.sentKey()) || '[]');
+      if (sent.indexOf(id) === -1) { sent.push(id); localStorage.setItem(this.sentKey(), JSON.stringify(sent)); }
+    } catch (e) {}
+    this.closeTaskView();
+  }
+
+  restoreTaskStates = () => {
+    let done = [], sent = [];
+    try { done = JSON.parse(localStorage.getItem(this.doneKey()) || '[]'); } catch (e) {}
+    try { sent = JSON.parse(localStorage.getItem(this.sentKey()) || '[]'); } catch (e) {}
+    done.forEach(id => {
+      const item = document.querySelector('.task-item[data-task="' + id + '"]');
+      if (item) { item.classList.remove('todo'); const st = item.querySelector('.task-status'); if (st) st.textContent = 'Pronta para enviar'; }
+    });
+    sent.forEach(id => {
+      const item = document.querySelector('.task-item[data-task="' + id + '"]');
+      if (item) { item.classList.remove('todo'); item.classList.add('sent'); const st = item.querySelector('.task-status'); if (st) st.textContent = 'Enviada'; }
+    });
+  }
+
+  applyReadOnly = () => {
+    // Caderno colaborativo: garante que tudo fique editável (limpa estados antigos de só-leitura)
+    const content = document.getElementById('content');
+    content.removeAttribute('contenteditable');
+    content.querySelectorAll('.edit-block').forEach(e => e.setAttribute('contenteditable', 'true'));
+  }
+
+  makeParagraph = () => {
+    const p = document.createElement('p');
+    p.className = 'edit-block';
+    p.setAttribute('contenteditable', 'true');
+    return p;
+  }
+
+  placeCaret = (el) => {
+    if (!el) return;
+    el.focus();
+    try {
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) {}
+  }
+
+  insertEl = (type) => {
+    const content = document.getElementById('content');
+    const cursorEl = this.state.cursorEl;
+    let el = null;
+
+    if (type === 'p') {
+      el = document.createElement('p');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo parágrafo...';
+    } else if (type === 'h2') {
+      el = document.createElement('h2');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo Heading 2';
+    } else if (type === 'h3') {
+      el = document.createElement('h3');
+      el.className = 'edit-block';
+      el.contentEditable = 'true';
+      el.textContent = 'Novo Heading 3';
+    } else if (type === 'ul') {
+      el = document.createElement('ul');
+      const li = document.createElement('li');
+      li.className = 'edit-block';
+      li.contentEditable = 'true';
+      li.textContent = 'Item';
+      el.appendChild(li);
+    } else if (type === 'table') {
+      el = document.createElement('table');
+      for (let i = 0; i < 2; i++) {
+        const tr = document.createElement('tr');
+        for (let j = 0; j < 3; j++) {
+          const cell = i === 0 ? document.createElement('th') : document.createElement('td');
+          cell.className = 'edit-block';
+          cell.contentEditable = 'true';
+          cell.textContent = i === 0 ? 'Col ' + (j+1) : 'Dado';
+          tr.appendChild(cell);
+        }
+        el.appendChild(tr);
+      }
+    } else if (type === 'img') {
+      el = document.createElement('div');
+      el.className = 'media-box';
+      el.textContent = '📸 Clique ou arraste uma imagem';
+    } else if (type === 'video') {
+      el = document.createElement('div');
+      el.className = 'media-box';
+      el.textContent = '🎬 Cole URL do vídeo aqui';
+    } else if (type === 'col2' || type === 'col3') {
+      el = document.createElement('div');
+      el.className = 'cols-container ' + (type === 'col2' ? 'col2' : 'col3');
+      const count = type === 'col2' ? 2 : 3;
+      for (let i = 0; i < count; i++) {
+        const col = document.createElement('div');
+        col.className = 'col edit-block';
+        col.contentEditable = 'true';
+        col.textContent = 'Coluna ' + (i+1);
+        el.appendChild(col);
+      }
+    } else if (type === 'sep') {
+      el = document.createElement('hr');
+      el.className = 'sep';
+    } else if (type === 'task') {
+      el = document.createElement('div');
+      el.className = 'task-item';
+      el.innerHTML = '<div class="task-title edit-block" contenteditable="true">Nova tarefa</div>' +
+        '<div class="task-meta" style="display: flex; align-items: center; gap: 8px;">📅 Vencimento: <input type="date" class="task-date" /></div>' +
+        '<div class="task-desc edit-block" contenteditable="true">Descrição da tarefa...</div>';
+    }
+
+    if (el && cursorEl && cursorEl !== content && content.contains(cursorEl)) {
+      cursorEl.parentNode.insertBefore(el, cursorEl.nextSibling);
+    } else if (el) {
+      content.appendChild(el);
+    }
+
+    setTimeout(() => {
+      let focusTarget = (el && el.querySelector) ? el.querySelector('.edit-block') : null;
+      if (!focusTarget && el && el.getAttribute && el.getAttribute('contenteditable') === 'true') focusTarget = el;
+      if (!focusTarget && el) {
+        // bloco não editável (imagem, vídeo, separador): adiciona um parágrafo para continuar escrevendo
+        const p = this.makeParagraph();
+        el.parentNode.insertBefore(p, el.nextSibling);
+        focusTarget = p;
+      }
+      if (focusTarget) this.placeCaret(focusTarget);
+      this.autoSave();
+    }, 50);
+  }
+
+  getDeadline = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 6);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+  }
+
+  autoSave = () => {
+    if (this.activeAula && this.activeAula.extra) return;
+    const content = document.getElementById('content');
+    try { localStorage.setItem(this.storeKey || 'aulaContent', content.innerHTML); } catch (err) { /* quota (ex.: imagens grandes) */ }
+    const ind = document.getElementById('saveInd');
+    if (ind) {
+      ind.classList.add('show');
+      setTimeout(() => ind.classList.remove('show'), 2000);
+    }
+  }
+
+  renderExtraAula = (a) => {
+    const content = document.getElementById('content');
+    const prof = this.state.isProfessor;
+    const confirmed = this.getPresence(a);
+    const roster = this.extraRoster();
+    const initials = (n) => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+    const header =
+      '<div class="extra-badge">🔴 Aula Extra ao vivo</div>' +
+      '<h1 style="margin-bottom: 12px;">' + this.esc(a.topic) + '</h1>' +
+      '<p style="font-size: 15px; color: var(--gray); line-height: 1.6; margin-bottom: 8px;">' + this.esc(a.desc) + '</p>' +
+      '<div class="extra-meta">' +
+        '<div class="extra-meta-item"><div class="em-ico">📅</div><div><div class="em-k">Quando</div><div class="em-v">' + this.esc(a.when) + '</div></div></div>' +
+        '<div class="extra-meta-item"><div class="em-ico">💻</div><div><div class="em-k">Formato</div><div class="em-v">' + this.esc(a.format) + '</div></div></div>' +
+        '<div class="extra-meta-item"><div class="em-ico">👩‍🏫</div><div><div class="em-k">Professora</div><div class="em-v">' + this.esc(a.prof) + '</div></div></div>' +
+      '</div>';
+
+    let panel = '';
+    if (prof) {
+      // Visão do professor: chamada (lista de presença)
+      const rows = roster.map(name => {
+        const present = confirmed.indexOf(name) !== -1;
+        return '<div class="chamada-row ' + (present ? 'present' : 'absent') + '">' +
+          '<div class="ch-ava">' + initials(name) + '</div>' +
+          '<div class="ch-name">' + this.esc(name) + '</div>' +
+          '<div class="ch-mark">' + (present ? '✓ Presente' : 'Não confirmou') + '</div>' +
+        '</div>';
+      }).join('');
+      panel =
+        '<div class="extra-panel">' +
+          '<h2 style="margin-top: 0;">Chamada</h2>' +
+          '<p style="font-size: 13px; color: var(--gray); margin-bottom: 18px;">Atualiza automaticamente conforme os alunos confirmam presença no app.</p>' +
+          '<div class="chamada-stat"><span class="cs-num">' + confirmed.length + '</span><span class="cs-lab">de ' + roster.length + ' alunos confirmaram presença</span></div>' +
+          '<div class="chamada-list">' + rows + '</div>' +
+        '</div>';
+    } else {
+      // Visão do aluno: confirmar presença
+      const isConfirmed = confirmed.indexOf(this.studentName) !== -1;
+      const others = Math.max(0, confirmed.length - (isConfirmed ? 1 : 0));
+      const cta = isConfirmed
+        ? '<div class="pres-cta confirmed"><span class="pres-confirmed-pill">✓ Presença confirmada</span><span style="font-size: 13px; color: var(--gray);">A professora já vê você na chamada desta aula.</span></div>'
+        : '<div class="pres-cta"><button class="pres-btn" id="confirmPresBtn">✋ Confirmar presença</button><span style="font-size: 13px; color: var(--gray);">Avise a professora que você vai participar.</span></div>';
+      const countTxt = others > 0
+        ? '<div class="pres-count">👥 ' + others + ' colega' + (others > 1 ? 's' : '') + ' já confirmaram presença.</div>'
+        : '<div class="pres-count">Seja o primeiro a confirmar presença.</div>';
+      panel = '<div class="extra-panel"><h2 style="margin-top: 0;">Sua presença</h2>' + cta + countTxt + '</div>';
+    }
+
+    content.innerHTML = header + panel;
+
+    const btn = document.getElementById('confirmPresBtn');
+    if (btn) btn.addEventListener('click', () => this.confirmPresence(a));
+  }
+
+  gotoSlide(dir) {
+    if (!this.slides || !this.slides.length) return;
+    const next = this.slideIndex + dir;
+    if (next < 0 || next >= this.slides.length) return;
+    this.slideIndex = next;
+    this.renderSlide();
+  }
+
+  renderSlide() {
+    const fsContent = document.getElementById('fullscreenContent');
+    if (!fsContent || !this.slides) return;
+    fsContent.innerHTML = '';
+    fsContent.appendChild(this.slides[this.slideIndex]);
+    fsContent.scrollTop = 0;
+    const counter = document.getElementById('fsCounter');
+    if (counter) counter.textContent = (this.slideIndex + 1) + ' / ' + this.slides.length;
+    const prev = document.getElementById('fsPrev');
+    const next = document.getElementById('fsNext');
+    if (prev) prev.style.opacity = this.slideIndex === 0 ? '0.3' : '1';
+    if (next) next.style.opacity = this.slideIndex === this.slides.length - 1 ? '0.3' : '1';
+  }
+
+  renderVals() {
+    return {
+      toggleFullscreen: () => {
+        const fsMode = document.getElementById('fullscreenMode');
+        const content = document.getElementById('content');
+        const willOpen = !this.state.fullscreen;
+        this.setState({ fullscreen: willOpen });
+
+        if (willOpen) {
+          // Cria slides a partir dos separadores
+          const slides = [];
+          let currentSlide = document.createElement('div');
+          currentSlide.className = 'slide';
+
+          Array.from(content.childNodes).forEach(node => {
+            if (node.classList && node.classList.contains('sep')) {
+              if (currentSlide.innerHTML.trim()) {
+                slides.push(currentSlide.cloneNode(true));
+              }
+              currentSlide = document.createElement('div');
+              currentSlide.className = 'slide';
+            } else {
+              currentSlide.appendChild(node.cloneNode(true));
+            }
+          });
+          if (currentSlide.innerHTML.trim()) slides.push(currentSlide);
+          if (!slides.length) slides.push(currentSlide);
+
+          this.slides = slides;
+          this.slideIndex = 0;
+          this.renderSlide();
+          fsMode.classList.add('active');
+        } else {
+          fsMode.classList.remove('active');
+        }
+      },
+      prevSlide: () => this.gotoSlide(-1),
+      nextSlide: () => this.gotoSlide(1),
+      showProfGuide: () => {
+        this.switchTab('prof');
+      },
+      downloadPdf: () => {
+        this.switchTab('aula');
+        setTimeout(() => window.print(), 80);
+      },
+      createTask: () => {
+        this.switchTab('aula');
+        const content = document.getElementById('content');
+        this.state.cursorEl = content.lastElementChild;
+        this.insertEl('task');
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

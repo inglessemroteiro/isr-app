@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif;">
+
+  <header style="padding: 22px 16px 0; background: #164951;">
+    <div style="max-width: 480px; margin: 0 auto;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;">{{ profInitial }}</div>
+        <div style="flex: 1;">
+          <p style="margin: 0; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.2px;">{{ profNome }}</p>
+          <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Painel do Professor</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button onclick="{{ t.go }}" style="flex: 1; border: none; background: none; color: {{ t.color }}; font-size: 12px; font-weight: 700; padding: 12px 4px; cursor: pointer; border-bottom: 2px solid {{ t.border }}; letter-spacing: -0.1px;">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </header>
+
+  <div style="padding: 20px 16px 40px; max-width: 480px; margin: 0 auto;">
+
+    <!-- TAB: TURMAS -->
+    <sc-if value="{{ isTurmas }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ turmas }}" as="c" hint-placeholder-count="2">
+        <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div>
+              <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700; color: #164951;">{{ c.nome }}</h3>
+              <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.horario }} · {{ c.nAlunos }} alunos</p>
+            </div>
+            <span style="background: rgba(42,157,143,0.12); color: #2a9d8f; padding: 3px 8px; font-size: 9px; font-weight: 700; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
+          </div>
+          <div style="background: #faf8f3; border-radius: 2px; padding: 10px 12px; margin-bottom: 12px;">
+            <p style="margin: 0 0 1px; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Próximo tópico</p>
+            <p style="margin: 0; font-size: 12px; font-weight: 700; color: #333;">{{ c.nextTopic }}</p>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">📓 Caderno da turma</span>
+            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">📖 Guia do prof</span>
+            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">🎬 Gravações</span>
+          </div>
+          <button style="width: 100%; background: {{ c.accent }}; border: none; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 2px;">▶ Iniciar aula no Meet</button>
+        </section>
+      </sc-for>
+    </sc-if>
+
+    <!-- TAB: CHAMADA -->
+    <sc-if value="{{ isChamada }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <p style="margin: 0; font-size: 15px; font-weight: 700; color: #164951;">Speaking Group</p>
+          <p style="margin: 0; font-size: 11px; color: #9b8b7e;">Aula de hoje · Terça 19h00</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="margin: 0; font-size: 18px; font-weight: 700; color: #2a9d8f;">{{ presentCount }}/{{ totalAlunos }}</p>
+          <p style="margin: 0; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.4px;">presentes</p>
+        </div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 16px;">
+        <sc-for list="{{ chamada }}" as="a" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #f0ede8;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: {{ a.avBg }}; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ a.initial }}</div>
+            <span style="flex: 1; font-size: 13px; font-weight: 600; color: #333;">{{ a.nome }}</span>
+            <div style="display: flex; gap: 4px;">
+              <button onclick="{{ a.setPresent }}" title="Presente" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.pBorder }}; background: {{ a.pBg }}; color: {{ a.pFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✓</button>
+              <button onclick="{{ a.setTardy }}" title="Atrasado" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.tBorder }}; background: {{ a.tBg }}; color: {{ a.tFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">⏱</button>
+              <button onclick="{{ a.setAbsent }}" title="Faltou" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.aBorder }}; background: {{ a.aBg }}; color: {{ a.aFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✕</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <button onclick="{{ saveChamada }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">{{ chamadaBtn }}</button>
+    </sc-if>
+
+    <!-- TAB: FEEDBACK -->
+    <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ fbSaved }}" hint-placeholder-val="{{ false }}">
+        <div style="background: rgba(42,157,143,0.1); border: 1px solid rgba(42,157,143,0.3); border-radius: 2px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+          <span style="color: #2a9d8f; font-size: 16px;">✓</span>
+          <span style="font-size: 12px; color: #164951; font-weight: 600;">Feedback salvo e enviado ao aluno.</span>
+        </div>
+      </sc-if>
+      <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px;">
+        <label style="display: block; font-size: 10px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Turma / Aluno</label>
+        <input value="Speaking Group · Marina Oliveira" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px;" />
+
+        <label style="display: block; font-size: 10px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Tópico da aula</label>
+        <input value="Speaking & Storytelling" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px;" />
+
+        <label style="display: block; font-size: 10px; font-weight: 700; color: #2a9d8f; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">✓ O que foi bem</label>
+        <textarea placeholder="Pontos fortes do aluno nesta aula…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
+
+        <label style="display: block; font-size: 10px; font-weight: 700; color: #e07856; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">⚠ Pontos de atenção</label>
+        <textarea placeholder="O que precisa de mais prática…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
+
+        <label style="display: block; font-size: 10px; font-weight: 700; color: #6b5b95; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">→ Próximos passos</label>
+        <textarea placeholder="Sugestões e tarefas para a próxima aula…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 18px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
+
+        <button onclick="{{ saveFeedback }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">Salvar feedback</button>
+      </section>
+    </sc-if>
+
+  </div>
+
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}, &quot;profNome&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Prof. Agatha&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    tab: "turmas",
+    chamada: { "Marina Oliveira": "present", "João Santos": "present", "Ana Costa": "tardy", "Pedro Lima": "present", "Carla Reis": null },
+    chamadaSaved: false,
+    fbSaved: false,
+  };
+  renderVals() {
+    const tab = this.state.tab;
+    const mkTab = (id, label) => ({
+      label, go: () => this.setState({ tab: id }),
+      color: tab === id ? "#fff" : "rgba(255,255,255,0.55)",
+      border: tab === id ? "#e07856" : "transparent",
+    });
+    const palette = { present: ["#2a9d8f", "rgba(42,157,143,0.14)", "#2a9d8f"], tardy: ["#d4a574", "rgba(212,165,116,0.18)", "#b07d3a"], absent: ["#c95a4a", "rgba(201,90,74,0.14)", "#c95a4a"] };
+    const avColors = ["#e07856", "#2a9d8f", "#6b5b95", "#d4a574", "#d4a5a5"];
+    const cham = this.state.chamada;
+    const names = Object.keys(cham);
+    const setStatus = (n, s) => this.setState(st => ({ chamada: Object.assign({}, st.chamada, { [n]: s }), chamadaSaved: false }));
+    const cell = (active, kind) => active
+      ? { bg: palette[kind][1], fg: palette[kind][2], border: palette[kind][0] }
+      : { bg: "#fff", fg: "#ccc", border: "#e6e1d9" };
+    const chamada = names.map((n, i) => {
+      const st = cham[n];
+      const p = cell(st === "present", "present"), t = cell(st === "tardy", "tardy"), a = cell(st === "absent", "absent");
+      return {
+        nome: n, initial: n[0], avBg: avColors[i % avColors.length],
+        setPresent: () => setStatus(n, "present"), setTardy: () => setStatus(n, "tardy"), setAbsent: () => setStatus(n, "absent"),
+        pBg: p.bg, pFg: p.fg, pBorder: p.border, tBg: t.bg, tFg: t.fg, tBorder: t.border, aBg: a.bg, aFg: a.fg, aBorder: a.border,
+      };
+    });
+    const presentCount = names.filter(n => cham[n] === "present" || cham[n] === "tardy").length;
+    return {
+      profNome: this.props.profNome ?? "Prof. Agatha",
+      profInitial: (this.props.profNome ?? "Prof. Agatha").replace("Prof. ", "")[0],
+      tabs: [mkTab("turmas", "Minhas Turmas"), mkTab("chamada", "Chamada"), mkTab("feedback", "Feedback")],
+      isTurmas: tab === "turmas", isChamada: tab === "chamada", isFeedback: tab === "feedback",
+      turmas: [
+        { nome: "Speaking Group", horario: "Ter 19h00", nAlunos: 5, badge: "Hoje", accent: "#e07856", nextTopic: "Speaking & Storytelling" },
+        { nome: "Essentials A2", horario: "Sex 19h00", nAlunos: 7, badge: "Em 3 dias", accent: "#2a9d8f", nextTopic: "Grammar Review — Past Perfect" },
+      ],
+      chamada, presentCount, totalAlunos: names.length,
+      saveChamada: () => this.setState({ chamadaSaved: true }),
+      chamadaBtn: this.state.chamadaSaved ? "✓ Chamada salva" : "Salvar chamada",
+      saveFeedback: () => this.setState({ fbSaved: true }),
+      fbSaved: this.state.fbSaved,
+    };
+  }
+}
+</script>
+</body>
+</html>

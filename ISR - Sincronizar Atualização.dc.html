@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #efece6; color: #1a1a1a; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #d4d0c8; border-radius: 3px; }
+  </style>
+</helmet>
+
+<div style="min-height: 100vh; padding: 48px 24px; display: flex; justify-content: center;">
+  <div style="width: 100%; max-width: 720px;">
+
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #348a8e;">Caderno do Aluno · Sincronização</div>
+      <h1 style="font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-top: 6px;">Atualização do modelo</h1>
+    </div>
+
+    <sc-if value="{{ showReview }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #fff8ec; border: 1px solid #f0dfb8; border-radius: 14px; padding: 18px 20px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 18px;">
+        <span style="font-size: 20px;">📄</span>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: #8a6d1f;">O Google Docs-modelo foi atualizado · há 2 dias</div>
+          <div style="font-size: 13px; color: #8a7a52; margin-top: 3px; line-height: 1.5;">O modelo é o mesmo para todas as turmas de A1. Escolha onde aplicar — as <strong>respostas dos alunos</strong> e as <strong>tarefas criadas no app</strong> são mantidas.</div>
+        </div>
+      </div>
+
+      <div style="background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); overflow: hidden; margin-bottom: 18px;">
+        <div style="padding: 16px 22px; border-bottom: 1px solid #f0ede7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9b8b7e;">O que mudou no modelo</div>
+        <sc-for list="{{ changes }}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 22px; border-bottom: 1px solid #f6f3ee;">
+            <span style="width: 24px; height: 24px; border-radius: 7px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: {{ c.bg }}; color: {{ c.fg }};">{{ c.icon }}</span>
+            <div style="flex: 1;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: {{ c.fg }};">{{ c.label }}</div>
+              <div style="font-size: 14px; font-weight: 600; color: #1a1a1a; margin-top: 1px;">{{ c.title }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background: #fff; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px rgba(0,0,0,.06); overflow: hidden;">
+        <div style="padding: 16px 22px; border-bottom: 1px solid #f0ede7; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9b8b7e;">Aplicar em quais turmas</div>
+        <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="3">
+          <div onClick="{{ t.onToggle }}" style="display: flex; align-items: center; gap: 14px; padding: 16px 22px; border-bottom: 1px solid #f6f3ee; cursor: pointer;">
+            <span style="width: 22px; height: 22px; border-radius: 6px; flex: none; border: 2px solid {{ t.box }}; background: {{ t.boxBg }}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;">{{ t.tick }}</span>
+            <div style="flex: 1;">
+              <div style="font-size: 15px; font-weight: 700;">{{ t.nome }}</div>
+              <div style="font-size: 12px; color: #6b6b6b;">{{ t.info }}</div>
+            </div>
+            <span style="font-size: 11px; font-weight: 600; color: #5a9a2e;">respostas preservadas</span>
+          </div>
+        </sc-for>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 18px 22px;">
+          <button onClick="{{ apply }}" style="background: #fc9082; color: #fff; border: none; border-radius: 10px; padding: 14px 24px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;">{{ applyLabel }}</button>
+          <button onClick="{{ ignore }}" style="background: none; border: none; color: #6b6b6b; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;">Agora não</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showDone }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #fff; border-radius: 16px; padding: 48px 32px; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,.06); animation: fadeUp .3s ease;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(158,201,112,.2); color: #5a9a2e; font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">✓</div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-top: 18px;">{{ doneTitle }}</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin-top: 8px; line-height: 1.5;">Nada das respostas dos alunos ou das tarefas criadas no app foi apagado.</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 24px;">
+          <a href="ISR - Tela de Aula (Editor Colaborativo).dc.html?role=prof&turma=A1%20Manh%C3%A3" style="text-decoration: none; background: #348a8e; color: #fff; border-radius: 10px; padding: 12px 22px; font-size: 13px; font-weight: 700;">Abrir o caderno</a>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;760px&quot;, &quot;height&quot;: &quot;760px&quot;}}">
+class Component extends DCLogic {
+  state = {
+    stage: 'review',
+    changes: [
+      { type: 'add',  title: 'Verbos modais (can / must)' },
+      { type: 'edit', title: 'Aula 2 · Minha rotina — texto revisado' },
+      { type: 'edit', title: 'Aula 3 · tarefa de leitura atualizada' },
+      { type: 'keep', title: 'Aula 1 · Apresentações — sem mudança' },
+    ],
+    turmas: [
+      { id: 'm', nome: 'A1 · Manhã', info: '12 alunos · 34 respostas no caderno', sel: true },
+      { id: 't', nome: 'A1 · Tarde', info: '9 alunos · 21 respostas no caderno', sel: true },
+      { id: 'n', nome: 'A1 · Noite', info: '11 alunos · 28 respostas no caderno', sel: false },
+    ],
+  };
+
+  CH = {
+    add:  { icon: '+', label: 'Nova aula',      bg: 'rgba(158,201,112,.2)', fg: '#5a9a2e' },
+    edit: { icon: '✎', label: 'Texto alterado', bg: 'rgba(52,138,142,.14)', fg: '#348a8e' },
+    keep: { icon: '=', label: 'Sem mudança',    bg: '#f0ede7',              fg: '#9b8b7e' },
+  };
+
+  renderVals() {
+    const sel = this.state.turmas.filter(t => t.sel).length;
+    return {
+      showReview: this.state.stage === 'review',
+      showDone: this.state.stage === 'done',
+      applyLabel: sel ? ('Aplicar em ' + sel + (sel === 1 ? ' turma' : ' turmas')) : 'Selecione uma turma',
+      doneTitle: 'Atualização aplicada em ' + sel + (sel === 1 ? ' turma' : ' turmas'),
+      changes: this.state.changes.map(c => Object.assign({ title: c.title }, this.CH[c.type])),
+      turmas: this.state.turmas.map((t, i) => ({
+        nome: t.nome, info: t.info,
+        tick: t.sel ? '✓' : '',
+        box: t.sel ? '#fc9082' : '#cfcabf',
+        boxBg: t.sel ? '#fc9082' : '#fff',
+        onToggle: () => this.setState(s => {
+          const arr = s.turmas.slice();
+          arr[i] = Object.assign({}, arr[i], { sel: !arr[i].sel });
+          return { turmas: arr };
+        }),
+      })),
+      apply: () => { if (this.state.turmas.some(t => t.sel)) this.setState({ stage: 'done' }); },
+      ignore: () => this.setState({ stage: 'review' }),
+    };
+  }
+}
+</script>
+</body>
+</html>
