@@ -115,48 +115,98 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}, &quot;profNome&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Prof. Agatha&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
 class Component extends DCLogic {
-  state = {
-    tab: "turmas",
-    chamada: { "Marina Oliveira": "present", "João Santos": "present", "Ana Costa": "tardy", "Pedro Lima": "present", "Carla Reis": null },
-    chamadaSaved: false,
-    fbSaved: false,
-  };
+  constructor(props) {
+    super(props);
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem("isr_user") || "{}"); } catch(e) {}
+    // Build initial chamada from first turma's alunos
+    const schedules = user.turmaSchedules || [];
+    const firstAlunos = schedules.length && schedules[0].alunos ? schedules[0].alunos : [];
+    const initChamada = {};
+    firstAlunos.forEach(a => { initChamada[a] = null; });
+    this.state = {
+      tab: "turmas",
+      selectedTurmaIdx: 0,
+      chamada: initChamada,
+      chamadaSaved: false,
+      fbSaved: false,
+    };
+  }
   renderVals() {
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem("isr_user") || "{}"); } catch(e) {}
+    const nome = user.nome || "Professor";
+    const email = user.email || "";
+    const schedules = user.turmaSchedules || [];
+    const turmaNames = schedules.length ? schedules.map(s => s.turma) : (user.turmas || []);
+
     const tab = this.state.tab;
+    const selIdx = this.state.selectedTurmaIdx;
     const mkTab = (id, label) => ({
       label, go: () => this.setState({ tab: id }),
       color: tab === id ? "#fff" : "rgba(255,255,255,0.55)",
       border: tab === id ? "#e07856" : "transparent",
     });
-    const palette = { present: ["#2a9d8f", "rgba(42,157,143,0.14)", "#2a9d8f"], tardy: ["#d4a574", "rgba(212,165,116,0.18)", "#b07d3a"], absent: ["#c95a4a", "rgba(201,90,74,0.14)", "#c95a4a"] };
-    const avColors = ["#e07856", "#2a9d8f", "#6b5b95", "#d4a574", "#d4a5a5"];
+    const accents = ["#e07856","#2a9d8f","#6b5b95","#d4a574","#4a8fa0"];
+    const palette = { present: ["#2a9d8f","rgba(42,157,143,0.14)","#2a9d8f"], tardy: ["#d4a574","rgba(212,165,116,0.18)","#b07d3a"], absent: ["#c95a4a","rgba(201,90,74,0.14)","#c95a4a"] };
+    const avColors = ["#e07856","#2a9d8f","#6b5b95","#d4a574","#d4a5a5"];
+
+    const turmas = turmaNames.map((tNome, i) => {
+      const s = schedules[i] || {};
+      const alunos = s.alunos || [];
+      return {
+        nome: tNome,
+        horario: s.horario || "—",
+        nAlunos: alunos.length,
+        badge: s.isToday ? "Hoje" : (s.nextDate || ""),
+        accent: accents[i % accents.length],
+        nextTopic: s.nextTopic || "",
+        meetLink: s.meetLink || user.meetLink || "#",
+        go: () => {
+          const cham = {};
+          alunos.forEach(a => { cham[a] = null; });
+          this.setState({ tab: "chamada", selectedTurmaIdx: i, chamada: cham, chamadaSaved: false });
+        },
+      };
+    });
+
+    const selSched = schedules[selIdx] || {};
+    const selAlunos = selSched.alunos || Object.keys(this.state.chamada);
     const cham = this.state.chamada;
-    const names = Object.keys(cham);
     const setStatus = (n, s) => this.setState(st => ({ chamada: Object.assign({}, st.chamada, { [n]: s }), chamadaSaved: false }));
     const cell = (active, kind) => active
       ? { bg: palette[kind][1], fg: palette[kind][2], border: palette[kind][0] }
       : { bg: "#fff", fg: "#ccc", border: "#e6e1d9" };
-    const chamada = names.map((n, i) => {
+    const chamada = selAlunos.map((n, i) => {
       const st = cham[n];
-      const p = cell(st === "present", "present"), t = cell(st === "tardy", "tardy"), a = cell(st === "absent", "absent");
+      const p = cell(st === "present","present"), t = cell(st === "tardy","tardy"), a = cell(st === "absent","absent");
       return {
         nome: n, initial: n[0], avBg: avColors[i % avColors.length],
         setPresent: () => setStatus(n, "present"), setTardy: () => setStatus(n, "tardy"), setAbsent: () => setStatus(n, "absent"),
         pBg: p.bg, pFg: p.fg, pBorder: p.border, tBg: t.bg, tFg: t.fg, tBorder: t.border, aBg: a.bg, aFg: a.fg, aBorder: a.border,
       };
     });
-    const presentCount = names.filter(n => cham[n] === "present" || cham[n] === "tardy").length;
+    const presentCount = selAlunos.filter(n => cham[n] === "present" || cham[n] === "tardy").length;
+
+    const saveChamada = async () => {
+      const now = new Date();
+      const week = now.getFullYear() + "-W" + Math.ceil(((now - new Date(now.getFullYear(),0,1))/86400000 + new Date(now.getFullYear(),0,1).getDay()+1)/7);
+      const dateStr = now.toISOString().slice(0,10);
+      const data = selAlunos.map(n => ({ turma: selSched.turma || turmaNames[selIdx] || "", semana: week, date: dateStr, aluno: n, status: cham[n] || "absent" }));
+      try {
+        await fetch("/.netlify/functions/save-chamada", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ savedBy: email, data }) });
+      } catch(e) {}
+      this.setState({ chamadaSaved: true });
+    };
+
     return {
-      profNome: this.props.profNome ?? "Prof. Agatha",
-      profInitial: (this.props.profNome ?? "Prof. Agatha").replace("Prof. ", "")[0],
-      tabs: [mkTab("turmas", "Minhas Turmas"), mkTab("chamada", "Chamada"), mkTab("feedback", "Feedback")],
+      profNome: nome.split(" ")[0],
+      profInitial: nome[0] || "P",
+      tabs: [mkTab("turmas","Minhas Turmas"), mkTab("chamada","Chamada"), mkTab("feedback","Feedback")],
       isTurmas: tab === "turmas", isChamada: tab === "chamada", isFeedback: tab === "feedback",
-      turmas: [
-        { nome: "Speaking Group", horario: "Ter 19h00", nAlunos: 5, badge: "Hoje", accent: "#e07856", nextTopic: "Speaking & Storytelling" },
-        { nome: "Essentials A2", horario: "Sex 19h00", nAlunos: 7, badge: "Em 3 dias", accent: "#2a9d8f", nextTopic: "Grammar Review — Past Perfect" },
-      ],
-      chamada, presentCount, totalAlunos: names.length,
-      saveChamada: () => this.setState({ chamadaSaved: true }),
+      turmas,
+      chamada, presentCount, totalAlunos: selAlunos.length,
+      saveChamada,
       chamadaBtn: this.state.chamadaSaved ? "✓ Chamada salva" : "Salvar chamada",
       saveFeedback: () => this.setState({ fbSaved: true }),
       fbSaved: this.state.fbSaved,
