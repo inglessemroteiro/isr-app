@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — CRM · Funil de Leads</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+
+  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">CRM · Funil de leads</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #25D366; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(37,211,102,0.25);">💬 Mensagens prontas</a>
+        <button onclick="{{ resetDemo }}" title="Restaurar dados de demonstração" style="border: 1px solid #e0dcd6; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">↺ Demo</button>
+      </div>
+    </header>
+
+    <!-- NOTIFICAÇÃO NOVAS INSCRIÇÕES -->
+    <sc-if value="{{ temNovas }}">
+      <div style="display: flex; align-items: center; gap: 10px; background: rgba(42,157,143,0.10); border: 1px solid rgba(42,157,143,0.3); border-radius: 10px; padding: 11px 14px; margin-bottom: 16px;">
+        <span style="font-size: 16px;">🎯</span>
+        <span style="font-size: 13px; color: #164951;"><strong>{{ novasCount }}</strong> {{ novasLabel }} — abrir o funil.</span>
+      </div>
+    </sc-if>
+
+    <!-- ABAS DO FUNIL -->
+    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; -webkit-overflow-scrolling: touch;">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="8">
+        <button onclick="{{ tab.onClick }}" style="flex: none; border: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12px; font-weight: 700; padding: 8px 13px; border-radius: 999px; display: flex; align-items: center; gap: 6px; box-shadow: {{ tab.shadow }};">
+          <span>{{ tab.label }}</span>
+          <span style="background: {{ tab.countBg }}; color: {{ tab.countFg }}; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px;">{{ tab.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- TÍTULO DA VISÃO ATUAL -->
+    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">{{ currentTabLabel }}</h2>
+      <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+      <span style="font-size: 12px; color: #9b8b7e;">{{ currentCount }}</span>
+    </div>
+
+    <!-- LISTA DE LEADS -->
+    <sc-if value="{{ vazio }}">
+      <div style="text-align: center; padding: 44px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+        <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
+        <p style="margin: 0; font-size: 13px;">Nada por aqui nesta visão. Tudo em dia!</p>
+      </div>
+    </sc-if>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <sc-for list="{{ leads }}" as="lead" hint-placeholder-count="3">
+        <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ lead.stageColor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); overflow: hidden;">
+
+          <!-- LINHA PRINCIPAL -->
+          <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 1.7fr 0.9fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer;">
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ lead.nome }}</span>
+                <span style="color: #c9c1b6; font-size: 12px;">{{ lead.caret }}</span>
+              </div>
+              <sc-if value="{{ lead.badge }}">
+                <span style="display: inline-block; margin-top: 4px; background: {{ lead.stageBg }}; color: {{ lead.stageColor }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 4px;">{{ lead.badge }}</span>
+              </sc-if>
+            </div>
+            <div style="font-size: 11px; color: {{ lead.entrouColor }};">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Entrou</div>
+              {{ lead.entrouRel }} {{ lead.entrouWarn }}
+            </div>
+            <div style="font-size: 11px; color: #6b6155;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Turma</div>
+              {{ lead.turmaLabel }}
+            </div>
+            <div style="font-size: 11px;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Origem</div>
+              <span style="display: inline-block; background: #f2ebe3; color: #6b6155; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px;">{{ lead.canal }}</span>
+            </div>
+          </div>
+
+          <!-- PAINEL EXPANDIDO -->
+          <sc-if value="{{ lead.open }}">
+            <div style="border-top: 1px solid #f0ede8; padding: 16px; background: #fcfaf6;">
+
+              <!-- ESTÁGIO -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700;">Estágio</span>
+                <sc-for list="{{ lead.stageOptions }}" as="opt" hint-placeholder-count="7">
+                  <button onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
+                </sc-for>
+              </div>
+
+              <!-- CONTATO E PREFERÊNCIAS -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 16px;">
+                <div>
+                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">✉️ E-mail</div>
+                  <div style="font-size: 12px; color: #164951; word-break: break-all;">{{ lead.email }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">📞 WhatsApp</div>
+                  <div style="font-size: 12px; color: #164951;">{{ lead.telefone }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">🕐 Horários</div>
+                  <div style="font-size: 12px; color: #164951;">{{ lead.horarios }}</div>
+                </div>
+                <div>
+                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">📊 Nível</div>
+                  <div style="font-size: 12px; color: #164951;">{{ lead.nivel }}</div>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">🚀 Quer começar</div>
+                  <div style="font-size: 12px; color: #164951;">{{ lead.querComecar }}</div>
+                </div>
+              </div>
+
+              <!-- PRÓXIMO PASSO -->
+              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Próximo passo</div>
+                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; text-decoration: none; background: #2a9d8f; color: #fff; font-size: 13px; font-weight: 700; padding: 11px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(42,157,143,0.22);">✈️ Enviar mensagem do estágio</a>
+                <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 7px;">Lembrar de novo follow-up:</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                  <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
+                    <button onclick="{{ fu.onClick }}" style="border: 1px solid #e0dcd6; background: {{ fu.bg }}; color: {{ fu.fg }}; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
+                  </sc-for>
+                  <input type="date" onchange="{{ lead.onFollowupDate }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 11px; padding: 5px 8px; border-radius: 8px;" />
+                </div>
+                <sc-if value="{{ lead.followupInfo }}">
+                  <div style="font-size: 10px; color: #2a9d8f; margin-top: 8px;">🔔 {{ lead.followupInfo }}</div>
+                </sc-if>
+              </div>
+
+              <!-- HISTÓRICO -->
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Histórico</div>
+              <div style="margin-bottom: 14px;">
+                <sc-for list="{{ lead.historico }}" as="h" hint-placeholder-count="3">
+                  <div style="display: flex; gap: 9px; align-items: flex-start; margin-bottom: 8px;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ h.dot }}; margin-top: 4px; flex: none;"></span>
+                    <div style="font-size: 11px; color: #6b6155; line-height: 1.4;"><strong style="color: #164951;">{{ h.data }}</strong> · {{ h.texto }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <!-- ADICIONAR NOTA -->
+              <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+                <input ref="{{ lead.noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ lead.onNoteKey }}" style="flex: 1; border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 12px; padding: 9px 11px; border-radius: 8px;" />
+                <button onclick="{{ lead.onNoteSave }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer;">Salvar</button>
+              </div>
+
+              <!-- ORIGEM DETALHADA -->
+              <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 8px; padding: 11px 13px; margin-bottom: 14px;">
+                <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada</div>
+                <div style="font-size: 11px; color: #6b6155; line-height: 1.6;">
+                  {{ lead.origemDetalhe }}<br>
+                  <span style="color: #9b8b7e;">Veio de:</span> {{ lead.veioDe }}<br>
+                  <span style="color: #9b8b7e;">Entrou por:</span> {{ lead.entrouPor }}
+                </div>
+              </div>
+
+              <!-- AÇÕES -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">✓ Registrar contato</button>
+                <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #6b5b95; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">📅 Agendar reunião</button>
+                <span style="flex: 1;"></span>
+                <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b8ada0; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Marcar perdido</button>
+                <button onclick="{{ lead.onExcluir }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Excluir</button>
+              </div>
+
+            </div>
+          </sc-if>
+        </section>
+      </sc-for>
+    </div>
+
+    <!-- REATIVAÇÃO -->
+    <div style="margin-top: 34px;">
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Reativação · ex-alunas recuperáveis</h2>
+        <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 12px; color: #9b8b7e;">Ex-alunas marcadas como recuperáveis no encerramento aparecem aqui.</p>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-for list="{{ reativacao }}" as="ex" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 12px 14px;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ ex.nome }}</div>
+              <div style="font-size: 11px; color: #9b8b7e;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
+            </div>
+            <a href="{{ ex.waLink }}" target="_blank" rel="noopener" style="text-decoration: none; background: #25D366; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; white-space: nowrap;">💬 Reativar</a>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tab: "para_hoje", openId: null, tick: 0 };
+  noteRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  saveNote(leadId) {
+    const box = this.noteRef.current;
+    if (!box) return;
+    const txt = (box.value || "").trim();
+    if (!txt) return;
+    window.ISRCRM.addNote(leadId, txt);
+    box.value = "";
+    this.bump();
+  }
+
+  histDot(tipo) {
+    const map = { criado: "#9ec970", estagio: "#2a9d8f", reuniao: "#6b5b95", contato: "#348a8e",
+      followup: "#d4a574", nota: "#b8ada0", perdido: "#cf6b5c" };
+    return map[tipo] || "#c9c1b6";
+  }
+
+  // qual modelo de mensagem casa com cada estágio
+  stageTemplate(stageId) {
+    const map = { incompleta: "lead_incompleta", a_contatar: "lead_primeiro", em_conversa: "lead_followup",
+      reuniao: "lead_reuniao", contrato: "pag_link", matriculado: "aluno_boasvindas", perdido: "lead_followup" };
+    return map[stageId] || "lead_primeiro";
+  }
+
+  waForStage(lead) {
+    const CRM = window.ISRCRM;
+    const tplId = this.stageTemplate(lead.estagio);
+    const tpl = CRM.TEMPLATES.filter(t => t.id === tplId)[0];
+    const corpo = tpl ? CRM.fillTemplate(tpl.corpo, { nome: lead.nome, turma: lead.turma, nivel: lead.nivel, horario: lead.horarios }) : "";
+    return CRM.waLink(lead.telefone, corpo);
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, currentTabLabel: "", currentCount: "", temNovas: false };
+
+    const counts = CRM.tabCounts();
+    const active = this.state.tab;
+
+    const tabs = CRM.TABS.map(t => {
+      const on = t.id === active;
+      return {
+        id: t.id, label: t.label, count: counts[t.id],
+        onClick: () => this.setState({ tab: t.id, openId: null }),
+        bg: on ? "#164951" : "#fff",
+        fg: on ? "#fff" : "#6b6155",
+        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)",
+        countBg: on ? "rgba(255,255,255,0.22)" : "#f2ebe3",
+        countFg: on ? "#fff" : "#9b8b7e"
+      };
+    });
+    const currentTab = CRM.TABS.filter(t => t.id === active)[0] || CRM.TABS[0];
+
+    const rawLeads = CRM.leadsForTab(active);
+    const openId = this.state.openId;
+
+    const leads = rawLeads.map(l => {
+      const stage = CRM.stageById(l.estagio) || CRM.STAGES[0];
+      const open = l.id === openId;
+      const warn = CRM.isStale(l.entrouEm);
+      const out = {
+        id: l.id, nome: l.nome, badge: l.badge || "", canal: l.canal || "—",
+        caret: open ? "▾" : "▸",
+        stageColor: stage.color, stageBg: stage.bg,
+        entrouRel: CRM.relativeDays(l.entrouEm), entrouWarn: warn ? "⚠️" : "",
+        entrouColor: warn ? "#c98a3a" : "#6b6155",
+        turmaLabel: l.turma || "—",
+        open: open,
+        onToggle: () => this.setState({ openId: open ? null : l.id })
+      };
+      if (open) {
+        out.email = l.email || "—";
+        out.telefone = l.telefone || "—";
+        out.horarios = l.horarios || "—";
+        out.nivel = l.nivel || "—";
+        out.querComecar = l.querComecar || "—";
+        out.origemDetalhe = l.origemDetalhe || "—";
+        out.veioDe = l.veioDe || "—";
+        out.entrouPor = l.entrouPor || "—";
+        out.waStageLink = this.waForStage(l);
+        out.followupInfo = l.proximoFollowup ? ("Próximo follow-up: " + CRM.ddmm(l.proximoFollowup) + " (" + CRM.relativeDays(l.proximoFollowup) + ")") : "";
+        out.stageOptions = CRM.STAGES.map(s => {
+          const sel = s.id === l.estagio;
+          return {
+            label: s.short, onPick: () => { CRM.setStage(l.id, s.id); this.bump(); },
+            bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color
+          };
+        });
+        out.followups = CRM.followupPresets().map(f => ({
+          label: f.label, onClick: () => { CRM.setFollowup(l.id, f.iso, f.label); this.bump(); },
+          bg: "#fff", fg: "#6b6155"
+        }));
+        out.onFollowupDate = (e) => { const v = e.target.value; if (v) { CRM.setFollowup(l.id, v, "data escolhida"); this.bump(); } };
+        out.historico = (l.historico || []).slice().reverse().map(h => ({
+          data: CRM.ddmm(h.data) || h.data, texto: h.texto, dot: this.histDot(h.tipo)
+        }));
+        out.noteRef = this.noteRef;
+        out.onNoteKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(l.id); } };
+        out.onNoteSave = () => this.saveNote(l.id);
+        out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
+        out.onAgendar = () => { CRM.setStage(l.id, "reuniao"); CRM.addHistory(l.id, "reuniao", "Reunião marcada"); this.bump(); };
+        out.onMarcarPerdido = () => { CRM.markLost(l.id); this.setState({ openId: null }); };
+        out.onExcluir = () => { if (confirm("Excluir este lead? Não dá pra desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
+      }
+      return out;
+    });
+
+    // notificação de novas inscrições (entraram hoje)
+    const novas = CRM.getLeads().filter(l => CRM.relativeDays(l.entrouEm) === "Hoje").length;
+
+    const reativacao = CRM.REATIVACAO.map(ex => ({
+      nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
+      waLink: CRM.waLink(ex.telefone, CRM.fillTemplate(CRM.TEMPLATES.filter(t => t.id === "aluno_renovacao")[0].corpo, { nome: ex.nome, turma: ex.ultimaTurma }))
+    }));
+
+    return {
+      tabs, leads, reativacao,
+      currentTabLabel: currentTab.label,
+      currentCount: rawLeads.length + (rawLeads.length === 1 ? " lead" : " leads"),
+      vazio: rawLeads.length === 0,
+      temNovas: novas > 0,
+      novasCount: novas,
+      novasLabel: novas === 1 ? "nova inscrição hoje" : "novas inscrições hoje",
+      resetDemo: () => { CRM.resetDemo(); this.setState({ openId: null, tab: "para_hoje" }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
