@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ISR — Gestão · Caixa 90 dias</title>
 <script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
 <script src="./crm-data.js"></script>
 </head>
 <body>
@@ -122,17 +123,26 @@
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
       <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 18px; border-bottom: 1px solid #f2e9dd;">
-          <span style="font-size: 13px; color: #3d3529;">{{ c.nome }}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 18px; border-bottom: 1px solid #f2e9dd;">
+          <span style="font-size: 13px; color: #3d3529; flex: 1;">{{ c.nome }}</span>
           <span style="font-size: 13px; font-weight: 700; color: #cf6b5c;">− {{ c.valor }}</span>
+          <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
         </div>
       </sc-for>
+      <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef;">
+        <input ref="{{ custoNomeRef }}" placeholder="Novo custo (ex. Canva Pro)" style="flex: 1; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <select ref="{{ custoMoedaRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <option value="R$">R$</option><option value="€">€</option>
+        </select>
+        <input ref="{{ custoValorRef }}" placeholder="Valor" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Adicionar</button>
+      </div>
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #f6eee4;">
         <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Total mensal</span>
         <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
       </div>
     </div>
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Custos de demonstração espelhando seus comprovantes reais (Circle, BeConfident, DAS, tarifas, GoCardless). A lista oficial virá do <strong>ISR Financeiro</strong> quando você quiser conectar — editar custo continua sendo lá (fonte da verdade).</p>
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Os custos agora são editáveis aqui — o sistema faz, a planilha carimba: com o banco central conectado, cada mudança gera backup automático legível na planilha.</p>
 
   </div>
 </main>
@@ -141,6 +151,7 @@
 class Component extends DCLogic {
   state = { moedaExtrato: "€", analise: null, conciliadas: {}, simMat: 0, simRen: 0, tick: 0 };
   extratoRef = React.createRef();
+  custoNomeRef = React.createRef(); custoMoedaRef = React.createRef(); custoValorRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -203,7 +214,18 @@ class Component extends DCLogic {
     const ct = CRM.custosTotais();
     return {
       cards, meses,
-      custos: CRM.CUSTOS_FIXOS.map(c => ({ nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor) })),
+      custos: CRM.CUSTOS_FIXOS.map((c, i) => ({ nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
+        onRemove: () => { if (confirm("Remover o custo \"" + c.nome + "\"?")) { CRM.removeCusto(i); this.bump(); } } })),
+      custoNomeRef: this.custoNomeRef, custoMoedaRef: this.custoMoedaRef, custoValorRef: this.custoValorRef,
+      onAddCusto: () => {
+        const nome = (this.custoNomeRef.current && this.custoNomeRef.current.value || "").trim();
+        const moeda = (this.custoMoedaRef.current && this.custoMoedaRef.current.value) || "R$";
+        const valor = CRM.parseMoney((this.custoValorRef.current && this.custoValorRef.current.value) || "");
+        if (!nome || !valor) return;
+        CRM.addCusto(nome, moeda, valor);
+        this.custoNomeRef.current.value = ""; this.custoValorRef.current.value = "";
+        this.bump();
+      },
       custosTotalBRL: CRM.fmtMoney("R$", ct["R$"]), custosTotalEUR: CRM.fmtMoney("€", ct["€"]),
       simMat: this.state.simMat, simRen: this.state.simRen,
       onSimMat: (e) => this.setState({ simMat: e.target.value }),

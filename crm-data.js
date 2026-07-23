@@ -185,7 +185,8 @@
     try { return JSON.parse(localStorage.getItem(TPL_STORE_KEY)) || { overrides: {}, extras: [] }; }
     catch (e) { return { overrides: {}, extras: [] }; }
   }
-  function tplSave(st) { try { localStorage.setItem(TPL_STORE_KEY, JSON.stringify(st)); } catch (e) {} }
+  function tplSaveLocal(st) { try { localStorage.setItem(TPL_STORE_KEY, JSON.stringify(st)); } catch (e) {} }
+  function tplSave(st) { tplSaveLocal(st); agendarSync(); }
   function templatesMerged() {
     var st = tplStore();
     var base = BASE_TEMPLATES.map(function (t) {
@@ -470,9 +471,10 @@
     try { return JSON.parse(localStorage.getItem(PESSOAS_KEY)) || []; }
     catch (e) { return []; }
   }
-  function savePessoas(list) {
+  function savePessoasLocal(list) {
     try { localStorage.setItem(PESSOAS_KEY, JSON.stringify(list)); } catch (e) {}
   }
+  function savePessoas(list) { savePessoasLocal(list); agendarSync(); }
   function getPessoa(id) { return loadPessoas().filter(function (p) { return p.id === id; })[0] || null; }
   function mutate(id, fn) {
     var list = loadPessoas();
@@ -850,7 +852,7 @@
   //  DAS, tarifas Sicredi, GoCardless). Os oficiais virão do ISR
   //  Financeiro quando a Gabi conectar.
   // ══════════════════════════════════════════════════════════════
-  var CUSTOS_FIXOS = [
+  var BASE_CUSTOS = [
     { nome: "Agência de tráfego", moeda: "R$", valor: 2800 },
     { nome: "Professoras (estimativa mensal)", moeda: "R$", valor: 3200 },
     { nome: "Circle (comunidade · US$ 99)", moeda: "R$", valor: 610 },
@@ -860,9 +862,29 @@
     { nome: "GoCardless (taxas de cobrança)", moeda: "€", valor: 36 },
     { nome: "Assinaturas EU", moeda: "€", valor: 30 }
   ];
+  var CUSTOS_KEY = "isr_custos_v1";
+  function custosLista() {
+    try {
+      var st = JSON.parse(localStorage.getItem(CUSTOS_KEY));
+      if (st && st.length) return st;
+    } catch (e) {}
+    return BASE_CUSTOS.map(function (c) { return Object.assign({}, c); });
+  }
+  function custosSaveLocal(list) { try { localStorage.setItem(CUSTOS_KEY, JSON.stringify(list)); } catch (e) {} }
+  function custosSave(list) { custosSaveLocal(list); agendarSync(); }
+  function addCusto(nome, moeda, valor) {
+    var list = custosLista();
+    list.push({ nome: nome, moeda: moeda, valor: valor });
+    custosSave(list);
+  }
+  function removeCusto(idx) {
+    var list = custosLista();
+    list.splice(idx, 1);
+    custosSave(list);
+  }
   function custosTotais() {
     var t = { "R$": 0, "€": 0 };
-    CUSTOS_FIXOS.forEach(function (c) { t[c.moeda] += c.valor; });
+    custosLista().forEach(function (c) { t[c.moeda] += c.valor; });
     return t;
   }
 
@@ -1003,6 +1025,56 @@
     });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  BANCO CENTRAL (aposentando as planilhas · fase 1)
+  //  Com a URL do Apps Script configurada no portão de acesso, todo
+  //  dado (pessoas, custos, modelos) é salvo num banco compartilhado
+  //  — a mesma base pra Gabi, Érika e Carla, em qualquer aparelho.
+  //  Sem URL, roda local (demo). Ver apps-script-sistema.js.
+  // ══════════════════════════════════════════════════════════════
+  var BACKEND_KEY = "isr_backend_url";
+  function backendUrl() { try { return localStorage.getItem(BACKEND_KEY) || ""; } catch (e) { return ""; } }
+  function setBackendUrl(u) {
+    try { u ? localStorage.setItem(BACKEND_KEY, u.trim()) : localStorage.removeItem(BACKEND_KEY); } catch (e) {}
+  }
+  var syncTimer = null;
+  function agendarSync() {
+    if (!backendUrl()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(enviarSync, 1500); // agrupa edições em sequência
+  }
+  function enviarSync() {
+    var url = backendUrl();
+    if (!url) return;
+    var payload = {
+      pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
+      atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
+    };
+    try {
+      fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "sistemaSave", data: payload }) }).catch(function () {});
+    } catch (e) {}
+  }
+  function carregarDoBackend(cb) {
+    var url = backendUrl();
+    if (!url) { if (cb) cb(false); return; }
+    try {
+      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok && d.data) {
+            if (d.data.pessoas && d.data.pessoas.length) savePessoasLocal(d.data.pessoas);
+            if (d.data.custos && d.data.custos.length) custosSaveLocal(d.data.custos);
+            if (d.data.templates) tplSaveLocal(d.data.templates);
+            try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
+            if (cb) cb(true);
+          } else if (cb) cb(false);
+        }).catch(function () { if (cb) cb(false); });
+    } catch (e) { if (cb) cb(false); }
+  }
+  // ao abrir qualquer tela: puxa a base compartilhada (silencioso)
+  try { setTimeout(function () { carregarDoBackend(); }, 50); } catch (e) {}
+
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
   // Apps Script; por enquanto: allowlist de e-mails + sessão local.
@@ -1079,7 +1151,9 @@
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     // caixa
-    CUSTOS_FIXOS: CUSTOS_FIXOS, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
+    get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
+    addCusto: addCusto, removeCusto: removeCusto,
+    backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     // perfil
     ltv: ltv, contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
