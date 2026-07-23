@@ -19,11 +19,16 @@
         <h1 style="margin: 0 0 4px; font-size: 32px; font-weight: 700; letter-spacing: -0.8px; color: #fff;">Central do Sistema</h1>
         <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.75);">{{ saudacao }}</p>
       </div>
-      <!-- seletor de perfil (v0 dos perfis de acesso — spec 1.2) -->
-      <div style="display: flex; gap: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; padding: 4px;">
-        <sc-for list="{{ perfis }}" as="pf" hint-placeholder-count="3">
-          <button onclick="{{ pf.onClick }}" style="border: none; cursor: pointer; background: {{ pf.bg }}; color: {{ pf.fg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">{{ pf.label }}</button>
-        </sc-for>
+      <!-- seletor de perfil (Gestora vê tudo; equipe entra direto no seu) -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <sc-if value="{{ mostraSeletor }}">
+          <div style="display: flex; gap: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; padding: 4px;">
+            <sc-for list="{{ perfis }}" as="pf" hint-placeholder-count="3">
+              <button onclick="{{ pf.onClick }}" style="border: none; cursor: pointer; background: {{ pf.bg }}; color: {{ pf.fg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">{{ pf.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <button onclick="{{ onSair }}" title="Sair da gestão" style="border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 600; padding: 7px 13px; border-radius: 999px; cursor: pointer;">sair</button>
       </div>
     </header>
 
@@ -45,7 +50,12 @@
         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f7f4ef;">
           <span style="font-size: 16px; flex: none;">{{ item.icon }}</span>
           <div style="flex: 1; min-width: 0;">
-            <a href="{{ item.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <a href="{{ item.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
+              <sc-if value="{{ item.donoChip }}">
+                <span style="background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ item.donoChip }}</span>
+              </sc-if>
+            </div>
             <div style="font-size: 11px; color: #6b6155; margin-top: 1px;">{{ item.motivo }}</div>
           </div>
           <a href="{{ item.acaoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
@@ -126,8 +136,11 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { perfis: [], fila: [], areas: [], filaVazia: true, filaCount: "", saudacao: "", ciclo: "", matriculas: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%", temMais: false, filaBadgeBg: "#f2ebe3", filaBadgeFg: "#9b8b7e" };
 
-    const perfilAtivo = this.state.perfil;
+    const user = CRM.gestaoUser();
+    const ehGestora = !user || user.perfil === "gestora";
+    const perfilAtivo = ehGestora ? this.state.perfil : user.perfil;
     const nomes = { gestora: "Bom dia, Gabi! 👋", comercial: "Bom dia, Carla! 👋", operacao: "Bom dia, Érika! 👋" };
+    if (user && user.perfil === "gestora" ) nomes.gestora = "Bom dia, " + user.nome + "! 👋 Você vê a soma das filas de todo mundo — as etiquetas dizem de quem é cada tarefa.";
 
     const perfis = CRM.PERFIS.map(pf => {
       const on = pf.id === perfilAtivo;
@@ -149,6 +162,7 @@ class Component extends DCLogic {
       }) : "";
       return {
         icon: item.icon, nome: item.nome, motivo: item.motivo, acao: item.acao,
+        donoChip: perfilAtivo === "gestora" ? (item.dono || "") : "",
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + item.pessoaId,
         acaoHref: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId + "&tpl=" + item.tpl,
         onAdiar: () => { CRM.adiarItem(item.regra, item.pessoaId); this.bump(); }
@@ -198,6 +212,8 @@ class Component extends DCLogic {
 
     return {
       saudacao: nomes[perfilAtivo], perfis,
+      mostraSeletor: ehGestora,
+      onSair: () => { CRM.sairGestao(); window.location.replace("gestao.html"); },
       fila, filaVazia: filaAll.length === 0,
       filaCount: filaAll.length + (filaAll.length === 1 ? " item" : " itens"),
       filaBadgeBg: filaAll.length ? "rgba(224,120,86,0.14)" : "rgba(90,158,75,0.16)",

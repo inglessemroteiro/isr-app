@@ -20,7 +20,7 @@
       </div>
       <div style="display: flex; gap: 8px;">
         <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px;">← Voltar ao CRM</a>
-        <button title="Gestão de modelos chega na próxima fase" style="border: 1px solid #e5dccf; background: #fff; color: #b3a693; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: not-allowed;">✎ Gerenciar modelos</button>
+        <button onclick="{{ onToggleGerenciar }}" style="border: 1px solid {{ gerBorder }}; background: {{ gerBg }}; color: {{ gerFg }}; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer;">✎ Gerenciar modelos</button>
       </div>
     </header>
 
@@ -80,6 +80,40 @@
       </div>
     </div>
 
+    <!-- GERENCIAR MODELOS -->
+    <sc-if value="{{ gerenciando }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">✎ Editando o modelo selecionado <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· variáveis (entre chaves duplas): primeiroNome · turma · nivel · valor · vencimento · link</span></div>
+        <input ref="{{ gerTituloRef }}" placeholder="Título do modelo" style="width: 100%; box-sizing: border-box; padding: 11px 13px; font-size: 13px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; margin-bottom: 8px;" />
+        <textarea ref="{{ gerCorpoRef }}" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px 14px; font-size: 13px; line-height: 1.6; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; resize: vertical;"></textarea>
+        <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
+          <button onclick="{{ onSalvarModelo }}" style="border: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Salvar alterações</button>
+          <sc-if value="{{ ehEditado }}">
+            <button onclick="{{ onRestaurar }}" style="border: 1px solid #e5dccf; background: #fff; color: #8a7c6b; font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer;">↺ Restaurar padrão</button>
+          </sc-if>
+          <sc-if value="{{ ehCustom }}">
+            <button onclick="{{ onExcluirModelo }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 12px; font-weight: 600; padding: 10px 8px; cursor: pointer;">Excluir modelo</button>
+          </sc-if>
+          <sc-if value="{{ modeloSalvo }}">
+            <span style="font-size: 12px; color: #3f6d4e; font-weight: 700;">✓ Salvo!</span>
+          </sc-if>
+        </div>
+        <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 14px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">➕ Criar modelo novo</div>
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 8px; margin-bottom: 8px;">
+            <select ref="{{ novoCatRef }}" style="padding: 11px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+              <sc-for list="{{ catsNovo }}" as="cn" hint-placeholder-count="7">
+                <option value="{{ cn.id }}">{{ cn.label }}</option>
+              </sc-for>
+            </select>
+            <input ref="{{ novoTituloRef }}" placeholder="Título do novo modelo (ex. Aviso de feriado)" style="padding: 11px 13px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+          </div>
+          <textarea ref="{{ novoCorpoRef }}" placeholder="Texto do modelo… escreva as variáveis entre chaves duplas: primeiroNome, turma, valor etc." style="width: 100%; box-sizing: border-box; min-height: 90px; padding: 12px 14px; font-size: 13px; line-height: 1.6; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; resize: vertical;"></textarea>
+          <button onclick="{{ onCriarModelo }}" style="margin-top: 10px; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">➕ Criar modelo</button>
+        </div>
+      </div>
+    </sc-if>
+
     <!-- CORPO: LISTA + EDITOR -->
     <div style="display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start;">
 
@@ -132,8 +166,20 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { categoria: null, templateId: null, recipientId: null, msg: null, search: "", copied: false, veioDeContexto: false, enviadoPara: "" };
+  state = { categoria: null, templateId: null, recipientId: null, msg: null, search: "", copied: false, veioDeContexto: false, enviadoPara: "", gerenciando: false, modeloSalvo: false };
   recipientRef = React.createRef();
+  gerTituloRef = React.createRef(); gerCorpoRef = React.createRef();
+  novoCatRef = React.createRef(); novoTituloRef = React.createRef(); novoCorpoRef = React.createRef();
+
+  // carrega o modelo selecionado nos campos de edição
+  syncGer(tplId) {
+    setTimeout(() => {
+      const CRM = window.ISRCRM;
+      const t = CRM.TEMPLATES.filter(x => x.id === tplId)[0];
+      if (t && this.gerTituloRef.current) this.gerTituloRef.current.value = t.titulo;
+      if (t && this.gerCorpoRef.current) this.gerCorpoRef.current.value = t.corpo;
+    }, 60);
+  }
 
   componentDidMount() {
     // contexto vindo de outra tela: ?para=<pessoaId>&tpl=<templateId>
@@ -230,7 +276,7 @@ class Component extends DCLogic {
       templates: tpls.map(t => {
         const on = t.id === templateId;
         return { titulo: t.titulo, tag: t.tag || "",
-          onClick: () => this.setState({ templateId: t.id, msg: null }),
+          onClick: () => { this.setState({ templateId: t.id, msg: null, modeloSalvo: false }); if (this.state.gerenciando) this.syncGer(t.id); },
           bg: on ? "#f8efe4" : "#fff", weight: on ? 700 : 600 };
       }),
       search: this.state.search,
@@ -243,6 +289,37 @@ class Component extends DCLogic {
       temDestacado: curMsg.indexOf("[DESTACADO") >= 0,
       semModelos: tpls.length === 0,
       copyLabel: this.state.copied ? "✓ Copiado" : "Copiar",
+      // gerenciar modelos
+      gerenciando: this.state.gerenciando,
+      gerBorder: this.state.gerenciando ? "#164951" : "#e5dccf",
+      gerBg: this.state.gerenciando ? "#164951" : "#fff",
+      gerFg: this.state.gerenciando ? "#fff" : "#164951",
+      onToggleGerenciar: () => { const on = !this.state.gerenciando; this.setState({ gerenciando: on, modeloSalvo: false }); if (on && templateId) this.syncGer(templateId); },
+      gerTituloRef: this.gerTituloRef, gerCorpoRef: this.gerCorpoRef,
+      novoCatRef: this.novoCatRef, novoTituloRef: this.novoTituloRef, novoCorpoRef: this.novoCorpoRef,
+      ehEditado: !!(tpl && tpl.editado),
+      ehCustom: !!(tpl && CRM.ehModeloCustom(tpl.id)),
+      modeloSalvo: this.state.modeloSalvo,
+      catsNovo: cats.map(c => ({ id: c, label: c })),
+      onSalvarModelo: () => {
+        if (!tpl) return;
+        const ti = (this.gerTituloRef.current && this.gerTituloRef.current.value || "").trim();
+        const co = (this.gerCorpoRef.current && this.gerCorpoRef.current.value || "").trim();
+        if (!ti || !co) return;
+        CRM.salvarModelo(tpl.id, ti, co);
+        this.setState({ msg: null, modeloSalvo: true }, () => setTimeout(() => this.setState({ modeloSalvo: false }), 2000));
+      },
+      onRestaurar: () => { if (tpl) { CRM.restaurarModelo(tpl.id); this.setState({ msg: null, modeloSalvo: false }); this.syncGer(tpl.id); } },
+      onExcluirModelo: () => { if (tpl && confirm("Excluir este modelo?")) { CRM.excluirModelo(tpl.id); this.setState({ templateId: null, msg: null }); } },
+      onCriarModelo: () => {
+        const cat = (this.novoCatRef.current && this.novoCatRef.current.value) || cats[0];
+        const ti = (this.novoTituloRef.current && this.novoTituloRef.current.value || "").trim();
+        const co = (this.novoCorpoRef.current && this.novoCorpoRef.current.value || "").trim();
+        if (!ti || !co) return;
+        CRM.novoModelo(cat, ti, co);
+        this.novoTituloRef.current.value = ""; this.novoCorpoRef.current.value = "";
+        this.setState({ categoria: cat, msg: null });
+      },
       onCopy: () => { this.doCopy(curMsg); if (rec) { CRM.registrarContato(rec.id, "mensagem copiada · " + (tpl ? tpl.titulo : "texto livre")); } }
     };
   }

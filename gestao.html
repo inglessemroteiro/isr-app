@@ -3,8 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ISR — Gestão</title>
-<script>window.location.replace('ISR%20-%20Central.dc.html');</script>
+<title>ISR — Acesso à Gestão</title>
+<script src="./crm-data.js"></script>
+<style>
+  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fdfbf8; border-radius: 16px; padding: 34px 30px; max-width: 380px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 8px; }
+  h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
+  p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
+  input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; margin-bottom: 10px; }
+  button { width: 100%; border: none; background: #164951; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 999px; cursor: pointer; }
+  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
+  .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
+</style>
 </head>
-<body></body>
+<body>
+<div class="card">
+  <p class="eyebrow">Inglês sem Roteiro</p>
+  <h1>⚙️ Acesso à Gestão</h1>
+  <p>Área restrita da equipe. Entre com seu e-mail de trabalho.</p>
+  <input id="email" type="email" placeholder="voce@email.com" autofocus />
+  <button onclick="entrar()">Entrar →</button>
+  <p class="erro" id="erro">E-mail não autorizado. Fale com a Gabi para liberar seu acesso.</p>
+  <p class="nota">Aluna? Sua área é o <a href="index.html" style="color: #2a9d8f; font-weight: 700;">app do Inglês sem Roteiro</a>.</p>
+</div>
+<script>
+  // já logada → direto pra Central
+  if (window.ISRCRM && window.ISRCRM.gestaoUser()) {
+    window.location.replace('ISR%20-%20Central.dc.html');
+  }
+  function entrar() {
+    var email = document.getElementById('email').value;
+    var u = window.ISRCRM && window.ISRCRM.liberarGestao(email);
+    if (u) window.location.replace('ISR%20-%20Central.dc.html');
+    else document.getElementById('erro').style.display = 'block';
+  }
+  document.getElementById('email').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') entrar();
+  });
+</script>
+</body>
 </html>
