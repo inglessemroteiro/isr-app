@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Marketing · Origens & Conversão</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e07856;">Inglês sem Roteiro · Marketing</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Origens & Conversão</h1>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">🎯 Abrir CRM</a>
+      </div>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">De onde vêm seus leads, quanto cada canal converte e por que as vendas se perdem. Alimentado pelos mesmos dados do CRM — origem gravada uma vez, imutável.</p>
+
+    <!-- META DO CICLO -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Meta do ciclo {{ ciclo }}</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #3d3529; margin-bottom: 5px;"><span>Matrículas</span><strong>{{ matriculasMeta }}</strong></div>
+          <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;"><span style="display: block; height: 100%; width: {{ pMatriculas }}; background: #3f6d4e;"></span></div>
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #3d3529; margin-bottom: 5px;"><span>Renovações</span><strong>{{ renovacoesMeta }}</strong></div>
+          <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;"><span style="display: block; height: 100%; width: {{ pRenovacoes }}; background: #d4a574;"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAIS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 22px;">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 16px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 5px;">Leads no funil</div>
+        <div style="font-size: 22px; font-weight: 700; color: #164951;">{{ totalAtivos }}</div>
+      </div>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 16px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 5px;">Matriculadas</div>
+        <div style="font-size: 22px; font-weight: 700; color: #3f6d4e;">{{ totalMatriculados }}</div>
+      </div>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 16px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 5px;">Perdidas</div>
+        <div style="font-size: 22px; font-weight: 700; color: #cf6b5c;">{{ totalPerdidos }}</div>
+      </div>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 16px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 5px;">Conversão geral</div>
+        <div style="font-size: 22px; font-weight: 700; color: #2a9d8f;">{{ conversaoGeral }}</div>
+      </div>
+    </div>
+
+    <!-- POR CANAL (tabela) -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Por canal</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden; margin-bottom: 22px;">
+      <div style="display: grid; grid-template-columns: 1fr 0.6fr 1.6fr 0.9fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Canal <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Leads <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Matriculadas · no funil · perdidas</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Conversão <span style="opacity:.5;">⌄</span></span>
+      </div>
+      <sc-for list="{{ canais }}" as="c" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: 1fr 0.6fr 1.6fr 0.9fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid #f2e9dd;">
+          <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ c.canal }}</span>
+          <span style="font-size: 13px; color: #6b6155;">{{ c.total }}</span>
+          <div>
+            <div style="display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #f0e7db;">
+              <span style="width: {{ c.pMat }}; background: #3f6d4e;"></span>
+              <span style="width: {{ c.pAtivo }}; background: #2a9d8f; opacity: 0.4;"></span>
+              <span style="width: {{ c.pPerd }}; background: #cf6b5c; opacity: 0.55;"></span>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 5px; font-size: 10px; color: #a2957f;">
+              <span>🟢 {{ c.matriculados }}</span><span>🔵 {{ c.ativos }}</span><span>🔴 {{ c.perdidos }}</span>
+            </div>
+          </div>
+          <span style="justify-self: start; background: {{ c.convBg }}; color: {{ c.convFg }}; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px;">{{ c.convLabel }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- MOTIVOS DE PERDA -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Motivos de perda · CRM + Renovações</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; padding: 16px 18px; margin-bottom: 22px;">
+      <sc-if value="{{ semPerdas }}">
+        <div style="font-size: 12px; color: #a2957f;">Nenhuma perda com motivo registrado ainda.</div>
+      </sc-if>
+      <sc-for list="{{ motivos }}" as="m" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 130px 1fr 40px; gap: 12px; align-items: center; margin-bottom: 9px;">
+          <span style="font-size: 12.5px; font-weight: 600; color: #3d3529;">{{ m.motivo }}</span>
+          <div style="height: 10px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
+            <span style="display: block; height: 100%; width: {{ m.pct }}; background: #cf6b5c; opacity: 0.75;"></span>
+          </div>
+          <span style="font-size: 12px; color: #6b6155; font-weight: 700;">{{ m.total }}</span>
+        </div>
+      </sc-for>
+      <p style="margin: 8px 0 0; font-size: 11px; color: #b3a693;">Se "Horário" dominar, o problema é grade — não anúncio.</p>
+    </div>
+
+    <!-- ORIGENS DETALHADAS (tabela) -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Origens detalhadas (pixels)</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 1fr 1.6fr 0.9fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Pessoa <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Origem detalhada</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Veio de</span>
+      </div>
+      <sc-for list="{{ origens }}" as="o" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: 1fr 1.6fr 0.9fr; gap: 12px; align-items: center; padding: 12px 18px; border-top: 1px solid #f2e9dd;">
+          <a href="{{ o.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25); justify-self: start;">{{ o.nome }}</a>
+          <span style="font-size: 12px; color: #6b6155; font-family: monospace;">{{ o.detalhe }}</span>
+          <span style="font-size: 11.5px; color: #a2957f;">{{ o.veioDe }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Conectada à <strong>[ISR] MKT - Leads_e_Alunos</strong>, esta tela mostra seu histórico real (Social Selling, Aplicação, Indicação, Site) com objeções e frases reais — via <code>apps-script-integracoes.js</code>.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { canais: [], origens: [], motivos: [], semPerdas: true, totalAtivos: 0, totalMatriculados: 0, totalPerdidos: 0, conversaoGeral: "—", ciclo: "", matriculasMeta: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%" };
+
+    const stats = CRM.leadStatsByCanal();
+    const totalMat = stats.reduce((a, s) => a + s.matriculados, 0);
+    const totalPerd = stats.reduce((a, s) => a + s.perdidos, 0);
+    const totalAtivo = stats.reduce((a, s) => a + s.ativos, 0);
+    const fechados = totalMat + totalPerd;
+    const metas = CRM.progressoMetas();
+
+    const canais = stats.map(s => {
+      const pc = n => s.total ? Math.round(100 * n / s.total) + "%" : "0%";
+      return {
+        canal: s.canal, total: s.total,
+        matriculados: s.matriculados, perdidos: s.perdidos, ativos: s.ativos,
+        pMat: pc(s.matriculados), pPerd: pc(s.perdidos), pAtivo: pc(s.ativos),
+        convLabel: s.conversao === null ? "sem fechamento" : s.conversao + "%",
+        convBg: s.conversao === null ? "#f0e7db" : (s.conversao >= 50 ? "rgba(90,158,75,0.16)" : "#f9dfc6"),
+        convFg: s.conversao === null ? "#a2957f" : (s.conversao >= 50 ? "#3f6d4e" : "#b0722c")
+      };
+    });
+
+    const perdas = CRM.statsMotivosPerda();
+    const maxPerda = perdas.reduce((a, m) => Math.max(a, m.total), 0) || 1;
+    const motivos = perdas.map(m => ({ motivo: m.motivo, total: m.total, pct: Math.round(100 * m.total / maxPerda) + "%" }));
+
+    const origens = CRM.getPessoas().filter(p => p.origem && p.origem.detalhe).map(p => ({
+      nome: p.nome, detalhe: p.origem.detalhe, veioDe: p.origem.veioDe || "",
+      perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id
+    }));
+
+    return {
+      canais, origens, motivos, semPerdas: motivos.length === 0,
+      totalAtivos: totalAtivo, totalMatriculados: totalMat, totalPerdidos: totalPerd,
+      conversaoGeral: fechados > 0 ? Math.round(100 * totalMat / fechados) + "%" : "—",
+      ciclo: metas.ciclo,
+      matriculasMeta: metas.matriculas + "/" + metas.metaMatriculas,
+      renovacoesMeta: metas.renovacoes + "/" + metas.metaRenovacoes,
+      pMatriculas: Math.min(100, Math.round(100 * metas.matriculas / metas.metaMatriculas)) + "%",
+      pRenovacoes: Math.min(100, Math.round(100 * metas.renovacoes / metas.metaRenovacoes)) + "%"
+    };
+  }
+}
+</script>
+</body>
+</html>

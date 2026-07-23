@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Perfil da Pessoa</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+  <div style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- TOPO -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #eee3d6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
+      <a href="{{ waDireto }}" target="_blank" rel="noopener" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">💬 WhatsApp</a>
+    </div>
+
+    <sc-if value="{{ naoEncontrada }}">
+      <div style="text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+        <p style="margin: 0; font-size: 14px;">Pessoa não encontrada. Volte à Central e abra um perfil pelo nome.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+      <!-- CABEÇALHO DA PESSOA -->
+      <header style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid {{ statusColor }}; border-radius: 12px; box-shadow: 0 4px 14px rgba(22,73,81,0.06); padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.6px;">{{ nome }}</h1>
+          <span style="background: {{ statusBg }}; color: {{ statusColor }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px; border-radius: 999px;">{{ statusLabel }}</span>
+          <sc-if value="{{ estagioBadge }}">
+            <span style="background: {{ estagioBg }}; color: {{ estagioFg }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px; border-radius: 999px;">{{ estagioBadge }}</span>
+          </sc-if>
+          <span style="background: #f2ebe3; color: #6b6155; font-size: 10px; font-weight: 700; padding: 4px 11px; border-radius: 999px;">{{ moeda }}</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #6b6155;">{{ contexto }}</p>
+      </header>
+
+      <!-- 2 COLUNAS -->
+      <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; align-items: start;">
+
+        <!-- ═══ COLUNA ESQUERDA · A RELAÇÃO ═══ -->
+        <div>
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 12px;">Linha do tempo</div>
+            <sc-for list="{{ timeline }}" as="h" hint-placeholder-count="6">
+              <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ h.dot }}; margin-top: 4px; flex: none;"></span>
+                <div style="font-size: 12px; color: #6b6155; line-height: 1.5;"><strong style="color: #164951;">{{ h.data }}</strong> · {{ h.texto }}</div>
+              </div>
+            </sc-for>
+            <div style="display: flex; gap: 6px; margin-top: 14px; border-top: 1px solid #f0ede8; padding-top: 14px;">
+              <input ref="{{ noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ onNoteKey }}" style="flex: 1; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 12px; padding: 9px 11px; border-radius: 8px; font-family: inherit;" />
+              <button onclick="{{ onNoteSave }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer;">Salvar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ COLUNA DIREITA · NÚMEROS E DOCUMENTOS ═══ -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+
+          <!-- ALUNA: CONTRATO VIGENTE -->
+          <sc-if value="{{ temContrato }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Contrato vigente</div>
+              <div style="font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 12px;">{{ contratoParcela }} · {{ contratoVenc }} · termina {{ contratoFim }}</div>
+              <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <sc-for list="{{ mesesView }}" as="m" hint-placeholder-count="6">
+                  <button onclick="{{ m.onClick }}" title="Clique para marcar paga/pendente" style="border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 9px; font-weight: 700; padding: 7px 8px; border-radius: 8px; cursor: pointer; min-width: 64px; text-align: center;">
+                    <div style="font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.75;">{{ m.label }}</div>
+                    <div style="margin-top: 1px;">{{ m.valor }}</div>
+                    <div style="font-size: 8px; margin-top: 1px;">{{ m.icon }}</div>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+
+            <!-- LTV -->
+            <div style="background: #164951; border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700;">Total investido (LTV)</span>
+              <span style="font-size: 17px; font-weight: 700; color: #9ec970;">{{ ltvValor }}</span>
+            </div>
+
+            <!-- PEDAGÓGICO -->
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Pedagógico</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
+                <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Nível</div>{{ nivel }}</div>
+                <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Professora</div>{{ professora }}</div>
+                <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Turma</div>{{ turma }}</div>
+                <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- LEAD: PAINEL DO FUNIL -->
+          <sc-if value="{{ ehLead }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Funil</div>
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;">
+                <sc-for list="{{ stageOptions }}" as="opt" hint-placeholder-count="7">
+                  <button onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
+                </sc-for>
+              </div>
+              <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 6px;">Próximo follow-up: <strong style="color: #164951;">{{ followupAtual }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <sc-for list="{{ followups }}" as="fu" hint-placeholder-count="3">
+                  <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 12px; padding: 13px 15px;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada (imutável)</div>
+              <div style="font-size: 11px; color: #6b6155; line-height: 1.6;">{{ origemDetalhe }}<br><span style="color: #9b8b7e;">Veio de:</span> {{ veioDe }} · <span style="color: #9b8b7e;">Entrou por:</span> {{ entrouPor }}</div>
+            </div>
+          </sc-if>
+
+          <!-- DOCUMENTOS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">📎 Documentos</div>
+            <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="1">
+              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: #2a9d8f; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #f4f1ec;">🔗 {{ doc.nome }}</a>
+            </sc-for>
+            <sc-if value="{{ semDocs }}">
+              <div style="font-size: 11px; color: #b8ada0; margin-bottom: 4px;">Nenhum documento ainda.</div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; margin-top: 10px;">
+              <input ref="{{ docNomeRef }}" placeholder="Nome (ex. Contrato 3.2026)" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+              <input ref="{{ docLinkRef }}" placeholder="Link do Drive" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+              <button onclick="{{ onAddDoc }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">+</button>
+            </div>
+          </div>
+
+          <!-- AÇÕES RÁPIDAS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+              <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
+                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
+              </sc-for>
+            </div>
+            <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
+          </div>
+
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tick: 0 };
+  noteRef = React.createRef();
+  docNomeRef = React.createRef();
+  docLinkRef = React.createRef();
+
+  pessoaId() {
+    try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
+  }
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  histDot(tipo) {
+    const map = { criado: "#9ec970", estagio: "#2a9d8f", reuniao: "#6b5b95", contato: "#348a8e",
+      followup: "#d4a574", nota: "#b8ada0", perdido: "#cf6b5c", matricula: "#5a9e4b",
+      renovacao: "#6b5b95", pagamento: "#5a9e4b", onboarding: "#d4a574", documento: "#9b8b7e" };
+    return map[tipo] || "#c9c1b6";
+  }
+
+
+  saveNote(id) {
+    const box = this.noteRef.current;
+    if (!box) return;
+    const txt = (box.value || "").trim();
+    if (!txt) return;
+    window.ISRCRM.addNote(id, txt);
+    box.value = "";
+    this.bump();
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { ok: false, naoEncontrada: true, waDireto: "#" };
+    let p = CRM.getPessoa(this.pessoaId());
+    if (!p) p = CRM.getPessoas()[0] || null;
+    if (!p) return { ok: false, naoEncontrada: true, waDireto: "#" };
+
+    const st = CRM.STATUS_META[p.status] || CRM.STATUS_META.lead;
+    const c = CRM.contratoVigente(p);
+    const key = CRM.mesAtualKey();
+
+    // contexto: "Essentials (A2) · Adrielly · conosco desde mar/2025 · 1 ano e 4 meses"
+    const partes = [];
+    if (p.turma) partes.push(p.turma);
+    if (p.professora) partes.push("👩‍🏫 " + p.professora);
+    if (p.desde) partes.push("conosco desde " + CRM.mesAno(p.desde) + " · " + CRM.tempoDesde(p.desde));
+    else if (p.entrouEm) partes.push("lead há " + CRM.tempoDesde(p.entrouEm));
+    if (p.motivoPerda && p.estagio === "perdido") partes.push("saiu: " + p.motivoPerda);
+
+    // projeto do ciclo (units): match por label da turma
+    const unit = CRM.UNITS.filter(u => p.turma && p.turma.indexOf(u.turma) >= 0)[0];
+
+    // badge do estágio do funil no cabeçalho (só pra leads)
+    const stageMeta = p.status === "lead" ? CRM.stageById(p.estagio) : null;
+
+    const out = {
+      ok: true, naoEncontrada: false,
+      estagioBadge: stageMeta ? stageMeta.label : "",
+      estagioBg: stageMeta ? stageMeta.bg : "", estagioFg: stageMeta ? stageMeta.color : "",
+      nome: p.nome, statusLabel: st.label, statusColor: st.color, statusBg: st.bg,
+      moeda: p.moeda || "R$", contexto: partes.join("  ·  ") || "—",
+      waDireto: CRM.waLink(p.whatsapp, ""),
+      timeline: (p.historico || []).slice().reverse().map(h => ({
+        data: CRM.ddmm(h.data) || h.data, texto: h.texto, dot: this.histDot(h.tipo)
+      })),
+      noteRef: this.noteRef, docNomeRef: this.docNomeRef, docLinkRef: this.docLinkRef,
+      onNoteKey: (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(p.id); } },
+      onNoteSave: () => this.saveNote(p.id),
+      documentos: p.documentos || [],
+      semDocs: !(p.documentos || []).length,
+      onAddDoc: () => {
+        const n = (this.docNomeRef.current && this.docNomeRef.current.value || "").trim();
+        const l = (this.docLinkRef.current && this.docLinkRef.current.value || "").trim();
+        if (!n || !l) return;
+        CRM.addDocumento(p.id, n, l);
+        this.docNomeRef.current.value = ""; this.docLinkRef.current.value = "";
+        this.bump();
+      },
+      ehLead: p.status === "lead" && p.estagio !== "matriculado",
+      temContrato: !!c && (p.status === "aluna" || p.status === "mvs" || p.status === "ex-aluna" || p.status === "pausada"),
+      nivel: p.nivel || "—", professora: p.professora || "—", turma: p.turma || "—",
+      projetoCiclo: unit ? unit.projeto : "—"
+    };
+
+    if (out.temContrato) {
+      out.contratoTipo = c.tipo; out.contratoCiclos = c.ciclos;
+      out.contratoParcela = c.parcelaValor || "—";
+      out.contratoVenc = c.vencDia === "auto" ? "auto matrícula" : "venc. dia " + c.vencDia;
+      out.contratoFim = c.fim ? CRM.ddmm(c.fim) + "/" + c.fim.slice(0, 4) : "—";
+      out.ltvValor = CRM.ltv(p);
+      out.mesesView = (c.meses || []).map(m => ({
+        label: m.label, valor: m.valor,
+        icon: m.pago ? "✓" : (m.key === key ? "●" : "…"),
+        border: m.pago ? "#5a9e4b" : (m.key === key ? "#e07856" : "#e0dcd6"),
+        bg: m.pago ? "rgba(90,158,75,0.12)" : "#fff",
+        fg: m.pago ? "#5a9e4b" : "#6b6155",
+        onClick: () => { CRM.setParcelaPaga(p.id, m.key, !m.pago); this.bump(); }
+      }));
+    }
+
+    if (out.ehLead) {
+      out.stageOptions = CRM.STAGES.map(s => {
+        const sel = s.id === p.estagio;
+        return { label: s.short, onPick: () => { CRM.setStage(p.id, s.id); this.bump(); },
+          bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color };
+      });
+      out.followupAtual = p.proximoFollowup ? (CRM.ddmm(p.proximoFollowup) + " (" + CRM.relativeDays(p.proximoFollowup) + ")") : "não agendado";
+      out.followups = CRM.followupPresets().map(f => ({
+        label: f.label, onClick: () => { CRM.setFollowup(p.id, f.iso, f.label); this.bump(); }
+      }));
+      out.origemDetalhe = (p.origem && p.origem.detalhe) || "—";
+      out.veioDe = (p.origem && p.origem.veioDe) || "—";
+      out.entrouPor = (p.origem && p.origem.entrouPor) || "—";
+    }
+
+    // ações rápidas (spec 5): registram contato na timeline
+    const mk = (label, bg, tpl, detalhe) => ({
+      label, bg, href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + p.id + "&tpl=" + tpl
+    });
+    out.acoes = out.ehLead ? [
+      mk("✈️ Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
+      mk("📅 Confirmar conversa", "#6b5b95", "lead_reuniao", "confirmação de conversa"),
+      mk("🔔 Link de pagamento", "#d4a574", "pag_link", "link de pagamento"),
+      mk("💛 Primeiro contato", "#e07856", "lead_primeiro", "primeiro contato")
+    ] : [
+      mk("🔔 Lembrete", "#2a9d8f", "pag_lembrete", "lembrete de vencimento"),
+      mk("✅ Confirmar pagto", "#5a9e4b", "pag_confirmado", "confirmação de pagamento"),
+      mk("🔄 Renovação", "#6b5b95", "renov_abrir", "conversa de renovação"),
+      mk("💛 Check-in", "#e07856", "checkin_mensal", "check-in")
+    ];
+
+    return out;
+  }
+}
+</script>
+</body>
+</html>
