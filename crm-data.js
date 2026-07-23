@@ -801,6 +801,118 @@
       renovacoes: renovadas, metaRenovacoes: METAS.renovacoes, ciclo: METAS.cicloLabel };
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  CAIXA (spec 9) — custos, projeção e conciliação de extrato
+  //  Custos DEMO espelhando os comprovantes reais (Circle, BeConfident,
+  //  DAS, tarifas Sicredi, GoCardless). Os oficiais virão do ISR
+  //  Financeiro quando a Gabi conectar.
+  // ══════════════════════════════════════════════════════════════
+  var CUSTOS_FIXOS = [
+    { nome: "Agência de tráfego", moeda: "R$", valor: 2800 },
+    { nome: "Professoras (estimativa mensal)", moeda: "R$", valor: 3200 },
+    { nome: "Circle (comunidade · US$ 99)", moeda: "R$", valor: 610 },
+    { nome: "BeConfident (IA de idiomas)", moeda: "R$", valor: 398 },
+    { nome: "Impostos (DAS)", moeda: "R$", valor: 81 },
+    { nome: "Tarifas bancárias (Sicredi)", moeda: "R$", valor: 29 },
+    { nome: "GoCardless (taxas de cobrança)", moeda: "€", valor: 36 },
+    { nome: "Assinaturas EU", moeda: "€", valor: 30 }
+  ];
+  function custosTotais() {
+    var t = { "R$": 0, "€": 0 };
+    CUSTOS_FIXOS.forEach(function (c) { t[c.moeda] += c.valor; });
+    return t;
+  }
+
+  // Projeção 90 dias, mês a mês e por moeda:
+  //   esperado = parcelas do mês (pagas + a receber) · custos = fixos
+  //   resultado = esperado − custos · saldo = acumulado
+  function projecaoCaixa() {
+    var horizonte = MESES_COBRANCA.slice(0, 3); // mês corrente + 2
+    var custos = custosTotais();
+    var recebidoPorMes = {}, previstoPorMes = {};
+    horizonte.forEach(function (m) {
+      recebidoPorMes[m.key] = { "R$": 0, "€": 0 };
+      previstoPorMes[m.key] = { "R$": 0, "€": 0 };
+    });
+    getCobranca().forEach(function (c) {
+      (c.meses || []).forEach(function (m) {
+        if (!recebidoPorMes[m.key]) return;
+        var v = parseMoney(m.valor || c.parcelaValor);
+        if (m.pago) recebidoPorMes[m.key][c.moeda] += v;
+        else previstoPorMes[m.key][c.moeda] += v;
+      });
+    });
+    var saldo = { "R$": 0, "€": 0 };
+    return horizonte.map(function (m) {
+      var esperado = {
+        "R$": recebidoPorMes[m.key]["R$"] + previstoPorMes[m.key]["R$"],
+        "€": recebidoPorMes[m.key]["€"] + previstoPorMes[m.key]["€"]
+      };
+      var resultado = { "R$": esperado["R$"] - custos["R$"], "€": esperado["€"] - custos["€"] };
+      saldo["R$"] += resultado["R$"]; saldo["€"] += resultado["€"];
+      return { key: m.key, label: m.label,
+        recebido: recebidoPorMes[m.key], previsto: previstoPorMes[m.key],
+        esperado: esperado, custos: { "R$": custos["R$"], "€": custos["€"] },
+        resultado: resultado, saldoAcumulado: { "R$": saldo["R$"], "€": saldo["€"] } };
+    });
+  }
+
+  // Parser de extrato (v1: uma transação por linha, colada do banco):
+  // "dd/mm/aaaa ; descrição ; valor" — valor negativo = saída.
+  // Aceita 1.234,56 e 1234.56.
+  function parseExtrato(texto) {
+    var out = [];
+    (texto || "").split("\n").forEach(function (linha) {
+      var l = linha.trim();
+      if (!l) return;
+      var data = (l.match(/(\d{2}\/\d{2}\/\d{4})/) || [])[1] || "";
+      var moneyTokens = l.match(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+\.\d{2}|-?\d+,\d{2}/g);
+      if (!moneyTokens || !moneyTokens.length) return;
+      var raw = moneyTokens[moneyTokens.length - 1];
+      var v = parseMoney(raw);
+      if (raw.indexOf("-") === 0) v = -Math.abs(v);
+      var desc = l.replace(data, "").replace(raw, "").replace(/^[;|,\s]+|[;|,\s]+$/g, "").trim();
+      out.push({ data: data, descricao: desc || "(sem descrição)", valor: v });
+    });
+    return out;
+  }
+
+  // Conciliação: para cada CRÉDITO do extrato, procura parcela em aberto
+  // com o mesmo valor (±0,60) na mesma moeda; nome na descrição desempata.
+  function sugerirConciliacao(transacoes, moeda) {
+    var abertas = [];
+    getCobranca().forEach(function (c) {
+      if (c.moeda !== moeda) return;
+      (c.meses || []).forEach(function (m) {
+        if (!m.pago) abertas.push({ pessoaId: c.id, nome: c.nome, mesKey: m.key, mesLabel: m.label, valor: parseMoney(m.valor || c.parcelaValor) });
+      });
+    });
+    var usadas = {};
+    var sugestoes = [], semMatch = [];
+    transacoes.forEach(function (t) {
+      if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
+      var cands = abertas.filter(function (a) {
+        return !usadas[a.pessoaId + a.mesKey] && Math.abs(a.valor - t.valor) <= 0.6;
+      });
+      if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
+      var desc = (t.descricao || "").toLowerCase();
+      cands.sort(function (a, b) {
+        var an = desc.indexOf(firstName(a.nome).toLowerCase()) >= 0 ? 0 : 1;
+        var bn = desc.indexOf(firstName(b.nome).toLowerCase()) >= 0 ? 0 : 1;
+        if (an !== bn) return an - bn;
+        return a.mesKey < b.mesKey ? -1 : 1;
+      });
+      var alvo = cands[0];
+      usadas[alvo.pessoaId + alvo.mesKey] = true;
+      sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome, mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor });
+    });
+    return { sugestoes: sugestoes, semMatch: semMatch };
+  }
+  function conciliar(pessoaId, mesKey, descricao) {
+    setParcelaPaga(pessoaId, mesKey, true);
+    addHistory(pessoaId, "pagamento", "Pagamento conciliado com o extrato" + (descricao ? " · " + descricao.slice(0, 60) : ""));
+  }
+
   // ── MARKETING ─────────────────────────────────────────────────
   function leadStatsByCanal() {
     var by = {};
@@ -886,6 +998,9 @@
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
+    // caixa
+    CUSTOS_FIXOS: CUSTOS_FIXOS, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
+    parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     // perfil
     ltv: ltv, contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
     // util
