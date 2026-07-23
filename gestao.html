@@ -25,12 +25,22 @@
   <input id="email" type="email" placeholder="voce@email.com" autofocus />
   <button onclick="entrar()">Entrar →</button>
   <p class="erro" id="erro">E-mail não autorizado. Fale com a Gabi para liberar seu acesso.</p>
-  <p class="nota">Aluna? Sua área é o <a href="index.html" style="color: #2a9d8f; font-weight: 700;">app do Inglês sem Roteiro</a>.</p>
+  <p class="nota">Aluna? Sua área é o <a href="index.html" style="color: #2a9d8f; font-weight: 700;">app do Inglês sem Roteiro</a></p>
+  <p class="nota"><a href="#" onclick="document.getElementById('conexao').style.display='block';return false;" style="color: #b3a693;">⚙ configurar banco central</a></p>
+  <div id="conexao" style="display: none; margin-top: 12px; text-align: left;">
+    <p style="font-size: 11px; color: #6b6155; margin: 0 0 6px;">URL do Apps Script (implantação Web App — ver apps-script-sistema.js):</p>
+    <input id="backend" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom: 6px; font-size: 12px;" />
+    <button onclick="salvarBackend()" style="font-size: 11px; padding: 10px;">Salvar conexão</button>
+    <p class="nota" id="statusConexao" style="margin-top: 8px;"></p>
+  </div>
 </div>
 <script>
-  // já logada → direto pra Central
-  if (window.ISRCRM && window.ISRCRM.gestaoUser()) {
+  // já logada → direto pra Central (exceto ?config, pra ajustar a conexão)
+  if (window.ISRCRM && window.ISRCRM.gestaoUser() && window.location.search.indexOf('config') < 0) {
     window.location.replace('ISR%20-%20Central.dc.html');
+  }
+  if (window.location.search.indexOf('config') >= 0) {
+    document.getElementById('conexao').style.display = 'block';
   }
   function entrar() {
     var email = document.getElementById('email').value;
@@ -38,6 +48,15 @@
     if (u) window.location.replace('ISR%20-%20Central.dc.html');
     else document.getElementById('erro').style.display = 'block';
   }
+  function salvarBackend() {
+    var u = document.getElementById('backend').value.trim();
+    window.ISRCRM.setBackendUrl(u);
+    document.getElementById('statusConexao').textContent = u ? '✓ Banco central conectado — o sistema salva e carimba na planilha de backup.' : 'Conexão removida (modo local).';
+  }
+  (function () {
+    var u = window.ISRCRM && window.ISRCRM.backendUrl();
+    if (u) { document.getElementById('backend').value = u; document.getElementById('statusConexao').textContent = '✓ Conectado.'; }
+  })();
   document.getElementById('email').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') entrar();
   });
