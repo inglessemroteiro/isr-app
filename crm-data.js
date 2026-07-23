@@ -114,7 +114,7 @@
   // ── MODELOS DE MENSAGEM ───────────────────────────────────────
   // Variáveis: {{nome}} {{primeiroNome}} {{turma}} {{nivel}} {{horario}}
   //            {{valor}} {{vencimento}} {{link}}
-  var TEMPLATES = [
+  var BASE_TEMPLATES = [
     // LEADS
     { id: "lead_primeiro", categoria: "Leads", titulo: "Primeiro contato",
       corpo: "Oi, {{primeiroNome}}! Tudo bem? 😊\nAqui é a Gabi, do Inglês sem Roteiro. Vi que você demonstrou interesse nas nossas aulas.\nMe conta: o que te motivou a querer voltar a estudar inglês agora?" },
@@ -175,6 +175,49 @@
     { id: "mvs_upsell", categoria: "MVS", titulo: "Convite pra experimentar grupo",
       corpo: "Oi, {{primeiroNome}}! Você está indo tão bem no MVS que queria te fazer um convite: que tal experimentar uma aula em grupo, sem compromisso?\nTem turma de {{nivel}} com vaga aberta — acho que você ia amar a energia. Topa? 💛" }
   ];
+
+  // ── MODELOS EDITÁVEIS ─────────────────────────────────────────
+  // A Gabi pode ajustar qualquer modelo e criar novos; ajustes ficam
+  // em localStorage (overrides por id + extras). O texto padrão nunca
+  // se perde: "Restaurar padrão" remove o override.
+  var TPL_STORE_KEY = "isr_templates_v1";
+  function tplStore() {
+    try { return JSON.parse(localStorage.getItem(TPL_STORE_KEY)) || { overrides: {}, extras: [] }; }
+    catch (e) { return { overrides: {}, extras: [] }; }
+  }
+  function tplSave(st) { try { localStorage.setItem(TPL_STORE_KEY, JSON.stringify(st)); } catch (e) {} }
+  function templatesMerged() {
+    var st = tplStore();
+    var base = BASE_TEMPLATES.map(function (t) {
+      var o = st.overrides[t.id];
+      return o ? Object.assign({}, t, { titulo: o.titulo || t.titulo, corpo: o.corpo || t.corpo, editado: true }) : t;
+    });
+    return base.concat(st.extras || []);
+  }
+  function salvarModelo(id, titulo, corpo) {
+    var st = tplStore();
+    var extra = (st.extras || []).filter(function (e) { return e.id === id; })[0];
+    if (extra) { extra.titulo = titulo; extra.corpo = corpo; }
+    else st.overrides[id] = { titulo: titulo, corpo: corpo };
+    tplSave(st);
+  }
+  function novoModelo(categoria, titulo, corpo) {
+    var st = tplStore();
+    st.extras = st.extras || [];
+    st.extras.push({ id: "tpl" + Date.now(), categoria: categoria, titulo: titulo, corpo: corpo, tag: "meu" });
+    tplSave(st);
+  }
+  function excluirModelo(id) {
+    var st = tplStore();
+    st.extras = (st.extras || []).filter(function (e) { return e.id !== id; });
+    tplSave(st);
+  }
+  function restaurarModelo(id) {
+    var st = tplStore();
+    delete st.overrides[id];
+    tplSave(st);
+  }
+  function ehModeloCustom(id) { return (tplStore().extras || []).some(function (e) { return e.id === id; }); }
 
   function fillTemplate(corpo, data) {
     data = data || {};
@@ -717,7 +760,7 @@
       if (p.status === "lead" && p.estagio !== "perdido" && p.estagio !== "incompleta" && p.proximoFollowup) {
         var d = parseISO(p.proximoFollowup);
         if (d && daysBetween(d, today()) >= 0) {
-          itens.push({ regra: "R1", urg: 1, icon: "✈️", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R1", dono: "🎯 Carla", urg: 1, icon: "✈️", pessoaId: p.id, nome: p.nome,
             motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
             acao: "Mensagem do estágio", tpl: "lead_followup" });
         }
@@ -726,7 +769,7 @@
       if (p.status === "lead" && p.estagio === "incompleta") {
         var e = parseISO(p.entrouEm);
         if (e && daysBetween(e, today()) >= 1) {
-          itens.push({ regra: "R2", urg: 2, icon: "📝", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R2", dono: "🎯 Carla", urg: 2, icon: "📝", pessoaId: p.id, nome: p.nome,
             motivo: "Inscrição incompleta há " + daysBetween(e, today()) + "d" + (p.badge ? " · " + p.badge.toLowerCase() : ""),
             acao: "Mensagem de inscrição", tpl: "lead_incompleta" });
         }
@@ -739,11 +782,11 @@
           var hoje = new Date().getDate(), venc = parseInt(c.vencDia, 10);
           if (!isNaN(venc)) {
             if (hoje > venc) {
-              itens.push({ regra: "R3", urg: 0, icon: "⚠️", pessoaId: p.id, nome: p.nome,
+              itens.push({ regra: "R3", dono: "🗂 Érika", urg: 0, icon: "⚠️", pessoaId: p.id, nome: p.nome,
                 motivo: "Parcela de " + mes.label + " atrasada (" + mes.valor + " · venceu dia " + venc + ")",
                 acao: "Cobrar atraso", tpl: "pag_atraso" });
             } else if (venc - hoje <= 3) {
-              itens.push({ regra: "R4", urg: 3, icon: "🔔", pessoaId: p.id, nome: p.nome,
+              itens.push({ regra: "R4", dono: "🗂 Érika", urg: 3, icon: "🔔", pessoaId: p.id, nome: p.nome,
                 motivo: "Parcela vence em " + (venc - hoje) + "d (" + mes.valor + ")",
                 acao: "Enviar lembrete", tpl: "pag_lembrete" });
             }
@@ -754,7 +797,7 @@
       if (p.status === "aluna" && c && c.fim && p.renovacao !== "renovada" && p.renovacao !== "nao_renovou") {
         var dias = daysBetween(today(), parseISO(c.fim));
         if (dias >= 0 && dias <= 45) {
-          itens.push({ regra: "R5", urg: 4, icon: "🔄", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R5", dono: "🎯 Carla", urg: 4, icon: "🔄", pessoaId: p.id, nome: p.nome,
             motivo: "Contrato termina em " + dias + "d — abrir renovação",
             acao: "Conversa de renovação", tpl: "renov_abrir" });
         }
@@ -763,7 +806,7 @@
       if (p.status === "ex-aluna" && p.motivoPerda === "Momento errado" && p.saidaEm) {
         var m6 = daysBetween(parseISO(p.saidaEm), today());
         if (m6 >= 180) {
-          itens.push({ regra: "R12", urg: 5, icon: "💬", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R12", dono: "🎯 Carla", urg: 5, icon: "💬", pessoaId: p.id, nome: p.nome,
             motivo: "Saiu há " + Math.floor(m6 / 30) + " meses (momento errado) — hora de reativar",
             acao: "Reativar", tpl: "renov_abrir" });
         }
@@ -960,6 +1003,40 @@
     });
   }
 
+  // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
+  // O acesso definitivo virá do magic link com papel validado no
+  // Apps Script; por enquanto: allowlist de e-mails + sessão local.
+  var GESTAO_EMAILS = {
+    "gabisouza.prof@gmail.com": { perfil: "gestora", nome: "Gabi" },
+    "erikainglessemroteiro@gmail.com": { perfil: "operacao", nome: "Érika" },
+    "comercial.inglessemroteiro@gmail.com": { perfil: "comercial", nome: "Carla" },
+    "carlaoliveiraprof35@gmail.com": { perfil: "comercial", nome: "Carla" }
+  };
+  function gestaoUser() {
+    try { return JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) { return null; }
+  }
+  function liberarGestao(email) {
+    var e = (email || "").toLowerCase().trim();
+    var m = GESTAO_EMAILS[e];
+    if (!m) return null;
+    var u = { email: e, perfil: m.perfil, nome: m.nome };
+    localStorage.setItem("isr_gestao_user", JSON.stringify(u));
+    return u;
+  }
+  function sairGestao() { localStorage.removeItem("isr_gestao_user"); }
+
+  // Guard automático: telas de gestão redirecionam pro portão se não
+  // houver sessão. Iframes (miniaturas do launcher) ficam de fora.
+  (function guardGestao() {
+    try {
+      if (window.top !== window.self) return;
+      var path = decodeURIComponent(window.location.pathname || "");
+      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Marketing"];
+      var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
+      if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
+    } catch (e) {}
+  })();
+
   function resetDemo() {
     localStorage.removeItem(SEED_FLAG);
     localStorage.removeItem(PESSOAS_KEY);
@@ -970,7 +1047,7 @@
   // ── API PÚBLICA ───────────────────────────────────────────────
   window.ISRCRM = {
     // constantes
-    STAGES: STAGES, TABS: TABS, CANAIS: CANAIS, TEMPLATES: TEMPLATES,
+    STAGES: STAGES, TABS: TABS, CANAIS: CANAIS, get TEMPLATES() { return templatesMerged(); },
     MOTIVOS_PERDA: MOTIVOS_PERDA, STATUS_META: STATUS_META, PERFIS: PERFIS,
     MESES_COBRANCA: MESES_COBRANCA, COBRANCA_STATUS_META: COBRANCA_STATUS_META,
     RENOV_ESTAGIOS: RENOV_ESTAGIOS, UNITS: UNITS, METAS: METAS,
@@ -981,8 +1058,11 @@
     stageById: function (id) { return STAGES.filter(function (s) { return s.id === id; })[0] || null; },
     get REATIVACAO() { return reativacao(); },
     recipients: recipients,
-    templatesByCategoria: function (cat) { return TEMPLATES.filter(function (t) { return !cat || t.categoria === cat; }); },
-    categorias: function () { var seen = {}, out = []; TEMPLATES.forEach(function (t) { if (!seen[t.categoria]) { seen[t.categoria] = 1; out.push(t.categoria); } }); return out; },
+    templatesByCategoria: function (cat) { return templatesMerged().filter(function (t) { return !cat || t.categoria === cat; }); },
+    salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
+    restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
+    gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    categorias: function () { var seen = {}, out = []; templatesMerged().forEach(function (t) { if (!seen[t.categoria]) { seen[t.categoria] = 1; out.push(t.categoria); } }); return out; },
     // ações
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,
     registrarContato: registrarContato, marcarPerdido: marcarPerdido, markLost: function (id) { return marcarPerdido(id, "Outro"); },
