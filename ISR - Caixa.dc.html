@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Gestão · Caixa 90 dias</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão <span style="background: #ece5f3; color: #7b689a; padding: 2px 9px; border-radius: 999px; margin-left: 6px;">👑 só Gestora</span></p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Caixa · próximos 90 dias</h1>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
+        <a href="ISR%20-%20Cobran%C3%A7a.dc.html" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">💰 Cobrança</a>
+      </div>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 700px;">Responde: <strong>"o mês que vem fecha no azul?"</strong> — parcelas esperadas menos custos fixos, por moeda (R$ e € nunca se somam). E concilia o extrato do banco: cole as entradas e o sistema casa cada crédito com a parcela da aluna.</p>
+
+    <!-- CARDS 30/60/90 -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;">
+      <sc-for list="{{ cards }}" as="cd" hint-placeholder-count="3">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ cd.cor }}; border-radius: 10px; padding: 14px 16px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 6px;">{{ cd.label }}</div>
+          <div style="font-size: 18px; font-weight: 700; color: {{ cd.corBRL }};">{{ cd.brl }}</div>
+          <div style="font-size: 14px; font-weight: 700; color: {{ cd.corEUR }};">{{ cd.eur }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- TABELA MENSAL -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Mês a mês · esperado − custos = resultado</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Mês</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Esperado</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Custos fixos</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Resultado</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Já recebido</span>
+      </div>
+      <sc-for list="{{ meses }}" as="m" hint-placeholder-count="3">
+        <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid #f2e9dd; background: {{ m.bg }};">
+          <div>
+            <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ m.label }}</span>
+            <sc-if value="{{ m.atual }}"><div style="font-size: 9px; color: #9c6f56; font-weight: 700; text-transform: uppercase;">● mês atual</div></sc-if>
+          </div>
+          <div style="font-size: 12.5px; color: #3d3529; line-height: 1.5;">{{ m.esperadoBRL }}<br><span style="color: #6b5b95;">{{ m.esperadoEUR }}</span></div>
+          <div style="font-size: 12.5px; color: #a2957f; line-height: 1.5;">− {{ m.custosBRL }}<br><span>− {{ m.custosEUR }}</span></div>
+          <div style="font-size: 13px; font-weight: 700; line-height: 1.5;"><span style="color: {{ m.corResBRL }};">{{ m.resBRL }}</span><br><span style="color: {{ m.corResEUR }};">{{ m.resEUR }}</span></div>
+          <div>
+            <div style="height: 9px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-bottom: 4px;"><span style="display: block; height: 100%; width: {{ m.pctRecebido }}; background: #3f6d4e;"></span></div>
+            <div style="font-size: 10.5px; color: #8a7c6b;">{{ m.recebidoLabel }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- SIMULADOR -->
+    <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">🎛 Simulador · "e se…?"</div>
+      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff;">+ matrículas grupo
+          <input type="number" min="0" value="{{ simMat }}" oninput="{{ onSimMat }}" style="width: 64px; padding: 8px 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; text-align: center;" />
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff;">+ renovações
+          <input type="number" min="0" value="{{ simRen }}" oninput="{{ onSimRen }}" style="width: 64px; padding: 8px 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; text-align: center;" />
+        </label>
+        <span style="font-size: 13px; color: rgba(255,255,255,0.85);">→ cada uma ≈ R$ 400/mês · resultado de <strong>Setembro</strong> vira <strong style="color: {{ simCor }};">{{ simResultado }}</strong></span>
+      </div>
+    </div>
+
+    <!-- CONCILIAÇÃO DE EXTRATO -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">🏦 Conciliar extrato do banco</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
+      <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato (Wise, Sicredi...) — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo = saída). O sistema casa cada crédito com a parcela em aberto da aluna.</p>
+      <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+        <select onchange="{{ onMoedaExtrato }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <option value="€" selected="{{ moedaEUR }}">Conta em € (Wise EUR)</option>
+          <option value="R$" selected="{{ moedaBRL }}">Conta em R$ (Sicredi / Wise BRL)</option>
+        </select>
+        <textarea ref="{{ extratoRef }}" placeholder="28/05/2026 ; Recebeu dinheiro de Ana Beatriz Luz INV-2026-048 ; 125,00&#10;31/05/2026 ; Pago para GOCARDLESS ; -35,70" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
+        <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer;">🔍 Analisar</button>
+      </div>
+
+      <!-- RESULTADO DA CONCILIAÇÃO -->
+      <sc-if value="{{ temAnalise }}">
+        <div style="margin-top: 16px; border-top: 1px solid #f2e9dd; padding-top: 14px;">
+          <sc-for list="{{ sugestoes }}" as="s" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea;">
+              <span style="font-size: 15px;">💚</span>
+              <div style="flex: 1; min-width: 0; font-size: 12.5px; color: #3d3529; line-height: 1.5;">
+                <strong>{{ s.transDesc }}</strong> ({{ s.transValor }})<br>
+                <span style="color: #8a7c6b;">casa com a parcela de <strong>{{ s.mesLabel }}</strong> de </span><a href="{{ s.perfilHref }}" style="color: #164951; font-weight: 700;">{{ s.nome }}</a>
+              </div>
+              <sc-if value="{{ s.pendente }}">
+                <button onclick="{{ s.onConciliar }}" style="border: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer;">✓ Conciliar (marca paga)</button>
+              </sc-if>
+              <sc-if value="{{ s.feita }}">
+                <span style="background: rgba(90,158,75,0.16); color: #3f6d4e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">✓ Conciliada</span>
+              </sc-if>
+            </div>
+          </sc-for>
+          <sc-for list="{{ semMatch }}" as="x" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea;">
+              <span style="font-size: 15px;">{{ x.icon }}</span>
+              <div style="flex: 1; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- CUSTOS FIXOS -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
+      <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 18px; border-bottom: 1px solid #f2e9dd;">
+          <span style="font-size: 13px; color: #3d3529;">{{ c.nome }}</span>
+          <span style="font-size: 13px; font-weight: 700; color: #cf6b5c;">− {{ c.valor }}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #f6eee4;">
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Total mensal</span>
+        <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
+      </div>
+    </div>
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Custos de demonstração espelhando seus comprovantes reais (Circle, BeConfident, DAS, tarifas, GoCardless). A lista oficial virá do <strong>ISR Financeiro</strong> quando você quiser conectar — editar custo continua sendo lá (fonte da verdade).</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { moedaExtrato: "€", analise: null, conciliadas: {}, simMat: 0, simRen: 0, tick: 0 };
+  extratoRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { cards: [], meses: [], custos: [], sugestoes: [], semMatch: [], temAnalise: false, custosTotalBRL: "", custosTotalEUR: "", simMat: 0, simRen: 0, simResultado: "", simCor: "#fff", moedaEUR: true, moedaBRL: false };
+
+    const proj = CRM.projecaoCaixa();
+    const fmt = (m, v) => (v < 0 ? "− " : "") + CRM.fmtMoney(m, Math.abs(v));
+    const corRes = v => v >= 0 ? "#3f6d4e" : "#cf6b5c";
+
+    const cards = proj.map((m, i) => ({
+      label: "Saldo previsto " + ((i + 1) * 30) + " dias · até " + m.label,
+      brl: fmt("R$", m.saldoAcumulado["R$"]), eur: fmt("€", m.saldoAcumulado["€"]),
+      corBRL: corRes(m.saldoAcumulado["R$"]), corEUR: corRes(m.saldoAcumulado["€"]),
+      cor: (m.saldoAcumulado["R$"] >= 0 && m.saldoAcumulado["€"] >= 0) ? "#3f6d4e" : "#cf6b5c"
+    }));
+
+    const chaveAtual = CRM.mesAtualKey();
+    const meses = proj.map(m => {
+      const recTot = m.recebido["R$"] + m.recebido["€"];
+      const espTot = m.esperado["R$"] + m.esperado["€"];
+      return {
+        label: m.label, atual: m.key === chaveAtual, bg: m.key === chaveAtual ? "#fbf6ef" : "#fdfbf8",
+        esperadoBRL: CRM.fmtMoney("R$", m.esperado["R$"]), esperadoEUR: CRM.fmtMoney("€", m.esperado["€"]),
+        custosBRL: CRM.fmtMoney("R$", m.custos["R$"]), custosEUR: CRM.fmtMoney("€", m.custos["€"]),
+        resBRL: fmt("R$", m.resultado["R$"]), resEUR: fmt("€", m.resultado["€"]),
+        corResBRL: corRes(m.resultado["R$"]), corResEUR: corRes(m.resultado["€"]),
+        pctRecebido: espTot > 0 ? Math.round(100 * recTot / espTot) + "%" : "0%",
+        recebidoLabel: CRM.fmtMoney("R$", m.recebido["R$"]) + " + " + CRM.fmtMoney("€", m.recebido["€"]) + " recebidos"
+      };
+    });
+
+    // simulador: +N × R$400/mês no resultado de setembro
+    const extra = (parseInt(this.state.simMat, 10) || 0) * 400 + (parseInt(this.state.simRen, 10) || 0) * 400;
+    const setembro = proj[2];
+    const simVal = setembro ? setembro.resultado["R$"] + extra : 0;
+
+    // conciliação
+    const analise = this.state.analise;
+    const sugestoes = analise ? analise.sugestoes.map((s, i) => {
+      const feita = !!this.state.conciliadas[i];
+      return {
+        transDesc: s.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor),
+        nome: s.nome, mesLabel: s.mesLabel,
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + s.pessoaId,
+        pendente: !feita, feita: feita,
+        onConciliar: () => {
+          CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao);
+          this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: true }) }));
+        }
+      };
+    }) : [];
+    const semMatch = analise ? analise.semMatch.map(x => ({
+      transDesc: x.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, x.trans.valor),
+      icon: x.tipo === "saida" ? "📤" : "❔",
+      motivo: x.tipo === "saida" ? "saída (custo — não concilia com parcela)" : "nenhuma parcela em aberto com esse valor"
+    })) : [];
+
+    const ct = CRM.custosTotais();
+    return {
+      cards, meses,
+      custos: CRM.CUSTOS_FIXOS.map(c => ({ nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor) })),
+      custosTotalBRL: CRM.fmtMoney("R$", ct["R$"]), custosTotalEUR: CRM.fmtMoney("€", ct["€"]),
+      simMat: this.state.simMat, simRen: this.state.simRen,
+      onSimMat: (e) => this.setState({ simMat: e.target.value }),
+      onSimRen: (e) => this.setState({ simRen: e.target.value }),
+      simResultado: fmt("R$", simVal), simCor: simVal >= 0 ? "#9ec970" : "#f4a099",
+      moedaEUR: this.state.moedaExtrato === "€", moedaBRL: this.state.moedaExtrato === "R$",
+      onMoedaExtrato: (e) => this.setState({ moedaExtrato: e.target.value, analise: null, conciliadas: {} }),
+      extratoRef: this.extratoRef,
+      temAnalise: !!analise,
+      sugestoes, semMatch,
+      onAnalisar: () => {
+        const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
+        const trans = CRM.parseExtrato(txt);
+        this.setState({ analise: CRM.sugerirConciliacao(trans, this.state.moedaExtrato), conciliadas: {} });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
