@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Pedagógico · Turmas & Projetos</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6b5b95;">Inglês sem Roteiro · Pedagógico</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">Turmas & Projetos</h1>
+      </div>
+      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e0dcd6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px;">⌂ Central</a>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 640px;">O que cada turma está estudando agora — projeto do ciclo, professora e materiais (units of study). Filtre por professora para preparar a semana.</p>
+
+    <!-- FILTRO POR TEACHER -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;">
+      <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="5">
+        <button onclick="{{ t.onClick }}" style="border: none; cursor: pointer; background: {{ t.bg }}; color: {{ t.fg }}; font-size: 12px; font-weight: 700; padding: 7px 13px; border-radius: 999px; box-shadow: {{ t.shadow }};">{{ t.label }}</button>
+      </sc-for>
+    </div>
+
+    <!-- CARDS POR NÍVEL -->
+    <sc-for list="{{ niveis }}" as="nv" hint-placeholder-count="4">
+      <div style="display: flex; align-items: baseline; gap: 10px; margin: 22px 0 10px;">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">{{ nv.nome }}</h2>
+        <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
+        <span style="font-size: 12px; color: #9b8b7e;">{{ nv.count }}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+        <sc-for list="{{ nv.turmas }}" as="u" hint-placeholder-count="2">
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-top: 4px solid {{ u.cor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ u.turma }}</div>
+                <div style="font-size: 11px; color: #9b8b7e; margin-top: 2px;">👩‍🏫 {{ u.teacher }} · ciclo {{ u.cycle }}</div>
+              </div>
+            </div>
+            <div style="background: {{ u.corBg }}; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: {{ u.cor }}; font-weight: 700; margin-bottom: 3px;">Projeto do ciclo</div>
+              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ u.projeto }}</div>
+            </div>
+            <sc-if value="{{ u.notebook }}">
+              <div style="font-size: 10px; color: #6b6155; line-height: 1.5; word-break: break-all;">📓 {{ u.notebook }}</div>
+            </sc-if>
+            <sc-if value="{{ u.semMaterial }}">
+              <div style="font-size: 10px; color: #c98a3a;">⚠️ Sem caderno vinculado neste ciclo</div>
+            </sc-if>
+          </section>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <p style="margin: 26px 0 0; font-size: 11px; color: #b8ada0; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Units of study</strong> (projeto, syllabus, teacher's guide, student's notebook por turma/ciclo). A integração com a planilha real está em <code>apps-script-integracoes.js</code> — conectada, os cards passam a trazer os links clicáveis dos materiais.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { teacher: "Todas" };
+
+  nivelCor(nivel) {
+    if (nivel.indexOf("First") >= 0) return { cor: "#d4a574", bg: "rgba(212,165,116,0.12)" };
+    if (nivel.indexOf("Basics") >= 0) return { cor: "#e07856", bg: "rgba(224,120,86,0.10)" };
+    if (nivel.indexOf("Essentials") >= 0) return { cor: "#2a9d8f", bg: "rgba(42,157,143,0.10)" };
+    if (nivel.indexOf("Speaking") >= 0) return { cor: "#6b5b95", bg: "rgba(107,91,149,0.10)" };
+    return { cor: "#348a8e", bg: "rgba(52,138,142,0.10)" };
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { teachers: [], niveis: [] };
+
+    const units = CRM.UNITS;
+    const names = ["Todas"];
+    units.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
+    const active = this.state.teacher;
+
+    const teachers = names.map(n => {
+      const on = n === active;
+      return { label: n, onClick: () => this.setState({ teacher: n }),
+        bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#6b6155",
+        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)" };
+    });
+
+    const filtered = units.filter(u => active === "Todas" || u.teacher === active);
+    const ordem = [];
+    const porNivel = {};
+    filtered.forEach(u => {
+      if (!porNivel[u.nivel]) { porNivel[u.nivel] = []; ordem.push(u.nivel); }
+      porNivel[u.nivel].push(u);
+    });
+
+    const niveis = ordem.map(nome => ({
+      nome: nome,
+      count: porNivel[nome].length + (porNivel[nome].length === 1 ? " turma" : " turmas"),
+      turmas: porNivel[nome].map(u => {
+        const c = this.nivelCor(u.nivel);
+        return { turma: u.turma, teacher: u.teacher, cycle: u.cycle, projeto: u.projeto || "—",
+          notebook: u.notebook || "", semMaterial: !u.notebook,
+          cor: c.cor, corBg: c.bg };
+      })
+    }));
+
+    return { teachers, niveis };
+  }
+}
+</script>
+</body>
+</html>

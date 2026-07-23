@@ -14,8 +14,9 @@
   "use strict";
 
   var LEADS_KEY = "isr_crm_leads";
+  var COBRANCA_KEY = "isr_crm_cobranca";
   var TPL_KEY = "isr_crm_templates";
-  var SEED_FLAG = "isr_crm_seeded_v1";
+  var SEED_FLAG = "isr_crm_seeded_v2";
 
   // ── ESTÁGIOS DO FUNIL ─────────────────────────────────────────
   // ordem = ordem no funil. cor = usada nos badges/dropdown.
@@ -252,6 +253,180 @@
     return leads.concat(alunas);
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  COBRANÇA — estrutura espelhada da [ISR] Planilha Renovações
+  //  (aba de parcelas: Tipo, ciclos, moeda, parcelas, dia de
+  //   vencimento, grade mês a mês com "quitou").
+  //  Dados abaixo são FICTÍCIOS de demonstração — os reais entram
+  //  pela integração com a planilha (apps-script-integracoes.js).
+  // ══════════════════════════════════════════════════════════════
+  var MESES_COBRANCA = [
+    { key: "2026-07", label: "Julho" }, { key: "2026-08", label: "Agosto" },
+    { key: "2026-09", label: "Setembro" }, { key: "2026-10", label: "Outubro" },
+    { key: "2026-11", label: "Novembro" }, { key: "2026-12", label: "Dezembro" },
+    { key: "2027-01", label: "Janeiro" }
+  ];
+
+  function seedCobranca() {
+    // pago: true = recebido ("quitou" na coluna do mês)
+    // n = número de parcelas do plano (grade só até onde o plano vai)
+    var mk = function (pagos, valor, n) {
+      return MESES_COBRANCA.slice(0, n || MESES_COBRANCA.length).map(function (m, i) {
+        return { key: m.key, label: m.label, valor: valor, pago: i < pagos };
+      });
+    };
+    return [
+      { id: "c1", nome: "Amanda Ferraz", telefone: "+55 11 98801-2233", tipo: "Renovação", ciclos: "2 Ciclos 3.2026 e 4.2026",
+        moeda: "R$", valorTotal: "R$ 2.760,00", parcelaValor: "R$ 345,00", parcelas: 8, vencDia: 10,
+        meses: mk(1, "R$ 345,00", 8), obs: "Paga pelo Asaas" },
+      { id: "c2", nome: "Ana Beatriz Luz", telefone: "+31 6 4455-8899", tipo: "Renovação", ciclos: "2 Ciclos 3.2026 e 4.2026",
+        moeda: "€", valorTotal: "€ 750,00", parcelaValor: "€ 125,00", parcelas: 6, vencDia: 10,
+        meses: mk(1, "€ 125,00", 6), obs: "Sinal de €50 pago em 10/07; 1ª parcela cheia em agosto" },
+      { id: "c3", nome: "Fernanda Souto", telefone: "+55 21 99911-7788", tipo: "Matrícula", ciclos: "1 Ciclo 3.2026",
+        moeda: "R$", valorTotal: "R$ 1.491,00", parcelaValor: "R$ 497,00", parcelas: 3, vencDia: 6,
+        meses: mk(0, "R$ 497,00", 3), obs: "" },
+      { id: "c4", nome: "Juliana Prates", telefone: "+31 6 8123-4567", tipo: "Renovação", ciclos: "2 Ciclos 3.2026 e 4.2026",
+        moeda: "€", valorTotal: "€ 555,10", parcelaValor: "€ 79,30", parcelas: 7, vencDia: 26,
+        meses: mk(1, "€ 79,30", 7), obs: "" },
+      { id: "c5", nome: "Marcela Nunes", telefone: "+55 31 98444-5566", tipo: "Continuidade", ciclos: "1 Ciclo 3.2026",
+        moeda: "R$", valorTotal: "R$ 1.040,00", parcelaValor: "R$ 130,00", parcelas: 8, vencDia: 20,
+        meses: mk(2, "R$ 130,00", 7), obs: "" },
+      { id: "c6", nome: "Beatriz Ohana", telefone: "+55 11 97654-1100", tipo: "Matrícula", ciclos: "1 Ciclo 3.2026",
+        moeda: "€", valorTotal: "€ 255,00", parcelaValor: "€ 85,00", parcelas: 3, vencDia: "auto",
+        meses: mk(3, "€ 85,00", 3), obs: "Auto matrícula — cobrança automática do site" }
+    ];
+  }
+
+  function loadCobranca() {
+    ensureSeed();
+    try { return JSON.parse(localStorage.getItem(COBRANCA_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function saveCobranca(list) {
+    try { localStorage.setItem(COBRANCA_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function mesAtualKey() {
+    var d = new Date(); var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1);
+  }
+
+  // Status da cobrança no mês corrente:
+  //   quitada       → todas as parcelas pagas
+  //   auto          → auto matrícula (site cobra sozinho)
+  //   paga_mes      → parcela deste mês já recebida
+  //   atrasada      → dia de vencimento já passou e não pagou
+  //   vence_breve   → vence nos próximos 5 dias
+  //   em_dia        → vence ainda neste mês, sem urgência
+  function cobrancaStatus(c) {
+    var todas = (c.meses || []).every(function (m) { return m.pago; });
+    if (todas) return "quitada";
+    if (c.vencDia === "auto") return "auto";
+    var key = mesAtualKey();
+    var mes = (c.meses || []).filter(function (m) { return m.key === key; })[0];
+    if (!mes) return "em_dia"; // plano nem começou ou já passou do fim
+    if (mes.pago) return "paga_mes";
+    var hoje = new Date().getDate();
+    var d = parseInt(c.vencDia, 10);
+    if (isNaN(d)) return "em_dia";
+    if (hoje > d) return "atrasada";
+    if (d - hoje <= 5) return "vence_breve";
+    return "em_dia";
+  }
+
+  var COBRANCA_STATUS_META = {
+    atrasada:    { label: "Atrasada",       color: "#cf6b5c", bg: "rgba(207,107,92,0.14)" },
+    vence_breve: { label: "Vence em breve", color: "#c98a3a", bg: "rgba(212,165,116,0.18)" },
+    em_dia:      { label: "Em dia",         color: "#2a9d8f", bg: "rgba(42,157,143,0.14)" },
+    paga_mes:    { label: "Paga este mês",  color: "#5a9e4b", bg: "rgba(90,158,75,0.16)" },
+    quitada:     { label: "Quitada",        color: "#348a8e", bg: "rgba(52,138,142,0.14)" },
+    auto:        { label: "Auto matrícula", color: "#6b5b95", bg: "rgba(107,91,149,0.14)" }
+  };
+
+  function setParcelaPaga(id, mesKey, pago) {
+    var list = loadCobranca();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) {
+        (list[i].meses || []).forEach(function (m) { if (m.key === mesKey) m.pago = pago; });
+        break;
+      }
+    }
+    saveCobranca(list);
+    return list;
+  }
+
+  function parseMoney(str) {
+    if (!str) return 0;
+    var s = str.toString().replace(/[^\d,\.]/g, "");
+    // formato BR/EU: "1.128,57" → 1128.57
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    var v = parseFloat(s);
+    return isNaN(v) ? 0 : v;
+  }
+  function fmtMoney(moeda, v) {
+    var s = v.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (moeda === "€" ? "€ " : "R$ ") + s;
+  }
+
+  // Resumo do mês corrente por moeda: a receber, recebido, atrasado
+  function cobrancaResumo() {
+    var key = mesAtualKey();
+    var out = { atrasadas: 0, receber: { "R$": 0, "€": 0 }, recebido: { "R$": 0, "€": 0 } };
+    loadCobranca().forEach(function (c) {
+      var mes = (c.meses || []).filter(function (m) { return m.key === key; })[0];
+      if (!mes) return;
+      var v = parseMoney(mes.valor || c.parcelaValor);
+      if (mes.pago) out.recebido[c.moeda] += v; else out.receber[c.moeda] += v;
+      if (cobrancaStatus(c) === "atrasada") out.atrasadas++;
+    });
+    return out;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  PEDAGÓGICO — units of study (estrutura da [ISR] Units of study:
+  //  por turma/ciclo → projeto, syllabus, teacher's guide,
+  //  student's notebook, group calendar)
+  // ══════════════════════════════════════════════════════════════
+  var UNITS = [
+    { nivel: "First Steps (A0)", turma: "WED 14h BR | 19h NL", teacher: "Carla", cycle: "2.2026",
+      projeto: "My People Map", notebook: "[ON-FIR][Student_Notebook] My_People_Map_26.2", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Basics (A1)", turma: "MON 7h BR | 12h NL", teacher: "Gabi", cycle: "2.2026",
+      projeto: "The Poetry Project", notebook: "[ON-BAS][MON-7BR|12NL][Students Notebook] The_Poetry_Project_26_2", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Basics (A1)", turma: "TUE 13h BR | 18h NL", teacher: "Carla", cycle: "2.2026",
+      projeto: "My People Map", notebook: "[ON-BAS][Student_Notebook] My_People_Map_26.2", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Essentials (A2)", turma: "MON 13h BR | 18h NL", teacher: "Gabi", cycle: "2.2026",
+      projeto: "My Timeline", notebook: "", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Essentials (A2)", turma: "TUE 8h BR | 13h NL", teacher: "Adrielly", cycle: "2.2026",
+      projeto: "The Poetry Project", notebook: "[Student-Notebook][ON-ESS-TUE 8BR|13NL]", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Speaking (B1)", turma: "PRESENCIAL MON 9h NL", teacher: "Gabi", cycle: "2.2026",
+      projeto: "The Culture Map", notebook: "[PRES-SPE][Teacher's Guide] DH001 - Our Sessions", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Speaking (B1)", turma: "WED 8h BR | 13h NL", teacher: "Ricky", cycle: "2.2026",
+      projeto: "The Poetry Project", notebook: "[ON-SPE][WED-8BR|13NL][Student Notebook] The_Poetry_Project_26.2", syllabus: "", guide: "", calendar: "" },
+    { nivel: "Speaking (B1)", turma: "FRI 6h BR | 11h NL", teacher: "Gabi", cycle: "2.2026",
+      projeto: "My Timeline", notebook: "ON-SPE_Student_Notebook_My_Timeline_26_2", syllabus: "", guide: "", calendar: "" }
+  ];
+
+  // ══════════════════════════════════════════════════════════════
+  //  MARKETING — estatísticas calculadas dos leads (canal, conversão)
+  // ══════════════════════════════════════════════════════════════
+  function leadStatsByCanal() {
+    var by = {};
+    loadLeads().forEach(function (l) {
+      var c = l.canal || "—";
+      if (!by[c]) by[c] = { canal: c, total: 0, matriculados: 0, perdidos: 0, ativos: 0 };
+      by[c].total++;
+      if (l.estagio === "matriculado") by[c].matriculados++;
+      else if (l.estagio === "perdido") by[c].perdidos++;
+      else by[c].ativos++;
+    });
+    return Object.keys(by).map(function (k) {
+      var s = by[k];
+      var fechados = s.matriculados + s.perdidos;
+      s.conversao = fechados > 0 ? Math.round(100 * s.matriculados / fechados) : null;
+      return s;
+    }).sort(function (a, b) { return b.total - a.total; });
+  }
+
   // Ex-alunas recuperáveis (seção Reativação)
   var REATIVACAO = [
     { nome: "Juliana Prado", telefone: "+55 11 98444-2210", motivo: "Pausou no fim do ciclo 2025.2", ultimaTurma: "B1 · Ter 19h" },
@@ -276,6 +451,7 @@
   function ensureSeed() {
     if (localStorage.getItem(SEED_FLAG)) return;
     localStorage.setItem(LEADS_KEY, JSON.stringify(seedLeads()));
+    localStorage.setItem(COBRANCA_KEY, JSON.stringify(seedCobranca()));
     localStorage.setItem(SEED_FLAG, "1");
   }
 
@@ -393,6 +569,7 @@
   function resetDemo() {
     localStorage.removeItem(SEED_FLAG);
     localStorage.removeItem(LEADS_KEY);
+    localStorage.removeItem(COBRANCA_KEY);
     ensureSeed();
   }
 
@@ -408,6 +585,14 @@
     // escrita
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,
     registrarContato: registrarContato, markLost: markLost, deleteLead: deleteLead, addLead: addLead, addHistory: addHistory,
+    // cobrança
+    MESES_COBRANCA: MESES_COBRANCA, COBRANCA_STATUS_META: COBRANCA_STATUS_META,
+    getCobranca: loadCobranca, cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
+    setParcelaPaga: setParcelaPaga, parseMoney: parseMoney, fmtMoney: fmtMoney, mesAtualKey: mesAtualKey,
+    // pedagógico
+    UNITS: UNITS,
+    // marketing
+    leadStatsByCanal: leadStatsByCanal,
     // util
     firstName: firstName, fillTemplate: fillTemplate, waLink: waLink, waNumber: waNumber,
     relativeDays: relativeDays, isStale: isStale, ddmm: ddmm, followupPresets: followupPresets,

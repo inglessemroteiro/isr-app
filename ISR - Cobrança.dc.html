@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Gestão · Cobrança</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">Cobrança · {{ mesLabel }}</h1>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e0dcd6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px;">⌂ Central</a>
+        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #25D366; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px;">💬 Mensagens</a>
+      </div>
+    </header>
+
+    <!-- RESUMO DO MÊS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px;">
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 5px;">A receber no mês</div>
+        <div style="font-size: 17px; font-weight: 700; color: #164951;">{{ receberBRL }}</div>
+        <div style="font-size: 13px; font-weight: 700; color: #6b5b95;">{{ receberEUR }}</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 5px;">Recebido no mês</div>
+        <div style="font-size: 17px; font-weight: 700; color: #5a9e4b;">{{ recebidoBRL }}</div>
+        <div style="font-size: 13px; font-weight: 700; color: #6b5b95;">{{ recebidoEUR }}</div>
+      </div>
+      <div style="background: #fff; border: 1px solid {{ atrasadasBorder }}; border-radius: 10px; padding: 14px;">
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 5px;">Atrasadas</div>
+        <div style="font-size: 22px; font-weight: 700; color: {{ atrasadasColor }};">{{ atrasadas }}</div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px;">
+      <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="6">
+        <button onclick="{{ f.onClick }}" style="flex: none; border: none; cursor: pointer; background: {{ f.bg }}; color: {{ f.fg }}; font-size: 12px; font-weight: 700; padding: 8px 13px; border-radius: 999px; display: flex; align-items: center; gap: 6px; box-shadow: {{ f.shadow }};">
+          <span>{{ f.label }}</span>
+          <span style="background: {{ f.countBg }}; color: {{ f.countFg }}; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px;">{{ f.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ vazio }}">
+      <div style="text-align: center; padding: 44px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+        <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
+        <p style="margin: 0; font-size: 13px;">Nada nesta visão. Tudo em dia!</p>
+      </div>
+    </sc-if>
+
+    <!-- LISTA -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <sc-for list="{{ items }}" as="c" hint-placeholder-count="4">
+        <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.stColor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); overflow: hidden;">
+
+          <!-- LINHA -->
+          <div onclick="{{ c.onToggle }}" style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ c.nome }}</span>
+                <span style="color: #c9c1b6; font-size: 12px;">{{ c.caret }}</span>
+              </div>
+              <div style="font-size: 10px; color: #9b8b7e; margin-top: 2px;">{{ c.tipo }} · {{ c.ciclos }}</div>
+            </div>
+            <div style="font-size: 11px; color: #6b6155;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Parcela</div>
+              {{ c.parcelaValor }} · {{ c.vencLabel }}
+            </div>
+            <div style="font-size: 11px; color: #6b6155;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Progresso</div>
+              {{ c.progresso }}
+            </div>
+            <div>
+              <span style="display: inline-block; background: {{ c.stBg }}; color: {{ c.stColor }}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 9px; border-radius: 999px;">{{ c.stLabel }}</span>
+            </div>
+          </div>
+
+          <!-- PAINEL EXPANDIDO -->
+          <sc-if value="{{ c.open }}">
+            <div style="border-top: 1px solid #f0ede8; padding: 16px; background: #fcfaf6;">
+
+              <!-- GRADE MENSAL -->
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Parcelas · clique para marcar paga/pendente</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+                <sc-for list="{{ c.mesesView }}" as="m" hint-placeholder-count="7">
+                  <button onclick="{{ m.onClick }}" style="border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 10px; font-weight: 700; padding: 8px 10px; border-radius: 8px; cursor: pointer; min-width: 76px; text-align: center;">
+                    <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.75; margin-bottom: 2px;">{{ m.label }}</div>
+                    <div>{{ m.valor }}</div>
+                    <div style="font-size: 9px; margin-top: 2px;">{{ m.icon }}</div>
+                  </button>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ c.obs }}">
+                <div style="background: rgba(212,165,116,0.10); border: 1px solid rgba(212,165,116,0.3); border-radius: 8px; padding: 10px 13px; margin-bottom: 14px; font-size: 12px; color: #6b6155;">📝 {{ c.obs }}</div>
+              </sc-if>
+
+              <!-- AÇÕES WHATSAPP -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{{ c.waLembrete }}" target="_blank" rel="noopener" style="text-decoration: none; background: #2a9d8f; color: #fff; font-size: 11px; font-weight: 700; padding: 9px 13px; border-radius: 8px;">🔔 Lembrete de vencimento</a>
+                <a href="{{ c.waAtraso }}" target="_blank" rel="noopener" style="text-decoration: none; background: #cf6b5c; color: #fff; font-size: 11px; font-weight: 700; padding: 9px 13px; border-radius: 8px;">⚠️ Cobrar atraso</a>
+                <a href="{{ c.waConfirma }}" target="_blank" rel="noopener" style="text-decoration: none; background: #5a9e4b; color: #fff; font-size: 11px; font-weight: 700; padding: 9px 13px; border-radius: 8px;">✅ Confirmar recebimento</a>
+              </div>
+
+            </div>
+          </sc-if>
+        </section>
+      </sc-for>
+    </div>
+
+    <p style="margin: 22px 0 0; font-size: 11px; color: #b8ada0; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Planilha Renovações</strong> (tipo, ciclos, parcelas, vencimento, grade mês a mês). Os dados acima são de demonstração — a integração com a planilha real está pronta em <code>apps-script-integracoes.js</code>.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { filtro: "todas", openId: null, tick: 0 };
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  waCobranca(c, tplId) {
+    const CRM = window.ISRCRM;
+    const tpl = CRM.TEMPLATES.filter(t => t.id === tplId)[0];
+    const key = CRM.mesAtualKey();
+    const mes = (c.meses || []).filter(m => m.key === key)[0];
+    const venc = c.vencDia === "auto" ? "auto matrícula" : ("dia " + c.vencDia);
+    const corpo = tpl ? CRM.fillTemplate(tpl.corpo, {
+      nome: c.nome, valor: (mes && mes.valor) || c.parcelaValor, vencimento: venc, link: c.linkPagamento || ""
+    }) : "";
+    return CRM.waLink(c.telefone, corpo);
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { items: [], filtros: [], vazio: true, mesLabel: "", receberBRL: "", receberEUR: "", recebidoBRL: "", recebidoEUR: "", atrasadas: 0, atrasadasColor: "#9b8b7e", atrasadasBorder: "#e0dcd6" };
+
+    const all = CRM.getCobranca();
+    const resumo = CRM.cobrancaResumo();
+    const key = CRM.mesAtualKey();
+    const mesLabel = (CRM.MESES_COBRANCA.filter(m => m.key === key)[0] || {}).label || "Mês atual";
+
+    const FILTROS = [
+      { id: "todas", label: "Todas", test: () => true },
+      { id: "atrasada", label: "Atrasadas", test: s => s === "atrasada" },
+      { id: "vence_breve", label: "Vence em breve", test: s => s === "vence_breve" },
+      { id: "paga_mes", label: "Pagas no mês", test: s => s === "paga_mes" },
+      { id: "quitada", label: "Quitadas", test: s => s === "quitada" },
+      { id: "auto", label: "Auto matrícula", test: s => s === "auto" }
+    ];
+    const active = this.state.filtro;
+    const counts = {};
+    FILTROS.forEach(f => { counts[f.id] = all.filter(c => f.test(CRM.cobrancaStatus(c))).length; });
+
+    const filtros = FILTROS.map(f => {
+      const on = f.id === active;
+      return {
+        label: f.label, count: counts[f.id],
+        onClick: () => this.setState({ filtro: f.id, openId: null }),
+        bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#6b6155",
+        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)",
+        countBg: on ? "rgba(255,255,255,0.22)" : "#f2ebe3", countFg: on ? "#fff" : "#9b8b7e"
+      };
+    });
+
+    const ftest = (FILTROS.filter(f => f.id === active)[0] || FILTROS[0]).test;
+    const visiveis = all.filter(c => ftest(CRM.cobrancaStatus(c)));
+
+    const items = visiveis.map(c => {
+      const st = CRM.cobrancaStatus(c);
+      const meta = CRM.COBRANCA_STATUS_META[st];
+      const pagas = (c.meses || []).filter(m => m.pago).length;
+      const open = c.id === this.state.openId;
+      const out = {
+        id: c.id, nome: c.nome, tipo: c.tipo, ciclos: c.ciclos,
+        parcelaValor: c.parcelaValor,
+        vencLabel: c.vencDia === "auto" ? "auto" : "venc. dia " + c.vencDia,
+        progresso: pagas + "/" + (c.meses || []).length + " pagas",
+        stLabel: meta.label, stColor: meta.color, stBg: meta.bg,
+        caret: open ? "▾" : "▸", open: open,
+        onToggle: () => this.setState({ openId: open ? null : c.id })
+      };
+      if (open) {
+        out.obs = c.obs || "";
+        out.mesesView = (c.meses || []).map(m => ({
+          label: m.label, valor: m.valor,
+          icon: m.pago ? "✓ paga" : (m.key === key ? "● este mês" : "pendente"),
+          border: m.pago ? "#5a9e4b" : (m.key === key ? meta.color : "#e0dcd6"),
+          bg: m.pago ? "rgba(90,158,75,0.12)" : "#fff",
+          fg: m.pago ? "#5a9e4b" : "#6b6155",
+          onClick: () => { CRM.setParcelaPaga(c.id, m.key, !m.pago); this.bump(); }
+        }));
+        out.waLembrete = this.waCobranca(c, "pag_lembrete");
+        out.waAtraso = this.waCobranca(c, "pag_atraso");
+        out.waConfirma = this.waCobranca(c, "pag_confirmado");
+      }
+      return out;
+    });
+
+    return {
+      items, filtros, mesLabel,
+      vazio: items.length === 0,
+      receberBRL: CRM.fmtMoney("R$", resumo.receber["R$"]),
+      receberEUR: CRM.fmtMoney("€", resumo.receber["€"]),
+      recebidoBRL: CRM.fmtMoney("R$", resumo.recebido["R$"]),
+      recebidoEUR: CRM.fmtMoney("€", resumo.recebido["€"]),
+      atrasadas: resumo.atrasadas,
+      atrasadasColor: resumo.atrasadas > 0 ? "#cf6b5c" : "#5a9e4b",
+      atrasadasBorder: resumo.atrasadas > 0 ? "rgba(207,107,92,0.4)" : "#e0dcd6"
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Central do Sistema</title>
+<script src="./support.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #164951; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 40px 20px 70px;">
+
+    <header style="margin-bottom: 32px;">
+      <p style="margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9ec970;">Inglês sem Roteiro</p>
+      <h1 style="margin: 0 0 8px; font-size: 34px; font-weight: 700; letter-spacing: -0.8px; color: #fff;">Central do Sistema</h1>
+      <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.75); max-width: 620px; line-height: 1.6;">Tudo da escola num só lugar: comercial, gestão, pedagógico e marketing.</p>
+    </header>
+
+    <!-- ALERTAS DO DIA -->
+    <sc-if value="{{ temAlertas }}">
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 26px;">
+        <sc-for list="{{ alertas }}" as="a" hint-placeholder-count="2">
+          <a href="{{ a.href }}" style="text-decoration: none; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; padding: 11px 14px;">
+            <span style="font-size: 15px;">{{ a.icon }}</span>
+            <span style="font-size: 13px; color: #fff; flex: 1;">{{ a.texto }}</span>
+            <span style="font-size: 12px; color: #9ec970; font-weight: 700;">abrir →</span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- 4 ÁREAS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+      <sc-for list="{{ areas }}" as="ar" hint-placeholder-count="4">
+        <section style="background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+          <div style="background: {{ ar.cor }}; padding: 14px 16px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.85);">{{ ar.icon }} {{ ar.nome }}</div>
+          </div>
+          <div style="padding: 16px;">
+            <div style="display: flex; gap: 16px; margin-bottom: 14px;">
+              <div>
+                <div style="font-size: 20px; font-weight: 700; color: #164951;">{{ ar.stat1 }}</div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e;">{{ ar.stat1Label }}</div>
+              </div>
+              <div>
+                <div style="font-size: 20px; font-weight: 700; color: {{ ar.stat2Cor }};">{{ ar.stat2 }}</div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e;">{{ ar.stat2Label }}</div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <sc-for list="{{ ar.links }}" as="lk" hint-placeholder-count="2">
+                <a href="{{ lk.href }}" style="text-decoration: none; display: flex; justify-content: space-between; align-items: center; background: #faf8f3; border: 1px solid #eee8e0; border-radius: 8px; padding: 9px 12px;">
+                  <span style="font-size: 12px; font-weight: 700; color: #164951;">{{ lk.label }}</span>
+                  <span style="font-size: 12px; color: #c9c1b6;">→</span>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+
+    <p style="margin: 28px 0 0; font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6;">Dados de demonstração no navegador. As integrações com as planilhas reais ([ISR] Planilha Renovações, [ISR] MKT - Leads_e_Alunos, [ISR] Units of study, ISR_Planilha_Mestra) ficam em <code style="color: rgba(255,255,255,0.6);">apps-script-integracoes.js</code>.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { areas: [], alertas: [], temAlertas: false };
+
+    const counts = CRM.tabCounts();
+    const resumo = CRM.cobrancaResumo();
+    const stats = CRM.leadStatsByCanal();
+    const totalMat = stats.reduce((a, s) => a + s.matriculados, 0);
+    const totalPerd = stats.reduce((a, s) => a + s.perdidos, 0);
+    const fechados = totalMat + totalPerd;
+    const teachers = [];
+    CRM.UNITS.forEach(u => { if (teachers.indexOf(u.teacher) < 0) teachers.push(u.teacher); });
+
+    const alertas = [];
+    if (counts.para_hoje > 0) alertas.push({ icon: "🎯", href: "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html",
+      texto: counts.para_hoje + (counts.para_hoje === 1 ? " lead precisa" : " leads precisam") + " de atenção hoje (follow-up ou inscrição incompleta)" });
+    if (resumo.atrasadas > 0) alertas.push({ icon: "⚠️", href: "ISR%20-%20Cobran%C3%A7a.dc.html",
+      texto: resumo.atrasadas + (resumo.atrasadas === 1 ? " parcela atrasada" : " parcelas atrasadas") + " para cobrar" });
+
+    const areas = [
+      {
+        nome: "Comercial", icon: "🎯", cor: "#e07856",
+        stat1: counts.para_hoje, stat1Label: "para hoje",
+        stat2: counts.matriculados, stat2Label: "matriculadas", stat2Cor: "#5a9e4b",
+        links: [
+          { label: "CRM · Funil de leads", href: "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" },
+          { label: "Mensagens WhatsApp", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html" }
+        ]
+      },
+      {
+        nome: "Gestão", icon: "💰", cor: "#2a9d8f",
+        stat1: CRM.fmtMoney("R$", resumo.receber["R$"]), stat1Label: "a receber (R$)",
+        stat2: resumo.atrasadas, stat2Label: "atrasadas", stat2Cor: resumo.atrasadas > 0 ? "#cf6b5c" : "#5a9e4b",
+        links: [
+          { label: "Cobrança & renovações", href: "ISR%20-%20Cobran%C3%A7a.dc.html" },
+          { label: "App do aluno (dados reais)", href: "ISR%20App%20(Conectado).dc.html" }
+        ]
+      },
+      {
+        nome: "Pedagógico", icon: "📚", cor: "#6b5b95",
+        stat1: CRM.UNITS.length, stat1Label: "turmas ativas",
+        stat2: teachers.length, stat2Label: "professoras", stat2Cor: "#164951",
+        links: [
+          { label: "Turmas & projetos (units)", href: "ISR%20-%20Turmas%20e%20Projetos.dc.html" },
+          { label: "Painel do professor", href: "ISR%20-%20Painel%20do%20Professor.dc.html" }
+        ]
+      },
+      {
+        nome: "Marketing", icon: "📣", cor: "#d4a574",
+        stat1: stats.reduce((a, s) => a + s.total, 0), stat1Label: "leads registrados",
+        stat2: fechados > 0 ? Math.round(100 * totalMat / fechados) + "%" : "—", stat2Label: "conversão", stat2Cor: "#2a9d8f",
+        links: [
+          { label: "Origens & conversão", href: "ISR%20-%20Marketing.dc.html" },
+          { label: "Launcher (todas as telas)", href: "launcher.html" }
+        ]
+      }
+    ];
+
+    return { areas, alertas, temAlertas: alertas.length > 0 };
+  }
+}
+</script>
+</body>
+</html>
