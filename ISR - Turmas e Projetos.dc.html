@@ -9,109 +9,150 @@
 </head>
 <body>
 <x-dc>
-<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
-  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
 
     <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
       <div>
         <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6b5b95;">Inglês sem Roteiro · Pedagógico</p>
-        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">Turmas & Projetos</h1>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Turmas & Projetos</h1>
       </div>
-      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e0dcd6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px;">⌂ Central</a>
+      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 640px;">O que cada turma está estudando agora — projeto do ciclo, professora e materiais (units of study). Filtre por professora para preparar a semana.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">O que cada turma está estudando agora — projeto do ciclo, professora, ocupação e materiais (units of study). A ocupação é calculada das matrículas: ninguém digita.</p>
 
-    <!-- FILTRO POR TEACHER -->
-    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;">
-      <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="5">
-        <button onclick="{{ t.onClick }}" style="border: none; cursor: pointer; background: {{ t.bg }}; color: {{ t.fg }}; font-size: 12px; font-weight: 700; padding: 7px 13px; border-radius: 999px; box-shadow: {{ t.shadow }};">{{ t.label }}</button>
+    <!-- FILTRO PROFESSORA (dropdown) -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700;">Professora</div>
+      <select onchange="{{ onTeacher }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="5">
+          <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
+        </sc-for>
+      </select>
+    </div>
+
+    <!-- ABAS DE OCUPAÇÃO -->
+    <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px;">
+      <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="3">
+        <button onclick="{{ tab.onClick }}" style="flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 16px 9px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 6px;">
+          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
+        </button>
       </sc-for>
     </div>
 
-    <!-- CARDS POR NÍVEL -->
-    <sc-for list="{{ niveis }}" as="nv" hint-placeholder-count="4">
-      <div style="display: flex; align-items: baseline; gap: 10px; margin: 22px 0 10px;">
-        <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">{{ nv.nome }}</h2>
-        <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
-        <span style="font-size: 12px; color: #9b8b7e;">{{ nv.count }}</span>
+    <!-- TABELA DE TURMAS -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 1.6fr 0.8fr 1.1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Professora <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Projeto do ciclo</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Ocupação <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Material</span>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
-        <sc-for list="{{ nv.turmas }}" as="u" hint-placeholder-count="2">
-          <section style="background: #fff; border: 1px solid #e0dcd6; border-top: 4px solid {{ u.cor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ u.turma }}</div>
-                <div style="font-size: 11px; color: #9b8b7e; margin-top: 2px;">👩‍🏫 {{ u.teacher }} · ciclo {{ u.cycle }}</div>
-              </div>
-            </div>
-            <div style="background: {{ u.corBg }}; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;">
-              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: {{ u.cor }}; font-weight: 700; margin-bottom: 3px;">Projeto do ciclo</div>
-              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ u.projeto }}</div>
-            </div>
-            <sc-if value="{{ u.notebook }}">
-              <div style="font-size: 10px; color: #6b6155; line-height: 1.5; word-break: break-all;">📓 {{ u.notebook }}</div>
-            </sc-if>
-            <sc-if value="{{ u.semMaterial }}">
-              <div style="font-size: 10px; color: #c98a3a;">⚠️ Sem caderno vinculado neste ciclo</div>
-            </sc-if>
-          </section>
-        </sc-for>
-      </div>
-    </sc-for>
 
-    <p style="margin: 26px 0 0; font-size: 11px; color: #b8ada0; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Units of study</strong> (projeto, syllabus, teacher's guide, student's notebook por turma/ciclo). A integração com a planilha real está em <code>apps-script-integracoes.js</code> — conectada, os cards passam a trazer os links clicáveis dos materiais.</p>
+      <sc-if value="{{ vazio }}">
+        <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
+          <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
+          <p style="margin: 0; font-size: 13px;">Nenhuma turma nesta visão.</p>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ turmas }}" as="u" hint-placeholder-count="6">
+        <div style="display: grid; grid-template-columns: 1.6fr 0.8fr 1.1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; background: #fdfbf8;">
+          <div style="min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
+              <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ u.nivel }}</span>
+            </div>
+            <div style="font-size: 11.5px; color: #a2957f; margin-top: 3px; margin-left: 17px;">{{ u.turma }} · ciclo {{ u.cycle }}</div>
+          </div>
+          <div style="font-size: 13px; color: #6b6155;">👩‍🏫 {{ u.teacher }}</div>
+          <div style="font-size: 13px; font-weight: 700; color: {{ u.cor }};">{{ u.projeto }}</div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
+              <span style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px;">{{ u.vagaLabel }}</span>
+            </div>
+            <div style="height: 6px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-top: 5px; max-width: 110px;">
+              <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
+            </div>
+          </div>
+          <div style="font-size: 11px; color: #6b6155; line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Units of study</strong>. Conectada à planilha real, os materiais viram links clicáveis. Capacidade e margem por turma (visão Gestora) entram com os custos do ISR Financeiro.</p>
 
   </div>
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { teacher: "Todas" };
+  state = { teacher: "Todas", aba: "todas" };
 
   nivelCor(nivel) {
-    if (nivel.indexOf("First") >= 0) return { cor: "#d4a574", bg: "rgba(212,165,116,0.12)" };
-    if (nivel.indexOf("Basics") >= 0) return { cor: "#e07856", bg: "rgba(224,120,86,0.10)" };
-    if (nivel.indexOf("Essentials") >= 0) return { cor: "#2a9d8f", bg: "rgba(42,157,143,0.10)" };
-    if (nivel.indexOf("Speaking") >= 0) return { cor: "#6b5b95", bg: "rgba(107,91,149,0.10)" };
-    return { cor: "#348a8e", bg: "rgba(52,138,142,0.10)" };
+    if (nivel.indexOf("First") >= 0) return "#d4a574";
+    if (nivel.indexOf("Basics") >= 0) return "#e07856";
+    if (nivel.indexOf("Essentials") >= 0) return "#2a9d8f";
+    if (nivel.indexOf("Speaking") >= 0) return "#6b5b95";
+    return "#348a8e";
   }
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], niveis: [] };
+    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true };
 
-    const units = CRM.UNITS;
+    const ocup = CRM.ocupacaoTurmas();
     const names = ["Todas"];
-    units.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
-    const active = this.state.teacher;
+    ocup.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
+    const teacherSel = this.state.teacher;
 
-    const teachers = names.map(n => {
-      const on = n === active;
-      return { label: n, onClick: () => this.setState({ teacher: n }),
-        bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#6b6155",
-        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)" };
+    const ABAS = [
+      { id: "todas", label: "Todas", test: () => true },
+      { id: "vagas", label: "Com vagas", test: u => u.vagas > 0 },
+      { id: "lotadas", label: "Lotadas", test: u => u.vagas <= 0 }
+    ];
+    const abaAtiva = this.state.aba;
+
+    const base = ocup.filter(u => teacherSel === "Todas" || u.teacher === teacherSel);
+    const counts = {};
+    ABAS.forEach(a => { counts[a.id] = base.filter(a.test).length; });
+
+    const abas = ABAS.map(a => {
+      const on = a.id === abaAtiva;
+      return {
+        label: a.label, count: counts[a.id],
+        onClick: () => this.setState({ aba: a.id }),
+        bg: on ? "#fdfbf8" : "#f3ebe0", fg: on ? "#164951" : "#8a7c6b",
+        border: on ? "#eee3d6" : "transparent", weight: on ? 700 : 600,
+        countFg: on ? "#9c6f56" : "#b3a693"
+      };
     });
 
-    const filtered = units.filter(u => active === "Todas" || u.teacher === active);
-    const ordem = [];
-    const porNivel = {};
-    filtered.forEach(u => {
-      if (!porNivel[u.nivel]) { porNivel[u.nivel] = []; ordem.push(u.nivel); }
-      porNivel[u.nivel].push(u);
+    const test = (ABAS.filter(a => a.id === abaAtiva)[0] || ABAS[0]).test;
+    const turmas = base.filter(test).map(u => {
+      const pct = Math.min(100, Math.round(100 * u.ocupadas / u.capacidade));
+      const lotada = u.vagas <= 0, umaVaga = u.vagas === 1;
+      return {
+        nivel: u.nivel, turma: u.turma, cycle: u.cycle, teacher: u.teacher,
+        cor: this.nivelCor(u.nivel),
+        projeto: u.projeto || "—",
+        ocupLabel: u.ocupadas + "/" + u.capacidade,
+        ocupPct: pct + "%",
+        ocupCor: lotada ? "#cf6b5c" : (umaVaga ? "#b0722c" : "#3f6d4e"),
+        vagaLabel: lotada ? "Lotada" : (u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
+        vagaBg: lotada ? "rgba(207,107,92,0.14)" : (umaVaga ? "#f9dfc6" : "rgba(90,158,75,0.14)"),
+        vagaFg: lotada ? "#b05c4c" : (umaVaga ? "#b0722c" : "#3f6d4e"),
+        material: u.notebook || "⚠️ Sem caderno vinculado neste ciclo"
+      };
     });
 
-    const niveis = ordem.map(nome => ({
-      nome: nome,
-      count: porNivel[nome].length + (porNivel[nome].length === 1 ? " turma" : " turmas"),
-      turmas: porNivel[nome].map(u => {
-        const c = this.nivelCor(u.nivel);
-        return { turma: u.turma, teacher: u.teacher, cycle: u.cycle, projeto: u.projeto || "—",
-          notebook: u.notebook || "", semMaterial: !u.notebook,
-          cor: c.cor, corBg: c.bg };
-      })
-    }));
-
-    return { teachers, niveis };
+    return {
+      teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
+      onTeacher: (e) => this.setState({ teacher: e.target.value }),
+      abas, turmas, vazio: turmas.length === 0
+    };
   }
 }
 </script>
