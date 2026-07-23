@@ -139,7 +139,7 @@
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
               <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
-                <a href="{{ a.href }}" target="_blank" rel="noopener" onclick="{{ a.onClick }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
+                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
               </sc-for>
             </div>
             <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
@@ -171,16 +171,6 @@ class Component extends DCLogic {
     return map[tipo] || "#c9c1b6";
   }
 
-  waAcao(p, tplId) {
-    const CRM = window.ISRCRM;
-    const tpl = CRM.TEMPLATES.filter(t => t.id === tplId)[0];
-    const c = CRM.contratoVigente(p);
-    const corpo = tpl ? CRM.fillTemplate(tpl.corpo, {
-      nome: p.nome, turma: p.turma, nivel: p.nivel, horario: p.horarios,
-      valor: c ? c.parcelaValor : "", vencimento: c && c.vencDia !== "auto" ? "dia " + c.vencDia : "", link: p.linkPagamento || ""
-    }) : "";
-    return CRM.waLink(p.whatsapp, corpo);
-  }
 
   saveNote(id) {
     const box = this.noteRef.current;
@@ -279,8 +269,7 @@ class Component extends DCLogic {
 
     // ações rápidas (spec 5): registram contato na timeline
     const mk = (label, bg, tpl, detalhe) => ({
-      label, bg, href: this.waAcao(p, tpl),
-      onClick: () => { CRM.registrarContato(p.id, detalhe); setTimeout(() => this.bump(), 100); }
+      label, bg, href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + p.id + "&tpl=" + tpl
     });
     out.acoes = out.ehLead ? [
       mk("✈️ Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),

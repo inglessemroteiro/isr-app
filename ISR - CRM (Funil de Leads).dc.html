@@ -122,7 +122,7 @@
 
               <div>
                 <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 14px;">Próximo passo</div>
-                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" onclick="{{ lead.onEnviarStage }}" style="display: block; text-align: center; text-decoration: none; background: #3f6d4e; color: #fff; font-size: 14px; font-weight: 700; padding: 14px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(63,109,78,0.25);">✈️ Enviar mensagem do estágio</a>
+                <a href="{{ lead.waStageLink }}" style="display: block; text-align: center; text-decoration: none; background: #3f6d4e; color: #fff; font-size: 14px; font-weight: 700; padding: 14px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(63,109,78,0.25);">✈️ Enviar mensagem do estágio</a>
                 <div style="font-size: 12px; color: #8a7c6b; margin-bottom: 8px;">Lembrar de novo follow-up:</div>
                 <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center;">
                   <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
@@ -225,7 +225,7 @@
               <a href="{{ ex.perfilHref }}" style="font-size: 13.5px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ ex.nome }}</a>
               <div style="font-size: 11.5px; color: #a2957f; margin-top: 2px;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
             </div>
-            <a href="{{ ex.waLink }}" target="_blank" rel="noopener" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; white-space: nowrap;">💬 Reativar</a>
+            <a href="{{ ex.waLink }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; white-space: nowrap;">💬 Reativar</a>
           </div>
         </sc-for>
       </div>
@@ -267,10 +267,8 @@ class Component extends DCLogic {
   }
 
   waForStage(lead) {
-    const CRM = window.ISRCRM;
-    const tpl = CRM.TEMPLATES.filter(t => t.id === this.stageTemplate(lead.estagio))[0];
-    const corpo = tpl ? CRM.fillTemplate(tpl.corpo, { nome: lead.nome, turma: lead.turma, nivel: lead.nivel, horario: lead.horarios }) : "";
-    return CRM.waLink(lead.telefone, corpo);
+    // abre o COMPOSITOR com pessoa + modelo do estágio (revisar antes de enviar)
+    return "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + lead.id + "&tpl=" + this.stageTemplate(lead.estagio);
   }
 
   renderVals() {
@@ -337,7 +335,6 @@ class Component extends DCLogic {
         out.veioDe = l.veioDe || "—";
         out.entrouPor = l.entrouPor || "—";
         out.waStageLink = this.waForStage(l);
-        out.onEnviarStage = () => { CRM.registrarContato(l.id, "mensagem do estágio enviada"); setTimeout(() => this.bump(), 100); };
         out.followupInfo = l.proximoFollowup ? ("Próximo follow-up: " + CRM.ddmm(l.proximoFollowup) + " (" + CRM.relativeDays(l.proximoFollowup) + ")") : "";
         out.followups = CRM.followupPresets().map(f => ({
           label: f.label, onClick: () => { CRM.setFollowup(l.id, f.iso, f.label); this.bump(); }
@@ -384,7 +381,7 @@ class Component extends DCLogic {
     const reativacao = CRM.REATIVACAO.map(ex => ({
       nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
       perfilHref: "ISR%20-%20Perfil.dc.html?id=" + ex.id,
-      waLink: CRM.waLink(ex.telefone, CRM.fillTemplate(CRM.TEMPLATES.filter(t => t.id === "renov_abrir")[0].corpo, { nome: ex.nome, turma: ex.ultimaTurma }))
+      waLink: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + ex.id + "&tpl=renov_abrir"
     }));
 
     return {

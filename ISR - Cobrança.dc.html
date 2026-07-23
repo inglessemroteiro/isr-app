@@ -102,9 +102,9 @@
                 <div style="background: #fdf1e8; border: 1px solid #f2ddc9; border-radius: 8px; padding: 10px 13px; margin-bottom: 14px; font-size: 12px; color: #6b6155;">📝 {{ c.obs }}</div>
               </sc-if>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="{{ c.waLembrete }}" target="_blank" rel="noopener" onclick="{{ c.onWaLembrete }}" style="text-decoration: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">🔔 Lembrete de vencimento</a>
-                <a href="{{ c.waAtraso }}" target="_blank" rel="noopener" onclick="{{ c.onWaAtraso }}" style="text-decoration: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">⚠️ Cobrar atraso</a>
-                <a href="{{ c.waConfirma }}" target="_blank" rel="noopener" onclick="{{ c.onWaConfirma }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">✅ Confirmar recebimento</a>
+                <a href="{{ c.waLembrete }}" style="text-decoration: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">🔔 Lembrete de vencimento</a>
+                <a href="{{ c.waAtraso }}" style="text-decoration: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">⚠️ Cobrar atraso</a>
+                <a href="{{ c.waConfirma }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px;">✅ Confirmar recebimento</a>
                 <span style="flex: 1;"></span>
                 <a href="{{ c.perfilHref }}" style="text-decoration: none; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 6px;">Abrir perfil</a>
               </div>
@@ -148,7 +148,7 @@
                 </sc-for>
               </select>
             </div>
-            <div><a href="{{ r.waHref }}" target="_blank" rel="noopener" onclick="{{ r.onEnviar }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 14px; border-radius: 999px; white-space: nowrap;">✈️ Mensagem</a></div>
+            <div><a href="{{ r.waHref }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 14px; border-radius: 999px; white-space: nowrap;">✈️ Mensagem</a></div>
           </div>
           <sc-if value="{{ r.pedindoMotivo }}">
             <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 12px 18px; background: #fdf0ee; border-top: 1px solid #ecc9c2;">
@@ -172,17 +172,6 @@ class Component extends DCLogic {
   state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0 };
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
-  waCobranca(c, tplId) {
-    const CRM = window.ISRCRM;
-    const tpl = CRM.TEMPLATES.filter(t => t.id === tplId)[0];
-    const key = CRM.mesAtualKey();
-    const mes = (c.meses || []).filter(m => m.key === key)[0];
-    const venc = c.vencDia === "auto" ? "auto matrícula" : ("dia " + c.vencDia);
-    const corpo = tpl ? CRM.fillTemplate(tpl.corpo, {
-      nome: c.nome, valor: (mes && mes.valor) || c.parcelaValor, vencimento: venc, link: c.linkPagamento || ""
-    }) : "";
-    return CRM.waLink(c.telefone, corpo);
-  }
 
   renderVals() {
     const CRM = window.ISRCRM;
@@ -256,13 +245,11 @@ class Component extends DCLogic {
           fg: m.pago ? "#3f6d4e" : "#6b6155",
           onClick: () => { CRM.setParcelaPaga(c.id, m.key, !m.pago); this.bump(); }
         }));
-        out.waLembrete = this.waCobranca(c, "pag_lembrete");
-        out.waAtraso = this.waCobranca(c, "pag_atraso");
-        out.waConfirma = this.waCobranca(c, "pag_confirmado");
-        const reg = det => () => { CRM.registrarContato(c.id, det); setTimeout(() => this.bump(), 100); };
-        out.onWaLembrete = reg("lembrete de vencimento");
-        out.onWaAtraso = reg("cobrança de atraso");
-        out.onWaConfirma = reg("confirmação de recebimento");
+        // abrem o compositor com pessoa + modelo (revisar antes de enviar)
+        const compor = tpl => "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + c.id + "&tpl=" + tpl;
+        out.waLembrete = compor("pag_lembrete");
+        out.waAtraso = compor("pag_atraso");
+        out.waConfirma = compor("pag_confirmado");
       }
       return out;
     });
@@ -287,8 +274,7 @@ class Component extends DCLogic {
           if (val === "nao_renovou") { this.setState({ motivoId: p.id }); return; }
           CRM.setRenovacao(p.id, val); this.setState({ motivoId: null });
         },
-        waHref: CRM.waLink(p.whatsapp, corpo),
-        onEnviar: () => { CRM.registrarContato(p.id, "mensagem de renovação"); setTimeout(() => this.bump(), 100); },
+        waHref: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + p.id + "&tpl=" + (r.estagio === "proposta" ? "renov_lembrete" : "renov_abrir"),
         pedindoMotivo: this.state.motivoId === p.id,
         onMotivoCancela: () => this.setState({ motivoId: null }),
         motivosOpts: CRM.MOTIVOS_PERDA.map(m => ({
