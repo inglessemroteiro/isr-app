@@ -9,90 +9,95 @@
 </head>
 <body>
 <x-dc>
-<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
-  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 26px 16px 60px;">
 
     <!-- HEADER -->
-    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+    <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
       <div>
-        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão</p>
-        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">Mensagens prontas</h1>
+        <h1 style="margin: 0 0 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.3px; color: #164951; font-family: Georgia, 'Times New Roman', serif;">Mensagens prontas</h1>
+        <p style="margin: 0 0 22px; font-size: 13.5px; color: #6b6155; line-height: 1.65; max-width: 660px;">Escolha o destinatário (aluna ou lead) e o modelo: as variáveis são preenchidas com os dados do sistema (turma, contrato, cobranças). O que faltar aparece <strong>[DESTACADO]</strong> para completar à mão. Revise o texto e envie pelo WhatsApp com um clique.</p>
       </div>
-      <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e0dcd6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px;">← Voltar ao CRM</a>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px;">← Voltar ao CRM</a>
+        <button title="Gestão de modelos chega na próxima fase" style="border: 1px solid #e5dccf; background: #fff; color: #b3a693; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: not-allowed;">✎ Gerenciar modelos</button>
+      </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 640px;">Escolha o destinatário (aluna ou lead) e o modelo: as variáveis são preenchidas com os dados da pessoa (turma, valor, vencimento). O que faltar aparece como <strong style="color: #c98060;">[DESTACADO]</strong> para completar à mão. Revise o texto e envie pelo WhatsApp com um clique.</p>
 
-    <!-- CATEGORIA + PARA -->
-    <div style="display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px;">
+    <!-- CONTROLES: CATEGORIA + PARA -->
+    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 16px; margin-bottom: 14px;">
       <div>
-        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 7px;">Categoria</div>
-        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <sc-for list="{{ categorias }}" as="cat" hint-placeholder-count="5">
-            <button onclick="{{ cat.onClick }}" style="border: none; cursor: pointer; background: {{ cat.bg }}; color: {{ cat.fg }}; font-size: 12px; font-weight: 700; padding: 7px 13px; border-radius: 999px; box-shadow: {{ cat.shadow }};">{{ cat.label }}</button>
-          </sc-for>
-        </div>
-      </div>
-      <div>
-        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 7px;">Para</div>
-        <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="width: 100%; max-width: 380px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 10px; background: #fff;">
-          <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
-            <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700; margin-bottom: 7px;">Categoria</div>
+        <select onchange="{{ onCategoria }}" style="width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <sc-for list="{{ categorias }}" as="cat" hint-placeholder-count="7">
+            <option value="{{ cat.id }}" selected="{{ cat.sel }}">{{ cat.label }}</option>
           </sc-for>
         </select>
       </div>
+      <div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700; margin-bottom: 7px;">Para</div>
+        <div style="display: flex; align-items: center; gap: 0; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; padding-right: 10px;">
+          <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="flex: 1; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #3d3529; border: none; border-radius: 10px; background: transparent; outline: none;">
+            <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
+              <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
+            </sc-for>
+          </select>
+          <button onclick="{{ onClearRecipient }}" title="Limpar destinatário" style="border: none; background: transparent; color: #b3a693; font-size: 15px; cursor: pointer; padding: 4px 6px;">×</button>
+        </div>
+      </div>
     </div>
 
-    <!-- CORPO: lista de modelos + editor -->
-    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start;">
+    <!-- CORPO: LISTA + EDITOR -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start;">
 
       <!-- LISTA DE MODELOS -->
-      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; overflow: hidden;">
-        <div style="padding: 10px 12px; border-bottom: 1px solid #f0ede8;">
-          <input value="{{ search }}" oninput="{{ onSearch }}" placeholder="🔎 Buscar modelo..." style="width: 100%; box-sizing: border-box; border: 1px solid #e0dcd6; background: #faf8f3; color: #164951; font-size: 12px; padding: 8px 11px; border-radius: 8px; font-family: inherit;" />
-        </div>
-        <div style="max-height: 460px; overflow-y: auto;">
-          <sc-for list="{{ templates }}" as="tpl" hint-placeholder-count="6">
-            <div onclick="{{ tpl.onClick }}" style="padding: 12px 13px; border-bottom: 1px solid #f4f1ec; cursor: pointer; background: {{ tpl.bg }}; border-left: 3px solid {{ tpl.bar }};">
-              <div style="font-size: 12px; font-weight: 700; color: {{ tpl.titleColor }}; line-height: 1.3;">{{ tpl.titulo }}</div>
-              <sc-if value="{{ tpl.tag }}">
-                <span style="display: inline-block; margin-top: 5px; background: rgba(107,91,149,0.14); color: #6b5b95; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 6px; border-radius: 4px;">{{ tpl.tag }}</span>
-              </sc-if>
+      <div>
+        <input value="{{ search }}" oninput="{{ onSearch }}" placeholder="🔍 Buscar modelo..." style="width: 100%; box-sizing: border-box; border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 13px; padding: 12px 14px; border-radius: 10px; font-family: inherit; margin-bottom: 10px;" />
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 10px; overflow: hidden; max-height: 520px; overflow-y: auto;">
+          <sc-for list="{{ templates }}" as="tpl" hint-placeholder-count="8">
+            <div onclick="{{ tpl.onClick }}" style="padding: 14px 15px; border-bottom: 1px solid #f2e9dd; cursor: pointer; background: {{ tpl.bg }};">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: {{ tpl.weight }}; color: #3d3529; line-height: 1.35;">{{ tpl.titulo }}</span>
+                <sc-if value="{{ tpl.tag }}">
+                  <span style="background: #ece5f3; color: #7b689a; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px;">{{ tpl.tag }}</span>
+                </sc-if>
+              </div>
             </div>
           </sc-for>
           <sc-if value="{{ semModelos }}">
-            <div style="padding: 20px; text-align: center; font-size: 12px; color: #9b8b7e;">Nenhum modelo encontrado.</div>
+            <div style="padding: 20px; text-align: center; font-size: 12px; color: #a2957f;">Nenhum modelo encontrado.</div>
           </sc-if>
         </div>
       </div>
 
       <!-- EDITOR -->
-      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; padding: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Mensagem · variáveis preenchidas</div>
-          <div style="font-size: 11px; color: #9b8b7e;">para <strong style="color: #164951;">{{ recipientNome }}</strong></div>
+      <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700;">Mensagem <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· variáveis preenchidas</span></div>
+          <span style="font-size: 12px; color: #9c6f56;">✎ Editar texto livremente</span>
         </div>
-
-        <textarea value="{{ msg }}" oninput="{{ onMsgInput }}" style="width: 100%; box-sizing: border-box; min-height: 220px; border: 1px solid #e0dcd6; border-radius: 10px; background: #faf8f3; color: #164951; font-size: 13px; line-height: 1.6; padding: 13px; font-family: inherit; resize: vertical;"></textarea>
+        <textarea value="{{ msg }}" oninput="{{ onMsgInput }}" style="width: 100%; box-sizing: border-box; min-height: 240px; border: 1px solid #e5dccf; border-radius: 12px; background: #fff; color: #3d3529; font-size: 14px; line-height: 1.7; padding: 16px 18px; font-family: inherit; resize: vertical;"></textarea>
 
         <sc-if value="{{ temDestacado }}">
-          <div style="display: flex; align-items: center; gap: 8px; background: rgba(224,120,86,0.08); border: 1px solid rgba(224,120,86,0.25); border-radius: 8px; padding: 9px 12px; margin-top: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px; background: #fdf1e8; border: 1px solid #f2ddc9; border-radius: 8px; padding: 9px 13px; margin-top: 10px;">
             <span>✍️</span>
-            <span style="font-size: 12px; color: #c98060;">Complete os trechos <strong>[DESTACADO]</strong> antes de enviar.</span>
+            <span style="font-size: 12.5px; color: #b0722c;">Complete os trechos <strong>[DESTACADO]</strong> antes de enviar.</span>
           </div>
         </sc-if>
 
-        <div style="display: flex; gap: 8px; margin-top: 14px; align-items: center;">
-          <a href="{{ waLink }}" target="_blank" rel="noopener" style="flex: 1; text-align: center; text-decoration: none; background: #25D366; color: #fff; font-size: 13px; font-weight: 700; padding: 12px; border-radius: 10px; box-shadow: 0 2px 10px rgba(37,211,102,0.28);">💬 Enviar no WhatsApp</a>
-          <button onclick="{{ onCopy }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 13px; font-weight: 700; padding: 12px 18px; border-radius: 10px; cursor: pointer;">{{ copyLabel }}</button>
+        <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center;">
+          <a href="{{ waLink }}" target="_blank" rel="noopener" onclick="{{ onEnviar }}" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 14px; font-weight: 700; padding: 13px 26px; border-radius: 999px; box-shadow: 0 2px 10px rgba(63,109,78,0.25);">💬 Enviar no WhatsApp</a>
+          <button onclick="{{ onCopy }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 14px; font-weight: 700; padding: 13px 24px; border-radius: 999px; cursor: pointer;">⧉ {{ copyLabel }}</button>
+          <span style="font-size: 12px; color: #a2957f;">para <strong style="color: #3d3529;">{{ recipientNome }}</strong></span>
         </div>
-        <p style="margin: 10px 0 0; font-size: 11px; color: #b8ada0; line-height: 1.5;">Abre o WhatsApp já com a mensagem escrita para o número da pessoa. Nada é enviado automaticamente — você confere e aperta enviar.</p>
+        <p style="margin: 12px 0 0; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Abre o WhatsApp já com a mensagem escrita para o número da pessoa. Nada é enviado automaticamente — você confere e aperta enviar. Enviar (ou copiar) registra um contato no histórico da pessoa.</p>
       </div>
     </div>
 
   </div>
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { categoria: null, templateId: null, recipientId: null, msg: null, search: "", copied: false };
   recipientRef = React.createRef();
@@ -129,12 +134,10 @@ class Component extends DCLogic {
     const recipientId = this.state.recipientId || (recs[0] && recs[0].id);
     const rec = recs.filter(r => r.id === recipientId)[0] || recs[0];
 
-    // modelos da categoria, filtrados pela busca
     const q = (this.state.search || "").toLowerCase().trim();
     let tpls = CRM.templatesByCategoria(categoria);
     if (q) tpls = tpls.filter(t => t.titulo.toLowerCase().indexOf(q) >= 0);
 
-    // template selecionado (ou primeiro da lista visível)
     let templateId = this.state.templateId;
     if (!templateId || !tpls.filter(t => t.id === templateId)[0]) templateId = tpls[0] && tpls[0].id;
     const tpl = CRM.TEMPLATES.filter(t => t.id === templateId)[0];
@@ -142,38 +145,32 @@ class Component extends DCLogic {
     const filled = tpl ? CRM.fillTemplate(tpl.corpo, this.recipientData(rec)) : "";
     const curMsg = this.state.msg !== null ? this.state.msg : filled;
 
-    const categorias = cats.map(c => {
-      const on = c === categoria;
-      return { label: c, onClick: () => this.setState({ categoria: c, templateId: null, msg: null, search: "" }),
-        bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#6b6155",
-        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)" };
-    });
-
-    const recipients = recs.map(r => ({
-      id: r.id, selected: r.id === recipientId,
-      label: r.nome + " · " + r.tipo + (r.turma ? " · " + r.turma : "")
-    }));
-
-    const templates = tpls.map(t => {
-      const on = t.id === templateId;
-      return { titulo: t.titulo, tag: t.tag || "", onClick: () => this.setState({ templateId: t.id, msg: null }),
-        bg: on ? "rgba(42,157,143,0.08)" : "#fff", bar: on ? "#2a9d8f" : "transparent",
-        titleColor: on ? "#164951" : "#4a4038" };
-    });
-
     return {
-      categorias, recipients, templates,
-      search: this.state.search,
+      categorias: cats.map(c => ({ id: c, label: c, sel: c === categoria })),
+      onCategoria: (e) => this.setState({ categoria: e.target.value, templateId: null, msg: null, search: "" }),
+      recipients: recs.map(r => ({
+        id: r.id, selected: r.id === recipientId,
+        label: r.nome + " · " + r.tipo + (r.turma ? " · " + r.turma : "")
+      })),
       onRecipient: (e) => this.setState({ recipientId: e.target.value, msg: null }),
+      onClearRecipient: () => this.setState({ recipientId: recs[0] && recs[0].id, msg: null }),
+      templates: tpls.map(t => {
+        const on = t.id === templateId;
+        return { titulo: t.titulo, tag: t.tag || "",
+          onClick: () => this.setState({ templateId: t.id, msg: null }),
+          bg: on ? "#f8efe4" : "#fff", weight: on ? 700 : 600 };
+      }),
+      search: this.state.search,
       onSearch: (e) => this.setState({ search: e.target.value }),
       onMsgInput: (e) => this.setState({ msg: e.target.value, copied: false }),
       msg: curMsg,
       recipientNome: rec ? rec.nome : "—",
       waLink: rec ? CRM.waLink(rec.telefone, curMsg) : "#",
+      onEnviar: () => { if (rec) { CRM.registrarContato(rec.id, "mensagem enviada · " + (tpl ? tpl.titulo : "texto livre")); } },
       temDestacado: curMsg.indexOf("[DESTACADO") >= 0,
       semModelos: tpls.length === 0,
       copyLabel: this.state.copied ? "✓ Copiado" : "Copiar",
-      onCopy: () => this.doCopy(curMsg)
+      onCopy: () => { this.doCopy(curMsg); if (rec) { CRM.registrarContato(rec.id, "mensagem copiada · " + (tpl ? tpl.titulo : "texto livre")); } }
     };
   }
 }

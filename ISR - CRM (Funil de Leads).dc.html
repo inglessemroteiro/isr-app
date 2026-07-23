@@ -9,242 +9,223 @@
 </head>
 <body>
 <x-dc>
-<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
 
-  <div style="max-width: 960px; margin: 0 auto; padding: 22px 16px 60px;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
 
     <!-- HEADER -->
     <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
       <div>
-        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão</p>
-        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px;">CRM · Funil de leads</h1>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">CRM · Funil de leads</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #25D366; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; box-shadow: 0 2px 8px rgba(37,211,102,0.25);">💬 Mensagens prontas</a>
-        <button onclick="{{ resetDemo }}" title="Restaurar dados de demonstração" style="border: 1px solid #e0dcd6; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">↺ Demo</button>
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
+        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">💬 Mensagens prontas</a>
+        <button onclick="{{ resetDemo }}" title="Restaurar dados de demonstração" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 999px; cursor: pointer;">↺ Demo</button>
       </div>
     </header>
 
     <!-- NOTIFICAÇÃO NOVAS INSCRIÇÕES -->
     <sc-if value="{{ temNovas }}">
-      <div style="display: flex; align-items: center; gap: 10px; background: rgba(42,157,143,0.10); border: 1px solid rgba(42,157,143,0.3); border-radius: 10px; padding: 11px 14px; margin-bottom: 16px;">
-        <span style="font-size: 16px;">🎯</span>
-        <span style="font-size: 13px; color: #164951;"><strong>{{ novasCount }}</strong> {{ novasLabel }} — abrir o funil.</span>
+      <div style="display: flex; align-items: center; gap: 10px; background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 8px; padding: 11px 14px; margin-bottom: 14px;">
+        <span style="font-size: 15px;">🎯</span>
+        <span style="font-size: 13px; color: #3d3529;"><strong>{{ novasCount }}</strong> {{ novasLabel }} — abrir o funil.</span>
       </div>
     </sc-if>
 
-    <!-- ABAS DO FUNIL -->
-    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; -webkit-overflow-scrolling: touch;">
+    <!-- ABAS ESTILO TABS -->
+    <div style="display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 0 6px;">
       <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="8">
-        <button onclick="{{ tab.onClick }}" style="flex: none; border: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12px; font-weight: 700; padding: 8px 13px; border-radius: 999px; display: flex; align-items: center; gap: 6px; box-shadow: {{ tab.shadow }};">
-          <span>{{ tab.label }}</span>
-          <span style="background: {{ tab.countBg }}; color: {{ tab.countFg }}; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 999px;">{{ tab.count }}</span>
+        <button onclick="{{ tab.onClick }}" style="flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 16px 9px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 6px; margin-left: {{ tab.ml }};">
+          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
         </button>
       </sc-for>
     </div>
 
-    <!-- TÍTULO DA VISÃO ATUAL -->
-    <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
-      <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">{{ currentTabLabel }}</h2>
-      <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
-      <span style="font-size: 12px; color: #9b8b7e;">{{ currentCount }}</span>
-    </div>
+    <!-- TABELA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
 
-    <!-- LISTA DE LEADS -->
-    <sc-if value="{{ vazio }}">
-      <div style="text-align: center; padding: 44px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
-        <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
-        <p style="margin: 0; font-size: 13px;">Nada por aqui nesta visão. Tudo em dia!</p>
+      <!-- CABEÇALHO DE COLUNAS -->
+      <div style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Lead <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Entrou <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Origem <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Estágio <span style="opacity:.5;">⌄</span></span>
       </div>
-    </sc-if>
 
-    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <sc-if value="{{ vazio }}">
+        <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
+          <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
+          <p style="margin: 0; font-size: 13px;">Nada por aqui nesta visão. Tudo em dia!</p>
+        </div>
+      </sc-if>
+
       <sc-for list="{{ leads }}" as="lead" hint-placeholder-count="3">
-        <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ lead.stageColor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); overflow: hidden;">
-
-          <!-- LINHA PRINCIPAL -->
-          <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 1.7fr 0.9fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer;">
-            <div style="min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ lead.nome }}</a>
-                <span style="color: #c9c1b6; font-size: 12px;">{{ lead.caret }}</span>
-              </div>
-              <sc-if value="{{ lead.badge }}">
-                <span style="display: inline-block; margin-top: 4px; background: {{ lead.stageBg }}; color: {{ lead.stageColor }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 4px;">{{ lead.badge }}</span>
-              </sc-if>
+        <!-- LINHA -->
+        <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; cursor: pointer; background: {{ lead.rowBg }};">
+          <div style="min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 7px;">
+              <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14.5px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ lead.nome }}</a>
+              <span style="color: #b9ab99; font-size: 11px;">{{ lead.caret }}</span>
             </div>
-            <div style="font-size: 11px; color: {{ lead.entrouColor }};">
-              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Entrou</div>
-              {{ lead.entrouRel }} {{ lead.entrouWarn }}
-            </div>
-            <div style="font-size: 11px; color: #6b6155;">
-              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Turma</div>
-              {{ lead.turmaLabel }}
-            </div>
-            <div style="font-size: 11px;">
-              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">Origem</div>
-              <span style="display: inline-block; background: #f2ebe3; color: #6b6155; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px;">{{ lead.canal }}</span>
-            </div>
+            <div style="font-size: 11.5px; color: #a2957f; margin-top: 3px;">{{ lead.telefone }}</div>
+            <sc-if value="{{ lead.badge }}">
+              <span style="display: inline-block; margin-top: 5px; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 5px;">{{ lead.badge }}</span>
+            </sc-if>
           </div>
+          <div style="font-size: 13px; color: {{ lead.entrouColor }}; font-weight: {{ lead.entrouWeight }};">{{ lead.entrouRel }} {{ lead.entrouWarn }}</div>
+          <div style="font-size: 13px; color: #6b6155;">{{ lead.turmaLabel }}</div>
+          <div><span style="display: inline-block; background: #f4e4d9; color: #9c6f56; font-size: 11.5px; font-weight: 600; padding: 4px 12px; border-radius: 999px;">{{ lead.canal }}</span></div>
+          <div>
+            <select onclick="{{ lead.onSelClick }}" onchange="{{ lead.onStageChange }}" style="width: 100%; appearance: auto; border: 1px solid {{ lead.stageColor }}33; background: {{ lead.stageBg }}; color: {{ lead.stageColor }}; font-size: 12px; font-weight: 700; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-family: inherit;">
+              <sc-for list="{{ lead.stageOpts }}" as="so" hint-placeholder-count="7">
+                <option value="{{ so.id }}" selected="{{ so.sel }}">{{ so.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+        </div>
 
-          <!-- PAINEL EXPANDIDO -->
-          <sc-if value="{{ lead.open }}">
-            <div style="border-top: 1px solid #f0ede8; padding: 16px; background: #fcfaf6;">
+        <!-- PAINEL EXPANDIDO -->
+        <sc-if value="{{ lead.open }}">
+          <div style="border-top: 1px solid #f2e9dd; background: #fbf6ef; padding: 20px 18px;">
 
-              <!-- ESTÁGIO -->
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-                <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700;">Estágio</span>
-                <sc-for list="{{ lead.stageOptions }}" as="opt" hint-placeholder-count="7">
-                  <button onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
-                </sc-for>
+            <!-- 2 COLUNAS: CONTATO | PRÓXIMO PASSO -->
+            <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 26px; margin-bottom: 20px;">
+              <div>
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 14px;">Contato e preferências</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px;">
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b3a693; margin-bottom: 3px;">✉️ E-mail</div>
+                    <div style="font-size: 13px; color: #3d3529; word-break: break-all;">{{ lead.email }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b3a693; margin-bottom: 3px;">🕐 Horários</div>
+                    <div style="font-size: 13px; color: #3d3529;">{{ lead.horarios }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b3a693; margin-bottom: 3px;">📊 Nível</div>
+                    <div style="font-size: 13px; color: #3d3529;">{{ lead.nivel }}</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b3a693; margin-bottom: 3px;">📅 Quer começar</div>
+                    <div style="font-size: 13px; color: #3d3529;">{{ lead.querComecar }}</div>
+                  </div>
+                </div>
+                <!-- ORIGEM DETALHADA -->
+                <div style="margin-top: 16px; background: #fdf1e8; border: 1px solid #f2ddc9; border-radius: 8px; padding: 10px 13px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #c08a5e; font-weight: 700; margin-bottom: 4px;">Origem detalhada</div>
+                  <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6;">{{ lead.origemDetalhe }}<br><span style="color: #a2957f;">Veio de:</span> {{ lead.veioDe }} · <span style="color: #a2957f;">Entrou por:</span> {{ lead.entrouPor }}</div>
+                </div>
               </div>
 
-              <!-- CONTATO E PREFERÊNCIAS -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 16px;">
-                <div>
-                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">✉️ E-mail</div>
-                  <div style="font-size: 12px; color: #164951; word-break: break-all;">{{ lead.email }}</div>
-                </div>
-                <div>
-                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">📞 WhatsApp</div>
-                  <div style="font-size: 12px; color: #164951;">{{ lead.telefone }}</div>
-                </div>
-                <div>
-                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">🕐 Horários</div>
-                  <div style="font-size: 12px; color: #164951;">{{ lead.horarios }}</div>
-                </div>
-                <div>
-                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">📊 Nível</div>
-                  <div style="font-size: 12px; color: #164951;">{{ lead.nivel }}</div>
-                </div>
-                <div style="grid-column: 1 / -1;">
-                  <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 3px;">🚀 Quer começar</div>
-                  <div style="font-size: 12px; color: #164951;">{{ lead.querComecar }}</div>
-                </div>
-              </div>
-
-              <!-- PRÓXIMO PASSO -->
-              <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Próximo passo</div>
-                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" onclick="{{ lead.onEnviarStage }}" style="display: block; text-align: center; text-decoration: none; background: #2a9d8f; color: #fff; font-size: 13px; font-weight: 700; padding: 11px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(42,157,143,0.22);">✈️ Enviar mensagem do estágio</a>
-                <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 7px;">Lembrar de novo follow-up:</div>
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <div>
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 14px;">Próximo passo</div>
+                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" onclick="{{ lead.onEnviarStage }}" style="display: block; text-align: center; text-decoration: none; background: #3f6d4e; color: #fff; font-size: 14px; font-weight: 700; padding: 14px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(63,109,78,0.25);">✈️ Enviar mensagem do estágio</a>
+                <div style="font-size: 12px; color: #8a7c6b; margin-bottom: 8px;">Lembrar de novo follow-up:</div>
+                <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center;">
                   <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
-                    <button onclick="{{ fu.onClick }}" style="border: 1px solid #e0dcd6; background: {{ fu.bg }}; color: {{ fu.fg }}; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
+                    <button onclick="{{ fu.onClick }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer;">{{ fu.label }}</button>
                   </sc-for>
-                  <input type="date" onchange="{{ lead.onFollowupDate }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 11px; padding: 5px 8px; border-radius: 8px;" />
+                  <input type="date" onchange="{{ lead.onFollowupDate }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 11px; padding: 7px 9px; border-radius: 10px; font-family: inherit;" />
                 </div>
                 <sc-if value="{{ lead.followupInfo }}">
-                  <div style="font-size: 10px; color: #2a9d8f; margin-top: 8px;">🔔 {{ lead.followupInfo }}</div>
+                  <div style="font-size: 11px; color: #3f6d4e; margin-top: 10px;">🔔 {{ lead.followupInfo }}</div>
                 </sc-if>
               </div>
-
-              <!-- HISTÓRICO -->
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Histórico</div>
-              <div style="margin-bottom: 14px;">
-                <sc-for list="{{ lead.historico }}" as="h" hint-placeholder-count="3">
-                  <div style="display: flex; gap: 9px; align-items: flex-start; margin-bottom: 8px;">
-                    <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ h.dot }}; margin-top: 4px; flex: none;"></span>
-                    <div style="font-size: 11px; color: #6b6155; line-height: 1.4;"><strong style="color: #164951;">{{ h.data }}</strong> · {{ h.texto }}</div>
-                  </div>
-                </sc-for>
-              </div>
-
-              <!-- ADICIONAR NOTA -->
-              <div style="display: flex; gap: 6px; margin-bottom: 14px;">
-                <input ref="{{ lead.noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ lead.onNoteKey }}" style="flex: 1; border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 12px; padding: 9px 11px; border-radius: 8px;" />
-                <button onclick="{{ lead.onNoteSave }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer;">Salvar</button>
-              </div>
-
-              <!-- ORIGEM DETALHADA -->
-              <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 8px; padding: 11px 13px; margin-bottom: 14px;">
-                <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada</div>
-                <div style="font-size: 11px; color: #6b6155; line-height: 1.6;">
-                  {{ lead.origemDetalhe }}<br>
-                  <span style="color: #9b8b7e;">Veio de:</span> {{ lead.veioDe }}<br>
-                  <span style="color: #9b8b7e;">Entrou por:</span> {{ lead.entrouPor }}
-                </div>
-              </div>
-
-              <!-- MINI-FORM DE MATRÍCULA (transição lead→aluna, spec 6) -->
-              <sc-if value="{{ lead.matriculando }}">
-                <div style="background: rgba(90,158,75,0.06); border: 1px solid rgba(90,158,75,0.3); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #5a9e4b; font-weight: 700; margin-bottom: 10px;">🎓 Matricular — zero recadastro</div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                    <select ref="{{ lead.matTurmaRef }}" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
-                      <sc-for list="{{ lead.turmasOpts }}" as="t" hint-placeholder-count="4">
-                        <option value="{{ t.id }}">{{ t.label }}</option>
-                      </sc-for>
-                    </select>
-                    <select ref="{{ lead.matTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
-                      <option value="Matrícula">Matrícula</option>
-                      <option value="Renovação">Renovação</option>
-                      <option value="Continuidade">Continuidade</option>
-                    </select>
-                    <select ref="{{ lead.matMoedaRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
-                      <option value="R$">R$ (Brasil)</option>
-                      <option value="€">€ (Europa)</option>
-                    </select>
-                    <input ref="{{ lead.matValorRef }}" placeholder="Valor da parcela (ex. R$ 497,00)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;" />
-                    <select ref="{{ lead.matParcelasRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
-                      <option value="3">3 parcelas</option>
-                      <option value="6">6 parcelas</option>
-                      <option value="7">7 parcelas</option>
-                      <option value="8">8 parcelas</option>
-                    </select>
-                    <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;" />
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #5a9e4b; color: #fff; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 8px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
-                    <button onclick="{{ lead.onMatricularCancela }}" style="border: 1px solid #e0dcd6; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 8px; cursor: pointer;">Cancelar</button>
-                  </div>
-                </div>
-              </sc-if>
-
-              <!-- MOTIVO DE PERDA (obrigatório — spec 6) -->
-              <sc-if value="{{ lead.perdendo }}">
-                <div style="background: rgba(207,107,92,0.06); border: 1px solid rgba(207,107,92,0.3); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #cf6b5c; font-weight: 700; margin-bottom: 10px;">Qual foi o motivo da perda?</div>
-                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <sc-for list="{{ lead.motivosOpts }}" as="mo" hint-placeholder-count="6">
-                      <button onclick="{{ mo.onClick }}" style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
-                    </sc-for>
-                    <button onclick="{{ lead.onPerderCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 7px 8px; cursor: pointer;">cancelar</button>
-                  </div>
-                </div>
-              </sc-if>
-
-              <!-- AÇÕES -->
-              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">✓ Registrar contato</button>
-                <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #6b5b95; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">📅 Agendar reunião</button>
-                <button onclick="{{ lead.onMatricular }}" style="border: 1px solid rgba(90,158,75,0.5); background: #fff; color: #5a9e4b; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">🎓 Matricular</button>
-                <span style="flex: 1;"></span>
-                <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b8ada0; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Marcar perdido</button>
-                <button onclick="{{ lead.onExcluir }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Excluir</button>
-              </div>
-
             </div>
-          </sc-if>
-        </section>
+
+            <!-- HISTÓRICO -->
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Histórico</div>
+            <div style="margin-bottom: 14px;">
+              <sc-for list="{{ lead.historico }}" as="h" hint-placeholder-count="3">
+                <div style="display: flex; gap: 9px; align-items: flex-start; margin-bottom: 8px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ h.dot }}; margin-top: 4px; flex: none;"></span>
+                  <div style="font-size: 12.5px; color: #6b6155; line-height: 1.5;"><strong style="color: #3d3529;">{{ h.data }}</strong> · {{ h.texto }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <!-- NOTA -->
+            <input ref="{{ lead.noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ lead.onNoteKey }}" style="width: 100%; box-sizing: border-box; border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 13px; padding: 12px 14px; border-radius: 10px; font-family: inherit; margin-bottom: 16px;" />
+
+            <!-- MINI-FORM DE MATRÍCULA -->
+            <sc-if value="{{ lead.matriculando }}">
+              <div style="background: #f0f5ee; border: 1px solid #cfe0cd; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #3f6d4e; font-weight: 700; margin-bottom: 10px;">🎓 Matricular — zero recadastro</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                  <select ref="{{ lead.matTurmaRef }}" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                    <sc-for list="{{ lead.turmasOpts }}" as="t" hint-placeholder-count="4">
+                      <option value="{{ t.id }}">{{ t.label }}</option>
+                    </sc-for>
+                  </select>
+                  <select ref="{{ lead.matTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                    <option value="Matrícula">Matrícula</option>
+                    <option value="Renovação">Renovação</option>
+                    <option value="Continuidade">Continuidade</option>
+                  </select>
+                  <select ref="{{ lead.matMoedaRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                    <option value="R$">R$ (Brasil)</option>
+                    <option value="€">€ (Europa)</option>
+                  </select>
+                  <input ref="{{ lead.matValorRef }}" placeholder="Valor da parcela (ex. R$ 497,00)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <select ref="{{ lead.matParcelasRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                    <option value="3">3 parcelas</option>
+                    <option value="6">6 parcelas</option>
+                    <option value="7">7 parcelas</option>
+                    <option value="8">8 parcelas</option>
+                  </select>
+                  <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
+                  <button onclick="{{ lead.onMatricularCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- MOTIVO DE PERDA -->
+            <sc-if value="{{ lead.perdendo }}">
+              <div style="background: #fdf0ee; border: 1px solid #ecc9c2; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b05c4c; font-weight: 700; margin-bottom: 10px;">Qual foi o motivo da perda?</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <sc-for list="{{ lead.motivosOpts }}" as="mo" hint-placeholder-count="6">
+                    <button onclick="{{ mo.onClick }}" style="border: 1px solid #cf6b5c; background: #fff; color: #b05c4c; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
+                  </sc-for>
+                  <button onclick="{{ lead.onPerderCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 7px 8px; cursor: pointer;">cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- RODAPÉ DE AÇÕES -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px solid #f2e9dd; padding-top: 14px;">
+              <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Registrar contato</button>
+              <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Agendar reunião</button>
+              <button onclick="{{ lead.onMatricular }}" style="border: 1px solid #cfe0cd; background: #fff; color: #3f6d4e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">🎓 Matricular</button>
+              <span style="flex: 1;"></span>
+              <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b9ab99; font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;">Marcar perdido...</button>
+              <a href="{{ lead.perfilHref }}" style="text-decoration: none; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 6px;">Editar</a>
+              <button onclick="{{ lead.onExcluir }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;">Excluir</button>
+            </div>
+
+          </div>
+        </sc-if>
       </sc-for>
     </div>
 
     <!-- REATIVAÇÃO -->
     <div style="margin-top: 34px;">
-      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-        <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Reativação · ex-alunas recuperáveis</h2>
-        <span style="height: 1px; flex: 1; background: #e0dcd6;"></span>
-      </div>
-      <p style="margin: 0 0 12px; font-size: 12px; color: #9b8b7e;">Ex-alunas marcadas como recuperáveis no encerramento aparecem aqui.</p>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Reativação · ex-alunas recuperáveis</div>
+      <p style="margin: 0 0 12px; font-size: 12.5px; color: #a2957f;">Ex-alunas marcadas como recuperáveis no encerramento aparecem aqui.</p>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
         <sc-for list="{{ reativacao }}" as="ex" hint-placeholder-count="2">
-          <div style="display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 12px 14px;">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid #f2e9dd;">
             <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ ex.nome }}</div>
-              <div style="font-size: 11px; color: #9b8b7e;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
+              <a href="{{ ex.perfilHref }}" style="font-size: 13.5px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ ex.nome }}</a>
+              <div style="font-size: 11.5px; color: #a2957f; margin-top: 2px;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
             </div>
-            <a href="{{ ex.waLink }}" target="_blank" rel="noopener" style="text-decoration: none; background: #25D366; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; white-space: nowrap;">💬 Reativar</a>
+            <a href="{{ ex.waLink }}" target="_blank" rel="noopener" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; white-space: nowrap;">💬 Reativar</a>
           </div>
         </sc-for>
       </div>
@@ -253,7 +234,7 @@
   </div>
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, tick: 0 };
   noteRef = React.createRef();
@@ -273,46 +254,45 @@ class Component extends DCLogic {
   }
 
   histDot(tipo) {
-    const map = { criado: "#9ec970", estagio: "#2a9d8f", reuniao: "#6b5b95", contato: "#348a8e",
-      followup: "#d4a574", nota: "#b8ada0", perdido: "#cf6b5c" };
+    const map = { criado: "#9ec970", estagio: "#d4a574", reuniao: "#6b5b95", contato: "#348a8e",
+      followup: "#d4a574", nota: "#b8ada0", perdido: "#cf6b5c", matricula: "#5a9e4b",
+      renovacao: "#6b5b95", pagamento: "#5a9e4b", onboarding: "#d4a574", documento: "#9b8b7e" };
     return map[tipo] || "#c9c1b6";
   }
 
-  // qual modelo de mensagem casa com cada estágio
   stageTemplate(stageId) {
     const map = { incompleta: "lead_incompleta", a_contatar: "lead_primeiro", em_conversa: "lead_followup",
-      reuniao: "lead_reuniao", contrato: "pag_link", matriculado: "aluno_boasvindas", perdido: "lead_followup" };
+      reuniao: "lead_confirma_dia", contrato: "pag_link", matriculado: "aluno_boasvindas", perdido: "lead_falta3" };
     return map[stageId] || "lead_primeiro";
   }
 
   waForStage(lead) {
     const CRM = window.ISRCRM;
-    const tplId = this.stageTemplate(lead.estagio);
-    const tpl = CRM.TEMPLATES.filter(t => t.id === tplId)[0];
+    const tpl = CRM.TEMPLATES.filter(t => t.id === this.stageTemplate(lead.estagio))[0];
     const corpo = tpl ? CRM.fillTemplate(tpl.corpo, { nome: lead.nome, turma: lead.turma, nivel: lead.nivel, horario: lead.horarios }) : "";
     return CRM.waLink(lead.telefone, corpo);
   }
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, currentTabLabel: "", currentCount: "", temNovas: false };
+    if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, temNovas: false };
 
     const counts = CRM.tabCounts();
     const active = this.state.tab;
 
-    const tabs = CRM.TABS.map(t => {
+    const tabs = CRM.TABS.map((t, i) => {
       const on = t.id === active;
       return {
-        id: t.id, label: t.label, count: counts[t.id],
-        onClick: () => this.setState({ tab: t.id, openId: null }),
-        bg: on ? "#164951" : "#fff",
-        fg: on ? "#fff" : "#6b6155",
-        shadow: on ? "0 2px 8px rgba(22,73,81,0.2)" : "0 1px 3px rgba(22,73,81,0.06)",
-        countBg: on ? "rgba(255,255,255,0.22)" : "#f2ebe3",
-        countFg: on ? "#fff" : "#9b8b7e"
+        label: t.label, count: counts[t.id],
+        onClick: () => this.setState({ tab: t.id, openId: null, perdendoId: null, matriculandoId: null }),
+        bg: on ? "#fdfbf8" : "#f3ebe0",
+        fg: on ? "#164951" : "#8a7c6b",
+        border: on ? "#eee3d6" : "transparent",
+        weight: on ? 700 : 600,
+        countFg: on ? "#9c6f56" : "#b3a693",
+        ml: t.id === "matriculados" ? "18px" : "0" // separador visual do grupo fechado
       };
     });
-    const currentTab = CRM.TABS.filter(t => t.id === active)[0] || CRM.TABS[0];
 
     const rawLeads = CRM.leadsForTab(active);
     const openId = this.state.openId;
@@ -321,21 +301,35 @@ class Component extends DCLogic {
       const stage = CRM.stageById(l.estagio) || CRM.STAGES[0];
       const open = l.id === openId;
       const warn = CRM.isStale(l.entrouEm);
+      const badgeIncompleta = l.estagio === "incompleta";
       const out = {
-        id: l.id, nome: l.nome, badge: l.badge || "", canal: l.canal || "—",
-        caret: open ? "▾" : "▸",
+        id: l.id, nome: l.nome, telefone: l.telefone || "—",
+        badge: l.badge || "", canal: l.canal || "—",
+        badgeBg: badgeIncompleta ? "#f9dfc6" : "#dde6f2",
+        badgeFg: badgeIncompleta ? "#b0722c" : "#5b7395",
+        caret: open ? "▲" : "▼",
+        rowBg: open ? "#fbf6ef" : "#fdfbf8",
         stageColor: stage.color, stageBg: stage.bg,
         entrouRel: CRM.relativeDays(l.entrouEm), entrouWarn: warn ? "⚠️" : "",
-        entrouColor: warn ? "#c98a3a" : "#6b6155",
+        entrouColor: warn ? "#ad5a6b" : "#6b6155",
+        entrouWeight: warn ? 700 : 400,
         turmaLabel: l.turma || "—",
         open: open,
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + l.id,
         onNomeClick: (e) => e.stopPropagation(),
-        onToggle: () => this.setState({ openId: open ? null : l.id, perdendoId: null, matriculandoId: null })
+        onSelClick: (e) => e.stopPropagation(),
+        onToggle: () => this.setState({ openId: open ? null : l.id, perdendoId: null, matriculandoId: null }),
+        // dropdown de estágio na linha (formato da mentora)
+        stageOpts: CRM.STAGES.map(s => ({ id: s.id, label: s.label, sel: s.id === l.estagio })),
+        onStageChange: (e) => {
+          const val = e.target.value;
+          if (val === "matriculado") { this.setState({ openId: l.id, matriculandoId: l.id, perdendoId: null }); return; }
+          if (val === "perdido") { this.setState({ openId: l.id, perdendoId: l.id, matriculandoId: null }); return; }
+          CRM.setStage(l.id, val); this.bump();
+        }
       };
       if (open) {
         out.email = l.email || "—";
-        out.telefone = l.telefone || "—";
         out.horarios = l.horarios || "—";
         out.nivel = l.nivel || "—";
         out.querComecar = l.querComecar || "—";
@@ -343,19 +337,10 @@ class Component extends DCLogic {
         out.veioDe = l.veioDe || "—";
         out.entrouPor = l.entrouPor || "—";
         out.waStageLink = this.waForStage(l);
-        // enviar grava contato no historico (spec 6)
         out.onEnviarStage = () => { CRM.registrarContato(l.id, "mensagem do estágio enviada"); setTimeout(() => this.bump(), 100); };
         out.followupInfo = l.proximoFollowup ? ("Próximo follow-up: " + CRM.ddmm(l.proximoFollowup) + " (" + CRM.relativeDays(l.proximoFollowup) + ")") : "";
-        out.stageOptions = CRM.STAGES.map(s => {
-          const sel = s.id === l.estagio;
-          return {
-            label: s.short, onPick: () => { CRM.setStage(l.id, s.id); this.bump(); },
-            bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color
-          };
-        });
         out.followups = CRM.followupPresets().map(f => ({
-          label: f.label, onClick: () => { CRM.setFollowup(l.id, f.iso, f.label); this.bump(); },
-          bg: "#fff", fg: "#6b6155"
+          label: f.label, onClick: () => { CRM.setFollowup(l.id, f.iso, f.label); this.bump(); }
         }));
         out.onFollowupDate = (e) => { const v = e.target.value; if (v) { CRM.setFollowup(l.id, v, "data escolhida"); this.bump(); } };
         out.historico = (l.historico || []).slice().reverse().map(h => ({
@@ -363,20 +348,15 @@ class Component extends DCLogic {
         }));
         out.noteRef = this.noteRef;
         out.onNoteKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(l.id); } };
-        out.onNoteSave = () => this.saveNote(l.id);
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
         out.onAgendar = () => { CRM.setStage(l.id, "reuniao"); CRM.addHistory(l.id, "reuniao", "Reunião marcada"); this.bump(); };
         out.onExcluir = () => { if (confirm("Excluir este lead? Não dá pra desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
-
-        // motivo de perda obrigatório (spec 6)
         out.perdendo = this.state.perdendoId === l.id;
         out.onMarcarPerdido = () => this.setState({ perdendoId: l.id, matriculandoId: null });
         out.onPerderCancela = () => this.setState({ perdendoId: null });
         out.motivosOpts = CRM.MOTIVOS_PERDA.map(m => ({
           label: m, onClick: () => { CRM.marcarPerdido(l.id, m); this.setState({ perdendoId: null, openId: null }); }
         }));
-
-        // mini-form de matrícula (spec 6: zero recadastro)
         out.matriculando = this.state.matriculandoId === l.id;
         out.onMatricular = () => this.setState({ matriculandoId: l.id, perdendoId: null });
         out.onMatricularCancela = () => this.setState({ matriculandoId: null });
@@ -399,18 +379,16 @@ class Component extends DCLogic {
       return out;
     });
 
-    // notificação de novas inscrições (entraram hoje)
-    const novas = CRM.getLeads().filter(l => CRM.relativeDays(l.entrouEm) === "Hoje").length;
+    const novas = CRM.getLeads().filter(l => l.status === "lead" && CRM.relativeDays(l.entrouEm) === "Hoje").length;
 
     const reativacao = CRM.REATIVACAO.map(ex => ({
       nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
+      perfilHref: "ISR%20-%20Perfil.dc.html?id=" + ex.id,
       waLink: CRM.waLink(ex.telefone, CRM.fillTemplate(CRM.TEMPLATES.filter(t => t.id === "renov_abrir")[0].corpo, { nome: ex.nome, turma: ex.ultimaTurma }))
     }));
 
     return {
       tabs, leads, reativacao,
-      currentTabLabel: currentTab.label,
-      currentCount: rawLeads.length + (rawLeads.length === 1 ? " lead" : " leads"),
       vazio: rawLeads.length === 0,
       temNovas: novas > 0,
       novasCount: novas,
