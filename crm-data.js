@@ -490,9 +490,12 @@
       p.desde = iso(today());
       var fimIdx = Math.min(n - 1, MESES_COBRANCA.length - 1);
       p.contratos = p.contratos || [];
+      // valor total: informado, ou calculado (parcela × nº de parcelas) pro LTV
+      var moedaC = cfg.moeda || p.moeda || "R$";
+      var totalCalc = cfg.valorTotal || (cfg.valorParcela ? fmtMoney(moedaC, parseMoney(cfg.valorParcela) * n) : "");
       p.contratos.unshift({
         tipo: cfg.tipo || "Matrícula", ciclos: cfg.ciclos || "1 Ciclo " + METAS.cicloLabel,
-        moeda: cfg.moeda || p.moeda || "R$", valorTotal: cfg.valorTotal || "",
+        moeda: moedaC, valorTotal: totalCalc,
         parcelaValor: cfg.valorParcela || "", parcelas: n, vencDia: cfg.vencDia || 10,
         fim: MESES_COBRANCA[fimIdx].key + "-28",
         meses: mkMeses(0, cfg.valorParcela || "", n)
