@@ -24,6 +24,13 @@
       </div>
     </header>
 
+    <!-- ABAS PARCELAS / RENOVAÇÕES (spec 8) -->
+    <div style="display: flex; gap: 6px; margin-bottom: 16px;">
+      <button onclick="{{ onAbaParcelas }}" style="border: none; cursor: pointer; background: {{ abaParcelasBg }}; color: {{ abaParcelasFg }}; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 10px;">💰 Parcelas</button>
+      <button onclick="{{ onAbaRenovacoes }}" style="border: none; cursor: pointer; background: {{ abaRenovBg }}; color: {{ abaRenovFg }}; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 10px; display: flex; align-items: center; gap: 7px;">🔄 Renovações <span style="background: rgba(224,120,86,0.16); color: #e07856; font-size: 10px; font-weight: 700; padding: 1px 8px; border-radius: 999px;">{{ renovCount }}</span></button>
+    </div>
+
+    <sc-if value="{{ abaParcelas }}">
     <!-- RESUMO DO MÊS -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px;">
       <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px;">
@@ -68,7 +75,7 @@
           <div onclick="{{ c.onToggle }}" style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer;">
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ c.nome }}</span>
+                <a href="{{ c.perfilHref }}" onclick="{{ c.onNomeClick }}" style="font-size: 14px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ c.nome }}</a>
                 <span style="color: #c9c1b6; font-size: 12px;">{{ c.caret }}</span>
               </div>
               <div style="font-size: 10px; color: #9b8b7e; margin-top: 2px;">{{ c.tipo }} · {{ c.ciclos }}</div>
@@ -120,13 +127,66 @@
     </div>
 
     <p style="margin: 22px 0 0; font-size: 11px; color: #b8ada0; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Planilha Renovações</strong> (tipo, ciclos, parcelas, vencimento, grade mês a mês). Os dados acima são de demonstração — a integração com a planilha real está pronta em <code>apps-script-integracoes.js</code>.</p>
+    </sc-if>
+
+    <!-- ═══ ABA RENOVAÇÕES (funil de proteção da base — spec 8) ═══ -->
+    <sc-if value="{{ abaRenov }}">
+      <!-- TAXA DE RENOVAÇÃO -->
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Taxa de renovação do ciclo</div>
+          <div style="font-size: 26px; font-weight: 700; color: {{ taxaCor }};">{{ taxaLabel }}</div>
+        </div>
+        <div style="font-size: 12px; color: #6b6155; line-height: 1.6;">{{ taxaDetalhe }}<br><span style="color: #9b8b7e;">Contratos que terminam em ≤ 45 dias entram aqui sozinhos (R5).</span></div>
+      </div>
+
+      <sc-if value="{{ renovVazia }}">
+        <div style="text-align: center; padding: 44px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+          <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
+          <p style="margin: 0; font-size: 13px;">Nenhum contrato na janela de renovação.</p>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{ renovs }}" as="r" hint-placeholder-count="3">
+          <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ r.cor }}; border-radius: 10px; box-shadow: 0 3px 12px rgba(22,73,81,0.05); padding: 14px 16px;">
+            <div style="display: grid; grid-template-columns: 1.4fr 0.9fr 0.8fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+              <div>
+                <a href="{{ r.perfilHref }}" style="font-size: 14px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ r.nome }}</a>
+                <div style="font-size: 10px; color: #9b8b7e; margin-top: 2px;">{{ r.contrato }}</div>
+              </div>
+              <div style="font-size: 12px; font-weight: 700; color: {{ r.diasCor }};">termina em {{ r.dias }}d</div>
+              <div style="font-size: 11px; color: #6b6155;">
+                <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 2px;">LTV</div>
+                {{ r.ltv }}
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <sc-for list="{{ r.estagios }}" as="est" hint-placeholder-count="5">
+                <button onclick="{{ est.onClick }}" style="border: 1px solid {{ est.border }}; background: {{ est.bg }}; color: {{ est.fg }}; font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer;">{{ est.label }}</button>
+              </sc-for>
+              <span style="flex: 1;"></span>
+              <a href="{{ r.waHref }}" target="_blank" rel="noopener" onclick="{{ r.onEnviar }}" style="text-decoration: none; background: #2a9d8f; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">✈️ Mensagem de renovação</a>
+            </div>
+            <sc-if value="{{ r.pedindoMotivo }}">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0ede8;">
+                <span style="font-size: 10px; color: #cf6b5c; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; align-self: center;">Motivo:</span>
+                <sc-for list="{{ r.motivosOpts }}" as="mo" hint-placeholder-count="6">
+                  <button onclick="{{ mo.onClick }}" style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 10px; font-weight: 700; padding: 5px 11px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </section>
+        </sc-for>
+      </div>
+    </sc-if>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { filtro: "todas", openId: null, tick: 0 };
+  state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0 };
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -184,6 +244,8 @@ class Component extends DCLogic {
       const open = c.id === this.state.openId;
       const out = {
         id: c.id, nome: c.nome, tipo: c.tipo, ciclos: c.ciclos,
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + c.id,
+        onNomeClick: (e) => e.stopPropagation(),
         parcelaValor: c.parcelaValor,
         vencLabel: c.vencDia === "auto" ? "auto" : "venc. dia " + c.vencDia,
         progresso: pagas + "/" + (c.meses || []).length + " pagas",
@@ -208,6 +270,39 @@ class Component extends DCLogic {
       return out;
     });
 
+    // ── aba Renovações (spec 8) ──
+    const renovsRaw = CRM.renovacoes();
+    const taxa = CRM.taxaRenovacao();
+    const renovs = renovsRaw.map(r => {
+      const p = r.pessoa;
+      const estMeta = CRM.RENOV_ESTAGIOS.filter(e => e.id === r.estagio)[0] || CRM.RENOV_ESTAGIOS[0];
+      const tpl = CRM.TEMPLATES.filter(t => t.id === (r.estagio === "proposta" ? "renov_lembrete" : "renov_abrir"))[0];
+      const corpo = CRM.fillTemplate(tpl.corpo, { nome: p.nome, turma: p.turma, nivel: p.nivel });
+      return {
+        nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+        contrato: (CRM.contratoVigente(p) || {}).tipo + " · " + ((CRM.contratoVigente(p) || {}).ciclos || ""),
+        dias: r.diasRestantes,
+        diasCor: r.diasRestantes <= 15 ? "#cf6b5c" : (r.diasRestantes <= 30 ? "#c98a3a" : "#6b6155"),
+        cor: estMeta.color, ltv: CRM.ltv(p),
+        waHref: CRM.waLink(p.whatsapp, corpo),
+        onEnviar: () => { CRM.registrarContato(p.id, "mensagem de renovação"); setTimeout(() => this.bump(), 100); },
+        pedindoMotivo: this.state.motivoId === p.id,
+        motivosOpts: CRM.MOTIVOS_PERDA.map(m => ({
+          label: m, onClick: () => { CRM.setRenovacao(p.id, "nao_renovou", m); this.setState({ motivoId: null }); }
+        })),
+        estagios: CRM.RENOV_ESTAGIOS.map(e => {
+          const sel = e.id === r.estagio;
+          return { label: e.label,
+            bg: sel ? e.color : "#fff", fg: sel ? "#fff" : e.color, border: e.color,
+            onClick: () => {
+              if (e.id === "nao_renovou") { this.setState({ motivoId: p.id }); return; }
+              CRM.setRenovacao(p.id, e.id); this.setState({ motivoId: null });
+            } };
+        })
+      };
+    });
+
+    const abaParcelas = this.state.aba === "parcelas";
     return {
       items, filtros, mesLabel,
       vazio: items.length === 0,
@@ -217,7 +312,19 @@ class Component extends DCLogic {
       recebidoEUR: CRM.fmtMoney("€", resumo.recebido["€"]),
       atrasadas: resumo.atrasadas,
       atrasadasColor: resumo.atrasadas > 0 ? "#cf6b5c" : "#5a9e4b",
-      atrasadasBorder: resumo.atrasadas > 0 ? "rgba(207,107,92,0.4)" : "#e0dcd6"
+      atrasadasBorder: resumo.atrasadas > 0 ? "rgba(207,107,92,0.4)" : "#e0dcd6",
+      // abas
+      abaParcelas: abaParcelas, abaRenov: !abaParcelas,
+      onAbaParcelas: () => this.setState({ aba: "parcelas" }),
+      onAbaRenovacoes: () => this.setState({ aba: "renov" }),
+      abaParcelasBg: abaParcelas ? "#164951" : "#fff", abaParcelasFg: abaParcelas ? "#fff" : "#6b6155",
+      abaRenovBg: !abaParcelas ? "#164951" : "#fff", abaRenovFg: !abaParcelas ? "#fff" : "#6b6155",
+      renovCount: renovsRaw.length,
+      // renovações
+      renovs, renovVazia: renovs.length === 0,
+      taxaLabel: taxa.taxa === null ? "—" : taxa.taxa + "%",
+      taxaCor: taxa.taxa === null ? "#9b8b7e" : (taxa.taxa >= 70 ? "#5a9e4b" : "#c98a3a"),
+      taxaDetalhe: taxa.fechadas ? (taxa.renovadas + " renovadas de " + taxa.fechadas + " decididas") : "Nenhuma renovação decidida ainda neste ciclo."
     };
   }
 }

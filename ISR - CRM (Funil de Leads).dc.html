@@ -66,7 +66,7 @@
           <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 1.7fr 0.9fr 1fr 0.9fr; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer;">
             <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ lead.nome }}</span>
+                <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ lead.nome }}</a>
                 <span style="color: #c9c1b6; font-size: 12px;">{{ lead.caret }}</span>
               </div>
               <sc-if value="{{ lead.badge }}">
@@ -126,7 +126,7 @@
               <!-- PRÓXIMO PASSO -->
               <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
                 <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Próximo passo</div>
-                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; text-decoration: none; background: #2a9d8f; color: #fff; font-size: 13px; font-weight: 700; padding: 11px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(42,157,143,0.22);">✈️ Enviar mensagem do estágio</a>
+                <a href="{{ lead.waStageLink }}" target="_blank" rel="noopener" onclick="{{ lead.onEnviarStage }}" style="display: block; text-align: center; text-decoration: none; background: #2a9d8f; color: #fff; font-size: 13px; font-weight: 700; padding: 11px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(42,157,143,0.22);">✈️ Enviar mensagem do estágio</a>
                 <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 7px;">Lembrar de novo follow-up:</div>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                   <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
@@ -166,10 +166,59 @@
                 </div>
               </div>
 
+              <!-- MINI-FORM DE MATRÍCULA (transição lead→aluna, spec 6) -->
+              <sc-if value="{{ lead.matriculando }}">
+                <div style="background: rgba(90,158,75,0.06); border: 1px solid rgba(90,158,75,0.3); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #5a9e4b; font-weight: 700; margin-bottom: 10px;">🎓 Matricular — zero recadastro</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                    <select ref="{{ lead.matTurmaRef }}" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
+                      <sc-for list="{{ lead.turmasOpts }}" as="t" hint-placeholder-count="4">
+                        <option value="{{ t.id }}">{{ t.label }}</option>
+                      </sc-for>
+                    </select>
+                    <select ref="{{ lead.matTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
+                      <option value="Matrícula">Matrícula</option>
+                      <option value="Renovação">Renovação</option>
+                      <option value="Continuidade">Continuidade</option>
+                    </select>
+                    <select ref="{{ lead.matMoedaRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
+                      <option value="R$">R$ (Brasil)</option>
+                      <option value="€">€ (Europa)</option>
+                    </select>
+                    <input ref="{{ lead.matValorRef }}" placeholder="Valor da parcela (ex. R$ 497,00)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;" />
+                    <select ref="{{ lead.matParcelasRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;">
+                      <option value="3">3 parcelas</option>
+                      <option value="6">6 parcelas</option>
+                      <option value="7">7 parcelas</option>
+                      <option value="8">8 parcelas</option>
+                    </select>
+                    <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e0dcd6; border-radius: 8px; background: #fff;" />
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #5a9e4b; color: #fff; font-size: 12px; font-weight: 700; padding: 10px; border-radius: 8px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
+                    <button onclick="{{ lead.onMatricularCancela }}" style="border: 1px solid #e0dcd6; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 8px; cursor: pointer;">Cancelar</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- MOTIVO DE PERDA (obrigatório — spec 6) -->
+              <sc-if value="{{ lead.perdendo }}">
+                <div style="background: rgba(207,107,92,0.06); border: 1px solid rgba(207,107,92,0.3); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #cf6b5c; font-weight: 700; margin-bottom: 10px;">Qual foi o motivo da perda?</div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <sc-for list="{{ lead.motivosOpts }}" as="mo" hint-placeholder-count="6">
+                      <button onclick="{{ mo.onClick }}" style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
+                    </sc-for>
+                    <button onclick="{{ lead.onPerderCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 7px 8px; cursor: pointer;">cancelar</button>
+                  </div>
+                </div>
+              </sc-if>
+
               <!-- AÇÕES -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">✓ Registrar contato</button>
                 <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e0dcd6; background: #fff; color: #6b5b95; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">📅 Agendar reunião</button>
+                <button onclick="{{ lead.onMatricular }}" style="border: 1px solid rgba(90,158,75,0.5); background: #fff; color: #5a9e4b; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">🎓 Matricular</button>
                 <span style="flex: 1;"></span>
                 <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b8ada0; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Marcar perdido</button>
                 <button onclick="{{ lead.onExcluir }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 8px 6px; cursor: pointer;">Excluir</button>
@@ -206,8 +255,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;960px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "para_hoje", openId: null, tick: 0 };
+  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, tick: 0 };
   noteRef = React.createRef();
+  matTurmaRef = React.createRef(); matTipoRef = React.createRef(); matMoedaRef = React.createRef();
+  matValorRef = React.createRef(); matParcelasRef = React.createRef(); matVencRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -278,7 +329,9 @@ class Component extends DCLogic {
         entrouColor: warn ? "#c98a3a" : "#6b6155",
         turmaLabel: l.turma || "—",
         open: open,
-        onToggle: () => this.setState({ openId: open ? null : l.id })
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + l.id,
+        onNomeClick: (e) => e.stopPropagation(),
+        onToggle: () => this.setState({ openId: open ? null : l.id, perdendoId: null, matriculandoId: null })
       };
       if (open) {
         out.email = l.email || "—";
@@ -290,6 +343,8 @@ class Component extends DCLogic {
         out.veioDe = l.veioDe || "—";
         out.entrouPor = l.entrouPor || "—";
         out.waStageLink = this.waForStage(l);
+        // enviar grava contato no historico (spec 6)
+        out.onEnviarStage = () => { CRM.registrarContato(l.id, "mensagem do estágio enviada"); setTimeout(() => this.bump(), 100); };
         out.followupInfo = l.proximoFollowup ? ("Próximo follow-up: " + CRM.ddmm(l.proximoFollowup) + " (" + CRM.relativeDays(l.proximoFollowup) + ")") : "";
         out.stageOptions = CRM.STAGES.map(s => {
           const sel = s.id === l.estagio;
@@ -311,8 +366,35 @@ class Component extends DCLogic {
         out.onNoteSave = () => this.saveNote(l.id);
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
         out.onAgendar = () => { CRM.setStage(l.id, "reuniao"); CRM.addHistory(l.id, "reuniao", "Reunião marcada"); this.bump(); };
-        out.onMarcarPerdido = () => { CRM.markLost(l.id); this.setState({ openId: null }); };
         out.onExcluir = () => { if (confirm("Excluir este lead? Não dá pra desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
+
+        // motivo de perda obrigatório (spec 6)
+        out.perdendo = this.state.perdendoId === l.id;
+        out.onMarcarPerdido = () => this.setState({ perdendoId: l.id, matriculandoId: null });
+        out.onPerderCancela = () => this.setState({ perdendoId: null });
+        out.motivosOpts = CRM.MOTIVOS_PERDA.map(m => ({
+          label: m, onClick: () => { CRM.marcarPerdido(l.id, m); this.setState({ perdendoId: null, openId: null }); }
+        }));
+
+        // mini-form de matrícula (spec 6: zero recadastro)
+        out.matriculando = this.state.matriculandoId === l.id;
+        out.onMatricular = () => this.setState({ matriculandoId: l.id, perdendoId: null });
+        out.onMatricularCancela = () => this.setState({ matriculandoId: null });
+        out.matTurmaRef = this.matTurmaRef; out.matTipoRef = this.matTipoRef; out.matMoedaRef = this.matMoedaRef;
+        out.matValorRef = this.matValorRef; out.matParcelasRef = this.matParcelasRef; out.matVencRef = this.matVencRef;
+        out.turmasOpts = CRM.ocupacaoTurmas().map(t => ({
+          id: t.id,
+          label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "LOTADA")
+        }));
+        out.onMatricularConfirma = () => {
+          const v = r => (r.current && r.current.value) || "";
+          CRM.matricular(l.id, {
+            turmaId: v(this.matTurmaRef), tipo: v(this.matTipoRef) || "Matrícula",
+            moeda: v(this.matMoedaRef) || "R$", valorParcela: v(this.matValorRef),
+            parcelas: v(this.matParcelasRef) || 3, vencDia: parseInt(v(this.matVencRef), 10) || 10
+          });
+          this.setState({ matriculandoId: null, openId: null, tab: "matriculados" });
+        };
       }
       return out;
     });
@@ -322,7 +404,7 @@ class Component extends DCLogic {
 
     const reativacao = CRM.REATIVACAO.map(ex => ({
       nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
-      waLink: CRM.waLink(ex.telefone, CRM.fillTemplate(CRM.TEMPLATES.filter(t => t.id === "aluno_renovacao")[0].corpo, { nome: ex.nome, turma: ex.ultimaTurma }))
+      waLink: CRM.waLink(ex.telefone, CRM.fillTemplate(CRM.TEMPLATES.filter(t => t.id === "renov_abrir")[0].corpo, { nome: ex.nome, turma: ex.ultimaTurma }))
     }));
 
     return {
