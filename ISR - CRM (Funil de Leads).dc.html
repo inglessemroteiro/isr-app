@@ -20,11 +20,45 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">CRM · Funil de leads</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
+        <button onclick="{{ onNovoLead }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
         <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
         <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">💬 Mensagens prontas</a>
         <button onclick="{{ resetDemo }}" title="Restaurar dados de demonstração" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 999px; cursor: pointer;">↺ Demo</button>
       </div>
     </header>
+
+    <!-- FORMULÁRIO NOVO LEAD (cadastro manual) -->
+    <sc-if value="{{ novoLeadAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">➕ Novo lead · cadastro manual</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ nlNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nlZapRef }}" placeholder="WhatsApp * (ex. +55 11 99999-0000)" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nlEmailRef }}" placeholder="E-mail" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ nlCanalRef }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ canaisOpts }}" as="cn" hint-placeholder-count="6">
+              <option value="{{ cn.id }}">{{ cn.label }}</option>
+            </sc-for>
+          </select>
+          <select ref="{{ nlNivelRef }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <option value="">Nível (se souber)</option>
+            <option value="Iniciante">Iniciante (A0)</option>
+            <option value="Básico">Básico (A1)</option>
+            <option value="Pré-intermediário">Pré-intermediário (A2)</option>
+            <option value="Intermediário">Intermediário (B1)</option>
+            <option value="Avançado">Avançado (B2+)</option>
+          </select>
+          <input ref="{{ nlHorariosRef }}" placeholder="Horários de preferência" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button onclick="{{ onSalvarNovoLead }}" style="border: none; background: #3f6d4e; color: #fff; font-size: 13px; font-weight: 700; padding: 11px 22px; border-radius: 999px; cursor: pointer;">✓ Criar lead</button>
+          <button onclick="{{ onCancelarNovoLead }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
+          <sc-if value="{{ nlErro }}">
+            <span style="font-size: 12px; color: #cf6b5c; font-weight: 600;">{{ nlErro }}</span>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
 
     <!-- NOTIFICAÇÃO NOVAS INSCRIÇÕES -->
     <sc-if value="{{ temNovas }}">
@@ -236,10 +270,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, tick: 0 };
+  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, novoLead: false, nlErro: "", tick: 0 };
   noteRef = React.createRef();
   matTurmaRef = React.createRef(); matTipoRef = React.createRef(); matMoedaRef = React.createRef();
   matValorRef = React.createRef(); matParcelasRef = React.createRef(); matVencRef = React.createRef();
+  nlNomeRef = React.createRef(); nlZapRef = React.createRef(); nlEmailRef = React.createRef();
+  nlCanalRef = React.createRef(); nlNivelRef = React.createRef(); nlHorariosRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -390,7 +426,23 @@ class Component extends DCLogic {
       temNovas: novas > 0,
       novasCount: novas,
       novasLabel: novas === 1 ? "nova inscrição hoje" : "novas inscrições hoje",
-      resetDemo: () => { CRM.resetDemo(); this.setState({ openId: null, tab: "para_hoje" }); }
+      resetDemo: () => { CRM.resetDemo(); this.setState({ openId: null, tab: "para_hoje" }); },
+      // novo lead manual
+      novoLeadAberto: this.state.novoLead,
+      nlErro: this.state.nlErro,
+      onNovoLead: () => this.setState({ novoLead: true, nlErro: "" }),
+      onCancelarNovoLead: () => this.setState({ novoLead: false, nlErro: "" }),
+      nlNomeRef: this.nlNomeRef, nlZapRef: this.nlZapRef, nlEmailRef: this.nlEmailRef,
+      nlCanalRef: this.nlCanalRef, nlNivelRef: this.nlNivelRef, nlHorariosRef: this.nlHorariosRef,
+      canaisOpts: CRM.CANAIS.map(c => ({ id: c, label: "Canal: " + c })),
+      onSalvarNovoLead: () => {
+        const v = r => (r.current && r.current.value || "").trim();
+        const nome = v(this.nlNomeRef), zap = v(this.nlZapRef);
+        if (!nome || !zap) { this.setState({ nlErro: "Nome e WhatsApp são obrigatórios." }); return; }
+        CRM.novaPessoa({ nome: nome, whatsapp: zap, email: v(this.nlEmailRef),
+          canal: v(this.nlCanalRef), nivel: v(this.nlNivelRef), horarios: v(this.nlHorariosRef) });
+        this.setState({ novoLead: false, nlErro: "", tab: "a_contatar" });
+      }
     };
   }
 }

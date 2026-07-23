@@ -467,6 +467,29 @@
     savePessoas(list);
     return list;
   }
+  // Novo lead manual (spec 1.1: o registro nasce no primeiro contato)
+  function novaPessoa(dados) {
+    var list = loadPessoas();
+    var p = {
+      id: "p" + Date.now(),
+      nome: (dados.nome || "").trim(),
+      whatsapp: (dados.whatsapp || "").trim(),
+      email: (dados.email || "").trim(),
+      moeda: dados.moeda || "R$",
+      status: "lead", estagio: "a_contatar", badge: "",
+      origem: { canal: dados.canal || "WhatsApp", detalhe: "cadastro manual", veioDe: "-", entrouPor: "-" },
+      formatos: [], turma: "", professora: "",
+      nivel: dados.nivel || "", horarios: dados.horarios || "",
+      querComecar: dados.querComecar || "",
+      entrouEm: iso(today()), desde: "", proximoFollowup: "",
+      contratos: [], documentos: [],
+      historico: [{ data: iso(today()), tipo: "criado", texto: "Lead criado manualmente" + (dados.canal ? " · canal: " + dados.canal : "") }]
+    };
+    list.unshift(p);
+    savePessoas(list);
+    return p;
+  }
+
   function addDocumento(id, nome, link) {
     return mutate(id, function (p) {
       p.documentos = p.documentos || [];
@@ -852,6 +875,7 @@
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,
     registrarContato: registrarContato, marcarPerdido: marcarPerdido, markLost: function (id) { return marcarPerdido(id, "Outro"); },
     deleteLead: deleteLead, addHistory: addHistory, addDocumento: addDocumento, matricular: matricular,
+    novaPessoa: novaPessoa,
     // cobrança
     getCobranca: getCobranca, cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
     setParcelaPaga: setParcelaPaga, entradasPrevistas: entradasPrevistas,
