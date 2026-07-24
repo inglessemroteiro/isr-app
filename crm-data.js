@@ -357,6 +357,7 @@
         historico: [{ data: d(-84), tipo: "criado", texto: "Lead criado · preencheu formulário no site" }] },
       { id: "p4", nome: "Victoria Figueiredo", whatsapp: "+55 11 96423-6119", email: "victoria.fig@email.com", moeda: "R$",
         status: "lead", estagio: "reuniao", badge: "Conversa agendada",
+        reuniao: { data: addDays(2), hora: "18:00", feita: false },
         origem: { canal: "Site", detalhe: "site · matricula-direta", veioDe: "inglessemroteiro.com", entrouPor: "/matricula" },
         formatos: [], turma: "", professora: "", nivel: "Básico", horarios: "Qui 18h", querComecar: "Imediatamente",
         entrouEm: d(-1), desde: "", proximoFollowup: d(1), contratos: [], documentos: [],
@@ -808,6 +809,251 @@
   }
 
   // ── OCUPAÇÃO / VAGAS (spec 10: ninguém digita) ────────────────
+  // Quantas conversas de matrícula estão marcadas — o número que diz se o
+  // comercial está com agenda cheia ou vazia, antes de virar matrícula.
+  function reunioesResumo(nDias) {
+    var n = nDias || 30;
+    var hoje = iso(today()), limite = addDays(n);
+    var marcadas = [], feitas = [], vencidas = [];
+    loadPessoas().forEach(function (p) {
+      if (!p.reuniao || !p.reuniao.data) return;
+      var r = { pessoaId: p.id, nome: p.nome, data: p.reuniao.data, hora: p.reuniao.hora || "",
+        feita: !!p.reuniao.feita, virouAluna: p.status === "aluna" };
+      if (r.feita) { if (r.data >= addDays(-n)) feitas.push(r); }
+      else if (r.data < hoje) vencidas.push(r);
+      else if (r.data <= limite) marcadas.push(r);
+    });
+    var ord = function (a, b) { return a.data < b.data ? -1 : 1; };
+    marcadas.sort(ord); vencidas.sort(ord); feitas.sort(function (a, b) { return b.data < a.data ? -1 : 1; });
+    var converteu = feitas.filter(function (r) { return r.virouAluna; }).length;
+    return { dias: n, marcadas: marcadas, feitas: feitas, vencidas: vencidas,
+      converteu: converteu,
+      taxa: feitas.length ? Math.round(100 * converteu / feitas.length) : 0 };
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ACOMPANHAMENTO — o que acontece no WhatsApp vira dado
+  //  ------------------------------------------------------------
+  //  Tudo com a aluna acontece no WhatsApp e nada fica registrado.
+  //  A 80 alunas "acho que falei com ela" para de funcionar. Aqui
+  //  são duas coisas separadas:
+  //    TOQUE  → você falou com ela (fato, 1 clique)
+  //    PULSO  → como ela sente que está indo (a percepção dela)
+  //  O pulso é o número de saúde da escola: é o que mais prevê
+  //  renovação e é o único que a aluna responde, não a gente.
+  // ══════════════════════════════════════════════════════════════
+  var TOQUE_TIPOS = [
+    { id: "checkin",   label: "Check-in",        cor: "#2a9d8f", desc: "Como você está indo?" },
+    { id: "feedback",  label: "Feedback",        cor: "#6b5b95", desc: "Devolutiva de tarefa ou áudio" },
+    { id: "elogio",    label: "Reconhecimento",  cor: "#9ec970", desc: "Celebrar um avanço" },
+    { id: "falta",     label: "Sumiço",          cor: "#e07856", desc: "Faltou e você foi atrás" },
+    { id: "cobranca",  label: "Cobrança",        cor: "#cf6b5c", desc: "Pagamento" },
+    { id: "renovacao", label: "Renovação",       cor: "#d4a574", desc: "Conversa de próximo ciclo" },
+    { id: "outro",     label: "Outro",           cor: "#9c6f56", desc: "" }
+  ];
+  var TOQUES_KEY = "isr_toques_v1";
+  var PULSOS_KEY = "isr_pulsos_v1";
+
+  function toquesLista() {
+    try { var l = JSON.parse(localStorage.getItem(TOQUES_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function toquesSave(l) { try { localStorage.setItem(TOQUES_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function registrarToque(pessoaId, tipo, nota, por) {
+    var l = toquesLista();
+    var t = { id: "tq" + Date.now() + Math.floor(Math.random() * 1000), pessoaId: pessoaId,
+      data: iso(today()), tipo: tipo || "checkin", nota: nota || "",
+      por: por || ((gestaoUser() || {}).nome || "") };
+    l.push(t); toquesSave(l);
+    var meta = TOQUE_TIPOS.filter(function (x) { return x.id === t.tipo; })[0];
+    addHistory(pessoaId, "contato", (meta ? meta.label : "Contato") + " no WhatsApp" + (nota ? " · " + nota : ""), t.por);
+    return t;
+  }
+  function toquesDe(pessoaId) {
+    return toquesLista().filter(function (t) { return t.pessoaId === pessoaId; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function ultimoToque(pessoaId) { return toquesDe(pessoaId)[0] || null; }
+  function diasSemToque(pessoaId) {
+    var u = ultimoToque(pessoaId);
+    return u ? daysBetween(parseISO(u.data), today()) : null;
+  }
+
+  // Pulso: 1 a 5, respondido pela aluna (você transcreve o que ela disse).
+  var PULSO_META = [
+    { nota: 1, label: "Travada",     cor: "#cf6b5c" },
+    { nota: 2, label: "Difícil",     cor: "#e07856" },
+    { nota: 3, label: "Devagar",     cor: "#d4a574" },
+    { nota: 4, label: "Evoluindo",   cor: "#2a9d8f" },
+    { nota: 5, label: "Muito bem",   cor: "#5a9e4b" }
+  ];
+  function pulsosLista() {
+    try { var l = JSON.parse(localStorage.getItem(PULSOS_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function pulsosSave(l) { try { localStorage.setItem(PULSOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function registrarPulso(pessoaId, nota, comentario, por) {
+    var n = parseInt(nota, 10);
+    if (!(n >= 1 && n <= 5)) return null;
+    var l = pulsosLista();
+    var p = { id: "pl" + Date.now() + Math.floor(Math.random() * 1000), pessoaId: pessoaId,
+      data: iso(today()), nota: n, comentario: comentario || "",
+      por: por || ((gestaoUser() || {}).nome || "") };
+    l.push(p); pulsosSave(l);
+    var m = PULSO_META.filter(function (x) { return x.nota === n; })[0];
+    addHistory(pessoaId, "nota", "Pulso: " + n + "/5 · " + m.label + (comentario ? " — " + comentario : ""), p.por);
+    return p;
+  }
+  function pulsosDe(pessoaId) {
+    return pulsosLista().filter(function (p) { return p.pessoaId === pessoaId; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function ultimoPulso(pessoaId) { return pulsosDe(pessoaId)[0] || null; }
+  function tendenciaPulso(pessoaId) {
+    var l = pulsosDe(pessoaId);
+    if (l.length < 2) return 0;
+    return l[0].nota - l[1].nota;
+  }
+  function pulsoMeta(nota) {
+    return PULSO_META.filter(function (x) { return x.nota === nota; })[0] || PULSO_META[2];
+  }
+
+  // ── FILA DE ACOMPANHAMENTO ────────────────────────────────────
+  // Quem falar esta semana e por quê. A 80 alunas, um toque por
+  // aluna por ciclo dá ~7 por semana — é conta que cabe no dia.
+  var MOTIVOS_TOQUE = {
+    faltou:      { label: "Faltou nas últimas aulas", peso: 50, tipo: "falta",     cor: "#e07856" },
+    pulso_baixo: { label: "Disse que está travada",   peso: 45, tipo: "checkin",   cor: "#cf6b5c" },
+    pulso_caiu:  { label: "Piorou desde o último",    peso: 40, tipo: "checkin",   cor: "#e07856" },
+    atrasada:    { label: "Pagamento atrasado",       peso: 35, tipo: "cobranca",  cor: "#cf6b5c" },
+    nova:        { label: "Primeiras semanas",        peso: 32, tipo: "checkin",   cor: "#9ec970" },
+    renovacao:   { label: "Renovação chegando",       peso: 30, tipo: "renovacao", cor: "#6b5b95" },
+    sem_pulso:   { label: "Nunca perguntou como está", peso: 25, tipo: "checkin",  cor: "#d4a574" },
+    sumida:      { label: "Sem contato há muito tempo", peso: 20, tipo: "checkin", cor: "#d4a574" },
+    indo_bem:    { label: "Indo bem — vale reconhecer", peso: 8, tipo: "elogio",   cor: "#9ec970" }
+  };
+  function filaAcompanhamento() {
+    var hoje = iso(today());
+    return loadPessoas()
+      .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
+      .map(function (p) {
+        var c = contratoVigente(p) || {};
+        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+        var atrasadas = (c.meses || []).filter(function (m) {
+          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+          return !m.pago && venc < hoje;
+        }).length;
+
+        var pulso = ultimoPulso(p.id);
+        var tend = tendenciaPulso(p.id);
+        var dToque = diasSemToque(p.id);
+        var faltas = faltasDe(p.id);
+        var diasDeCasa = p.desde ? daysBetween(parseISO(p.desde), today()) : 999;
+        var diasPraRenovar = c.fim ? daysBetween(today(), parseISO(c.fim)) : null;
+
+        var motivos = [];
+        if (faltas >= 2) motivos.push("faltou");
+        if (pulso && pulso.nota <= 2) motivos.push("pulso_baixo");
+        if (tend < 0) motivos.push("pulso_caiu");
+        if (atrasadas) motivos.push("atrasada");
+        if (diasDeCasa <= 42) motivos.push("nova");
+        if (diasPraRenovar !== null && diasPraRenovar >= 0 && diasPraRenovar <= 30) motivos.push("renovacao");
+        if (!pulso) motivos.push("sem_pulso");
+        if (dToque === null || dToque > 21) motivos.push("sumida");
+        if (!motivos.length && pulso && pulso.nota >= 4) motivos.push("indo_bem");
+
+        var peso = motivos.reduce(function (a, m) { return a + MOTIVOS_TOQUE[m].peso; }, 0);
+        // quem foi tocada esta semana sai da fila — não se cobra duas vezes
+        var tocadaEstaSemana = dToque !== null && dToque <= 6;
+        return {
+          pessoaId: p.id, nome: p.nome, turma: p.turma || "", whatsapp: p.whatsapp || "",
+          professora: p.professora || "",
+          motivos: motivos, peso: peso, tocadaEstaSemana: tocadaEstaSemana,
+          diasSemToque: dToque, ultimoToque: ultimoToque(p.id),
+          pulso: pulso, tendencia: tend, faltas: faltas, atrasadas: atrasadas,
+          diasDeCasa: diasDeCasa, diasPraRenovar: diasPraRenovar,
+          tipoSugerido: motivos.length ? MOTIVOS_TOQUE[motivos[0]].tipo : "checkin"
+        };
+      })
+      .sort(function (a, b) {
+        if (a.tocadaEstaSemana !== b.tocadaEstaSemana) return a.tocadaEstaSemana ? 1 : -1;
+        return b.peso - a.peso || a.nome.localeCompare(b.nome);
+      });
+  }
+
+  // ── PAINEL DE ALUNAS ──────────────────────────────────────────
+  // Todo mundo que já é aluna, com os sinais que dizem se ela está
+  // bem ou se precisa de você. É a base do acompanhamento: sem isso
+  // o único jeito de saber como alguém está é abrindo perfil por perfil.
+  var RISCOS = {
+    inadimplente: { label: "Pagamento atrasado", cor: "#cf6b5c", peso: 40 },
+    faltando:     { label: "Faltando",           cor: "#e07856", peso: 30 },
+    sem_contato:  { label: "Sem contato",        cor: "#d4a574", peso: 20 },
+    onboarding:   { label: "Onboarding parado",  cor: "#9c6f56", peso: 25 },
+    renovacao:    { label: "Renovação chegando", cor: "#6b5b95", peso: 15 },
+    travada:      { label: "Travada",            cor: "#cf6b5c", peso: 45 }
+  };
+  function alunasPainel() {
+    var hoje = iso(today());
+    return loadPessoas()
+      .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
+      .map(function (p) {
+        var c = contratoVigente(p) || {};
+        var meses = c.meses || [];
+        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+        var atrasadas = meses.filter(function (m) {
+          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+          return !m.pago && venc < hoje;
+        });
+        var pagas = meses.filter(function (m) { return m.pago; }).length;
+        var faltas = faltasDe(p.id);
+        var ob = p.onboarding || [];
+        var obFeitos = ob.filter(function (x) { return x.feito; }).length;
+        var obAtrasado = ob.filter(function (x) { return !x.feito && x.data < hoje; }).length;
+        // contato de verdade é toque registrado; histórico serve de reserva
+        var dt = diasSemToque(p.id);
+        var ultimo = (p.historico && p.historico.length)
+          ? p.historico[p.historico.length - 1] : null;
+        var diasSemContato = dt !== null ? dt
+          : (ultimo ? daysBetween(parseISO(ultimo.data), today()) : 999);
+        var pulso = ultimoPulso(p.id);
+        var fimContrato = c.fim || "";
+        var diasPraRenovar = fimContrato ? daysBetween(today(), parseISO(fimContrato)) : null;
+
+        var riscos = [];
+        if (atrasadas.length) riscos.push("inadimplente");
+        if (faltas >= 2) riscos.push("faltando");
+        if (obAtrasado > 0) riscos.push("onboarding");
+        if (diasSemContato > 30) riscos.push("sem_contato");
+        if (pulso && pulso.nota <= 2) riscos.push("travada");
+        if (diasPraRenovar !== null && diasPraRenovar >= 0 && diasPraRenovar <= 30) riscos.push("renovacao");
+
+        var score = riscos.reduce(function (a, r) { return a + RISCOS[r].peso; }, 0);
+        return {
+          id: p.id, nome: p.nome, turma: p.turma || "—", professora: p.professora || "—",
+          nivel: p.nivel || "", status: p.status, whatsapp: p.whatsapp || "",
+          moeda: c.moeda || p.moeda || "R$", parcelaValor: c.parcelaValor || "",
+          parcelasPagas: pagas, parcelasTotal: meses.length,
+          atrasadas: atrasadas.length,
+          faltas: faltas,
+          onboardingFeitos: obFeitos, onboardingTotal: ob.length,
+          diasSemContato: diasSemContato,
+          proximoCheckin: p.proximoCheckin || "",
+          fimContrato: fimContrato, diasPraRenovar: diasPraRenovar,
+          moedas: moedasDe(p.id).total,
+          tarefas: tarefasDe(p.id, 4),
+          pulso: pulso ? pulso.nota : null,
+          pulsoLabel: pulso ? pulsoMeta(pulso.nota).label : "",
+          pulsoCor: pulso ? pulsoMeta(pulso.nota).cor : "#b8ada0",
+          tendenciaPulso: tendenciaPulso(p.id),
+          desde: p.desde || "",
+          riscos: riscos, score: score,
+          saudavel: riscos.length === 0
+        };
+      })
+      .sort(function (a, b) { return b.score - a.score || a.nome.localeCompare(b.nome); });
+  }
+
   function ocupacaoTurmas() {
     var pessoas = loadPessoas();
     return turmasLista().map(function (u) {
@@ -1040,10 +1286,21 @@
   }
   function custosSaveLocal(list) { try { localStorage.setItem(CUSTOS_KEY, JSON.stringify(list)); } catch (e) {} }
   function custosSave(list) { custosSaveLocal(list); agendarSync(); }
-  function addCusto(nome, moeda, valor, categoria) {
+  function addCusto(nome, moeda, valor, categoria, inicio, fim) {
     var list = custosLista();
-    list.push({ nome: nome, moeda: moeda, valor: valor, categoria: categoria || "outros" });
+    list.push({ nome: nome, moeda: moeda, valor: valor, categoria: categoria || "outros",
+      inicio: inicio || "", fim: fim || "" });
     custosSave(list);
+  }
+  // Vigência: um custo só conta nos meses em que a escola realmente pagou.
+  // Sem início nem fim, vale sempre (é o caso da maioria).
+  function vigenteNoMes(item, key) {
+    if (item.inicio && key < item.inicio.slice(0, 7)) return false;
+    if (item.fim && key > item.fim.slice(0, 7)) return false;
+    return true;
+  }
+  function custosDoMes(key) {
+    return custosLista().filter(function (c) { return vigenteNoMes(c, key); });
   }
   function updateCusto(idx, patch) {
     var list = custosLista();
@@ -1055,9 +1312,10 @@
     list.splice(idx, 1);
     custosSave(list);
   }
-  function custosTotais() {
+  function custosTotais(key) {
+    var k = key || mesAtualKey();
     var t = { "R$": 0, "€": 0 };
-    custosLista().concat(equipeCustosMensais()).forEach(function (c) { t[c.moeda] += c.valor; });
+    custosDoMes(k).concat(equipeCustosMensais(k)).forEach(function (c) { t[c.moeda] += c.valor; });
     return t;
   }
 
@@ -1097,6 +1355,7 @@
   function projecaoCaixa() {
     var horizonte = MESES_COBRANCA.slice(0, 3); // mês corrente + 2
     var custos = custosTotais();
+    void custos;
     var recebidoPorMes = {}, previstoPorMes = {};
     horizonte.forEach(function (m) {
       recebidoPorMes[m.key] = { "R$": 0, "€": 0 };
@@ -1116,11 +1375,12 @@
         "R$": recebidoPorMes[m.key]["R$"] + previstoPorMes[m.key]["R$"],
         "€": recebidoPorMes[m.key]["€"] + previstoPorMes[m.key]["€"]
       };
-      var resultado = { "R$": esperado["R$"] - custos["R$"], "€": esperado["€"] - custos["€"] };
+      var cst = custosTotais(m.key);
+      var resultado = { "R$": esperado["R$"] - cst["R$"], "€": esperado["€"] - cst["€"] };
       saldo["R$"] += resultado["R$"]; saldo["€"] += resultado["€"];
       return { key: m.key, label: m.label,
         recebido: recebidoPorMes[m.key], previsto: previstoPorMes[m.key],
-        esperado: esperado, custos: { "R$": custos["R$"], "€": custos["€"] },
+        esperado: esperado, custos: { "R$": cst["R$"], "€": cst["€"] },
         resultado: resultado, saldoAcumulado: { "R$": saldo["R$"], "€": saldo["€"] } };
     });
   }
@@ -1255,6 +1515,7 @@
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosLista(), cambio: taxaCambio(),
+      toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1284,6 +1545,9 @@
             if (d.data.calc) { try { localStorage.setItem(CALC_KEY, JSON.stringify(d.data.calc)); } catch (e) {} }
             if (d.data.lancamentos) { try { localStorage.setItem(LANC_KEY, JSON.stringify(d.data.lancamentos)); } catch (e) {} }
             if (d.data.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.data.cambio)); } catch (e) {} }
+            if (d.data.toques) { try { localStorage.setItem(TOQUES_KEY, JSON.stringify(d.data.toques)); } catch (e) {} }
+            if (d.data.pulsos) { try { localStorage.setItem(PULSOS_KEY, JSON.stringify(d.data.pulsos)); } catch (e) {} }
+            if (d.data.precos) { try { localStorage.setItem(PRECOS_KEY, JSON.stringify(d.data.precos)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1372,9 +1636,10 @@
     equipeSave(l); return l;
   }
   function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
-  function equipeCustosMensais() {
+  function equipeCustosMensais(key) {
+    var k = key || mesAtualKey();
     return equipeLista()
-      .filter(function (m) { return m.valorTipo === "mensal" && m.valor > 0; })
+      .filter(function (m) { return m.valorTipo === "mensal" && m.valor > 0 && vigenteNoMes(m, k); })
       .map(function (m) { return { nome: m.nome + " (equipe)", moeda: m.moeda || "R$", valor: m.valor }; });
   }
 
@@ -1410,7 +1675,7 @@
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
+      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Alunas", "ISR - Acompanhamento", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
       var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
       if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
@@ -1444,11 +1709,12 @@
     if (v === false) return "falta";
     return v || "presente";
   }
-  function salvarChamada(turmaLabel, dataIso, presencas, por) {
+  function salvarChamada(turmaLabel, dataIso, presencas, por, tarefas) {
     var m = chamadasAll();
     var key = turmaLabel + "|" + dataIso;
     var antes = (m[key] && m[key].presencas) || {};
     m[key] = { turma: turmaLabel, data: dataIso, presencas: presencas,
+      tarefas: tarefas || {},
       salvoEm: new Date().toISOString(), por: por || "" };
     chamadasSaveLocal(m);
     agendarSync();
@@ -1464,6 +1730,19 @@
     });
     return m[key];
   }
+  // Tarefa: só "fez / não fez", marcado na chamada. O trabalho e a correção
+  // continuam no caderno — aqui é sinal de engajamento, não canal paralelo.
+  function tarefasDe(pessoaId, nUltimas) {
+    var m = chamadasAll();
+    var regs = Object.keys(m).map(function (k) { return m[k]; })
+      .filter(function (c) { return c.tarefas && c.tarefas[pessoaId] !== undefined; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    if (nUltimas) regs = regs.slice(0, nUltimas);
+    var fez = regs.filter(function (c) { return !!c.tarefas[pessoaId]; }).length;
+    return { total: regs.length, fez: fez, naoFez: regs.length - fez,
+      pct: regs.length ? Math.round(100 * fez / regs.length) : null };
+  }
+
   function faltasDe(pessoaId) {
     var m = chamadasAll(), n = 0;
     Object.keys(m).forEach(function (k) {
@@ -1875,9 +2154,9 @@
         atrasada: false, lancId: l.id });
     });
 
-    var saidas = custosLista().map(function (c) {
+    var saidas = custosDoMes(key).map(function (c) {
       return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
-    }).concat(equipeCustosMensais().map(function (c) {
+    }).concat(equipeCustosMensais(key).map(function (c) {
       return { nome: c.nome, categoria: "equipe", moeda: c.moeda, valor: c.valor, fixo: true };
     })).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
@@ -2019,6 +2298,159 @@
     ].join("\n");
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  TABELA DE PREÇOS E NEGOCIAÇÃO
+  //  ------------------------------------------------------------
+  //  A escola vende CICLO (3 meses), não mensalidade. Tudo aqui é
+  //  o preço do ciclo; o "por mês" é só referência de comparação.
+  //  Origem: planilha "calculadora de negociação ISR 2.0".
+  // ══════════════════════════════════════════════════════════════
+  var CICLO_MESES = 3;
+  var PRECOS_PADRAO = [
+    { id: "grupo_brl", nome: "Turma online (grupo) BRL", moeda: "R$", ciclo: 1495,
+      descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4, obs: "" },
+    { id: "grupo_eur", nome: "Turma online (grupo) EUR", moeda: "€", ciclo: 255,
+      descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 0, maxParcelas: 3,
+      obs: "€85/mês vigente neste ciclo · sobe pra €89/mês (€267/ciclo) no próximo" },
+    { id: "presencial_dh", nome: "Turma presencial Den Haag", moeda: "€", ciclo: 375,
+      descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 3, obs: "" },
+    { id: "part_brl", nome: "Particular online (BRL)", moeda: "R$", ciclo: 2940,
+      descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 8, obs: "" },
+    { id: "part_eur", nome: "Particular EUR", moeda: "€", ciclo: 480,
+      descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 3,
+      obs: "Defasado: €40/aula é preço de particular BR. Proposta pra contratos novos: €200–220/mês" },
+    { id: "dupla_eur", nome: "Aula em dupla EUR (por pessoa)", moeda: "€", ciclo: 330,
+      descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 3,
+      obs: "Mesmo nível CEFR + mesma agenda. Se uma sai, a outra migra pra particular ou repõe a dupla" },
+    { id: "dupla_brl", nome: "Aula em dupla BRL (por pessoa)", moeda: "R$", ciclo: 1950,
+      descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 8,
+      obs: "Mesmas regras da dupla EUR" },
+    { id: "addon_eur", nome: "Add-on particular quinzenal (EUR)", moeda: "€", ciclo: 240,
+      descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4,
+      obs: "2 aulas 1:1 por mês pra quem já está no grupo. Sobe junto se o particular for reajustado" },
+    { id: "addon_brl", nome: "Add-on particular quinzenal (BRL)", moeda: "R$", ciclo: 1470,
+      descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4,
+      obs: "Mesma lógica do add-on EUR" },
+    { id: "bookclub", nome: "Book Club avulso", moeda: "R$", ciclo: 197,
+      descAvista: 0, descParcelado: 0, desc2Ciclos: 0, descRenovacao: 0, maxParcelas: 1, obs: "Assinatura" },
+    { id: "piloto_eur", nome: "Piloto Sem Roteiro (EUR)", moeda: "€", ciclo: 27,
+      descAvista: 0, descParcelado: 0, desc2Ciclos: 0, descRenovacao: 0, maxParcelas: 1, obs: "Preço fixo, sem negociação" },
+    { id: "piloto_brl", nome: "Piloto Sem Roteiro (BRL)", moeda: "R$", ciclo: 157,
+      descAvista: 0, descParcelado: 0, desc2Ciclos: 0, descRenovacao: 0, maxParcelas: 1, obs: "Preço fixo, sem negociação" }
+  ];
+  // O que oferecer ANTES de mexer no preço — nesta ordem.
+  var ESCADA_CONCESSOES = [
+    { titulo: "Piloto Sem Roteiro de bônus", detalhe: "€27 / R$157 de valor percebido, custo perto de zero — é assíncrono" },
+    { titulo: "Fechar 2 ciclos", detalhe: "Desconto adicional já previsto na tabela + preço congelado na renovação" },
+    { titulo: "Desconto por indicação", detalhe: "Vale só quando a indicada se matricula — é o desconto que se paga sozinho" },
+    { titulo: "1 sessão de interview coaching", detalhe: "Máximo 1 por contrato — custa hora da Gabi" },
+    { titulo: "Só então: desconto em dinheiro", detalhe: "Nunca abaixo do piso" }
+  ];
+
+  var PRECOS_KEY = "isr_precos_v1";
+  function precosLista() {
+    try { var l = JSON.parse(localStorage.getItem(PRECOS_KEY)); if (l && l.length) return l; } catch (e) {}
+    return PRECOS_PADRAO.map(function (p) { return Object.assign({}, p); });
+  }
+  function precosSave(list) { try { localStorage.setItem(PRECOS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  function updatePreco(id, patch) {
+    var l = precosLista();
+    l.forEach(function (p) { if (p.id === id) Object.assign(p, patch); });
+    precosSave(l); return l;
+  }
+  function getPreco(id) { return precosLista().filter(function (p) { return p.id === id; })[0] || null; }
+
+  var TICKET_KEY = "isr_ticket_alvo_v1";
+  function ticketAlvo() {
+    try { var v = parseFloat(localStorage.getItem(TICKET_KEY)); if (v > 0) return v; } catch (e) {}
+    return 89; // € por mês
+  }
+  function setTicketAlvo(v) {
+    var n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+    if (n > 0) { try { localStorage.setItem(TICKET_KEY, String(n)); } catch (e) {} agendarSync(); }
+    return ticketAlvo();
+  }
+
+  // cfg: { produtoId, fonte: "nova"|"renovacao", ciclos: 1|2,
+  //        forma: "avista"|"parcelado", parcelas, totalProposto }
+  function calcularProposta(cfg) {
+    var p = getPreco(cfg.produtoId);
+    if (!p) return null;
+    var ciclos = parseInt(cfg.ciclos, 10) === 2 ? 2 : 1;
+    var avista = cfg.forma === "avista";
+    var tabela = p.ciclo * ciclos;
+
+    // teto de desconto: renovação tem teto próprio; 2 ciclos somam o adicional
+    var tetoBase = cfg.fonte === "renovacao" ? p.descRenovacao
+                                             : (avista ? p.descAvista : p.descParcelado);
+    var descMax = tetoBase + (ciclos === 2 ? p.desc2Ciclos : 0);
+    var piso = Math.round(tabela * (1 - descMax / 100) * 100) / 100;
+
+    var maxParcelas = avista ? 1 : p.maxParcelas * ciclos;
+    var parcelas = avista ? 1 : Math.max(1, parseInt(cfg.parcelas, 10) || 1);
+
+    var total = cfg.totalProposto != null && cfg.totalProposto !== ""
+      ? (typeof cfg.totalProposto === "number" ? cfg.totalProposto : parseMoney(cfg.totalProposto))
+      : tabela;
+    var descDado = tabela > 0 ? Math.round((1 - total / tabela) * 1000) / 10 : 0;
+
+    var mensal = total / (CICLO_MESES * ciclos);
+    var eurMes = p.moeda === "€" ? mensal : mensal / taxaCambio();
+    var alvo = ticketAlvo();
+
+    var alertas = [];
+    if (parcelas > maxParcelas)
+      alertas.push("Você pediu " + parcelas + " parcelas, mas o máximo pra este produto é " + maxParcelas + ".");
+    if (descDado > descMax + 0.05)
+      alertas.push("Desconto de " + descDado.toFixed(1) + "% passa do teto de " + descMax + "% — precisa de aprovação da Gabi.");
+    if (descDado < -0.05)
+      alertas.push("O valor proposto está acima da tabela. Confirme se é isso mesmo.");
+    if (eurMes < alvo * 0.85)
+      alertas.push("Equivale a € " + Math.round(eurMes) + "/mês, abaixo do ticket alvo de € " + alvo + "/mês.");
+
+    var podeFechar = total >= piso - 0.01 && parcelas <= maxParcelas;
+    return {
+      produto: p, moeda: p.moeda, ciclos: ciclos, avista: avista,
+      tabela: tabela, descMax: descMax, piso: piso,
+      total: total, descDado: descDado,
+      parcelas: parcelas, maxParcelas: maxParcelas,
+      valorParcela: parcelas > 0 ? total / parcelas : total,
+      mensal: mensal, eurMes: eurMes, ticketAlvo: alvo,
+      podeFechar: podeFechar,
+      decisao: podeFechar ? "Pode fechar" : "Precisa de aprovação da Gabi",
+      contrato: descDado > 0.05 ? "Valor negociado → contrato sempre"
+                                : "Tabela cheia → fluxo normal",
+      alertas: alertas
+    };
+  }
+
+  // Pacote: 2+ produtos da MESMA moeda. O preço do pacote já é o piso —
+  // abaixo dele não existe margem de negociação, só aprovação.
+  function calcularPacote(itens, ciclos, descPacote, parcelas) {
+    var lista = (itens || []).map(getPreco).filter(Boolean);
+    if (lista.length < 2) return null;
+    var moedas = {};
+    lista.forEach(function (p) { moedas[p.moeda] = true; });
+    if (Object.keys(moedas).length > 1)
+      return { erro: "Não misture R$ e € no mesmo pacote." };
+    var moeda = lista[0].moeda;
+    var c = parseInt(ciclos, 10) === 2 ? 2 : 1;
+    var soma = lista.reduce(function (a, p) { return a + p.ciclo; }, 0) * c;
+    var desc = parseFloat(descPacote) || 0;
+    var preco = Math.round(soma * (1 - desc / 100) * 100) / 100;
+    var n = Math.max(1, parseInt(parcelas, 10) || 1);
+    var maxP = Math.min.apply(null, lista.map(function (p) { return p.maxParcelas; })) * c;
+    var mensal = preco / (CICLO_MESES * c);
+    return {
+      itens: lista, moeda: moeda, ciclos: c, soma: soma, desconto: desc,
+      preco: preco, parcelas: n, maxParcelas: maxP,
+      valorParcela: preco / n, mensal: mensal,
+      eurMes: moeda === "€" ? mensal : mensal / taxaCambio(),
+      ticketAlvo: ticketAlvo(),
+      excedeParcelas: n > maxP
+    };
+  }
+
   // ── API PÚBLICA ───────────────────────────────────────────────
   window.ISRCRM = {
     // constantes
@@ -2075,6 +2507,7 @@
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
     addCusto: addCusto, removeCusto: removeCusto, updateCusto: updateCusto,
+    custosDoMes: custosDoMes, vigenteNoMes: vigenteNoMes,
     // financeiro
     CAT_ENTRADA: CAT_ENTRADA, CAT_SAIDA: CAT_SAIDA, catMeta: catMeta,
     financeiroMes: financeiroMes, financeiroSerie: financeiroSerie, previsaoMes: previsaoMes,
@@ -2084,7 +2517,20 @@
     metaDoMes: metaDoMes, setMetaMes: setMetaMes, setMetaPadrao: setMetaPadrao,
     taxaCambio: taxaCambio, setTaxaCambio: setTaxaCambio, emReais: emReais,
     ticketMedio: ticketMedio, taxaConversao: taxaConversao,
-    resumoFinanceiroTexto: resumoFinanceiroTexto,
+    resumoFinanceiroTexto: resumoFinanceiroTexto, reunioesResumo: reunioesResumo,
+    alunasPainel: alunasPainel, RISCOS: RISCOS, tarefasDe: tarefasDe,
+    // acompanhamento
+    TOQUE_TIPOS: TOQUE_TIPOS, PULSO_META: PULSO_META, MOTIVOS_TOQUE: MOTIVOS_TOQUE,
+    registrarToque: registrarToque, toquesDe: toquesDe, ultimoToque: ultimoToque,
+    toquesLista: toquesLista, diasSemToque: diasSemToque,
+    registrarPulso: registrarPulso, pulsosDe: pulsosDe, ultimoPulso: ultimoPulso,
+    pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
+    filaAcompanhamento: filaAcompanhamento,
+    // preços e negociação
+    CICLO_MESES: CICLO_MESES, ESCADA_CONCESSOES: ESCADA_CONCESSOES,
+    precosLista: precosLista, getPreco: getPreco, updatePreco: updatePreco,
+    ticketAlvo: ticketAlvo, setTicketAlvo: setTicketAlvo,
+    calcularProposta: calcularProposta, calcularPacote: calcularPacote,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     // perfil
