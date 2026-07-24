@@ -21,15 +21,14 @@
         <p style="margin: 0; font-size: 13px; color: #6b6155;">{{ saudacao }}</p>
       </div>
       <!-- seletor de perfil (Gestora vê tudo; equipe entra direto no seu) -->
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
         <sc-if value="{{ mostraSeletor }}">
-          <div style="display: flex; gap: 6px; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 4px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 4px;">
             <sc-for list="{{ perfis }}" as="pf" hint-placeholder-count="3">
               <button onclick="{{ pf.onClick }}" style="border: none; cursor: pointer; background: {{ pf.bg }}; color: {{ pf.fg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">{{ pf.label }}</button>
             </sc-for>
           </div>
         </sc-if>
-        <button onclick="{{ onSair }}" title="Sair da gestão" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 13px; border-radius: 999px; cursor: pointer;">sair</button>
       </div>
     </header>
 
@@ -293,7 +292,6 @@ class Component extends DCLogic {
     return {
       saudacao: nomes[perfilAtivo], perfis,
       mostraSeletor: ehGestora,
-      onSair: () => { CRM.sairGestao(); window.location.replace("gestao.html"); },
       fila, filaVazia: filaAll.length === 0,
       filaCount: filaAll.length + (filaAll.length === 1 ? " item" : " itens"),
       filaBadgeBg: filaAll.length ? "rgba(224,120,86,0.14)" : "rgba(90,158,75,0.16)",
