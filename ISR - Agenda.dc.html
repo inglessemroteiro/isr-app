@@ -19,7 +19,6 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Agenda da escola</h1>
       </div>
       <div style="display: flex; gap: 8px;">
-        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
         <button onclick="{{ onToggleFeriados }}" style="border: 1px solid #e5dccf; background: {{ ferBg }}; color: {{ ferFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Feriados</button>
         <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
       </div>
@@ -44,9 +43,12 @@
     <sc-if value="{{ feriadosAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 6px;">Feriados da escola</div>
-        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">No feriado a agenda não marca aula — e a conta de aulas do ciclo sai certa.</p>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">No feriado a agenda não marca aula — e a conta de aulas do ciclo sai certa. Para férias ou recesso, preencha início e fim.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; color: #8a7c6b; font-weight: 700;">de</span>
           <input ref="{{ ferDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <span style="font-size: 11px; color: #8a7c6b; font-weight: 700;">até</span>
+          <input ref="{{ ferFimRef }}" type="date" title="Deixe vazio para um dia só" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ ferNomeRef }}" placeholder="Nome (ex. Carnaval)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; flex: 1; min-width: 160px;" />
           <button onclick="{{ onAddFeriado }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">✓ Adicionar feriado</button>
         </div>
@@ -94,13 +96,12 @@
       </sc-if>
     </div>
 
-    <!-- LEGENDA DE CORES -->
-    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 0 4px;">
-      <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="8">
-        <button onclick="{{ lg.onClick }}" style="display: inline-flex; align-items: center; gap: 5px; border: none; background: {{ lg.bg }}; cursor: pointer; padding: 4px 10px; border-radius: 999px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ lg.cor }}; display: inline-block;"></span>
-          <span style="font-size: 11px; font-weight: {{ lg.weight }}; color: #6b6155;">{{ lg.label }}</span>
-          <span style="font-size: 10px; color: #b3a693;">{{ lg.count }}</span>
+    <!-- LEGENDA DE CORES (compacta: só o que tem item na janela) -->
+    <div style="display: flex; gap: 4px; overflow-x: auto; margin-bottom: 10px; padding: 2px 4px; -webkit-overflow-scrolling: touch;">
+      <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="6">
+        <button onclick="{{ lg.onClick }}" style="flex: none; display: inline-flex; align-items: center; gap: 4px; border: none; background: {{ lg.bg }}; cursor: pointer; padding: 3px 8px; border-radius: 999px; white-space: nowrap;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ lg.cor }}; display: inline-block;"></span>
+          <span style="font-size: 10px; font-weight: {{ lg.weight }}; color: #6b6155;">{{ lg.label }} {{ lg.count }}</span>
         </button>
       </sc-for>
     </div>
@@ -126,6 +127,9 @@
                 <div style="flex: 1; min-width: 0;">
                   <sc-if value="{{ it.temPerfil }}">
                     <a href="{{ it.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ it.titulo }}</a>
+                  </sc-if>
+                  <sc-if value="{{ it.temTurma }}">
+                    <a href="{{ it.turmaHref }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: underline; text-underline-offset: 2px;">{{ it.titulo }}</a>
                   </sc-if>
                   <sc-if value="{{ it.semPerfil }}">
                     <span style="font-size: 13px; font-weight: 700; color: {{ it.tituloCor }};">{{ it.titulo }}</span>
@@ -180,7 +184,7 @@ class Component extends DCLogic {
     novoAberto: false, feriadosAberto: false, tick: 0 };
   evTituloRef = React.createRef(); evDataRef = React.createRef();
   evHoraRef = React.createRef(); evRespRef = React.createRef();
-  ferDataRef = React.createRef(); ferNomeRef = React.createRef();
+  ferDataRef = React.createRef(); ferNomeRef = React.createRef(); ferFimRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
@@ -223,7 +227,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const refs = { evTituloRef: this.evTituloRef, evDataRef: this.evDataRef, evHoraRef: this.evHoraRef,
-      evRespRef: this.evRespRef, ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef };
+      evRespRef: this.evRespRef, ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
     if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
 
     const ehSemana = this.state.visao === "semana";
@@ -257,7 +261,7 @@ class Component extends DCLogic {
           bg: on ? "#f2ebe3" : "transparent", weight: on ? 700 : 600,
           onClick: () => this.setState({ tipo: l.id })
         };
-      });
+      }).filter(l => l.count > 0 || l.id === tipoAtivo || l.id === "todos");
 
     const visiveis = porResp.filter(it => tipoAtivo === "todos" || it.tipo === tipoAtivo);
 
@@ -277,9 +281,12 @@ class Component extends DCLogic {
         titulo: it.titulo, hora: it.hora || "—", cor: meta(it.tipo).cor,
         tituloCor: it.tipo === "feriado" ? "#b05c4c" : "#164951",
         resp: it.responsavel || "",
-        temPerfil: !!it.pessoaId, semPerfil: !it.pessoaId,
+        temPerfil: !!it.pessoaId,
+        temTurma: !it.pessoaId && !!it.turmaId,
+        semPerfil: !it.pessoaId && !it.turmaId,
+        turmaHref: it.turmaId ? "ISR%20-%20Turma.dc.html?id=" + it.turmaId : "#",
         perfilHref: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#",
-        temGcal: it.tipo !== "feriado",
+        temGcal: it.tipo !== "feriado" && it.tipo !== "aula",
         gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Agenda · Inglês sem Roteiro"),
         removivel: !!it.eventoId,
         onRemover: () => { CRM.removeEvento(it.eventoId); this.bump(); }
@@ -306,7 +313,7 @@ class Component extends DCLogic {
             bg: it.tipo === "feriado" ? "rgba(207,107,92,0.08)" : "#faf8f3",
             horaTag: (it.hora || "").toUpperCase() || (this.TIPO_META[it.tipo] ? this.TIPO_META[it.tipo].label.toUpperCase() : ""),
             curto: it.titulo.replace(/^(Aula|Aula extra|Reunião( feita)?|Matrícula|Onboarding|Check-in|Follow-up|Fim de contrato|Pendência|Feriado) · /, ""),
-            href: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#"
+            href: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : (it.turmaId ? "ISR%20-%20Turma.dc.html?id=" + it.turmaId : "#")
           }))
         });
       }
@@ -319,7 +326,7 @@ class Component extends DCLogic {
     })() : "";
 
     const feriados = CRM.feriadosLista().map(f => ({
-      label: CRM.ddmm(f.data) + " · " + f.nome,
+      label: CRM.ddmm(f.data) + (f.fim && f.fim !== f.data ? "–" + CRM.ddmm(f.fim) : "") + " · " + f.nome,
       onRemover: () => { CRM.removeFeriado(f.id); this.bump(); }
     }));
 
@@ -362,7 +369,9 @@ class Component extends DCLogic {
       onAddFeriado: () => {
         const data = this.val(this.ferDataRef);
         if (!data) { window.alert("Escolha a data do feriado."); return; }
-        window.ISRCRM.addFeriado(data, this.val(this.ferNomeRef) || "Feriado");
+        const fim = this.val(this.ferFimRef);
+        if (fim && fim < data) { window.alert("A data final deve ser depois da inicial."); return; }
+        window.ISRCRM.addFeriado(data, this.val(this.ferNomeRef) || "Feriado", fim || data);
         if (this.ferNomeRef.current) this.ferNomeRef.current.value = "";
         this.bump();
       }

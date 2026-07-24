@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inglês sem Roteiro — Cadastro</title>
+<style>
+  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+  .card { background: #fdfbf8; border-radius: 16px; padding: 32px 28px; max-width: 420px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 6px; }
+  h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
+  p.desc { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
+  label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; margin: 12px 0 5px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; }
+  .sinal { background: #eef4f4; border: 1px solid #c9dede; border-radius: 10px; padding: 13px 15px; margin-top: 16px; font-size: 12.5px; color: #3d3529; line-height: 1.6; }
+  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 14px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px; cursor: pointer; margin-top: 18px; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; text-align: center; }
+  .ok { display: none; text-align: center; padding: 30px 10px; }
+  .ok h2 { font-size: 20px; color: #164951; margin: 0 0 8px; }
+  .ok p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0; }
+  .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 14px 0 0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="form">
+    <p class="eyebrow">Inglês sem Roteiro</p>
+    <h1>Garanta sua vaga</h1>
+    <p class="desc">Preencha seu cadastro e, se combinou um sinal com a gente, cole aqui o link do comprovante — o restante fica em parcelas, do jeito que combinamos. 💛</p>
+    <label>Nome completo *</label>
+    <input id="nome" placeholder="Seu nome" />
+    <label>WhatsApp * (com DDD / código do país)</label>
+    <input id="whatsapp" placeholder="+55 11 99999-0000" />
+    <label>E-mail</label>
+    <input id="email" type="email" placeholder="voce@email.com" />
+    <label>Horário / turma que combinamos (se souber)</label>
+    <input id="turma" placeholder="ex. terça 19h" />
+    <div class="sinal">
+      <strong>Vai enviar o sinal?</strong> Faça o pagamento pelo link que a Gabi te mandou e cole abaixo o link do comprovante (print no Google Drive/Fotos com link liberado, ou o link do próprio banco).
+    </div>
+    <label>Valor do sinal (se combinado)</label>
+    <input id="sinal" placeholder="ex. R$ 200" />
+    <label>Link do comprovante</label>
+    <input id="comprovante" placeholder="https://..." />
+    <button id="enviar" onclick="enviar()">Enviar cadastro →</button>
+    <p class="erro" id="erro"></p>
+    <p class="nota">Seus dados vão direto pro sistema da escola. Qualquer dúvida, chama a Gabi no WhatsApp.</p>
+  </div>
+  <div class="ok" id="sucesso">
+    <h2>Cadastro recebido! 🎉</h2>
+    <p>Obrigada! A equipe do Inglês sem Roteiro já recebeu seus dados<span id="okSinal"></span>.<br>Em breve você recebe as boas-vindas no WhatsApp.</p>
+  </div>
+</div>
+<script>
+  // o link enviado pela escola traz o endereço do banco central: cadastro.html?b=<url do Apps Script>
+  var BACKEND = "";
+  try { BACKEND = new URLSearchParams(window.location.search).get("b") || ""; } catch (e) {}
+  function enviar() {
+    var v = function (id) { return (document.getElementById(id).value || "").trim(); };
+    var erro = document.getElementById("erro");
+    erro.style.display = "none";
+    if (!v("nome") || !v("whatsapp")) {
+      erro.textContent = "Preencha pelo menos o nome e o WhatsApp."; erro.style.display = "block"; return;
+    }
+    if (!BACKEND) {
+      erro.textContent = "Link incompleto — peça o link de cadastro novamente pra escola."; erro.style.display = "block"; return;
+    }
+    var btn = document.getElementById("enviar");
+    btn.disabled = true; btn.textContent = "Enviando…";
+    fetch(BACKEND, {
+      method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "novoCadastro", data: {
+        nome: v("nome"), whatsapp: v("whatsapp"), email: v("email"),
+        turmaInteresse: v("turma"), sinal: v("sinal"), comprovante: v("comprovante")
+      } })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) {
+        if (v("comprovante")) document.getElementById("okSinal").textContent = " e o comprovante do sinal";
+        document.getElementById("form").style.display = "none";
+        document.getElementById("sucesso").style.display = "block";
+      } else {
+        erro.textContent = (d && d.error) || "Não deu certo — tente de novo."; erro.style.display = "block";
+        btn.disabled = false; btn.textContent = "Enviar cadastro →";
+      }
+    }).catch(function () {
+      erro.textContent = "Sem conexão — tente de novo em instantes."; erro.style.display = "block";
+      btn.disabled = false; btn.textContent = "Enviar cadastro →";
+    });
+  }
+</script>
+</body>
+</html>

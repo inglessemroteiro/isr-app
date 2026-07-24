@@ -18,7 +18,6 @@
         <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Pedagógico</p>
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Painel do Professor</h1>
       </div>
-      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">A semana de cada professora: as próximas aulas (das turmas e particulares), a chamada — que registra faltas direto na linha do tempo da aluna — e as turmas com projeto e material do ciclo.</p>
 
@@ -109,7 +108,7 @@
       <sc-for list="{{ turmasProf }}" as="u" hint-placeholder-count="3">
         <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid #f2e9dd;">
           <div style="min-width: 0;">
-            <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ u.nivel }}</div>
+            <a href="{{ u.turmaHref }}" style="font-size: 13.5px; font-weight: 700; color: #164951; text-decoration: underline; text-underline-offset: 2px;">{{ u.nivel }}</a>
             <div style="font-size: 11px; color: #a2957f; margin-top: 2px;">{{ u.turma }}</div>
           </div>
           <div style="font-size: 12.5px; font-weight: 700; color: #6b5b95;">{{ u.projeto }}</div>
@@ -130,6 +129,10 @@ class Component extends DCLogic {
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
+
+  turmaParam() {
+    try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
+  }
 
   diaLabel(isoStr) {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
@@ -172,7 +175,10 @@ class Component extends DCLogic {
 
     // professora inicial: a própria (se logada com nome de professora), senão a primeira
     const user = CRM.gestaoUser();
+    const tp = this.turmaParam();
+    const tpTurma = tp ? ocup.filter(u => u.label === tp)[0] : null;
     let teacher = this.state.teacher;
+    if (!teacher && tpTurma) teacher = tpTurma.teacher;
     if (!teacher) teacher = (user && nomes.indexOf(user.nome) >= 0) ? user.nome : nomes[0];
 
     const turmasProfOcup = ocup.filter(u => u.teacher === teacher);
@@ -196,7 +202,9 @@ class Component extends DCLogic {
       });
 
     // ── chamada ──
-    const turmaSel = this.state.turmaChamada || (turmasProfOcup[0] ? turmasProfOcup[0].label : null);
+    const turmaSel = this.state.turmaChamada
+      || (tpTurma && tpTurma.teacher === teacher ? tpTurma.label : null)
+      || (turmasProfOcup[0] ? turmasProfOcup[0].label : null);
     const dataSel = this.state.chamadaData || this.hojeIso();
     const presAtual = this.state.presencas || (turmaSel ? this.carregarChamada(turmaSel, dataSel) : {});
     const alunas = turmaSel ? CRM.alunasDaTurma(turmaSel) : [];
@@ -247,6 +255,7 @@ class Component extends DCLogic {
       },
 
       turmasProf: turmasProfOcup.map(u => ({
+        turmaHref: "ISR%20-%20Turma.dc.html?id=" + u.id,
         nivel: u.nivel, turma: u.turma,
         projeto: u.projeto || "—",
         ocupLabel: u.ocupadas + "/" + u.capacidade,

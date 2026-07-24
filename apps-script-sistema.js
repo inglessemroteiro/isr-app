@@ -28,17 +28,67 @@ var CHUNK = 45000;                // limite seguro por célula
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || "";
   if (action === "sistemaLoad") return json_(sistemaLoad_());
-  return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "POST sistemaSave"] });
+  if (action === "cadastrosPendentes") return json_(cadastrosPendentes_());
+  return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
 }
 
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (body.action === "sistemaSave") return json_(sistemaSave_(body.data || {}));
+    if (body.action === "novoCadastro") return json_(novoCadastro_(body.data || {}));
+    if (body.action === "cadastroProcessado") return json_(cadastroProcessado_(body.id));
     return json_({ ok: false, error: "ação desconhecida" });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+// ── CADASTRO ONLINE (link público → CRM) ─────────────────────────
+// A pessoa preenche cadastro.html no celular dela; cai na aba
+// "Cadastros recebidos" e o sistema puxa e cria o lead sozinho.
+var CAD_SHEET = "Cadastros recebidos";
+var CAD_HEAD = ["ID", "Recebido em", "Nome", "WhatsApp", "E-mail", "Turma de interesse", "Sinal", "Comprovante", "Processado"];
+
+function cadSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(CAD_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(CAD_SHEET);
+    sh.getRange(1, 1, 1, CAD_HEAD.length).setValues([CAD_HEAD]).setFontWeight("bold");
+  }
+  return sh;
+}
+
+function novoCadastro_(d) {
+  if (!d.nome || !d.whatsapp) return { ok: false, error: "nome e WhatsApp são obrigatórios" };
+  var sh = cadSheet_();
+  var id = "cad" + new Date().getTime();
+  sh.appendRow([id, new Date().toISOString(), String(d.nome), String(d.whatsapp),
+    String(d.email || ""), String(d.turmaInteresse || ""), String(d.sinal || ""),
+    String(d.comprovante || ""), ""]);
+  return { ok: true, id: id };
+}
+
+function cadastrosPendentes_() {
+  var sh = cadSheet_();
+  var vals = sh.getDataRange().getValues();
+  var itens = [];
+  for (var i = 1; i < vals.length; i++) {
+    if (String(vals[i][8]) === "sim") continue;
+    itens.push({ id: vals[i][0], nome: vals[i][2], whatsapp: String(vals[i][3]),
+      email: vals[i][4], turmaInteresse: vals[i][5], sinal: vals[i][6], comprovante: vals[i][7] });
+  }
+  return { ok: true, itens: itens };
+}
+
+function cadastroProcessado_(id) {
+  var sh = cadSheet_();
+  var vals = sh.getDataRange().getValues();
+  for (var i = 1; i < vals.length; i++) {
+    if (vals[i][0] === id) { sh.getRange(i + 1, 9).setValue("sim"); return { ok: true }; }
+  }
+  return { ok: false, error: "cadastro não encontrado" };
 }
 
 // ── SALVAR: dado bruto + carimbo legível ─────────────────────────

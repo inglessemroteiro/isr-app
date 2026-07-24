@@ -118,6 +118,8 @@
     // LEADS
     { id: "lead_primeiro", categoria: "Leads", titulo: "Primeiro contato",
       corpo: "Oi, {{primeiroNome}}! Tudo bem? 😊\nAqui é a Gabi, do Inglês sem Roteiro. Vi que você demonstrou interesse nas nossas aulas.\nMe conta: o que te motivou a querer voltar a estudar inglês agora?" },
+    { id: "lead_cadastro", categoria: "Leads", titulo: "Link de cadastro + sinal",
+      corpo: "Oi, {{primeiroNome}}! Que alegria que voc\u00ea vai entrar pro Ingl\u00eas sem Roteiro. \ud83d\udc9b\nPra garantir sua vaga sem pagar tudo de uma vez: preenche seu cadastro nesse link e envia o comprovante do sinal por l\u00e1 mesmo \u2014 o resto a gente combina em parcelas.\n[DESTACADO: link de cadastro \u2014 copie no CRM]\nQualquer d\u00favida me chama aqui!" },
     { id: "lead_followup", categoria: "Leads", titulo: "Follow-up (sumiu)",
       corpo: "Oi, {{primeiroNome}}! Passando pra saber se você ainda tem interesse em conversar sobre as aulas de inglês.\nÀs vezes a rotina corre e essas coisas ficam pra depois — se ainda fizer sentido pra você, me manda um horário melhor e a gente marca com calma. 🙌" },
     { id: "lead_incompleta", categoria: "Leads", titulo: "Inscrição incompleta",
@@ -288,7 +290,7 @@
   function addTurma(dados) {
     var list = turmasLista();
     list.push({ id: "t" + Date.now(), nivel: dados.nivel || "", turma: dados.turma || "",
-      teacher: dados.teacher || "", cycle: dados.cycle || METAS.cicloLabel,
+      teacher: dados.teacher || "", cycle: dados.cycle || metasAtuais().cicloLabel,
       projeto: dados.projeto || "", notebook: dados.notebook || "",
       capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
     turmasSave(list); return list;
@@ -304,7 +306,19 @@
   }
 
   // ── METAS DO CICLO (Config digita 1x — spec 13; demo fixo) ────
-  var METAS = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026" };
+  var METAS_PADRAO = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026" };
+  var METAS_KEY = "isr_metas_v1";
+  function metasAtuais() {
+    try { var m = JSON.parse(localStorage.getItem(METAS_KEY)); if (m) return Object.assign({}, METAS_PADRAO, m); } catch (e) {}
+    return METAS_PADRAO;
+  }
+  function setMetas(patch) {
+    var m = {}; try { m = JSON.parse(localStorage.getItem(METAS_KEY)) || {}; } catch (e) {}
+    Object.assign(m, patch);
+    try { localStorage.setItem(METAS_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return metasAtuais();
+  }
 
   // ══════════════════════════════════════════════════════════════
   //  SEED — Pessoa única (dados FICTÍCIOS; estrutura = spec 1.3)
@@ -615,12 +629,16 @@
       var moedaC = cfg.moeda || p.moeda || "R$";
       var totalCalc = cfg.valorTotal || (cfg.valorParcela ? fmtMoney(moedaC, parseMoney(cfg.valorParcela) * n) : "");
       p.contratos.unshift({
-        tipo: cfg.tipo || "Matrícula", ciclos: cfg.ciclos || "1 Ciclo " + METAS.cicloLabel,
+        tipo: cfg.tipo || "Matrícula", ciclos: cfg.ciclos || "1 Ciclo " + metasAtuais().cicloLabel,
         moeda: moedaC, valorTotal: totalCalc,
         parcelaValor: cfg.valorParcela || "", parcelas: n, vencDia: cfg.vencDia || 10,
         fim: MESES_COBRANCA[fimIdx].key + "-28",
         meses: mkMeses(0, cfg.valorParcela || "", n)
       });
+      if (cfg.sinalValor) {
+        p.contratos[p.contratos.length - 1].sinal = { valor: cfg.sinalValor, recebido: !!cfg.sinalRecebido };
+        pushHist(p, "pagamento", "Sinal de " + cfg.sinalValor + (cfg.sinalRecebido ? " recebido" : " combinado (aguardando comprovante)"));
+      }
       p.onboarding = [
         { id: "d0", label: "Boas-vindas enviadas", data: addDays(0), feito: false },
         { id: "d2", label: "Confirmou a 1ª aula", data: addDays(2), feito: false },
@@ -828,9 +846,9 @@
   // ── FERIADOS DA ESCOLA (a agenda pula as aulas nesses dias) ────
   var FERIADOS_KEY = "isr_feriados_v1";
   function feriadosLista() { try { return JSON.parse(localStorage.getItem(FERIADOS_KEY)) || []; } catch (e) { return []; } }
-  function addFeriado(dataIso, nome) {
+  function addFeriado(dataIso, nome, fimIso) {
     var l = feriadosLista();
-    l.push({ id: "fer" + Date.now(), data: dataIso, nome: nome || "Feriado" });
+    l.push({ id: "fer" + Date.now(), data: dataIso, fim: fimIso || dataIso, nome: nome || "Feriado" });
     l.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
     try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(l)); } catch (e) {}
     agendarSync(); return l;
@@ -841,7 +859,9 @@
     agendarSync(); return l;
   }
   function ehFeriado(dataIso) {
-    return feriadosLista().filter(function (f) { return f.data === dataIso; }).length > 0;
+    return feriadosLista().filter(function (f) {
+      return dataIso >= f.data && dataIso <= (f.fim || f.data);
+    }).length > 0;
   }
 
   // ── REUNIÕES DO COMERCIAL (calendário da Carla) ────────────────
@@ -981,13 +1001,14 @@
   // ── METAS DO CICLO ────────────────────────────────────────────
   function progressoMetas() {
     var pessoas = loadPessoas();
-    var ini = parseISO(METAS.cicloInicio);
+    var M = metasAtuais();
+    var ini = parseISO(M.cicloInicio);
     var matriculas = pessoas.filter(function (p) {
       return (p.status === "aluna" || p.status === "mvs") && p.desde && parseISO(p.desde) >= ini;
     }).length;
     var renovadas = pessoas.filter(function (p) { return p.renovacao === "renovada"; }).length;
-    return { matriculas: matriculas, metaMatriculas: METAS.matriculas,
-      renovacoes: renovadas, metaRenovacoes: METAS.renovacoes, ciclo: METAS.cicloLabel };
+    return { matriculas: matriculas, metaMatriculas: M.matriculas,
+      renovacoes: renovadas, metaRenovacoes: M.renovacoes, ciclo: M.cicloLabel };
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -1035,6 +1056,36 @@
   // Projeção 90 dias, mês a mês e por moeda:
   //   esperado = parcelas do mês (pagas + a receber) · custos = fixos
   //   resultado = esperado − custos · saldo = acumulado
+  function caixaDetalheMes(key) {
+    var entradas = [];
+    loadPessoas().forEach(function (p) {
+      (p.contratos || []).forEach(function (c) {
+        (c.meses || []).forEach(function (m) {
+          if (m.key === key && m.valor)
+            entradas.push({ pessoaId: p.id, nome: p.nome, moeda: p.moeda || "R$",
+              valor: m.valor, valorNum: parseMoney(m.valor), pago: !!m.pago });
+        });
+      });
+    });
+    entradas.sort(function (a, b) { return (a.pago === b.pago) ? (b.valorNum - a.valorNum) : (a.pago ? -1 : 1); });
+    var saidas = custosLista().map(function (c) {
+      return { nome: c.nome, moeda: c.moeda, valor: c.valor };
+    });
+    var tot = function (list, moeda, f) {
+      return list.filter(function (x) { return x.moeda === moeda; })
+        .reduce(function (a, x) { return a + f(x); }, 0);
+    };
+    return {
+      entradas: entradas, saidas: saidas,
+      recebidoBRL: tot(entradas, "R$", function (e) { return e.pago ? e.valorNum : 0; }),
+      recebidoEUR: tot(entradas, "€", function (e) { return e.pago ? e.valorNum : 0; }),
+      aReceberBRL: tot(entradas, "R$", function (e) { return e.pago ? 0 : e.valorNum; }),
+      aReceberEUR: tot(entradas, "€", function (e) { return e.pago ? 0 : e.valorNum; }),
+      saiuBRL: tot(saidas, "R$", function (s) { return s.valor; }),
+      saiuEUR: tot(saidas, "€", function (s) { return s.valor; })
+    };
+  }
+
   function projecaoCaixa() {
     var horizonte = MESES_COBRANCA.slice(0, 3); // mês corrente + 2
     var custos = custosTotais();
@@ -1193,7 +1244,7 @@
     var payload = {
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
-      tarefas: tarefasLista(), feriados: feriadosLista(),
+      tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1217,14 +1268,52 @@
             if (d.data.chamadas) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(d.data.chamadas)); } catch (e) {} }
             if (d.data.tarefas) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(d.data.tarefas)); } catch (e) {} }
             if (d.data.feriados) { try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(d.data.feriados)); } catch (e) {} }
+            if (d.data.metas) { try { localStorage.setItem(METAS_KEY, JSON.stringify(d.data.metas)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
         }).catch(function () { if (cb) cb(false); });
     } catch (e) { if (cb) cb(false); }
   }
-  // ao abrir qualquer tela: puxa a base compartilhada (silencioso)
-  try { setTimeout(function () { carregarDoBackend(); }, 50); } catch (e) {}
+  function processarCadastrosPendentes(cb) {
+    var url = backendUrl();
+    if (!url) { if (cb) cb(0); return; }
+    try {
+      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=cadastrosPendentes")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
+          var novos = 0;
+          d.itens.forEach(function (c) {
+            var existe = loadPessoas().filter(function (p) {
+              return (c.whatsapp && p.whatsapp === c.whatsapp) || (c.email && p.email && p.email === c.email);
+            })[0];
+            if (!existe) {
+              var p = novaPessoa({ nome: c.nome, whatsapp: c.whatsapp, email: c.email, canal: "Cadastro online" });
+              mutate(p.id, function (pp) {
+                pp.origem = { canal: "Cadastro online", detalhe: "link de cadastro", veioDe: "-", entrouPor: "link" };
+                if (c.turmaInteresse) pp.turmaInteresse = c.turmaInteresse;
+                pp.badge = c.comprovante ? "sinal enviado" : "cadastro online";
+                if (c.comprovante) {
+                  pp.documentos = pp.documentos || [];
+                  pp.documentos.push({ nome: "Comprovante do sinal" + (c.sinal ? " (" + c.sinal + ")" : ""), link: c.comprovante });
+                }
+                pushHist(pp, "criado", "Cadastro online recebido" + (c.sinal ? " · sinal: " + c.sinal : "") + (c.comprovante ? " · comprovante anexado" : ""));
+              });
+              novos++;
+            }
+            try {
+              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "cadastroProcessado", id: c.id }) }).catch(function () {});
+            } catch (e) {}
+          });
+          if (cb) cb(novos);
+        }).catch(function () { if (cb) cb(0); });
+    } catch (e) { if (cb) cb(0); }
+  }
+
+  // ao abrir qualquer tela: puxa a base compartilhada + cadastros novos (silencioso)
+  try { setTimeout(function () { carregarDoBackend(function () { processarCadastrosPendentes(); }); }, 50); } catch (e) {}
 
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
@@ -1315,6 +1404,25 @@
     });
     return n;
   }
+  function renegociarContrato(id, cfg) {
+    return mutate(id, function (p) {
+      var c = contratoVigente(p);
+      if (!c || !cfg.novoValor) return;
+      var alteradas = 0;
+      (c.meses || []).forEach(function (m) { if (!m.pago) { m.valor = cfg.novoValor; alteradas++; } });
+      c.parcelaValor = cfg.novoValor;
+      if (cfg.vencDia) c.vencDia = parseInt(cfg.vencDia, 10) || c.vencDia;
+      pushHist(p, "renovacao", "Contrato renegociado · " + alteradas + " parcela(s) em aberto agora " + cfg.novoValor + (cfg.motivo ? " · " + cfg.motivo : ""));
+    });
+  }
+  function setSinalRecebido(id, recebido) {
+    return mutate(id, function (p) {
+      var c = contratoVigente(p);
+      if (!c || !c.sinal) return;
+      c.sinal.recebido = !!recebido;
+      if (recebido) pushHist(p, "pagamento", "Sinal de " + c.sinal.valor + " recebido");
+    });
+  }
   function registrarAulaParticular(id) {
     return mutate(id, function (p) {
       p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
@@ -1330,6 +1438,12 @@
   }
   function alunasDaTurma(turmaLabel) {
     return loadPessoas().filter(function (p) { return p.status === "aluna" && p.turma === turmaLabel; });
+  }
+  function chamadasDaTurma(turmaLabel) {
+    var m = chamadasAll(), out = [];
+    Object.keys(m).forEach(function (k) { if (m[k].turma === turmaLabel) out.push(m[k]); });
+    out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    return out;
   }
 
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
@@ -1352,15 +1466,19 @@
       for (var i = 0; i < nDias; i++) {
         var d = new Date(t0); d.setDate(d.getDate() + i);
         if (d.getDay() === alvo && !ehFeriado(iso(d))) {
-          itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula",
+          itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula", turmaId: u.id,
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
       }
     });
     feriadosLista().forEach(function (f) {
-      if (dentro(f.data))
-        itens.push({ data: f.data, hora: "", tipo: "feriado",
-          titulo: "Feriado · " + f.nome + " (sem aulas)", responsavel: "" });
+      var dIni = parseISO(f.data), dFim = parseISO(f.fim || f.data);
+      if (!dIni || !dFim) return;
+      for (var fd = new Date(dIni); fd <= dFim; fd.setDate(fd.getDate() + 1)) {
+        if (dentro(iso(fd)))
+          itens.push({ data: iso(fd), hora: "", tipo: "feriado",
+            titulo: "Feriado · " + f.nome + " (sem aulas)", responsavel: "" });
+      }
     });
     tarefasLista().forEach(function (tf) {
       if (!tf.feita && tf.prazo && dentro(tf.prazo))
@@ -1421,6 +1539,7 @@
     localStorage.removeItem(CHAMADAS_KEY);
     localStorage.removeItem(TAREFAS_KEY);
     localStorage.removeItem(FERIADOS_KEY);
+    localStorage.removeItem(METAS_KEY);
     localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
@@ -1431,7 +1550,7 @@
     STAGES: STAGES, TABS: TABS, CANAIS: CANAIS, get TEMPLATES() { return templatesMerged(); },
     MOTIVOS_PERDA: MOTIVOS_PERDA, STATUS_META: STATUS_META, PERFIS: PERFIS,
     MESES_COBRANCA: MESES_COBRANCA, COBRANCA_STATUS_META: COBRANCA_STATUS_META,
-    RENOV_ESTAGIOS: RENOV_ESTAGIOS, get UNITS() { return turmasLista(); }, METAS: METAS,
+    RENOV_ESTAGIOS: RENOV_ESTAGIOS, get UNITS() { return turmasLista(); }, get METAS() { return metasAtuais(); }, setMetas: setMetas,
     // pessoas
     getPessoas: loadPessoas, getPessoa: getPessoa,
     // compat CRM
@@ -1464,11 +1583,14 @@
     eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
+    chamadasDaTurma: chamadasDaTurma,
     estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
     agendarReuniao: agendarReuniao, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
+    renegociarContrato: renegociarContrato, setSinalRecebido: setSinalRecebido,
+    caixaDetalheMes: caixaDetalheMes, processarCadastrosPendentes: processarCadastrosPendentes,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
     addCusto: addCusto, removeCusto: removeCusto,
