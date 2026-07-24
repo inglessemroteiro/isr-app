@@ -17,15 +17,16 @@
   if (!user) return;
 
   var ITENS = [
-    { id: "central", label: "⚡ Central", href: "ISR - Central.dc.html", perfis: null },
-    { id: "crm", label: "🎯 CRM", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
-    { id: "mensagens", label: "💬 Mensagens", href: "ISR - Mensagens WhatsApp.dc.html", perfis: null },
-    { id: "cobranca", label: "💰 Cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
-    { id: "caixa", label: "📈 Caixa", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
-    { id: "turmas", label: "📚 Turmas", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "marketing", label: "📣 Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "professor", label: "🍎 Professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora"] },
-    { id: "aluna", label: "🎒 App da aluna", href: "index.html", perfis: null }
+    { id: "central", label: "Central", href: "ISR - Central.dc.html", perfis: null },
+    { id: "agenda", label: "Agenda", href: "ISR - Agenda.dc.html", perfis: null },
+    { id: "crm", label: "CRM", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
+    { id: "mensagens", label: "Mensagens", href: "ISR - Mensagens WhatsApp.dc.html", perfis: null },
+    { id: "cobranca", label: "Cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+    { id: "caixa", label: "Caixa", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
+    { id: "turmas", label: "Turmas", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "marketing", label: "Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "professor", label: "Professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora"] },
+    { id: "aluna", label: "App da aluna", href: "index.html", perfis: null }
   ];
 
   var path = "";

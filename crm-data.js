@@ -278,6 +278,31 @@
       projeto: "My Timeline", notebook: "ON-SPE_Student_Notebook_My_Timeline_26_2" }
   ];
 
+  // ── TURMAS EDITÁVEIS ──────────────────────────────────────────
+  var TURMAS_KEY = "isr_turmas_v1";
+  function turmasLista() {
+    try { var st = JSON.parse(localStorage.getItem(TURMAS_KEY)); if (st && st.length) return st; } catch (e) {}
+    return UNITS.map(function (u) { return Object.assign({ capacidade: CAPACIDADE_PADRAO }, u); });
+  }
+  function turmasSave(list) { try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  function addTurma(dados) {
+    var list = turmasLista();
+    list.push({ id: "t" + Date.now(), nivel: dados.nivel || "", turma: dados.turma || "",
+      teacher: dados.teacher || "", cycle: dados.cycle || METAS.cicloLabel,
+      projeto: dados.projeto || "", notebook: dados.notebook || "",
+      capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
+    turmasSave(list); return list;
+  }
+  function updateTurma(id, patch) {
+    var list = turmasLista();
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) { Object.assign(list[i], patch); break; }
+    turmasSave(list); return list;
+  }
+  function removeTurma(id) {
+    var list = turmasLista().filter(function (t) { return t.id !== id; });
+    turmasSave(list); return list;
+  }
+
   // ── METAS DO CICLO (Config digita 1x — spec 13; demo fixo) ────
   var METAS = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026" };
 
@@ -535,6 +560,29 @@
     return p;
   }
 
+  function setOnboardingFeito(id, cpId, feito) {
+    return mutate(id, function (p) {
+      (p.onboarding || []).forEach(function (c) {
+        if (c.id === cpId) {
+          c.feito = feito;
+          if (feito) pushHist(p, "onboarding", "Onboarding concluído: " + c.label);
+        }
+      });
+    });
+  }
+  function setProximoCheckin(id, isoStr) {
+    return mutate(id, function (p) {
+      p.proximoCheckin = isoStr;
+      pushHist(p, "checkin", "Próximo check-in agendado para " + ddmm(isoStr));
+    });
+  }
+  function registrarCheckinFeito(id) {
+    return mutate(id, function (p) {
+      p.proximoCheckin = "";
+      pushHist(p, "checkin", "Check-in realizado");
+    });
+  }
+
   function addDocumento(id, nome, link) {
     return mutate(id, function (p) {
       p.documentos = p.documentos || [];
@@ -546,15 +594,16 @@
   // Transição lead→aluna (spec 6): zero recadastro.
   // cfg: { turmaId, tipo, ciclos, moeda, valorParcela, parcelas, vencDia }
   function matricular(id, cfg) {
-    var unit = UNITS.filter(function (u) { return u.id === cfg.turmaId; })[0];
-    var turmaLabel = unit ? (unit.nivel + " · " + unit.turma) : (cfg.turmaLabel || "");
+    var particular = cfg.turmaId === "particular";
+    var unit = turmasLista().filter(function (u) { return u.id === cfg.turmaId; })[0];
+    var turmaLabel = particular ? "Particular" : (unit ? (unit.nivel + " · " + unit.turma) : (cfg.turmaLabel || ""));
     var n = parseInt(cfg.parcelas, 10) || 3;
     return mutate(id, function (p) {
       p.status = "aluna";
       p.estagio = "matriculado";
       p.turma = turmaLabel;
       p.professora = unit ? unit.teacher : "";
-      p.formatos = (p.formatos || []).concat(["grupo"]);
+      p.formatos = (p.formatos || []).concat([particular ? "particular" : "grupo"]);
       p.desde = iso(today());
       var fimIdx = Math.min(n - 1, MESES_COBRANCA.length - 1);
       p.contratos = p.contratos || [];
@@ -568,8 +617,14 @@
         fim: MESES_COBRANCA[fimIdx].key + "-28",
         meses: mkMeses(0, cfg.valorParcela || "", n)
       });
+      p.onboarding = [
+        { id: "d0", label: "Boas-vindas enviadas", data: addDays(0), feito: false },
+        { id: "d2", label: "Confirmou a 1ª aula", data: addDays(2), feito: false },
+        { id: "d7", label: "Check-in da 1ª semana", data: addDays(7), feito: false },
+        { id: "d30", label: "1º pagamento ok + NPS", data: addDays(30), feito: false }
+      ];
       pushHist(p, "matricula", "Matriculada · " + turmaLabel + " · contrato " + (cfg.tipo || "Matrícula") + " criado (" + n + " parcelas)");
-      pushHist(p, "onboarding", "Onboarding criado: D0 boas-vindas · D+2 confirma 1ª aula · D+7 check-in · D+30 pagamento + NPS");
+      pushHist(p, "onboarding", "Onboarding criado (4 checkpoints: boas-vindas, 1ª aula, 1ª semana, 1º pagamento)");
     });
   }
 
@@ -732,14 +787,15 @@
   // ── OCUPAÇÃO / VAGAS (spec 10: ninguém digita) ────────────────
   function ocupacaoTurmas() {
     var pessoas = loadPessoas();
-    return UNITS.map(function (u) {
+    return turmasLista().map(function (u) {
       var label = u.nivel + " · " + u.turma;
+      var cap = u.capacidade || CAPACIDADE_PADRAO;
       var ocup = pessoas.filter(function (p) {
         return (p.status === "aluna") && p.turma === label;
       }).length;
       return { id: u.id, nivel: u.nivel, turma: u.turma, teacher: u.teacher, cycle: u.cycle,
         projeto: u.projeto, notebook: u.notebook, label: label,
-        capacidade: CAPACIDADE_PADRAO, ocupadas: ocup, vagas: CAPACIDADE_PADRAO - ocup };
+        capacidade: cap, ocupadas: ocup, vagas: cap - ocup };
     });
   }
 
@@ -748,9 +804,9 @@
   //  perfil: 'gestora' | 'comercial' | 'operacao'
   // ══════════════════════════════════════════════════════════════
   var PERFIS = [
-    { id: "gestora", label: "👑 Gestora", regras: null }, // null = todas
-    { id: "comercial", label: "🎯 Comercial", regras: ["R1", "R2", "R5", "R12"] },
-    { id: "operacao", label: "🗂 Operação", regras: ["R3", "R4"] }
+    { id: "gestora", label: "Gestora", regras: null }, // null = todas
+    { id: "comercial", label: "Comercial", regras: ["R1", "R2", "R5", "R12"] },
+    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10"] }
   ];
   function filaParaHoje(perfilId) {
     var itens = [];
@@ -762,7 +818,7 @@
       if (p.status === "lead" && p.estagio !== "perdido" && p.estagio !== "incompleta" && p.proximoFollowup) {
         var d = parseISO(p.proximoFollowup);
         if (d && daysBetween(d, today()) >= 0) {
-          itens.push({ regra: "R1", dono: "🎯 Carla", urg: 1, icon: "✈️", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R1", dono: "Carla", urg: 1, icon: "", cor: "#348a8e", pessoaId: p.id, nome: p.nome,
             motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
             acao: "Mensagem do estágio", tpl: "lead_followup" });
         }
@@ -771,7 +827,7 @@
       if (p.status === "lead" && p.estagio === "incompleta") {
         var e = parseISO(p.entrouEm);
         if (e && daysBetween(e, today()) >= 1) {
-          itens.push({ regra: "R2", dono: "🎯 Carla", urg: 2, icon: "📝", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R2", dono: "Carla", urg: 2, icon: "", cor: "#9c6f56", pessoaId: p.id, nome: p.nome,
             motivo: "Inscrição incompleta há " + daysBetween(e, today()) + "d" + (p.badge ? " · " + p.badge.toLowerCase() : ""),
             acao: "Mensagem de inscrição", tpl: "lead_incompleta" });
         }
@@ -784,11 +840,11 @@
           var hoje = new Date().getDate(), venc = parseInt(c.vencDia, 10);
           if (!isNaN(venc)) {
             if (hoje > venc) {
-              itens.push({ regra: "R3", dono: "🗂 Érika", urg: 0, icon: "⚠️", pessoaId: p.id, nome: p.nome,
+              itens.push({ regra: "R3", dono: "Érika", urg: 0, icon: "", cor: "#e07856", pessoaId: p.id, nome: p.nome,
                 motivo: "Parcela de " + mes.label + " atrasada (" + mes.valor + " · venceu dia " + venc + ")",
                 acao: "Cobrar atraso", tpl: "pag_atraso" });
             } else if (venc - hoje <= 3) {
-              itens.push({ regra: "R4", dono: "🗂 Érika", urg: 3, icon: "🔔", pessoaId: p.id, nome: p.nome,
+              itens.push({ regra: "R4", dono: "Érika", urg: 3, icon: "", cor: "#d4a574", pessoaId: p.id, nome: p.nome,
                 motivo: "Parcela vence em " + (venc - hoje) + "d (" + mes.valor + ")",
                 acao: "Enviar lembrete", tpl: "pag_lembrete" });
             }
@@ -799,16 +855,34 @@
       if (p.status === "aluna" && c && c.fim && p.renovacao !== "renovada" && p.renovacao !== "nao_renovou") {
         var dias = daysBetween(today(), parseISO(c.fim));
         if (dias >= 0 && dias <= 45) {
-          itens.push({ regra: "R5", dono: "🎯 Carla", urg: 4, icon: "🔄", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R5", dono: "Carla", urg: 4, icon: "", cor: "#6b5b95", pessoaId: p.id, nome: p.nome,
             motivo: "Contrato termina em " + dias + "d — abrir renovação",
             acao: "Conversa de renovação", tpl: "renov_abrir" });
+        }
+      }
+      // R10 — checkpoint de onboarding pendente e vencido
+      if ((p.status === "aluna" || p.status === "mvs") && p.onboarding) {
+        var cpV = p.onboarding.filter(function (c) { return !c.feito && parseISO(c.data) && daysBetween(parseISO(c.data), today()) >= 0; })[0];
+        if (cpV) {
+          itens.push({ regra: "R10", dono: "Érika", urg: 2, icon: "", cor: "#9ec970", pessoaId: p.id, nome: p.nome,
+            motivo: "Onboarding pendente: " + cpV.label,
+            acao: "Mensagem do checkpoint", tpl: cpV.id === "d2" ? "onb_confirma1a" : "onb_sessao" });
+        }
+      }
+      // RC — check-in agendado para hoje/vencido
+      if (p.status === "aluna" && p.proximoCheckin) {
+        var dc = parseISO(p.proximoCheckin);
+        if (dc && daysBetween(dc, today()) >= 0) {
+          itens.push({ regra: "RC", dono: "Gabi", urg: 2, icon: "", cor: "#2a9d8f", pessoaId: p.id, nome: p.nome,
+            motivo: "Check-in agendado " + (daysBetween(dc, today()) === 0 ? "para hoje" : "· venceu " + ddmm(p.proximoCheckin)),
+            acao: "Fazer check-in", tpl: "checkin_mensal" });
         }
       }
       // R12 — ex-aluna "momento errado" completou 6 meses
       if (p.status === "ex-aluna" && p.motivoPerda === "Momento errado" && p.saidaEm) {
         var m6 = daysBetween(parseISO(p.saidaEm), today());
         if (m6 >= 180) {
-          itens.push({ regra: "R12", dono: "🎯 Carla", urg: 5, icon: "💬", pessoaId: p.id, nome: p.nome,
+          itens.push({ regra: "R12", dono: "Carla", urg: 5, icon: "", cor: "#b8ada0", pessoaId: p.id, nome: p.nome,
             motivo: "Saiu há " + Math.floor(m6 / 30) + " meses (momento errado) — hora de reativar",
             acao: "Reativar", tpl: "renov_abrir" });
         }
@@ -1109,10 +1183,91 @@
     } catch (e) {}
   })();
 
+  // ── AULAS EXTRAS / EVENTOS ────────────────────────────────────
+  var EVENTOS_KEY = "isr_eventos_v1";
+  function eventosLista() {
+    try { return JSON.parse(localStorage.getItem(EVENTOS_KEY)) || []; } catch (e) { return []; }
+  }
+  function eventosSave(l) { try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function addEvento(dados) {
+    var l = eventosLista();
+    l.push({ id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
+      responsavel: dados.responsavel || "", tipo: "aula_extra" });
+    l.sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; });
+    eventosSave(l); return l;
+  }
+  function removeEvento(id) { var l = eventosLista().filter(function (e) { return e.id !== id; }); eventosSave(l); return l; }
+
+  // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
+  var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
+    SEG: 1, TER: 2, QUA: 3, QUI: 4, SEX: 5 };
+  function agendaItens(nDias) {
+    nDias = nDias || 14;
+    var itens = [];
+    var t0 = today();
+    function dentro(isoStr) {
+      var d = parseISO(isoStr); if (!d) return false;
+      var dif = daysBetween(t0, d);
+      return dif >= 0 && dif < nDias;
+    }
+    turmasLista().forEach(function (u) {
+      var m = (u.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
+      if (!m) return;
+      var alvo = DIAS_SEMANA[m[1]];
+      var hora = ((u.turma || "").match(/(\d{1,2})H/i) || [])[1];
+      for (var i = 0; i < nDias; i++) {
+        var d = new Date(t0); d.setDate(d.getDate() + i);
+        if (d.getDay() === alvo) {
+          itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula",
+            titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
+        }
+      }
+    });
+    loadPessoas().forEach(function (p) {
+      if (p.proximoCheckin && dentro(p.proximoCheckin))
+        itens.push({ data: p.proximoCheckin, hora: "", tipo: "checkin",
+          titulo: "Check-in · " + p.nome, pessoaId: p.id, responsavel: "Gabi" });
+      if (p.proximoFollowup && p.status === "lead" && p.estagio !== "perdido" && dentro(p.proximoFollowup))
+        itens.push({ data: p.proximoFollowup, hora: "", tipo: "followup",
+          titulo: "Follow-up · " + p.nome, pessoaId: p.id, responsavel: "Carla" });
+      (p.onboarding || []).forEach(function (c) {
+        if (!c.feito && dentro(c.data))
+          itens.push({ data: c.data, hora: "", tipo: "onboarding",
+            titulo: "Onboarding · " + p.nome + " · " + c.label, pessoaId: p.id, responsavel: "Érika" });
+      });
+      var ct = contratoVigente(p);
+      if (p.status === "aluna" && ct && ct.fim && dentro(ct.fim))
+        itens.push({ data: ct.fim, hora: "", tipo: "renovacao",
+          titulo: "Fim de contrato · " + p.nome, pessoaId: p.id, responsavel: "Carla" });
+    });
+    eventosLista().forEach(function (e) {
+      if (dentro(e.data))
+        itens.push({ data: e.data, hora: e.hora, tipo: "aula_extra",
+          titulo: "Aula extra · " + e.titulo, responsavel: e.responsavel, eventoId: e.id });
+    });
+    itens.sort(function (a, b) { return (a.data + (a.hora || "")) < (b.data + (b.hora || "")) ? -1 : 1; });
+    return itens;
+  }
+
+  function gcalLink(titulo, dataIso, horaStr, detalhes) {
+    var d = (dataIso || "").replace(/-/g, "");
+    var h = parseInt((horaStr || "").replace(/\D/g, ""), 10);
+    var ini, fim;
+    if (!isNaN(h)) {
+      var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+      ini = d + "T" + p2(h) + "0000"; fim = d + "T" + p2(h + 1) + "0000";
+    } else { ini = d; fim = d; }
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(titulo) +
+      "&dates=" + ini + "/" + fim + "&details=" + encodeURIComponent(detalhes || "Inglês sem Roteiro");
+  }
+
   function resetDemo() {
     localStorage.removeItem(SEED_FLAG);
     localStorage.removeItem(PESSOAS_KEY);
     localStorage.removeItem("isr_fila_adiados");
+    localStorage.removeItem(TURMAS_KEY);
+    localStorage.removeItem(EVENTOS_KEY);
+    localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
 
@@ -1122,7 +1277,7 @@
     STAGES: STAGES, TABS: TABS, CANAIS: CANAIS, get TEMPLATES() { return templatesMerged(); },
     MOTIVOS_PERDA: MOTIVOS_PERDA, STATUS_META: STATUS_META, PERFIS: PERFIS,
     MESES_COBRANCA: MESES_COBRANCA, COBRANCA_STATUS_META: COBRANCA_STATUS_META,
-    RENOV_ESTAGIOS: RENOV_ESTAGIOS, UNITS: UNITS, METAS: METAS,
+    RENOV_ESTAGIOS: RENOV_ESTAGIOS, get UNITS() { return turmasLista(); }, METAS: METAS,
     // pessoas
     getPessoas: loadPessoas, getPessoa: getPessoa,
     // compat CRM
@@ -1150,6 +1305,10 @@
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
+    turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
+    setOnboardingFeito: setOnboardingFeito, setProximoCheckin: setProximoCheckin, registrarCheckinFeito: registrarCheckinFeito,
+    eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
+    agendaItens: agendaItens, gcalLink: gcalLink,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
     addCusto: addCusto, removeCusto: removeCusto,

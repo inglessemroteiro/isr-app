@@ -18,9 +18,31 @@
         <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6b5b95;">Inglês sem Roteiro · Pedagógico</p>
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Turmas & Projetos</h1>
       </div>
-      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+        <button onclick="{{ onToggleNova }}" style="border: none; background: {{ novaBg }}; color: {{ novaFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novaLabel }}</button>
+      </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">O que cada turma está estudando agora — projeto do ciclo, professora, ocupação e materiais (units of study). A ocupação é calculada das matrículas: ninguém digita.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">O que cada turma está estudando agora — projeto do ciclo, professora, ocupação e materiais. A ocupação é calculada das matrículas: ninguém digita.</p>
+
+    <!-- FORM NOVA TURMA -->
+    <sc-if value="{{ novaAberta }}">
+      <div style="background: #fdfbf8; border: 1px solid #d9d2e5; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b5b95; margin-bottom: 12px;">Nova turma</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <input ref="{{ ntNivelRef }}" placeholder="Nível (ex. Essentials A2)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ntTurmaRef }}" placeholder="Horário (ex. TUE 19H)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ntTeacherRef }}" placeholder="Professora" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ntProjetoRef }}" placeholder="Projeto do ciclo" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ntMaterialRef }}" placeholder="Material / caderno" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ntCapRef }}" type="number" placeholder="Capacidade (padrão 10)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button onclick="{{ onCriarTurma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Criar turma</button>
+          <span style="font-size: 11px; color: #b3a693;">Use o dia em inglês ou português no horário (TUE 19H, SEG 18H) — assim a aula entra sozinha na Agenda da escola.</span>
+        </div>
+      </div>
+    </sc-if>
 
     <!-- FILTRO PROFESSORA (dropdown) -->
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
@@ -43,54 +65,107 @@
 
     <!-- TABELA DE TURMAS -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
-      <div style="display: grid; grid-template-columns: 1.6fr 0.8fr 1.1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma <span style="opacity:.5;">⌄</span></span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Professora <span style="opacity:.5;">⌄</span></span>
+      <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Professora</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Projeto do ciclo</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Ocupação <span style="opacity:.5;">⌄</span></span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Ocupação</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Material</span>
+        <span></span>
       </div>
 
       <sc-if value="{{ vazio }}">
         <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
-          <p style="margin: 0 0 4px; font-size: 30px;">🌤️</p>
           <p style="margin: 0; font-size: 13px;">Nenhuma turma nesta visão.</p>
         </div>
       </sc-if>
 
       <sc-for list="{{ turmas }}" as="u" hint-placeholder-count="6">
-        <div style="display: grid; grid-template-columns: 1.6fr 0.8fr 1.1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; background: #fdfbf8;">
-          <div style="min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
-              <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ u.nivel }}</span>
+        <div style="border-top: 1px solid #f2e9dd; background: #fdfbf8;">
+          <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 15px 18px;">
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
+                <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ u.nivel }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: #a2957f; margin-top: 3px; margin-left: 17px;">{{ u.turma }} · ciclo {{ u.cycle }}</div>
             </div>
-            <div style="font-size: 11.5px; color: #a2957f; margin-top: 3px; margin-left: 17px;">{{ u.turma }} · ciclo {{ u.cycle }}</div>
+            <div style="font-size: 13px; color: #6b6155;">{{ u.teacher }}</div>
+            <div style="font-size: 13px; font-weight: 700; color: {{ u.cor }};">{{ u.projeto }}</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12.5px; font-weight: 700; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
+                <span style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px;">{{ u.vagaLabel }}</span>
+              </div>
+              <div style="height: 6px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-top: 5px; max-width: 110px;">
+                <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: #6b6155; line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+            <div style="display: flex; gap: 4px; justify-content: flex-end;">
+              <button onclick="{{ u.onEditar }}" style="border: 1px solid #e5dccf; background: {{ u.editBg }}; color: {{ u.editFg }}; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px; cursor: pointer;">{{ u.editLabel }}</button>
+              <button onclick="{{ u.onExcluir }}" title="Excluir turma" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px 7px; cursor: pointer;">excluir</button>
+            </div>
           </div>
-          <div style="font-size: 13px; color: #6b6155;">👩‍🏫 {{ u.teacher }}</div>
-          <div style="font-size: 13px; font-weight: 700; color: {{ u.cor }};">{{ u.projeto }}</div>
-          <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 12.5px; font-weight: 700; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
-              <span style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px;">{{ u.vagaLabel }}</span>
+
+          <!-- PAINEL DE EDIÇÃO INLINE -->
+          <sc-if value="{{ u.editando }}">
+            <div style="background: #f6f2ea; border-top: 1px dashed #e5dccf; padding: 14px 18px;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; margin-bottom: 10px;">Editar · deixe em branco o que não muda</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <input ref="{{ edTeacherRef }}" placeholder="Professora: {{ u.teacher }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ u.capacidade }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button onclick="{{ u.onSalvarEdicao }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer;">✓ Salvar</button>
+                <button onclick="{{ u.onCancelarEdicao }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 9px 8px; cursor: pointer;">cancelar</button>
+              </div>
             </div>
-            <div style="height: 6px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-top: 5px; max-width: 110px;">
-              <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
-            </div>
-          </div>
-          <div style="font-size: 11px; color: #6b6155; line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+          </sc-if>
         </div>
       </sc-for>
     </div>
 
-    <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Units of study</strong>. Conectada à planilha real, os materiais viram links clicáveis. Capacidade e margem por turma (visão Gestora) entram com os custos do ISR Financeiro.</p>
+    <!-- ALUNAS PARTICULARES -->
+    <div style="margin-top: 26px;">
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Alunas particulares</h2>
+        <span style="font-size: 12px; color: #a2957f;">{{ partCount }}</span>
+      </div>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Aluna</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Professora</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Desde</span>
+          <span></span>
+        </div>
+        <sc-if value="{{ partVazio }}">
+          <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aluna particular no momento. Na matrícula, escolha a turma "Particular · aula individual".</div>
+        </sc-if>
+        <sc-for list="{{ particulares }}" as="pp" hint-placeholder-count="2">
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd;">
+            <a href="{{ pp.perfilHref }}" style="font-size: 13.5px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ pp.nome }}</a>
+            <span style="font-size: 12.5px; color: #6b6155;">{{ pp.professora }}</span>
+            <span style="font-size: 12.5px; color: #6b6155;">{{ pp.desde }}</span>
+            <a href="ISR%20-%20Agenda.dc.html" style="justify-self: end; text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">+ aula na Agenda</a>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Aulas de particulares não têm horário fixo de turma: registre cada aula (ou pacote) na <strong>Agenda da escola</strong> como aula extra — assim elas aparecem no dia certo, com a professora certa.</p>
+    </div>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { teacher: "Todas", aba: "todas" };
+  state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null };
+  ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
+  ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
+  edTeacherRef = React.createRef(); edProjetoRef = React.createRef();
+  edMaterialRef = React.createRef(); edCapRef = React.createRef();
 
   nivelCor(nivel) {
     if (nivel.indexOf("First") >= 0) return "#d4a574";
@@ -100,9 +175,11 @@ class Component extends DCLogic {
     return "#348a8e";
   }
 
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true };
+    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "#164951", novaFg: "#fff", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef };
 
     const ocup = CRM.ocupacaoTurmas();
     const names = ["Todas"];
@@ -135,24 +212,83 @@ class Component extends DCLogic {
     const turmas = base.filter(test).map(u => {
       const pct = Math.min(100, Math.round(100 * u.ocupadas / u.capacidade));
       const lotada = u.vagas <= 0, umaVaga = u.vagas === 1;
+      const editando = this.state.editId === u.id;
       return {
         nivel: u.nivel, turma: u.turma, cycle: u.cycle, teacher: u.teacher,
         cor: this.nivelCor(u.nivel),
-        projeto: u.projeto || "—",
+        projeto: u.projeto || "—", projetoRaw: u.projeto || "—",
+        capacidade: u.capacidade,
         ocupLabel: u.ocupadas + "/" + u.capacidade,
         ocupPct: pct + "%",
-        ocupCor: lotada ? "#cf6b5c" : (umaVaga ? "#b0722c" : "#3f6d4e"),
+        ocupCor: lotada ? "#cf6b5c" : (umaVaga ? "#b0722c" : "#348a8e"),
         vagaLabel: lotada ? "Lotada" : (u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
-        vagaBg: lotada ? "rgba(207,107,92,0.14)" : (umaVaga ? "#f9dfc6" : "rgba(90,158,75,0.14)"),
-        vagaFg: lotada ? "#b05c4c" : (umaVaga ? "#b0722c" : "#3f6d4e"),
-        material: u.notebook || "⚠️ Sem caderno vinculado neste ciclo"
+        vagaBg: lotada ? "rgba(207,107,92,0.14)" : (umaVaga ? "#f9dfc6" : "rgba(52,138,142,0.14)"),
+        vagaFg: lotada ? "#b05c4c" : (umaVaga ? "#b0722c" : "#348a8e"),
+        material: u.notebook || "Sem caderno vinculado neste ciclo",
+        materialCurto: (u.notebook || "—").slice(0, 30),
+        editando,
+        editLabel: editando ? "editando…" : "editar",
+        editBg: editando ? "#164951" : "#fff",
+        editFg: editando ? "#fff" : "#164951",
+        onEditar: () => this.setState({ editId: editando ? null : u.id, novaAberta: false }),
+        onCancelarEdicao: () => this.setState({ editId: null }),
+        onSalvarEdicao: () => {
+          const patch = {};
+          const t = this.val(this.edTeacherRef); if (t) patch.teacher = t;
+          const pj = this.val(this.edProjetoRef); if (pj) patch.projeto = pj;
+          const mt = this.val(this.edMaterialRef); if (mt) patch.notebook = mt;
+          const cp = parseInt(this.val(this.edCapRef), 10); if (cp > 0) patch.capacidade = cp;
+          if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
+          this.setState({ editId: null });
+        },
+        onExcluir: () => {
+          const ocupadas = u.ocupadas > 0 ? "\nAtenção: " + u.ocupadas + " aluna(s) matriculada(s) nela." : "";
+          if (window.confirm("Excluir a turma " + u.nivel + " (" + u.turma + ")?" + ocupadas)) {
+            CRM.removeTurma(u.id);
+            this.setState({ editId: null });
+          }
+        }
       };
     });
+
+    // alunas particulares (matrícula com turma "Particular")
+    const particulares = CRM.getPessoas()
+      .filter(p => p.status === "aluna" && (p.turma === "Particular" || (p.formatos || []).indexOf("particular") >= 0))
+      .map(p => ({
+        nome: p.nome, professora: p.professora || "—",
+        desde: p.desde ? CRM.mesAno(p.desde) : "—",
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id
+      }));
 
     return {
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
       onTeacher: (e) => this.setState({ teacher: e.target.value }),
-      abas, turmas, vazio: turmas.length === 0
+      abas, turmas, vazio: turmas.length === 0,
+      particulares, partVazio: particulares.length === 0,
+      partCount: particulares.length + (particulares.length === 1 ? " aluna" : " alunas"),
+      novaAberta: this.state.novaAberta,
+      novaLabel: this.state.novaAberta ? "fechar" : "+ Nova turma",
+      novaBg: this.state.novaAberta ? "#e5dccf" : "#164951",
+      novaFg: this.state.novaAberta ? "#6b6155" : "#fff",
+      onToggleNova: () => this.setState({ novaAberta: !this.state.novaAberta, editId: null }),
+      ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef,
+      ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef,
+      edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef,
+      edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      onCriarTurma: () => {
+        const nivel = this.val(this.ntNivelRef), turma = this.val(this.ntTurmaRef);
+        if (!nivel || !turma) { window.alert("Preencha pelo menos o nível e o horário da turma."); return; }
+        window.ISRCRM.addTurma({
+          nivel, turma,
+          teacher: this.val(this.ntTeacherRef),
+          projeto: this.val(this.ntProjetoRef),
+          notebook: this.val(this.ntMaterialRef),
+          capacidade: this.val(this.ntCapRef)
+        });
+        [this.ntNivelRef, this.ntTurmaRef, this.ntTeacherRef, this.ntProjetoRef, this.ntMaterialRef, this.ntCapRef]
+          .forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ novaAberta: false });
+      }
     };
   }
 }

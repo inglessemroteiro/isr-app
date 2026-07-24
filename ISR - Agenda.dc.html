@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Agenda da Escola</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Escola</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Agenda da escola</h1>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+        <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
+      </div>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Tudo o que acontece nos próximos dias, num lugar só: aulas das turmas, aulas extras e particulares, check-ins, follow-ups da Carla, onboardings da Érika e fins de contrato. Filtre pelo tipo ou pela pessoa responsável.</p>
+
+    <!-- FORM AULA EXTRA -->
+    <sc-if value="{{ novoAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #f0d9c8; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98060; margin-bottom: 12px;">Nova aula extra / particular</div>
+        <div style="display: grid; grid-template-columns: 2fr 1fr 0.7fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ evTituloRef }}" placeholder="O quê? (ex. Particular · Renata)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evHoraRef }}" placeholder="19h" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evRespRef }}" placeholder="Professora / responsável" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <button onclick="{{ onCriarEvento }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Adicionar à agenda</button>
+      </div>
+    </sc-if>
+
+    <!-- FILTROS -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+      <select onchange="{{ onResp }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ resps }}" as="r" hint-placeholder-count="5">
+          <option value="{{ r.id }}" selected="{{ r.sel }}">{{ r.label }}</option>
+        </sc-for>
+      </select>
+      <select onchange="{{ onDias }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ diasOpts }}" as="d" hint-placeholder-count="3">
+          <option value="{{ d.id }}" selected="{{ d.sel }}">{{ d.label }}</option>
+        </sc-for>
+      </select>
+    </div>
+
+    <!-- ABAS DE TIPO -->
+    <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px; overflow-x: auto;">
+      <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="7">
+        <button onclick="{{ tab.onClick }}" style="flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 14px 9px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- LISTA POR DIA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
+      <sc-if value="{{ vazio }}">
+        <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
+          <p style="margin: 0; font-size: 13px;">Nada na agenda com esses filtros.</p>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f6eee4; border-top: 1px solid #f2e9dd;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: {{ g.cor }};">{{ g.label }}</span>
+            <span style="font-size: 11px; color: #b3a693;">{{ g.sub }}</span>
+          </div>
+          <sc-for list="{{ g.itens }}" as="it" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #f7f2ea;">
+              <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ it.cor }}; flex: none;"></span>
+              <span style="flex: none; width: 44px; font-size: 12px; font-weight: 700; color: #164951;">{{ it.hora }}</span>
+              <div style="flex: 1; min-width: 0;">
+                <sc-if value="{{ it.temPerfil }}">
+                  <a href="{{ it.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ it.titulo }}</a>
+                </sc-if>
+                <sc-if value="{{ it.semPerfil }}">
+                  <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ it.titulo }}</span>
+                </sc-if>
+              </div>
+              <sc-if value="{{ it.resp }}">
+                <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ it.resp }}</span>
+              </sc-if>
+              <a href="{{ it.gcal }}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">+ Google Agenda</a>
+              <sc-if value="{{ it.removivel }}">
+                <button onclick="{{ it.onRemover }}" style="flex: none; border: none; background: transparent; color: #c9c1b6; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px;">remover</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">As aulas das turmas entram sozinhas pelo horário cadastrado em Turmas & Projetos (ex. TUE 19H). Check-ins, follow-ups, onboardings e fins de contrato vêm dos perfis — quando você resolve por lá, some daqui.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tipo: "todos", resp: "Todos", dias: 14, novoAberto: false, tick: 0 };
+  evTituloRef = React.createRef(); evDataRef = React.createRef();
+  evHoraRef = React.createRef(); evRespRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+
+  TIPO_META = {
+    aula: { label: "Aulas", cor: "#6b5b95" },
+    aula_extra: { label: "Aulas extras", cor: "#e07856" },
+    checkin: { label: "Check-ins", cor: "#2a9d8f" },
+    followup: { label: "Follow-ups", cor: "#348a8e" },
+    onboarding: { label: "Onboarding", cor: "#9ec970" },
+    renovacao: { label: "Renovações", cor: "#d4a574" }
+  };
+
+  diaLabel(isoStr) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const d = new Date(isoStr + "T12:00:00");
+    const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+    const dif = Math.round((d0 - hoje) / 86400000);
+    const sem = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][d.getDay()];
+    const dm = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    if (dif === 0) return { label: "Hoje", sub: sem + " · " + dm, cor: "#e07856" };
+    if (dif === 1) return { label: "Amanhã", sub: sem + " · " + dm, cor: "#9c6f56" };
+    return { label: sem + " " + dm, sub: "", cor: "#8a7c6b" };
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { evTituloRef: this.evTituloRef, evDataRef: this.evDataRef, evHoraRef: this.evHoraRef, evRespRef: this.evRespRef };
+    if (!CRM) return Object.assign({ abas: [], grupos: [], resps: [], diasOpts: [], vazio: true, novoAberto: false, novoLabel: "+ Aula extra", novoBg: "#164951", novoFg: "#fff" }, refs);
+
+    const todos = CRM.agendaItens(this.state.dias);
+
+    // responsáveis presentes
+    const nomes = ["Todos"];
+    todos.forEach(it => { if (it.responsavel && nomes.indexOf(it.responsavel) < 0) nomes.push(it.responsavel); });
+    const respSel = this.state.resp;
+    const porResp = todos.filter(it => respSel === "Todos" || it.responsavel === respSel);
+
+    // abas por tipo
+    const TIPOS = [{ id: "todos", label: "Tudo" }].concat(
+      Object.keys(this.TIPO_META).map(k => ({ id: k, label: this.TIPO_META[k].label })));
+    const tipoAtivo = this.state.tipo;
+    const abas = TIPOS.map(t => {
+      const on = t.id === tipoAtivo;
+      const count = t.id === "todos" ? porResp.length : porResp.filter(x => x.tipo === t.id).length;
+      return {
+        label: t.label, count,
+        onClick: () => this.setState({ tipo: t.id }),
+        bg: on ? "#fdfbf8" : "#f3ebe0", fg: on ? "#164951" : "#8a7c6b",
+        border: on ? "#eee3d6" : "transparent", weight: on ? 700 : 600,
+        countFg: on ? "#9c6f56" : "#b3a693"
+      };
+    });
+
+    const visiveis = porResp.filter(it => tipoAtivo === "todos" || it.tipo === tipoAtivo);
+
+    // agrupar por dia
+    const grupos = [];
+    let atual = null;
+    visiveis.forEach(it => {
+      if (!atual || atual.data !== it.data) {
+        const dl = this.diaLabel(it.data);
+        atual = { data: it.data, label: dl.label, sub: dl.sub, cor: dl.cor, itens: [] };
+        grupos.push(atual);
+      }
+      const meta = this.TIPO_META[it.tipo] || { cor: "#c9c1b6" };
+      atual.itens.push({
+        titulo: it.titulo, hora: it.hora || "—", cor: meta.cor,
+        resp: it.responsavel || "",
+        temPerfil: !!it.pessoaId, semPerfil: !it.pessoaId,
+        perfilHref: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#",
+        gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Agenda · Inglês sem Roteiro"),
+        removivel: !!it.eventoId,
+        onRemover: () => { CRM.removeEvento(it.eventoId); this.bump(); }
+      });
+    });
+
+    return Object.assign({
+      abas, grupos, vazio: visiveis.length === 0,
+      resps: nomes.map(n => ({ id: n, label: n === "Todos" ? "Todos os responsáveis" : n, sel: n === respSel })),
+      onResp: (e) => this.setState({ resp: e.target.value }),
+      diasOpts: [7, 14, 30].map(n => ({ id: String(n), label: "Próximos " + n + " dias", sel: this.state.dias === n })),
+      onDias: (e) => this.setState({ dias: parseInt(e.target.value, 10) || 14 }),
+      novoAberto: this.state.novoAberto,
+      novoLabel: this.state.novoAberto ? "fechar" : "+ Aula extra",
+      novoBg: this.state.novoAberto ? "#e5dccf" : "#164951",
+      novoFg: this.state.novoAberto ? "#6b6155" : "#fff",
+      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto }),
+      onCriarEvento: () => {
+        const titulo = this.val(this.evTituloRef), data = this.val(this.evDataRef);
+        if (!titulo || !data) { window.alert("Preencha pelo menos o título e a data."); return; }
+        window.ISRCRM.addEvento({ titulo, data, hora: this.val(this.evHoraRef), responsavel: this.val(this.evRespRef) });
+        [this.evTituloRef, this.evHoraRef, this.evRespRef].forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ novoAberto: false });
+      }
+    }, refs);
+  }
+}
+</script>
+</body>
+</html>
