@@ -211,7 +211,8 @@
                     <option value="7">7 parcelas</option>
                     <option value="8">8 parcelas</option>
                   </select>
-                  <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ lead.matAulasRef }}" type="number" placeholder="Nº de aulas (se particular)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 </div>
                 <div style="display: flex; gap: 8px;">
                   <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
@@ -233,10 +234,29 @@
               </div>
             </sc-if>
 
+            <!-- MINI-FORM DE REUNIÃO -->
+            <sc-if value="{{ lead.agendandoReuniao }}">
+              <div style="background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 10px;">Agendar reunião — entra no calendário da Carla e na Agenda da escola</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ lead.reuHoraRef }}" placeholder="Hora (ex. 15h)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; width: 110px;" />
+                  <button onclick="{{ lead.onAgendarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">✓ Agendar</button>
+                  <button onclick="{{ lead.onAgendarCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 10px 8px; cursor: pointer;">cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+
             <!-- RODAPÉ DE AÇÕES -->
             <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px solid #f2e9dd; padding-top: 14px;">
               <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Registrar contato</button>
-              <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Agendar reunião</button>
+              <sc-if value="{{ lead.semReuniao }}">
+                <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Agendar reunião</button>
+              </sc-if>
+              <sc-if value="{{ lead.temReuniao }}">
+                <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
+                <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">✓ Reunião feita</button>
+              </sc-if>
               <button onclick="{{ lead.onMatricular }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Matricular</button>
               <span style="flex: 1;"></span>
               <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b9ab99; font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;">Marcar perdido...</button>
@@ -271,7 +291,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, novoLead: false, nlErro: "", tick: 0 };
+  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", tick: 0 };
+  reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   noteRef = React.createRef();
   matTurmaRef = React.createRef(); matTipoRef = React.createRef(); matMoedaRef = React.createRef();
   matValorRef = React.createRef(); matParcelasRef = React.createRef(); matVencRef = React.createRef();
@@ -383,7 +404,21 @@ class Component extends DCLogic {
         out.noteRef = this.noteRef;
         out.onNoteKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(l.id); } };
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
-        out.onAgendar = () => { CRM.setStage(l.id, "reuniao"); CRM.addHistory(l.id, "reuniao", "Reunião marcada"); this.bump(); };
+        out.agendandoReuniao = this.state.agendandoReuniaoId === l.id;
+        out.semReuniao = !(l.reuniao && !l.reuniao.feita) && this.state.agendandoReuniaoId !== l.id;
+        out.temReuniao = !!(l.reuniao && !l.reuniao.feita);
+        out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " · " + l.reuniao.hora : "")) : "";
+        out.reuDataRef = this.reuDataRef; out.reuHoraRef = this.reuHoraRef;
+        out.onAgendar = () => this.setState({ agendandoReuniaoId: l.id, matriculandoId: null, perdendoId: null });
+        out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null });
+        out.onAgendarConfirma = () => {
+          const data = (this.reuDataRef.current && this.reuDataRef.current.value) || "";
+          if (!data) return;
+          CRM.setStage(l.id, "reuniao");
+          CRM.agendarReuniao(l.id, data, (this.reuHoraRef.current && this.reuHoraRef.current.value) || "");
+          this.setState({ agendandoReuniaoId: null });
+        };
+        out.onReuniaoFeita = () => { CRM.marcarReuniaoFeita(l.id); this.bump(); };
         out.onExcluir = () => { if (confirm("Excluir este lead? Não dá pra desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
         out.perdendo = this.state.perdendoId === l.id;
         out.onMarcarPerdido = () => this.setState({ perdendoId: l.id, matriculandoId: null });
@@ -396,6 +431,7 @@ class Component extends DCLogic {
         out.onMatricularCancela = () => this.setState({ matriculandoId: null });
         out.matTurmaRef = this.matTurmaRef; out.matTipoRef = this.matTipoRef; out.matMoedaRef = this.matMoedaRef;
         out.matValorRef = this.matValorRef; out.matParcelasRef = this.matParcelasRef; out.matVencRef = this.matVencRef;
+        out.matAulasRef = this.matAulasRef;
         out.turmasOpts = CRM.ocupacaoTurmas().map(t => ({
           id: t.id, sel: !!l.turmaInteresse && l.turmaInteresse === t.label,
           label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "LOTADA")
@@ -405,7 +441,8 @@ class Component extends DCLogic {
           CRM.matricular(l.id, {
             turmaId: v(this.matTurmaRef), tipo: v(this.matTipoRef) || "Matrícula",
             moeda: v(this.matMoedaRef) || "R$", valorParcela: v(this.matValorRef),
-            parcelas: v(this.matParcelasRef) || 3, vencDia: parseInt(v(this.matVencRef), 10) || 10
+            parcelas: v(this.matParcelasRef) || 3, vencDia: parseInt(v(this.matVencRef), 10) || 10,
+            aulasContratadas: v(this.matAulasRef)
           });
           this.setState({ matriculandoId: null, openId: null, tab: "matriculados" });
         };

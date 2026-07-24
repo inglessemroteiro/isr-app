@@ -604,6 +604,10 @@
       p.turma = turmaLabel;
       p.professora = unit ? unit.teacher : "";
       p.formatos = (p.formatos || []).concat([particular ? "particular" : "grupo"]);
+      if (particular) {
+        p.particular = { inicio: cfg.inicioEm || iso(today()),
+          aulas: parseInt(cfg.aulasContratadas, 10) || 0, feitas: 0 };
+      }
       p.desde = iso(today());
       var fimIdx = Math.min(n - 1, MESES_COBRANCA.length - 1);
       p.contratos = p.contratos || [];
@@ -803,10 +807,61 @@
   //  MOTOR DE FILAS — spec 3.1 (R1–R5, R12; R6–R11 aguardam fontes)
   //  perfil: 'gestora' | 'comercial' | 'operacao'
   // ══════════════════════════════════════════════════════════════
+  // ── PENDÊNCIAS (tarefas da equipe — Gabi distribui, cada uma vê a sua) ──
+  var TAREFAS_KEY = "isr_tarefas_v1";
+  function tarefasLista() { try { return JSON.parse(localStorage.getItem(TAREFAS_KEY)) || []; } catch (e) { return []; } }
+  function tarefasSave(l) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function addTarefa(dados) {
+    var l = tarefasLista();
+    l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
+      prazo: dados.prazo || "", feita: false, criadaEm: iso(today()), por: dados.por || "" });
+    l.sort(function (a, b) { return (a.prazo || "9999") < (b.prazo || "9999") ? -1 : 1; });
+    tarefasSave(l); return l;
+  }
+  function setTarefaFeita(id, feita) {
+    var l = tarefasLista();
+    l.forEach(function (tf) { if (tf.id === id) { tf.feita = !!feita; tf.feitaEm = feita ? iso(today()) : ""; } });
+    tarefasSave(l); return l;
+  }
+  function removeTarefa(id) { var l = tarefasLista().filter(function (tf) { return tf.id !== id; }); tarefasSave(l); return l; }
+
+  // ── FERIADOS DA ESCOLA (a agenda pula as aulas nesses dias) ────
+  var FERIADOS_KEY = "isr_feriados_v1";
+  function feriadosLista() { try { return JSON.parse(localStorage.getItem(FERIADOS_KEY)) || []; } catch (e) { return []; } }
+  function addFeriado(dataIso, nome) {
+    var l = feriadosLista();
+    l.push({ id: "fer" + Date.now(), data: dataIso, nome: nome || "Feriado" });
+    l.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync(); return l;
+  }
+  function removeFeriado(id) {
+    var l = feriadosLista().filter(function (f) { return f.id !== id; });
+    try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync(); return l;
+  }
+  function ehFeriado(dataIso) {
+    return feriadosLista().filter(function (f) { return f.data === dataIso; }).length > 0;
+  }
+
+  // ── REUNIÕES DO COMERCIAL (calendário da Carla) ────────────────
+  function agendarReuniao(id, dataIso, hora) {
+    return mutate(id, function (p) {
+      p.reuniao = { data: dataIso, hora: hora || "", feita: false };
+      pushHist(p, "reuniao", "Reunião agendada para " + ddmm(dataIso) + (hora ? " às " + hora : ""));
+    });
+  }
+  function marcarReuniaoFeita(id) {
+    return mutate(id, function (p) {
+      if (p.reuniao) p.reuniao.feita = true;
+      pushHist(p, "reuniao", "Reunião realizada");
+    });
+  }
+
   var PERFIS = [
     { id: "gestora", label: "Gestora", regras: null }, // null = todas
-    { id: "comercial", label: "Comercial", regras: ["R1", "R2", "R5", "R12"] },
-    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10"] }
+    { id: "comercial", label: "Comercial", regras: ["R1", "R2", "R5", "R12", "RT"] },
+    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "RT"] }
   ];
   function filaParaHoje(perfilId) {
     var itens = [];
@@ -889,9 +944,24 @@
       }
     });
 
+    // RT — pendências com prazo pra hoje ou vencido
+    tarefasLista().forEach(function (tf) {
+      if (tf.feita || !tf.prazo) return;
+      var dp = parseISO(tf.prazo);
+      if (!dp || daysBetween(dp, today()) < 0) return;
+      itens.push({ regra: "RT", dono: tf.dono || "Gabi", urg: 1, icon: "", cor: "#9c6f56",
+        pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
+        motivo: "Pendência " + (daysBetween(dp, today()) === 0 ? "para hoje" : "venceu " + ddmm(tf.prazo)),
+        acao: "Concluir", tpl: "" });
+    });
+
     // filtro por perfil
     var perfil = PERFIS.filter(function (pf) { return pf.id === perfilId; })[0];
     if (perfil && perfil.regras) itens = itens.filter(function (i) { return perfil.regras.indexOf(i.regra) >= 0; });
+    var donoPorPerfil = { comercial: "Carla", operacao: "Érika" };
+    if (donoPorPerfil[perfilId]) {
+      itens = itens.filter(function (i) { return i.regra !== "RT" || i.dono === donoPorPerfil[perfilId]; });
+    }
 
     // adiados hoje ficam fora (adiar = some da fila até amanhã)
     var adiadosRaw = localStorage.getItem("isr_fila_adiados") || "{}";
@@ -1123,6 +1193,7 @@
     var payload = {
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
+      tarefas: tarefasLista(), feriados: feriadosLista(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1144,6 +1215,8 @@
             if (d.data.turmas && d.data.turmas.length) { try { localStorage.setItem(TURMAS_KEY, JSON.stringify(d.data.turmas)); } catch (e) {} }
             if (d.data.eventos) { try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(d.data.eventos)); } catch (e) {} }
             if (d.data.chamadas) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(d.data.chamadas)); } catch (e) {} }
+            if (d.data.tarefas) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(d.data.tarefas)); } catch (e) {} }
+            if (d.data.feriados) { try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(d.data.feriados)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1209,6 +1282,12 @@
   }
   function chamadasSaveLocal(m) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(m)); } catch (e) {} }
   function getChamada(turmaLabel, dataIso) { return chamadasAll()[turmaLabel + "|" + dataIso] || null; }
+  // estados: presente · atraso · falta · justificada (true/false = legado)
+  function estadoPresenca(v) {
+    if (v === true) return "presente";
+    if (v === false) return "falta";
+    return v || "presente";
+  }
   function salvarChamada(turmaLabel, dataIso, presencas, por) {
     var m = chamadasAll();
     var key = turmaLabel + "|" + dataIso;
@@ -1217,10 +1296,14 @@
       salvoEm: new Date().toISOString(), por: por || "" };
     chamadasSaveLocal(m);
     agendarSync();
-    // falta nova vai pra linha do tempo da aluna (re-salvar não duplica)
+    // falta/justificada nova vai pra linha do tempo (re-salvar não duplica)
     Object.keys(presencas).forEach(function (pid) {
-      if (presencas[pid] === false && antes[pid] !== false) {
+      var agora = estadoPresenca(presencas[pid]), antesE = estadoPresenca(antes[pid]);
+      if (agora === antesE) return;
+      if (agora === "falta") {
         mutate(pid, function (p) { pushHist(p, "falta", "Faltou na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
+      } else if (agora === "justificada") {
+        mutate(pid, function (p) { pushHist(p, "falta", "Ausência justificada na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
       }
     });
     return m[key];
@@ -1228,9 +1311,22 @@
   function faltasDe(pessoaId) {
     var m = chamadasAll(), n = 0;
     Object.keys(m).forEach(function (k) {
-      if (m[k].presencas && m[k].presencas[pessoaId] === false) n++;
+      if (m[k].presencas && estadoPresenca(m[k].presencas[pessoaId]) === "falta") n++;
     });
     return n;
+  }
+  function registrarAulaParticular(id) {
+    return mutate(id, function (p) {
+      p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
+      p.particular.feitas = (p.particular.feitas || 0) + 1;
+      var tot = p.particular.aulas ? " de " + p.particular.aulas : "";
+      pushHist(p, "contato", "Aula particular dada (" + p.particular.feitas + tot + ")");
+    });
+  }
+  function updateParticular(id, patch) {
+    return mutate(id, function (p) {
+      p.particular = Object.assign(p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 }, patch);
+    });
   }
   function alunasDaTurma(turmaLabel) {
     return loadPessoas().filter(function (p) { return p.status === "aluna" && p.turma === turmaLabel; });
@@ -1239,10 +1335,10 @@
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
   var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
     SEG: 1, TER: 2, QUA: 3, QUI: 4, SEX: 5 };
-  function agendaItens(nDias) {
+  function agendaItens(nDias, inicioIso) {
     nDias = nDias || 14;
     var itens = [];
-    var t0 = today();
+    var t0 = inicioIso ? (parseISO(inicioIso) || today()) : today();
     function dentro(isoStr) {
       var d = parseISO(isoStr); if (!d) return false;
       var dif = daysBetween(t0, d);
@@ -1255,11 +1351,21 @@
       var hora = ((u.turma || "").match(/(\d{1,2})H/i) || [])[1];
       for (var i = 0; i < nDias; i++) {
         var d = new Date(t0); d.setDate(d.getDate() + i);
-        if (d.getDay() === alvo) {
+        if (d.getDay() === alvo && !ehFeriado(iso(d))) {
           itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula",
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
       }
+    });
+    feriadosLista().forEach(function (f) {
+      if (dentro(f.data))
+        itens.push({ data: f.data, hora: "", tipo: "feriado",
+          titulo: "Feriado · " + f.nome + " (sem aulas)", responsavel: "" });
+    });
+    tarefasLista().forEach(function (tf) {
+      if (!tf.feita && tf.prazo && dentro(tf.prazo))
+        itens.push({ data: tf.prazo, hora: "", tipo: "tarefa", tarefaId: tf.id,
+          titulo: "Pendência · " + tf.titulo, responsavel: tf.dono || "" });
     });
     loadPessoas().forEach(function (p) {
       if (p.proximoCheckin && dentro(p.proximoCheckin))
@@ -1277,6 +1383,13 @@
       if (p.status === "aluna" && ct && ct.fim && dentro(ct.fim))
         itens.push({ data: ct.fim, hora: "", tipo: "renovacao",
           titulo: "Fim de contrato · " + p.nome, pessoaId: p.id, responsavel: "Carla" });
+      if (p.reuniao && p.reuniao.data && dentro(p.reuniao.data) && p.status === "lead")
+        itens.push({ data: p.reuniao.data, hora: p.reuniao.hora || "", pessoaId: p.id,
+          tipo: p.reuniao.feita ? "reuniao_feita" : "reuniao",
+          titulo: (p.reuniao.feita ? "Reunião feita · " : "Reunião · ") + p.nome, responsavel: "Carla" });
+      if (p.desde && dentro(p.desde) && (p.status === "aluna" || p.status === "mvs"))
+        itens.push({ data: p.desde, hora: "", tipo: "matricula", pessoaId: p.id,
+          titulo: "Matrícula · " + p.nome, responsavel: "Carla" });
     });
     eventosLista().forEach(function (e) {
       if (dentro(e.data))
@@ -1306,6 +1419,8 @@
     localStorage.removeItem(TURMAS_KEY);
     localStorage.removeItem(EVENTOS_KEY);
     localStorage.removeItem(CHAMADAS_KEY);
+    localStorage.removeItem(TAREFAS_KEY);
+    localStorage.removeItem(FERIADOS_KEY);
     localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
@@ -1349,6 +1464,11 @@
     eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
+    estadoPresenca: estadoPresenca,
+    tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
+    feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
+    agendarReuniao: agendarReuniao, marcarReuniaoFeita: marcarReuniaoFeita,
+    registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
     addCusto: addCusto, removeCusto: removeCusto,

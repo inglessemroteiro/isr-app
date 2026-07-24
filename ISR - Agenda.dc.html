@@ -11,7 +11,7 @@
 <body>
 <x-dc>
 <main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
-  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+  <div style="max-width: 1120px; margin: 0 auto; padding: 22px 16px 60px;">
 
     <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
       <div>
@@ -20,10 +20,11 @@
       </div>
       <div style="display: flex; gap: 8px;">
         <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+        <button onclick="{{ onToggleFeriados }}" style="border: 1px solid #e5dccf; background: {{ ferBg }}; color: {{ ferFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Feriados</button>
         <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Tudo o que acontece nos próximos dias, num lugar só: aulas das turmas, aulas extras e particulares, check-ins, follow-ups da Carla, onboardings da Érika e fins de contrato. Filtre pelo tipo ou pela pessoa responsável.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;">Tudo num lugar só: aulas, reuniões do comercial, check-ins, onboardings, matrículas, pendências e fins de contrato. Veja em lista ou a semana inteira de uma vez — cada cor é um tipo de compromisso.</p>
 
     <!-- FORM AULA EXTRA -->
     <sc-if value="{{ novoAberto }}">
@@ -39,90 +40,173 @@
       </div>
     </sc-if>
 
-    <!-- FILTROS -->
+    <!-- FERIADOS DA ESCOLA -->
+    <sc-if value="{{ feriadosAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 6px;">Feriados da escola</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">No feriado a agenda não marca aula — e a conta de aulas do ciclo sai certa.</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+          <input ref="{{ ferDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ ferNomeRef }}" placeholder="Nome (ex. Carnaval)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; flex: 1; min-width: 160px;" />
+          <button onclick="{{ onAddFeriado }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">✓ Adicionar feriado</button>
+        </div>
+        <sc-if value="{{ semFeriados }}">
+          <div style="font-size: 12px; color: #b3a693;">Nenhum feriado cadastrado ainda.</div>
+        </sc-if>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <sc-for list="{{ feriados }}" as="f" hint-placeholder-count="3">
+            <span style="display: inline-flex; align-items: center; gap: 8px; background: rgba(207,107,92,0.1); border: 1px solid rgba(207,107,92,0.25); border-radius: 999px; padding: 6px 6px 6px 13px;">
+              <span style="font-size: 12px; font-weight: 700; color: #b05c4c;">{{ f.label }}</span>
+              <button onclick="{{ f.onRemover }}" title="Remover feriado" style="border: none; background: transparent; color: #cf6b5c; font-size: 13px; font-weight: 700; cursor: pointer; padding: 0 6px;">×</button>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- CONTROLES: VISÃO + FILTROS -->
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+      <div style="display: flex; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 3px;">
+        <button onclick="{{ onVerLista }}" style="border: none; cursor: pointer; background: {{ listaBg }}; color: {{ listaFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">Lista</button>
+        <button onclick="{{ onVerSemana }}" style="border: none; cursor: pointer; background: {{ semanaBg }}; color: {{ semanaFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">Semana</button>
+      </div>
       <select onchange="{{ onResp }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
         <sc-for list="{{ resps }}" as="r" hint-placeholder-count="5">
           <option value="{{ r.id }}" selected="{{ r.sel }}">{{ r.label }}</option>
         </sc-for>
       </select>
-      <select onchange="{{ onDias }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
-        <sc-for list="{{ diasOpts }}" as="d" hint-placeholder-count="3">
-          <option value="{{ d.id }}" selected="{{ d.sel }}">{{ d.label }}</option>
-        </sc-for>
-      </select>
+      <sc-if value="{{ ehLista }}">
+        <select onchange="{{ onDias }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <sc-for list="{{ diasOpts }}" as="d" hint-placeholder-count="3">
+            <option value="{{ d.id }}" selected="{{ d.sel }}">{{ d.label }}</option>
+          </sc-for>
+        </select>
+      </sc-if>
+      <sc-if value="{{ ehSemana }}">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button onclick="{{ onSemanaAnterior }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 13px; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">‹</button>
+          <span style="font-size: 12.5px; font-weight: 700; color: #164951; min-width: 150px; text-align: center;">{{ semanaLabel }}</span>
+          <button onclick="{{ onSemanaProxima }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 13px; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; cursor: pointer;">›</button>
+          <sc-if value="{{ foraDaSemanaAtual }}">
+            <button onclick="{{ onSemanaHoje }}" style="border: none; background: transparent; color: #2a9d8f; font-size: 12px; font-weight: 700; cursor: pointer; padding: 6px;">hoje</button>
+          </sc-if>
+        </div>
+      </sc-if>
     </div>
 
-    <!-- ABAS DE TIPO -->
-    <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px; overflow-x: auto;">
-      <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="7">
-        <button onclick="{{ tab.onClick }}" style="flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 14px 9px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
+    <!-- LEGENDA DE CORES -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; padding: 0 4px;">
+      <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="8">
+        <button onclick="{{ lg.onClick }}" style="display: inline-flex; align-items: center; gap: 5px; border: none; background: {{ lg.bg }}; cursor: pointer; padding: 4px 10px; border-radius: 999px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ lg.cor }}; display: inline-block;"></span>
+          <span style="font-size: 11px; font-weight: {{ lg.weight }}; color: #6b6155;">{{ lg.label }}</span>
+          <span style="font-size: 10px; color: #b3a693;">{{ lg.count }}</span>
         </button>
       </sc-for>
     </div>
 
-    <!-- LISTA POR DIA -->
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
-      <sc-if value="{{ vazio }}">
-        <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
-          <p style="margin: 0; font-size: 13px;">Nada na agenda com esses filtros.</p>
-        </div>
-      </sc-if>
-
-      <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f6eee4; border-top: 1px solid #f2e9dd;">
-            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: {{ g.cor }};">{{ g.label }}</span>
-            <span style="font-size: 11px; color: #b3a693;">{{ g.sub }}</span>
+    <!-- ═══ VISÃO LISTA ═══ -->
+    <sc-if value="{{ ehLista }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
+        <sc-if value="{{ vazio }}">
+          <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
+            <p style="margin: 0; font-size: 13px;">Nada na agenda com esses filtros.</p>
           </div>
-          <sc-for list="{{ g.itens }}" as="it" hint-placeholder-count="3">
-            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #f7f2ea;">
-              <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ it.cor }}; flex: none;"></span>
-              <span style="flex: none; width: 44px; font-size: 12px; font-weight: 700; color: #164951;">{{ it.hora }}</span>
-              <div style="flex: 1; min-width: 0;">
-                <sc-if value="{{ it.temPerfil }}">
-                  <a href="{{ it.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ it.titulo }}</a>
+        </sc-if>
+        <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f6eee4; border-top: 1px solid #f2e9dd;">
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: {{ g.cor }};">{{ g.label }}</span>
+              <span style="font-size: 11px; color: #b3a693;">{{ g.sub }}</span>
+            </div>
+            <sc-for list="{{ g.itens }}" as="it" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #f7f2ea;">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ it.cor }}; flex: none;"></span>
+                <span style="flex: none; width: 44px; font-size: 12px; font-weight: 700; color: #164951;">{{ it.hora }}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <sc-if value="{{ it.temPerfil }}">
+                    <a href="{{ it.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ it.titulo }}</a>
+                  </sc-if>
+                  <sc-if value="{{ it.semPerfil }}">
+                    <span style="font-size: 13px; font-weight: 700; color: {{ it.tituloCor }};">{{ it.titulo }}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ it.resp }}">
+                  <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ it.resp }}</span>
                 </sc-if>
-                <sc-if value="{{ it.semPerfil }}">
-                  <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ it.titulo }}</span>
+                <sc-if value="{{ it.temGcal }}">
+                  <a href="{{ it.gcal }}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">+ Google Agenda</a>
+                </sc-if>
+                <sc-if value="{{ it.removivel }}">
+                  <button onclick="{{ it.onRemover }}" style="flex: none; border: none; background: transparent; color: #c9c1b6; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px;">remover</button>
                 </sc-if>
               </div>
-              <sc-if value="{{ it.resp }}">
-                <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ it.resp }}</span>
-              </sc-if>
-              <a href="{{ it.gcal }}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">+ Google Agenda</a>
-              <sc-if value="{{ it.removivel }}">
-                <button onclick="{{ it.onRemover }}" style="flex: none; border: none; background: transparent; color: #c9c1b6; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px;">remover</button>
-              </sc-if>
-            </div>
-          </sc-for>
-        </div>
-      </sc-for>
-    </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
 
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">As aulas das turmas entram sozinhas pelo horário cadastrado em Turmas & Projetos (ex. TUE 19H). Check-ins, follow-ups, onboardings e fins de contrato vêm dos perfis — quando você resolve por lá, some daqui.</p>
+    <!-- ═══ VISÃO SEMANA ═══ -->
+    <sc-if value="{{ ehSemana }}">
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: start;">
+        <sc-for list="{{ semanaDias }}" as="dia" hint-placeholder-count="7">
+          <div style="background: {{ dia.bg }}; border: 1px solid {{ dia.border }}; border-radius: 10px; min-height: 180px; overflow: hidden;">
+            <div style="text-align: center; padding: 8px 4px; background: {{ dia.headBg }}; border-bottom: 1px solid {{ dia.border }};">
+              <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: {{ dia.headFg }};">{{ dia.semDia }}</div>
+              <div style="font-size: 16px; font-weight: 700; color: {{ dia.numFg }}; margin-top: 1px;">{{ dia.num }}</div>
+            </div>
+            <div style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+              <sc-for list="{{ dia.itens }}" as="it" hint-placeholder-count="3">
+                <a href="{{ it.href }}" style="display: block; text-decoration: none; background: {{ it.bg }}; border-left: 3px solid {{ it.cor }}; border-radius: 6px; padding: 5px 7px;">
+                  <div style="font-size: 9px; font-weight: 700; color: {{ it.cor }};">{{ it.horaTag }}</div>
+                  <div style="font-size: 10.5px; font-weight: 600; color: #3d3529; line-height: 1.35; word-break: break-word;">{{ it.curto }}</div>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">As aulas das turmas entram sozinhas pelo horário cadastrado em Turmas & Projetos. Reuniões vêm do CRM, check-ins e onboardings dos perfis, pendências da Central — quando você resolve por lá, muda de cor ou some daqui.</p>
 
   </div>
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1120px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tipo: "todos", resp: "Todos", dias: 14, novoAberto: false, tick: 0 };
+  state = { visao: "lista", tipo: "todos", resp: "Todos", dias: 14, semanaOffset: 0,
+    novoAberto: false, feriadosAberto: false, tick: 0 };
   evTituloRef = React.createRef(); evDataRef = React.createRef();
   evHoraRef = React.createRef(); evRespRef = React.createRef();
+  ferDataRef = React.createRef(); ferNomeRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
 
   TIPO_META = {
     aula: { label: "Aulas", cor: "#6b5b95" },
-    aula_extra: { label: "Aulas extras", cor: "#e07856" },
+    aula_extra: { label: "Aulas extras", cor: "#b0722c" },
+    reuniao: { label: "Reuniões a fazer", cor: "#e07856" },
+    reuniao_feita: { label: "Reuniões feitas", cor: "#b8ada0" },
+    matricula: { label: "Matrículas", cor: "#5a9e4b" },
+    onboarding: { label: "Onboarding", cor: "#9ec970" },
     checkin: { label: "Check-ins", cor: "#2a9d8f" },
     followup: { label: "Follow-ups", cor: "#348a8e" },
-    onboarding: { label: "Onboarding", cor: "#9ec970" },
-    renovacao: { label: "Renovações", cor: "#d4a574" }
+    renovacao: { label: "Renovações", cor: "#d4a574" },
+    tarefa: { label: "Pendências", cor: "#9c6f56" },
+    feriado: { label: "Feriados", cor: "#cf6b5c" }
   };
+
+  hojeIso() { return new Date().toISOString().slice(0, 10); }
+
+  segundaDaSemana(offset) {
+    const d = new Date(); d.setHours(12, 0, 0, 0);
+    const dow = (d.getDay() + 6) % 7; // 0 = segunda
+    d.setDate(d.getDate() - dow + (offset || 0) * 7);
+    return d;
+  }
 
   diaLabel(isoStr) {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
@@ -138,36 +222,49 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { evTituloRef: this.evTituloRef, evDataRef: this.evDataRef, evHoraRef: this.evHoraRef, evRespRef: this.evRespRef };
-    if (!CRM) return Object.assign({ abas: [], grupos: [], resps: [], diasOpts: [], vazio: true, novoAberto: false, novoLabel: "+ Aula extra", novoBg: "#164951", novoFg: "#fff" }, refs);
+    const refs = { evTituloRef: this.evTituloRef, evDataRef: this.evDataRef, evHoraRef: this.evHoraRef,
+      evRespRef: this.evRespRef, ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef };
+    if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
 
-    const todos = CRM.agendaItens(this.state.dias);
+    const ehSemana = this.state.visao === "semana";
+    const iso = d => d.toISOString().slice(0, 10);
 
-    // responsáveis presentes
+    // itens da janela ativa
+    let todos;
+    let segunda = null;
+    if (ehSemana) {
+      segunda = this.segundaDaSemana(this.state.semanaOffset);
+      todos = CRM.agendaItens(7, iso(segunda));
+    } else {
+      todos = CRM.agendaItens(this.state.dias);
+    }
+
+    // responsáveis
     const nomes = ["Todos"];
     todos.forEach(it => { if (it.responsavel && nomes.indexOf(it.responsavel) < 0) nomes.push(it.responsavel); });
     const respSel = this.state.resp;
     const porResp = todos.filter(it => respSel === "Todos" || it.responsavel === respSel);
 
-    // abas por tipo
-    const TIPOS = [{ id: "todos", label: "Tudo" }].concat(
-      Object.keys(this.TIPO_META).map(k => ({ id: k, label: this.TIPO_META[k].label })));
+    // legenda clicável = filtro por tipo
     const tipoAtivo = this.state.tipo;
-    const abas = TIPOS.map(t => {
-      const on = t.id === tipoAtivo;
-      const count = t.id === "todos" ? porResp.length : porResp.filter(x => x.tipo === t.id).length;
-      return {
-        label: t.label, count,
-        onClick: () => this.setState({ tipo: t.id }),
-        bg: on ? "#fdfbf8" : "#f3ebe0", fg: on ? "#164951" : "#8a7c6b",
-        border: on ? "#eee3d6" : "transparent", weight: on ? 700 : 600,
-        countFg: on ? "#9c6f56" : "#b3a693"
-      };
-    });
+    const legenda = [{ id: "todos", label: "Tudo", cor: "#164951" }].concat(
+      Object.keys(this.TIPO_META).map(k => ({ id: k, label: this.TIPO_META[k].label, cor: this.TIPO_META[k].cor })))
+      .map(l => {
+        const on = l.id === tipoAtivo;
+        const count = l.id === "todos" ? porResp.length : porResp.filter(x => x.tipo === l.id).length;
+        return {
+          label: l.label, cor: l.cor, count: count,
+          bg: on ? "#f2ebe3" : "transparent", weight: on ? 700 : 600,
+          onClick: () => this.setState({ tipo: l.id })
+        };
+      });
 
     const visiveis = porResp.filter(it => tipoAtivo === "todos" || it.tipo === tipoAtivo);
 
-    // agrupar por dia
+    const meta = t => this.TIPO_META[t] || { cor: "#c9c1b6" };
+    const hoje = this.hojeIso();
+
+    // ── lista agrupada por dia ──
     const grupos = [];
     let atual = null;
     visiveis.forEach(it => {
@@ -176,35 +273,98 @@ class Component extends DCLogic {
         atual = { data: it.data, label: dl.label, sub: dl.sub, cor: dl.cor, itens: [] };
         grupos.push(atual);
       }
-      const meta = this.TIPO_META[it.tipo] || { cor: "#c9c1b6" };
       atual.itens.push({
-        titulo: it.titulo, hora: it.hora || "—", cor: meta.cor,
+        titulo: it.titulo, hora: it.hora || "—", cor: meta(it.tipo).cor,
+        tituloCor: it.tipo === "feriado" ? "#b05c4c" : "#164951",
         resp: it.responsavel || "",
         temPerfil: !!it.pessoaId, semPerfil: !it.pessoaId,
         perfilHref: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#",
+        temGcal: it.tipo !== "feriado",
         gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Agenda · Inglês sem Roteiro"),
         removivel: !!it.eventoId,
         onRemover: () => { CRM.removeEvento(it.eventoId); this.bump(); }
       });
     });
 
+    // ── grade da semana ──
+    const semanaDias = [];
+    if (ehSemana) {
+      const nomesDias = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(segunda); d.setDate(d.getDate() + i);
+        const dIso = iso(d);
+        const ehHoje = dIso === hoje;
+        semanaDias.push({
+          semDia: nomesDias[i], num: d.getDate(),
+          bg: ehHoje ? "#fff" : "#fdfbf8",
+          border: ehHoje ? "#348a8e" : "#eee3d6",
+          headBg: ehHoje ? "rgba(52,138,142,0.1)" : "#f6eee4",
+          headFg: ehHoje ? "#348a8e" : "#8a7c6b",
+          numFg: ehHoje ? "#348a8e" : "#164951",
+          itens: visiveis.filter(it => it.data === dIso).map(it => ({
+            cor: meta(it.tipo).cor,
+            bg: it.tipo === "feriado" ? "rgba(207,107,92,0.08)" : "#faf8f3",
+            horaTag: (it.hora || "").toUpperCase() || (this.TIPO_META[it.tipo] ? this.TIPO_META[it.tipo].label.toUpperCase() : ""),
+            curto: it.titulo.replace(/^(Aula|Aula extra|Reunião( feita)?|Matrícula|Onboarding|Check-in|Follow-up|Fim de contrato|Pendência|Feriado) · /, ""),
+            href: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#"
+          }))
+        });
+      }
+    }
+
+    const semanaLabel = segunda ? (() => {
+      const fim = new Date(segunda); fim.setDate(fim.getDate() + 6);
+      const f = d => ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+      return f(segunda) + " – " + f(fim);
+    })() : "";
+
+    const feriados = CRM.feriadosLista().map(f => ({
+      label: CRM.ddmm(f.data) + " · " + f.nome,
+      onRemover: () => { CRM.removeFeriado(f.id); this.bump(); }
+    }));
+
     return Object.assign({
-      abas, grupos, vazio: visiveis.length === 0,
+      ehLista: !ehSemana, ehSemana,
+      onVerLista: () => this.setState({ visao: "lista" }),
+      onVerSemana: () => this.setState({ visao: "semana" }),
+      listaBg: !ehSemana ? "#164951" : "transparent", listaFg: !ehSemana ? "#fff" : "#6b6155",
+      semanaBg: ehSemana ? "#164951" : "transparent", semanaFg: ehSemana ? "#fff" : "#6b6155",
+      semanaLabel, semanaDias,
+      onSemanaAnterior: () => this.setState({ semanaOffset: this.state.semanaOffset - 1 }),
+      onSemanaProxima: () => this.setState({ semanaOffset: this.state.semanaOffset + 1 }),
+      onSemanaHoje: () => this.setState({ semanaOffset: 0 }),
+      foraDaSemanaAtual: this.state.semanaOffset !== 0,
+
+      legenda, grupos, vazio: visiveis.length === 0,
       resps: nomes.map(n => ({ id: n, label: n === "Todos" ? "Todos os responsáveis" : n, sel: n === respSel })),
       onResp: (e) => this.setState({ resp: e.target.value }),
       diasOpts: [7, 14, 30].map(n => ({ id: String(n), label: "Próximos " + n + " dias", sel: this.state.dias === n })),
       onDias: (e) => this.setState({ dias: parseInt(e.target.value, 10) || 14 }),
+
       novoAberto: this.state.novoAberto,
       novoLabel: this.state.novoAberto ? "fechar" : "+ Aula extra",
       novoBg: this.state.novoAberto ? "#e5dccf" : "#164951",
       novoFg: this.state.novoAberto ? "#6b6155" : "#fff",
-      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto }),
+      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, feriadosAberto: false }),
       onCriarEvento: () => {
         const titulo = this.val(this.evTituloRef), data = this.val(this.evDataRef);
         if (!titulo || !data) { window.alert("Preencha pelo menos o título e a data."); return; }
         window.ISRCRM.addEvento({ titulo, data, hora: this.val(this.evHoraRef), responsavel: this.val(this.evRespRef) });
         [this.evTituloRef, this.evHoraRef, this.evRespRef].forEach(r => { if (r.current) r.current.value = ""; });
         this.setState({ novoAberto: false });
+      },
+
+      feriadosAberto: this.state.feriadosAberto,
+      ferBg: this.state.feriadosAberto ? "#164951" : "#fff",
+      ferFg: this.state.feriadosAberto ? "#fff" : "#164951",
+      onToggleFeriados: () => this.setState({ feriadosAberto: !this.state.feriadosAberto, novoAberto: false }),
+      feriados, semFeriados: feriados.length === 0,
+      onAddFeriado: () => {
+        const data = this.val(this.ferDataRef);
+        if (!data) { window.alert("Escolha a data do feriado."); return; }
+        window.ISRCRM.addFeriado(data, this.val(this.ferNomeRef) || "Feriado");
+        if (this.ferNomeRef.current) this.ferNomeRef.current.value = "";
+        this.bump();
       }
     }, refs);
   }
