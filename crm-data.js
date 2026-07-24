@@ -994,9 +994,10 @@
     "Marcar um horário", "Pegar uma encomenda", "Resolver quando algo dá errado",
     "Um dia inteiro lá fora"
   ];
+  // Por aluna, só duas coisas: ela respondeu, e a devolutiva já foi enviada.
+  // O envio da missão é uma ação de turma — fica em programa.missoesEnviadas.
   var ETAPAS_SEMANA = [
-    { id: "missao",   label: "Missão enviada",   curto: "missão",   cor: "#348a8e" },
-    { id: "audio",    label: "Áudio recebido",   curto: "áudio",    cor: "#9ec970" },
+    { id: "audio",    label: "Respondeu",         curto: "resposta",   cor: "#9ec970" },
     { id: "feedback", label: "Devolutiva enviada", curto: "devolutiva", cor: "#fc9082" }
   ];
   var PROGRAMAS_KEY = "isr_programas_v1";
@@ -1054,6 +1055,20 @@
     });
     programasSave(l); return l;
   }
+  // Missão da semana: enviada ao grupo, uma marca por semana.
+  function marcarMissaoSemana(programaId, semana, valor) {
+    var l = programasLista();
+    l.forEach(function (p) {
+      if (p.id !== programaId) return;
+      p.missoesEnviadas = p.missoesEnviadas || {};
+      if (valor) p.missoesEnviadas[semana] = iso(today());
+      else delete p.missoesEnviadas[semana];
+    });
+    programasSave(l); return l;
+  }
+  function missaoEnviada(programa, semana) {
+    return !!((programa.missoesEnviadas || {})[semana]);
+  }
   function etapaFeita(programa, pessoaId, semana, etapa) {
     var k = pessoaId + "|" + semana;
     return !!((programa.progresso || {})[k] || {})[etapa];
@@ -1075,12 +1090,11 @@
       var pessoa = getPessoa(pid) || { nome: "(removida)", whatsapp: "" };
       var faltando = [];
       for (var s = 1; s <= sem; s++) {
-        var m = etapaFeita(p, pid, s, "missao");
+        if (!missaoEnviada(p, s)) continue; // missão ainda não foi ao grupo
         var a = etapaFeita(p, pid, s, "audio");
         var f = etapaFeita(p, pid, s, "feedback");
-        if (!m) faltando.push({ semana: s, etapa: "missao" });
-        if (m && !a) faltando.push({ semana: s, etapa: "audio" });
-        if (a && !f) { faltando.push({ semana: s, etapa: "feedback" }); }
+        if (!a) faltando.push({ semana: s, etapa: "audio" });
+        else if (!f) faltando.push({ semana: s, etapa: "feedback" });
       }
       var devendoFeedback = faltando.filter(function (x) { return x.etapa === "feedback"; }).length;
       var semAud = faltando.filter(function (x) { return x.etapa === "audio"; }).length;
@@ -1098,7 +1112,14 @@
     }).sort(function (a, b) {
       return (b.devendoFeedback - a.devendoFeedback) || (b.sumindo - a.sumindo) || a.nome.localeCompare(b.nome);
     });
-    return { semanaAtual: sem, linhas: linhas, feedbacksDevendo: feedbacksDevendo, semAudio: semAudio };
+    var respSemana = p.participantes.filter(function (pid) {
+      return sem >= 1 && etapaFeita(p, pid, sem, "audio");
+    }).length;
+    return { semanaAtual: sem, linhas: linhas,
+      feedbacksDevendo: feedbacksDevendo, semAudio: semAudio,
+      missaoDaSemanaEnviada: sem >= 1 && missaoEnviada(p, sem),
+      responderamNaSemana: respSemana, totalParticipantes: p.participantes.length,
+      missaoDaSemana: sem >= 1 ? (p.missoes[sem - 1] || "") : "" };
   }
 
   // ── PAINEL DE ALUNAS ──────────────────────────────────────────
@@ -2806,6 +2827,7 @@
     updatePrograma: updatePrograma, removePrograma: removePrograma,
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
+    marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     semanaAtualPrograma: semanaAtualPrograma, pendenciasPrograma: pendenciasPrograma,
     // acompanhamento
     TOQUE_TIPOS: TOQUE_TIPOS, PULSO_META: PULSO_META, MOTIVOS_TOQUE: MOTIVOS_TOQUE,
