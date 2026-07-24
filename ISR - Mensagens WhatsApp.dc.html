@@ -11,16 +11,17 @@
 <body>
 <x-dc>
 <main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
-  <div style="max-width: 1080px; margin: 0 auto; padding: 26px 16px 60px;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
 
     <!-- HEADER -->
     <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
       <div>
-        <h1 style="margin: 0 0 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.3px; color: #164951; font-family: Georgia, 'Times New Roman', serif;">Mensagens prontas</h1>
-        <p style="margin: 0 0 22px; font-size: 13.5px; color: #6b6155; line-height: 1.65; max-width: 660px;">Escolha o destinatário (aluna ou lead) e o modelo: as variáveis são preenchidas com os dados do sistema (turma, contrato, cobranças). O que faltar aparece <strong>[DESTACADO]</strong> para completar à mão. Revise o texto e envie pelo WhatsApp com um clique.</p>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
+        <h1 style="margin: 0 0 10px; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Mensagens prontas</h1>
+        <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">Escolha o destinatário (aluna ou lead) e o modelo: as variáveis são preenchidas com os dados do sistema (turma, contrato, cobranças). O que faltar aparece <strong>[DESTACADO]</strong> para completar à mão. Revise o texto e envie pelo WhatsApp com um clique.</p>
       </div>
       <div style="display: flex; gap: 8px;">
-        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px;">← Voltar ao CRM</a>
+        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px;">← Central</a>
         <button onclick="{{ onToggleGerenciar }}" style="border: 1px solid {{ gerBorder }}; background: {{ gerBg }}; color: {{ gerFg }}; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer;">✎ Gerenciar modelos</button>
       </div>
     </header>
@@ -49,7 +50,7 @@
         <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;">
           <sc-for list="{{ fila }}" as="f" hint-placeholder-count="5">
             <button onclick="{{ f.onClick }}" style="flex: none; display: flex; align-items: center; gap: 8px; border: 1px solid {{ f.border }}; background: {{ f.bg }}; border-radius: 999px; padding: 8px 14px; cursor: pointer;">
-              <span style="font-size: 13px;">{{ f.icon }}</span>
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ f.cor }}; flex: none;"></span>
               <span style="font-size: 12px; font-weight: 700; color: #3d3529;">{{ f.nome }}</span>
               <span style="font-size: 11px; color: #8a7c6b;">{{ f.acao }}</span>
             </button>
@@ -250,7 +251,7 @@ class Component extends DCLogic {
     const filaRaw = CRM.filaParaHoje("gestora").slice(0, 10);
     const urgCor = { R3: "#ecc9c2", R1: "#f2ddc9", R2: "#f2ddc9", R4: "#f2ddc9", R5: "#ddd4e8", R12: "#c9dede" };
     const fila = filaRaw.map(f => ({
-      icon: f.icon, nome: CRM.firstName(f.nome), acao: f.acao,
+      cor: f.cor || "#c9c1b6", nome: CRM.firstName(f.nome), acao: f.acao,
       border: urgCor[f.regra] || "#e5dccf",
       bg: f.regra === "R3" ? "#fdf0ee" : "#fff",
       onClick: () => {

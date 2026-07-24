@@ -1122,6 +1122,7 @@
     if (!url) return;
     var payload = {
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
+      turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1140,6 +1141,9 @@
             if (d.data.pessoas && d.data.pessoas.length) savePessoasLocal(d.data.pessoas);
             if (d.data.custos && d.data.custos.length) custosSaveLocal(d.data.custos);
             if (d.data.templates) tplSaveLocal(d.data.templates);
+            if (d.data.turmas && d.data.turmas.length) { try { localStorage.setItem(TURMAS_KEY, JSON.stringify(d.data.turmas)); } catch (e) {} }
+            if (d.data.eventos) { try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(d.data.eventos)); } catch (e) {} }
+            if (d.data.chamadas) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(d.data.chamadas)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1197,6 +1201,40 @@
     eventosSave(l); return l;
   }
   function removeEvento(id) { var l = eventosLista().filter(function (e) { return e.id !== id; }); eventosSave(l); return l; }
+
+  // ── CHAMADA (presenças por turma e dia — Painel do Professor) ──
+  var CHAMADAS_KEY = "isr_chamadas_v1";
+  function chamadasAll() {
+    try { return JSON.parse(localStorage.getItem(CHAMADAS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function chamadasSaveLocal(m) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(m)); } catch (e) {} }
+  function getChamada(turmaLabel, dataIso) { return chamadasAll()[turmaLabel + "|" + dataIso] || null; }
+  function salvarChamada(turmaLabel, dataIso, presencas, por) {
+    var m = chamadasAll();
+    var key = turmaLabel + "|" + dataIso;
+    var antes = (m[key] && m[key].presencas) || {};
+    m[key] = { turma: turmaLabel, data: dataIso, presencas: presencas,
+      salvoEm: new Date().toISOString(), por: por || "" };
+    chamadasSaveLocal(m);
+    agendarSync();
+    // falta nova vai pra linha do tempo da aluna (re-salvar não duplica)
+    Object.keys(presencas).forEach(function (pid) {
+      if (presencas[pid] === false && antes[pid] !== false) {
+        mutate(pid, function (p) { pushHist(p, "falta", "Faltou na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
+      }
+    });
+    return m[key];
+  }
+  function faltasDe(pessoaId) {
+    var m = chamadasAll(), n = 0;
+    Object.keys(m).forEach(function (k) {
+      if (m[k].presencas && m[k].presencas[pessoaId] === false) n++;
+    });
+    return n;
+  }
+  function alunasDaTurma(turmaLabel) {
+    return loadPessoas().filter(function (p) { return p.status === "aluna" && p.turma === turmaLabel; });
+  }
 
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
   var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
@@ -1267,6 +1305,7 @@
     localStorage.removeItem("isr_fila_adiados");
     localStorage.removeItem(TURMAS_KEY);
     localStorage.removeItem(EVENTOS_KEY);
+    localStorage.removeItem(CHAMADAS_KEY);
     localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
@@ -1309,6 +1348,7 @@
     setOnboardingFeito: setOnboardingFeito, setProximoCheckin: setProximoCheckin, registrarCheckinFeito: registrarCheckinFeito,
     eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
     agendaItens: agendaItens, gcalLink: gcalLink,
+    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
     addCusto: addCusto, removeCusto: removeCusto,

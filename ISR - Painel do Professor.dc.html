@@ -3,214 +3,242 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Painel do Professor</title>
 <script src="./support.js"></script>
 <script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
 </head>
 <body>
 <x-dc>
-<main style="background: #faf8f3; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif;">
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
 
-  <header style="padding: 22px 16px 0; background: #164951;">
-    <div style="max-width: 480px; margin: 0 auto;">
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-        <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center;">{{ profInitial }}</div>
-        <div style="flex: 1;">
-          <p style="margin: 0; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.2px;">{{ profNome }}</p>
-          <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px;">Painel do Professor</p>
-        </div>
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Pedagógico</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Painel do Professor</h1>
       </div>
-      <div style="display: flex; gap: 4px;">
-        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
-          <button onclick="{{ t.go }}" style="flex: 1; border: none; background: none; color: {{ t.color }}; font-size: 12px; font-weight: 700; padding: 12px 4px; cursor: pointer; border-bottom: 2px solid {{ t.border }}; letter-spacing: -0.1px;">{{ t.label }}</button>
+      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">A semana de cada professora: as próximas aulas (das turmas e particulares), a chamada — que registra faltas direto na linha do tempo da aluna — e as turmas com projeto e material do ciclo.</p>
+
+    <!-- SELETOR DE PROFESSORA -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700;">Professora</div>
+      <select onchange="{{ onTeacher }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="4">
+          <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
         </sc-for>
-      </div>
+      </select>
     </div>
-  </header>
 
-  <div style="padding: 20px 16px 40px; max-width: 480px; margin: 0 auto;">
-
-    <!-- TAB: TURMAS -->
-    <sc-if value="{{ isTurmas }}" hint-placeholder-val="{{ true }}">
-      <sc-for list="{{ turmas }}" as="c" hint-placeholder-count="2">
-        <section style="background: #fff; border: 1px solid #e0dcd6; border-left: 4px solid {{ c.accent }}; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 16px; margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-            <div>
-              <h3 style="margin: 0 0 2px; font-size: 15px; font-weight: 700; color: #164951;">{{ c.nome }}</h3>
-              <p style="margin: 0; font-size: 11px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.horario }} · {{ c.nAlunos }} alunos</p>
-            </div>
-            <span style="background: rgba(42,157,143,0.12); color: #2a9d8f; padding: 3px 8px; font-size: 9px; font-weight: 700; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.3px;">{{ c.badge }}</span>
-          </div>
-          <div style="background: #faf8f3; border-radius: 2px; padding: 10px 12px; margin-bottom: 12px;">
-            <p style="margin: 0 0 1px; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.5px;">Próximo tópico</p>
-            <p style="margin: 0; font-size: 12px; font-weight: 700; color: #333;">{{ c.nextTopic }}</p>
-          </div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">📓 Caderno da turma</span>
-            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">📖 Guia do prof</span>
-            <span style="font-size: 10px; color: #6b5b95; background: rgba(107,91,149,0.1); padding: 5px 9px; border-radius: 2px; font-weight: 600;">🎬 Gravações</span>
-          </div>
-          <button style="width: 100%; background: {{ c.accent }}; border: none; color: #fff; padding: 11px; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 2px;">▶ Iniciar aula no Meet</button>
-        </section>
+    <!-- PRÓXIMAS AULAS -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden; margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Próximas aulas · 7 dias</span>
+        <a href="ISR%20-%20Agenda.dc.html" style="text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">agenda completa →</a>
+      </div>
+      <sc-if value="{{ aulasVazio }}">
+        <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aula nos próximos 7 dias para esta professora.</div>
+      </sc-if>
+      <sc-for list="{{ aulas }}" as="a" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #f7f2ea;">
+          <span style="flex: none; width: 92px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: {{ a.diaCor }};">{{ a.dia }}</span>
+          <span style="flex: none; width: 40px; font-size: 12px; font-weight: 700; color: #164951;">{{ a.hora }}</span>
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ a.cor }}; flex: none;"></span>
+          <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #164951;">{{ a.titulo }}</span>
+          <button onclick="{{ a.onChamada }}" style="flex: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer;">fazer chamada</button>
+          <a href="{{ a.gcal }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">+ Google Agenda</a>
+        </div>
       </sc-for>
-    </sc-if>
+    </div>
 
-    <!-- TAB: CHAMADA -->
-    <sc-if value="{{ isChamada }}" hint-placeholder-val="{{ false }}">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <div>
-          <p style="margin: 0; font-size: 15px; font-weight: 700; color: #164951;">Speaking Group</p>
-          <p style="margin: 0; font-size: 11px; color: #9b8b7e;">Aula de hoje · Terça 19h00</p>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 0; font-size: 18px; font-weight: 700; color: #2a9d8f;">{{ presentCount }}/{{ totalAlunos }}</p>
-          <p style="margin: 0; font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.4px;">presentes</p>
-        </div>
+    <!-- CHAMADA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">Chamada</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px;">
+        <select onchange="{{ onTurmaChamada }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; max-width: 100%;">
+          <sc-for list="{{ turmasChamada }}" as="tc" hint-placeholder-count="4">
+            <option value="{{ tc.id }}" selected="{{ tc.sel }}">{{ tc.label }}</option>
+          </sc-for>
+        </select>
+        <input type="date" value="{{ chamadaData }}" onchange="{{ onDataChamada }}" style="padding: 8px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+        <sc-if value="{{ jaSalva }}">
+          <span style="background: rgba(90,158,75,0.14); color: #5a9e4b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 11px; border-radius: 999px;">salva em {{ salvaQuando }}</span>
+        </sc-if>
       </div>
-      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 16px;">
-        <sc-for list="{{ chamada }}" as="a" hint-placeholder-count="5">
-          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #f0ede8;">
-            <div style="width: 30px; height: 30px; border-radius: 50%; background: {{ a.avBg }}; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ a.initial }}</div>
-            <span style="flex: 1; font-size: 13px; font-weight: 600; color: #333;">{{ a.nome }}</span>
-            <div style="display: flex; gap: 4px;">
-              <button onclick="{{ a.setPresent }}" title="Presente" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.pBorder }}; background: {{ a.pBg }}; color: {{ a.pFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✓</button>
-              <button onclick="{{ a.setTardy }}" title="Atrasado" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.tBorder }}; background: {{ a.tBg }}; color: {{ a.tFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">⏱</button>
-              <button onclick="{{ a.setAbsent }}" title="Faltou" style="width: 30px; height: 30px; border-radius: 2px; border: 1px solid {{ a.aBorder }}; background: {{ a.aBg }}; color: {{ a.aFg }}; font-size: 13px; cursor: pointer; font-weight: 700;">✕</button>
-            </div>
-          </div>
-        </sc-for>
-      </div>
-      <button onclick="{{ saveChamada }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">{{ chamadaBtn }}</button>
-    </sc-if>
 
-    <!-- TAB: FEEDBACK -->
-    <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
-      <sc-if value="{{ fbSaved }}" hint-placeholder-val="{{ false }}">
-        <div style="background: rgba(42,157,143,0.1); border: 1px solid rgba(42,157,143,0.3); border-radius: 2px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-          <span style="color: #2a9d8f; font-size: 16px;">✓</span>
-          <span style="font-size: 12px; color: #164951; font-weight: 600;">Feedback salvo e enviado ao aluno.</span>
+      <sc-if value="{{ chamadaVazia }}">
+        <div style="text-align: center; padding: 24px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aluna matriculada nesta turma ainda.</div>
+      </sc-if>
+
+      <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
+          <a href="{{ al.perfilHref }}" style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ al.nome }}</a>
+          <sc-if value="{{ al.temFaltas }}">
+            <span style="flex: none; font-size: 10px; color: #b3a693;">{{ al.faltasInfo }}</span>
+          </sc-if>
+          <button onclick="{{ al.onPresente }}" style="flex: none; border: 1px solid {{ al.pBorder }}; background: {{ al.pBg }}; color: {{ al.pFg }}; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">Presente</button>
+          <button onclick="{{ al.onFalta }}" style="flex: none; border: 1px solid {{ al.fBorder }}; background: {{ al.fBg }}; color: {{ al.fFg }}; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">Falta</button>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ temAlunas }}">
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px;">
+          <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer;">✓ Salvar chamada</button>
+          <span style="font-size: 12px; color: #8a7c6b;">{{ resumoChamada }}</span>
+          <sc-if value="{{ salvouAgora }}">
+            <span style="font-size: 12px; color: #348a8e; font-weight: 700;">✓ Salva! Faltas registradas na linha do tempo.</span>
+          </sc-if>
         </div>
       </sc-if>
-      <section style="background: #fff; border: 1px solid #e0dcd6; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 18px;">
-        <label style="display: block; font-size: 10px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Turma / Aluno</label>
-        <input value="Speaking Group · Marina Oliveira" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px;" />
+    </div>
 
-        <label style="display: block; font-size: 10px; font-weight: 700; color: #164951; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">Tópico da aula</label>
-        <input value="Speaking & Storytelling" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px;" />
+    <!-- TURMAS DA PROFESSORA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Projeto do ciclo</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Alunas</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Material</span>
+      </div>
+      <sc-if value="{{ turmasVazio }}">
+        <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma turma desta professora.</div>
+      </sc-if>
+      <sc-for list="{{ turmasProf }}" as="u" hint-placeholder-count="3">
+        <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid #f2e9dd;">
+          <div style="min-width: 0;">
+            <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ u.nivel }}</div>
+            <div style="font-size: 11px; color: #a2957f; margin-top: 2px;">{{ u.turma }}</div>
+          </div>
+          <div style="font-size: 12.5px; font-weight: 700; color: #6b5b95;">{{ u.projeto }}</div>
+          <div style="font-size: 12.5px; color: #6b6155;">{{ u.ocupLabel }}</div>
+          <div style="font-size: 11px; color: #6b6155; line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+        </div>
+      </sc-for>
+    </div>
 
-        <label style="display: block; font-size: 10px; font-weight: 700; color: #2a9d8f; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">✓ O que foi bem</label>
-        <textarea placeholder="Pontos fortes do aluno nesta aula…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
-
-        <label style="display: block; font-size: 10px; font-weight: 700; color: #e07856; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">⚠ Pontos de atenção</label>
-        <textarea placeholder="O que precisa de mais prática…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 14px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
-
-        <label style="display: block; font-size: 10px; font-weight: 700; color: #6b5b95; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;">→ Próximos passos</label>
-        <textarea placeholder="Sugestões e tarefas para a próxima aula…" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #333; border: 1px solid #ddd; border-radius: 2px; background: #faf8f3; margin-bottom: 18px; min-height: 60px; resize: vertical; line-height: 1.5;"></textarea>
-
-        <button onclick="{{ saveFeedback }}" style="width: 100%; background: #164951; border: none; color: #fff; padding: 13px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(22,73,81,0.2);">Salvar feedback</button>
-      </section>
-    </sc-if>
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">A chamada fica guardada por turma e dia no banco central. Cada falta entra na linha do tempo da aluna — sinal de atenção pro check-in da Gabi.</p>
 
   </div>
-
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;375px&quot;, &quot;height&quot;: &quot;100vh&quot;}, &quot;profNome&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Prof. Agatha&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  constructor(props) {
-    super(props);
-    let user = {};
-    try { user = JSON.parse(localStorage.getItem("isr_user") || "{}"); } catch(e) {}
-    // Build initial chamada from first turma's alunos
-    const schedules = user.turmaSchedules || [];
-    const firstAlunos = schedules.length && schedules[0].alunos ? schedules[0].alunos : [];
-    const initChamada = {};
-    firstAlunos.forEach(a => { initChamada[a] = null; });
-    this.state = {
-      tab: "turmas",
-      selectedTurmaIdx: 0,
-      chamada: initChamada,
-      chamadaSaved: false,
-      fbSaved: false,
-    };
+  state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, salvouAgora: false, tick: 0 };
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
+
+  diaLabel(isoStr) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const d = new Date(isoStr + "T12:00:00");
+    const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+    const dif = Math.round((d0 - hoje) / 86400000);
+    const sem = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][d.getDay()];
+    const dm = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    if (dif === 0) return { label: "Hoje", cor: "#e07856" };
+    if (dif === 1) return { label: "Amanhã", cor: "#9c6f56" };
+    return { label: sem + " " + dm, cor: "#8a7c6b" };
   }
+
+  tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : "#6b5b95"; }
+
+  carregarChamada(turmaLabel, dataIso) {
+    const salva = window.ISRCRM.getChamada(turmaLabel, dataIso);
+    const pres = {};
+    window.ISRCRM.alunasDaTurma(turmaLabel).forEach(p => {
+      pres[p.id] = salva && salva.presencas[p.id] === false ? false : true;
+    });
+    return pres;
+  }
+
   renderVals() {
-    let user = {};
-    try { user = JSON.parse(localStorage.getItem("isr_user") || "{}"); } catch(e) {}
-    const nome = user.nome || "Professor";
-    const email = user.email || "";
-    const schedules = user.turmaSchedules || [];
-    const turmaNames = schedules.length ? schedules.map(s => s.turma) : (user.turmas || []);
+    const CRM = window.ISRCRM;
+    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "" };
 
-    const tab = this.state.tab;
-    const selIdx = this.state.selectedTurmaIdx;
-    const mkTab = (id, label) => ({
-      label, go: () => this.setState({ tab: id }),
-      color: tab === id ? "#fff" : "rgba(255,255,255,0.55)",
-      border: tab === id ? "#e07856" : "transparent",
-    });
-    const accents = ["#e07856","#2a9d8f","#6b5b95","#d4a574","#4a8fa0"];
-    const palette = { present: ["#2a9d8f","rgba(42,157,143,0.14)","#2a9d8f"], tardy: ["#d4a574","rgba(212,165,116,0.18)","#b07d3a"], absent: ["#c95a4a","rgba(201,90,74,0.14)","#c95a4a"] };
-    const avColors = ["#e07856","#2a9d8f","#6b5b95","#d4a574","#d4a5a5"];
+    const ocup = CRM.ocupacaoTurmas();
+    const nomes = [];
+    ocup.forEach(u => { if (u.teacher && nomes.indexOf(u.teacher) < 0) nomes.push(u.teacher); });
 
-    const turmas = turmaNames.map((tNome, i) => {
-      const s = schedules[i] || {};
-      const alunos = s.alunos || [];
+    // professora inicial: a própria (se logada com nome de professora), senão a primeira
+    const user = CRM.gestaoUser();
+    let teacher = this.state.teacher;
+    if (!teacher) teacher = (user && nomes.indexOf(user.nome) >= 0) ? user.nome : nomes[0];
+
+    const turmasProfOcup = ocup.filter(u => u.teacher === teacher);
+
+    // ── próximas aulas (7 dias) ──
+    const aulas = CRM.agendaItens(7)
+      .filter(it => (it.tipo === "aula" || it.tipo === "aula_extra") && it.responsavel === teacher)
+      .map(it => {
+        const dl = this.diaLabel(it.data);
+        const daTurma = turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0 && it.titulo.indexOf(u.turma) >= 0)[0];
+        return {
+          dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
+          titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
+          gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
+          onChamada: () => {
+            if (!daTurma) return;
+            this.setState({ turmaChamada: daTurma.label, chamadaData: it.data,
+              presencas: this.carregarChamada(daTurma.label, it.data), salvouAgora: false });
+          }
+        };
+      });
+
+    // ── chamada ──
+    const turmaSel = this.state.turmaChamada || (turmasProfOcup[0] ? turmasProfOcup[0].label : null);
+    const dataSel = this.state.chamadaData || this.hojeIso();
+    const presAtual = this.state.presencas || (turmaSel ? this.carregarChamada(turmaSel, dataSel) : {});
+    const alunas = turmaSel ? CRM.alunasDaTurma(turmaSel) : [];
+    const salva = turmaSel ? CRM.getChamada(turmaSel, dataSel) : null;
+
+    const presencas = alunas.map(p => {
+      const presente = presAtual[p.id] !== false;
+      const faltas = CRM.faltasDe(p.id);
       return {
-        nome: tNome,
-        horario: s.horario || "—",
-        nAlunos: alunos.length,
-        badge: s.isToday ? "Hoje" : (s.nextDate || ""),
-        accent: accents[i % accents.length],
-        nextTopic: s.nextTopic || "",
-        meetLink: s.meetLink || user.meetLink || "#",
-        go: () => {
-          const cham = {};
-          alunos.forEach(a => { cham[a] = null; });
-          this.setState({ tab: "chamada", selectedTurmaIdx: i, chamada: cham, chamadaSaved: false });
-        },
+        nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+        temFaltas: faltas > 0, faltasInfo: faltas + (faltas === 1 ? " falta no ciclo" : " faltas no ciclo"),
+        pBg: presente ? "#348a8e" : "#fff", pFg: presente ? "#fff" : "#8a7c6b", pBorder: presente ? "#348a8e" : "#e5dccf",
+        fBg: !presente ? "#cf6b5c" : "#fff", fFg: !presente ? "#fff" : "#8a7c6b", fBorder: !presente ? "#cf6b5c" : "#e5dccf",
+        onPresente: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: true }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false }),
+        onFalta: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: false }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false })
       };
     });
-
-    const selSched = schedules[selIdx] || {};
-    const selAlunos = selSched.alunos || Object.keys(this.state.chamada);
-    const cham = this.state.chamada;
-    const setStatus = (n, s) => this.setState(st => ({ chamada: Object.assign({}, st.chamada, { [n]: s }), chamadaSaved: false }));
-    const cell = (active, kind) => active
-      ? { bg: palette[kind][1], fg: palette[kind][2], border: palette[kind][0] }
-      : { bg: "#fff", fg: "#ccc", border: "#e6e1d9" };
-    const chamada = selAlunos.map((n, i) => {
-      const st = cham[n];
-      const p = cell(st === "present","present"), t = cell(st === "tardy","tardy"), a = cell(st === "absent","absent");
-      return {
-        nome: n, initial: n[0], avBg: avColors[i % avColors.length],
-        setPresent: () => setStatus(n, "present"), setTardy: () => setStatus(n, "tardy"), setAbsent: () => setStatus(n, "absent"),
-        pBg: p.bg, pFg: p.fg, pBorder: p.border, tBg: t.bg, tFg: t.fg, tBorder: t.border, aBg: a.bg, aFg: a.fg, aBorder: a.border,
-      };
-    });
-    const presentCount = selAlunos.filter(n => cham[n] === "present" || cham[n] === "tardy").length;
-
-    const saveChamada = async () => {
-      const now = new Date();
-      const week = now.getFullYear() + "-W" + Math.ceil(((now - new Date(now.getFullYear(),0,1))/86400000 + new Date(now.getFullYear(),0,1).getDay()+1)/7);
-      const dateStr = now.toISOString().slice(0,10);
-      const data = selAlunos.map(n => ({ turma: selSched.turma || turmaNames[selIdx] || "", semana: week, date: dateStr, aluno: n, status: cham[n] || "absent" }));
-      try {
-        await fetch("/.netlify/functions/save-chamada", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ savedBy: email, data }) });
-      } catch(e) {}
-      this.setState({ chamadaSaved: true });
-    };
+    const nFaltas = alunas.filter(p => presAtual[p.id] === false).length;
 
     return {
-      profNome: nome.split(" ")[0],
-      profInitial: nome[0] || "P",
-      tabs: [mkTab("turmas","Minhas Turmas"), mkTab("chamada","Chamada"), mkTab("feedback","Feedback")],
-      isTurmas: tab === "turmas", isChamada: tab === "chamada", isFeedback: tab === "feedback",
-      turmas,
-      chamada, presentCount, totalAlunos: selAlunos.length,
-      saveChamada,
-      chamadaBtn: this.state.chamadaSaved ? "✓ Chamada salva" : "Salvar chamada",
-      saveFeedback: () => this.setState({ fbSaved: true }),
-      fbSaved: this.state.fbSaved,
+      teachers: nomes.map(n => ({ id: n, label: n, sel: n === teacher })),
+      onTeacher: (e) => this.setState({ teacher: e.target.value, turmaChamada: null, chamadaData: null, presencas: null, salvouAgora: false }),
+
+      aulas, aulasVazio: aulas.length === 0,
+
+      turmasChamada: turmasProfOcup.map(u => ({
+        id: u.label, label: u.label + " · " + u.ocupadas + (u.ocupadas === 1 ? " aluna" : " alunas"),
+        sel: u.label === turmaSel
+      })),
+      onTurmaChamada: (e) => this.setState({ turmaChamada: e.target.value, presencas: this.carregarChamada(e.target.value, dataSel), salvouAgora: false }),
+      chamadaData: dataSel,
+      onDataChamada: (e) => {
+        const v = e.target.value || this.hojeIso();
+        this.setState({ chamadaData: v, turmaChamada: turmaSel, presencas: turmaSel ? this.carregarChamada(turmaSel, v) : null, salvouAgora: false });
+      },
+      jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
+      presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
+      resumoChamada: (alunas.length - nFaltas) + (alunas.length - nFaltas === 1 ? " presente" : " presentes") + " · " + nFaltas + (nFaltas === 1 ? " falta" : " faltas"),
+      salvouAgora: this.state.salvouAgora,
+      onSalvarChamada: () => {
+        CRM.salvarChamada(turmaSel, dataSel, presAtual, (user && user.nome) || "");
+        this.setState({ salvouAgora: true, turmaChamada: turmaSel, chamadaData: dataSel });
+      },
+
+      turmasProf: turmasProfOcup.map(u => ({
+        nivel: u.nivel, turma: u.turma,
+        projeto: u.projeto || "—",
+        ocupLabel: u.ocupadas + "/" + u.capacidade,
+        material: u.notebook || "Sem caderno vinculado neste ciclo"
+      })),
+      turmasVazio: turmasProfOcup.length === 0
     };
   }
 }

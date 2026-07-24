@@ -91,6 +91,7 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
                 <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Nível</div>{{ nivel }}</div>
                 <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Professora</div>{{ professora }}</div>
+                <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Faltas no ciclo</div>{{ faltasCiclo }}</div>
                 <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Turma</div>{{ turma }}</div>
                 <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
               </div>
@@ -226,7 +227,8 @@ class Component extends DCLogic {
   histDot(tipo) {
     const map = { criado: "#9ec970", estagio: "#2a9d8f", reuniao: "#6b5b95", contato: "#348a8e",
       followup: "#d4a574", nota: "#b8ada0", perdido: "#cf6b5c", matricula: "#5a9e4b",
-      renovacao: "#6b5b95", pagamento: "#5a9e4b", onboarding: "#d4a574", documento: "#9b8b7e" };
+      renovacao: "#6b5b95", pagamento: "#5a9e4b", onboarding: "#d4a574", documento: "#9b8b7e",
+      checkin: "#2a9d8f", falta: "#cf6b5c" };
     return map[tipo] || "#c9c1b6";
   }
 
@@ -293,6 +295,7 @@ class Component extends DCLogic {
       ehAluna: p.status === "aluna",
       temContrato: !!c && (p.status === "aluna" || p.status === "mvs" || p.status === "ex-aluna" || p.status === "pausada"),
       nivel: p.nivel || "—", professora: p.professora || "—", turma: p.turma || "—",
+      faltasCiclo: String(CRM.faltasDe ? CRM.faltasDe(p.id) : 0),
       projetoCiclo: unit ? unit.projeto : "—"
     };
 
