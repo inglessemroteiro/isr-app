@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Equipe</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Equipe</h1>
+      </div>
+      <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Quem trabalha com a escola e o que cada uma pode ver. Papéis se acumulam — a Carla pode ser comercial <em>e</em> professora. Prestadoras com valor mensal entram sozinhas nos custos do Caixa; prestadora sem papel de acesso não entra no sistema.</p>
+
+    <!-- FORM NOVA PESSOA -->
+    <sc-if value="{{ novoAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">Nova pessoa da equipe</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <input ref="{{ nvNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nvEmailRef }}" placeholder="E-mail de acesso (se for entrar no sistema)" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Papéis (pode marcar mais de um)</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+          <sc-for list="{{ papeisOpts }}" as="pp" hint-placeholder-count="5">
+            <button onclick="{{ pp.onToggle }}" style="border: 1px solid {{ pp.border }}; background: {{ pp.bg }}; color: {{ pp.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer;">{{ pp.label }}</button>
+          </sc-for>
+        </div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração (entra nos custos do Caixa)</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+          <select ref="{{ nvTipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <option value="">Sem valor fixo</option>
+            <option value="mensal">Mensal (fixo)</option>
+            <option value="por_aula">Por aula (variável)</option>
+          </select>
+          <select ref="{{ nvMoedaRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <option value="R$">R$</option>
+            <option value="€">€</option>
+          </select>
+          <input ref="{{ nvValorRef }}" type="number" placeholder="Valor (ex. 1200)" style="width: 130px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <button onclick="{{ onCriar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Adicionar à equipe</button>
+      </div>
+    </sc-if>
+
+    <!-- TABELA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow-x: auto;">
+      <div style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 640px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Nome</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Papéis</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Acesso (e-mail)</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Remuneração</span>
+        <span></span>
+      </div>
+      <sc-if value="{{ vazio }}">
+        <div style="text-align: center; padding: 34px 20px; color: #9b8b7e; font-size: 13px;">Só as fundadoras por enquanto (Gabi, Érika e Carla já têm acesso fixo). Adicione professoras e prestadoras acima.</div>
+      </sc-if>
+      <sc-for list="{{ membros }}" as="mb" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd; min-width: 640px;">
+          <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ mb.nome }}</span>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <sc-for list="{{ mb.papeis }}" as="pp" hint-placeholder-count="2">
+              <span style="background: {{ pp.bg }}; color: {{ pp.fg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;">{{ pp.label }}</span>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; color: #6b6155; word-break: break-all;">{{ mb.email }}</span>
+          <span style="font-size: 12px; font-weight: 700; color: {{ mb.remCor }};">{{ mb.remuneracao }}</span>
+          <button onclick="{{ mb.onRemover }}" style="justify-self: end; border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px; cursor: pointer;">remover</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Acesso por papel: <strong>gestora</strong> vê tudo · <strong>comercial</strong> vê CRM, Mensagens, Cobrança, Turmas, Marketing e Calculadora · <strong>operação</strong> vê Cobrança e Mensagens · <strong>professora</strong> vê o Painel do Professor, a Agenda e as pendências dela · <strong>prestadora</strong> não entra no sistema (só nos custos). Valor "por aula" ainda não entra sozinho no Caixa — registre pela conciliação.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { novoAberto: false, papeisSel: {}, tick: 0 };
+  nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
+  nvTipoRef = React.createRef(); nvMoedaRef = React.createRef(); nvValorRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+
+  PAPEIS = [
+    { id: "professora", label: "Professora", cor: "#6b5b95" },
+    { id: "comercial", label: "Comercial", cor: "#e07856" },
+    { id: "operacao", label: "Operação", cor: "#2a9d8f" },
+    { id: "prestadora", label: "Prestadora de serviço", cor: "#9c6f56" },
+    { id: "gestora", label: "Gestora", cor: "#164951" }
+  ];
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { nvNomeRef: this.nvNomeRef, nvEmailRef: this.nvEmailRef,
+      nvTipoRef: this.nvTipoRef, nvMoedaRef: this.nvMoedaRef, nvValorRef: this.nvValorRef };
+    if (!CRM) return Object.assign({ membros: [], papeisOpts: [], vazio: true, novoAberto: false, novoLabel: "+ Nova pessoa", novoBg: "#164951", novoFg: "#fff" }, refs);
+
+    const sel = this.state.papeisSel;
+    const papeisOpts = this.PAPEIS.map(pp => {
+      const on = !!sel[pp.id];
+      return {
+        label: pp.label,
+        bg: on ? pp.cor : "#fff", fg: on ? "#fff" : pp.cor, border: pp.cor,
+        onToggle: () => this.setState({ papeisSel: Object.assign({}, sel, { [pp.id]: !on }) })
+      };
+    });
+
+    const corDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || {}).cor || "#8a7c6b";
+    const labelDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || { label: id }).label;
+
+    const membros = CRM.equipeLista().map(m => ({
+      nome: m.nome,
+      email: m.email || "— (sem acesso)",
+      papeis: (m.papeis || []).map(id => ({ label: labelDe(id), bg: corDe(id), fg: "#fff" })),
+      remuneracao: m.valor > 0 ? CRM.fmtMoney(m.moeda || "R$", m.valor) + (m.valorTipo === "por_aula" ? " / aula" : " / mês") : "—",
+      remCor: m.valor > 0 ? "#164951" : "#b3a693",
+      onRemover: () => {
+        if (window.confirm("Remover " + m.nome + " da equipe? (Isso corta o acesso dela ao sistema.)")) {
+          CRM.removeEquipe(m.id); this.bump();
+        }
+      }
+    }));
+
+    return Object.assign({
+      membros, vazio: membros.length === 0,
+      papeisOpts,
+      novoAberto: this.state.novoAberto,
+      novoLabel: this.state.novoAberto ? "fechar" : "+ Nova pessoa",
+      novoBg: this.state.novoAberto ? "#e5dccf" : "#164951",
+      novoFg: this.state.novoAberto ? "#6b6155" : "#fff",
+      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, papeisSel: {} }),
+      onCriar: () => {
+        const nome = this.val(this.nvNomeRef);
+        const papeis = Object.keys(sel).filter(k => sel[k]);
+        if (!nome) { window.alert("Preencha o nome."); return; }
+        if (!papeis.length) { window.alert("Marque pelo menos um papel."); return; }
+        const email = this.val(this.nvEmailRef);
+        if (!email && papeis.some(p => p !== "prestadora")) {
+          if (!window.confirm("Sem e-mail, essa pessoa não consegue entrar no sistema. Continuar?")) return;
+        }
+        window.ISRCRM.addEquipe({
+          nome, email, papeis,
+          valorTipo: this.val(this.nvTipoRef), valor: this.val(this.nvValorRef),
+          moeda: this.val(this.nvMoedaRef) || "R$"
+        });
+        [this.nvNomeRef, this.nvEmailRef, this.nvValorRef].forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ novoAberto: false, papeisSel: {} });
+      }
+    }, refs);
+  }
+}
+</script>
+</body>
+</html>

@@ -174,12 +174,42 @@
           <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; font-weight: 700;">suas moedas</div>
         </div>
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Como ganhar</div>
-          <div style="font-size: 12.5px; color: #6b6155; line-height: 1.9;">
-            Presença na aula <strong style="color: #164951;">+{{ regraPresenca }}</strong> · chegou atrasada <strong style="color: #164951;">+{{ regraAtraso }}</strong><br>
-            Parcela paga em dia <strong style="color: #164951;">+{{ regraParcela }}</strong> · onboarding completo <strong style="color: #164951;">+{{ regraOnboarding }}</strong><br>
-            Bônus da escola (indicações, desafios) valem mais — fica de olho!
-          </div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Como ganhar</div>
+          <sc-for list="{{ ganharGrupos }}" as="gg" hint-placeholder-count="3">
+            <div style="margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ gg.cor }};"></span>
+                <span style="font-size: 11px; font-weight: 700; color: #164951;">{{ gg.grupo }}</span>
+              </div>
+              <sc-for list="{{ gg.itens }}" as="gi" hint-placeholder-count="4">
+                <div style="display: flex; justify-content: space-between; padding: 3px 0 3px 14px; font-size: 12px; color: #6b6155;">
+                  <span>{{ gi.label }}</span><strong style="color: #164951;">+{{ gi.valor }}</strong>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <div style="font-size: 11px; color: #b3a693; border-top: 1px solid #f4f1ec; padding-top: 8px;">Automáticos: parcela paga em dia +{{ regraParcela }} · onboarding completo +{{ regraOnboarding }} · atraso na aula vale +{{ regraAtraso }}.</div>
+        </div>
+
+        <!-- LOJINHA DE RESGATES -->
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Resgatar</div>
+          <sc-if value="{{ resgateMsg }}">
+            <div style="background: #eef4f4; border: 1px solid #c9dede; border-radius: 10px; padding: 10px 13px; margin-bottom: 10px; font-size: 12.5px; color: #164951; font-weight: 600;">{{ resgateMsg }}</div>
+          </sc-if>
+          <sc-for list="{{ resgates }}" as="rg" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; background: {{ rg.bg }}; border: 1px solid {{ rg.border }}; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; font-weight: 700; color: {{ rg.titCor }}; line-height: 1.35;">{{ rg.nome }}</div>
+                <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 4px;">
+                  <span style="width: 11px; height: 11px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 1px solid #c9963f;"></span>
+                  <span style="font-size: 12px; font-weight: 700; color: {{ rg.titCor }};">{{ rg.custo }}</span>
+                  <span style="background: {{ rg.catBg }}; color: {{ rg.catFg }}; font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 999px;">{{ rg.cat }}</span>
+                </div>
+              </div>
+              <button onclick="{{ rg.onResgatar }}" style="flex: none; border: none; background: {{ rg.btnBg }}; color: {{ rg.btnFg }}; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 999px; cursor: pointer;">{{ rg.btnLabel }}</button>
+            </div>
+          </sc-for>
         </div>
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px;">
           <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Extrato</div>
@@ -213,7 +243,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;420px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "inicio", pedidoFeito: false, tick: 0 };
+  state = { tab: "inicio", pedidoFeito: false, resgateMsg: "", tick: 0 };
   corrTextoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -376,7 +406,28 @@ class Component extends DCLogic {
       })),
       semMoedas: moedas.extrato.length === 0,
       regraPresenca: CRM.MOEDAS_REGRAS.presenca, regraAtraso: CRM.MOEDAS_REGRAS.atraso,
-      regraParcela: CRM.MOEDAS_REGRAS.parcelaPaga, regraOnboarding: CRM.MOEDAS_REGRAS.onboardingCompleto
+      regraParcela: CRM.MOEDAS_REGRAS.parcelaPaga, regraOnboarding: CRM.MOEDAS_REGRAS.onboardingCompleto,
+      ganharGrupos: CRM.MOEDAS_BONUS.map(g => ({ grupo: g.grupo, cor: g.cor,
+        itens: g.itens.map(i => ({ label: i.label + (i.auto ? " (automático)" : ""), valor: i.valor })) })),
+      resgateMsg: this.state.resgateMsg,
+      resgates: CRM.MOEDAS_RESGATES.map(r => {
+        const pode = moedas.total >= r.custo;
+        const vip = !!r.vip;
+        return {
+          nome: r.nome, custo: String(r.custo), cat: r.cat,
+          bg: vip ? "#164951" : "#fff", border: vip ? "#164951" : "#eee8e0",
+          titCor: vip ? "#fff" : "#164951",
+          catBg: vip ? "#9ec970" : "#f2ebe3", catFg: vip ? "#164951" : "#8a7c6b",
+          btnBg: pode ? "#fc9082" : (vip ? "rgba(255,255,255,0.15)" : "#f0ede8"),
+          btnFg: pode ? "#164951" : (vip ? "#fff" : "#9b8b7e"),
+          btnLabel: pode ? "Resgatar" : "Faltam " + (r.custo - moedas.total),
+          onResgatar: () => {
+            if (!pode) { this.setState({ resgateMsg: "Faltam " + (r.custo - moedas.total) + " moedas pra esse — continua acumulando!" }); return; }
+            const res = CRM.resgatarRecompensa(p.id, r.id);
+            this.setState({ resgateMsg: res.ok ? "✓ Resgate pedido! A Gabi já recebeu e vai combinar com você." : "Não deu — tenta de novo." });
+          }
+        };
+      })
     }, refs);
   }
 }

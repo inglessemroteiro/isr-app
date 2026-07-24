@@ -47,7 +47,7 @@
       </sc-if>
 
       <sc-for list="{{ fila }}" as="item" hint-placeholder-count="5">
-        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f7f4ef;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid #f7f4ef;">
           <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ item.cor }}; flex: none;"></span>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -88,9 +88,9 @@
         <input ref="{{ tfTituloRef }}" placeholder="Nova pendência... (ex. Enviar contrato da Renata)" onkeydown="{{ onTarefaKey }}" style="flex: 1; min-width: 200px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; font-family: inherit;" />
         <sc-if value="{{ podeAtribuir }}">
           <select ref="{{ tfDonoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <option value="Gabi">Gabi</option>
-            <option value="Érika">Érika</option>
-            <option value="Carla">Carla</option>
+            <sc-for list="{{ donosOpts }}" as="dn" hint-placeholder-count="4">
+              <option value="{{ dn.id }}">{{ dn.label }}</option>
+            </sc-for>
           </select>
         </sc-if>
         <input ref="{{ tfPrazoRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -188,6 +188,7 @@ class Component extends DCLogic {
     const ehGestora = !user || user.perfil === "gestora";
     const perfilAtivo = ehGestora ? this.state.perfil : user.perfil;
     const nomes = { gestora: "Bom dia, Gabi!", comercial: "Bom dia, Carla!", operacao: "Bom dia, Érika!" };
+    if (!nomes[perfilAtivo]) nomes[perfilAtivo] = "Bom dia" + (user ? ", " + user.nome : "") + "!";
     if (user && user.perfil === "gestora" ) nomes.gestora = "Bom dia, " + user.nome + "! Você vê a soma das filas de todo mundo — as etiquetas dizem de quem é cada tarefa.";
 
     const perfis = CRM.PERFIS.map(pf => {
@@ -196,7 +197,7 @@ class Component extends DCLogic {
         bg: on ? "#164951" : "transparent", fg: on ? "#fff" : "#8a7c6b" };
     });
 
-    const filaAll = CRM.filaParaHoje(perfilAtivo);
+    const filaAll = CRM.filaParaHoje(perfilAtivo, user && user.nome);
     const LIMIT = 15;
     const visiveis = this.state.verTodos ? filaAll : filaAll.slice(0, LIMIT);
 
@@ -285,7 +286,8 @@ class Component extends DCLogic {
     const areasPorPerfil = {
       gestora: areas,
       comercial: [areas[0], areas[3]],
-      operacao: [areas[1]]
+      operacao: [areas[1]],
+      professora: [areas[2]]
     };
 
     return {
@@ -296,6 +298,11 @@ class Component extends DCLogic {
       filaCount: filaAll.length + (filaAll.length === 1 ? " item" : " itens"),
       filaBadgeBg: filaAll.length ? "rgba(224,120,86,0.14)" : "rgba(90,158,75,0.16)",
       filaBadgeFg: filaAll.length ? "#e07856" : "#5a9e4b",
+      donosOpts: (() => {
+        const base = ["Gabi", "Érika", "Carla"];
+        CRM.equipeLista().forEach(m => { if (base.indexOf(m.nome) < 0 && (m.papeis || []).some(pp => pp !== "prestadora")) base.push(m.nome); });
+        return base.map(n => ({ id: n, label: n }));
+      })(),
       tarefas, semTarefas: tarefas.length === 0,
       tarefasResumo: tarefas.length + (tarefas.length === 1 ? " aberta" : " abertas") + (feitasN ? " · " + feitasN + " concluídas" : ""),
       podeAtribuir: perfilAtivo === "gestora",
