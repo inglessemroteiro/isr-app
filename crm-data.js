@@ -1752,11 +1752,10 @@
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
   // Apps Script; por enquanto: allowlist de e-mails + sessão local.
+  // Fundadora: acesso total, independente do cadastro de Equipe.
+  // Todo o resto do time entra pela tela Equipe.
   var GESTAO_EMAILS = {
-    "gabisouza.prof@gmail.com": { perfil: "gestora", nome: "Gabi" },
-    "erikainglessemroteiro@gmail.com": { perfil: "operacao", nome: "Érika" },
-    "comercial.inglessemroteiro@gmail.com": { perfil: "comercial", nome: "Carla" },
-    "carlaoliveiraprof35@gmail.com": { perfil: "comercial", nome: "Carla" }
+    "gabisouza.prof@gmail.com": { perfil: "gestora", nome: "Gabi", fundadora: true }
   };
   function gestaoUser() {
     try { return JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) { return null; }
@@ -1776,7 +1775,21 @@
   }
 
   var EQUIPE_KEY = "isr_equipe_v1";
-  function equipeLista() { try { return JSON.parse(localStorage.getItem(EQUIPE_KEY)) || []; } catch (e) { return []; } }
+  // A escola tem uma fundadora (Gabi). As demais entram pelo cadastro de
+  // Equipe, já com papéis e acesso — sem isso ninguém consegue entrar.
+  var EQUIPE_PADRAO = [
+    { id: "eqCarla", nome: "Carla", email: "comercial.inglessemroteiro@gmail.com",
+      papeis: ["comercial", "professora"], valorTipo: "", valor: 0, moeda: "R$" },
+    { id: "eqErika", nome: "Érika", email: "erikainglessemroteiro@gmail.com",
+      papeis: ["operacao"], valorTipo: "", valor: 0, moeda: "R$" }
+  ];
+  function equipeLista() {
+    try {
+      var l = JSON.parse(localStorage.getItem(EQUIPE_KEY));
+      if (l && l.length) return l;
+    } catch (e) {}
+    return EQUIPE_PADRAO.map(function (m) { return Object.assign({}, m, { papeis: m.papeis.slice() }); });
+  }
   function equipeSave(l) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEquipe(dados) {
     var l = equipeLista();

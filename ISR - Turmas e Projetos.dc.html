@@ -111,7 +111,9 @@
           <sc-if value="{{ u.editando }}">
             <div style="background: #f6f2ea; border-top: 1px dashed #e5dccf; padding: 14px 18px;">
               <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; margin-bottom: 10px;">Editar · deixe em branco o que não muda</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                <input ref="{{ edNivelRef }}" placeholder="Nível: {{ u.nivel }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ edHorarioRef }}" placeholder="Dia e horário: {{ u.turma }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edTeacherRef }}" placeholder="Professora: {{ u.teacher }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -165,7 +167,8 @@ class Component extends DCLogic {
   state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null };
   ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
-  edTeacherRef = React.createRef(); edProjetoRef = React.createRef();
+  edTeacherRef = React.createRef();
+  edNivelRef = React.createRef(); edHorarioRef = React.createRef(); edProjetoRef = React.createRef();
   edMaterialRef = React.createRef(); edCapRef = React.createRef();
 
   nivelCor(nivel) {
@@ -240,6 +243,16 @@ class Component extends DCLogic {
           const pj = this.val(this.edProjetoRef); if (pj) patch.projeto = pj;
           const mt = this.val(this.edMaterialRef); if (mt) patch.notebook = mt;
           const cp = parseInt(this.val(this.edCapRef), 10); if (cp > 0) patch.capacidade = cp;
+          const nv = this.val(this.edNivelRef); if (nv) patch.nivel = nv;
+          const hr = this.val(this.edHorarioRef); if (hr) patch.turma = hr;
+          // mudar nível ou horário muda o rótulo da turma: as alunas vão junto
+          if (patch.nivel || patch.turma) {
+            const antes = u.nivel + " · " + u.turma;
+            const depois = (patch.nivel || u.nivel) + " · " + (patch.turma || u.turma);
+            CRM.getPessoas().filter(pp => pp.turma === antes).forEach(pp => {
+              CRM.updateLead(pp.id, { turma: depois });
+            });
+          }
           if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
           this.setState({ editId: null });
         },
@@ -282,6 +295,7 @@ class Component extends DCLogic {
       ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef,
       edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef,
       edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
       onCriarTurma: () => {
         const nivel = this.val(this.ntNivelRef), turma = this.val(this.ntTurmaRef);
         if (!nivel || !turma) { window.alert("Preencha pelo menos o nível e o horário da turma."); return; }
