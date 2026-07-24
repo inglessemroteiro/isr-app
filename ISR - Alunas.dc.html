@@ -24,7 +24,7 @@
         <a href="ISR%20-%20Turmas%20e%20Projetos.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Turmas</a>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Todas as alunas matriculadas e como cada uma está. Quem precisa de atenção vem primeiro — pagamento atrasado, falta, onboarding parado, sumiço ou renovação chegando.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>Cadastro de Alunas Ativas.</strong> Relaciona as matrículas vigentes com indicadores de adimplência, frequência, integração e avaliação de progresso. A ordenação prioriza os casos críticos.</p>
 
     <!-- TERMÔMETRO -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px;">
@@ -105,11 +105,11 @@ class Component extends DCLogic {
     const conta = r => todas.filter(a => a.riscos.indexOf(r) >= 0).length;
     const cards = [
       { id: "", valor: todas.length, label: todas.length === 1 ? "aluna ativa" : "alunas ativas", cor: "#164951" },
-      { id: "inadimplente", valor: conta("inadimplente"), label: "com pagamento atrasado", cor: "#cf6b5c" },
-      { id: "faltando", valor: conta("faltando"), label: "faltando às aulas", cor: "#e07856" },
-      { id: "sem_contato", valor: conta("sem_contato"), label: "sem contato há 30 dias", cor: "#d4a574" },
-      { id: "travada", valor: conta("travada"), label: "disseram que estão travadas", cor: "#cf6b5c" },
-      { id: "renovacao", valor: conta("renovacao"), label: "com renovação chegando", cor: "#6b5b95" }
+      { id: "inadimplente", valor: conta("inadimplente"), label: "com pagamento em atraso", cor: "#cf6b5c" },
+      { id: "faltando", valor: conta("faltando"), label: "com ausências recentes", cor: "#e07856" },
+      { id: "sem_contato", valor: conta("sem_contato"), label: "sem contato há mais de 30 dias", cor: "#d4a574" },
+      { id: "travada", valor: conta("travada"), label: "com dificuldade relatada", cor: "#cf6b5c" },
+      { id: "renovacao", valor: conta("renovacao"), label: "com renovação próxima", cor: "#6b5b95" }
     ];
     const termometro = cards.map(c => ({
       valor: String(c.valor), label: c.label, cor: c.cor,
@@ -140,7 +140,7 @@ class Component extends DCLogic {
     // ── cada aluna ──
     const alunas = filtradas.map(a => {
       const pag = a.atrasadas > 0
-        ? { v: a.atrasadas + (a.atrasadas === 1 ? " atrasada" : " atrasadas"), c: "#cf6b5c" }
+        ? { v: a.atrasadas + (a.atrasadas === 1 ? " em atraso" : " em atraso"), c: "#cf6b5c" }
         : (a.parcelasTotal
             ? { v: a.parcelasPagas + "/" + a.parcelasTotal, c: "#348a8e" }
             : { v: "—", c: "#b8ada0" });
@@ -152,14 +152,14 @@ class Component extends DCLogic {
             c: a.onboardingFeitos === a.onboardingTotal ? "#348a8e" : "#9c6f56" }
         : { v: "—", c: "#b8ada0" };
       const cont = a.diasSemContato >= 900
-        ? { v: "nunca", c: "#cf6b5c" }
-        : { v: a.diasSemContato + "d", c: a.diasSemContato > 30 ? "#d4a574" : "#348a8e" };
+        ? { v: "Nenhum", c: "#cf6b5c" }
+        : { v: "Há " + a.diasSemContato + (a.diasSemContato === 1 ? " dia" : " dias"), c: a.diasSemContato > 30 ? "#d4a574" : "#348a8e" };
 
       return {
         nome: a.nome,
         href: "ISR%20-%20Perfil.dc.html?id=" + a.id,
         waHref: CRM.waLink(a.whatsapp, ""),
-        turmaInfo: [a.turma, a.professora !== "—" ? "com " + a.professora : "", a.nivel]
+        turmaInfo: [a.turma, a.professora !== "—" ? "Professora: " + a.professora : "", a.nivel]
           .filter(Boolean).join(" · "),
         corBorda: a.saudavel ? "#9ec970" : CRM.RISCOS[a.riscos[0]].cor,
         temRiscos: a.riscos.length > 0,
@@ -168,12 +168,12 @@ class Component extends DCLogic {
           bg: "rgba(0,0,0,0.04)"
         })),
         sinais: [
-          { rotulo: "Pulso", valor: a.pulso ? (a.pulso + "/5" + (a.tendenciaPulso > 0 ? " ↑" : (a.tendenciaPulso < 0 ? " ↓" : ""))) : "—",
+          { rotulo: "Avaliação", valor: a.pulso ? (a.pulso + "/5" + (a.tendenciaPulso > 0 ? " ↑" : (a.tendenciaPulso < 0 ? " ↓" : ""))) : "—",
             cor: a.pulsoCor },
           { rotulo: "Parcelas", valor: pag.v, cor: pag.c },
-          { rotulo: "Faltas", valor: falt.v, cor: falt.c },
-          { rotulo: "Onboarding", valor: ob.v, cor: ob.c },
-          { rotulo: "Últ. contato", valor: cont.v, cor: cont.c },
+          { rotulo: "Ausências", valor: falt.v, cor: falt.c },
+          { rotulo: "Integração", valor: ob.v, cor: ob.c },
+          { rotulo: "Último contato", valor: cont.v, cor: cont.c },
           { rotulo: "Moedas", valor: String(a.moedas), cor: "#9c6f56" }
         ]
       };
@@ -184,7 +184,7 @@ class Component extends DCLogic {
       termometro, turmaOpts, profOpts, alunas,
       vazio: alunas.length === 0,
       contagem: filtradas.length === todas.length
-        ? (precisam ? precisam + (precisam === 1 ? " precisa de atenção" : " precisam de atenção") : "todas em dia")
+        ? (precisam ? precisam + (precisam === 1 ? " aluna exige atenção" : " alunas exigem atenção") : "Todas em dia")
         : (filtradas.length + " de " + todas.length),
       temFiltro: !!(this.state.busca || this.state.turma || this.state.professora || this.state.risco),
       buscaRef: this.buscaRef,
@@ -198,7 +198,7 @@ class Component extends DCLogic {
       labelCopiar: this.state.copiado ? "Lista copiada" : "Copiar lista",
       onCopiarLista: () => {
         const txt = filtradas.map(a => {
-          const sit = a.riscos.length ? a.riscos.map(r => CRM.RISCOS[r].label).join(", ") : "em dia";
+          const sit = a.riscos.length ? a.riscos.map(r => CRM.RISCOS[r].label).join(", ") : "Em dia";
           return a.nome + " · " + a.turma + " · " + sit;
         }).join("\n");
         try { navigator.clipboard.writeText(txt); } catch (e) {}

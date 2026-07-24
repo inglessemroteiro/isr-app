@@ -77,16 +77,16 @@
       </sc-if>
     </section>
 
-    <!-- AVISOS: o que a equipe concluiu pra você -->
+    <!-- AVISOS: o que a equipe concluiu para você -->
     <sc-if value="{{ temAvisos }}">
       <section style="background: #f2ebe3; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 9px;">Ficou pronto</div>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 9px;">Concluído pela equipe</div>
         <sc-for list="{{ avisos }}" as="av" hint-placeholder-count="2">
           <div style="display: flex; gap: 10px; align-items: center; padding: 7px 0;">
             <span style="width: 7px; height: 7px; border-radius: 50%; background: #9ec970; flex: none;"></span>
             <span style="flex: 1; min-width: 0; font-size: 13px; color: #164951;">{{ av.texto }}</span>
             <span style="flex: none; font-size: 11px; color: #8a7465;">{{ av.quando }}</span>
-            <button onclick="{{ av.onLido }}" style="flex: none; border: none; background: #fff; color: #8a7465; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ok</button>
+            <button onclick="{{ av.onLido }}" style="flex: none; border: none; background: #fff; color: #8a7465; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar como lido</button>
           </div>
         </sc-for>
       </section>
@@ -99,7 +99,7 @@
         <span style="font-size: 11px; color: #b3a693;">{{ tarefasResumo }}</span>
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f7f4ef; background: #faf8f3;">
-        <input ref="{{ tfTituloRef }}" placeholder="Nova pendência... (ex. Enviar contrato da Renata)" onkeydown="{{ onTarefaKey }}" style="flex: 1; min-width: 200px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; font-family: inherit;" />
+        <input ref="{{ tfTituloRef }}" placeholder="Nova pendência (ex. Enviar contrato da Renata)" onkeydown="{{ onTarefaKey }}" style="flex: 1; min-width: 200px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; font-family: inherit;" />
         <sc-if value="{{ podeAtribuir }}">
           <select ref="{{ tfDonoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
             <sc-for list="{{ donosOpts }}" as="dn" hint-placeholder-count="4">
@@ -203,7 +203,7 @@ class Component extends DCLogic {
     const perfilAtivo = ehGestora ? this.state.perfil : user.perfil;
     const nomes = { gestora: "Bom dia, Gabi!", comercial: "Bom dia, Carla!", operacao: "Bom dia, Érika!" };
     if (!nomes[perfilAtivo]) nomes[perfilAtivo] = "Bom dia" + (user ? ", " + user.nome : "") + "!";
-    if (user && user.perfil === "gestora" ) nomes.gestora = "Bom dia, " + user.nome + "! Você vê a soma das filas de todo mundo — as etiquetas dizem de quem é cada tarefa.";
+    if (user && user.perfil === "gestora" ) nomes.gestora = "Bom dia, " + user.nome + "! <strong>Painel Operacional.</strong> Consolida as pendências de todos os perfis em fila única, ordenada por prioridade e prazo. As etiquetas indicam o responsável por cada item.";
 
     const perfis = CRM.PERFIS.map(pf => {
       const on = pf.id === perfilAtivo;

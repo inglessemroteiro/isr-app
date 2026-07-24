@@ -29,42 +29,42 @@
     {
       id: "hoje", label: "Hoje", cor: "#9ec970",
       itens: [
-        { label: "Central", desc: "O que precisa da sua atenção agora", href: "ISR - Central.dc.html", perfis: null },
-        { label: "Agenda", desc: "Aulas, reuniões e pendências da semana", href: "ISR - Agenda.dc.html", perfis: null }
+        { label: "Central", desc: "Pendências consolidadas por prioridade", href: "ISR - Central.dc.html", perfis: null },
+        { label: "Agenda", desc: "Compromissos operacionais, comerciais e pedagógicos", href: "ISR - Agenda.dc.html", perfis: null }
       ]
     },
     {
       id: "comercial", label: "Comercial", cor: "#e07856",
       itens: [
-        { label: "CRM", desc: "Funil de leads, reuniões e matrículas", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Mensagens", desc: "Modelos de WhatsApp pra cada momento", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-        { label: "Calculadora", desc: "Monta a proposta e o parcelamento", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Marketing", desc: "Canais, origens e metas do mês", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
+        { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
+        { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
+        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
       ]
     },
     {
       id: "financeiro", label: "Financeiro", cor: "#d4a574",
       itens: [
-        { label: "Cobrança", desc: "Parcelas a vencer, vencidas e pagas", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
-        { label: "Caixa", desc: "Entrou, saiu e sobrou — mês a mês", href: "ISR - Caixa.dc.html", perfis: ["gestora"] }
+        { label: "Cobrança", desc: "Recebíveis por situação e ações de cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+        { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] }
       ]
     },
     {
       id: "pedagogico", label: "Pedagógico", cor: "#348a8e",
       itens: [
-        { label: "Acompanhamento", desc: "Quem falar esta semana e por quê", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
-        { label: "Programa no WhatsApp", desc: "Missão, áudio e feedback semana a semana", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] },
-        { label: "Alunas", desc: "Todas as matriculadas e como cada uma está", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Turmas e projetos", desc: "Turmas, particulares e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
-        { label: "Painel do Professor", desc: "Aulas do dia e chamada", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
-        { label: "App da aluna", desc: "Ver o app do jeito que a aluna vê", href: "ISR - Aluna.dc.html", perfis: null }
+        { label: "Acompanhamento", desc: "Priorização e registro de contatos", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
+        { label: "Programa no WhatsApp", desc: "Controle semanal do programa assíncrono", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] },
+        { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
+        { label: "Painel do Professor", desc: "Aulas da semana e registro de frequência", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
+        { label: "App da aluna", desc: "Visualização da interface da aluna", href: "ISR - Aluna.dc.html", perfis: null }
       ]
     },
     {
       id: "escola", label: "Escola", cor: "#9c6f56",
       itens: [
-        { label: "Equipe", desc: "Quem é quem, papéis e acessos", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
-        { label: "Conexão", desc: "Onde o app guarda os dados da escola", href: "gestao.html?config", perfis: ["gestora"] }
+        { label: "Equipe", desc: "Integrantes, papéis, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
+        { label: "Conexão", desc: "Configuração da base de dados central", href: "gestao.html?config", perfis: ["gestora"] }
       ]
     }
   ];
