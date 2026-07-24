@@ -1752,11 +1752,10 @@
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
   // Apps Script; por enquanto: allowlist de e-mails + sessão local.
+  // Fundadora: acesso total, independente do cadastro de Equipe.
+  // Todo o resto do time entra pela tela Equipe.
   var GESTAO_EMAILS = {
-    "gabisouza.prof@gmail.com": { perfil: "gestora", nome: "Gabi" },
-    "erikainglessemroteiro@gmail.com": { perfil: "operacao", nome: "Érika" },
-    "comercial.inglessemroteiro@gmail.com": { perfil: "comercial", nome: "Carla" },
-    "carlaoliveiraprof35@gmail.com": { perfil: "comercial", nome: "Carla" }
+    "gabisouza.prof@gmail.com": { perfil: "gestora", nome: "Gabi", fundadora: true }
   };
   function gestaoUser() {
     try { return JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) { return null; }
@@ -1776,7 +1775,21 @@
   }
 
   var EQUIPE_KEY = "isr_equipe_v1";
-  function equipeLista() { try { return JSON.parse(localStorage.getItem(EQUIPE_KEY)) || []; } catch (e) { return []; } }
+  // A escola tem uma fundadora (Gabi). As demais entram pelo cadastro de
+  // Equipe, já com papéis e acesso — sem isso ninguém consegue entrar.
+  var EQUIPE_PADRAO = [
+    { id: "eqCarla", nome: "Carla", email: "comercial.inglessemroteiro@gmail.com",
+      papeis: ["comercial", "professora"], valorTipo: "", valor: 0, moeda: "R$" },
+    { id: "eqErika", nome: "Érika", email: "erikainglessemroteiro@gmail.com",
+      papeis: ["operacao"], valorTipo: "", valor: 0, moeda: "R$" }
+  ];
+  function equipeLista() {
+    try {
+      var l = JSON.parse(localStorage.getItem(EQUIPE_KEY));
+      if (l && l.length) return l;
+    } catch (e) {}
+    return EQUIPE_PADRAO.map(function (m) { return Object.assign({}, m, { papeis: m.papeis.slice() }); });
+  }
   function equipeSave(l) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEquipe(dados) {
     var l = equipeLista();
@@ -1916,6 +1929,114 @@
       pushHist(p, "renovacao", "Contrato renegociado · " + alteradas + " parcela(s) em aberto agora " + cfg.novoValor + (cfg.motivo ? " · " + cfg.motivo : ""));
     });
   }
+  // ── EDIÇÃO DEPOIS DA MATRÍCULA ────────────────────────────────
+  // Gente muda de turma, pede outro dia de vencimento e o telefone vem
+  // com erro de digitação. Sem isto, o único caminho era refazer tudo.
+
+  // Contrato: tipo, ciclos, valor, dia de vencimento e nº de parcelas.
+  // Parcelas já pagas nunca são mexidas — só as em aberto.
+  function atualizarContrato(id, patch) {
+    return mutate(id, function (p) {
+      var c = contratoVigente(p);
+      if (!c) return;
+      var mudou = [];
+
+      if (patch.tipo && patch.tipo !== c.tipo) { mudou.push("tipo → " + patch.tipo); c.tipo = patch.tipo; }
+      if (patch.ciclos && patch.ciclos !== c.ciclos) { mudou.push("ciclos → " + patch.ciclos); c.ciclos = patch.ciclos; }
+      if (patch.moeda && patch.moeda !== c.moeda) { mudou.push("moeda → " + patch.moeda); c.moeda = patch.moeda; }
+
+      if (patch.vencDia !== undefined && patch.vencDia !== "" && String(patch.vencDia) !== String(c.vencDia)) {
+        var d = patch.vencDia === "auto" ? "auto" : (parseInt(patch.vencDia, 10) || 10);
+        mudou.push("vencimento → " + (d === "auto" ? "automático" : "dia " + d));
+        c.vencDia = d;
+      }
+
+      if (patch.parcelaValor && patch.parcelaValor !== c.parcelaValor) {
+        var alteradas = 0;
+        (c.meses || []).forEach(function (m) { if (!m.pago) { m.valor = patch.parcelaValor; alteradas++; } });
+        mudou.push("parcela → " + patch.parcelaValor + " (" + alteradas + " em aberto)");
+        c.parcelaValor = patch.parcelaValor;
+      }
+
+      // nº de parcelas: acrescenta no fim ou remove as últimas ainda em aberto
+      var nNovo = parseInt(patch.parcelas, 10);
+      if (nNovo > 0 && nNovo !== (c.meses || []).length) {
+        var meses = c.meses || [];
+        var pagas = meses.filter(function (m) { return m.pago; }).length;
+        if (nNovo < pagas) nNovo = pagas; // não dá pra apagar parcela já paga
+        if (nNovo > meses.length) {
+          var ultimo = meses.length ? meses[meses.length - 1].key : mesAtualKey();
+          for (var i = meses.length; i < nNovo; i++) {
+            var prox = mesSeguinte(ultimo);
+            meses.push({ key: prox.key, label: prox.label, valor: c.parcelaValor || "", pago: false });
+            ultimo = prox.key;
+          }
+        } else {
+          meses = meses.slice(0, nNovo);
+        }
+        c.meses = meses;
+        c.parcelas = nNovo;
+        if (meses.length) c.fim = meses[meses.length - 1].key + "-28";
+        mudou.push("parcelas → " + nNovo);
+      }
+
+      if (patch.fim && patch.fim !== c.fim) { mudou.push("término → " + ddmm(patch.fim)); c.fim = patch.fim; }
+
+      if (mudou.length) pushHist(p, "renovacao", "Contrato editado · " + mudou.join(" · "));
+    });
+  }
+  function mesSeguinte(key) {
+    var pr = key.split("-");
+    var d = new Date(parseInt(pr[0], 10), parseInt(pr[1], 10), 1); // mês seguinte
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    return { key: d.getFullYear() + "-" + p2(d.getMonth() + 1), label: MES_NOMES[d.getMonth()] };
+  }
+
+  // Troca de turma: atualiza professora e registra na linha do tempo.
+  function mudarTurma(id, turmaId) {
+    return mutate(id, function (p) {
+      var antes = p.turma || "—";
+      if (turmaId === "particular") {
+        p.turma = "Particular";
+        p.professora = p.professora || "";
+        if (!p.particular) p.particular = { inicio: iso(today()), aulas: 0, feitas: 0 };
+      } else {
+        var u = turmasLista().filter(function (x) { return x.id === turmaId; })[0];
+        if (!u) return;
+        p.turma = u.nivel + " · " + u.turma;
+        p.professora = u.teacher || "";
+        p.nivel = p.nivel || u.nivel;
+      }
+      if (p.turma !== antes) pushHist(p, "estagio", "Turma alterada · de " + antes + " para " + p.turma);
+    });
+  }
+
+  // Dados cadastrais, com registro do que mudou.
+  var CAMPOS_CADASTRO = { nome: "nome", whatsapp: "WhatsApp", email: "e-mail",
+    nivel: "nível", professora: "professora" };
+  function atualizarCadastro(id, patch) {
+    return mutate(id, function (p) {
+      var mudou = [];
+      Object.keys(CAMPOS_CADASTRO).forEach(function (k) {
+        if (patch[k] === undefined) return;
+        var v = String(patch[k]).trim();
+        if (!v || v === p[k]) return;
+        mudou.push(CAMPOS_CADASTRO[k]);
+        p[k] = v;
+      });
+      if (mudou.length) pushHist(p, "nota", "Cadastro atualizado · " + mudou.join(", "));
+    });
+  }
+
+  // Onboarding: a data de cada etapa passa a ser editável.
+  function setOnboardingData(id, cpId, dataIso) {
+    return mutate(id, function (p) {
+      (p.onboarding || []).forEach(function (cp) {
+        if (cp.id === cpId) cp.data = dataIso;
+      });
+    });
+  }
+
   function setSinalRecebido(id, recebido) {
     return mutate(id, function (p) {
       var c = contratoVigente(p);
@@ -2674,6 +2795,9 @@
     ticketMedio: ticketMedio, taxaConversao: taxaConversao,
     resumoFinanceiroTexto: resumoFinanceiroTexto, reunioesResumo: reunioesResumo,
     alunasPainel: alunasPainel, RISCOS: RISCOS, tarefasDe: tarefasDe,
+    // edição depois da matrícula
+    atualizarContrato: atualizarContrato, mudarTurma: mudarTurma,
+    atualizarCadastro: atualizarCadastro, setOnboardingData: setOnboardingData,
     // avisos internos
     avisosDe: avisosDe, avisar: avisar, marcarAvisoLido: marcarAvisoLido, avisosLista: avisosLista,
     // programa no WhatsApp

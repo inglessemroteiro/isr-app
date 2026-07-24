@@ -36,7 +36,23 @@
           </sc-if>
           <span style="background: #f2ebe3; color: #6b6155; font-size: 10px; font-weight: 700; padding: 4px 11px; border-radius: 999px;">{{ moeda }}</span>
         </div>
-        <p style="margin: 0; font-size: 13px; color: #6b6155;">{{ contexto }}</p>
+        <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+          <p style="margin: 0; flex: 1; min-width: 200px; font-size: 13px; color: #6b6155;">{{ contexto }}</p>
+          <button onclick="{{ onEditarCadastro }}" style="flex: none; border: 1px solid #e5dccf; background: {{ edCadBg }}; color: {{ edCadFg }}; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edCadLabel }}</button>
+        </div>
+        <sc-if value="{{ editandoCadastro }}">
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2e9dd; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+            <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome</div>
+              <input ref="{{ cadNomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+            <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">WhatsApp</div>
+              <input ref="{{ cadZapRef }}" placeholder="{{ whatsappAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+            <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">E-mail</div>
+              <input ref="{{ cadEmailRef }}" placeholder="{{ emailAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+            <div style="display: flex; align-items: flex-end;">
+              <button onclick="{{ onSalvarCadastro }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+            </div>
+          </div>
+        </sc-if>
       </header>
 
       <!-- 2 COLUNAS -->
@@ -65,7 +81,28 @@
           <!-- ALUNA: CONTRATO VIGENTE -->
           <sc-if value="{{ temContrato }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Contrato vigente</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Contrato vigente</span>
+                <button onclick="{{ onEditarContrato }}" style="border: 1px solid #e5dccf; background: {{ edCtrBg }}; color: {{ edCtrFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edCtrLabel }}</button>
+              </div>
+              <sc-if value="{{ editandoContrato }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-bottom: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Tipo</div>
+                    <input ref="{{ ctrTipoRef }}" placeholder="{{ contratoTipo }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Ciclos</div>
+                    <input ref="{{ ctrCiclosRef }}" placeholder="{{ contratoCiclos }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Valor da parcela</div>
+                    <input ref="{{ ctrValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Dia de vencimento</div>
+                    <input ref="{{ ctrVencRef }}" placeholder="{{ vencDiaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nº de parcelas</div>
+                    <input ref="{{ ctrParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div style="display: flex; align-items: flex-end;">
+                    <button onclick="{{ onSalvarContrato }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                  </div>
+                  <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Preencha apenas os campos que deseja alterar; os demais permanecem como estão. Parcelas já pagas não são alteradas — reduzir o número remove apenas as em aberto no fim do contrato.</p>
+                </div>
+              </sc-if>
               <div style="font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
               <div style="font-size: 12px; color: #6b6155; margin-bottom: 12px;">{{ contratoParcela }} · {{ contratoVenc }} · termina {{ contratoFim }}</div>
               <sc-if value="{{ temSinal }}">
@@ -99,7 +136,24 @@
 
             <!-- PEDAGÓGICO -->
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Pedagógico</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Pedagógico</span>
+                <button onclick="{{ onEditarTurma }}" style="border: 1px solid #e5dccf; background: {{ edTurBg }}; color: {{ edTurFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edTurLabel }}</button>
+              </div>
+              <sc-if value="{{ editandoTurma }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                  <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Turma</div>
+                  <select ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                    <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="8"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
+                  </select>
+                  <div style="display: flex; gap: 8px; align-items: flex-end;">
+                    <div style="flex: 1;"><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nível</div>
+                      <input ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <button onclick="{{ onSalvarTurma }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                  </div>
+                  <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A professora é atualizada automaticamente pela turma escolhida.</p>
+                </div>
+              </sc-if>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
                 <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Nível</div>{{ nivel }}</div>
                 <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Professora</div>{{ professora }}</div>
@@ -188,6 +242,10 @@
                   <span style="flex: 1; font-size: 12px; color: {{ ob.fg }};">{{ ob.label }}</span>
                   <span style="font-size: 10px; color: #b8ada0;">{{ ob.quando }}</span>
                 </button>
+                <div style="display: flex; align-items: center; gap: 8px; padding: 0 0 8px 26px;">
+                  <span style="font-size: 10px; color: #b8ada0;">Previsto para</span>
+                  <input type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="padding: 5px 8px; font-size: 11px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 7px; background: #fff;" />
+                </div>
               </sc-for>
               <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Pendências aparecem na fila da Érika.</p>
             </div>
@@ -257,7 +315,11 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tick: 0 };
+  state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false };
+  cadNomeRef = React.createRef(); cadZapRef = React.createRef(); cadEmailRef = React.createRef();
+  ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
+  ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
+  turSelRef = React.createRef(); turNivelRef = React.createRef();
   noteRef = React.createRef();
   docNomeRef = React.createRef();
   docLinkRef = React.createRef();
@@ -333,6 +395,18 @@ class Component extends DCLogic {
       estagioBadge: stageMeta ? stageMeta.label : "",
       estagioBg: stageMeta ? stageMeta.bg : "", estagioFg: stageMeta ? stageMeta.color : "",
       nome: p.nome, statusLabel: st.label, statusColor: st.color, statusBg: st.bg,
+      whatsappAtual: p.whatsapp || "", emailAtual: p.email || "",
+      editandoCadastro: this.state.editandoCadastro,
+      edCadLabel: this.state.editandoCadastro ? "Fechar" : "Editar dados",
+      edCadBg: this.state.editandoCadastro ? "#f6eee4" : "#fff",
+      edCadFg: this.state.editandoCadastro ? "#9c6f56" : "#164951",
+      onEditarCadastro: () => this.setState(s => ({ editandoCadastro: !s.editandoCadastro })),
+      cadNomeRef: this.cadNomeRef, cadZapRef: this.cadZapRef, cadEmailRef: this.cadEmailRef,
+      onSalvarCadastro: () => {
+        const v = r => (r.current && r.current.value || "").trim();
+        CRM.atualizarCadastro(p.id, { nome: v(this.cadNomeRef), whatsapp: v(this.cadZapRef), email: v(this.cadEmailRef) });
+        this.setState({ editandoCadastro: false });
+      },
       moeda: p.moeda || "R$", contexto: partes.join("  ·  ") || "—",
       waDireto: CRM.waLink(p.whatsapp, ""),
       timeline: (p.historico || []).slice().reverse().map(h => ({
@@ -378,9 +452,45 @@ class Component extends DCLogic {
       };
       out.contratoTipo = c.tipo; out.contratoCiclos = c.ciclos;
       out.contratoParcela = c.parcelaValor || "—";
+      out.vencDiaAtual = String(c.vencDia);
+      out.nParcelasAtual = String((c.meses || []).length);
+      out.editandoContrato = this.state.editandoContrato;
+      out.edCtrLabel = this.state.editandoContrato ? "Fechar" : "Editar";
+      out.edCtrBg = this.state.editandoContrato ? "#f6eee4" : "#fff";
+      out.edCtrFg = this.state.editandoContrato ? "#9c6f56" : "#164951";
+      out.onEditarContrato = () => this.setState(s => ({ editandoContrato: !s.editandoContrato }));
+      out.ctrTipoRef = this.ctrTipoRef; out.ctrCiclosRef = this.ctrCiclosRef;
+      out.ctrValorRef = this.ctrValorRef; out.ctrVencRef = this.ctrVencRef;
+      out.ctrParcelasRef = this.ctrParcelasRef;
+      out.onSalvarContrato = () => {
+        const v = r => (r.current && r.current.value || "").trim();
+        CRM.atualizarContrato(p.id, {
+          tipo: v(this.ctrTipoRef), ciclos: v(this.ctrCiclosRef),
+          parcelaValor: v(this.ctrValorRef), vencDia: v(this.ctrVencRef),
+          parcelas: v(this.ctrParcelasRef)
+        });
+        this.setState({ editandoContrato: false });
+      };
       out.contratoVenc = c.vencDia === "auto" ? "auto matrícula" : "venc. dia " + c.vencDia;
       out.contratoFim = c.fim ? CRM.ddmm(c.fim) + "/" + c.fim.slice(0, 4) : "—";
       out.ltvValor = CRM.ltv(p);
+      out.editandoTurma = this.state.editandoTurma;
+      out.edTurLabel = this.state.editandoTurma ? "Fechar" : "Editar";
+      out.edTurBg = this.state.editandoTurma ? "#f6eee4" : "#fff";
+      out.edTurFg = this.state.editandoTurma ? "#9c6f56" : "#164951";
+      out.onEditarTurma = () => this.setState(s => ({ editandoTurma: !s.editandoTurma }));
+      out.turSelRef = this.turSelRef; out.turNivelRef = this.turNivelRef;
+      out.turmaOpts = CRM.turmasLista().map(u => {
+        const label = u.nivel + " · " + u.turma;
+        return { id: u.id, label: label + " · " + (u.teacher || "sem professora"), sel: p.turma === label };
+      }).concat([{ id: "particular", label: "Particular", sel: (p.turma || "").indexOf("Particular") === 0 }]);
+      out.onSalvarTurma = () => {
+        const id = this.turSelRef.current && this.turSelRef.current.value;
+        if (id) CRM.mudarTurma(p.id, id);
+        const nv = (this.turNivelRef.current && this.turNivelRef.current.value || "").trim();
+        if (nv) CRM.atualizarCadastro(p.id, { nivel: nv });
+        this.setState({ editandoTurma: false });
+      };
       out.mesesView = (c.meses || []).map(m => ({
         label: m.label, valor: m.valor,
         icon: m.pago ? "✓" : (m.key === key ? "●" : "…"),
@@ -456,6 +566,8 @@ class Component extends DCLogic {
         cor: c2.feito ? "#5a9e4b" : "#d8cfc2",
         bg: c2.feito ? "#5a9e4b" : "#fff",
         fg: c2.feito ? "#9b8b7e" : "#164951",
+        data: c2.data || "",
+        onData: (e) => { CRM.setOnboardingData(p.id, c2.id, e.target.value); this.bump(); },
         onToggle: () => { CRM.setOnboardingFeito(p.id, c2.id, !c2.feito); this.bump(); }
       }));
     }
