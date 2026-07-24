@@ -11,7 +11,7 @@
      Hoje        → Central · Agenda
      Comercial   → CRM · Mensagens · Calculadora · Marketing
      Financeiro  → Cobrança · Caixa
-     Pedagógico  → Alunas · Turmas · Painel do Professor · App da aluna
+     Pedagógico  → Acompanhamento · Alunas · Turmas · Painel · App da aluna
      Escola      → Equipe · Conexão
 
    Cada tela declara quais perfis a enxergam; uma área só aparece
@@ -52,6 +52,7 @@
     {
       id: "pedagogico", label: "Pedagógico", cor: "#348a8e",
       itens: [
+        { label: "Acompanhamento", desc: "Quem falar esta semana e por quê", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
         { label: "Alunas", desc: "Todas as matriculadas e como cada uma está", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Turmas e projetos", desc: "Turmas, particulares e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
         { label: "Painel do Professor", desc: "Aulas do dia e chamada", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
