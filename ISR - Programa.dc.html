@@ -48,6 +48,24 @@
 
     <sc-if value="{{ temPrograma }}">
 
+      <!-- SEMANA CORRENTE -->
+      <sc-if value="{{ temSemana }}">
+        <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+          <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 220px;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 5px;">Semana {{ semanaAtual }} · missão do grupo</div>
+              <div style="font-size: 19px; font-weight: 700; color: #fff; letter-spacing: -0.3px;">{{ missaoDaSemana }}</div>
+              <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 3px;">{{ statusMissao }}</div>
+            </div>
+            <div style="flex: none; text-align: right;">
+              <div style="font-size: 24px; font-weight: 700; color: {{ corRespostas }}; letter-spacing: -0.5px;">{{ responderam }}</div>
+              <div style="font-size: 11.5px; color: rgba(255,255,255,0.6);">responderam</div>
+            </div>
+            <button onclick="{{ onMissaoGrupo }}" style="flex: none; border: 1px solid {{ missaoBorda }}; background: {{ missaoBg }}; color: {{ missaoFg }}; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ missaoLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
       <!-- TERMÔMETRO -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px;">
         <sc-for list="{{ termometro }}" as="tm" hint-placeholder-count="4">
@@ -130,7 +148,7 @@
                   </div>
                   <div style="flex: 1; min-width: 130px;">
                     <div style="font-size: 12.5px; font-weight: 600; color: #3d3529;">{{ sm.missao }}</div>
-                    <div style="font-size: 10.5px; color: #b3a693;">{{ sm.quando }}</div>
+                    <div style="font-size: 10.5px; color: {{ sm.corQuando }};">{{ sm.quando }}</div>
                   </div>
                   <div style="flex: none; display: flex; gap: 5px; flex-wrap: wrap;">
                     <sc-for list="{{ sm.etapas }}" as="et" hint-placeholder-count="3">
@@ -166,7 +184,7 @@ class Component extends DCLogic {
 
     const prog = CRM.getPrograma();
     if (!prog) return Object.assign({}, vazioBase, {
-      subtitulo: "Acompanhamento de Programa Assíncrono. Controle semanal de envio de missão, recebimento de entrega e devolutiva, por participante. Crie a turma para iniciar.",
+      subtitulo: "Acompanhamento de Programa Assíncrono. A missão vai ao grupo uma vez por semana; aqui se acompanha quem respondeu e a quem a devolutiva já foi enviada. Crie a turma para iniciar.",
       novoNomeRef: this.novoNomeRef, novoInicioRef: this.novoInicioRef, novoSemanasRef: this.novoSemanasRef,
       onCriar: () => {
         const nome = (this.novoNomeRef.current && this.novoNomeRef.current.value || "").trim();
@@ -191,8 +209,8 @@ class Component extends DCLogic {
       { id: "", valor: prog.participantes.length,
         label: prog.participantes.length === 1 ? "aluna no programa" : "alunas no programa", cor: "#164951" },
       { id: "feedback", valor: devendo, label: "aguardando devolutiva", cor: "#e07856" },
-      { id: "audio", valor: semAudio, label: "sem áudio recebido", cor: "#d4a574" },
-      { id: "sumindo", valor: sumindo, label: "duas semanas sem entrega", cor: "#cf6b5c" }
+      { id: "audio", valor: semAudio, label: "não responderam", cor: "#d4a574" },
+      { id: "sumindo", valor: sumindo, label: "duas semanas sem responder", cor: "#cf6b5c" }
     ];
     const termometro = cards.map(c => ({
       valor: String(c.valor), label: c.label, cor: c.cor,
@@ -210,6 +228,7 @@ class Component extends DCLogic {
         (this.state.filtro === "audio" && l.semAudio) ||
         (this.state.filtro === "sumindo" && l.sumindo)));
 
+    const missaoJa = s => CRM.missaoEnviada(prog, s);
     const dataDaSemana = n => {
       const d = CRM.mesOffset ? null : null; void d;
       const base = new Date(prog.inicio + "T12:00:00");
@@ -225,7 +244,8 @@ class Component extends DCLogic {
         const futura = s > sem;
         semanas.push({
           n: String(s), missao: prog.missoes[s - 1] || "",
-          quando: (s === sem ? "Semana atual · " : "") + "a partir de " + dataDaSemana(s),
+          quando: (s === sem ? "Semana atual · " : "") + (missaoJa(s) ? "missão enviada ao grupo" : "missão ainda não enviada"),
+          corQuando: missaoJa(s) ? "#8a7c6b" : "#c98a3a",
           corN: s === sem ? "#164951" : (futura ? "#c9b9a6" : "#8a7c6b"),
           opacidade: futura ? "0.55" : "1",
           etapas: etapas.map(e => {
@@ -241,8 +261,8 @@ class Component extends DCLogic {
 
       const alertas = [];
       if (l.devendoFeedback) alertas.push({ label: l.devendoFeedback === 1 ? "1 devolutiva pendente" : l.devendoFeedback + " devolutivas pendentes", cor: "#e07856" });
-      if (l.sumindo) alertas.push({ label: "Duas semanas sem entrega", cor: "#cf6b5c" });
-      if (l.semAudio && !l.sumindo) alertas.push({ label: l.semAudio === 1 ? "1 áudio não recebido" : l.semAudio + " áudios não recebidos", cor: "#d4a574" });
+      if (l.sumindo) alertas.push({ label: "Duas semanas sem responder", cor: "#cf6b5c" });
+      if (l.semAudio && !l.sumindo) alertas.push({ label: l.semAudio === 1 ? "1 semana sem responder" : l.semAudio + " semanas sem responder", cor: "#d4a574" });
 
       const ultima = (function () {
         for (let s = sem; s >= 1; s--) if (CRM.etapaFeita(prog, id, s, "audio")) return "Semana " + s;
@@ -256,11 +276,11 @@ class Component extends DCLogic {
         corBorda: alertas.length ? alertas[0].cor : "#9ec970",
         temAlertas: alertas.length > 0, alertas,
         sinais: [
-          { rotulo: "Entregues", valor: l.entregues + "/" + prog.semanas,
+          { rotulo: "Respostas", valor: l.entregues + "/" + prog.semanas,
             cor: l.entregues ? "#348a8e" : "#b8ada0" },
           { rotulo: "Devolutivas", valor: l.devendoFeedback ? l.devendoFeedback + " pendentes" : "Em dia",
             cor: l.devendoFeedback ? "#e07856" : "#348a8e" },
-          { rotulo: "Última entrega", valor: ultima, cor: ultima === "Nenhuma" ? "#cf6b5c" : "#8a7c6b" }
+          { rotulo: "Última resposta", valor: ultima, cor: ultima === "Nenhuma" ? "#cf6b5c" : "#8a7c6b" }
         ],
         aberto, semanas,
         abrirLabel: aberto ? "Fechar" : "Semanas",
@@ -277,9 +297,23 @@ class Component extends DCLogic {
 
     return {
       temPrograma: true, semPrograma: false,
-      subtitulo: "Acompanhamento de Programa Assíncrono. Controle semanal de envio de missão, recebimento de entrega e devolutiva, por participante. "
+      subtitulo: "Acompanhamento de Programa Assíncrono. A missão é enviada ao grupo uma vez por semana; o acompanhamento individual registra quem respondeu e a quem a devolutiva já foi enviada. "
         + prog.nome + " · " + (sem === 0 ? "início em " + CRM.ddmm(prog.inicio) : "semana " + sem + " de " + prog.semanas) + ".",
       termometro,
+      temSemana: sem >= 1,
+      semanaAtual: String(sem),
+      missaoDaSemana: pend.missaoDaSemana || "—",
+      responderam: pend.responderamNaSemana + " de " + pend.totalParticipantes,
+      corRespostas: pend.responderamNaSemana === pend.totalParticipantes && pend.totalParticipantes ? "#9ec970"
+        : (pend.responderamNaSemana ? "#d4a574" : "#f4a099"),
+      statusMissao: pend.missaoDaSemanaEnviada
+        ? "Missão enviada ao grupo. Acompanhe quem respondeu."
+        : "Missão ainda não enviada ao grupo.",
+      missaoLabel: pend.missaoDaSemanaEnviada ? "Enviada ao grupo" : "Marcar como enviada",
+      missaoBg: pend.missaoDaSemanaEnviada ? "#9ec970" : "transparent",
+      missaoFg: pend.missaoDaSemanaEnviada ? "#164951" : "#fff",
+      missaoBorda: pend.missaoDaSemanaEnviada ? "#9ec970" : "rgba(255,255,255,0.3)",
+      onMissaoGrupo: () => { CRM.marcarMissaoSemana(prog.id, sem, !pend.missaoDaSemanaEnviada); this.bump(); },
 
       turmaAberta: this.state.turmaAberta,
       turmaBg: this.state.turmaAberta ? "#164951" : "#fff",
