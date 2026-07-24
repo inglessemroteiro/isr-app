@@ -306,7 +306,8 @@
   }
 
   // ── METAS DO CICLO (Config digita 1x — spec 13; demo fixo) ────
-  var METAS_PADRAO = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026" };
+  var METAS_PADRAO = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026",
+    faturamento: { "R$": 16000, "€": 1400 }, faturamentoMes: {} };
   var METAS_KEY = "isr_metas_v1";
   function metasAtuais() {
     try { var m = JSON.parse(localStorage.getItem(METAS_KEY)); if (m) return Object.assign({}, METAS_PADRAO, m); } catch (e) {}
@@ -1020,14 +1021,14 @@
   //  Financeiro quando a Gabi conectar.
   // ══════════════════════════════════════════════════════════════
   var BASE_CUSTOS = [
-    { nome: "Agência de tráfego", moeda: "R$", valor: 2800 },
-    { nome: "Professoras (estimativa mensal)", moeda: "R$", valor: 3200 },
-    { nome: "Circle (comunidade · US$ 99)", moeda: "R$", valor: 610 },
-    { nome: "BeConfident (IA de idiomas)", moeda: "R$", valor: 398 },
-    { nome: "Impostos (DAS)", moeda: "R$", valor: 81 },
-    { nome: "Tarifas bancárias (Sicredi)", moeda: "R$", valor: 29 },
-    { nome: "GoCardless (taxas de cobrança)", moeda: "€", valor: 36 },
-    { nome: "Assinaturas EU", moeda: "€", valor: 30 }
+    { nome: "Agência de tráfego", moeda: "R$", valor: 2800, categoria: "marketing" },
+    { nome: "Professoras (estimativa mensal)", moeda: "R$", valor: 3200, categoria: "equipe" },
+    { nome: "Circle (comunidade · US$ 99)", moeda: "R$", valor: 610, categoria: "ferramentas" },
+    { nome: "BeConfident (IA de idiomas)", moeda: "R$", valor: 398, categoria: "ferramentas" },
+    { nome: "Impostos (DAS)", moeda: "R$", valor: 81, categoria: "impostos" },
+    { nome: "Tarifas bancárias (Sicredi)", moeda: "R$", valor: 29, categoria: "impostos" },
+    { nome: "GoCardless (taxas de cobrança)", moeda: "€", valor: 36, categoria: "impostos" },
+    { nome: "Assinaturas EU", moeda: "€", valor: 30, categoria: "ferramentas" }
   ];
   var CUSTOS_KEY = "isr_custos_v1";
   function custosLista() {
@@ -1039,10 +1040,15 @@
   }
   function custosSaveLocal(list) { try { localStorage.setItem(CUSTOS_KEY, JSON.stringify(list)); } catch (e) {} }
   function custosSave(list) { custosSaveLocal(list); agendarSync(); }
-  function addCusto(nome, moeda, valor) {
+  function addCusto(nome, moeda, valor, categoria) {
     var list = custosLista();
-    list.push({ nome: nome, moeda: moeda, valor: valor });
+    list.push({ nome: nome, moeda: moeda, valor: valor, categoria: categoria || "outros" });
     custosSave(list);
+  }
+  function updateCusto(idx, patch) {
+    var list = custosLista();
+    if (list[idx]) { Object.assign(list[idx], patch); custosSave(list); }
+    return list;
   }
   function removeCusto(idx) {
     var list = custosLista();
@@ -1248,6 +1254,7 @@
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
+      lancamentos: lancamentosLista(), cambio: taxaCambio(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1275,6 +1282,8 @@
             if (d.data.moedas) { try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(d.data.moedas)); } catch (e) {} }
             if (d.data.equipe) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(d.data.equipe)); } catch (e) {} }
             if (d.data.calc) { try { localStorage.setItem(CALC_KEY, JSON.stringify(d.data.calc)); } catch (e) {} }
+            if (d.data.lancamentos) { try { localStorage.setItem(LANC_KEY, JSON.stringify(d.data.lancamentos)); } catch (e) {} }
+            if (d.data.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.data.cambio)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1716,6 +1725,300 @@
     ensureSeed();
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  FINANCEIRO — o mês inteiro: de onde entrou, para onde foi,
+  //  se bateu a meta e o que ainda se espera.
+  //
+  //  Três leituras que NUNCA se misturam num número só:
+  //    realizado  → o que de fato entrou e saiu (regime de caixa)
+  //    a receber  → contratos ativos que ainda vão cair
+  //    em risco   → parcela vencida e não paga
+  //  E dois pisos de referência: ponto de equilíbrio (= tudo que
+  //  sai no mês) e meta de faturamento (o que a Gabi definiu).
+  // ══════════════════════════════════════════════════════════════
+  var CAT_ENTRADA = [
+    { id: "grupo",      label: "Turmas em grupo",      cor: "#348a8e" },
+    { id: "particular", label: "Aulas particulares",   cor: "#6b5b95" },
+    { id: "mvs",        label: "MVS · autoguiado",     cor: "#2a9d8f" },
+    { id: "sinal",      label: "Sinais de matrícula",  cor: "#9ec970" },
+    { id: "extra",      label: "Aulas extras",         cor: "#d4a574" },
+    { id: "outra",      label: "Outras receitas",      cor: "#b8ada0" }
+  ];
+  var CAT_SAIDA = [
+    { id: "equipe",      label: "Equipe",           cor: "#348a8e" },
+    { id: "ferramentas", label: "Ferramentas",      cor: "#6b5b95" },
+    { id: "marketing",   label: "Marketing",        cor: "#e07856" },
+    { id: "impostos",    label: "Impostos e taxas", cor: "#9c6f56" },
+    { id: "outros",      label: "Outros",           cor: "#b8ada0" }
+  ];
+  function catMeta(lista, id) {
+    for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return lista[i];
+    return lista[lista.length - 1];
+  }
+
+  // ── LANÇAMENTOS AVULSOS ───────────────────────────────────────
+  // O que o mês teve de específico: o notebook novo, a contadora,
+  // um workshop avulso. É o que faltava pra "para onde foi" deixar
+  // de ser sempre a mesma lista de custos fixos.
+  var LANC_KEY = "isr_lancamentos_v1";
+  function lancamentosLista() {
+    try { var l = JSON.parse(localStorage.getItem(LANC_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function lancamentosSave(l) { try { localStorage.setItem(LANC_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function addLancamento(dados) {
+    var l = lancamentosLista();
+    l.push({ id: "lc" + Date.now() + Math.floor(Math.random() * 1000),
+      data: dados.data || iso(today()),
+      tipo: dados.tipo === "entrada" ? "entrada" : "saida",
+      categoria: dados.categoria || (dados.tipo === "entrada" ? "outra" : "outros"),
+      descricao: dados.descricao || "Lançamento",
+      moeda: dados.moeda || "R$",
+      valor: typeof dados.valor === "number" ? dados.valor : parseMoney(dados.valor) });
+    lancamentosSave(l);
+    return l;
+  }
+  function removeLancamento(id) {
+    lancamentosSave(lancamentosLista().filter(function (x) { return x.id !== id; }));
+  }
+  function lancamentosDoMes(key) {
+    return lancamentosLista().filter(function (l) { return (l.data || "").slice(0, 7) === key; });
+  }
+
+  // ── CÂMBIO (só pra ter UMA leitura do todo; nunca some sozinho) ─
+  var CAMBIO_KEY = "isr_cambio_v1";
+  function taxaCambio() {
+    try { var v = parseFloat(localStorage.getItem(CAMBIO_KEY)); if (v > 0) return v; } catch (e) {}
+    return 6.2;
+  }
+  function setTaxaCambio(v) {
+    var n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+    if (n > 0) { try { localStorage.setItem(CAMBIO_KEY, String(n)); } catch (e) {} agendarSync(); }
+    return taxaCambio();
+  }
+  function emReais(por) { return (por["R$"] || 0) + (por["€"] || 0) * taxaCambio(); }
+
+  // ── META DE FATURAMENTO ───────────────────────────────────────
+  function metaDoMes(key) {
+    var m = metasAtuais();
+    var base = m.faturamento || { "R$": 0, "€": 0 };
+    var ov = (m.faturamentoMes || {})[key] || {};
+    return { "R$": ov["R$"] != null ? ov["R$"] : (base["R$"] || 0),
+             "€":  ov["€"]  != null ? ov["€"]  : (base["€"]  || 0) };
+  }
+  function setMetaMes(key, moeda, valor) {
+    var m = metasAtuais();
+    var mm = Object.assign({}, m.faturamentoMes || {});
+    mm[key] = Object.assign({}, mm[key] || {});
+    mm[key][moeda] = typeof valor === "number" ? valor : parseMoney(valor);
+    return setMetas({ faturamentoMes: mm });
+  }
+  function setMetaPadrao(moeda, valor) {
+    var f = Object.assign({}, metasAtuais().faturamento || {});
+    f[moeda] = typeof valor === "number" ? valor : parseMoney(valor);
+    return setMetas({ faturamento: f });
+  }
+
+  // ── MESES EM TORNO DE HOJE (não uma lista fixa) ───────────────
+  var MES_NOMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  function mesOffset(n) {
+    var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + n);
+    var p = function (x) { return (x < 10 ? "0" : "") + x; };
+    return { key: d.getFullYear() + "-" + p(d.getMonth() + 1),
+      label: MES_NOMES[d.getMonth()] + " de " + d.getFullYear(),
+      curto: MES_NOMES[d.getMonth()].slice(0, 3) + "/" + String(d.getFullYear()).slice(2),
+      offset: n };
+  }
+  function mesesFinanceiro(back, fwd) {
+    var out = [];
+    for (var i = -Math.abs(back); i <= Math.abs(fwd); i++) out.push(mesOffset(i));
+    return out;
+  }
+
+  // ── O MÊS INTEIRO ─────────────────────────────────────────────
+  function financeiroMes(key) {
+    var hoje = iso(today());
+    var entradas = [];
+
+    loadPessoas().forEach(function (p) {
+      // a categoria vem do que a pessoa é, não do contrato
+      var ehParticular = !!p.particular || /^particular/i.test(p.turma || "");
+      var catPessoa = p.status === "mvs" ? "mvs" : (ehParticular ? "particular" : "grupo");
+      (p.contratos || []).forEach(function (c) {
+        var moeda = c.moeda || p.moeda || "R$";
+        (c.meses || []).forEach(function (m) {
+          if (m.key !== key || !m.valor) return;
+          var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+          var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
+          entradas.push({ pessoaId: p.id, nome: p.nome,
+            categoria: catPessoa,
+            detalhe: p.turma || (c.tipo || ""),
+            moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
+            pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje });
+        });
+        if (c.sinal && c.sinal.valor && (p.desde || "").slice(0, 7) === key) {
+          entradas.push({ pessoaId: p.id, nome: p.nome, categoria: "sinal",
+            detalhe: "Sinal de matrícula", moeda: moeda,
+            valor: parseMoney(c.sinal.valor), valorLabel: c.sinal.valor,
+            pago: !!c.sinal.recebido, venc: p.desde,
+            atrasada: !c.sinal.recebido && p.desde < hoje });
+        }
+      });
+    });
+
+    var lancs = lancamentosDoMes(key);
+    lancs.filter(function (l) { return l.tipo === "entrada"; }).forEach(function (l) {
+      entradas.push({ pessoaId: "", nome: l.descricao, categoria: l.categoria || "outra",
+        detalhe: "Lançamento", moeda: l.moeda, valor: l.valor,
+        valorLabel: fmtMoney(l.moeda, l.valor), pago: true, venc: l.data,
+        atrasada: false, lancId: l.id });
+    });
+
+    var saidas = custosLista().map(function (c) {
+      return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
+    }).concat(equipeCustosMensais().map(function (c) {
+      return { nome: c.nome, categoria: "equipe", moeda: c.moeda, valor: c.valor, fixo: true };
+    })).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
+      return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
+        valor: l.valor, fixo: false, data: l.data, lancId: l.id };
+    }));
+
+    // ordena: atrasada primeiro (é o que precisa de ação), depois em aberto, depois pago
+    entradas.sort(function (a, b) {
+      var peso = function (e) { return e.atrasada ? 0 : (e.pago ? 2 : 1); };
+      return peso(a) - peso(b) || b.valor - a.valor;
+    });
+    saidas.sort(function (a, b) { return b.valor - a.valor; });
+
+    var zero = function () { return { "R$": 0, "€": 0 }; };
+    var recebido = zero(), aReceber = zero(), atrasado = zero(), saiu = zero();
+    var porCatEntrada = {}, porCatSaida = {};
+    var acumula = function (mapa, cat, moeda, v) {
+      if (!mapa[cat]) mapa[cat] = zero();
+      mapa[cat][moeda] += v;
+    };
+    entradas.forEach(function (e) {
+      if (e.pago) { recebido[e.moeda] += e.valor; acumula(porCatEntrada, e.categoria, e.moeda, e.valor); }
+      else if (e.atrasada) atrasado[e.moeda] += e.valor;
+      else aReceber[e.moeda] += e.valor;
+    });
+    saidas.forEach(function (s) { saiu[s.moeda] += s.valor; acumula(porCatSaida, s.categoria, s.moeda, s.valor); });
+
+    var meta = metaDoMes(key);
+    var faturado = { "R$": recebido["R$"], "€": recebido["€"] };
+    var previsto = { "R$": recebido["R$"] + aReceber["R$"] + atrasado["R$"],
+                     "€": recebido["€"] + aReceber["€"] + atrasado["€"] };
+    var pct = function (a, b) { return b > 0 ? Math.round(100 * a / b) : (a > 0 ? 100 : 0); };
+
+    return {
+      key: key, entradas: entradas, saidas: saidas,
+      porCatEntrada: porCatEntrada, porCatSaida: porCatSaida,
+      recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
+      previsto: previsto,
+      // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
+      resultado: { "R$": recebido["R$"] - saiu["R$"], "€": recebido["€"] - saiu["€"] },
+      resultadoPrevisto: { "R$": previsto["R$"] - saiu["R$"], "€": previsto["€"] - saiu["€"] },
+      // ponto de equilíbrio = tudo que sai. Abaixo disso o mês dá prejuízo.
+      pontoEquilibrio: { "R$": saiu["R$"], "€": saiu["€"] },
+      meta: meta,
+      pctMeta: { "R$": pct(faturado["R$"], meta["R$"]), "€": pct(faturado["€"], meta["€"]) },
+      faltaMeta: { "R$": Math.max(0, meta["R$"] - faturado["R$"]), "€": Math.max(0, meta["€"] - faturado["€"]) },
+      pctEquilibrio: pct(emReais(recebido), emReais(saiu)),
+      totalReais: { recebido: emReais(recebido), aReceber: emReais(aReceber),
+        atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
+        resultado: emReais(recebido) - emReais(saiu) }
+    };
+  }
+
+  // ── EXPECTATIVA, EM CAMADAS DE CONFIANÇA ──────────────────────
+  // Somar tudo num número só é o jeito mais fácil de se enganar.
+  function taxaConversao() {
+    var ps = loadPessoas();
+    var virou = ps.filter(function (p) { return p.status === "aluna" || p.estagio === "matriculado"; }).length;
+    return ps.length > 0 ? virou / ps.length : 0.3;
+  }
+  function ticketMedio(moeda) {
+    var vals = [];
+    loadPessoas().forEach(function (p) {
+      var c = contratoVigente(p);
+      if (c && (c.moeda || p.moeda) === moeda && c.parcelaValor) vals.push(parseMoney(c.parcelaValor));
+    });
+    if (!vals.length) return 0;
+    return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+  }
+  function previsaoMes(key) {
+    var f = financeiroMes(key);
+    var futuro = key >= mesAtualKey();
+    var leadsAtivos = loadPessoas().filter(function (p) {
+      return p.status === "lead" && p.estagio !== "perdido" && p.estagio !== "matriculado";
+    }).length;
+    var conv = taxaConversao();
+    var pipeline = { "R$": 0, "€": 0 };
+    if (futuro) {
+      pipeline["R$"] = Math.round(leadsAtivos * conv * ticketMedio("R$"));
+      pipeline["€"] = Math.round(leadsAtivos * conv * ticketMedio("€"));
+    }
+    return {
+      confirmado: f.recebido,     // já caiu na conta
+      contratado: f.aReceber,     // contrato ativo, ainda não venceu
+      emRisco: f.atrasado,        // venceu e não pagou
+      pipeline: pipeline,         // negociações em aberto × conversão histórica
+      leadsAtivos: leadsAtivos, conversao: Math.round(conv * 100),
+      otimista: { "R$": f.previsto["R$"] + pipeline["R$"], "€": f.previsto["€"] + pipeline["€"] },
+      conservador: { "R$": f.recebido["R$"] + f.aReceber["R$"], "€": f.recebido["€"] + f.aReceber["€"] }
+    };
+  }
+
+  // ── SÉRIE (passado + futuro) pro gráfico e pra tendência ──────
+  function financeiroSerie(back, fwd) {
+    return mesesFinanceiro(back, fwd).map(function (m) {
+      var f = financeiroMes(m.key);
+      return { key: m.key, label: m.label, curto: m.curto, offset: m.offset,
+        recebido: f.recebido, aReceber: f.aReceber, atrasado: f.atrasado,
+        saiu: f.saiu, resultado: f.resultado, meta: f.meta,
+        recebidoReais: emReais(f.recebido), saiuReais: emReais(f.saiu),
+        previstoReais: emReais(f.previsto), metaReais: emReais(f.meta),
+        resultadoReais: emReais(f.recebido) - emReais(f.saiu) };
+    });
+  }
+
+  // ── RESUMO PRONTO PRA ATA DA REUNIÃO DE TERÇA ─────────────────
+  function resumoFinanceiroTexto(key) {
+    var f = financeiroMes(key);
+    var pv = previsaoMes(key);
+    var mes = mesesFinanceiro(12, 12).filter(function (m) { return m.key === key; })[0];
+    var lin = function (rot, por) {
+      var partes = [];
+      if (por["R$"]) partes.push(fmtMoney("R$", por["R$"]));
+      if (por["€"]) partes.push(fmtMoney("€", por["€"]));
+      return rot + ": " + (partes.join(" + ") || "—");
+    };
+    var top = function (mapa, cats) {
+      return Object.keys(mapa).map(function (id) {
+        return "  · " + catMeta(cats, id).label + " — " + lin("", mapa[id]).replace(": ", "");
+      }).join("\n");
+    };
+    return [
+      "FINANCEIRO · " + (mes ? mes.label : key),
+      "",
+      lin("Entrou", f.recebido),
+      top(f.porCatEntrada, CAT_ENTRADA),
+      "",
+      lin("Saiu", f.saiu),
+      top(f.porCatSaida, CAT_SAIDA),
+      "",
+      lin("Sobrou", f.resultado),
+      lin("Ainda a receber", f.aReceber),
+      lin("Atrasado (em risco)", f.atrasado),
+      "",
+      "Meta do mês: " + lin("", f.meta).replace(": ", "") +
+        " · atingido " + f.pctMeta["R$"] + "% em R$ / " + f.pctMeta["€"] + "% em €",
+      "Ponto de equilíbrio: " + lin("", f.pontoEquilibrio).replace(": ", ""),
+      "Pipeline: " + pv.leadsAtivos + " negociações abertas · conversão histórica " + pv.conversao + "%"
+    ].join("\n");
+  }
+
   // ── API PÚBLICA ───────────────────────────────────────────────
   window.ISRCRM = {
     // constantes
@@ -1771,7 +2074,17 @@
     caixaDetalheMes: caixaDetalheMes, processarCadastrosPendentes: processarCadastrosPendentes,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
-    addCusto: addCusto, removeCusto: removeCusto,
+    addCusto: addCusto, removeCusto: removeCusto, updateCusto: updateCusto,
+    // financeiro
+    CAT_ENTRADA: CAT_ENTRADA, CAT_SAIDA: CAT_SAIDA, catMeta: catMeta,
+    financeiroMes: financeiroMes, financeiroSerie: financeiroSerie, previsaoMes: previsaoMes,
+    mesesFinanceiro: mesesFinanceiro, mesOffset: mesOffset,
+    lancamentosLista: lancamentosLista, addLancamento: addLancamento,
+    removeLancamento: removeLancamento, lancamentosDoMes: lancamentosDoMes,
+    metaDoMes: metaDoMes, setMetaMes: setMetaMes, setMetaPadrao: setMetaPadrao,
+    taxaCambio: taxaCambio, setTaxaCambio: setTaxaCambio, emReais: emReais,
+    ticketMedio: ticketMedio, taxaConversao: taxaConversao,
+    resumoFinanceiroTexto: resumoFinanceiroTexto,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     // perfil

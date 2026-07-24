@@ -108,6 +108,8 @@ function sistemaSave_(data) {
   // 2) carimbo legível
   carimboPessoas_(ss, data.pessoas || []);
   carimboCustos_(ss, data.custos || []);
+  carimboLancamentos_(ss, data.lancamentos || []);
+  carimboFinanceiro_(ss, data);
   var meta = ss.getSheetByName("Backup · Info") || ss.insertSheet("Backup · Info");
   meta.clearContents();
   meta.getRange(1, 1, 3, 2).setValues([
@@ -148,10 +150,85 @@ function carimboPessoas_(ss, pessoas) {
 function carimboCustos_(ss, custos) {
   var sh = ss.getSheetByName("Backup · Custos") || ss.insertSheet("Backup · Custos");
   sh.clearContents();
-  var rows = [["Custo", "Moeda", "Valor mensal"]];
-  custos.forEach(function (c) { rows.push([c.nome || "", c.moeda || "", c.valor || 0]); });
-  sh.getRange(1, 1, rows.length, 3).setValues(rows);
-  sh.getRange(1, 1, 1, 3).setFontWeight("bold");
+  var rows = [["Custo", "Categoria", "Moeda", "Valor mensal"]];
+  custos.forEach(function (c) {
+    rows.push([c.nome || "", c.categoria || "outros", c.moeda || "", c.valor || 0]);
+  });
+  sh.getRange(1, 1, rows.length, 4).setValues(rows);
+  sh.getRange(1, 1, 1, 4).setFontWeight("bold");
+}
+
+// Lançamentos avulsos: o que foi específico de cada mês (o notebook novo,
+// a contadora, um workshop). É o histórico que o extrato do banco alimenta.
+function carimboLancamentos_(ss, lancamentos) {
+  var sh = ss.getSheetByName("Backup · Lançamentos") || ss.insertSheet("Backup · Lançamentos");
+  sh.clearContents();
+  var rows = [["Data", "Mês", "Tipo", "Categoria", "Descrição", "Moeda", "Valor"]];
+  lancamentos.slice().sort(function (a, b) { return (a.data || "") < (b.data || "") ? 1 : -1; })
+    .forEach(function (l) {
+      rows.push([l.data || "", (l.data || "").slice(0, 7), l.tipo || "", l.categoria || "",
+        l.descricao || "", l.moeda || "", l.valor || 0]);
+    });
+  sh.getRange(1, 1, rows.length, 7).setValues(rows);
+  sh.getRange(1, 1, 1, 7).setFontWeight("bold");
+}
+
+// Fechamento mês a mês: entrou, saiu, sobrou e meta — por moeda, sem somar
+// R$ com €. É o que a contadora e a reunião de terça leem.
+function carimboFinanceiro_(ss, data) {
+  var sh = ss.getSheetByName("Backup · Financeiro") || ss.insertSheet("Backup · Financeiro");
+  sh.clearContents();
+
+  var metas = data.metas || {};
+  var metaBase = metas.faturamento || {};
+  var metaMes = metas.faturamentoMes || {};
+  var fixos = { "R$": 0, "€": 0 };
+  (data.custos || []).forEach(function (c) { fixos[c.moeda] = (fixos[c.moeda] || 0) + (c.valor || 0); });
+  (data.equipe || []).forEach(function (e) {
+    if (e.valorTipo === "mensal" && e.valor > 0)
+      fixos[e.moeda || "R$"] = (fixos[e.moeda || "R$"] || 0) + e.valor;
+  });
+
+  var meses = {};
+  var toca = function (key) {
+    if (!meses[key]) meses[key] = { rec: { "R$": 0, "€": 0 }, abr: { "R$": 0, "€": 0 },
+      sai: { "R$": 0, "€": 0 } };
+    return meses[key];
+  };
+  (data.pessoas || []).forEach(function (p) {
+    (p.contratos || []).forEach(function (c) {
+      var moeda = c.moeda || p.moeda || "R$";
+      (c.meses || []).forEach(function (m) {
+        if (!m.key || !m.valor) return;
+        var v = Number(String(m.valor).replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
+        var alvo = toca(m.key);
+        if (m.pago) alvo.rec[moeda] += v; else alvo.abr[moeda] += v;
+      });
+    });
+  });
+  (data.lancamentos || []).forEach(function (l) {
+    var key = (l.data || "").slice(0, 7);
+    if (!key) return;
+    var alvo = toca(key);
+    if (l.tipo === "entrada") alvo.rec[l.moeda] += (l.valor || 0);
+    else alvo.sai[l.moeda] += (l.valor || 0);
+  });
+
+  var keys = Object.keys(meses).sort().reverse();
+  var rows = [["Mês", "Entrou R$", "Entrou €", "A receber R$", "A receber €",
+    "Saiu R$", "Saiu €", "Sobrou R$", "Sobrou €", "Meta R$", "Meta €"]];
+  keys.forEach(function (k) {
+    var m = meses[k];
+    var saiBRL = m.sai["R$"] + fixos["R$"], saiEUR = m.sai["€"] + fixos["€"];
+    var ov = metaMes[k] || {};
+    rows.push([k,
+      m.rec["R$"], m.rec["€"], m.abr["R$"], m.abr["€"],
+      saiBRL, saiEUR, m.rec["R$"] - saiBRL, m.rec["€"] - saiEUR,
+      ov["R$"] != null ? ov["R$"] : (metaBase["R$"] || 0),
+      ov["€"] != null ? ov["€"] : (metaBase["€"] || 0)]);
+  });
+  sh.getRange(1, 1, rows.length, 11).setValues(rows);
+  sh.getRange(1, 1, 1, 11).setFontWeight("bold");
 }
 
 // ── CARREGAR ─────────────────────────────────────────────────────
