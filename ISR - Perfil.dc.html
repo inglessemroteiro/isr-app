@@ -119,6 +119,23 @@
             </div>
           </sc-if>
 
+          <!-- AULAS PARTICULARES · PACOTE -->
+          <sc-if value="{{ ehParticular }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Aulas particulares · pacote</span>
+                <span style="font-size: 11px; font-weight: 700; color: {{ pacoteCor }};">{{ pacoteResumo }}</span>
+              </div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Início: <strong style="color: #164951;">{{ pacoteInicio }}</strong> · restam <strong style="color: #164951;">{{ pacoteRestam }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <button onclick="{{ onAulaDada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;">+ Registrar aula dada</button>
+                <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
+              </div>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários você marca na Agenda da escola (aula extra) — feriados não contam.</p>
+            </div>
+          </sc-if>
+
           <!-- ONBOARDING · PRIMEIROS 30 DIAS -->
           <sc-if value="{{ temOnboarding }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -206,6 +223,7 @@ class Component extends DCLogic {
   docNomeRef = React.createRef();
   docLinkRef = React.createRef();
   checkinDateRef = React.createRef();
+  pacAulasRef = React.createRef();
 
   emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -328,6 +346,24 @@ class Component extends DCLogic {
         if (v) { CRM.setProximoCheckin(p.id, v); this.bump(); }
       };
       out.onCheckinFeito = () => { CRM.registrarCheckinFeito(p.id); this.bump(); };
+    }
+
+    // pacote de aulas particulares
+    out.ehParticular = p.status === "aluna" && (p.turma === "Particular" || !!p.particular);
+    if (out.ehParticular) {
+      const pac = p.particular || { inicio: p.desde, aulas: 0, feitas: 0 };
+      const restam = pac.aulas ? Math.max(0, pac.aulas - (pac.feitas || 0)) : null;
+      out.pacoteResumo = (pac.feitas || 0) + (pac.aulas ? " / " + pac.aulas + " aulas dadas" : " aulas dadas");
+      out.pacoteCor = pac.aulas && (pac.feitas || 0) >= pac.aulas ? "#e07856" : "#348a8e";
+      out.pacoteInicio = pac.inicio ? CRM.ddmm(pac.inicio) + "/" + String(pac.inicio).slice(0, 4) : "—";
+      out.pacoteRestam = restam === null ? "— (defina o total)" : restam + (restam === 1 ? " aula" : " aulas");
+      out.pacoteTotal = pac.aulas || 0;
+      out.pacAulasRef = this.pacAulasRef;
+      out.onAulaDada = () => { CRM.registrarAulaParticular(p.id); this.bump(); };
+      out.onPacoteTotal = () => {
+        const v = parseInt((this.pacAulasRef.current && this.pacAulasRef.current.value) || "", 10);
+        if (v > 0) { CRM.updateParticular(p.id, { aulas: v }); this.bump(); }
+      };
     }
 
     // onboarding · primeiros 30 dias (qualquer pessoa que tenha o checklist)

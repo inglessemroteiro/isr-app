@@ -135,20 +135,22 @@
         <span style="font-size: 12px; color: #a2957f;">{{ partCount }}</span>
       </div>
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
-        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
+        <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.7fr 0.8fr 0.8fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Aluna</span>
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Professora</span>
-          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Desde</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Início</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Pacote</span>
           <span></span>
         </div>
         <sc-if value="{{ partVazio }}">
           <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aluna particular no momento. Na matrícula, escolha a turma "Particular · aula individual".</div>
         </sc-if>
         <sc-for list="{{ particulares }}" as="pp" hint-placeholder-count="2">
-          <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd;">
+          <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.7fr 0.8fr 0.8fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd;">
             <a href="{{ pp.perfilHref }}" style="font-size: 13.5px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ pp.nome }}</a>
             <span style="font-size: 12.5px; color: #6b6155;">{{ pp.professora }}</span>
             <span style="font-size: 12.5px; color: #6b6155;">{{ pp.desde }}</span>
+            <span style="font-size: 12.5px; font-weight: 700; color: {{ pp.pacoteCor }};">{{ pp.pacote }}</span>
             <a href="ISR%20-%20Agenda.dc.html" style="justify-self: end; text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">+ aula na Agenda</a>
           </div>
         </sc-for>
@@ -254,11 +256,16 @@ class Component extends DCLogic {
     // alunas particulares (matrícula com turma "Particular")
     const particulares = CRM.getPessoas()
       .filter(p => p.status === "aluna" && (p.turma === "Particular" || (p.formatos || []).indexOf("particular") >= 0))
-      .map(p => ({
-        nome: p.nome, professora: p.professora || "—",
-        desde: p.desde ? CRM.mesAno(p.desde) : "—",
-        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id
-      }));
+      .map(p => {
+        const pac = p.particular || null;
+        return {
+          nome: p.nome, professora: p.professora || "—",
+          desde: pac && pac.inicio ? CRM.mesAno(pac.inicio) : (p.desde ? CRM.mesAno(p.desde) : "—"),
+          pacote: pac && pac.aulas ? (pac.feitas || 0) + "/" + pac.aulas + " aulas" : "—",
+          pacoteCor: pac && pac.aulas && (pac.feitas || 0) >= pac.aulas ? "#e07856" : "#348a8e",
+          perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id
+        };
+      });
 
     return {
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),

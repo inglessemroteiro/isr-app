@@ -51,14 +51,24 @@
           <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ item.cor }}; flex: none;"></span>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <a href="{{ item.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
+              <sc-if value="{{ item.ehMsg }}">
+                <a href="{{ item.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
+              </sc-if>
+              <sc-if value="{{ item.ehTarefa }}">
+                <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ item.nome }}</span>
+              </sc-if>
               <sc-if value="{{ item.donoChip }}">
                 <span style="background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ item.donoChip }}</span>
               </sc-if>
             </div>
             <div style="font-size: 11px; color: #6b6155; margin-top: 1px;">{{ item.motivo }}</div>
           </div>
-          <a href="{{ item.acaoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
+          <sc-if value="{{ item.ehMsg }}">
+            <a href="{{ item.acaoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
+          </sc-if>
+          <sc-if value="{{ item.ehTarefa }}">
+            <button onclick="{{ item.onConcluir }}" style="flex: none; border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px; cursor: pointer;">Concluir</button>
+          </sc-if>
           <button onclick="{{ item.onAdiar }}" title="Adiar para amanhã" style="flex: none; border: none; background: transparent; color: #c9c1b6; font-size: 11px; font-weight: 600; cursor: pointer; padding: 6px;">adiar</button>
         </div>
       </sc-for>
@@ -66,6 +76,40 @@
       <sc-if value="{{ temMais }}">
         <button onclick="{{ onVerTodos }}" style="width: 100%; border: none; background: #faf8f3; color: #2a9d8f; font-size: 12px; font-weight: 700; padding: 11px; cursor: pointer;">{{ verTodosLabel }}</button>
       </sc-if>
+    </section>
+
+    <!-- PENDÊNCIAS DA EQUIPE -->
+    <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden; margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ede8;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Pendências</div>
+        <span style="font-size: 11px; color: #b3a693;">{{ tarefasResumo }}</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f7f4ef; background: #faf8f3;">
+        <input ref="{{ tfTituloRef }}" placeholder="Nova pendência... (ex. Enviar contrato da Renata)" onkeydown="{{ onTarefaKey }}" style="flex: 1; min-width: 200px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; font-family: inherit;" />
+        <sc-if value="{{ podeAtribuir }}">
+          <select ref="{{ tfDonoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <option value="Gabi">Gabi</option>
+            <option value="Érika">Érika</option>
+            <option value="Carla">Carla</option>
+          </select>
+        </sc-if>
+        <input ref="{{ tfPrazoRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <button onclick="{{ onAddTarefa }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer;">+ Adicionar</button>
+      </div>
+      <sc-if value="{{ semTarefas }}">
+        <div style="text-align: center; padding: 22px 20px; color: #9b8b7e; font-size: 12.5px;">Nenhuma pendência aberta. Adicione acima — com prazo, ela entra na fila "Para hoje" da pessoa no dia certo.</div>
+      </sc-if>
+      <sc-for list="{{ tarefas }}" as="tf" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 11px 18px; border-bottom: 1px solid #f7f4ef;">
+          <button onclick="{{ tf.onFeita }}" title="Marcar como feita" style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid #9ec970; background: #fff; cursor: pointer; flex: none;"></button>
+          <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: #3d3529;">{{ tf.titulo }}</span>
+          <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ tf.dono }}</span>
+          <sc-if value="{{ tf.prazoLabel }}">
+            <span style="flex: none; font-size: 11px; font-weight: 700; color: {{ tf.prazoCor }};">{{ tf.prazoLabel }}</span>
+          </sc-if>
+          <button onclick="{{ tf.onRemover }}" style="flex: none; border: none; background: transparent; color: #c9c1b6; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px;">remover</button>
+        </div>
+      </sc-for>
     </section>
 
     <!-- LINHA DE META DO CICLO -->
@@ -131,6 +175,9 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { perfil: "gestora", verTodos: false, tick: 0 };
+  tfTituloRef = React.createRef();
+  tfDonoRef = React.createRef();
+  tfPrazoRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
@@ -164,11 +211,40 @@ class Component extends DCLogic {
       return {
         cor: item.cor || "#c9c1b6", nome: item.nome, motivo: item.motivo, acao: item.acao,
         donoChip: perfilAtivo === "gestora" ? (item.dono || "") : "",
+        ehTarefa: item.regra === "RT",
+        ehMsg: item.regra !== "RT",
+        onConcluir: () => { CRM.setTarefaFeita(item.tarefaId, true); this.bump(); },
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + item.pessoaId,
         acaoHref: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId + "&tpl=" + item.tpl,
         onAdiar: () => { CRM.adiarItem(item.regra, item.pessoaId); this.bump(); }
       };
     });
+
+    // pendências: gestora vê e distribui todas; equipe vê as suas
+    const donoDoPerfil = { comercial: "Carla", operacao: "Érika" };
+    const tarefasAbertas = CRM.tarefasLista()
+      .filter(tf => !tf.feita)
+      .filter(tf => perfilAtivo === "gestora" || tf.dono === donoDoPerfil[perfilAtivo]);
+    const hojeIso = new Date().toISOString().slice(0, 10);
+    const tarefas = tarefasAbertas.map(tf => ({
+      titulo: tf.titulo, dono: tf.dono,
+      prazoLabel: tf.prazo ? CRM.ddmm(tf.prazo) : "",
+      prazoCor: tf.prazo && tf.prazo <= hojeIso ? "#e07856" : "#8a7c6b",
+      onFeita: () => { CRM.setTarefaFeita(tf.id, true); this.bump(); },
+      onRemover: () => { CRM.removeTarefa(tf.id); this.bump(); }
+    }));
+    const feitasN = CRM.tarefasLista().filter(tf => tf.feita).length;
+    const addTarefa = () => {
+      const titulo = ((this.tfTituloRef.current && this.tfTituloRef.current.value) || "").trim();
+      if (!titulo) return;
+      const dono = perfilAtivo === "gestora"
+        ? ((this.tfDonoRef.current && this.tfDonoRef.current.value) || "Gabi")
+        : donoDoPerfil[perfilAtivo];
+      CRM.addTarefa({ titulo, dono, prazo: (this.tfPrazoRef.current && this.tfPrazoRef.current.value) || "", por: (user && user.nome) || "" });
+      this.tfTituloRef.current.value = "";
+      if (this.tfPrazoRef.current) this.tfPrazoRef.current.value = "";
+      this.bump();
+    };
 
     const metas = CRM.progressoMetas();
     const resumo = CRM.cobrancaResumo();
@@ -220,6 +296,12 @@ class Component extends DCLogic {
       filaCount: filaAll.length + (filaAll.length === 1 ? " item" : " itens"),
       filaBadgeBg: filaAll.length ? "rgba(224,120,86,0.14)" : "rgba(90,158,75,0.16)",
       filaBadgeFg: filaAll.length ? "#e07856" : "#5a9e4b",
+      tarefas, semTarefas: tarefas.length === 0,
+      tarefasResumo: tarefas.length + (tarefas.length === 1 ? " aberta" : " abertas") + (feitasN ? " · " + feitasN + " concluídas" : ""),
+      podeAtribuir: perfilAtivo === "gestora",
+      tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,
+      onAddTarefa: addTarefa,
+      onTarefaKey: (e) => { if (e.key === "Enter") { e.preventDefault(); addTarefa(); } },
       temMais: !this.state.verTodos && filaAll.length > LIMIT,
       verTodosLabel: "ver todos (" + filaAll.length + ")",
       onVerTodos: () => this.setState({ verTodos: true }),

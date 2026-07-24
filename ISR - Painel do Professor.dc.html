@@ -78,8 +78,9 @@
           <sc-if value="{{ al.temFaltas }}">
             <span style="flex: none; font-size: 10px; color: #b3a693;">{{ al.faltasInfo }}</span>
           </sc-if>
-          <button onclick="{{ al.onPresente }}" style="flex: none; border: 1px solid {{ al.pBorder }}; background: {{ al.pBg }}; color: {{ al.pFg }}; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">Presente</button>
-          <button onclick="{{ al.onFalta }}" style="flex: none; border: 1px solid {{ al.fBorder }}; background: {{ al.fBg }}; color: {{ al.fFg }}; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">Falta</button>
+          <sc-for list="{{ al.estados }}" as="es" hint-placeholder-count="4">
+            <button onclick="{{ es.onClick }}" title="{{ es.title }}" style="flex: none; border: 1px solid {{ es.border }}; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer;">{{ es.label }}</button>
+          </sc-for>
         </div>
       </sc-for>
 
@@ -144,11 +145,19 @@ class Component extends DCLogic {
 
   tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : "#6b5b95"; }
 
+  ESTADOS = [
+    { id: "presente", label: "Presente", title: "Presente", cor: "#348a8e" },
+    { id: "atraso", label: "Atraso", title: "Chegou atrasada", cor: "#d4a574" },
+    { id: "falta", label: "Falta", title: "Faltou (vai pra linha do tempo)", cor: "#cf6b5c" },
+    { id: "justificada", label: "Justif.", title: "Ausência justificada (avisou antes)", cor: "#6b5b95" }
+  ];
+
   carregarChamada(turmaLabel, dataIso) {
-    const salva = window.ISRCRM.getChamada(turmaLabel, dataIso);
+    const CRM = window.ISRCRM;
+    const salva = CRM.getChamada(turmaLabel, dataIso);
     const pres = {};
-    window.ISRCRM.alunasDaTurma(turmaLabel).forEach(p => {
-      pres[p.id] = salva && salva.presencas[p.id] === false ? false : true;
+    CRM.alunasDaTurma(turmaLabel).forEach(p => {
+      pres[p.id] = salva ? CRM.estadoPresenca(salva.presencas[p.id]) : "presente";
     });
     return pres;
   }
@@ -194,18 +203,23 @@ class Component extends DCLogic {
     const salva = turmaSel ? CRM.getChamada(turmaSel, dataSel) : null;
 
     const presencas = alunas.map(p => {
-      const presente = presAtual[p.id] !== false;
+      const estadoAtual = CRM.estadoPresenca(presAtual[p.id]);
       const faltas = CRM.faltasDe(p.id);
       return {
         nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
         temFaltas: faltas > 0, faltasInfo: faltas + (faltas === 1 ? " falta no ciclo" : " faltas no ciclo"),
-        pBg: presente ? "#348a8e" : "#fff", pFg: presente ? "#fff" : "#8a7c6b", pBorder: presente ? "#348a8e" : "#e5dccf",
-        fBg: !presente ? "#cf6b5c" : "#fff", fFg: !presente ? "#fff" : "#8a7c6b", fBorder: !presente ? "#cf6b5c" : "#e5dccf",
-        onPresente: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: true }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false }),
-        onFalta: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: false }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false })
+        estados: this.ESTADOS.map(es => {
+          const on = es.id === estadoAtual;
+          return {
+            label: es.label, title: es.title,
+            bg: on ? es.cor : "#fff", fg: on ? "#fff" : "#8a7c6b", border: on ? es.cor : "#e5dccf",
+            onClick: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: es.id }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false })
+          };
+        })
       };
     });
-    const nFaltas = alunas.filter(p => presAtual[p.id] === false).length;
+    const conta = est => alunas.filter(p => CRM.estadoPresenca(presAtual[p.id]) === est).length;
+    const nPres = conta("presente") + conta("atraso"), nAtr = conta("atraso"), nFal = conta("falta"), nJus = conta("justificada");
 
     return {
       teachers: nomes.map(n => ({ id: n, label: n, sel: n === teacher })),
@@ -225,7 +239,7 @@ class Component extends DCLogic {
       },
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
-      resumoChamada: (alunas.length - nFaltas) + (alunas.length - nFaltas === 1 ? " presente" : " presentes") + " · " + nFaltas + (nFaltas === 1 ? " falta" : " faltas"),
+      resumoChamada: nPres + (nPres === 1 ? " presente" : " presentes") + (nAtr ? " (" + nAtr + " com atraso)" : "") + " · " + nFal + (nFal === 1 ? " falta" : " faltas") + (nJus ? " · " + nJus + (nJus === 1 ? " justificada" : " justificadas") : ""),
       salvouAgora: this.state.salvouAgora,
       onSalvarChamada: () => {
         CRM.salvarChamada(turmaSel, dataSel, presAtual, (user && user.nome) || "");
