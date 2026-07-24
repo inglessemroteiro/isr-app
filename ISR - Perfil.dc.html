@@ -15,8 +15,8 @@
 
     <!-- TOPO -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #eee3d6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
-      <a href="{{ waDireto }}" target="_blank" rel="noopener" style="text-decoration: none; background: #3f6d4e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">💬 WhatsApp</a>
+      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #eee3d6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+      <a href="{{ waDireto }}" target="_blank" rel="noopener" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">WhatsApp</a>
     </div>
 
     <sc-if value="{{ naoEncontrada }}">
@@ -97,6 +97,45 @@
             </div>
           </sc-if>
 
+          <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Acompanhamento · check-in</div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Próximo check-in: <strong style="color: #164951;">{{ checkinAtual }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
+                <button onclick="{{ onCheckin7 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 semana</button>
+                <button onclick="{{ onCheckin30 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 mês</button>
+                <input ref="{{ checkinDateRef }}" type="date" style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 6px 8px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onCheckinData }}" style="border: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Agendar</button>
+              </div>
+              <sc-if value="{{ temCheckin }}">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #f4f1ec; padding-top: 10px;">
+                  <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px;">+ Google Agenda</a>
+                  <button onclick="{{ onCheckinFeito }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Check-in feito</button>
+                </div>
+              </sc-if>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">O check-in agendado aparece na Central e na Agenda da escola.</p>
+            </div>
+          </sc-if>
+
+          <!-- ONBOARDING · PRIMEIROS 30 DIAS -->
+          <sc-if value="{{ temOnboarding }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Onboarding · primeiros 30 dias</span>
+                <span style="font-size: 10px; font-weight: 700; color: {{ obResumoCor }};">{{ obResumo }}</span>
+              </div>
+              <sc-for list="{{ obView }}" as="ob" hint-placeholder-count="4">
+                <button onclick="{{ ob.onToggle }}" title="Clique para marcar feito/pendente" style="display: flex; width: 100%; box-sizing: border-box; text-align: left; align-items: center; gap: 9px; border: none; background: transparent; cursor: pointer; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-family: inherit;">
+                  <span style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{ ob.cor }}; background: {{ ob.bg }}; color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none;">{{ ob.check }}</span>
+                  <span style="flex: 1; font-size: 12px; color: {{ ob.fg }};">{{ ob.label }}</span>
+                  <span style="font-size: 10px; color: #b8ada0;">{{ ob.quando }}</span>
+                </button>
+              </sc-for>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Pendências aparecem na fila da Érika.</p>
+            </div>
+          </sc-if>
+
           <!-- LEAD: PAINEL DO FUNIL -->
           <sc-if value="{{ ehLead }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -112,6 +151,12 @@
                   <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
                 </sc-for>
               </div>
+              <div style="font-size: 10px; color: #9b8b7e; margin: 12px 0 6px;">Turma de interesse <span style="color: #b8ada0;">(vira sugestão na matrícula)</span></div>
+              <select onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
+                  <option value="{{ ti.id }}" selected="{{ ti.sel }}">{{ ti.label }}</option>
+                </sc-for>
+              </select>
             </div>
             <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 12px; padding: 13px 15px;">
               <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada (imutável)</div>
@@ -121,9 +166,9 @@
 
           <!-- DOCUMENTOS -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">📎 Documentos</div>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Documentos</div>
             <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="1">
-              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: #2a9d8f; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #f4f1ec;">🔗 {{ doc.nome }}</a>
+              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: #2a9d8f; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #f4f1ec;">{{ doc.nome }}</a>
             </sc-for>
             <sc-if value="{{ semDocs }}">
               <div style="font-size: 11px; color: #b8ada0; margin-bottom: 4px;">Nenhum documento ainda.</div>
@@ -159,6 +204,19 @@ class Component extends DCLogic {
   noteRef = React.createRef();
   docNomeRef = React.createRef();
   docLinkRef = React.createRef();
+  checkinDateRef = React.createRef();
+
+  emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+
+  emQuando(isoStr) {
+    const d = new Date(isoStr + "T12:00:00");
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0);
+    const n = Math.round((d - hoje) / 86400000);
+    if (n === 0) return "hoje";
+    if (n === 1) return "amanhã";
+    if (n > 1) return "em " + n + " dias";
+    return "venceu há " + (-n) + (-n === 1 ? " dia" : " dias");
+  }
 
   pessoaId() {
     try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
@@ -197,7 +255,7 @@ class Component extends DCLogic {
     // contexto: "Essentials (A2) · Adrielly · conosco desde mar/2025 · 1 ano e 4 meses"
     const partes = [];
     if (p.turma) partes.push(p.turma);
-    if (p.professora) partes.push("👩‍🏫 " + p.professora);
+    if (p.professora) partes.push("Prof. " + p.professora);
     if (p.desde) partes.push("conosco desde " + CRM.mesAno(p.desde) + " · " + CRM.tempoDesde(p.desde));
     else if (p.entrouEm) partes.push("lead há " + CRM.tempoDesde(p.entrouEm));
     if (p.motivoPerda && p.estagio === "perdido") partes.push("saiu: " + p.motivoPerda);
@@ -232,6 +290,7 @@ class Component extends DCLogic {
         this.bump();
       },
       ehLead: p.status === "lead" && p.estagio !== "matriculado",
+      ehAluna: p.status === "aluna",
       temContrato: !!c && (p.status === "aluna" || p.status === "mvs" || p.status === "ex-aluna" || p.status === "pausada"),
       nivel: p.nivel || "—", professora: p.professora || "—", turma: p.turma || "—",
       projetoCiclo: unit ? unit.projeto : "—"
@@ -253,16 +312,59 @@ class Component extends DCLogic {
       }));
     }
 
+    // acompanhamento · check-in (aluna)
+    if (out.ehAluna) {
+      out.checkinAtual = p.proximoCheckin ? (CRM.ddmm(p.proximoCheckin) + " (" + this.emQuando(p.proximoCheckin) + ")") : "não agendado";
+      out.temCheckin = !!p.proximoCheckin;
+      out.checkinGcal = p.proximoCheckin ? CRM.gcalLink("Check-in · " + p.nome, p.proximoCheckin, "", "Check-in mensal · Inglês sem Roteiro") : "#";
+      out.checkinDateRef = this.checkinDateRef;
+      out.onCheckin7 = () => { CRM.setProximoCheckin(p.id, this.emDias(7)); this.bump(); };
+      out.onCheckin30 = () => { CRM.setProximoCheckin(p.id, this.emDias(30)); this.bump(); };
+      out.onCheckinData = () => {
+        const v = (this.checkinDateRef.current && this.checkinDateRef.current.value) || "";
+        if (v) { CRM.setProximoCheckin(p.id, v); this.bump(); }
+      };
+      out.onCheckinFeito = () => { CRM.registrarCheckinFeito(p.id); this.bump(); };
+    }
+
+    // onboarding · primeiros 30 dias (qualquer pessoa que tenha o checklist)
+    out.temOnboarding = !!(p.onboarding && p.onboarding.length);
+    if (out.temOnboarding) {
+      const feitos = p.onboarding.filter(c2 => c2.feito).length;
+      out.obResumo = feitos + "/" + p.onboarding.length;
+      out.obResumoCor = feitos === p.onboarding.length ? "#5a9e4b" : "#9c6f56";
+      out.obView = p.onboarding.map(c2 => ({
+        label: c2.label, quando: CRM.ddmm(c2.data),
+        check: c2.feito ? "✓" : "",
+        cor: c2.feito ? "#5a9e4b" : "#d8cfc2",
+        bg: c2.feito ? "#5a9e4b" : "#fff",
+        fg: c2.feito ? "#9b8b7e" : "#164951",
+        onToggle: () => { CRM.setOnboardingFeito(p.id, c2.id, !c2.feito); this.bump(); }
+      }));
+    }
+
     if (out.ehLead) {
       out.stageOptions = CRM.STAGES.map(s => {
         const sel = s.id === p.estagio;
         return { label: s.short, onPick: () => { CRM.setStage(p.id, s.id); this.bump(); },
           bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color };
       });
-      out.followupAtual = p.proximoFollowup ? (CRM.ddmm(p.proximoFollowup) + " (" + CRM.relativeDays(p.proximoFollowup) + ")") : "não agendado";
+      out.followupAtual = p.proximoFollowup ? (CRM.ddmm(p.proximoFollowup) + " (" + this.emQuando(p.proximoFollowup) + ")") : "não agendado";
       out.followups = CRM.followupPresets().map(f => ({
         label: f.label, onClick: () => { CRM.setFollowup(p.id, f.iso, f.label); this.bump(); }
       }));
+      const interesse = p.turmaInteresse || "";
+      out.turmasInteresse = [{ id: "", label: "— ainda não definida", sel: !interesse }]
+        .concat(CRM.ocupacaoTurmas().map(t => ({
+          id: t.label, label: t.label + (t.vagas > 0 ? " · " + t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : " · LOTADA"),
+          sel: t.label === interesse
+        })))
+        .concat([{ id: "Particular", label: "Particular · aula individual", sel: interesse === "Particular" }]);
+      out.onTurmaInteresse = (e) => {
+        CRM.updateLead(p.id, { turmaInteresse: e.target.value });
+        if (e.target.value) CRM.addNote(p.id, "Turma de interesse: " + e.target.value);
+        this.bump();
+      };
       out.origemDetalhe = (p.origem && p.origem.detalhe) || "—";
       out.veioDe = (p.origem && p.origem.veioDe) || "—";
       out.entrouPor = (p.origem && p.origem.entrouPor) || "—";
@@ -273,15 +375,15 @@ class Component extends DCLogic {
       label, bg, href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + p.id + "&tpl=" + tpl
     });
     out.acoes = out.ehLead ? [
-      mk("✈️ Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
-      mk("📅 Confirmar conversa", "#6b5b95", "lead_reuniao", "confirmação de conversa"),
-      mk("🔔 Link de pagamento", "#d4a574", "pag_link", "link de pagamento"),
-      mk("💛 Primeiro contato", "#e07856", "lead_primeiro", "primeiro contato")
+      mk("Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
+      mk("Confirmar conversa", "#6b5b95", "lead_reuniao", "confirmação de conversa"),
+      mk("Link de pagamento", "#d4a574", "pag_link", "link de pagamento"),
+      mk("Primeiro contato", "#e07856", "lead_primeiro", "primeiro contato")
     ] : [
-      mk("🔔 Lembrete", "#2a9d8f", "pag_lembrete", "lembrete de vencimento"),
-      mk("✅ Confirmar pagto", "#5a9e4b", "pag_confirmado", "confirmação de pagamento"),
-      mk("🔄 Renovação", "#6b5b95", "renov_abrir", "conversa de renovação"),
-      mk("💛 Check-in", "#e07856", "checkin_mensal", "check-in")
+      mk("Lembrete", "#2a9d8f", "pag_lembrete", "lembrete de vencimento"),
+      mk("Confirmar pagto", "#5a9e4b", "pag_confirmado", "confirmação de pagamento"),
+      mk("Renovação", "#6b5b95", "renov_abrir", "conversa de renovação"),
+      mk("Check-in", "#e07856", "checkin_mensal", "check-in")
     ];
 
     return out;
