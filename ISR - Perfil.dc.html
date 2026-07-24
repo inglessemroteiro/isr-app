@@ -40,7 +40,7 @@
       </header>
 
       <!-- 2 COLUNAS -->
-      <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; align-items: start;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
 
         <!-- ═══ COLUNA ESQUERDA · A RELAÇÃO ═══ -->
         <div>
@@ -140,6 +140,14 @@
                   <span style="width: 15px; height: 15px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 2px solid #c9963f;"></span>
                   <strong style="font-size: 15px; color: #164951;">{{ moedasTotal }}</strong>
                 </span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                <select ref="{{ moedasBonusRef }}" style="flex: 1; min-width: 150px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ bonusOpts }}" as="bo" hint-placeholder-count="8">
+                    <option value="{{ bo.id }}">{{ bo.label }}</option>
+                  </sc-for>
+                </select>
+                <button onclick="{{ onAplicarBonus }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px; cursor: pointer;">Aplicar</button>
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <input ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="width: 80px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
@@ -257,6 +265,7 @@ class Component extends DCLogic {
   pacAulasRef = React.createRef();
   renegValorRef = React.createRef();
   moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
+  moedasBonusRef = React.createRef();
 
   emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -397,6 +406,17 @@ class Component extends DCLogic {
       out.onCheckinFeito = () => { CRM.registrarCheckinFeito(p.id); this.bump(); };
       out.moedasTotal = CRM.moedasDe(p.id).total;
       out.moedasValorRef = this.moedasValorRef; out.moedasMotivoRef = this.moedasMotivoRef;
+      out.moedasBonusRef = this.moedasBonusRef;
+      const bonusFlat = [];
+      CRM.MOEDAS_BONUS.forEach(g => g.itens.forEach(i => { if (!i.auto) bonusFlat.push({ id: i.label + "|" + i.valor, label: i.label + " · +" + i.valor }); }));
+      out.bonusOpts = bonusFlat;
+      out.onAplicarBonus = () => {
+        const v = (this.moedasBonusRef.current && this.moedasBonusRef.current.value) || "";
+        const [label, valor] = v.split("|");
+        if (!valor) return;
+        CRM.addMoedas(p.id, parseInt(valor, 10), label);
+        this.bump();
+      };
       out.onAddMoedas = () => {
         const v = parseInt((this.moedasValorRef.current && this.moedasValorRef.current.value) || "", 10);
         if (!v) return;

@@ -25,7 +25,9 @@
     { id: "caixa", label: "Caixa", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
     { id: "turmas", label: "Turmas", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial"] },
     { id: "marketing", label: "Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "professor", label: "Professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora"] },
+    { id: "calculadora", label: "Calculadora", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "professor", label: "Professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
+    { id: "equipe", label: "Equipe", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
     { id: "aluna", label: "App da aluna", href: "ISR - Aluna.dc.html", perfis: null }
   ];
 
@@ -49,7 +51,9 @@
     bar.appendChild(marca);
 
     ITENS.forEach(function (item) {
-      if (item.perfis && item.perfis.indexOf(user.perfil) < 0) return;
+      var papeis = user.papeis || [];
+      var extra = item.id === "professor" && papeis.indexOf("professora") >= 0;
+      if (item.perfis && item.perfis.indexOf(user.perfil) < 0 && !extra) return;
       var a = document.createElement("a");
       a.textContent = item.label;
       a.href = encodeURI(item.href);

@@ -881,9 +881,10 @@
   var PERFIS = [
     { id: "gestora", label: "Gestora", regras: null }, // null = todas
     { id: "comercial", label: "Comercial", regras: ["R1", "R2", "R5", "R12", "RT"] },
-    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "RT"] }
+    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "RT"] },
+    { id: "professora", label: "Professora", regras: ["RT"] }
   ];
-  function filaParaHoje(perfilId) {
+  function filaParaHoje(perfilId, donoNome) {
     var itens = [];
     var pessoas = loadPessoas();
     var key = mesAtualKey();
@@ -979,8 +980,9 @@
     var perfil = PERFIS.filter(function (pf) { return pf.id === perfilId; })[0];
     if (perfil && perfil.regras) itens = itens.filter(function (i) { return perfil.regras.indexOf(i.regra) >= 0; });
     var donoPorPerfil = { comercial: "Carla", operacao: "Érika" };
-    if (donoPorPerfil[perfilId]) {
-      itens = itens.filter(function (i) { return i.regra !== "RT" || i.dono === donoPorPerfil[perfilId]; });
+    var donoRT = donoPorPerfil[perfilId] || (perfilId === "professora" ? donoNome : null);
+    if (donoRT) {
+      itens = itens.filter(function (i) { return i.regra !== "RT" || i.dono === donoRT; });
     }
 
     // adiados hoje ficam fora (adiar = some da fila até amanhã)
@@ -1049,7 +1051,7 @@
   }
   function custosTotais() {
     var t = { "R$": 0, "€": 0 };
-    custosLista().forEach(function (c) { t[c.moeda] += c.valor; });
+    custosLista().concat(equipeCustosMensais()).forEach(function (c) { t[c.moeda] += c.valor; });
     return t;
   }
 
@@ -1068,7 +1070,7 @@
       });
     });
     entradas.sort(function (a, b) { return (a.pago === b.pago) ? (b.valorNum - a.valorNum) : (a.pago ? -1 : 1); });
-    var saidas = custosLista().map(function (c) {
+    var saidas = custosLista().concat(equipeCustosMensais()).map(function (c) {
       return { nome: c.nome, moeda: c.moeda, valor: c.valor };
     });
     var tot = function (list, moeda, f) {
@@ -1245,6 +1247,7 @@
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
+      equipe: equipeLista(), calc: calcParams(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1270,6 +1273,8 @@
             if (d.data.feriados) { try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(d.data.feriados)); } catch (e) {} }
             if (d.data.metas) { try { localStorage.setItem(METAS_KEY, JSON.stringify(d.data.metas)); } catch (e) {} }
             if (d.data.moedas) { try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(d.data.moedas)); } catch (e) {} }
+            if (d.data.equipe) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(d.data.equipe)); } catch (e) {} }
+            if (d.data.calc) { try { localStorage.setItem(CALC_KEY, JSON.stringify(d.data.calc)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1328,11 +1333,63 @@
   function gestaoUser() {
     try { return JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) { return null; }
   }
+  var CALC_KEY = "isr_calc_v1";
+  var CALC_PADRAO = { grupoBRL: 497, grupoEUR: 125, partBRL: 800, partEUR: 200,
+    descAvistaMax: 10, sinalPct: 20, parcelas: [3, 6, 8] };
+  function calcParams() {
+    try { var c = JSON.parse(localStorage.getItem(CALC_KEY)); if (c) return Object.assign({}, CALC_PADRAO, c); } catch (e) {}
+    return CALC_PADRAO;
+  }
+  function setCalcParams(patch) {
+    var c = {}; try { c = JSON.parse(localStorage.getItem(CALC_KEY)) || {}; } catch (e) {}
+    Object.assign(c, patch);
+    try { localStorage.setItem(CALC_KEY, JSON.stringify(c)); } catch (e) {}
+    agendarSync(); return calcParams();
+  }
+
+  var EQUIPE_KEY = "isr_equipe_v1";
+  function equipeLista() { try { return JSON.parse(localStorage.getItem(EQUIPE_KEY)) || []; } catch (e) { return []; } }
+  function equipeSave(l) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function addEquipe(dados) {
+    var l = equipeLista();
+    l.push({ id: "eq" + Date.now(), nome: (dados.nome || "").trim(), email: (dados.email || "").trim().toLowerCase(),
+      papeis: dados.papeis || [], valorTipo: dados.valorTipo || "", valor: parseFloat(dados.valor) || 0,
+      moeda: dados.moeda || "R$" });
+    equipeSave(l); return l;
+  }
+  function updateEquipe(id, patch) {
+    var l = equipeLista();
+    l.forEach(function (m) { if (m.id === id) Object.assign(m, patch); });
+    equipeSave(l); return l;
+  }
+  function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
+  function equipeCustosMensais() {
+    return equipeLista()
+      .filter(function (m) { return m.valorTipo === "mensal" && m.valor > 0; })
+      .map(function (m) { return { nome: m.nome + " (equipe)", moeda: m.moeda || "R$", valor: m.valor }; });
+  }
+
+  function perfilDosPapeis(papeis) {
+    if (papeis.indexOf("gestora") >= 0) return "gestora";
+    if (papeis.indexOf("comercial") >= 0) return "comercial";
+    if (papeis.indexOf("operacao") >= 0) return "operacao";
+    if (papeis.indexOf("professora") >= 0) return "professora";
+    return null;
+  }
   function liberarGestao(email) {
     var e = (email || "").toLowerCase().trim();
     var m = GESTAO_EMAILS[e];
-    if (!m) return null;
-    var u = { email: e, perfil: m.perfil, nome: m.nome };
+    var eq = equipeLista().filter(function (x) { return x.email === e; })[0];
+    var u = null;
+    if (m) {
+      var papeis = [m.perfil];
+      if (eq) (eq.papeis || []).forEach(function (pp) { if (papeis.indexOf(pp) < 0) papeis.push(pp); });
+      u = { email: e, perfil: m.perfil, nome: m.nome, papeis: papeis };
+    } else if (eq) {
+      var perfil = perfilDosPapeis(eq.papeis || []);
+      if (!perfil) return null; // prestadora pura não tem acesso ao sistema
+      u = { email: e, perfil: perfil, nome: eq.nome, papeis: eq.papeis || [] };
+    } else return null;
     localStorage.setItem("isr_gestao_user", JSON.stringify(u));
     return u;
   }
@@ -1344,7 +1401,7 @@
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor"];
+      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
       var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
       if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
@@ -1450,6 +1507,47 @@
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
   var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
   var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30 };
+  // grupos de bônus do design original (Moedas ISR) — a equipe aplica pelo Perfil
+  var MOEDAS_BONUS = [
+    { grupo: "Aulas", cor: "#2a9d8f", itens: [
+      { label: "Presença em aula", valor: 10, auto: true },
+      { label: "Tarefa entregue no prazo", valor: 8 },
+      { label: "Presença em aula extra", valor: 15 },
+      { label: "Book club semanal", valor: 20 }] },
+    { grupo: "Comunidade", cor: "#e07856", itens: [
+      { label: "Completou o desafio da semana", valor: 10 },
+      { label: "Melhor resposta do desafio", valor: 10 },
+      { label: "Respondeu um colega", valor: 5 },
+      { label: "Compartilhou post da ISR", valor: 5 }] },
+    { grupo: "Indicações", cor: "#9c6f56", itens: [
+      { label: "Indicou um amigo", valor: 20 },
+      { label: "Trouxe convidado pra apresentação", valor: 60 },
+      { label: "Indicação virou matrícula", valor: 200 }] }
+  ];
+  // lojinha de resgates do design original
+  var MOEDAS_RESGATES = [
+    { id: "rg1", nome: "Escolhe o tema da próxima aula", cat: "aula", custo: 80 },
+    { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", custo: 120 },
+    { id: "rg3", nome: "30 min de bate-papo com a Gabi", cat: "mentoria", custo: 200 },
+    { id: "rg4", nome: "Traz um convidado pra aula regular", cat: "comunidade", custo: 250 },
+    { id: "rg5", nome: "Nomeia um colega (+20 bônus)", cat: "comunidade", custo: 300 },
+    { id: "rg6", nome: "Featured no Instagram da escola", cat: "reconhecimento", custo: 350 },
+    { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", custo: 400 },
+    { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", custo: 600 },
+    { id: "rg9", nome: "Sessão de preparação pra entrevista", cat: "carreira", custo: 900 },
+    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "topo", custo: 1200, vip: true }
+  ];
+  function resgatarRecompensa(pessoaId, resgateId) {
+    var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
+    var p = getPessoa(pessoaId);
+    if (!r || !p) return { ok: false };
+    var saldo = moedasDe(pessoaId).total;
+    if (saldo < r.custo) return { ok: false, faltam: r.custo - saldo };
+    addMoedas(pessoaId, -r.custo, "Resgate: " + r.nome);
+    addTarefa({ titulo: "Entregar resgate · " + r.nome + " · " + p.nome,
+      dono: "Gabi", prazo: iso(today()), por: p.nome });
+    return { ok: true };
+  }
   function moedasAjustesAll() {
     try { return JSON.parse(localStorage.getItem(MOEDAS_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -1612,6 +1710,8 @@
     localStorage.removeItem(FERIADOS_KEY);
     localStorage.removeItem(METAS_KEY);
     localStorage.removeItem(MOEDAS_KEY);
+    localStorage.removeItem(EQUIPE_KEY);
+    localStorage.removeItem(CALC_KEY);
     localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
@@ -1657,6 +1757,10 @@
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
     chamadasDaTurma: chamadasDaTurma,
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
+    MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
+    equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
+    equipeCustosMensais: equipeCustosMensais,
+    calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
     estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
