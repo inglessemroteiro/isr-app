@@ -77,6 +77,21 @@
       </sc-if>
     </section>
 
+    <!-- AVISOS: o que a equipe concluiu pra você -->
+    <sc-if value="{{ temAvisos }}">
+      <section style="background: #f2ebe3; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 9px;">Ficou pronto</div>
+        <sc-for list="{{ avisos }}" as="av" hint-placeholder-count="2">
+          <div style="display: flex; gap: 10px; align-items: center; padding: 7px 0;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #9ec970; flex: none;"></span>
+            <span style="flex: 1; min-width: 0; font-size: 13px; color: #164951;">{{ av.texto }}</span>
+            <span style="flex: none; font-size: 11px; color: #8a7465;">{{ av.quando }}</span>
+            <button onclick="{{ av.onLido }}" style="flex: none; border: none; background: #fff; color: #8a7465; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ok</button>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- PENDÊNCIAS DA EQUIPE -->
     <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden; margin-bottom: 18px;">
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ede8;">
@@ -233,6 +248,7 @@ class Component extends DCLogic {
       onFeita: () => { CRM.setTarefaFeita(tf.id, true); this.bump(); },
       onRemover: () => { CRM.removeTarefa(tf.id); this.bump(); }
     }));
+    const avisosMeus = CRM.avisosDe((user && user.nome) || "");
     const feitasN = CRM.tarefasLista().filter(tf => tf.feita).length;
     const addTarefa = () => {
       const titulo = ((this.tfTituloRef.current && this.tfTituloRef.current.value) || "").trim();
@@ -303,6 +319,11 @@ class Component extends DCLogic {
       })(),
       tarefas, semTarefas: tarefas.length === 0,
       tarefasResumo: tarefas.length + (tarefas.length === 1 ? " aberta" : " abertas") + (feitasN ? " · " + feitasN + " concluídas" : ""),
+      avisos: avisosMeus.map(a => ({
+        texto: a.texto, quando: CRM.ddmm(a.data),
+        onLido: () => { CRM.marcarAvisoLido(a.id); this.bump(); }
+      })),
+      temAvisos: avisosMeus.length > 0,
       podeAtribuir: perfilAtivo === "gestora",
       tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,
       onAddTarefa: addTarefa,

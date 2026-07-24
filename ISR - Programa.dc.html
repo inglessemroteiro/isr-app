@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Pedagógico · Programa no WhatsApp</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Pedagógico</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Programa no WhatsApp</h1>
+      </div>
+      <sc-if value="{{ temPrograma }}">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button onclick="{{ onToggleTurma }}" style="border: 1px solid #e5dccf; background: {{ turmaBg }}; color: {{ turmaFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Participantes</button>
+        </div>
+      </sc-if>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">Uma missão por semana, o áudio dela e o seu feedback de sexta. Três marcas por aluna por semana — o feedback é o que ela pagou pra ter, e é o que não pode furar.</p>
+
+    <!-- SEM PROGRAMA -->
+    <sc-if value="{{ semPrograma }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 24px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Criar a turma do programa</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input ref="{{ novoNomeRef }}" placeholder="Nome da turma (ex. Piloto · 1ª turma)" style="flex: 1; min-width: 200px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+          <label style="font-size: 12px; color: #8a7c6b;">começa
+            <input ref="{{ novoInicioRef }}" type="date" style="padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; margin-left: 6px;" />
+          </label>
+          <label style="font-size: 12px; color: #8a7c6b;">semanas
+            <input ref="{{ novoSemanasRef }}" placeholder="8" style="width: 52px; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; margin-left: 6px;" />
+          </label>
+          <button onclick="{{ onCriar }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar</button>
+        </div>
+        <p style="margin: 10px 0 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">Já vem com as 8 missões do piloto: me apresentar, pedir num café, fazer compras, transporte público, marcar horário, pegar encomenda, resolver quando algo dá errado, um dia inteiro lá fora.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ temPrograma }}">
+
+      <!-- ESTADO -->
+      <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;">
+        <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline;">
+          <div>
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 5px;">{{ progNome }}</div>
+            <div style="font-size: 21px; font-weight: 700; color: #fff; letter-spacing: -0.4px;">{{ semanaLabel }}</div>
+            <div style="font-size: 11.5px; color: rgba(255,255,255,0.6);">{{ nParticipantes }} · começou {{ inicioLabel }}</div>
+          </div>
+          <sc-for list="{{ contadores }}" as="ct" hint-placeholder-count="3">
+            <div>
+              <div style="font-size: 21px; font-weight: 700; color: {{ ct.cor }}; letter-spacing: -0.4px;">{{ ct.valor }}</div>
+              <div style="font-size: 11.5px; color: rgba(255,255,255,0.6); line-height: 1.4;">{{ ct.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- PARTICIPANTES -->
+      <sc-if value="{{ turmaAberta }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Quem está na turma</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+            <sc-for list="{{ participantes }}" as="pt" hint-placeholder-count="4">
+              <span style="background: #f6eee4; color: #164951; font-size: 12px; font-weight: 700; padding: 7px 8px 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">{{ pt.nome }}<button onclick="{{ pt.onRemove }}" title="Tirar da turma" style="border: none; background: transparent; color: #b3a693; font-size: 14px; cursor: pointer; padding: 0 3px;">×</button></span>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <select ref="{{ addRef }}" style="flex: 1; min-width: 190px; padding: 9px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+              <sc-for list="{{ candidatas }}" as="cd" hint-placeholder-count="6"><option value="{{ cd.id }}">{{ cd.label }}</option></sc-for>
+            </select>
+            <button onclick="{{ onAdicionar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Adicionar</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- A GRADE -->
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Semana a semana <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· clique pra marcar: missão enviada, áudio dela, feedback devolvido</span></div>
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; overflow-x: auto;">
+        <div style="min-width: 700px;">
+          <div style="display: grid; grid-template-columns: 150px repeat({{ nSemanas }}, 1fr); gap: 6px; align-items: end; padding-bottom: 8px; border-bottom: 1px solid #eee3d6; margin-bottom: 8px;">
+            <span></span>
+            <sc-for list="{{ colunas }}" as="cl" hint-placeholder-count="8">
+              <div style="text-align: center;">
+                <div style="font-size: 9px; font-weight: 700; color: {{ cl.cor }};">S{{ cl.n }}</div>
+                <div style="font-size: 8.5px; color: #b8ada0; line-height: 1.25; min-height: 20px;">{{ cl.missao }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 150px repeat({{ nSemanas }}, 1fr); gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f4efe7;">
+              <div style="min-width: 0;">
+                <a href="{{ ln.href }}" style="font-size: 12.5px; font-weight: 700; color: #164951; text-decoration: none;">{{ ln.nome }}</a>
+                <div style="font-size: 9.5px; color: {{ ln.statusCor }};">{{ ln.status }}</div>
+              </div>
+              <sc-for list="{{ ln.celulas }}" as="cel" hint-placeholder-count="8">
+                <div style="display: flex; gap: 3px; justify-content: center;">
+                  <sc-for list="{{ cel.etapas }}" as="et" hint-placeholder-count="3">
+                    <button onclick="{{ et.onClick }}" title="{{ et.title }}" style="border: 1px solid {{ et.borda }}; background: {{ et.bg }}; width: 15px; height: 15px; border-radius: 4px; cursor: pointer; padding: 0;"></button>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px;">
+        <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="3">
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #8a7c6b;">
+            <span style="width: 12px; height: 12px; border-radius: 4px; background: {{ lg.cor }};"></span>{{ lg.label }}
+          </span>
+        </sc-for>
+      </div>
+
+      <!-- O QUE FALTA AGORA -->
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">O que está pendente</div>
+      <sc-if value="{{ semPendencia }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 30px 20px; text-align: center; color: #9b8b7e; font-size: 13px;">Tudo em dia até a semana {{ semanaAtual }}.</div>
+      </sc-if>
+      <sc-for list="{{ pendentes }}" as="pd" hint-placeholder-count="4">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-left: 4px solid {{ pd.cor }}; border-radius: 10px; padding: 12px 16px; margin-bottom: 7px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 170px;">
+            <a href="{{ pd.href }}" style="font-size: 14px; font-weight: 700; color: #164951; text-decoration: none;">{{ pd.nome }}</a>
+            <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ pd.detalhe }}</div>
+          </div>
+          <span style="flex: none; font-size: 11.5px; font-weight: 700; color: {{ pd.cor }};">{{ pd.entregues }}</span>
+          <a href="{{ pd.waHref }}" target="_blank" style="flex: none; text-decoration: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px;">WhatsApp</a>
+        </div>
+      </sc-for>
+
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { turmaAberta: false, tick: 0 };
+  novoNomeRef = React.createRef(); novoInicioRef = React.createRef(); novoSemanasRef = React.createRef();
+  addRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { temPrograma: false, semPrograma: true, contadores: [], participantes: [],
+      candidatas: [], colunas: [], linhas: [], legenda: [], pendentes: [], semPendencia: true,
+      nSemanas: 8, turmaAberta: false };
+    if (!CRM) return vazio;
+
+    const prog = CRM.getPrograma();
+    if (!prog) return Object.assign({}, vazio, {
+      novoNomeRef: this.novoNomeRef, novoInicioRef: this.novoInicioRef, novoSemanasRef: this.novoSemanasRef,
+      onCriar: () => {
+        const nome = (this.novoNomeRef.current && this.novoNomeRef.current.value || "").trim();
+        CRM.addPrograma({
+          nome: nome || "Programa Sem Roteiro · piloto",
+          inicio: (this.novoInicioRef.current && this.novoInicioRef.current.value) || undefined,
+          semanas: (this.novoSemanasRef.current && this.novoSemanasRef.current.value) || 8
+        });
+        this.setState({ turmaAberta: true });
+      }
+    });
+
+    const sem = CRM.semanaAtualPrograma(prog);
+    const pend = CRM.pendenciasPrograma(prog.id);
+    const etapas = CRM.ETAPAS_SEMANA;
+
+    // ── grade ──
+    const colunas = [];
+    for (let i = 1; i <= prog.semanas; i++) {
+      colunas.push({ n: String(i), missao: (prog.missoes[i - 1] || ""),
+        cor: i === sem ? "#164951" : (i < sem ? "#8a7c6b" : "#c9b9a6") });
+    }
+
+    const linhas = prog.participantes.map(pid => {
+      const p = CRM.getPessoa(pid) || { nome: "(removida)" };
+      const linha = pend.linhas.filter(l => l.pessoaId === pid)[0] || {};
+      const celulas = [];
+      for (let s = 1; s <= prog.semanas; s++) {
+        celulas.push({
+          etapas: etapas.map(e => {
+            const on = CRM.etapaFeita(prog, pid, s, e.id);
+            const futura = s > sem;
+            return {
+              title: "Semana " + s + " · " + e.label + (on ? " (feito)" : ""),
+              bg: on ? e.cor : (futura ? "#f7f3ec" : "#fff"),
+              borda: on ? e.cor : "#e5dccf",
+              onClick: () => { CRM.marcarEtapa(prog.id, pid, s, e.id, !on); this.bump(); }
+            };
+          })
+        });
+      }
+      let status = "", statusCor = "#b8ada0";
+      if (linha.devendoFeedback) { status = linha.devendoFeedback + " sem feedback"; statusCor = "#fc9082"; }
+      else if (linha.sumindo) { status = "sumiu"; statusCor = "#cf6b5c"; }
+      else if (linha.entregues) { status = linha.entregues + " de " + prog.semanas + " entregues"; statusCor = "#348a8e"; }
+      return { nome: p.nome, href: "ISR%20-%20Perfil.dc.html?id=" + pid, celulas, status, statusCor };
+    });
+
+    // ── quem falta ──
+    const pendentes = pend.linhas.filter(l => l.devendoFeedback || l.semAudio || l.sumindo).map(l => {
+      const partes = [];
+      if (l.devendoFeedback) partes.push(l.devendoFeedback + (l.devendoFeedback === 1 ? " feedback devendo" : " feedbacks devendo"));
+      if (l.semAudio) partes.push(l.semAudio + (l.semAudio === 1 ? " áudio não veio" : " áudios não vieram"));
+      if (l.sumindo) partes.push("duas semanas sem entregar");
+      return {
+        nome: l.nome, href: "ISR%20-%20Perfil.dc.html?id=" + l.pessoaId,
+        waHref: CRM.waLink(l.whatsapp, ""),
+        detalhe: partes.join(" · "),
+        entregues: l.entregues + "/" + prog.semanas,
+        cor: l.devendoFeedback ? "#fc9082" : (l.sumindo ? "#cf6b5c" : "#d4a574")
+      };
+    });
+
+    const jaDentro = prog.participantes;
+    const candidatas = CRM.getPessoas()
+      .filter(p => jaDentro.indexOf(p.id) < 0 && p.estagio !== "perdido")
+      .map(p => ({ id: p.id, label: p.nome + (p.status === "aluna" ? " · aluna" : " · lead") }));
+
+    return {
+      temPrograma: true, semPrograma: false,
+      progNome: prog.nome,
+      semanaLabel: sem === 0 ? "Ainda não começou"
+        : (sem >= prog.semanas ? "Última semana" : "Semana " + sem + " de " + prog.semanas),
+      nParticipantes: prog.participantes.length + (prog.participantes.length === 1 ? " aluna" : " alunas"),
+      inicioLabel: CRM.ddmm(prog.inicio),
+      nSemanas: String(prog.semanas),
+      contadores: [
+        { valor: String(pend.feedbacksDevendo), label: pend.feedbacksDevendo === 1 ? "feedback devendo" : "feedbacks devendo",
+          cor: pend.feedbacksDevendo ? "#fc9082" : "#9ec970" },
+        { valor: String(pend.semAudio), label: "sem mandar áudio", cor: pend.semAudio ? "#d4a574" : "#9ec970" },
+        { valor: String(pend.linhas.filter(l => l.sumindo).length), label: "sumindo", cor: "#cf6b5c" }
+      ],
+
+      turmaAberta: this.state.turmaAberta,
+      turmaBg: this.state.turmaAberta ? "#164951" : "#fff",
+      turmaFg: this.state.turmaAberta ? "#fff" : "#164951",
+      onToggleTurma: () => this.setState(s => ({ turmaAberta: !s.turmaAberta })),
+      participantes: prog.participantes.map(pid => {
+        const p = CRM.getPessoa(pid) || { nome: "(removida)" };
+        return { nome: p.nome, onRemove: () => { CRM.removeParticipante(prog.id, pid); this.bump(); } };
+      }),
+      candidatas, addRef: this.addRef,
+      onAdicionar: () => {
+        const id = this.addRef.current && this.addRef.current.value;
+        if (id) { CRM.addParticipante(prog.id, id); this.bump(); }
+      },
+
+      colunas, linhas,
+      legenda: etapas.map(e => ({ label: e.label, cor: e.cor })),
+      pendentes, semPendencia: pendentes.length === 0, semanaAtual: String(sem)
+    };
+  }
+}
+</script>
+</body>
+</html>

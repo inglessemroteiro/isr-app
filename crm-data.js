@@ -981,6 +981,126 @@
       });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  PROGRAMA — turma no WhatsApp, uma missão por semana
+  //  ------------------------------------------------------------
+  //  Três coisas por aluna por semana, e nenhuma delas dá pra
+  //  lembrar de cabeça na semana 4 com 30 pessoas:
+  //    enviei a missão · ela mandou o áudio · devolvi o feedback
+  //  O terceiro é o que ela pagou pra ter. É o que não pode furar.
+  // ══════════════════════════════════════════════════════════════
+  var MISSOES_PILOTO = [
+    "Me apresentar", "Pedir num café", "Fazer compras", "Pegar o transporte público",
+    "Marcar um horário", "Pegar uma encomenda", "Resolver quando algo dá errado",
+    "Um dia inteiro lá fora"
+  ];
+  var ETAPAS_SEMANA = [
+    { id: "missao",   label: "Missão enviada",   curto: "missão",   cor: "#348a8e" },
+    { id: "audio",    label: "Áudio dela",       curto: "áudio",    cor: "#9ec970" },
+    { id: "feedback", label: "Feedback devolvido", curto: "feedback", cor: "#fc9082" }
+  ];
+  var PROGRAMAS_KEY = "isr_programas_v1";
+  function programasLista() {
+    try { var l = JSON.parse(localStorage.getItem(PROGRAMAS_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function programasSave(l) { try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function addPrograma(dados) {
+    var l = programasLista();
+    var p = { id: "pg" + Date.now(), nome: dados.nome || "Programa Sem Roteiro",
+      inicio: dados.inicio || iso(today()),
+      semanas: parseInt(dados.semanas, 10) || 8,
+      diaFeedback: dados.diaFeedback || 5, // sexta
+      missoes: dados.missoes || MISSOES_PILOTO.slice(),
+      participantes: dados.participantes || [], progresso: {} };
+    l.push(p); programasSave(l); return p;
+  }
+  function getPrograma(id) {
+    var l = programasLista();
+    return (id ? l.filter(function (p) { return p.id === id; })[0] : l[0]) || null;
+  }
+  function updatePrograma(id, patch) {
+    var l = programasLista();
+    l.forEach(function (p) { if (p.id === id) Object.assign(p, patch); });
+    programasSave(l); return l;
+  }
+  function removePrograma(id) {
+    programasSave(programasLista().filter(function (p) { return p.id !== id; }));
+  }
+  function addParticipante(programaId, pessoaId) {
+    var l = programasLista();
+    l.forEach(function (p) {
+      if (p.id === programaId && p.participantes.indexOf(pessoaId) < 0) p.participantes.push(pessoaId);
+    });
+    programasSave(l); return l;
+  }
+  function removeParticipante(programaId, pessoaId) {
+    var l = programasLista();
+    l.forEach(function (p) {
+      if (p.id === programaId) p.participantes = p.participantes.filter(function (x) { return x !== pessoaId; });
+    });
+    programasSave(l); return l;
+  }
+  // chave: pessoaId|semana → { missao, audio, feedback }
+  function marcarEtapa(programaId, pessoaId, semana, etapa, valor) {
+    var l = programasLista();
+    l.forEach(function (p) {
+      if (p.id !== programaId) return;
+      p.progresso = p.progresso || {};
+      var k = pessoaId + "|" + semana;
+      p.progresso[k] = p.progresso[k] || {};
+      if (valor) p.progresso[k][etapa] = iso(today());
+      else delete p.progresso[k][etapa];
+    });
+    programasSave(l); return l;
+  }
+  function etapaFeita(programa, pessoaId, semana, etapa) {
+    var k = pessoaId + "|" + semana;
+    return !!((programa.progresso || {})[k] || {})[etapa];
+  }
+  // Semana corrente do programa (1 a N; 0 = ainda não começou)
+  function semanaAtualPrograma(programa) {
+    if (!programa || !programa.inicio) return 0;
+    var d = daysBetween(parseISO(programa.inicio), today());
+    if (d < 0) return 0;
+    return Math.min(programa.semanas, Math.floor(d / 7) + 1);
+  }
+  // O que está pendente AGORA: por aluna, o que falta até a semana corrente.
+  function pendenciasPrograma(programaId) {
+    var p = getPrograma(programaId);
+    if (!p) return { semanaAtual: 0, linhas: [], feedbacksDevendo: 0, semAudio: 0 };
+    var sem = semanaAtualPrograma(p);
+    var feedbacksDevendo = 0, semAudio = 0;
+    var linhas = p.participantes.map(function (pid) {
+      var pessoa = getPessoa(pid) || { nome: "(removida)", whatsapp: "" };
+      var faltando = [];
+      for (var s = 1; s <= sem; s++) {
+        var m = etapaFeita(p, pid, s, "missao");
+        var a = etapaFeita(p, pid, s, "audio");
+        var f = etapaFeita(p, pid, s, "feedback");
+        if (!m) faltando.push({ semana: s, etapa: "missao" });
+        if (m && !a) faltando.push({ semana: s, etapa: "audio" });
+        if (a && !f) { faltando.push({ semana: s, etapa: "feedback" }); }
+      }
+      var devendoFeedback = faltando.filter(function (x) { return x.etapa === "feedback"; }).length;
+      var semAud = faltando.filter(function (x) { return x.etapa === "audio"; }).length;
+      feedbacksDevendo += devendoFeedback;
+      if (semAud) semAudio++;
+      // entregou nas últimas 2 semanas? quem some duas seguidas some de vez
+      var recentes = 0;
+      for (var s2 = Math.max(1, sem - 1); s2 <= sem; s2++) if (etapaFeita(p, pid, s2, "audio")) recentes++;
+      return {
+        pessoaId: pid, nome: pessoa.nome, whatsapp: pessoa.whatsapp || "",
+        faltando: faltando, devendoFeedback: devendoFeedback, semAudio: semAud,
+        sumindo: sem >= 2 && recentes === 0,
+        entregues: (function () { var n = 0; for (var i = 1; i <= p.semanas; i++) if (etapaFeita(p, pid, i, "audio")) n++; return n; })()
+      };
+    }).sort(function (a, b) {
+      return (b.devendoFeedback - a.devendoFeedback) || (b.sumindo - a.sumindo) || a.nome.localeCompare(b.nome);
+    });
+    return { semanaAtual: sem, linhas: linhas, feedbacksDevendo: feedbacksDevendo, semAudio: semAudio };
+  }
+
   // ── PAINEL DE ALUNAS ──────────────────────────────────────────
   // Todo mundo que já é aluna, com os sinais que dizem se ela está
   // bem ou se precisa de você. É a base do acompanhamento: sem isso
@@ -1085,8 +1205,40 @@
   }
   function setTarefaFeita(id, feita) {
     var l = tarefasLista();
-    l.forEach(function (tf) { if (tf.id === id) { tf.feita = !!feita; tf.feitaEm = feita ? iso(today()) : ""; } });
+    l.forEach(function (tf) {
+      if (tf.id !== id) return;
+      var virouFeita = !!feita && !tf.feita;
+      tf.feita = !!feita; tf.feitaEm = feita ? iso(today()) : "";
+      // quem pediu fica sabendo — senão a pessoa fica perguntando "já saiu?"
+      if (virouFeita && tf.por && tf.por !== tf.dono)
+        avisar(tf.por, tf.dono + " concluiu: " + tf.titulo, "tarefa");
+    });
     tarefasSave(l); return l;
+  }
+
+  // ── AVISOS ────────────────────────────────────────────────────
+  // Recado interno de uma pessoa da equipe pra outra. Fica na
+  // Central de quem recebeu até ser lido.
+  var AVISOS_KEY = "isr_avisos_v1";
+  function avisosLista() {
+    try { return JSON.parse(localStorage.getItem(AVISOS_KEY)) || []; } catch (e) { return []; }
+  }
+  function avisosSave(l) { try { localStorage.setItem(AVISOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function avisar(para, texto, tipo) {
+    if (!para || !texto) return null;
+    var l = avisosLista();
+    var a = { id: "av" + Date.now() + Math.floor(Math.random() * 1000), para: para,
+      texto: texto, tipo: tipo || "geral", data: iso(today()), lido: false };
+    l.push(a); avisosSave(l); return a;
+  }
+  function avisosDe(nome) {
+    return avisosLista().filter(function (a) { return a.para === nome && !a.lido; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function marcarAvisoLido(id) {
+    var l = avisosLista();
+    l.forEach(function (a) { if (a.id === id) a.lido = true; });
+    avisosSave(l); return l;
   }
   function removeTarefa(id) { var l = tarefasLista().filter(function (tf) { return tf.id !== id; }); tarefasSave(l); return l; }
 
@@ -1516,6 +1668,7 @@
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosLista(), cambio: taxaCambio(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
+      programas: programasLista(), avisos: avisosLista(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1548,6 +1701,8 @@
             if (d.data.toques) { try { localStorage.setItem(TOQUES_KEY, JSON.stringify(d.data.toques)); } catch (e) {} }
             if (d.data.pulsos) { try { localStorage.setItem(PULSOS_KEY, JSON.stringify(d.data.pulsos)); } catch (e) {} }
             if (d.data.precos) { try { localStorage.setItem(PRECOS_KEY, JSON.stringify(d.data.precos)); } catch (e) {} }
+            if (d.data.programas) { try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(d.data.programas)); } catch (e) {} }
+            if (d.data.avisos) { try { localStorage.setItem(AVISOS_KEY, JSON.stringify(d.data.avisos)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1675,7 +1830,7 @@
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Alunas", "ISR - Acompanhamento", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
+      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Alunas", "ISR - Acompanhamento", "ISR - Programa", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
       var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
       if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
@@ -2519,6 +2674,15 @@
     ticketMedio: ticketMedio, taxaConversao: taxaConversao,
     resumoFinanceiroTexto: resumoFinanceiroTexto, reunioesResumo: reunioesResumo,
     alunasPainel: alunasPainel, RISCOS: RISCOS, tarefasDe: tarefasDe,
+    // avisos internos
+    avisosDe: avisosDe, avisar: avisar, marcarAvisoLido: marcarAvisoLido, avisosLista: avisosLista,
+    // programa no WhatsApp
+    MISSOES_PILOTO: MISSOES_PILOTO, ETAPAS_SEMANA: ETAPAS_SEMANA,
+    programasLista: programasLista, addPrograma: addPrograma, getPrograma: getPrograma,
+    updatePrograma: updatePrograma, removePrograma: removePrograma,
+    addParticipante: addParticipante, removeParticipante: removeParticipante,
+    marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
+    semanaAtualPrograma: semanaAtualPrograma, pendenciasPrograma: pendenciasPrograma,
     // acompanhamento
     TOQUE_TIPOS: TOQUE_TIPOS, PULSO_META: PULSO_META, MOTIVOS_TOQUE: MOTIVOS_TOQUE,
     registrarToque: registrarToque, toquesDe: toquesDe, ultimoToque: ultimoToque,
