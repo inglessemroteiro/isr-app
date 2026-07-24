@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ISR — Calculadora de Negociação</title>
+<title>ISR — Comercial · Calculadora de negociação</title>
 <script src="./support.js"></script>
 <script src="./isr-nav.js"></script>
 <script src="./crm-data.js"></script>
@@ -11,201 +11,367 @@
 <body>
 <x-dc>
 <main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
-  <div style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
 
+    <!-- HEADER -->
     <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
       <div>
         <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Calculadora de negociação</h1>
       </div>
-      <button onclick="{{ onToggleParams }}" style="border: 1px solid #e5dccf; background: {{ prBg }}; color: {{ prFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Parâmetros</button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="{{ onToggleTabela }}" style="border: 1px solid #e5dccf; background: {{ tabelaBg }}; color: {{ tabelaFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Tabela de preços</button>
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">CRM</a>
+      </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Monte a proposta na hora da conversa: escolha o formato, ajuste o desconto dentro do limite e copie o texto pronto pro WhatsApp. Os valores-base ficam salvos em Parâmetros — ajuste conforme a planilha de preços da escola.</p>
+    <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">A escola vende <strong>ciclo de 3 meses</strong>, não mensalidade. Todo preço aqui é o total do ciclo; o valor por mês é referência pra comparar com o ticket alvo.</p>
 
-    <!-- PARÂMETROS -->
-    <sc-if value="{{ paramsAberto }}">
-      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Parâmetros da escola · salvos pra todo mundo</div>
-        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">Mensalidades-base por formato e moeda, desconto máximo à vista e sinal padrão. Deixe em branco o que não muda.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px;">
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Grupo · R$/mês</div>
-            <input ref="{{ pGrupoBRLRef }}" type="number" placeholder="{{ vGrupoBRL }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Grupo · €/mês</div>
-            <input ref="{{ pGrupoEURRef }}" type="number" placeholder="{{ vGrupoEUR }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Particular · R$/mês</div>
-            <input ref="{{ pPartBRLRef }}" type="number" placeholder="{{ vPartBRL }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Particular · €/mês</div>
-            <input ref="{{ pPartEURRef }}" type="number" placeholder="{{ vPartEUR }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Desconto máx. à vista %</div>
-            <input ref="{{ pDescRef }}" type="number" placeholder="{{ vDesc }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Sinal padrão %</div>
-            <input ref="{{ pSinalRef }}" type="number" placeholder="{{ vSinal }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+    <!-- TABELA DE PREÇOS -->
+    <sc-if value="{{ tabelaAberta }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Tabela de preços · vale pra escola toda</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Preço do ciclo e tetos de desconto. A Carla negocia dentro disto sem precisar perguntar.</p>
+        <div style="overflow-x: auto;">
+          <div style="min-width: 720px;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr 0.8fr 0.8fr 0.8fr 0.8fr 0.7fr; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #eee3d6;">
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">Produto</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">Ciclo</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">À vista</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">Parcel.</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">2 ciclos</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">Renov.</span>
+              <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #8a7c6b;">Máx. par.</span>
+            </div>
+            <sc-for list="{{ precos }}" as="pr" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: 2fr 1fr 0.8fr 0.8fr 0.8fr 0.8fr 0.7fr; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid #f4efe7;">
+                <div>
+                  <div style="font-size: 12.5px; font-weight: 700; color: #164951;">{{ pr.nome }}</div>
+                  <div style="font-size: 10px; color: #a2957f;">{{ pr.mensal }} / mês</div>
+                  <sc-if value="{{ pr.temObs }}">
+                    <div style="font-size: 10px; color: #c98a3a; line-height: 1.4;">{{ pr.obs }}</div>
+                  </sc-if>
+                </div>
+                <input value="{{ pr.ciclo }}" onchange="{{ pr.onCiclo }}" style="width: 100%; box-sizing: border-box; padding: 7px 9px; font-size: 12px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+                <input value="{{ pr.descAvista }}" onchange="{{ pr.onDescAvista }}" style="width: 100%; box-sizing: border-box; padding: 7px 6px; font-size: 12px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff; text-align: center;" />
+                <input value="{{ pr.descParcelado }}" onchange="{{ pr.onDescParcelado }}" style="width: 100%; box-sizing: border-box; padding: 7px 6px; font-size: 12px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff; text-align: center;" />
+                <input value="{{ pr.desc2Ciclos }}" onchange="{{ pr.onDesc2 }}" style="width: 100%; box-sizing: border-box; padding: 7px 6px; font-size: 12px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff; text-align: center;" />
+                <input value="{{ pr.descRenovacao }}" onchange="{{ pr.onDescRen }}" style="width: 100%; box-sizing: border-box; padding: 7px 6px; font-size: 12px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff; text-align: center;" />
+                <input value="{{ pr.maxParcelas }}" onchange="{{ pr.onMaxPar }}" style="width: 100%; box-sizing: border-box; padding: 7px 6px; font-size: 12px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff; text-align: center;" />
+              </div>
+            </sc-for>
+          </div>
         </div>
-        <button onclick="{{ onSalvarParams }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Salvar parâmetros</button>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f2e9dd;">
+          <span style="font-size: 12px; color: #6b6155;">Ticket alvo da escola</span>
+          <input ref="{{ ticketRef }}" placeholder="{{ ticketValor }}" style="width: 90px; padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <span style="font-size: 12px; color: #8a7c6b;">€ por mês</span>
+          <button onclick="{{ onSalvarTicket }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+          <span style="font-size: 11px; color: #b3a693;">Descontos em %. Preço do ciclo na moeda do produto.</span>
+        </div>
       </div>
     </sc-if>
 
-    <!-- CONTROLES DA PROPOSTA -->
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
-      <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;">
-        <div>
-          <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px; font-weight: 700;">Formato</div>
-          <div style="display: flex; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 3px;">
-            <button onclick="{{ onGrupo }}" style="border: none; cursor: pointer; background: {{ gBg }}; color: {{ gFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">Grupo</button>
-            <button onclick="{{ onParticular }}" style="border: none; cursor: pointer; background: {{ ptBg }}; color: {{ ptFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">Particular</button>
-          </div>
+    <!-- PROPOSTA + RESULTADO -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 20px;">
+
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 14px;">A proposta</div>
+
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 4px;">Produto</div>
+        <select onchange="{{ onProduto }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; margin-bottom: 12px;">
+          <sc-for list="{{ produtoOpts }}" as="po" hint-placeholder-count="8">
+            <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+          </sc-for>
+        </select>
+
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 5px;">Fonte da venda</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+          <sc-for list="{{ fonteOpts }}" as="fo" hint-placeholder-count="2">
+            <button onclick="{{ fo.onClick }}" style="flex: 1; border: 1px solid {{ fo.borda }}; background: {{ fo.bg }}; color: {{ fo.fg }}; font-size: 12px; font-weight: 700; padding: 9px 8px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ fo.label }}</button>
+          </sc-for>
         </div>
-        <div>
-          <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px; font-weight: 700;">Moeda</div>
-          <div style="display: flex; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 3px;">
-            <button onclick="{{ onBRL }}" style="border: none; cursor: pointer; background: {{ bBg }}; color: {{ bFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">R$</button>
-            <button onclick="{{ onEUR }}" style="border: none; cursor: pointer; background: {{ eBg }}; color: {{ eFg }}; font-size: 12px; font-weight: 700; padding: 7px 16px; border-radius: 999px;">€</button>
-          </div>
+
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 5px;">Quantos ciclos</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+          <sc-for list="{{ cicloOpts }}" as="co" hint-placeholder-count="2">
+            <button onclick="{{ co.onClick }}" style="flex: 1; border: 1px solid {{ co.borda }}; background: {{ co.bg }}; color: {{ co.fg }}; font-size: 12px; font-weight: 700; padding: 9px 8px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ co.label }}</button>
+          </sc-for>
         </div>
-        <div>
-          <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px; font-weight: 700;">Mensalidade</div>
-          <input value="{{ mensalidade }}" oninput="{{ onMensalidade }}" type="number" style="width: 110px; padding: 9px 11px; font-size: 14px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 5px;">Forma de pagamento</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+          <sc-for list="{{ formaOpts }}" as="fm" hint-placeholder-count="2">
+            <button onclick="{{ fm.onClick }}" style="flex: 1; border: 1px solid {{ fm.borda }}; background: {{ fm.bg }}; color: {{ fm.fg }}; font-size: 12px; font-weight: 700; padding: 9px 8px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ fm.label }}</button>
+          </sc-for>
         </div>
-        <div>
-          <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px; font-weight: 700;">Ciclo (meses)</div>
-          <select onchange="{{ onMeses }}" style="padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <sc-for list="{{ mesesOpts }}" as="mo" hint-placeholder-count="3">
-              <option value="{{ mo.id }}" selected="{{ mo.sel }}">{{ mo.label }}</option>
+
+        <sc-if value="{{ ehParcelado }}">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 5px;">Em quantas parcelas · máximo {{ maxParcelas }}</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+            <sc-for list="{{ parcelaOpts }}" as="pa" hint-placeholder-count="6">
+              <button onclick="{{ pa.onClick }}" style="border: 1px solid {{ pa.borda }}; background: {{ pa.bg }}; color: {{ pa.fg }}; font-size: 12px; font-weight: 700; width: 40px; padding: 8px 0; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pa.label }}</button>
             </sc-for>
-          </select>
+          </div>
+        </sc-if>
+
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 4px;">Valor total proposto ao aluno</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input ref="{{ totalRef }}" placeholder="{{ tabelaLabel }}" onchange="{{ onTotal }}" style="flex: 1; min-width: 0; padding: 11px 13px; font-size: 15px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+          <button onclick="{{ onTabelaCheia }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit;">Tabela cheia</button>
         </div>
-        <div>
-          <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px; font-weight: 700;">Desconto % <span style="color: {{ descCor }};">(máx {{ descMax }}%)</span></div>
-          <input value="{{ desconto }}" oninput="{{ onDesconto }}" type="number" style="width: 80px; padding: 9px 11px; font-size: 14px; font-weight: 700; font-family: inherit; color: {{ descCor }}; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-        </div>
+        <p style="margin: 7px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">Total do ciclo, não o valor da parcela. Em branco = preço de tabela.</p>
       </div>
-      <sc-if value="{{ acimaDoMax }}">
-        <div style="margin-top: 10px; background: rgba(224,120,86,0.1); border: 1px solid rgba(224,120,86,0.3); border-radius: 8px; padding: 9px 13px; font-size: 12px; color: #b05c4c; font-weight: 600;">Desconto acima do limite da escola ({{ descMax }}%) — precisa de aprovação da Gabi.</div>
-      </sc-if>
+
+      <div style="background: {{ decisaoBg }}; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: {{ decisaoEyebrow }}; margin-bottom: 10px;">Decisão</div>
+        <div style="font-size: 22px; font-weight: 700; color: {{ decisaoFg }}; letter-spacing: -0.4px; line-height: 1.2; margin-bottom: 4px;">{{ decisao }}</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 16px;">{{ contrato }}</div>
+
+        <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="7">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.12);">
+            <span style="font-size: 12px; color: rgba(255,255,255,0.62);">{{ ln.rotulo }}</span>
+            <span style="font-size: 13.5px; font-weight: 700; color: {{ ln.valorCor }}; text-align: right;">{{ ln.valor }}</span>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ temAlertas }}">
+          <div style="margin-top: 14px;">
+            <sc-for list="{{ alertas }}" as="al" hint-placeholder-count="2">
+              <div style="background: rgba(207,107,92,0.22); color: #ffd9d3; font-size: 11.5px; line-height: 1.5; padding: 9px 12px; border-radius: 8px; margin-bottom: 6px;">{{ al.texto }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
     </div>
 
-    <!-- PROPOSTAS -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 14px;">
-      <sc-for list="{{ propostas }}" as="pr" hint-placeholder-count="3">
-        <div style="background: {{ pr.bg }}; border: 1px solid {{ pr.border }}; border-radius: 12px; padding: 16px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: {{ pr.labelCor }}; font-weight: 700; margin-bottom: 6px;">{{ pr.label }}</div>
-          <div style="font-size: 21px; font-weight: 700; color: {{ pr.valorCor }}; letter-spacing: -0.5px;">{{ pr.valor }}</div>
-          <div style="font-size: 11.5px; color: {{ pr.subCor }}; margin-top: 3px; line-height: 1.5;">{{ pr.sub }}</div>
+    <!-- ESCADA DE CONCESSÕES -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Antes de mexer no preço, ofereça nesta ordem</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 8px 18px 14px; margin-bottom: 22px;">
+      <sc-for list="{{ escada }}" as="es" hint-placeholder-count="5">
+        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f4efe7;">
+          <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ es.n }}</span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ es.titulo }}</div>
+            <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ es.detalhe }}</div>
+          </div>
         </div>
       </sc-for>
     </div>
 
-    <!-- TEXTO PRONTO -->
+    <!-- TEXTO PRO WHATSAPP -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Texto pronto pra mandar</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #3d3529; line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px;">{{ textoProposta }}</div>
+      <button onclick="{{ onCopiar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiar }}</button>
+    </div>
+
+    <!-- PACOTE -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Pacote · dois ou mais produtos</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Proposta pronta pro WhatsApp</span>
-        <button onclick="{{ onCopiar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer;">{{ copiarLabel }}</button>
+      <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Mãe e filho, grupo + particular quinzenal, grupo + dupla. Não misture R$ e €. O preço do pacote já é o piso — abaixo dele, só com aprovação.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+        <select onchange="{{ onPac1 }}" style="flex: 1; min-width: 170px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <sc-for list="{{ pac1Opts }}" as="p1" hint-placeholder-count="8"><option value="{{ p1.id }}" selected="{{ p1.sel }}">{{ p1.label }}</option></sc-for>
+        </select>
+        <select onchange="{{ onPac2 }}" style="flex: 1; min-width: 170px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <sc-for list="{{ pac2Opts }}" as="p2" hint-placeholder-count="8"><option value="{{ p2.id }}" selected="{{ p2.sel }}">{{ p2.label }}</option></sc-for>
+        </select>
+        <label style="font-size: 11.5px; color: #8a7c6b;">desconto
+          <input ref="{{ pacDescRef }}" onchange="{{ onPacDesc }}" placeholder="20" style="width: 56px; padding: 9px 10px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-left: 5px;" />%
+        </label>
+        <label style="font-size: 11.5px; color: #8a7c6b;">parcelas
+          <input ref="{{ pacParRef }}" onchange="{{ onPacPar }}" placeholder="1" style="width: 50px; padding: 9px 10px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-left: 5px;" />
+        </label>
       </div>
-      <div style="background: #fff; border: 1px solid #eee8e0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #3d3529; line-height: 1.7; white-space: pre-wrap;">{{ textoProposta }}</div>
+      <sc-if value="{{ pacErro }}">
+        <div style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 12px; font-weight: 600; padding: 10px 13px; border-radius: 8px;">{{ pacErroTexto }}</div>
+      </sc-if>
+      <sc-if value="{{ pacOk }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+          <sc-for list="{{ pacLinhas }}" as="pl" hint-placeholder-count="4">
+            <div style="background: #f6f2ea; border-radius: 10px; padding: 11px 13px;">
+              <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; margin-bottom: 3px;">{{ pl.rotulo }}</div>
+              <div style="font-size: 15px; font-weight: 700; color: {{ pl.cor }};">{{ pl.valor }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <p style="margin: 11px 0 0; font-size: 11.5px; color: #6b6155; line-height: 1.6;">{{ pacNota }}</p>
+      </sc-if>
     </div>
 
   </div>
 </main>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { formato: "grupo", moeda: "R$", meses: 3, mensalidade: null, desconto: 0, paramsAberto: false, copiado: false, tick: 0 };
-  pGrupoBRLRef = React.createRef(); pGrupoEURRef = React.createRef();
-  pPartBRLRef = React.createRef(); pPartEURRef = React.createRef();
-  pDescRef = React.createRef(); pSinalRef = React.createRef();
+  state = { produtoId: "grupo_eur", fonte: "nova", ciclos: 1, forma: "parcelado", parcelas: 3,
+            total: "", tabelaAberta: false, copiado: false,
+            pac1: "grupo_eur", pac2: "addon_eur", pacDesc: "20", pacPar: "1", tick: 0 };
+  totalRef = React.createRef(); ticketRef = React.createRef();
+  pacDescRef = React.createRef(); pacParRef = React.createRef();
 
-  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  pill(on, corOn) {
+    return on ? { bg: corOn, fg: "#fff", borda: corOn }
+              : { bg: "#fff", fg: "#8a7c6b", borda: "#e5dccf" };
+  }
+
+  vazio() {
+    return { produtoOpts: [], fonteOpts: [], cicloOpts: [], formaOpts: [], parcelaOpts: [],
+      linhas: [], alertas: [], escada: [], precos: [], pac1Opts: [], pac2Opts: [], pacLinhas: [],
+      ehParcelado: false, temAlertas: false, tabelaAberta: false, pacErro: false, pacOk: false,
+      decisao: "", contrato: "", textoProposta: "", labelCopiar: "Copiar texto" };
+  }
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { pGrupoBRLRef: this.pGrupoBRLRef, pGrupoEURRef: this.pGrupoEURRef,
-      pPartBRLRef: this.pPartBRLRef, pPartEURRef: this.pPartEURRef,
-      pDescRef: this.pDescRef, pSinalRef: this.pSinalRef };
-    if (!CRM) return Object.assign({ propostas: [], mesesOpts: [], mensalidade: 0, desconto: 0, textoProposta: "", copiarLabel: "Copiar", paramsAberto: false, prBg: "#fff", prFg: "#164951" }, refs);
+    if (!CRM) return this.vazio();
 
-    const P = CRM.calcParams();
-    const s = this.state;
-    const base = s.formato === "grupo"
-      ? (s.moeda === "R$" ? P.grupoBRL : P.grupoEUR)
-      : (s.moeda === "R$" ? P.partBRL : P.partEUR);
-    const mensal = s.mensalidade != null ? s.mensalidade : base;
-    const desc = parseFloat(s.desconto) || 0;
-    const meses = s.meses;
-    const fmt = v => CRM.fmtMoney(s.moeda, Math.round(v));
+    const precos = CRM.precosLista();
+    const r = CRM.calcularProposta({
+      produtoId: this.state.produtoId, fonte: this.state.fonte, ciclos: this.state.ciclos,
+      forma: this.state.forma, parcelas: this.state.parcelas, totalProposto: this.state.total
+    });
+    if (!r) return this.vazio();
 
-    const mensalComDesc = mensal * (1 - desc / 100);
-    const total = mensalComDesc * meses;
-    const totalAvista = total * (1 - P.descAvistaMax / 100);
-    const sinal = total * (P.sinalPct / 100);
-    const restanteParcela = (total - sinal) / meses;
+    const m = r.moeda;
+    const dinheiro = v => CRM.fmtMoney(m, v);
+    const ehParcelado = this.state.forma === "parcelado";
 
-    const propostas = [
-      { label: "Parcelado · " + meses + "×", valor: meses + "× de " + fmt(mensalComDesc),
-        sub: "Total do ciclo: " + fmt(total) + (desc > 0 ? " · já com " + desc + "% de desconto" : ""),
-        bg: "#fdfbf8", border: "#eee3d6", labelCor: "#9b8b7e", valorCor: "#164951", subCor: "#8a7c6b" },
-      { label: "Com sinal de " + P.sinalPct + "%", valor: fmt(sinal) + " + " + meses + "× de " + fmt(restanteParcela),
-        sub: "Sinal garante a vaga na hora; o resto em parcelas leves.",
-        bg: "#eef4f4", border: "#c9dede", labelCor: "#348a8e", valorCor: "#164951", subCor: "#5f7c7d" },
-      { label: "À vista · −" + P.descAvistaMax + "% extra", valor: fmt(totalAvista),
-        sub: "Economia total de " + fmt(total - totalAvista) + " vs. parcelado.",
-        bg: "#164951", border: "#164951", labelCor: "#9ec970", valorCor: "#fff", subCor: "rgba(255,255,255,0.75)" }
-    ];
+    const produtoOpts = precos.map(p => ({
+      id: p.id, label: p.nome + " · " + CRM.fmtMoney(p.moeda, p.ciclo) + " / ciclo",
+      sel: p.id === this.state.produtoId
+    }));
 
-    const nomeFormato = s.formato === "grupo" ? "aulas em grupo" : "aulas particulares";
-    const textoProposta = "Fechando hoje, " + nomeFormato + " no Inglês sem Roteiro ficam assim:\n" +
-      "· " + meses + "× de " + fmt(mensalComDesc) + (desc > 0 ? " (já com " + desc + "% de desconto)" : "") + "\n" +
-      "· Com sinal de " + fmt(sinal) + " pra garantir a vaga: + " + meses + "× de " + fmt(restanteParcela) + "\n" +
-      "· À vista: " + fmt(totalAvista) + " (economia de " + fmt(total - totalAvista) + ")\n" +
-      "Me fala qual formato faz mais sentido que eu já te mando o link. 💛";
+    const fonteOpts = [{ id: "nova", label: "Matrícula nova" }, { id: "renovacao", label: "Renovação" }]
+      .map(f => Object.assign({ label: f.label, onClick: () => this.setState({ fonte: f.id }) },
+        this.pill(this.state.fonte === f.id, "#348a8e")));
 
-    const seg = (on) => on ? "#164951" : "transparent";
-    const segF = (on) => on ? "#fff" : "#6b6155";
+    const cicloOpts = [1, 2].map(c => Object.assign(
+      { label: c === 1 ? "1 ciclo · 3 meses" : "2 ciclos · 6 meses", onClick: () => this.setState({ ciclos: c }) },
+      this.pill(this.state.ciclos === c, "#6b5b95")));
 
-    return Object.assign({
-      paramsAberto: s.paramsAberto,
-      prBg: s.paramsAberto ? "#164951" : "#fff", prFg: s.paramsAberto ? "#fff" : "#164951",
-      onToggleParams: () => this.setState({ paramsAberto: !s.paramsAberto }),
-      vGrupoBRL: String(P.grupoBRL), vGrupoEUR: String(P.grupoEUR),
-      vPartBRL: String(P.partBRL), vPartEUR: String(P.partEUR),
-      vDesc: String(P.descAvistaMax), vSinal: String(P.sinalPct),
-      onSalvarParams: () => {
-        const patch = {};
-        const setNum = (ref, k) => { const v = parseFloat(this.val(ref)); if (!isNaN(v) && v >= 0) patch[k] = v; };
-        setNum(this.pGrupoBRLRef, "grupoBRL"); setNum(this.pGrupoEURRef, "grupoEUR");
-        setNum(this.pPartBRLRef, "partBRL"); setNum(this.pPartEURRef, "partEUR");
-        setNum(this.pDescRef, "descAvistaMax"); setNum(this.pSinalRef, "sinalPct");
-        if (Object.keys(patch).length) CRM.setCalcParams(patch);
-        this.setState({ paramsAberto: false, mensalidade: null });
+    const formaOpts = [{ id: "avista", label: "À vista" }, { id: "parcelado", label: "Parcelado" }]
+      .map(f => Object.assign({ label: f.label, onClick: () => this.setState({ forma: f.id, parcelas: f.id === "avista" ? 1 : this.state.parcelas }) },
+        this.pill(this.state.forma === f.id, "#9c6f56")));
+
+    const parcelaOpts = [];
+    for (let i = 1; i <= r.maxParcelas; i++) {
+      parcelaOpts.push(Object.assign({ label: String(i) + "×", onClick: () => this.setState({ parcelas: i }) },
+        this.pill(this.state.parcelas === i, "#348a8e")));
+    }
+
+    const claro = r.podeFechar;
+    const alvoOk = r.eurMes >= r.ticketAlvo * 0.85;
+    const linhas = [
+      { rotulo: "Preço de tabela", valor: dinheiro(r.tabela) },
+      { rotulo: "Desconto máximo permitido", valor: r.descMax + "%" },
+      { rotulo: "Piso · mínimo autorizado", valor: dinheiro(r.piso) },
+      { rotulo: "Desconto que você está dando", valor: r.descDado.toFixed(1) + "%", ruim: r.descDado > r.descMax + 0.05 },
+      { rotulo: r.avista ? "Pagamento único" : r.parcelas + "× de", valor: dinheiro(r.valorParcela), forte: true },
+      { rotulo: "Equivale por mês", valor: dinheiro(r.mensal) + (m === "€" ? "" : " · € " + Math.round(r.eurMes)) },
+      { rotulo: "Ticket alvo da escola", valor: "€ " + r.ticketAlvo + " / mês", ruim: !alvoOk }
+    ].map(l => ({
+      rotulo: l.rotulo, valor: l.valor,
+      valorCor: l.ruim ? "#f4a099" : (l.forte ? "#9ec970" : "#fff")
+    }));
+
+    const escada = CRM.ESCADA_CONCESSOES.map((e, i) => ({
+      n: String(i + 1), titulo: e.titulo, detalhe: e.detalhe,
+      bg: i === 4 ? "rgba(207,107,92,0.16)" : "rgba(52,138,142,0.14)",
+      fg: i === 4 ? "#cf6b5c" : "#348a8e"
+    }));
+
+    const nomeProduto = r.produto.nome.replace(/\s*\((BRL|EUR)\)/, "").replace(/ BRL| EUR/, "");
+    const texto = [
+      "Sua proposta no Inglês sem Roteiro:",
+      "",
+      nomeProduto + " · " + (r.ciclos === 1 ? "1 ciclo (3 meses)" : "2 ciclos (6 meses)"),
+      r.avista ? ("Pagamento único de " + dinheiro(r.total))
+               : (r.parcelas + "× de " + dinheiro(r.valorParcela) + "  (total " + dinheiro(r.total) + ")"),
+      r.descDado > 0.05 ? ("Condição especial: " + r.descDado.toFixed(0) + "% de desconto sobre a tabela.") : "",
+      "",
+      "Fica em " + dinheiro(r.mensal) + " por mês de estudo."
+    ].filter(x => x !== "").join("\n");
+
+    const pac = CRM.calcularPacote([this.state.pac1, this.state.pac2], this.state.ciclos,
+      this.state.pacDesc, this.state.pacPar);
+    const pacErro = !!(pac && pac.erro);
+    const pacOk = !!(pac && !pac.erro);
+    const pacLinhas = pacOk ? [
+      { rotulo: "Soma das tabelas", valor: CRM.fmtMoney(pac.moeda, pac.soma), cor: "#8a7c6b" },
+      { rotulo: "Preço do pacote", valor: CRM.fmtMoney(pac.moeda, pac.preco), cor: "#164951" },
+      { rotulo: pac.parcelas + "× de", valor: CRM.fmtMoney(pac.moeda, pac.valorParcela), cor: "#348a8e" },
+      { rotulo: "Por mês", valor: CRM.fmtMoney(pac.moeda, pac.mensal) + " · € " + Math.round(pac.eurMes), cor: "#6b5b95" }
+    ] : [];
+    const opcPac = sel => precos.map(p => ({ id: p.id, label: p.nome, sel: p.id === sel }));
+
+    return {
+      tabelaAberta: this.state.tabelaAberta,
+      tabelaBg: this.state.tabelaAberta ? "#164951" : "#fff",
+      tabelaFg: this.state.tabelaAberta ? "#fff" : "#164951",
+      onToggleTabela: () => this.setState(s => ({ tabelaAberta: !s.tabelaAberta })),
+      precos: precos.map(p => ({
+        nome: p.nome, ciclo: String(p.ciclo),
+        mensal: CRM.fmtMoney(p.moeda, p.ciclo / CRM.CICLO_MESES),
+        obs: p.obs || "", temObs: !!p.obs,
+        descAvista: String(p.descAvista), descParcelado: String(p.descParcelado),
+        desc2Ciclos: String(p.desc2Ciclos), descRenovacao: String(p.descRenovacao),
+        maxParcelas: String(p.maxParcelas),
+        onCiclo: e => { CRM.updatePreco(p.id, { ciclo: CRM.parseMoney(e.target.value) }); this.bump(); },
+        onDescAvista: e => { CRM.updatePreco(p.id, { descAvista: parseFloat(e.target.value) || 0 }); this.bump(); },
+        onDescParcelado: e => { CRM.updatePreco(p.id, { descParcelado: parseFloat(e.target.value) || 0 }); this.bump(); },
+        onDesc2: e => { CRM.updatePreco(p.id, { desc2Ciclos: parseFloat(e.target.value) || 0 }); this.bump(); },
+        onDescRen: e => { CRM.updatePreco(p.id, { descRenovacao: parseFloat(e.target.value) || 0 }); this.bump(); },
+        onMaxPar: e => { CRM.updatePreco(p.id, { maxParcelas: parseInt(e.target.value, 10) || 1 }); this.bump(); }
+      })),
+      ticketRef: this.ticketRef, ticketValor: String(CRM.ticketAlvo()),
+      onSalvarTicket: () => {
+        const v = (this.ticketRef.current && this.ticketRef.current.value || "").trim();
+        if (v) { CRM.setTicketAlvo(v); this.ticketRef.current.value = ""; this.bump(); }
       },
 
-      gBg: seg(s.formato === "grupo"), gFg: segF(s.formato === "grupo"),
-      ptBg: seg(s.formato === "particular"), ptFg: segF(s.formato === "particular"),
-      onGrupo: () => this.setState({ formato: "grupo", mensalidade: null }),
-      onParticular: () => this.setState({ formato: "particular", mensalidade: null }),
-      bBg: seg(s.moeda === "R$"), bFg: segF(s.moeda === "R$"),
-      eBg: seg(s.moeda === "€"), eFg: segF(s.moeda === "€"),
-      onBRL: () => this.setState({ moeda: "R$", mensalidade: null }),
-      onEUR: () => this.setState({ moeda: "€", mensalidade: null }),
+      produtoOpts, fonteOpts, cicloOpts, formaOpts, parcelaOpts,
+      ehParcelado, maxParcelas: String(r.maxParcelas),
+      onProduto: e => this.setState({ produtoId: e.target.value, total: "", parcelas: 1 }),
+      totalRef: this.totalRef, tabelaLabel: dinheiro(r.tabela),
+      onTotal: e => this.setState({ total: e.target.value }),
+      onTabelaCheia: () => {
+        if (this.totalRef.current) this.totalRef.current.value = "";
+        this.setState({ total: "" });
+      },
 
-      mensalidade: mensal,
-      onMensalidade: (e) => this.setState({ mensalidade: parseFloat(e.target.value) || 0 }),
-      mesesOpts: (P.parcelas || [3, 6, 8]).map(n => ({ id: String(n), label: n + " meses", sel: meses === n })),
-      onMeses: (e) => this.setState({ meses: parseInt(e.target.value, 10) || 3 }),
-      desconto: desc,
-      onDesconto: (e) => this.setState({ desconto: e.target.value }),
-      descMax: P.descAvistaMax,
-      descCor: desc > P.descAvistaMax ? "#cf6b5c" : "#164951",
-      acimaDoMax: desc > P.descAvistaMax,
+      decisao: r.decisao, contrato: r.contrato,
+      decisaoBg: claro ? "#164951" : "#6b2f28",
+      decisaoFg: claro ? "#9ec970" : "#f4a099",
+      decisaoEyebrow: claro ? "rgba(158,201,112,0.75)" : "rgba(244,160,153,0.75)",
+      linhas,
+      alertas: r.alertas.map(a => ({ texto: a })), temAlertas: r.alertas.length > 0,
+      escada,
 
-      propostas, textoProposta,
-      copiarLabel: s.copiado ? "✓ Copiado!" : "Copiar",
+      textoProposta: texto,
+      labelCopiar: this.state.copiado ? "Copiado" : "Copiar texto",
       onCopiar: () => {
-        const done = () => { this.setState({ copiado: true }); setTimeout(() => this.setState({ copiado: false }), 2000); };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(textoProposta).then(done).catch(() => window.prompt("Copie:", textoProposta));
-        } else window.prompt("Copie:", textoProposta);
-      }
-    }, refs);
+        try { navigator.clipboard.writeText(texto); } catch (e) {}
+        this.setState({ copiado: true });
+        setTimeout(() => this.setState({ copiado: false }), 2200);
+      },
+
+      pac1Opts: opcPac(this.state.pac1), pac2Opts: opcPac(this.state.pac2),
+      onPac1: e => this.setState({ pac1: e.target.value }),
+      onPac2: e => this.setState({ pac2: e.target.value }),
+      pacDescRef: this.pacDescRef, pacParRef: this.pacParRef,
+      onPacDesc: e => this.setState({ pacDesc: e.target.value }),
+      onPacPar: e => this.setState({ pacPar: e.target.value }),
+      pacErro, pacErroTexto: pacErro ? pac.erro : "",
+      pacOk, pacLinhas,
+      pacNota: pacOk
+        ? ("Este preço já é o piso do pacote — abaixo disso, consulte a Gabi. Máximo de "
+           + pac.maxParcelas + " parcelas"
+           + (pac.excedeParcelas ? " · você pediu " + pac.parcelas + "." : "."))
+        : ""
+    };
   }
 }
 </script>

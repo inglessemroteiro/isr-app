@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Pedagógico · Alunas</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1080px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Pedagógico</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Alunas</h1>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="{{ onCopiarLista }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiar }}</button>
+        <a href="ISR%20-%20Turmas%20e%20Projetos.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Turmas</a>
+      </div>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Todas as alunas matriculadas e como cada uma está. Quem precisa de atenção vem primeiro — pagamento atrasado, falta, onboarding parado, sumiço ou renovação chegando.</p>
+
+    <!-- TERMÔMETRO -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px;">
+      <sc-for list="{{ termometro }}" as="tm" hint-placeholder-count="5">
+        <div onclick="{{ tm.onClick }}" style="cursor: pointer; background: {{ tm.bg }}; border: 1px solid {{ tm.borda }}; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 20px; font-weight: 700; color: {{ tm.cor }};">{{ tm.valor }}</div>
+          <div style="font-size: 11px; color: #6b6155; line-height: 1.4;">{{ tm.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- FILTROS -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
+      <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar por nome" style="flex: 1; min-width: 160px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+      <select onchange="{{ onTurma }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
+      </select>
+      <select onchange="{{ onProfessora }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+        <sc-for list="{{ profOpts }}" as="pf" hint-placeholder-count="5"><option value="{{ pf.id }}" selected="{{ pf.sel }}">{{ pf.label }}</option></sc-for>
+      </select>
+      <sc-if value="{{ temFiltro }}">
+        <button onclick="{{ onLimpar }}" style="border: none; background: #f6eee4; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Limpar filtros</button>
+      </sc-if>
+      <span style="font-size: 11.5px; color: #8a7c6b;">{{ contagem }}</span>
+    </div>
+
+    <!-- LISTA -->
+    <sc-if value="{{ vazio }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 40px 20px; text-align: center; color: #9b8b7e; font-size: 13px;">Nenhuma aluna com esses filtros.</div>
+    </sc-if>
+
+    <sc-for list="{{ alunas }}" as="a" hint-placeholder-count="8">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-left: 4px solid {{ a.corBorda }}; border-radius: 10px; padding: 13px 16px; margin-bottom: 8px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <a href="{{ a.href }}" style="font-size: 15px; font-weight: 700; color: #164951; text-decoration: none;">{{ a.nome }}</a>
+            <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ a.turmaInfo }}</div>
+            <sc-if value="{{ a.temRiscos }}">
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">
+                <sc-for list="{{ a.riscos }}" as="rs" hint-placeholder-count="2">
+                  <span style="background: {{ rs.bg }}; color: {{ rs.cor }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">{{ rs.label }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+          <div style="flex: none; display: flex; gap: 16px; flex-wrap: wrap;">
+            <sc-for list="{{ a.sinais }}" as="sn" hint-placeholder-count="4">
+              <div style="min-width: 62px;">
+                <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 2px;">{{ sn.rotulo }}</div>
+                <div style="font-size: 12.5px; font-weight: 700; color: {{ sn.cor }};">{{ sn.valor }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex: none; display: flex; gap: 6px; align-items: center;">
+            <a href="{{ a.waHref }}" target="_blank" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">WhatsApp</a>
+            <a href="{{ a.href }}" style="text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">Perfil</a>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { busca: "", turma: "", professora: "", risco: "", copiado: false, tick: 0 };
+  buscaRef = React.createRef();
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { termometro: [], turmaOpts: [], profOpts: [], alunas: [], vazio: true,
+      contagem: "", temFiltro: false, labelCopiar: "Copiar lista" };
+
+    const todas = CRM.alunasPainel();
+
+    // ── termômetro: quantas em cada situação ──
+    const conta = r => todas.filter(a => a.riscos.indexOf(r) >= 0).length;
+    const cards = [
+      { id: "", valor: todas.length, label: todas.length === 1 ? "aluna ativa" : "alunas ativas", cor: "#164951" },
+      { id: "inadimplente", valor: conta("inadimplente"), label: "com pagamento atrasado", cor: "#cf6b5c" },
+      { id: "faltando", valor: conta("faltando"), label: "faltando às aulas", cor: "#e07856" },
+      { id: "sem_contato", valor: conta("sem_contato"), label: "sem contato há 30 dias", cor: "#d4a574" },
+      { id: "renovacao", valor: conta("renovacao"), label: "com renovação chegando", cor: "#6b5b95" }
+    ];
+    const termometro = cards.map(c => ({
+      valor: String(c.valor), label: c.label, cor: c.cor,
+      bg: this.state.risco === c.id && c.id ? "#f6eee4" : "#fdfbf8",
+      borda: this.state.risco === c.id && c.id ? c.cor : "#eee3d6",
+      onClick: () => this.setState(s => ({ risco: s.risco === c.id ? "" : c.id }))
+    }));
+
+    // ── filtros ──
+    const turmas = [];
+    const profs = [];
+    todas.forEach(a => {
+      if (a.turma && turmas.indexOf(a.turma) < 0) turmas.push(a.turma);
+      if (a.professora && a.professora !== "—" && profs.indexOf(a.professora) < 0) profs.push(a.professora);
+    });
+    const turmaOpts = [{ id: "", label: "Todas as turmas", sel: !this.state.turma }]
+      .concat(turmas.sort().map(t => ({ id: t, label: t, sel: t === this.state.turma })));
+    const profOpts = [{ id: "", label: "Todas as professoras", sel: !this.state.professora }]
+      .concat(profs.sort().map(p => ({ id: p, label: p, sel: p === this.state.professora })));
+
+    const busca = (this.state.busca || "").toLowerCase();
+    const filtradas = todas.filter(a =>
+      (!busca || a.nome.toLowerCase().indexOf(busca) >= 0) &&
+      (!this.state.turma || a.turma === this.state.turma) &&
+      (!this.state.professora || a.professora === this.state.professora) &&
+      (!this.state.risco || a.riscos.indexOf(this.state.risco) >= 0));
+
+    // ── cada aluna ──
+    const alunas = filtradas.map(a => {
+      const pag = a.atrasadas > 0
+        ? { v: a.atrasadas + (a.atrasadas === 1 ? " atrasada" : " atrasadas"), c: "#cf6b5c" }
+        : (a.parcelasTotal
+            ? { v: a.parcelasPagas + "/" + a.parcelasTotal, c: "#348a8e" }
+            : { v: "—", c: "#b8ada0" });
+      const falt = a.faltas > 0
+        ? { v: String(a.faltas), c: a.faltas >= 2 ? "#e07856" : "#9c6f56" }
+        : { v: "0", c: "#348a8e" };
+      const ob = a.onboardingTotal
+        ? { v: a.onboardingFeitos + "/" + a.onboardingTotal,
+            c: a.onboardingFeitos === a.onboardingTotal ? "#348a8e" : "#9c6f56" }
+        : { v: "—", c: "#b8ada0" };
+      const cont = a.diasSemContato >= 900
+        ? { v: "nunca", c: "#cf6b5c" }
+        : { v: a.diasSemContato + "d", c: a.diasSemContato > 30 ? "#d4a574" : "#348a8e" };
+
+      return {
+        nome: a.nome,
+        href: "ISR%20-%20Perfil.dc.html?id=" + a.id,
+        waHref: CRM.waLink(a.whatsapp, ""),
+        turmaInfo: [a.turma, a.professora !== "—" ? "com " + a.professora : "", a.nivel]
+          .filter(Boolean).join(" · "),
+        corBorda: a.saudavel ? "#9ec970" : CRM.RISCOS[a.riscos[0]].cor,
+        temRiscos: a.riscos.length > 0,
+        riscos: a.riscos.map(r => ({
+          label: CRM.RISCOS[r].label, cor: CRM.RISCOS[r].cor,
+          bg: "rgba(0,0,0,0.04)"
+        })),
+        sinais: [
+          { rotulo: "Parcelas", valor: pag.v, cor: pag.c },
+          { rotulo: "Faltas", valor: falt.v, cor: falt.c },
+          { rotulo: "Onboarding", valor: ob.v, cor: ob.c },
+          { rotulo: "Últ. contato", valor: cont.v, cor: cont.c },
+          { rotulo: "Moedas", valor: String(a.moedas), cor: "#9c6f56" }
+        ]
+      };
+    });
+
+    const precisam = todas.filter(a => !a.saudavel).length;
+    return {
+      termometro, turmaOpts, profOpts, alunas,
+      vazio: alunas.length === 0,
+      contagem: filtradas.length === todas.length
+        ? (precisam ? precisam + (precisam === 1 ? " precisa de atenção" : " precisam de atenção") : "todas em dia")
+        : (filtradas.length + " de " + todas.length),
+      temFiltro: !!(this.state.busca || this.state.turma || this.state.professora || this.state.risco),
+      buscaRef: this.buscaRef,
+      onBusca: e => this.setState({ busca: e.target.value }),
+      onTurma: e => this.setState({ turma: e.target.value }),
+      onProfessora: e => this.setState({ professora: e.target.value }),
+      onLimpar: () => {
+        if (this.buscaRef.current) this.buscaRef.current.value = "";
+        this.setState({ busca: "", turma: "", professora: "", risco: "" });
+      },
+      labelCopiar: this.state.copiado ? "Lista copiada" : "Copiar lista",
+      onCopiarLista: () => {
+        const txt = filtradas.map(a => {
+          const sit = a.riscos.length ? a.riscos.map(r => CRM.RISCOS[r].label).join(", ") : "em dia";
+          return a.nome + " · " + a.turma + " · " + sit;
+        }).join("\n");
+        try { navigator.clipboard.writeText(txt); } catch (e) {}
+        this.setState({ copiado: true });
+        setTimeout(() => this.setState({ copiado: false }), 2200);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

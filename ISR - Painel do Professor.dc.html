@@ -19,7 +19,7 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Painel do Professor</h1>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">A semana de cada professora: as próximas aulas (das turmas e particulares), a chamada — que registra faltas direto na linha do tempo da aluna — e as turmas com projeto e material do ciclo.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Aulas dos próximos 7 dias, chamada e as turmas da professora. Faltas registradas aqui entram na linha do tempo da aluna.</p>
 
     <!-- SELETOR DE PROFESSORA -->
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
@@ -46,14 +46,14 @@
           <span style="flex: none; width: 40px; font-size: 12px; font-weight: 700; color: #164951;">{{ a.hora }}</span>
           <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ a.cor }}; flex: none;"></span>
           <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #164951;">{{ a.titulo }}</span>
-          <button onclick="{{ a.onChamada }}" style="flex: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer;">fazer chamada</button>
-          <a href="{{ a.gcal }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">+ Google Agenda</a>
+          <button onclick="{{ a.onChamada }}" style="flex: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer;">Chamada</button>
+          <a href="{{ a.gcal }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">Google Agenda</a>
         </div>
       </sc-for>
     </div>
 
     <!-- CHAMADA -->
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;">
+    <div ref="{{ chamadaRef }}" style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; scroll-margin-top: 64px;">
       <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">Chamada</div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px;">
         <select onchange="{{ onTurmaChamada }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; max-width: 100%;">
@@ -68,7 +68,10 @@
       </div>
 
       <sc-if value="{{ chamadaVazia }}">
-        <div style="text-align: center; padding: 24px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aluna matriculada nesta turma ainda.</div>
+        <div style="text-align: center; padding: 22px 20px;">
+          <div style="font-size: 13px; color: #6b6155; margin-bottom: 4px;">{{ turmaVaziaLabel }} não tem aluna matriculada.</div>
+          <a href="ISR%20-%20Turmas%20e%20Projetos.dc.html" style="font-size: 12px; font-weight: 700; color: #348a8e;">Turmas e projetos</a>
+        </div>
       </sc-if>
 
       <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
@@ -85,10 +88,10 @@
 
       <sc-if value="{{ temAlunas }}">
         <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px;">
-          <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer;">✓ Salvar chamada</button>
+          <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer;">Salvar chamada</button>
           <span style="font-size: 12px; color: #8a7c6b;">{{ resumoChamada }}</span>
           <sc-if value="{{ salvouAgora }}">
-            <span style="font-size: 12px; color: #348a8e; font-weight: 700;">✓ Salva! Faltas registradas na linha do tempo.</span>
+            <span style="font-size: 12px; color: #348a8e; font-weight: 700;">Salva. Faltas foram para a linha do tempo das alunas.</span>
           </sc-if>
         </div>
       </sc-if>
@@ -118,7 +121,7 @@
       </sc-for>
     </div>
 
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">A chamada fica guardada por turma e dia no banco central. Cada falta entra na linha do tempo da aluna — sinal de atenção pro check-in da Gabi.</p>
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">A chamada é guardada por turma e dia. Faltas entram na linha do tempo da aluna e aparecem no check-in.</p>
 
   </div>
 </main>
@@ -126,6 +129,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, salvouAgora: false, tick: 0 };
+  chamadaRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
@@ -167,7 +171,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "" };
+    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef };
 
     const ocup = CRM.ocupacaoTurmas();
     const nomes = [];
@@ -194,9 +198,14 @@ class Component extends DCLogic {
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
           gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
           onChamada: () => {
-            if (!daTurma) return;
-            this.setState({ turmaChamada: daTurma.label, chamadaData: it.data,
-              presencas: this.carregarChamada(daTurma.label, it.data), salvouAgora: false });
+            // sem turma casada (aula extra, particular) a chamada não se aplica —
+            // mas o botão nunca pode parecer quebrado: rola até o bloco de qualquer jeito
+            if (daTurma) {
+              this.setState({ turmaChamada: daTurma.label, chamadaData: it.data,
+                presencas: this.carregarChamada(daTurma.label, it.data), salvouAgora: false });
+            }
+            const el = this.chamadaRef.current;
+            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         };
       });
@@ -246,7 +255,9 @@ class Component extends DCLogic {
         this.setState({ chamadaData: v, turmaChamada: turmaSel, presencas: turmaSel ? this.carregarChamada(turmaSel, v) : null, salvouAgora: false });
       },
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
+      chamadaRef: this.chamadaRef,
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
+      turmaVaziaLabel: turmaSel || "Esta turma",
       resumoChamada: nPres + (nPres === 1 ? " presente" : " presentes") + (nAtr ? " (" + nAtr + " com atraso)" : "") + " · " + nFal + (nFal === 1 ? " falta" : " faltas") + (nJus ? " · " + nJus + (nJus === 1 ? " justificada" : " justificadas") : ""),
       salvouAgora: this.state.salvouAgora,
       onSalvarChamada: () => {

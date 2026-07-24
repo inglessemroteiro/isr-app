@@ -221,18 +221,31 @@
     </div>
 
     <!-- CUSTOS FIXOS -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· entram em todo mês do gráfico</span></div>
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· cada um pode ter data de início e fim</span></div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; overflow: hidden; margin-bottom: 24px;">
       <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #f2e9dd;">
           <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ c.cor }}; flex: none;"></span>
-          <span style="font-size: 13px; color: #3d3529; flex: 1;">{{ c.nome }}</span>
+          <div style="flex: 1; min-width: 0;">
+            <span style="font-size: 13px; color: #3d3529;">{{ c.nome }}</span>
+            <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ c.vigencia }}</div>
+          </div>
           <select onchange="{{ c.onCategoria }}" style="padding: 5px 8px; font-size: 10.5px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
             <sc-for list="{{ c.opcoes }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
           </select>
-          <span style="font-size: 13px; font-weight: 700; color: #cf6b5c; min-width: 84px; text-align: right;">− {{ c.valor }}</span>
+          <span style="font-size: 13px; font-weight: 700; color: {{ c.corValor }}; min-width: 84px; text-align: right;">− {{ c.valor }}</span>
+          <button onclick="{{ c.onVigencia }}" title="Definir desde quando e até quando este custo existe" style="border: 1px solid #eee3d6; background: #fff; color: #8a7c6b; font-size: 10px; font-weight: 700; padding: 5px 9px; border-radius: 999px; cursor: pointer; font-family: inherit;">período</button>
           <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
         </div>
+        <sc-if value="{{ c.editando }}">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 18px 14px; background: #fbf6ef; border-bottom: 1px solid #f2e9dd;">
+            <span style="font-size: 11.5px; color: #6b6155;">A escola paga isso</span>
+            <label style="font-size: 11px; color: #8a7c6b;">de <input ref="{{ c.inicioRef }}" type="month" value="{{ c.inicio }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
+            <label style="font-size: 11px; color: #8a7c6b;">até <input ref="{{ c.fimRef }}" type="month" value="{{ c.fim }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
+            <button onclick="{{ c.onSalvarVigencia }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar período</button>
+            <span style="font-size: 10.5px; color: #b3a693;">Em branco = vale sempre.</span>
+          </div>
+        </sc-if>
       </sc-for>
       <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef; flex-wrap: wrap;">
         <input ref="{{ custoNomeRef }}" placeholder="Novo custo fixo (ex. Canva Pro)" style="flex: 1; min-width: 140px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -246,7 +259,7 @@
         <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Adicionar</button>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: #f6eee4; flex-wrap: wrap;">
-        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Ponto de equilíbrio mensal</span>
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Ponto de equilíbrio em {{ mesCurto }}</span>
         <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
       </div>
     </div>
@@ -254,7 +267,7 @@
     <!-- CONCILIAÇÃO DE EXTRATO -->
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Conciliar extrato do banco</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
-      <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato (Wise, Sicredi...) — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo = saída). Créditos casam com a parcela em aberto da aluna; débitos viram saída lançada no mês.</p>
+      <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato (Wise, Sicredi...) — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo = saída). Créditos casam com a parcela em aberto da aluna; débitos viram saída lançada no mês. <strong>O sistema só sugere — nada é gravado até você confirmar.</strong></p>
       <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
         <select onchange="{{ onMoedaExtrato }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
           <option value="€" selected="{{ moedaEUR }}">Conta em € (Wise EUR)</option>
@@ -266,18 +279,25 @@
 
       <sc-if value="{{ temAnalise }}">
         <div style="margin-top: 16px; border-top: 1px solid #f2e9dd; padding-top: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+            <span style="font-size: 12px; color: #6b6155;">{{ resumoAnalise }}</span>
+            <sc-if value="{{ temCerteiras }}">
+              <button onclick="{{ onConciliarCerteiras }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar as {{ nCerteiras }} certeiras</button>
+            </sc-if>
+          </div>
           <sc-for list="{{ sugestoes }}" as="s" hint-placeholder-count="2">
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
               <span style="width: 9px; height: 9px; border-radius: 50%; background: #5a9e4b; flex: none;"></span>
               <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #3d3529; line-height: 1.5;">
                 <strong>{{ s.transDesc }}</strong> ({{ s.transValor }})<br>
                 <span style="color: #8a7c6b;">casa com a parcela de <strong>{{ s.mesLabel }}</strong> de </span><a href="{{ s.perfilHref }}" style="color: #164951; font-weight: 700;">{{ s.nome }}</a>
+                <span style="color: {{ s.confCor }}; font-weight: 700;"> · {{ s.confLabel }}</span>
               </div>
               <sc-if value="{{ s.pendente }}">
-                <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">✓ Conciliar (marca paga)</button>
+                <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
               </sc-if>
               <sc-if value="{{ s.feita }}">
-                <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">✓ Conciliada</span>
+                <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">Conciliada</span>
               </sc-if>
             </div>
           </sc-for>
@@ -289,7 +309,7 @@
                 <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar como saída</button>
               </sc-if>
               <sc-if value="{{ x.lancada }}">
-                <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">✓ Lançada</span>
+                <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">Lançada</span>
               </sc-if>
             </div>
           </sc-for>
@@ -313,7 +333,8 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
-            editandoMeta: false, copiado: false, tick: 0 };
+            editandoMeta: false, copiado: false, custoVigencia: null, tick: 0 };
+  custoRefs = {};
   extratoRef = React.createRef();
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
@@ -454,23 +475,54 @@ class Component extends DCLogic {
 
     // ── custos fixos ──
     const opcoesCatSaida = CRM.CAT_SAIDA.map(c => ({ id: c.id, label: c.label }));
-    const custos = CRM.CUSTOS_FIXOS.map((c, i) => ({
-      nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
-      cor: CRM.catMeta(CRM.CAT_SAIDA, c.categoria || "outros").cor,
-      opcoes: CRM.CAT_SAIDA.map(o => ({ id: o.id, label: o.label, sel: (c.categoria || "outros") === o.id })),
-      onCategoria: (ev) => { CRM.updateCusto(i, { categoria: ev.target.value }); this.bump(); },
-      onRemove: () => { if (confirm("Remover o custo \"" + c.nome + "\"?")) { CRM.removeCusto(i); this.bump(); } }
-    }));
-    const ct = CRM.custosTotais();
+    const mesLabelDe = k => { const p = (k || "").split("-"); return p.length === 2 ? (p[1] + "/" + p[0].slice(2)) : k; };
+    const custos = CRM.CUSTOS_FIXOS.map((c, i) => {
+      const vigente = CRM.vigenteNoMes(c, mes.key);
+      let vigencia;
+      if (!c.inicio && !c.fim) vigencia = "todo mês";
+      else if (c.inicio && c.fim) vigencia = "de " + mesLabelDe(c.inicio) + " a " + mesLabelDe(c.fim);
+      else if (c.inicio) vigencia = "desde " + mesLabelDe(c.inicio);
+      else vigencia = "até " + mesLabelDe(c.fim);
+      if (!vigente) vigencia += " · não conta em " + mes.curto;
+      if (!this.custoRefs[i]) this.custoRefs[i] = { inicio: React.createRef(), fim: React.createRef() };
+      return {
+        nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
+        corValor: vigente ? "#cf6b5c" : "#c9b9a6",
+        cor: CRM.catMeta(CRM.CAT_SAIDA, c.categoria || "outros").cor,
+        vigencia,
+        opcoes: CRM.CAT_SAIDA.map(o => ({ id: o.id, label: o.label, sel: (c.categoria || "outros") === o.id })),
+        onCategoria: (ev) => { CRM.updateCusto(i, { categoria: ev.target.value }); this.bump(); },
+        editando: this.state.custoVigencia === i,
+        inicio: (c.inicio || "").slice(0, 7), fim: (c.fim || "").slice(0, 7),
+        inicioRef: this.custoRefs[i].inicio, fimRef: this.custoRefs[i].fim,
+        onVigencia: () => this.setState(s => ({ custoVigencia: s.custoVigencia === i ? null : i })),
+        onSalvarVigencia: () => {
+          const r = this.custoRefs[i];
+          CRM.updateCusto(i, { inicio: (r.inicio.current && r.inicio.current.value) || "",
+                               fim: (r.fim.current && r.fim.current.value) || "" });
+          this.setState({ custoVigencia: null });
+        },
+        onRemove: () => { if (confirm("Remover o custo \"" + c.nome + "\"?")) { CRM.removeCusto(i); this.bump(); } }
+      };
+    });
+    const ct = CRM.custosTotais(mes.key);
 
     // ── conciliação ──
     const analise = this.state.analise;
+    // "certeira" = valor bate exato E o primeiro nome aparece na descrição do banco.
+    // Só essas podem ir em lote; o resto exige olho humano — marcar a parcela
+    // da pessoa errada como paga é um estrago difícil de achar depois.
+    const certeira = s => Math.abs(s.valor - s.trans.valor) < 0.01 &&
+      (s.trans.descricao || "").toLowerCase().indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0;
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
       const feita = !!this.state.conciliadas[i];
+      const cert = certeira(s);
       return {
         transDesc: s.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor),
         nome: s.nome, mesLabel: s.mesLabel,
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + s.pessoaId,
+        confLabel: cert ? "nome e valor batem" : "confira antes",
+        confCor: cert ? "#5a9e4b" : "#c98a3a",
         pendente: !feita, feita: feita,
         onConciliar: () => {
           CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao);
@@ -478,6 +530,9 @@ class Component extends DCLogic {
         }
       };
     }) : [];
+    const idxCerteiras = analise
+      ? analise.sugestoes.map((s, i) => (certeira(s) && !this.state.conciliadas[i]) ? i : -1).filter(i => i >= 0)
+      : [];
     const semMatch = analise ? analise.semMatch.map((x, i) => {
       const saida = x.tipo === "saida";
       const lancada = !!this.state.lancadas[i];
@@ -595,6 +650,20 @@ class Component extends DCLogic {
       moedaEUR: this.state.moedaExtrato === "€", moedaBRL: this.state.moedaExtrato === "R$",
       onMoedaExtrato: (e) => this.setState({ moedaExtrato: e.target.value, analise: null, conciliadas: {}, lancadas: {} }),
       extratoRef: this.extratoRef, temAnalise: !!analise, sugestoes, semMatch,
+      resumoAnalise: analise
+        ? (analise.sugestoes.length + (analise.sugestoes.length === 1 ? " crédito casou" : " créditos casaram")
+           + " · " + analise.semMatch.length + " sem par. Nada muda até você confirmar.")
+        : "",
+      temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),
+      onConciliarCerteiras: () => {
+        const feitas = {};
+        idxCerteiras.forEach(i => {
+          const s = analise.sugestoes[i];
+          CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao);
+          feitas[i] = true;
+        });
+        this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, feitas) }));
+      },
       onAnalisar: () => {
         const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
         const trans = CRM.parseExtrato(txt);

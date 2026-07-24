@@ -27,6 +27,30 @@
       </div>
     </header>
 
+    <!-- REUNIÕES: quantas estão marcadas, quantas viraram matrícula -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
+      <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: center;">
+        <div style="flex: none;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Conversas de matrícula · 30 dias</div>
+        </div>
+        <sc-for list="{{ reuNumeros }}" as="rn" hint-placeholder-count="4">
+          <div style="flex: none;">
+            <span style="font-size: 19px; font-weight: 700; color: {{ rn.cor }};">{{ rn.valor }}</span>
+            <span style="font-size: 11.5px; color: #6b6155; margin-left: 5px;">{{ rn.label }}</span>
+          </div>
+        </sc-for>
+        <span style="flex: 1; min-width: 4px;"></span>
+        <a href="ISR%20-%20Agenda.dc.html" style="flex: none; font-size: 11.5px; font-weight: 700; color: #348a8e; text-decoration: none;">ver na agenda</a>
+      </div>
+      <sc-if value="{{ temReuProximas }}">
+        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px;">
+          <sc-for list="{{ reuProximas }}" as="rp" hint-placeholder-count="3">
+            <a href="{{ rp.href }}" style="text-decoration: none; background: {{ rp.bg }}; color: {{ rp.cor }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">{{ rp.label }}</a>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- FORMULÁRIO NOVO LEAD (cadastro manual) -->
     <sc-if value="{{ novoLeadAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
@@ -51,7 +75,7 @@
           <input ref="{{ nlHorariosRef }}" placeholder="Horários de preferência" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button onclick="{{ onSalvarNovoLead }}" style="border: none; background: #348a8e; color: #fff; font-size: 13px; font-weight: 700; padding: 11px 22px; border-radius: 999px; cursor: pointer;">✓ Criar lead</button>
+          <button onclick="{{ onSalvarNovoLead }}" style="border: none; background: #348a8e; color: #fff; font-size: 13px; font-weight: 700; padding: 11px 22px; border-radius: 999px; cursor: pointer;">Criar lead</button>
           <button onclick="{{ onCancelarNovoLead }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
           <sc-if value="{{ nlErro }}">
             <span style="font-size: 12px; color: #cf6b5c; font-weight: 600;">{{ nlErro }}</span>
@@ -92,7 +116,7 @@
       <sc-if value="{{ vazio }}">
         <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
           <div style="height: 4px;"></div>
-          <p style="margin: 0; font-size: 13px;">Nada por aqui nesta visão. Tudo em dia!</p>
+          <p style="margin: 0; font-size: 13px;">Nada nesta visão.</p>
         </div>
       </sc-if>
 
@@ -105,6 +129,9 @@
               <span style="color: #b9ab99; font-size: 11px;">{{ lead.caret }}</span>
             </div>
             <div style="font-size: 11.5px; color: #a2957f; margin-top: 3px;">{{ lead.telefone }}</div>
+            <sc-if value="{{ lead.temReuniao }}">
+              <span style="display: inline-block; margin-top: 5px; margin-right: 5px; background: rgba(107,91,149,0.13); color: #6b5b95; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 5px;">Conversa {{ lead.reuniaoInfo }}</span>
+            </sc-if>
             <sc-if value="{{ lead.badge }}">
               <span style="display: inline-block; margin-top: 5px; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 5px;">{{ lead.badge }}</span>
             </sc-if>
@@ -216,7 +243,7 @@
                   <input ref="{{ lead.matSinalRef }}" placeholder="Sinal/entrada já combinado (ex. R$ 200 — opcional)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
+                  <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">Matricular</button>
                   <button onclick="{{ lead.onMatricularCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
                 </div>
               </div>
@@ -238,11 +265,11 @@
             <!-- MINI-FORM DE REUNIÃO -->
             <sc-if value="{{ lead.agendandoReuniao }}">
               <div style="background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 10px;">Agendar reunião — entra no calendário da Carla e na Agenda da escola</div>
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 10px;">Data da conversa de matrícula — entra na Agenda da escola</div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                   <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                   <input ref="{{ lead.reuHoraRef }}" placeholder="Hora (ex. 15h)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; width: 110px;" />
-                  <button onclick="{{ lead.onAgendarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">✓ Agendar</button>
+                  <button onclick="{{ lead.onAgendarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">Marcar</button>
                   <button onclick="{{ lead.onAgendarCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 10px 8px; cursor: pointer;">cancelar</button>
                 </div>
               </div>
@@ -252,11 +279,11 @@
             <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px solid #f2e9dd; padding-top: 14px;">
               <button onclick="{{ lead.onRegistrar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Registrar contato</button>
               <sc-if value="{{ lead.semReuniao }}">
-                <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Agendar reunião</button>
+                <button onclick="{{ lead.onAgendar }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Marcar conversa</button>
               </sc-if>
               <sc-if value="{{ lead.temReuniao }}">
                 <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
-                <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">✓ Reunião feita</button>
+                <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Marcar como feita</button>
               </sc-if>
               <button onclick="{{ lead.onMatricular }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Matricular</button>
               <span style="flex: 1;"></span>
@@ -408,6 +435,7 @@ class Component extends DCLogic {
         out.onNoteKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(l.id); } };
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
         out.agendandoReuniao = this.state.agendandoReuniaoId === l.id;
+        void 0;
         out.semReuniao = !(l.reuniao && !l.reuniao.feita) && this.state.agendandoReuniaoId !== l.id;
         out.temReuniao = !!(l.reuniao && !l.reuniao.feita);
         out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " · " + l.reuniao.hora : "")) : "";
@@ -461,8 +489,29 @@ class Component extends DCLogic {
       waLink: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + ex.id + "&tpl=renov_abrir"
     }));
 
+    // conversas de matrícula: o termômetro da agenda do comercial
+    const reu = CRM.reunioesResumo(30);
+    const reuNumeros = [
+      { valor: String(reu.marcadas.length), label: reu.marcadas.length === 1 ? "marcada" : "marcadas", cor: "#6b5b95" },
+      { valor: String(reu.feitas.length), label: reu.feitas.length === 1 ? "feita" : "feitas", cor: "#348a8e" },
+      { valor: String(reu.converteu), label: reu.converteu === 1 ? "virou matrícula" : "viraram matrícula", cor: "#5a9e4b" },
+      { valor: reu.feitas.length ? reu.taxa + "%" : "—", label: "de conversão", cor: "#9c6f56" }
+    ].concat(reu.vencidas.length
+      ? [{ valor: String(reu.vencidas.length), label: reu.vencidas.length === 1 ? "passou da data" : "passaram da data", cor: "#cf6b5c" }]
+      : []);
+    const reuProximas = reu.vencidas.map(r => ({ r, atrasada: true }))
+      .concat(reu.marcadas.map(r => ({ r, atrasada: false })))
+      .slice(0, 6)
+      .map(x => ({
+        label: CRM.ddmm(x.r.data) + (x.r.hora ? " " + x.r.hora : "") + " · " + CRM.firstName(x.r.nome),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.r.pessoaId,
+        bg: x.atrasada ? "rgba(207,107,92,0.12)" : "rgba(107,91,149,0.11)",
+        cor: x.atrasada ? "#cf6b5c" : "#6b5b95"
+      }));
+
     return {
       tabs, leads, reativacao,
+      reuNumeros, reuProximas, temReuProximas: reuProximas.length > 0,
       vazio: rawLeads.length === 0,
       temNovas: novas > 0,
       novasCount: novas,
