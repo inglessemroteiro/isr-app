@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ISR — Gestão · Caixa 90 dias</title>
+<title>ISR — Financeiro · Caixa</title>
 <script src="./support.js"></script>
 <script src="./isr-nav.js"></script>
 <script src="./crm-data.js"></script>
@@ -16,123 +16,265 @@
     <!-- HEADER -->
     <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
       <div>
-        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Gestão <span style="background: #ece5f3; color: #7b689a; padding: 2px 9px; border-radius: 999px; margin-left: 6px;">só Gestora</span></p>
-        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Caixa · próximos 90 dias</h1>
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Financeiro <span style="background: #ece5f3; color: #7b689a; padding: 2px 9px; border-radius: 999px; margin-left: 6px;">só Gestora</span></p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Caixa</h1>
       </div>
-      <div style="display: flex; gap: 8px;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="{{ onCopiarResumo }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiar }}</button>
         <a href="ISR%20-%20Cobran%C3%A7a.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Cobrança</a>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 700px;">Responde: <strong>"o mês que vem fecha no azul?"</strong> — parcelas esperadas menos custos fixos, por moeda (R$ e € nunca se somam). E concilia o extrato do banco: cole as entradas e o sistema casa cada crédito com a parcela da aluna.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Um mês por vez: <strong>de onde entrou</strong>, <strong>para onde foi</strong>, se bateu a meta e o que ainda se espera. R$ e € nunca se somam — quando você precisa de uma leitura só do todo, o número aparece marcado como estimativa.</p>
 
-    <!-- CARDS 30/60/90 -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;">
-      <sc-for list="{{ cards }}" as="cd" hint-placeholder-count="3">
-        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ cd.cor }}; border-radius: 10px; padding: 14px 16px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; font-weight: 700; margin-bottom: 6px;">{{ cd.label }}</div>
-          <div style="font-size: 18px; font-weight: 700; color: {{ cd.corBRL }};">{{ cd.brl }}</div>
-          <div style="font-size: 14px; font-weight: 700; color: {{ cd.corEUR }};">{{ cd.eur }}</div>
+    <!-- NAVEGADOR DE MÊS -->
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+      <button onclick="{{ onMesAnterior }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 15px; font-weight: 700; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-family: inherit;">‹</button>
+      <div style="min-width: 190px;">
+        <div style="font-size: 19px; font-weight: 700; color: #164951; letter-spacing: -0.3px;">{{ mesLabel }}</div>
+        <div style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: {{ quandoCor }};">{{ quandoLabel }}</div>
+      </div>
+      <button onclick="{{ onMesProximo }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 15px; font-weight: 700; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-family: inherit;">›</button>
+      <sc-if value="{{ naoEhAtual }}">
+        <button onclick="{{ onHoje }}" style="border: none; background: #f6eee4; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">voltar pra hoje</button>
+      </sc-if>
+    </div>
+
+    <!-- OS CINCO NÚMEROS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 8px;">
+      <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="5">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ n.cor }}; border-radius: 10px; padding: 13px 15px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; font-weight: 700; margin-bottom: 7px;">{{ n.label }}</div>
+          <div style="font-size: 17px; font-weight: 700; color: {{ n.corBrl }}; line-height: 1.35;">{{ n.brl }}</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: {{ n.corEur }}; opacity: 0.8; line-height: 1.35;">{{ n.eur }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 5px; line-height: 1.4;">{{ n.nota }}</div>
         </div>
       </sc-for>
     </div>
+    <p style="margin: 0 0 20px; font-size: 11px; color: #b3a693;">Sobrou = o que entrou de verdade menos o que saiu. Não conta o que ainda está a receber.</p>
 
-    <!-- TABELA MENSAL -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Mês a mês · esperado − custos = resultado <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· clique no mês pra ver o extrato: quem entrou, o que saiu</span></div>
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow-x: auto; margin-bottom: 24px;">
-      <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 660px;">
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Mês</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Esperado</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Custos fixos</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Resultado</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Já recebido</span>
+    <!-- META E PONTO DE EQUILÍBRIO -->
+    <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970;">Meta do mês e ponto de equilíbrio</span>
+        <button onclick="{{ onToggleMeta }}" style="border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.8); font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelEditarMeta }}</button>
       </div>
-      <sc-for list="{{ meses }}" as="m" hint-placeholder-count="3">
-        <div>
-        <div onclick="{{ m.onToggle }}" style="cursor: pointer; display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr 1.4fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid #f2e9dd; min-width: 660px; background: {{ m.bg }};">
-          <div>
-            <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ m.label }} <span style="font-size: 11px; color: #b3a693;">{{ m.seta }}</span></span>
-            <sc-if value="{{ m.atual }}"><div style="font-size: 9px; color: #9c6f56; font-weight: 700; text-transform: uppercase;">● mês atual</div></sc-if>
+      <sc-for list="{{ metas }}" as="mt" hint-placeholder-count="2">
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">{{ mt.moeda }} · {{ mt.recebido }} <span style="color: rgba(255,255,255,0.5); font-weight: 400;">de {{ mt.meta }}</span></span>
+            <span style="font-size: 12px; font-weight: 700; color: {{ mt.corPct }};">{{ mt.pct }}%</span>
           </div>
-          <div style="font-size: 12.5px; color: #3d3529; line-height: 1.5;">{{ m.esperadoBRL }}<br><span style="color: #6b5b95;">{{ m.esperadoEUR }}</span></div>
-          <div style="font-size: 12.5px; color: #a2957f; line-height: 1.5;">− {{ m.custosBRL }}<br><span>− {{ m.custosEUR }}</span></div>
-          <div style="font-size: 13px; font-weight: 700; line-height: 1.5;"><span style="color: {{ m.corResBRL }};">{{ m.resBRL }}</span><br><span style="color: {{ m.corResEUR }};">{{ m.resEUR }}</span></div>
-          <div>
-            <div style="height: 9px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-bottom: 4px;"><span style="display: block; height: 100%; width: {{ m.pctRecebido }}; background: #348a8e;"></span></div>
-            <div style="font-size: 10.5px; color: #8a7c6b;">{{ m.recebidoLabel }}</div>
+          <div style="position: relative; height: 14px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden;">
+            <span style="display: block; height: 100%; width: {{ mt.larguraBar }}; background: {{ mt.corBar }};"></span>
+            <sc-if value="{{ mt.temEquilibrio }}">
+              <span title="Ponto de equilíbrio" style="position: absolute; top: -2px; bottom: -2px; left: {{ mt.posEquilibrio }}; width: 2px; background: #f4a099;"></span>
+            </sc-if>
+          </div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.68); margin-top: 5px; line-height: 1.5;">{{ mt.frase }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ editandoMeta }}">
+        <div style="border-top: 1px solid rgba(255,255,255,0.14); padding-top: 12px; margin-top: 4px;">
+          <p style="margin: 0 0 9px; font-size: 11.5px; color: rgba(255,255,255,0.7); line-height: 1.6;">Meta só deste mês. Deixe em branco pra usar a meta padrão da escola (que você muda em Marketing).</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <input ref="{{ metaBrlRef }}" placeholder="Meta R$ · {{ metaPadraoBRL }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
+            <input ref="{{ metaEurRef }}" placeholder="Meta € · {{ metaPadraoEUR }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
+            <button onclick="{{ onSalvarMeta }}" style="border: none; background: #9ec970; color: #0f333a; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar meta de {{ mesCurto }}</button>
           </div>
         </div>
+      </sc-if>
+    </div>
 
-        <!-- EXTRATO DO MÊS -->
-        <sc-if value="{{ m.aberto }}">
-          <div style="background: #f6f2ea; border-top: 1px dashed #e5dccf; padding: 14px 18px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start;">
-              <div>
-                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #348a8e; margin-bottom: 8px;">Entrou / a entrar · {{ m.detResumoIn }}</div>
-                <sc-for list="{{ m.detEntradas }}" as="en" hint-placeholder-count="4">
-                  <div style="display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #efe8dc; font-size: 12px;">
-                    <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ en.cor }}; flex: none;"></span>
-                    <a href="{{ en.perfilHref }}" style="flex: 1; min-width: 0; color: #164951; font-weight: 600; text-decoration: none;">{{ en.nome }}</a>
-                    <span style="flex: none; color: {{ en.valCor }}; font-weight: 700;">{{ en.valor }}</span>
-                    <span style="flex: none; font-size: 9px; font-weight: 700; text-transform: uppercase; color: {{ en.cor }};">{{ en.status }}</span>
-                  </div>
-                </sc-for>
-              </div>
-              <div>
-                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #cf6b5c; margin-bottom: 8px;">Saiu (custos fixos) · {{ m.detResumoOut }}</div>
-                <sc-for list="{{ m.detSaidas }}" as="sa" hint-placeholder-count="4">
-                  <div style="display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #efe8dc; font-size: 12px;">
-                    <span style="flex: 1; color: #6b6155;">{{ sa.nome }}</span>
-                    <span style="flex: none; color: #9c6f56; font-weight: 700;">− {{ sa.valor }}</span>
-                  </div>
-                </sc-for>
-                <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693;">Custos editáveis na seção "Custos fixos" abaixo. Saídas variáveis entram pela conciliação de extrato.</p>
-              </div>
+    <!-- LINHA DO TEMPO -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Como os meses vêm se comportando <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· barra colorida = entrou · barra clara atrás = o que saiu · clique num mês pra abrir</span></div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 16px 14px 10px; margin-bottom: 24px; overflow-x: auto;">
+      <div style="display: flex; align-items: flex-end; gap: 5px; min-width: 640px; height: 130px;">
+        <sc-for list="{{ serie }}" as="s" hint-placeholder-count="12">
+          <div onclick="{{ s.onClick }}" title="{{ s.titulo }}" style="flex: 1; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 3px;">
+            <span style="font-size: 8.5px; font-weight: 700; color: {{ s.corValor }};">{{ s.topo }}</span>
+            <div style="position: relative; width: 100%; flex: 1; min-height: 0;">
+              <span title="o que saiu" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{ s.alturaCusto }}; border-radius: 4px 4px 0 0; background: #f0ddd7;"></span>
+              <span style="position: absolute; left: 22%; right: 22%; bottom: 0; height: {{ s.alturaBar }}; min-height: 2px; border-radius: 4px 4px 0 0; background: {{ s.cor }};"></span>
+            </div>
+            <span style="font-size: 9px; font-weight: 700; color: {{ s.corLabel }}; white-space: nowrap;">{{ s.curto }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} só pra caber num gráfico só — é estimativa, não contabilidade. Meses anteriores ao primeiro pagamento registrado não aparecem.</p>
+    </div>
+
+    <!-- DE ONDE ENTROU / PARA ONDE FOI -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
+
+      <!-- ENTROU -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 12px;">De onde entrou · {{ totalEntrouLabel }}</div>
+        <sc-for list="{{ catsEntrada }}" as="c" hint-placeholder-count="3">
+          <div style="margin-bottom: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
+              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
+              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
             </div>
           </div>
+        </sc-for>
+        <sc-if value="{{ semEntradas }}">
+          <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nada entrou neste mês ainda.</p>
         </sc-if>
+
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Quem</div>
+        <sc-for list="{{ entradas }}" as="e" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ e.cor }}; flex: none;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <a href="{{ e.href }}" style="color: #164951; font-weight: 700; text-decoration: none;">{{ e.nome }}</a>
+              <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ e.detalhe }}</div>
+            </div>
+            <div style="flex: none; text-align: right;">
+              <div style="font-size: 12px; font-weight: 700; color: {{ e.corValor }};">{{ e.valor }}</div>
+              <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: {{ e.cor }};">{{ e.status }}</div>
+            </div>
+            <sc-if value="{{ e.removivel }}">
+              <button onclick="{{ e.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+          <input ref="{{ entDescRef }}" placeholder="Outra receita (ex. workshop)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ entMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
+          <input ref="{{ entValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <button onclick="{{ onAddEntrada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Entrada</button>
         </div>
-      </sc-for>
+      </div>
+
+      <!-- SAIU -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #cf6b5c; margin-bottom: 12px;">Para onde foi · {{ totalSaiuLabel }}</div>
+        <sc-for list="{{ catsSaida }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
+              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
+              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">O quê</div>
+        <sc-for list="{{ saidas }}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ s.cor }}; flex: none;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <span style="color: #3d3529; font-weight: 600;">{{ s.nome }}</span>
+              <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
+            </div>
+            <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
+            <sc-if value="{{ s.removivel }}">
+              <button onclick="{{ s.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+          <input ref="{{ saiDescRef }}" placeholder="Gasto deste mês (ex. contadora)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ saiCatRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+          </select>
+          <select ref="{{ saiMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
+          <input ref="{{ saiValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Saída</button>
+        </div>
+        <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos aparecem todo mês (edite embaixo). Aqui você lança só o que foi específico deste mês.</p>
+      </div>
     </div>
 
-    <!-- SIMULADOR -->
-    <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
-      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">Simulador · "e se…?"</div>
-      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff;">+ matrículas grupo
-          <input type="number" min="0" value="{{ simMat }}" oninput="{{ onSimMat }}" style="width: 64px; padding: 8px 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; text-align: center;" />
-        </label>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #fff;">+ renovações
-          <input type="number" min="0" value="{{ simRen }}" oninput="{{ onSimRen }}" style="width: 64px; padding: 8px 10px; font-size: 14px; font-weight: 700; border: none; border-radius: 8px; text-align: center;" />
-        </label>
-        <span style="font-size: 13px; color: rgba(255,255,255,0.85);">→ cada uma ≈ R$ 400/mês · resultado de <strong>Setembro</strong> vira <strong style="color: {{ simCor }};">{{ simResultado }}</strong></span>
+    <!-- EXPECTATIVA -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">O que ainda se espera de {{ mesCurto }}</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
+      <sc-for list="{{ camadas }}" as="cm" hint-placeholder-count="4">
+        <div style="display: flex; align-items: flex-start; gap: 11px; padding: 9px 0; border-bottom: 1px solid #f2e9dd;">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ cm.cor }}; flex: none; margin-top: 5px;"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ cm.label }}</div>
+            <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">{{ cm.explica }}</div>
+          </div>
+          <span style="flex: none; font-size: 13px; font-weight: 700; color: {{ cm.cor }}; text-align: right;">{{ cm.valor }}</span>
+        </div>
+      </sc-for>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
+        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário seguro</div>
+          <div style="font-size: 15px; font-weight: 700; color: #164951;">{{ conservador }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">só o que já entrou + contrato ativo em dia</div>
+        </div>
+        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário otimista</div>
+          <div style="font-size: 15px; font-weight: 700; color: #348a8e;">{{ otimista }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">tudo isso + atrasadas pagas + pipeline convertendo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOS FIXOS -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· entram em todo mês do gráfico</span></div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; overflow: hidden; margin-bottom: 24px;">
+      <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #f2e9dd;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ c.cor }}; flex: none;"></span>
+          <span style="font-size: 13px; color: #3d3529; flex: 1;">{{ c.nome }}</span>
+          <select onchange="{{ c.onCategoria }}" style="padding: 5px 8px; font-size: 10.5px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ c.opcoes }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+          </select>
+          <span style="font-size: 13px; font-weight: 700; color: #cf6b5c; min-width: 84px; text-align: right;">− {{ c.valor }}</span>
+          <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+        </div>
+      </sc-for>
+      <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef; flex-wrap: wrap;">
+        <input ref="{{ custoNomeRef }}" placeholder="Novo custo fixo (ex. Canva Pro)" style="flex: 1; min-width: 140px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <select ref="{{ custoCatRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+        </select>
+        <select ref="{{ custoMoedaRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <option value="R$">R$</option><option value="€">€</option>
+        </select>
+        <input ref="{{ custoValorRef }}" placeholder="Valor" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Adicionar</button>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: #f6eee4; flex-wrap: wrap;">
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Ponto de equilíbrio mensal</span>
+        <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
       </div>
     </div>
 
     <!-- CONCILIAÇÃO DE EXTRATO -->
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Conciliar extrato do banco</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
-      <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato (Wise, Sicredi...) — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo = saída). O sistema casa cada crédito com a parcela em aberto da aluna.</p>
+      <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato (Wise, Sicredi...) — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo = saída). Créditos casam com a parcela em aberto da aluna; débitos viram saída lançada no mês.</p>
       <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
         <select onchange="{{ onMoedaExtrato }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
           <option value="€" selected="{{ moedaEUR }}">Conta em € (Wise EUR)</option>
           <option value="R$" selected="{{ moedaBRL }}">Conta em R$ (Sicredi / Wise BRL)</option>
         </select>
         <textarea ref="{{ extratoRef }}" placeholder="28/05/2026 ; Recebeu dinheiro de Ana Beatriz Luz INV-2026-048 ; 125,00&#10;31/05/2026 ; Pago para GOCARDLESS ; -35,70" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
-        <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer;">Analisar</button>
+        <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
       </div>
 
-      <!-- RESULTADO DA CONCILIAÇÃO -->
       <sc-if value="{{ temAnalise }}">
         <div style="margin-top: 16px; border-top: 1px solid #f2e9dd; padding-top: 14px;">
           <sc-for list="{{ sugestoes }}" as="s" hint-placeholder-count="2">
-            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
               <span style="width: 9px; height: 9px; border-radius: 50%; background: #5a9e4b; flex: none;"></span>
-              <div style="flex: 1; min-width: 0; font-size: 12.5px; color: #3d3529; line-height: 1.5;">
+              <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #3d3529; line-height: 1.5;">
                 <strong>{{ s.transDesc }}</strong> ({{ s.transValor }})<br>
                 <span style="color: #8a7c6b;">casa com a parcela de <strong>{{ s.mesLabel }}</strong> de </span><a href="{{ s.perfilHref }}" style="color: #164951; font-weight: 700;">{{ s.nome }}</a>
               </div>
               <sc-if value="{{ s.pendente }}">
-                <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer;">✓ Conciliar (marca paga)</button>
+                <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">✓ Conciliar (marca paga)</button>
               </sc-if>
               <sc-if value="{{ s.feita }}">
                 <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">✓ Conciliada</span>
@@ -140,100 +282,188 @@
             </div>
           </sc-for>
           <sc-for list="{{ semMatch }}" as="x" hint-placeholder-count="2">
-            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
               <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ x.icon }}; flex: none;"></span>
-              <div style="flex: 1; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
+              <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
+              <sc-if value="{{ x.lancavel }}">
+                <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar como saída</button>
+              </sc-if>
+              <sc-if value="{{ x.lancada }}">
+                <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">✓ Lançada</span>
+              </sc-if>
             </div>
           </sc-for>
         </div>
       </sc-if>
     </div>
 
-    <!-- CUSTOS FIXOS -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos mensais</div>
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow: hidden;">
-      <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 18px; border-bottom: 1px solid #f2e9dd;">
-          <span style="font-size: 13px; color: #3d3529; flex: 1;">{{ c.nome }}</span>
-          <span style="font-size: 13px; font-weight: 700; color: #cf6b5c;">− {{ c.valor }}</span>
-          <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
-        </div>
-      </sc-for>
-      <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef;">
-        <input ref="{{ custoNomeRef }}" placeholder="Novo custo (ex. Canva Pro)" style="flex: 1; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-        <select ref="{{ custoMoedaRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-          <option value="R$">R$</option><option value="€">€</option>
-        </select>
-        <input ref="{{ custoValorRef }}" placeholder="Valor" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-        <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Adicionar</button>
+    <!-- CÂMBIO -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 220px;">
+        <div style="font-size: 12.5px; font-weight: 700; color: #164951;">Taxa de conversão do euro</div>
+        <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">Usada só no gráfico e nos totais estimados. Os números por moeda continuam separados em todo o resto.</div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #f6eee4;">
-        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Total mensal</span>
-        <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
-      </div>
+      <input ref="{{ cambioRef }}" placeholder="{{ cambioValor }}" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+      <button onclick="{{ onSalvarCambio }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
     </div>
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Os custos agora são editáveis aqui — o sistema faz, a planilha carimba: com o banco central conectado, cada mudança gera backup automático legível na planilha.</p>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { moedaExtrato: "€", analise: null, conciliadas: {}, simMat: 0, simRen: 0, mesAberto: null, tick: 0 };
+  state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
+            editandoMeta: false, copiado: false, tick: 0 };
   extratoRef = React.createRef();
-  custoNomeRef = React.createRef(); custoMoedaRef = React.createRef(); custoValorRef = React.createRef();
+  custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
+  custoValorRef = React.createRef(); custoCatRef = React.createRef();
+  entDescRef = React.createRef(); entValorRef = React.createRef(); entMoedaRef = React.createRef();
+  saiDescRef = React.createRef(); saiValorRef = React.createRef();
+  saiMoedaRef = React.createRef(); saiCatRef = React.createRef();
+  metaBrlRef = React.createRef(); metaEurRef = React.createRef();
+  cambioRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { cards: [], meses: [], custos: [], sugestoes: [], semMatch: [], temAnalise: false, custosTotalBRL: "", custosTotalEUR: "", simMat: 0, simRen: 0, simResultado: "", simCor: "#fff", moedaEUR: true, moedaBRL: false };
+    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [],
+      saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
+    if (!CRM) return vazio;
 
-    const proj = CRM.projecaoCaixa();
-    const fmt = (m, v) => (v < 0 ? "− " : "") + CRM.fmtMoney(m, Math.abs(v));
-    const corRes = v => v >= 0 ? "#348a8e" : "#cf6b5c";
+    const mes = CRM.mesOffset(this.state.offset);
+    const f = CRM.financeiroMes(mes.key);
+    const pv = CRM.previsaoMes(mes.key);
+    const atualKey = CRM.mesAtualKey();
 
-    const cards = proj.map((m, i) => ({
-      label: "Saldo previsto " + ((i + 1) * 30) + " dias · até " + m.label,
-      brl: fmt("R$", m.saldoAcumulado["R$"]), eur: fmt("€", m.saldoAcumulado["€"]),
-      corBRL: corRes(m.saldoAcumulado["R$"]), corEUR: corRes(m.saldoAcumulado["€"]),
-      cor: (m.saldoAcumulado["R$"] >= 0 && m.saldoAcumulado["€"] >= 0) ? "#348a8e" : "#cf6b5c"
-    }));
+    // "R$ 1.200 + € 300" — nunca um número só
+    const duo = (por, prefixo) => {
+      const partes = [];
+      if (por["R$"]) partes.push((prefixo || "") + CRM.fmtMoney("R$", Math.abs(por["R$"])));
+      if (por["€"]) partes.push((prefixo || "") + CRM.fmtMoney("€", Math.abs(por["€"])));
+      return partes.join(" + ") || "—";
+    };
+    const sinal = por => (por["R$"] < 0 || por["€"] < 0) ? "− " : "";
 
-    const chaveAtual = CRM.mesAtualKey();
-    const meses = proj.map(m => {
-      const recTot = m.recebido["R$"] + m.recebido["€"];
-      const espTot = m.esperado["R$"] + m.esperado["€"];
-      const aberto = this.state.mesAberto === m.key;
-      const det = aberto ? CRM.caixaDetalheMes(m.key) : null;
-      const fmtM = (moeda, v) => v ? CRM.fmtMoney(moeda, v) : "";
+    // ── os cinco números ──
+    const numeros = [
+      { label: "Entrou", cor: "#348a8e", brl: CRM.fmtMoney("R$", f.recebido["R$"]), eur: CRM.fmtMoney("€", f.recebido["€"]),
+        nota: "já caiu na conta" },
+      { label: "A receber", cor: "#d4a574", brl: CRM.fmtMoney("R$", f.aReceber["R$"]), eur: CRM.fmtMoney("€", f.aReceber["€"]),
+        nota: "contrato em dia, ainda vence" },
+      { label: "Atrasado", cor: "#cf6b5c", brl: CRM.fmtMoney("R$", f.atrasado["R$"]), eur: CRM.fmtMoney("€", f.atrasado["€"]),
+        nota: f.atrasado["R$"] + f.atrasado["€"] > 0 ? "venceu e não pagou — cobre" : "nada vencido" },
+      { label: "Saiu", cor: "#9c6f56", brl: CRM.fmtMoney("R$", f.saiu["R$"]), eur: CRM.fmtMoney("€", f.saiu["€"]),
+        nota: "fixos + lançamentos do mês" },
+      { label: "Sobrou", cor: (f.resultado["R$"] >= 0 && f.resultado["€"] >= 0) ? "#348a8e" : "#cf6b5c",
+        corBrl: f.resultado["R$"] >= 0 ? "#348a8e" : "#cf6b5c",
+        corEur: f.resultado["€"] >= 0 ? "#348a8e" : "#cf6b5c",
+        brl: (f.resultado["R$"] < 0 ? "− " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"])),
+        eur: (f.resultado["€"] < 0 ? "− " : "") + CRM.fmtMoney("€", Math.abs(f.resultado["€"])),
+        nota: "entrou − saiu" }
+    ].map(n => Object.assign({ corBrl: n.cor, corEur: n.cor }, n)); // cada moeda pinta o próprio sinal
+
+    // ── meta por moeda ──
+    const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
+      const pct = f.pctMeta[m];
+      const eq = f.pontoEquilibrio[m];
+      const escala = Math.max(f.meta[m], f.recebido[m], eq) || 1;
+      const passouEq = f.recebido[m] >= eq && eq > 0;
+      let frase;
+      if (f.meta[m] <= 0) frase = "Sem meta definida pra esta moeda neste mês.";
+      else if (pct >= 100) frase = "Meta batida. Passou " + CRM.fmtMoney(m, f.recebido[m] - f.meta[m]) + " do combinado.";
+      else frase = "Faltam " + CRM.fmtMoney(m, f.faltaMeta[m]) + " pra meta" +
+        (eq > 0 ? (passouEq ? " · ponto de equilíbrio já coberto" : " · e " + CRM.fmtMoney(m, eq - f.recebido[m]) + " só pra não dar prejuízo") : "");
       return {
-        aberto, seta: aberto ? "▴" : "▾",
-        onToggle: () => this.setState({ mesAberto: aberto ? null : m.key }),
-        detEntradas: det ? det.entradas.map(en => ({
-          nome: en.nome, valor: en.valor, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + en.pessoaId,
-          status: en.pago ? "pago" : "em aberto",
-          cor: en.pago ? "#5a9e4b" : "#d4a574", valCor: en.pago ? "#348a8e" : "#9c6f56"
-        })) : [],
-        detSaidas: det ? det.saidas.map(sa => ({ nome: sa.nome, valor: CRM.fmtMoney(sa.moeda, sa.valor) })) : [],
-        detResumoIn: det ? ([fmtM("R$", det.recebidoBRL), fmtM("€", det.recebidoEUR)].filter(Boolean).join(" + ") || "0") + " recebidos · " + ([fmtM("R$", det.aReceberBRL), fmtM("€", det.aReceberEUR)].filter(Boolean).join(" + ") || "0") + " em aberto" : "",
-        detResumoOut: det ? [fmtM("R$", det.saiuBRL), fmtM("€", det.saiuEUR)].filter(Boolean).join(" + ") : "",
-        label: m.label, atual: m.key === chaveAtual, bg: m.key === chaveAtual ? "#fbf6ef" : "#fdfbf8",
-        esperadoBRL: CRM.fmtMoney("R$", m.esperado["R$"]), esperadoEUR: CRM.fmtMoney("€", m.esperado["€"]),
-        custosBRL: CRM.fmtMoney("R$", m.custos["R$"]), custosEUR: CRM.fmtMoney("€", m.custos["€"]),
-        resBRL: fmt("R$", m.resultado["R$"]), resEUR: fmt("€", m.resultado["€"]),
-        corResBRL: corRes(m.resultado["R$"]), corResEUR: corRes(m.resultado["€"]),
-        pctRecebido: espTot > 0 ? Math.round(100 * recTot / espTot) + "%" : "0%",
-        recebidoLabel: CRM.fmtMoney("R$", m.recebido["R$"]) + " + " + CRM.fmtMoney("€", m.recebido["€"]) + " recebidos"
+        moeda: m, recebido: CRM.fmtMoney(m, f.recebido[m]), meta: CRM.fmtMoney(m, f.meta[m]),
+        pct: pct, corPct: pct >= 100 ? "#9ec970" : (pct >= 60 ? "#d4a574" : "#f4a099"),
+        larguraBar: Math.min(100, Math.round(100 * f.recebido[m] / escala)) + "%",
+        corBar: passouEq ? "#9ec970" : "#d4a574",
+        temEquilibrio: eq > 0, posEquilibrio: Math.min(100, Math.round(100 * eq / escala)) + "%",
+        frase
       };
     });
 
-    // simulador: +N × R$400/mês no resultado de setembro
-    const extra = (parseInt(this.state.simMat, 10) || 0) * 400 + (parseInt(this.state.simRen, 10) || 0) * 400;
-    const setembro = proj[2];
-    const simVal = setembro ? setembro.resultado["R$"] + extra : 0;
+    // ── série de meses ──
+    // corta o passado vazio: mês sem nenhuma entrada é mês em que a escola
+    // ainda não usava o sistema — mostrar só os custos fixos ali inventaria
+    // um prejuízo que não aconteceu.
+    const serieToda = CRM.financeiroSerie(9, 3);
+    const primeiroComDado = serieToda.findIndex(s => s.recebidoReais > 0 || s.previstoReais > 0);
+    const serieRaw = primeiroComDado > 0 ? serieToda.slice(primeiroComDado) : serieToda;
+    const maxSerie = Math.max.apply(null, serieRaw.map(s => Math.max(s.recebidoReais, s.previstoReais, s.saiuReais)).concat([1]));
+    const serie = serieRaw.map(s => {
+      const base = s.key > atualKey ? s.previstoReais : s.recebidoReais;
+      const futuro = s.key > atualKey;
+      const selecionado = s.key === mes.key;
+      return {
+        curto: s.curto, onClick: () => this.setState({ offset: s.offset, analise: null }),
+        titulo: s.label + " · entrou " + CRM.fmtMoney("R$", s.recebidoReais) + " · saiu " + CRM.fmtMoney("R$", s.saiuReais),
+        alturaBar: Math.max(2, Math.round(100 * base / maxSerie)) + "%",
+        cor: selecionado ? "#164951" : (futuro ? "#d9cfc0" : (s.resultadoReais >= 0 ? "#348a8e" : "#cf6b5c")),
+        corLabel: selecionado ? "#164951" : "#a2957f",
+        corValor: selecionado ? "#164951" : "#c9b9a6",
+        topo: base >= 1000 ? Math.round(base / 1000) + "k" : (base > 0 ? String(Math.round(base)) : ""),
+        alturaCusto: Math.round(100 * s.saiuReais / maxSerie) + "%"
+      };
+    });
 
-    // conciliação
+    // ── categorias ──
+    const barras = (mapa, cats) => {
+      const ids = Object.keys(mapa);
+      const totalRef = Math.max.apply(null, ids.map(id => CRM.emReais(mapa[id])).concat([1]));
+      return ids.map(id => {
+        const meta = CRM.catMeta(cats, id);
+        return { label: meta.label, cor: meta.cor, valor: duo(mapa[id]),
+          largura: Math.round(100 * CRM.emReais(mapa[id]) / totalRef) + "%" };
+      }).sort((a, b) => parseInt(b.largura, 10) - parseInt(a.largura, 10));
+    };
+
+    const statusMeta = e => e.pago ? { txt: "recebido", cor: "#5a9e4b", val: "#348a8e" }
+      : (e.atrasada ? { txt: "atrasada", cor: "#cf6b5c", val: "#cf6b5c" }
+                    : { txt: "a receber", cor: "#d4a574", val: "#9c6f56" });
+
+    const entradas = f.entradas.map(e => {
+      const st = statusMeta(e);
+      const catLabel = CRM.catMeta(CRM.CAT_ENTRADA, e.categoria).label;
+      const jaDiz = (e.detalhe || "").toLowerCase().indexOf(catLabel.toLowerCase().split(" ")[0]) >= 0;
+      return { nome: e.nome, detalhe: [e.detalhe, jaDiz ? "" : catLabel].filter(Boolean).join(" · "),
+        valor: CRM.fmtMoney(e.moeda, e.valor), status: st.txt, cor: st.cor, corValor: st.val,
+        href: e.pessoaId ? ("ISR%20-%20Perfil.dc.html?id=" + e.pessoaId) : "#",
+        removivel: !!e.lancId,
+        onRemove: () => { CRM.removeLancamento(e.lancId); this.bump(); } };
+    });
+
+    const saidas = f.saidas.map(s => ({
+      nome: s.nome, valor: CRM.fmtMoney(s.moeda, s.valor),
+      cor: CRM.catMeta(CRM.CAT_SAIDA, s.categoria).cor,
+      detalhe: s.fixo ? "custo fixo · " + CRM.catMeta(CRM.CAT_SAIDA, s.categoria).label
+                      : "lançamento de " + CRM.ddmm(s.data) + " · " + CRM.catMeta(CRM.CAT_SAIDA, s.categoria).label,
+      removivel: !!s.lancId,
+      onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); }
+    }));
+
+    // ── expectativa em camadas ──
+    const camadas = [
+      { label: "Já entrou", explica: "dinheiro na conta, sem risco", cor: "#348a8e", valor: duo(pv.confirmado) },
+      { label: "Contrato ativo a vencer", explica: "parcela combinada que ainda não venceu", cor: "#d4a574", valor: duo(pv.contratado) },
+      { label: "Em risco", explica: "venceu e não foi pago — precisa de cobrança", cor: "#cf6b5c", valor: duo(pv.emRisco) },
+      { label: "Pipeline comercial", explica: pv.leadsAtivos + " negociações abertas × " + pv.conversao + "% de conversão histórica · só conta deste mês em diante",
+        cor: "#9c6f56", valor: duo(pv.pipeline) }
+    ];
+
+    // ── custos fixos ──
+    const opcoesCatSaida = CRM.CAT_SAIDA.map(c => ({ id: c.id, label: c.label }));
+    const custos = CRM.CUSTOS_FIXOS.map((c, i) => ({
+      nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
+      cor: CRM.catMeta(CRM.CAT_SAIDA, c.categoria || "outros").cor,
+      opcoes: CRM.CAT_SAIDA.map(o => ({ id: o.id, label: o.label, sel: (c.categoria || "outros") === o.id })),
+      onCategoria: (ev) => { CRM.updateCusto(i, { categoria: ev.target.value }); this.bump(); },
+      onRemove: () => { if (confirm("Remover o custo \"" + c.nome + "\"?")) { CRM.removeCusto(i); this.bump(); } }
+    }));
+    const ct = CRM.custosTotais();
+
+    // ── conciliação ──
     const analise = this.state.analise;
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
       const feita = !!this.state.conciliadas[i];
@@ -248,41 +478,127 @@ class Component extends DCLogic {
         }
       };
     }) : [];
-    const semMatch = analise ? analise.semMatch.map(x => ({
-      transDesc: x.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, x.trans.valor),
-      icon: x.tipo === "saida" ? "#b8ada0" : "#d4a574",
-      motivo: x.tipo === "saida" ? "saída (custo — não concilia com parcela)" : "nenhuma parcela em aberto com esse valor"
-    })) : [];
+    const semMatch = analise ? analise.semMatch.map((x, i) => {
+      const saida = x.tipo === "saida";
+      const lancada = !!this.state.lancadas[i];
+      return {
+        transDesc: x.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, x.trans.valor),
+        icon: saida ? "#cf6b5c" : "#d4a574",
+        motivo: saida ? "saída do banco — vira lançamento do mês" : "nenhuma parcela em aberto com esse valor",
+        lancavel: saida && !lancada, lancada: lancada,
+        onLancar: () => {
+          const d = (x.trans.data || "").split("/");
+          CRM.addLancamento({ tipo: "saida", categoria: "outros", descricao: x.trans.descricao.slice(0, 60),
+            moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+            data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, { [i]: true }) }));
+        }
+      };
+    }) : [];
 
-    const ct = CRM.custosTotais();
+    const metaPadrao = CRM.METAS.faturamento || { "R$": 0, "€": 0 };
+    const totalEntrou = duo(f.recebido);
+
     return {
-      cards, meses,
-      custos: CRM.CUSTOS_FIXOS.map((c, i) => ({ nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
-        onRemove: () => { if (confirm("Remover o custo \"" + c.nome + "\"?")) { CRM.removeCusto(i); this.bump(); } } })),
-      custoNomeRef: this.custoNomeRef, custoMoedaRef: this.custoMoedaRef, custoValorRef: this.custoValorRef,
+      // navegação
+      mesLabel: mes.label, mesCurto: mes.curto,
+      quandoLabel: mes.key === atualKey ? "● mês atual" : (mes.key < atualKey ? "mês fechado" : "ainda vem"),
+      quandoCor: mes.key === atualKey ? "#9c6f56" : "#b3a693",
+      naoEhAtual: this.state.offset !== 0,
+      onMesAnterior: () => this.setState(s => ({ offset: s.offset - 1, analise: null })),
+      onMesProximo: () => this.setState(s => ({ offset: s.offset + 1, analise: null })),
+      onHoje: () => this.setState({ offset: 0, analise: null }),
+
+      numeros, metas, serie, camadas,
+      catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
+      catsSaida: barras(f.porCatSaida, CRM.CAT_SAIDA),
+      entradas, saidas, custos, opcoesCatSaida,
+      semEntradas: Object.keys(f.porCatEntrada).length === 0,
+      totalEntrouLabel: totalEntrou, totalSaiuLabel: duo(f.saiu),
+      conservador: duo(pv.conservador), otimista: duo(pv.otimista),
+
+      // meta
+      editandoMeta: this.state.editandoMeta,
+      labelEditarMeta: this.state.editandoMeta ? "fechar" : "ajustar meta do mês",
+      onToggleMeta: () => this.setState(s => ({ editandoMeta: !s.editandoMeta })),
+      metaBrlRef: this.metaBrlRef, metaEurRef: this.metaEurRef,
+      metaPadraoBRL: CRM.fmtMoney("R$", metaPadrao["R$"] || 0),
+      metaPadraoEUR: CRM.fmtMoney("€", metaPadrao["€"] || 0),
+      onSalvarMeta: () => {
+        const b = (this.metaBrlRef.current && this.metaBrlRef.current.value || "").trim();
+        const e = (this.metaEurRef.current && this.metaEurRef.current.value || "").trim();
+        if (b) CRM.setMetaMes(mes.key, "R$", CRM.parseMoney(b));
+        if (e) CRM.setMetaMes(mes.key, "€", CRM.parseMoney(e));
+        this.setState({ editandoMeta: false });
+      },
+
+      // lançamentos
+      entDescRef: this.entDescRef, entValorRef: this.entValorRef, entMoedaRef: this.entMoedaRef,
+      onAddEntrada: () => {
+        const desc = (this.entDescRef.current && this.entDescRef.current.value || "").trim();
+        const valor = CRM.parseMoney((this.entValorRef.current && this.entValorRef.current.value) || "");
+        if (!desc || !valor) return;
+        CRM.addLancamento({ tipo: "entrada", categoria: "outra", descricao: desc,
+          moeda: (this.entMoedaRef.current && this.entMoedaRef.current.value) || "R$",
+          valor, data: mes.key + "-15" });
+        this.entDescRef.current.value = ""; this.entValorRef.current.value = "";
+        this.bump();
+      },
+      saiDescRef: this.saiDescRef, saiValorRef: this.saiValorRef,
+      saiMoedaRef: this.saiMoedaRef, saiCatRef: this.saiCatRef,
+      onAddSaida: () => {
+        const desc = (this.saiDescRef.current && this.saiDescRef.current.value || "").trim();
+        const valor = CRM.parseMoney((this.saiValorRef.current && this.saiValorRef.current.value) || "");
+        if (!desc || !valor) return;
+        CRM.addLancamento({ tipo: "saida",
+          categoria: (this.saiCatRef.current && this.saiCatRef.current.value) || "outros",
+          descricao: desc,
+          moeda: (this.saiMoedaRef.current && this.saiMoedaRef.current.value) || "R$",
+          valor, data: mes.key + "-15" });
+        this.saiDescRef.current.value = ""; this.saiValorRef.current.value = "";
+        this.bump();
+      },
+
+      // custos fixos
+      custoNomeRef: this.custoNomeRef, custoMoedaRef: this.custoMoedaRef,
+      custoValorRef: this.custoValorRef, custoCatRef: this.custoCatRef,
       onAddCusto: () => {
         const nome = (this.custoNomeRef.current && this.custoNomeRef.current.value || "").trim();
         const moeda = (this.custoMoedaRef.current && this.custoMoedaRef.current.value) || "R$";
+        const cat = (this.custoCatRef.current && this.custoCatRef.current.value) || "outros";
         const valor = CRM.parseMoney((this.custoValorRef.current && this.custoValorRef.current.value) || "");
         if (!nome || !valor) return;
-        CRM.addCusto(nome, moeda, valor);
+        CRM.addCusto(nome, moeda, valor, cat);
         this.custoNomeRef.current.value = ""; this.custoValorRef.current.value = "";
         this.bump();
       },
       custosTotalBRL: CRM.fmtMoney("R$", ct["R$"]), custosTotalEUR: CRM.fmtMoney("€", ct["€"]),
-      simMat: this.state.simMat, simRen: this.state.simRen,
-      onSimMat: (e) => this.setState({ simMat: e.target.value }),
-      onSimRen: (e) => this.setState({ simRen: e.target.value }),
-      simResultado: fmt("R$", simVal), simCor: simVal >= 0 ? "#9ec970" : "#f4a099",
+
+      // câmbio
+      cambioRef: this.cambioRef, cambioValor: String(CRM.taxaCambio()),
+      cambioLabel: "R$ " + String(CRM.taxaCambio()).replace(".", ",") + " / €",
+      onSalvarCambio: () => {
+        const v = (this.cambioRef.current && this.cambioRef.current.value || "").trim();
+        if (v) { CRM.setTaxaCambio(v); this.cambioRef.current.value = ""; this.bump(); }
+      },
+
+      // resumo
+      labelCopiar: this.state.copiado ? "resumo copiado" : "copiar resumo do mês",
+      onCopiarResumo: () => {
+        const txt = CRM.resumoFinanceiroTexto(mes.key);
+        try { navigator.clipboard.writeText(txt); } catch (e) {}
+        this.setState({ copiado: true });
+        setTimeout(() => this.setState({ copiado: false }), 2500);
+      },
+
+      // conciliação
       moedaEUR: this.state.moedaExtrato === "€", moedaBRL: this.state.moedaExtrato === "R$",
-      onMoedaExtrato: (e) => this.setState({ moedaExtrato: e.target.value, analise: null, conciliadas: {} }),
-      extratoRef: this.extratoRef,
-      temAnalise: !!analise,
-      sugestoes, semMatch,
+      onMoedaExtrato: (e) => this.setState({ moedaExtrato: e.target.value, analise: null, conciliadas: {}, lancadas: {} }),
+      extratoRef: this.extratoRef, temAnalise: !!analise, sugestoes, semMatch,
       onAnalisar: () => {
         const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
         const trans = CRM.parseExtrato(txt);
-        this.setState({ analise: CRM.sugerirConciliacao(trans, this.state.moedaExtrato), conciliadas: {} });
+        this.setState({ analise: CRM.sugerirConciliacao(trans, this.state.moedaExtrato), conciliadas: {}, lancadas: {} });
       }
     };
   }

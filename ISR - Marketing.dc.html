@@ -29,8 +29,12 @@
     <sc-if value="{{ metasAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
         <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Metas do ciclo · você cadastra 1x, o sistema acompanha sozinho</div>
-        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">Valem pra Central, pro Marketing e pras barras de progresso. Ao virar o ciclo, atualize o nome e a data de início. Deixe em branco o que não muda.</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">Valem pra Central, pro Caixa e pras barras de progresso. A meta de faturamento é o padrão de todo mês — no Caixa você pode sobrescrever mês a mês. Deixe em branco o que não muda.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de faturamento R$ / mês</div>
+            <input ref="{{ mFatBrlRef }}" placeholder="{{ metaFatBRL }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de faturamento € / mês</div>
+            <input ref="{{ mFatEurRef }}" placeholder="{{ metaFatEUR }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de matrículas</div>
             <input ref="{{ mMatRef }}" type="number" placeholder="{{ metaMatAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de renovações</div>
@@ -151,6 +155,7 @@
 class Component extends DCLogic {
   state = { metasAberto: false, tick: 0 };
   mMatRef = React.createRef(); mRenRef = React.createRef();
+  mFatBrlRef = React.createRef(); mFatEurRef = React.createRef();
   mCicloRef = React.createRef(); mInicioRef = React.createRef();
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
   renderVals() {
@@ -192,13 +197,18 @@ class Component extends DCLogic {
       mtFg: this.state.metasAberto ? "#fff" : "#164951",
       onToggleMetas: () => this.setState({ metasAberto: !this.state.metasAberto }),
       mMatRef: this.mMatRef, mRenRef: this.mRenRef, mCicloRef: this.mCicloRef, mInicioRef: this.mInicioRef,
+      mFatBrlRef: this.mFatBrlRef, mFatEurRef: this.mFatEurRef,
       metaMatAtual: String(M.matriculas), metaRenAtual: String(M.renovacoes), cicloAtual: M.cicloLabel,
+      metaFatBRL: CRM.fmtMoney("R$", (M.faturamento || {})["R$"] || 0),
+      metaFatEUR: CRM.fmtMoney("€", (M.faturamento || {})["€"] || 0),
       onSalvarMetas: () => {
         const patch = {};
         const mat = parseInt(this.val(this.mMatRef), 10); if (mat > 0) patch.matriculas = mat;
         const ren = parseInt(this.val(this.mRenRef), 10); if (this.val(this.mRenRef) && ren >= 0) patch.renovacoes = ren;
         const cic = this.val(this.mCicloRef); if (cic) patch.cicloLabel = cic;
         const ini = this.val(this.mInicioRef); if (ini) patch.cicloInicio = ini;
+        const fb = this.val(this.mFatBrlRef); if (fb) CRM.setMetaPadrao("R$", CRM.parseMoney(fb));
+        const fe = this.val(this.mFatEurRef); if (fe) CRM.setMetaPadrao("€", CRM.parseMoney(fe));
         if (Object.keys(patch).length) CRM.setMetas(patch);
         this.setState({ metasAberto: false });
       }
