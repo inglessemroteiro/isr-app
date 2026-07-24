@@ -131,6 +131,25 @@
             </div>
           </sc-if>
 
+          <!-- MOEDAS DA ALUNA -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Moedas</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 15px; height: 15px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 2px solid #c9963f;"></span>
+                  <strong style="font-size: 15px; color: #164951;">{{ moedasTotal }}</strong>
+                </span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <input ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="width: 80px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <input ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="flex: 1; min-width: 130px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onAddMoedas }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar</button>
+              </div>
+              <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">Presença, parcela em dia e onboarding pontuam sozinhos. Aqui entram bônus (indicação, desafios) e resgates (valor negativo).</p>
+            </div>
+          </sc-if>
+
           <!-- AULAS PARTICULARES · PACOTE -->
           <sc-if value="{{ ehParticular }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -237,6 +256,7 @@ class Component extends DCLogic {
   checkinDateRef = React.createRef();
   pacAulasRef = React.createRef();
   renegValorRef = React.createRef();
+  moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
 
   emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -375,6 +395,15 @@ class Component extends DCLogic {
         if (v) { CRM.setProximoCheckin(p.id, v); this.bump(); }
       };
       out.onCheckinFeito = () => { CRM.registrarCheckinFeito(p.id); this.bump(); };
+      out.moedasTotal = CRM.moedasDe(p.id).total;
+      out.moedasValorRef = this.moedasValorRef; out.moedasMotivoRef = this.moedasMotivoRef;
+      out.onAddMoedas = () => {
+        const v = parseInt((this.moedasValorRef.current && this.moedasValorRef.current.value) || "", 10);
+        if (!v) return;
+        CRM.addMoedas(p.id, v, ((this.moedasMotivoRef.current && this.moedasMotivoRef.current.value) || "").trim());
+        this.moedasValorRef.current.value = ""; if (this.moedasMotivoRef.current) this.moedasMotivoRef.current.value = "";
+        this.bump();
+      };
     }
 
     // pacote de aulas particulares

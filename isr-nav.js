@@ -26,7 +26,7 @@
     { id: "turmas", label: "Turmas", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial"] },
     { id: "marketing", label: "Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
     { id: "professor", label: "Professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora"] },
-    { id: "aluna", label: "App da aluna", href: "index.html", perfis: null }
+    { id: "aluna", label: "App da aluna", href: "ISR - Aluna.dc.html", perfis: null }
   ];
 
   var path = "";

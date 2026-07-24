@@ -1244,7 +1244,7 @@
     var payload = {
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
-      tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(),
+      tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
     try {
@@ -1269,6 +1269,7 @@
             if (d.data.tarefas) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(d.data.tarefas)); } catch (e) {} }
             if (d.data.feriados) { try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(d.data.feriados)); } catch (e) {} }
             if (d.data.metas) { try { localStorage.setItem(METAS_KEY, JSON.stringify(d.data.metas)); } catch (e) {} }
+            if (d.data.moedas) { try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(d.data.moedas)); } catch (e) {} }
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -1343,7 +1344,7 @@
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Marketing"];
+      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor"];
       var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
       if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
@@ -1446,6 +1447,73 @@
     return out;
   }
 
+  // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
+  var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
+  var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30 };
+  function moedasAjustesAll() {
+    try { return JSON.parse(localStorage.getItem(MOEDAS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function addMoedas(pessoaId, valor, motivo) {
+    var m = moedasAjustesAll();
+    m[pessoaId] = m[pessoaId] || [];
+    m[pessoaId].push({ id: "mo" + Date.now(), valor: parseInt(valor, 10) || 0, motivo: motivo || "", em: iso(today()) });
+    try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    mutate(pessoaId, function (p) {
+      var v = parseInt(valor, 10) || 0;
+      pushHist(p, "contato", "Moedas: " + (v > 0 ? "+" : "") + v + (motivo ? " · " + motivo : ""));
+    });
+  }
+  function moedasDe(pessoaId) {
+    var extrato = [];
+    var cham = chamadasAll();
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      var est = estadoPresenca(ch.presencas[pessoaId]);
+      var turmaCurta = (ch.turma || "").split(" · ")[0];
+      if (est === "presente") extrato.push({ em: ch.data, label: "Presença · " + turmaCurta, valor: MOEDAS_REGRAS.presenca });
+      else if (est === "atraso") extrato.push({ em: ch.data, label: "Presença (atraso) · " + turmaCurta, valor: MOEDAS_REGRAS.atraso });
+    });
+    var p = getPessoa(pessoaId);
+    if (p) {
+      (p.contratos || []).forEach(function (c) {
+        (c.meses || []).forEach(function (m) {
+          if (m.pago) extrato.push({ em: "", label: "Parcela de " + m.label + " paga em dia", valor: MOEDAS_REGRAS.parcelaPaga });
+        });
+      });
+      if (p.onboarding && p.onboarding.length && p.onboarding.every(function (c) { return c.feito; }))
+        extrato.push({ em: "", label: "Onboarding completo", valor: MOEDAS_REGRAS.onboardingCompleto });
+    }
+    (moedasAjustesAll()[pessoaId] || []).forEach(function (a) {
+      extrato.push({ em: a.em, label: a.motivo || (a.valor > 0 ? "Bônus da escola" : "Resgate"), valor: a.valor });
+    });
+    extrato.sort(function (a, b) { return (b.em || "0000") < (a.em || "0000") ? -1 : 1; });
+    var total = extrato.reduce(function (acc, e) { return acc + e.valor; }, 0);
+    return { total: total, extrato: extrato };
+  }
+
+  // ── RSVP DE AULAS EXTRAS (aluna confirma presença) ────────────
+  function rsvpEvento(eventoId, pessoaId, vai) {
+    var l = eventosLista();
+    l.forEach(function (e) {
+      if (e.id === eventoId) { e.rsvps = e.rsvps || {}; e.rsvps[pessoaId] = !!vai; }
+    });
+    eventosSave(l); return l;
+  }
+
+  // ── ALUNA PEDE CORREÇÃO DE TAREFA (vira pendência da equipe) ──
+  function solicitarCorrecao(pessoaId, texto) {
+    var p = getPessoa(pessoaId);
+    if (!p) return;
+    var dono = ["Gabi", "Érika", "Carla"].indexOf(p.professora) >= 0 ? p.professora : "Gabi";
+    addTarefa({ titulo: "Corrigir tarefa · " + p.nome + (texto ? " — " + texto : ""),
+      dono: dono, prazo: iso(today()), por: p.nome });
+    mutate(pessoaId, function (pp) {
+      pushHist(pp, "contato", "Pediu correção de tarefa" + (texto ? " · " + texto : ""));
+    });
+  }
+
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
   var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
     SEG: 1, TER: 2, QUA: 3, QUI: 4, SEX: 5 };
@@ -1510,9 +1578,12 @@
           titulo: "Matrícula · " + p.nome, responsavel: "Carla" });
     });
     eventosLista().forEach(function (e) {
-      if (dentro(e.data))
+      if (dentro(e.data)) {
+        var rsvps = Object.keys(e.rsvps || {}).filter(function (k) { return e.rsvps[k]; }).length;
         itens.push({ data: e.data, hora: e.hora, tipo: "aula_extra",
-          titulo: "Aula extra · " + e.titulo, responsavel: e.responsavel, eventoId: e.id });
+          titulo: "Aula extra · " + e.titulo + (rsvps ? " · " + rsvps + (rsvps === 1 ? " confirmada" : " confirmadas") : ""),
+          responsavel: e.responsavel, eventoId: e.id });
+      }
     });
     itens.sort(function (a, b) { return (a.data + (a.hora || "")) < (b.data + (b.hora || "")) ? -1 : 1; });
     return itens;
@@ -1540,6 +1611,7 @@
     localStorage.removeItem(TAREFAS_KEY);
     localStorage.removeItem(FERIADOS_KEY);
     localStorage.removeItem(METAS_KEY);
+    localStorage.removeItem(MOEDAS_KEY);
     localStorage.removeItem(CUSTOS_KEY);
     ensureSeed();
   }
@@ -1584,6 +1656,8 @@
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
     chamadasDaTurma: chamadasDaTurma,
+    moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
+    rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
     estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
