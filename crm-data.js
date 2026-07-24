@@ -843,12 +843,12 @@
   //  renovação e é o único que a aluna responde, não a gente.
   // ══════════════════════════════════════════════════════════════
   var TOQUE_TIPOS = [
-    { id: "checkin",   label: "Check-in",        cor: "#2a9d8f", desc: "Como você está indo?" },
-    { id: "feedback",  label: "Feedback",        cor: "#6b5b95", desc: "Devolutiva de tarefa ou áudio" },
+    { id: "checkin",   label: "Acompanhamento",  cor: "#2a9d8f", desc: "Conversa sobre como ela está indo" },
+    { id: "feedback",  label: "Devolutiva",      cor: "#6b5b95", desc: "Retorno sobre tarefa ou áudio" },
     { id: "elogio",    label: "Reconhecimento",  cor: "#9ec970", desc: "Celebrar um avanço" },
-    { id: "falta",     label: "Sumiço",          cor: "#e07856", desc: "Faltou e você foi atrás" },
-    { id: "cobranca",  label: "Cobrança",        cor: "#cf6b5c", desc: "Pagamento" },
-    { id: "renovacao", label: "Renovação",       cor: "#d4a574", desc: "Conversa de próximo ciclo" },
+    { id: "falta",     label: "Ausência",        cor: "#e07856", desc: "Contato após falta" },
+    { id: "cobranca",  label: "Cobrança",        cor: "#cf6b5c", desc: "Assunto financeiro" },
+    { id: "renovacao", label: "Renovação",       cor: "#d4a574", desc: "Conversa sobre o próximo ciclo" },
     { id: "outro",     label: "Outro",           cor: "#9c6f56", desc: "" }
   ];
   var TOQUES_KEY = "isr_toques_v1";
@@ -866,7 +866,7 @@
       por: por || ((gestaoUser() || {}).nome || "") };
     l.push(t); toquesSave(l);
     var meta = TOQUE_TIPOS.filter(function (x) { return x.id === t.tipo; })[0];
-    addHistory(pessoaId, "contato", (meta ? meta.label : "Contato") + " no WhatsApp" + (nota ? " · " + nota : ""), t.por);
+    addHistory(pessoaId, "contato", (meta ? meta.label : "Contato") + " por WhatsApp" + (nota ? " · " + nota : ""), t.por);
     return t;
   }
   function toquesDe(pessoaId) {
@@ -881,11 +881,11 @@
 
   // Pulso: 1 a 5, respondido pela aluna (você transcreve o que ela disse).
   var PULSO_META = [
-    { nota: 1, label: "Travada",     cor: "#cf6b5c" },
-    { nota: 2, label: "Difícil",     cor: "#e07856" },
-    { nota: 3, label: "Devagar",     cor: "#d4a574" },
-    { nota: 4, label: "Evoluindo",   cor: "#2a9d8f" },
-    { nota: 5, label: "Muito bem",   cor: "#5a9e4b" }
+    { nota: 1, label: "Muita dificuldade",     cor: "#cf6b5c" },
+    { nota: 2, label: "Com dificuldade",       cor: "#e07856" },
+    { nota: 3, label: "Progresso lento",       cor: "#d4a574" },
+    { nota: 4, label: "Progresso consistente", cor: "#2a9d8f" },
+    { nota: 5, label: "Progresso excelente",   cor: "#5a9e4b" }
   ];
   function pulsosLista() {
     try { var l = JSON.parse(localStorage.getItem(PULSOS_KEY)); if (l && l.length) return l; } catch (e) {}
@@ -901,7 +901,7 @@
       por: por || ((gestaoUser() || {}).nome || "") };
     l.push(p); pulsosSave(l);
     var m = PULSO_META.filter(function (x) { return x.nota === n; })[0];
-    addHistory(pessoaId, "nota", "Pulso: " + n + "/5 · " + m.label + (comentario ? " — " + comentario : ""), p.por);
+    addHistory(pessoaId, "nota", "Avaliação de progresso: " + n + "/5 · " + m.label + (comentario ? " — " + comentario : ""), p.por);
     return p;
   }
   function pulsosDe(pessoaId) {
@@ -922,15 +922,15 @@
   // Quem falar esta semana e por quê. A 80 alunas, um toque por
   // aluna por ciclo dá ~7 por semana — é conta que cabe no dia.
   var MOTIVOS_TOQUE = {
-    faltou:      { label: "Faltou nas últimas aulas", peso: 50, tipo: "falta",     cor: "#e07856" },
-    pulso_baixo: { label: "Disse que está travada",   peso: 45, tipo: "checkin",   cor: "#cf6b5c" },
-    pulso_caiu:  { label: "Piorou desde o último",    peso: 40, tipo: "checkin",   cor: "#e07856" },
+    faltou:      { label: "Ausente nas últimas aulas", peso: 50, tipo: "falta",     cor: "#e07856" },
+    pulso_baixo: { label: "Relatou dificuldade",       peso: 45, tipo: "checkin",   cor: "#cf6b5c" },
+    pulso_caiu:  { label: "Avaliação em queda",        peso: 40, tipo: "checkin",   cor: "#e07856" },
     atrasada:    { label: "Pagamento atrasado",       peso: 35, tipo: "cobranca",  cor: "#cf6b5c" },
-    nova:        { label: "Primeiras semanas",        peso: 32, tipo: "checkin",   cor: "#9ec970" },
-    renovacao:   { label: "Renovação chegando",       peso: 30, tipo: "renovacao", cor: "#6b5b95" },
-    sem_pulso:   { label: "Nunca perguntou como está", peso: 25, tipo: "checkin",  cor: "#d4a574" },
-    sumida:      { label: "Sem contato há muito tempo", peso: 20, tipo: "checkin", cor: "#d4a574" },
-    indo_bem:    { label: "Indo bem — vale reconhecer", peso: 8, tipo: "elogio",   cor: "#9ec970" }
+    nova:        { label: "Início de contrato",        peso: 32, tipo: "checkin",   cor: "#9ec970" },
+    renovacao:   { label: "Renovação próxima",         peso: 30, tipo: "renovacao", cor: "#6b5b95" },
+    sem_pulso:   { label: "Sem avaliação registrada",  peso: 25, tipo: "checkin",  cor: "#d4a574" },
+    sumida:      { label: "Sem contato há mais de 21 dias", peso: 20, tipo: "checkin", cor: "#d4a574" },
+    indo_bem:    { label: "Evolução positiva",          peso: 8, tipo: "elogio",   cor: "#9ec970" }
   };
   function filaAcompanhamento() {
     var hoje = iso(today());
@@ -996,8 +996,8 @@
   ];
   var ETAPAS_SEMANA = [
     { id: "missao",   label: "Missão enviada",   curto: "missão",   cor: "#348a8e" },
-    { id: "audio",    label: "Áudio dela",       curto: "áudio",    cor: "#9ec970" },
-    { id: "feedback", label: "Feedback devolvido", curto: "feedback", cor: "#fc9082" }
+    { id: "audio",    label: "Áudio recebido",   curto: "áudio",    cor: "#9ec970" },
+    { id: "feedback", label: "Devolutiva enviada", curto: "devolutiva", cor: "#fc9082" }
   ];
   var PROGRAMAS_KEY = "isr_programas_v1";
   function programasLista() {
@@ -1107,11 +1107,11 @@
   // o único jeito de saber como alguém está é abrindo perfil por perfil.
   var RISCOS = {
     inadimplente: { label: "Pagamento atrasado", cor: "#cf6b5c", peso: 40 },
-    faltando:     { label: "Faltando",           cor: "#e07856", peso: 30 },
+    faltando:     { label: "Ausências recentes", cor: "#e07856", peso: 30 },
     sem_contato:  { label: "Sem contato",        cor: "#d4a574", peso: 20 },
-    onboarding:   { label: "Onboarding parado",  cor: "#9c6f56", peso: 25 },
-    renovacao:    { label: "Renovação chegando", cor: "#6b5b95", peso: 15 },
-    travada:      { label: "Travada",            cor: "#cf6b5c", peso: 45 }
+    onboarding:   { label: "Integração pendente", cor: "#9c6f56", peso: 25 },
+    renovacao:    { label: "Renovação próxima",  cor: "#6b5b95", peso: 15 },
+    travada:      { label: "Dificuldade relatada", cor: "#cf6b5c", peso: 45 }
   };
   function alunasPainel() {
     var hoje = iso(today());
