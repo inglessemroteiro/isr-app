@@ -21,10 +21,9 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">CRM · Funil de leads</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
+        <button onclick="{{ onLinkCadastro }}" title="Copiar o link público de cadastro + sinal" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">{{ linkCadastroLabel }}</button>
+        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">Mensagens prontas</a>
         <button onclick="{{ onNovoLead }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
-        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
-        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Mensagens prontas</a>
-        <button onclick="{{ resetDemo }}" title="Restaurar dados de demonstração" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 999px; cursor: pointer;">↺ Demo</button>
       </div>
     </header>
 
@@ -197,6 +196,7 @@
                   </select>
                   <select ref="{{ lead.matTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
                     <option value="Matrícula">Matrícula</option>
+                    <option value="Auto-matrícula">Auto-matrícula</option>
                     <option value="Renovação">Renovação</option>
                     <option value="Continuidade">Continuidade</option>
                   </select>
@@ -213,6 +213,7 @@
                   </select>
                   <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                   <input ref="{{ lead.matAulasRef }}" type="number" placeholder="Nº de aulas (se particular)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ lead.matSinalRef }}" placeholder="Sinal/entrada já combinado (ex. R$ 200 — opcional)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 </div>
                 <div style="display: flex; gap: 8px;">
                   <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">✓ Matricular (cria contrato + parcelas + onboarding)</button>
@@ -286,13 +287,15 @@
       </div>
     </div>
 
+    <p style="margin: 18px 0 0; text-align: right;"><button onclick="{{ resetDemo }}" style="border: none; background: transparent; color: #c9c1b6; font-size: 11px; cursor: pointer;">↺ restaurar dados de demonstração</button></p>
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", tick: 0 };
+  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0 };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
+  matSinalRef = React.createRef();
   noteRef = React.createRef();
   matTurmaRef = React.createRef(); matTipoRef = React.createRef(); matMoedaRef = React.createRef();
   matValorRef = React.createRef(); matParcelasRef = React.createRef(); matVencRef = React.createRef();
@@ -431,7 +434,7 @@ class Component extends DCLogic {
         out.onMatricularCancela = () => this.setState({ matriculandoId: null });
         out.matTurmaRef = this.matTurmaRef; out.matTipoRef = this.matTipoRef; out.matMoedaRef = this.matMoedaRef;
         out.matValorRef = this.matValorRef; out.matParcelasRef = this.matParcelasRef; out.matVencRef = this.matVencRef;
-        out.matAulasRef = this.matAulasRef;
+        out.matAulasRef = this.matAulasRef; out.matSinalRef = this.matSinalRef;
         out.turmasOpts = CRM.ocupacaoTurmas().map(t => ({
           id: t.id, sel: !!l.turmaInteresse && l.turmaInteresse === t.label,
           label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "LOTADA")
@@ -442,7 +445,7 @@ class Component extends DCLogic {
             turmaId: v(this.matTurmaRef), tipo: v(this.matTipoRef) || "Matrícula",
             moeda: v(this.matMoedaRef) || "R$", valorParcela: v(this.matValorRef),
             parcelas: v(this.matParcelasRef) || 3, vencDia: parseInt(v(this.matVencRef), 10) || 10,
-            aulasContratadas: v(this.matAulasRef)
+            aulasContratadas: v(this.matAulasRef), sinalValor: v(this.matSinalRef)
           });
           this.setState({ matriculandoId: null, openId: null, tab: "matriculados" });
         };
@@ -465,6 +468,23 @@ class Component extends DCLogic {
       novasCount: novas,
       novasLabel: novas === 1 ? "nova inscrição hoje" : "novas inscrições hoje",
       resetDemo: () => { CRM.resetDemo(); this.setState({ openId: null, tab: "para_hoje" }); },
+      linkCadastroLabel: this.state.linkCopiado ? "✓ Link copiado!" : "Link de cadastro",
+      onLinkCadastro: () => {
+        const b = CRM.backendUrl();
+        if (!b) {
+          window.alert("Antes, conecte o banco central em gestao.html (Configurar banco central) — o link de cadastro envia os dados pra lá.");
+          return;
+        }
+        const base = window.location.href.replace(/[^/]*$/, "");
+        const link = base + "cadastro.html?b=" + encodeURIComponent(b);
+        const done = () => {
+          this.setState({ linkCopiado: true });
+          setTimeout(() => this.setState({ linkCopiado: false }), 2500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(done).catch(() => { window.prompt("Copie o link:", link); });
+        } else { window.prompt("Copie o link:", link); }
+      },
       // novo lead manual
       novoLeadAberto: this.state.novoLead,
       nlErro: this.state.nlErro,

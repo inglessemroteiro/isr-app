@@ -19,11 +19,30 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Origens & Conversão</h1>
       </div>
       <div style="display: flex; gap: 8px;">
-        <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #e5dccf; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">⌂ Central</a>
-        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Abrir CRM</a>
+        <button onclick="{{ onToggleMetas }}" style="border: 1px solid #e5dccf; background: {{ mtBg }}; color: {{ mtFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Editar metas</button>
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Abrir CRM</a>
       </div>
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">De onde vêm seus leads, quanto cada canal converte e por que as vendas se perdem. Alimentado pelos mesmos dados do CRM — origem gravada uma vez, imutável.</p>
+
+    <!-- EDITAR METAS -->
+    <sc-if value="{{ metasAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Metas do ciclo · você cadastra 1x, o sistema acompanha sozinho</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">Valem pra Central, pro Marketing e pras barras de progresso. Ao virar o ciclo, atualize o nome e a data de início. Deixe em branco o que não muda.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de matrículas</div>
+            <input ref="{{ mMatRef }}" type="number" placeholder="{{ metaMatAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de renovações</div>
+            <input ref="{{ mRenRef }}" type="number" placeholder="{{ metaRenAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome do ciclo</div>
+            <input ref="{{ mCicloRef }}" placeholder="{{ cicloAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Início do ciclo</div>
+            <input ref="{{ mInicioRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+        </div>
+        <button onclick="{{ onSalvarMetas }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Salvar metas</button>
+      </div>
+    </sc-if>
 
     <!-- META DO CICLO -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px;">
@@ -130,6 +149,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
+  state = { metasAberto: false, tick: 0 };
+  mMatRef = React.createRef(); mRenRef = React.createRef();
+  mCicloRef = React.createRef(); mInicioRef = React.createRef();
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { canais: [], origens: [], motivos: [], semPerdas: true, totalAtivos: 0, totalMatriculados: 0, totalPerdidos: 0, conversaoGeral: "—", ciclo: "", matriculasMeta: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%" };
@@ -162,7 +185,25 @@ class Component extends DCLogic {
       perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id
     }));
 
-    return {
+    const M = CRM.METAS;
+    const metasProps = {
+      metasAberto: !!this.state.metasAberto,
+      mtBg: this.state.metasAberto ? "#164951" : "#fff",
+      mtFg: this.state.metasAberto ? "#fff" : "#164951",
+      onToggleMetas: () => this.setState({ metasAberto: !this.state.metasAberto }),
+      mMatRef: this.mMatRef, mRenRef: this.mRenRef, mCicloRef: this.mCicloRef, mInicioRef: this.mInicioRef,
+      metaMatAtual: String(M.matriculas), metaRenAtual: String(M.renovacoes), cicloAtual: M.cicloLabel,
+      onSalvarMetas: () => {
+        const patch = {};
+        const mat = parseInt(this.val(this.mMatRef), 10); if (mat > 0) patch.matriculas = mat;
+        const ren = parseInt(this.val(this.mRenRef), 10); if (this.val(this.mRenRef) && ren >= 0) patch.renovacoes = ren;
+        const cic = this.val(this.mCicloRef); if (cic) patch.cicloLabel = cic;
+        const ini = this.val(this.mInicioRef); if (ini) patch.cicloInicio = ini;
+        if (Object.keys(patch).length) CRM.setMetas(patch);
+        this.setState({ metasAberto: false });
+      }
+    };
+    return Object.assign(metasProps, {
       canais, origens, motivos, semPerdas: motivos.length === 0,
       totalAtivos: totalAtivo, totalMatriculados: totalMat, totalPerdidos: totalPerd,
       conversaoGeral: fechados > 0 ? Math.round(100 * totalMat / fechados) + "%" : "—",
@@ -171,7 +212,7 @@ class Component extends DCLogic {
       renovacoesMeta: metas.renovacoes + "/" + metas.metaRenovacoes,
       pMatriculas: Math.min(100, Math.round(100 * metas.matriculas / metas.metaMatriculas)) + "%",
       pRenovacoes: Math.min(100, Math.round(100 * metas.renovacoes / metas.metaRenovacoes)) + "%"
-    };
+    });
   }
 }
 </script>

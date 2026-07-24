@@ -15,7 +15,7 @@
 
     <!-- TOPO -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-      <a href="ISR%20-%20Central.dc.html" style="text-decoration: none; background: #fff; border: 1px solid #eee3d6; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px;">← Central</a>
+      <span></span>
       <a href="{{ waDireto }}" target="_blank" rel="noopener" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">WhatsApp</a>
     </div>
 
@@ -68,6 +68,14 @@
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Contrato vigente</div>
               <div style="font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
               <div style="font-size: 12px; color: #6b6155; margin-bottom: 12px;">{{ contratoParcela }} · {{ contratoVenc }} · termina {{ contratoFim }}</div>
+              <sc-if value="{{ temSinal }}">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                  <span style="background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 11px; border-radius: 999px;">{{ sinalLabel }}</span>
+                  <sc-if value="{{ sinalPendente }}">
+                    <button onclick="{{ onSinalRecebido }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; cursor: pointer;">marcar recebido</button>
+                  </sc-if>
+                </div>
+              </sc-if>
               <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <sc-for list="{{ mesesView }}" as="m" hint-placeholder-count="6">
                   <button onclick="{{ m.onClick }}" title="Clique para marcar paga/pendente" style="border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 9px; font-weight: 700; padding: 7px 8px; border-radius: 8px; cursor: pointer; min-width: 64px; text-align: center;">
@@ -76,6 +84,10 @@
                     <div style="font-size: 8px; margin-top: 1px;">{{ m.icon }}</div>
                   </button>
                 </sc-for>
+              </div>
+              <div style="display: flex; gap: 6px; margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px; align-items: center; flex-wrap: wrap;">
+                <input ref="{{ renegValorRef }}" placeholder="Novo valor (ex. R$ 350)" style="flex: 1; min-width: 120px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onRenegociar }}" title="Recalcula todas as parcelas em aberto com o novo valor" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Renegociar parcelas em aberto</button>
               </div>
             </div>
 
@@ -224,6 +236,7 @@ class Component extends DCLogic {
   docLinkRef = React.createRef();
   checkinDateRef = React.createRef();
   pacAulasRef = React.createRef();
+  renegValorRef = React.createRef();
 
   emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -318,6 +331,22 @@ class Component extends DCLogic {
     };
 
     if (out.temContrato) {
+      out.temSinal = !!c.sinal;
+      if (c.sinal) {
+        out.sinalPendente = !c.sinal.recebido;
+        out.sinalLabel = "Sinal " + c.sinal.valor + (c.sinal.recebido ? " · recebido" : " · aguardando");
+        out.sinalBg = c.sinal.recebido ? "rgba(90,158,75,0.14)" : "rgba(224,120,86,0.14)";
+        out.sinalFg = c.sinal.recebido ? "#5a9e4b" : "#c96a48";
+        out.onSinalRecebido = () => { CRM.setSinalRecebido(p.id, true); this.bump(); };
+      }
+      out.renegValorRef = this.renegValorRef;
+      out.onRenegociar = () => {
+        const v = ((this.renegValorRef.current && this.renegValorRef.current.value) || "").trim();
+        if (!v) return;
+        CRM.renegociarContrato(p.id, { novoValor: v, motivo: "renegociação" });
+        this.renegValorRef.current.value = "";
+        this.bump();
+      };
       out.contratoTipo = c.tipo; out.contratoCiclos = c.ciclos;
       out.contratoParcela = c.parcelaValor || "—";
       out.contratoVenc = c.vencDia === "auto" ? "auto matrícula" : "venc. dia " + c.vencDia;

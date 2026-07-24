@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Turma</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <sc-if value="{{ naoEncontrada }}">
+      <div style="text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+        <p style="margin: 0; font-size: 14px;">Turma não encontrada. Abra pela tela Turmas & Projetos.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+      <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
+        <div>
+          <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Pedagógico · Turma</p>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">{{ nivel }}</h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="{{ onToggleEditar }}" style="border: 1px solid #e5dccf; background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">{{ edLabel }}</button>
+          <sc-if value="{{ temMeet }}">
+            <a href="{{ meet }}" target="_blank" rel="noopener" style="text-decoration: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Entrar na aula →</a>
+          </sc-if>
+        </div>
+      </header>
+      <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155;">{{ contexto }}</p>
+
+      <!-- EDITAR TURMA / MATERIAIS -->
+      <sc-if value="{{ editando }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Editar turma e materiais · deixe em branco o que não muda</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+            <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ projeto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edMeetRef }}" placeholder="Link da aula (Meet)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edGuideRef }}" placeholder="Link do Teacher's Guide" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edCadernoRef }}" placeholder="Link do Caderno de tarefas" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edSlidesRef }}" placeholder="Link dos Slides" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edSyllabusRef }}" placeholder="Link do Syllabus" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edCalRef }}" placeholder="Link do Calendário" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          </div>
+          <button onclick="{{ onSalvarEdicao }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">✓ Salvar</button>
+        </div>
+      </sc-if>
+
+      <div style="display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 16px; align-items: start;">
+
+        <!-- COLUNA ESQUERDA -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+
+          <!-- ALUNAS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f6eee4;">
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Alunas · {{ ocupLabel }}</span>
+              <a href="{{ chamadaHref }}" style="text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">fazer chamada →</a>
+            </div>
+            <sc-if value="{{ semAlunas }}">
+              <div style="text-align: center; padding: 26px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aluna matriculada ainda.</div>
+            </sc-if>
+            <sc-for list="{{ alunas }}" as="al" hint-placeholder-count="5">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid #f7f2ea;">
+                <a href="{{ al.perfilHref }}" style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ al.nome }}</a>
+                <sc-if value="{{ al.faltasInfo }}">
+                  <span style="flex: none; font-size: 10px; color: #b3a693;">{{ al.faltasInfo }}</span>
+                </sc-if>
+                <span style="flex: none; background: {{ al.pagBg }}; color: {{ al.pagFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px;">{{ al.pagLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- CHAMADAS RECENTES -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Chamadas recentes</div>
+            <sc-if value="{{ semChamadas }}">
+              <div style="font-size: 12px; color: #b3a693;">Nenhuma chamada registrada ainda — use "fazer chamada" acima.</div>
+            </sc-if>
+            <sc-for list="{{ chamadas }}" as="ch" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-size: 12px;">
+                <strong style="color: #164951;">{{ ch.data }}</strong>
+                <span style="color: #6b6155;">{{ ch.resumo }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+
+          <!-- PROJETO DO CICLO -->
+          <div style="background: #164951; border-radius: 12px; padding: 14px 16px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700; margin-bottom: 4px;">Projeto do ciclo {{ ciclo }}</div>
+            <div style="font-size: 16px; font-weight: 700; color: #9ec970;">{{ projeto }}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 4px;">Prof. {{ professora }} · {{ horario }}</div>
+          </div>
+
+          <!-- MATERIAIS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Materiais da turma</div>
+            <sc-for list="{{ materiais }}" as="mt" hint-placeholder-count="6">
+              <sc-if value="{{ mt.temLink }}">
+                <a href="{{ mt.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ mt.cor }}; flex: none;"></span>
+                  <span style="flex: 1; font-size: 12.5px; font-weight: 700; color: #164951;">{{ mt.label }}</span>
+                  <span style="font-size: 11px; color: #348a8e; font-weight: 700;">abrir →</span>
+                </a>
+              </sc-if>
+              <sc-if value="{{ mt.semLink }}">
+                <div style="display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #e0dcd6; flex: none;"></span>
+                  <span style="flex: 1; font-size: 12.5px; color: #b8ada0;">{{ mt.label }}</span>
+                  <span style="font-size: 10px; color: #c9c1b6;">sem link — use "editar"</span>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+
+          <!-- TAREFA DE CASA -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Tarefa de casa da semana</div>
+            <sc-if value="{{ temTarefaCasa }}">
+              <div style="background: #eef4f4; border: 1px solid #c9dede; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;">
+                <div style="font-size: 12.5px; color: #164951; line-height: 1.55;">{{ tarefaCasaTexto }}</div>
+                <div style="font-size: 10px; color: #8a7c6b; margin-top: 4px;">passada em {{ tarefaCasaEm }}</div>
+              </div>
+            </sc-if>
+            <div style="display: flex; gap: 6px;">
+              <input ref="{{ tcTextoRef }}" placeholder="Nova tarefa... (ex. Caderno p. 12-14 + áudio no grupo)" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 12px; padding: 9px 11px; border-radius: 8px; font-family: inherit;" />
+              <button onclick="{{ onSalvarTarefaCasa }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer;">Passar</button>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">A tarefa fica registrada na turma — na área da aluna ela vai aparecer como "tarefa da semana".</p>
+          </div>
+
+          <!-- PEDIR À GABI -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Pedir à Gabi</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <select ref="{{ pgTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <option value="Revisar aula">Revisar aula</option>
+                <option value="Planejar aula">Planejar aula</option>
+                <option value="Revisar material">Revisar material</option>
+              </select>
+              <input ref="{{ pgDetalheRef }}" placeholder="Detalhe (ex. aula de qui 30/07)" style="flex: 1; min-width: 140px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 12px; padding: 9px 11px; border-radius: 8px; font-family: inherit;" />
+              <button onclick="{{ onPedirGabi }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 8px; cursor: pointer;">Enviar</button>
+            </div>
+            <sc-if value="{{ pedidoEnviado }}">
+              <p style="margin: 8px 0 0; font-size: 11px; color: #348a8e; font-weight: 700;">✓ Virou pendência na lista da Gabi.</p>
+            </sc-if>
+          </div>
+
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { editando: false, pedidoEnviado: false, tick: 0 };
+  edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
+  edCadernoRef = React.createRef(); edSlidesRef = React.createRef(); edSyllabusRef = React.createRef();
+  edCalRef = React.createRef(); tcTextoRef = React.createRef();
+  pgTipoRef = React.createRef(); pgDetalheRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+
+  turmaId() {
+    try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
+      edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
+      edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef };
+    if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [] }, refs);
+
+    const ocup = CRM.ocupacaoTurmas();
+    let u = ocup.filter(t => t.id === this.turmaId())[0];
+    if (!u) u = ocup[0];
+    if (!u) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [] }, refs);
+    const raw = CRM.turmasLista().filter(t => t.id === u.id)[0] || {};
+
+    const alunas = CRM.alunasDaTurma(u.label).map(p => {
+      const faltas = CRM.faltasDe(p.id);
+      const st = CRM.cobrancaStatus ? null : null;
+      const c = CRM.contratoVigente(p);
+      const key = CRM.mesAtualKey();
+      const mes = c && (c.meses || []).filter(m => m.key === key)[0];
+      const emDia = !mes || mes.pago;
+      return {
+        nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+        faltasInfo: faltas > 0 ? faltas + (faltas === 1 ? " falta" : " faltas") : "",
+        pagLabel: emDia ? "em dia" : "parcela aberta",
+        pagBg: emDia ? "rgba(90,158,75,0.14)" : "rgba(224,120,86,0.14)",
+        pagFg: emDia ? "#5a9e4b" : "#c96a48"
+      };
+    });
+
+    const chamadas = CRM.chamadasDaTurma(u.label).slice(0, 5).map(ch => {
+      const est = Object.keys(ch.presencas || {}).map(k => CRM.estadoPresenca(ch.presencas[k]));
+      const n = e => est.filter(x => x === e).length;
+      return {
+        data: CRM.ddmm(ch.data),
+        resumo: (n("presente") + n("atraso")) + " presentes · " + n("falta") + " faltas" + (n("justificada") ? " · " + n("justificada") + " justif." : "")
+      };
+    });
+
+    const MATERIAIS = [
+      { key: "guide", label: "Teacher's Guide", cor: "#6b5b95" },
+      { key: "notebook", label: "Caderno de tarefas", cor: "#348a8e" },
+      { key: "slides", label: "Slides", cor: "#e07856" },
+      { key: "syllabus", label: "Syllabus", cor: "#d4a574" },
+      { key: "calendario", label: "Calendário", cor: "#9ec970" },
+      { key: "meet", label: "Link da aula (Meet)", cor: "#164951" }
+    ];
+    const linkDe = k => {
+      const v = raw[k] || "";
+      if (k === "notebook") return /^https?:/.test(v) ? v : "";
+      return v;
+    };
+    const materiais = MATERIAIS.map(m => {
+      const link = linkDe(m.key);
+      return { label: m.label + (m.key === "notebook" && raw.notebook && !link ? " · " + raw.notebook : ""), cor: m.cor, link, temLink: !!link, semLink: !link };
+    });
+
+    const tc = raw.tarefaCasa || null;
+    const user = CRM.gestaoUser();
+
+    return Object.assign({
+      ok: true, naoEncontrada: false,
+      nivel: u.nivel, horario: u.turma, ciclo: u.cycle,
+      professora: u.teacher || "—", projeto: u.projeto || "—",
+      contexto: u.turma + " · Prof. " + (u.teacher || "—") + " · " + u.ocupadas + "/" + u.capacidade + " alunas" + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas") : " · lotada"),
+      temMeet: !!raw.meet, meet: raw.meet || "#",
+      ocupLabel: u.ocupadas + "/" + u.capacidade,
+      chamadaHref: "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(u.label),
+      alunas, semAlunas: alunas.length === 0,
+      chamadas, semChamadas: chamadas.length === 0,
+      materiais,
+      temTarefaCasa: !!tc, tarefaCasaTexto: tc ? tc.texto : "", tarefaCasaEm: tc ? CRM.ddmm(tc.em) : "",
+      onSalvarTarefaCasa: () => {
+        const texto = this.val(this.tcTextoRef);
+        if (!texto) return;
+        CRM.updateTurma(u.id, { tarefaCasa: { texto, em: new Date().toISOString().slice(0, 10) } });
+        this.tcTextoRef.current.value = "";
+        this.bump();
+      },
+      editando: this.state.editando,
+      edLabel: this.state.editando ? "fechar" : "editar turma",
+      edBg: this.state.editando ? "#164951" : "#fff",
+      edFg: this.state.editando ? "#fff" : "#164951",
+      onToggleEditar: () => this.setState({ editando: !this.state.editando }),
+      onSalvarEdicao: () => {
+        const patch = {};
+        const set = (ref, k) => { const v = this.val(ref); if (v) patch[k] = v; };
+        set(this.edProjetoRef, "projeto"); set(this.edMeetRef, "meet"); set(this.edGuideRef, "guide");
+        set(this.edCadernoRef, "notebook"); set(this.edSlidesRef, "slides");
+        set(this.edSyllabusRef, "syllabus"); set(this.edCalRef, "calendario");
+        if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
+        this.setState({ editando: false });
+      },
+      pedidoEnviado: this.state.pedidoEnviado,
+      onPedirGabi: () => {
+        const tipo = this.val(this.pgTipoRef) || "Revisar aula";
+        const det = this.val(this.pgDetalheRef);
+        CRM.addTarefa({ titulo: tipo + " · " + u.nivel + " (" + u.turma + ")" + (det ? " — " + det : ""),
+          dono: "Gabi", prazo: "", por: (user && user.nome) || u.teacher || "" });
+        if (this.pgDetalheRef.current) this.pgDetalheRef.current.value = "";
+        this.setState({ pedidoEnviado: true });
+      }
+    }, refs);
+  }
+}
+</script>
+</body>
+</html>
