@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inglês sem Roteiro — Entrar</title>
+<script src="./crm-data.js"></script>
+<style>
+  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fdfbf8; border-radius: 16px; padding: 34px 30px; max-width: 380px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 8px; }
+  h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
+  p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
+  input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; margin-bottom: 10px; }
+  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; border-radius: 999px; cursor: pointer; }
+  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
+  .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Inglês sem Roteiro</p>
+  <h1>Área da aluna</h1>
+  <p>Entre com o e-mail que você usou na matrícula.</p>
+  <input id="email" type="email" placeholder="voce@email.com" autofocus />
+  <button onclick="entrar()">Entrar →</button>
+  <p class="erro" id="erro">Não achei esse e-mail. Confere se é o mesmo da matrícula — ou chama a Gabi no WhatsApp.</p>
+  <p class="nota">Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.</p>
+</div>
+<script>
+  // já logada → direto pra área
+  try {
+    if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
+      window.location.replace("ISR%20-%20Aluna.dc.html");
+    }
+  } catch (e) {}
+  function entrar() {
+    var email = (document.getElementById("email").value || "").trim().toLowerCase();
+    var erro = document.getElementById("erro");
+    erro.style.display = "none";
+    if (!email || !window.ISRCRM) { erro.style.display = "block"; return; }
+    var p = window.ISRCRM.getPessoas().filter(function (x) {
+      return (x.status === "aluna" || x.status === "mvs") && (x.email || "").trim().toLowerCase() === email;
+    })[0];
+    if (!p) { erro.style.display = "block"; return; }
+    try { localStorage.setItem("isr_aluna_id", p.id); } catch (e) {}
+    window.location.replace("ISR%20-%20Aluna.dc.html");
+  }
+  document.getElementById("email").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") entrar();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Área da Aluna</title>
+<script src="./support.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 520px; margin: 0 auto; padding: 20px 16px 90px;">
+
+    <sc-if value="{{ naoEncontrada }}">
+      <div style="text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #e0dcd6; border-radius: 12px; color: #9b8b7e;">
+        <p style="margin: 0; font-size: 14px;">Não encontrei sua matrícula. <a href="aluna.html?trocar" style="color: #2a9d8f; font-weight: 700;">Entrar de novo</a></p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+      <!-- CABEÇALHO -->
+      <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px;">
+        <div>
+          <p style="margin: 0 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro</p>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: #164951;">Oi, {{ primeiroNome }}!</h1>
+        </div>
+        <button onclick="{{ irMoedas }}" title="Suas moedas" style="display: flex; align-items: center; gap: 7px; border: 1px solid #eee3d6; background: #fff; border-radius: 999px; padding: 7px 13px; cursor: pointer;">
+          <span style="width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 2px solid #c9963f; flex: none;"></span>
+          <span style="font-size: 15px; font-weight: 700; color: #164951;">{{ moedasTotal }}</span>
+        </button>
+      </header>
+
+      <!-- ═══ INÍCIO ═══ -->
+      <sc-if value="{{ tabInicio }}">
+
+        <!-- PRÓXIMA AULA -->
+        <div style="background: #164951; border-radius: 14px; padding: 18px; margin-bottom: 12px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.7); font-weight: 700; margin-bottom: 6px;">Sua próxima aula</div>
+          <sc-if value="{{ temAula }}">
+            <div style="font-size: 18px; font-weight: 700; color: #fff;">{{ aulaQuando }}</div>
+            <div style="font-size: 12px; color: #9ec970; margin-top: 3px; font-weight: 700;">{{ turmaLabel }}</div>
+            <sc-if value="{{ temMeet }}">
+              <a href="{{ meet }}" target="_blank" rel="noopener" style="display: inline-block; margin-top: 12px; text-decoration: none; background: #9ec970; color: #164951; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 999px;">Entrar na aula →</a>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{ semAula }}">
+            <div style="font-size: 14px; color: rgba(255,255,255,0.85);">Sem aula marcada nos próximos dias — aproveita pra revisar o caderno. 💛</div>
+          </sc-if>
+        </div>
+
+        <!-- TAREFA DE CASA -->
+        <sc-if value="{{ temTarefa }}">
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Tarefa da semana</span>
+              <span style="font-size: 10px; color: #b3a693;">{{ tarefaEm }}</span>
+            </div>
+            <div style="background: #eef4f4; border: 1px solid #c9dede; border-radius: 10px; padding: 12px 14px; font-size: 13.5px; color: #164951; line-height: 1.55; margin-bottom: 10px;">{{ tarefaTexto }}</div>
+            <sc-if value="{{ semPedido }}">
+              <div style="display: flex; gap: 6px;">
+                <input ref="{{ corrTextoRef }}" placeholder="Qual parte? (ex. p. 12, exercício 3)" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 12px; padding: 10px 12px; border-radius: 10px; font-family: inherit;" />
+                <button onclick="{{ onPedirCorrecao }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 14px; border-radius: 10px; cursor: pointer;">Pedir correção</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ pedidoFeito }}">
+              <div style="font-size: 12px; color: #348a8e; font-weight: 700;">✓ Pedido enviado! Sua professora recebeu na lista dela.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- AULAS EXTRAS · RSVP -->
+        <sc-if value="{{ temExtras }}">
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Aulas extras · confirme sua presença</div>
+            <sc-for list="{{ extras }}" as="ex" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f4f1ec;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ ex.titulo }}</div>
+                  <div style="font-size: 11px; color: #8a7c6b; margin-top: 1px;">{{ ex.quando }}</div>
+                </div>
+                <button onclick="{{ ex.onVou }}" style="flex: none; border: 1px solid {{ ex.vouBorder }}; background: {{ ex.vouBg }}; color: {{ ex.vouFg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer;">Vou!</button>
+                <button onclick="{{ ex.onNaoVou }}" style="flex: none; border: 1px solid {{ ex.naoBorder }}; background: {{ ex.naoBg }}; color: {{ ex.naoFg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer;">Não vou</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- RESUMO RÁPIDO -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <button onclick="{{ irFinanceiro }}" style="text-align: left; border: 1px solid {{ finBorder }}; background: {{ finBg }}; border-radius: 12px; padding: 13px 14px; cursor: pointer;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: {{ finLabelCor }}; font-weight: 700;">Financeiro</div>
+            <div style="font-size: 13px; font-weight: 700; color: {{ finCor }}; margin-top: 3px;">{{ finResumo }}</div>
+          </button>
+          <button onclick="{{ irMateriais }}" style="text-align: left; border: 1px solid #eee3d6; background: #fdfbf8; border-radius: 12px; padding: 13px 14px; cursor: pointer;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700;">Materiais</div>
+            <div style="font-size: 13px; font-weight: 700; color: #164951; margin-top: 3px;">{{ matResumo }}</div>
+          </button>
+        </div>
+      </sc-if>
+
+      <!-- ═══ FINANCEIRO ═══ -->
+      <sc-if value="{{ tabFinanceiro }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Seu plano</div>
+          <sc-if value="{{ temContrato }}">
+            <div style="font-size: 14px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
+            <div style="font-size: 12px; color: #6b6155; margin-bottom: 12px;">{{ contratoParcela }} por mês · {{ contratoVenc }}</div>
+            <sc-if value="{{ temSinal }}">
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 12px;">Sinal: <strong style="color: {{ sinalCor }};">{{ sinalInfo }}</strong></div>
+            </sc-if>
+            <sc-for list="{{ parcelas }}" as="pc" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ pc.cor }}; flex: none;"></span>
+                <span style="flex: 1; font-size: 13px; font-weight: 600; color: #164951;">{{ pc.label }}</span>
+                <span style="flex: none; font-size: 13px; font-weight: 700; color: #164951;">{{ pc.valor }}</span>
+                <span style="flex: none; background: {{ pc.stBg }}; color: {{ pc.stFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;">{{ pc.status }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ semContrato }}">
+            <div style="font-size: 13px; color: #9b8b7e;">Nenhum plano ativo no momento.</div>
+          </sc-if>
+        </div>
+        <a href="{{ waEscola }}" target="_blank" rel="noopener" style="display: block; text-align: center; text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 13px; font-weight: 700; padding: 12px; border-radius: 999px;">Alguma dúvida no pagamento? Fala com a gente</a>
+      </sc-if>
+
+      <!-- ═══ MATERIAIS ═══ -->
+      <sc-if value="{{ tabMateriais }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <sc-for list="{{ materiais }}" as="mt" hint-placeholder-count="4">
+            <sc-if value="{{ mt.temLink }}">
+              <a href="{{ mt.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: {{ mt.bg }}; border-radius: 14px; padding: 18px 15px; min-height: 74px;">
+                <div style="width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,0.25); color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">{{ mt.inicial }}</div>
+                <div style="font-size: 13.5px; font-weight: 700; color: #fff; line-height: 1.3;">{{ mt.label }}</div>
+                <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 2px;">abrir →</div>
+              </a>
+            </sc-if>
+            <sc-if value="{{ mt.semLink }}">
+              <div style="background: #f2ede4; border-radius: 14px; padding: 18px 15px; min-height: 74px;">
+                <div style="width: 30px; height: 30px; border-radius: 9px; background: #e0d8ca; color: #b3a693; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">{{ mt.inicial }}</div>
+                <div style="font-size: 13.5px; font-weight: 700; color: #b3a693; line-height: 1.3;">{{ mt.label }}</div>
+                <div style="font-size: 10px; color: #c9c1b6; margin-top: 2px;">em breve</div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 13px 15px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Projeto do ciclo: <strong style="color: #164951;">{{ projetoCiclo }}</strong> · {{ turmaLabel }}</div>
+      </sc-if>
+
+      <!-- ═══ DOCUMENTOS ═══ -->
+      <sc-if value="{{ tabDocs }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Seus documentos</div>
+          <sc-if value="{{ semDocs }}">
+            <div style="font-size: 13px; color: #9b8b7e;">Contratos, relatórios e certificados vão aparecer aqui.</div>
+          </sc-if>
+          <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="2">
+            <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 11px 0; border-bottom: 1px solid #f4f1ec;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #348a8e; flex: none;"></span>
+              <span style="flex: 1; font-size: 13.5px; font-weight: 700; color: #164951;">{{ doc.nome }}</span>
+              <span style="font-size: 11px; color: #348a8e; font-weight: 700;">abrir →</span>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ═══ MOEDAS ═══ -->
+      <sc-if value="{{ tabMoedas }}">
+        <div style="background: linear-gradient(135deg, #164951, #1d5a63); border-radius: 14px; padding: 22px 18px; text-align: center; margin-bottom: 12px;">
+          <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 3px solid #c9963f; margin: 0 auto 10px;"></div>
+          <div style="font-size: 34px; font-weight: 700; color: #fff; letter-spacing: -1px;">{{ moedasTotal }}</div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; font-weight: 700;">suas moedas</div>
+        </div>
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Como ganhar</div>
+          <div style="font-size: 12.5px; color: #6b6155; line-height: 1.9;">
+            Presença na aula <strong style="color: #164951;">+{{ regraPresenca }}</strong> · chegou atrasada <strong style="color: #164951;">+{{ regraAtraso }}</strong><br>
+            Parcela paga em dia <strong style="color: #164951;">+{{ regraParcela }}</strong> · onboarding completo <strong style="color: #164951;">+{{ regraOnboarding }}</strong><br>
+            Bônus da escola (indicações, desafios) valem mais — fica de olho!
+          </div>
+        </div>
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Extrato</div>
+          <sc-if value="{{ semMoedas }}">
+            <div style="font-size: 13px; color: #9b8b7e;">Suas moedas aparecem aqui a partir da primeira aula.</div>
+          </sc-if>
+          <sc-for list="{{ moedasExtrato }}" as="mo" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
+              <span style="flex: 1; font-size: 12.5px; color: #3d3529;">{{ mo.label }}</span>
+              <sc-if value="{{ mo.em }}"><span style="flex: none; font-size: 10px; color: #b3a693;">{{ mo.em }}</span></sc-if>
+              <span style="flex: none; font-size: 13px; font-weight: 700; color: {{ mo.cor }};">{{ mo.valorLabel }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- BOTTOM NAV -->
+      <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #164951; box-shadow: 0 -4px 16px rgba(0,0,0,0.15); z-index: 999;">
+        <div style="max-width: 520px; margin: 0 auto; display: flex;">
+          <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
+            <button onclick="{{ tb.onClick }}" style="flex: 1; border: none; background: transparent; cursor: pointer; padding: 11px 4px 12px; border-top: 3px solid {{ tb.border }};">
+              <div style="font-size: 11px; font-weight: 700; color: {{ tb.cor }};">{{ tb.label }}</div>
+            </button>
+          </sc-for>
+        </div>
+      </nav>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;420px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tab: "inicio", pedidoFeito: false, tick: 0 };
+  corrTextoRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  alunaId() {
+    try {
+      const q = new URLSearchParams(window.location.search).get("id");
+      if (q) return q;
+      return localStorage.getItem("isr_aluna_id") || "";
+    } catch (e) { return ""; }
+  }
+
+  diaLabel(isoStr, hora) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const d = new Date(isoStr + "T12:00:00");
+    const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+    const dif = Math.round((d0 - hoje) / 86400000);
+    const sem = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][d.getDay()];
+    const dm = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    const h = hora ? " às " + hora : "";
+    if (dif === 0) return "Hoje" + h;
+    if (dif === 1) return "Amanhã" + h;
+    return sem + " " + dm + h;
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { corrTextoRef: this.corrTextoRef };
+    if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, tabs: [], materiais: [], parcelas: [], extras: [], documentos: [], moedasExtrato: [] }, refs);
+
+    let p = CRM.getPessoa(this.alunaId());
+    if (!p || (p.status !== "aluna" && p.status !== "mvs")) p = CRM.getPessoas().filter(x => x.status === "aluna")[0] || null;
+    if (!p) return Object.assign({ ok: false, naoEncontrada: true, tabs: [], materiais: [], parcelas: [], extras: [], documentos: [], moedasExtrato: [] }, refs);
+
+    const tab = this.state.tab;
+    const TABS = [
+      { id: "inicio", label: "Início" },
+      { id: "financeiro", label: "Pagamentos" },
+      { id: "materiais", label: "Materiais" },
+      { id: "docs", label: "Docs" },
+      { id: "moedas", label: "Moedas" }
+    ];
+    const tabs = TABS.map(t => ({
+      label: t.label,
+      onClick: () => this.setState({ tab: t.id }),
+      cor: tab === t.id ? "#9ec970" : "rgba(255,255,255,0.6)",
+      border: tab === t.id ? "#9ec970" : "transparent"
+    }));
+
+    // turma + materiais
+    const turmaRaw = CRM.turmasLista().filter(u => p.turma && p.turma.indexOf(u.nivel) >= 0 && p.turma.indexOf(u.turma) >= 0)[0] || null;
+    const unit = CRM.UNITS.filter(u => p.turma && p.turma.indexOf(u.turma) >= 0)[0];
+
+    // próxima aula (da turma dela ou particular via agenda)
+    const aulas = CRM.agendaItens(10).filter(it =>
+      (it.tipo === "aula" && turmaRaw && it.turmaId === turmaRaw.id) ||
+      (it.tipo === "aula_extra" && it.titulo.toLowerCase().indexOf(CRM.firstName(p.nome).toLowerCase()) >= 0));
+    const prox = aulas[0] || null;
+
+    // financeiro
+    const c = CRM.contratoVigente(p);
+    const key = CRM.mesAtualKey();
+    const parcelas = c ? (c.meses || []).map(m => {
+      const vencida = !m.pago && m.key <= key;
+      return {
+        label: m.label, valor: m.valor,
+        status: m.pago ? "paga" : (vencida ? "vencida" : "em aberto"),
+        cor: m.pago ? "#5a9e4b" : (vencida ? "#cf6b5c" : "#d4a574"),
+        stBg: m.pago ? "rgba(90,158,75,0.14)" : (vencida ? "rgba(207,107,92,0.14)" : "rgba(212,165,116,0.18)"),
+        stFg: m.pago ? "#5a9e4b" : (vencida ? "#b05c4c" : "#9c6f56")
+      };
+    }) : [];
+    const vencidas = parcelas.filter(x => x.status === "vencida").length;
+
+    // aulas extras + rsvp
+    const extras = CRM.eventosLista().filter(e => {
+      const d = new Date(e.data + "T12:00:00"); const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      return d >= hoje;
+    }).slice(0, 4).map(e => {
+      const meu = (e.rsvps || {})[p.id];
+      return {
+        titulo: e.titulo, quando: this.diaLabel(e.data, e.hora),
+        vouBg: meu === true ? "#348a8e" : "#fff", vouFg: meu === true ? "#fff" : "#8a7c6b", vouBorder: meu === true ? "#348a8e" : "#e5dccf",
+        naoBg: meu === false ? "#b8ada0" : "#fff", naoFg: meu === false ? "#fff" : "#8a7c6b", naoBorder: meu === false ? "#b8ada0" : "#e5dccf",
+        onVou: () => { CRM.rsvpEvento(e.id, p.id, true); this.bump(); },
+        onNaoVou: () => { CRM.rsvpEvento(e.id, p.id, false); this.bump(); }
+      };
+    });
+
+    // materiais (a aluna NÃO vê o Teacher's Guide)
+    const MATS = [
+      { key: "notebook", label: "Caderno de tarefas", bg: "#348a8e", inicial: "C" },
+      { key: "slides", label: "Slides das aulas", bg: "#e07856", inicial: "S" },
+      { key: "syllabus", label: "Syllabus do ciclo", bg: "#d4a574", inicial: "Sy" },
+      { key: "calendario", label: "Calendário", bg: "#6b5b95", inicial: "Ca" }
+    ];
+    const materiais = MATS.map(m => {
+      let link = turmaRaw ? (turmaRaw[m.key] || "") : "";
+      if (m.key === "notebook" && link && !/^https?:/.test(link)) link = "";
+      return { label: m.label, bg: m.bg, inicial: m.inicial, link, temLink: !!link, semLink: !link };
+    });
+    const matComLink = materiais.filter(m => m.temLink).length;
+
+    const moedas = CRM.moedasDe(p.id);
+    const tc = turmaRaw && turmaRaw.tarefaCasa ? turmaRaw.tarefaCasa : null;
+
+    return Object.assign({
+      ok: true, naoEncontrada: false,
+      primeiroNome: CRM.firstName(p.nome),
+      tabs,
+      tabInicio: tab === "inicio", tabFinanceiro: tab === "financeiro",
+      tabMateriais: tab === "materiais", tabDocs: tab === "docs", tabMoedas: tab === "moedas",
+      irMoedas: () => this.setState({ tab: "moedas" }),
+      irFinanceiro: () => this.setState({ tab: "financeiro" }),
+      irMateriais: () => this.setState({ tab: "materiais" }),
+
+      // início
+      temAula: !!prox, semAula: !prox,
+      aulaQuando: prox ? this.diaLabel(prox.data, prox.hora) : "",
+      turmaLabel: p.turma || "—",
+      temMeet: !!(turmaRaw && turmaRaw.meet), meet: turmaRaw ? (turmaRaw.meet || "#") : "#",
+      temTarefa: !!tc, tarefaTexto: tc ? tc.texto : "", tarefaEm: tc ? "passada em " + CRM.ddmm(tc.em) : "",
+      semPedido: !this.state.pedidoFeito, pedidoFeito: this.state.pedidoFeito,
+      onPedirCorrecao: () => {
+        const txt = ((this.corrTextoRef.current && this.corrTextoRef.current.value) || "").trim();
+        CRM.solicitarCorrecao(p.id, txt);
+        this.setState({ pedidoFeito: true });
+      },
+      temExtras: extras.length > 0, extras,
+      finResumo: vencidas > 0 ? vencidas + (vencidas === 1 ? " parcela vencida" : " parcelas vencidas") : "tudo em dia ✓",
+      finCor: vencidas > 0 ? "#b05c4c" : "#348a8e",
+      finLabelCor: vencidas > 0 ? "#c96a48" : "#9b8b7e",
+      finBg: vencidas > 0 ? "rgba(224,120,86,0.07)" : "#fdfbf8",
+      finBorder: vencidas > 0 ? "rgba(224,120,86,0.3)" : "#eee3d6",
+      matResumo: matComLink + " de " + materiais.length + " disponíveis",
+
+      // financeiro
+      temContrato: !!c, semContrato: !c,
+      contratoTipo: c ? c.tipo : "", contratoCiclos: c ? c.ciclos : "",
+      contratoParcela: c ? (c.parcelaValor || "—") : "",
+      contratoVenc: c ? (c.vencDia === "auto" ? "cobrança automática" : "vence dia " + c.vencDia) : "",
+      temSinal: !!(c && c.sinal),
+      sinalInfo: c && c.sinal ? c.sinal.valor + (c.sinal.recebido ? " · recebido, obrigada!" : " · aguardando comprovante") : "",
+      sinalCor: c && c.sinal && c.sinal.recebido ? "#348a8e" : "#c96a48",
+      parcelas,
+      waEscola: CRM.waLink("+31 6 000000000", "Oi, Gabi! Sou " + p.nome + " e tenho uma dúvida sobre pagamento."),
+
+      // materiais
+      materiais, projetoCiclo: unit ? (unit.projeto || "—") : "—",
+
+      // docs
+      documentos: p.documentos || [], semDocs: !(p.documentos || []).length,
+
+      // moedas
+      moedasTotal: moedas.total,
+      moedasExtrato: moedas.extrato.map(e => ({
+        label: e.label, em: e.em ? CRM.ddmm(e.em) : "",
+        valorLabel: (e.valor > 0 ? "+" : "") + e.valor,
+        cor: e.valor > 0 ? "#348a8e" : "#cf6b5c"
+      })),
+      semMoedas: moedas.extrato.length === 0,
+      regraPresenca: CRM.MOEDAS_REGRAS.presenca, regraAtraso: CRM.MOEDAS_REGRAS.atraso,
+      regraParcela: CRM.MOEDAS_REGRAS.parcelaPaga, regraOnboarding: CRM.MOEDAS_REGRAS.onboardingCompleto
+    }, refs);
+  }
+}
+</script>
+</body>
+</html>
