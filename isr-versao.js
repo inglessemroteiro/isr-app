@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-e",
+  numero: "2026.07.25-f",
   data: "25/07/2026",
-  nota: "A pílula Matriculados do perfil abre a tela de matrícula"
+  nota: "Chamada por seleção, Programa em grade e matrícula retroativa"
 };

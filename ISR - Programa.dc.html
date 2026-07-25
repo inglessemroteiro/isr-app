@@ -131,64 +131,62 @@
         <span style="font-size: 11.5px; color: #8a7c6b;">{{ contagem }}</span>
       </div>
 
-      <!-- LISTA -->
+      <!-- GRADE -->
       <sc-if value="{{ vazio }}">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 40px 20px; text-align: center; color: #9b8b7e; font-size: 13px;">{{ vazioTexto }}</div>
       </sc-if>
 
-      <sc-for list="{{ alunas }}" as="a" hint-placeholder-count="6">
-        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-left: 4px solid {{ a.corBorda }}; border-radius: 10px; padding: 13px 16px; margin-bottom: 8px;">
-          <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 180px;">
-              <a href="{{ a.perfilHref }}" style="font-size: 15px; font-weight: 700; color: #164951; text-decoration: none;">{{ a.nome }}</a>
-              <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ a.contexto }}</div>
-              <sc-if value="{{ a.temAlertas }}">
-                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">
-                  <sc-for list="{{ a.alertas }}" as="al" hint-placeholder-count="2">
-                    <span style="background: rgba(0,0,0,0.04); color: {{ al.cor }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">{{ al.label }}</span>
-                  </sc-for>
-                </div>
-              </sc-if>
-            </div>
+      <sc-if value="{{ temAlunas }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 0 6px; margin-bottom: 10px;">
+          <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 0 16px 10px;">
+            <span style="font-size: 11.5px; color: #6b6155;">Cada semana tem duas marcas por aluna. Toque para alternar.</span>
+            <span style="flex: 1;"></span>
+            <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="2">
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #6b6155;">
+                <span style="width: 11px; height: 11px; border-radius: 3px; background: {{ lg.cor }};"></span>{{ lg.label }}
+              </span>
+            </sc-for>
+          </div>
 
-            <div style="flex: none; display: flex; gap: 16px; flex-wrap: wrap;">
-              <sc-for list="{{ a.sinais }}" as="sn" hint-placeholder-count="3">
-                <div style="min-width: 68px;">
-                  <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 2px;">{{ sn.rotulo }}</div>
-                  <div style="font-size: 12.5px; font-weight: 700; color: {{ sn.cor }};">{{ sn.valor }}</div>
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="min-width: {{ larguraGrade }};">
+              <!-- cabeçalho das semanas -->
+              <div style="display: flex; align-items: flex-end; gap: 0; padding: 0 16px 6px; border-bottom: 1px solid #eee3d6;">
+                <div style="flex: none; width: 150px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Aluna</div>
+                <sc-for list="{{ colunas }}" as="col" hint-placeholder-count="8">
+                  <div style="flex: none; width: 46px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: {{ col.cor }};">S{{ col.n }}</div>
+                    <div style="font-size: 8.5px; color: {{ col.corMissao }};">{{ col.marca }}</div>
+                  </div>
+                </sc-for>
+                <div style="flex: none; width: 62px; text-align: right; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Total</div>
+              </div>
+
+              <!-- uma linha por aluna -->
+              <sc-for list="{{ alunas }}" as="a" hint-placeholder-count="8">
+                <div style="display: flex; align-items: center; gap: 0; padding: 5px 16px; border-bottom: 1px solid #f7f4ef;">
+                  <div style="flex: none; width: 150px; padding-right: 8px;">
+                    <a href="{{ a.perfilHref }}" style="font-size: 12.5px; font-weight: 700; color: #164951; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.nome }}</a>
+                    <div style="font-size: 10px; color: {{ a.alertaCor }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.alertaTexto }}</div>
+                  </div>
+                  <sc-for list="{{ a.celulas }}" as="cl" hint-placeholder-count="8">
+                    <div style="flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: {{ cl.opacidade }};">
+                      <sc-for list="{{ cl.marcas }}" as="mk" hint-placeholder-count="2">
+                        <button onclick="{{ mk.onClick }}" title="{{ mk.title }}" style="width: 34px; height: 17px; border: 1px solid {{ mk.borda }}; background: {{ mk.bg }}; border-radius: 5px; cursor: pointer; padding: 0; font-family: inherit; font-size: 9px; font-weight: 700; color: {{ mk.fg }}; line-height: 1;">{{ mk.sigla }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                  <div style="flex: none; width: 62px; text-align: right;">
+                    <span style="font-size: 12px; font-weight: 700; color: {{ a.totalCor }};">{{ a.total }}</span>
+                  </div>
                 </div>
               </sc-for>
-            </div>
-
-            <div style="flex: none; display: flex; gap: 6px; align-items: center;">
-              <a href="{{ a.waHref }}" target="_blank" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">WhatsApp</a>
-              <button onclick="{{ a.onAbrir }}" style="border: 1px solid #e5dccf; background: {{ a.abrirBg }}; color: {{ a.abrirFg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ a.abrirLabel }}</button>
             </div>
           </div>
 
-          <!-- SEMANA A SEMANA -->
-          <sc-if value="{{ a.aberto }}">
-            <div style="border-top: 1px dashed #e5dccf; margin-top: 12px; padding-top: 12px;">
-              <sc-for list="{{ a.semanas }}" as="sm" hint-placeholder-count="8">
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #f4efe7; opacity: {{ sm.opacidade }};">
-                  <div style="flex: none; width: 30px;">
-                    <div style="font-size: 12px; font-weight: 700; color: {{ sm.corN }};">S{{ sm.n }}</div>
-                  </div>
-                  <div style="flex: 1; min-width: 130px;">
-                    <div style="font-size: 12.5px; font-weight: 600; color: #3d3529;">{{ sm.missao }}</div>
-                    <div style="font-size: 10.5px; color: {{ sm.corQuando }};">{{ sm.quando }}</div>
-                  </div>
-                  <div style="flex: none; display: flex; gap: 5px; flex-wrap: wrap;">
-                    <sc-for list="{{ sm.etapas }}" as="et" hint-placeholder-count="3">
-                      <button onclick="{{ et.onClick }}" title="{{ et.title }}" style="border: 1px solid {{ et.borda }}; background: {{ et.bg }}; color: {{ et.fg }}; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ et.label }}</button>
-                    </sc-for>
-                  </div>
-                </div>
-              </sc-for>
-            </div>
-          </sc-if>
+          <p style="margin: 10px 16px 6px; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Semanas cuja missão ainda não foi enviada ao grupo aparecem esmaecidas e não entram na conta de pendências.</p>
         </div>
-      </sc-for>
+      </sc-if>
 
     </sc-if>
 
@@ -264,57 +262,50 @@ class Component extends DCLogic {
       return ("0" + base.getDate()).slice(-2) + "/" + ("0" + (base.getMonth() + 1)).slice(-2);
     };
 
+    // ── grade: alunas nas linhas, semanas nas colunas ──
+    // Abrir aluna por aluna e rolar até a semana certa não sobrevive a 40
+    // participantes. Na grade, a semana inteira se lê de uma vez.
+    const colunas = [];
+    for (let s = 1; s <= prog.semanas; s++) {
+      const enviada = missaoJa(s);
+      colunas.push({
+        n: String(s),
+        cor: s === sem ? "#164951" : (s > sem ? "#c9b9a6" : "#8a7c6b"),
+        marca: enviada ? dataDaSemana(s) : "—",
+        corMissao: enviada ? "#b8ada0" : "#c98a3a"
+      });
+    }
+
     const alunas = filtradas.map(l => {
       const id = l.pessoaId;
-      const aberto = this.state.abertoId === id;
-      const semanas = [];
+      const celulas = [];
       for (let s = 1; s <= prog.semanas; s++) {
-        const futura = s > sem;
-        semanas.push({
-          n: String(s), missao: prog.missoes[s - 1] || "",
-          quando: (s === sem ? "Semana atual · " : "") + (missaoJa(s) ? "missão enviada ao grupo" : "missão ainda não enviada"),
-          corQuando: missaoJa(s) ? "#8a7c6b" : "#c98a3a",
-          corN: s === sem ? "#164951" : (futura ? "#c9b9a6" : "#8a7c6b"),
-          opacidade: futura ? "0.55" : "1",
-          etapas: etapas.map(e => {
+        const enviada = missaoJa(s);
+        celulas.push({
+          opacidade: (!enviada || s > sem) ? "0.4" : "1",
+          marcas: etapas.map(e => {
             const on = CRM.etapaFeita(prog, id, s, e.id);
             return {
-              label: e.label, title: "Semana " + s + " · " + e.label,
-              bg: on ? e.cor : "#fff", fg: on ? "#fff" : "#8a7c6b", borda: on ? e.cor : "#e5dccf",
+              sigla: e.id === "audio" ? "R" : "D",
+              title: l.nome + " · semana " + s + " · " + e.label,
+              bg: on ? e.cor : "#fff",
+              fg: on ? "#fff" : "#c9b9a6",
+              borda: on ? e.cor : "#e5dccf",
               onClick: () => { CRM.marcarEtapa(prog.id, id, s, e.id, !on); this.bump(); }
             };
           })
         });
       }
-
-      const alertas = [];
-      if (l.devendoFeedback) alertas.push({ label: l.devendoFeedback === 1 ? "1 devolutiva pendente" : l.devendoFeedback + " devolutivas pendentes", cor: "#e07856" });
-      if (l.sumindo) alertas.push({ label: "Duas semanas sem responder", cor: "#cf6b5c" });
-      if (l.semAudio && !l.sumindo) alertas.push({ label: l.semAudio === 1 ? "1 semana sem responder" : l.semAudio + " semanas sem responder", cor: "#d4a574" });
-
-      const ultima = (function () {
-        for (let s = sem; s >= 1; s--) if (CRM.etapaFeita(prog, id, s, "audio")) return "Semana " + s;
-        return "Nenhuma";
-      })();
-
+      const alerta = l.sumindo ? { t: "duas semanas sem responder", c: "#cf6b5c" }
+        : (l.devendoFeedback ? { t: l.devendoFeedback + " devolutiva(s) pendente(s)", c: "#e07856" }
+        : (l.semAudio ? { t: l.semAudio + " semana(s) sem responder", c: "#d4a574" }
+        : { t: "em dia", c: "#5a9e4b" }));
       return {
         nome: l.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + id,
-        waHref: CRM.waLink(l.whatsapp, ""),
-        contexto: prog.nome + " · " + (sem === 0 ? "não iniciado" : "semana " + sem + " de " + prog.semanas),
-        corBorda: alertas.length ? alertas[0].cor : "#9ec970",
-        temAlertas: alertas.length > 0, alertas,
-        sinais: [
-          { rotulo: "Respostas", valor: l.entregues + "/" + prog.semanas,
-            cor: l.entregues ? "#348a8e" : "#b8ada0" },
-          { rotulo: "Devolutivas", valor: l.devendoFeedback ? l.devendoFeedback + " pendentes" : "Em dia",
-            cor: l.devendoFeedback ? "#e07856" : "#348a8e" },
-          { rotulo: "Última resposta", valor: ultima, cor: ultima === "Nenhuma" ? "#cf6b5c" : "#8a7c6b" }
-        ],
-        aberto, semanas,
-        abrirLabel: aberto ? "Fechar" : "Semanas",
-        abrirBg: aberto ? "#f6eee4" : "#fff",
-        abrirFg: aberto ? "#9c6f56" : "#164951",
-        onAbrir: () => this.setState(s => ({ abertoId: s.abertoId === id ? null : id }))
+        alertaTexto: alerta.t, alertaCor: alerta.c,
+        celulas,
+        total: l.entregues + "/" + prog.semanas,
+        totalCor: l.entregues ? "#348a8e" : "#b8ada0"
       };
     });
 
@@ -398,6 +389,9 @@ class Component extends DCLogic {
         : (filtradas.length + " de " + pend.linhas.length),
 
       alunas, vazio: alunas.length === 0,
+      colunas, temAlunas: alunas.length > 0,
+      larguraGrade: (150 + prog.semanas * 46 + 62) + "px",
+      legenda: etapas.map(e => ({ label: e.label, cor: e.cor })),
       vazioTexto: prog.participantes.length === 0
         ? "Nenhuma aluna na turma. Use Participantes para adicionar."
         : "Nenhuma aluna nesta seleção."

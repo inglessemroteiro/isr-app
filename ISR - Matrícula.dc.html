@@ -131,6 +131,28 @@
         </div>
       </section>
 
+      <!-- MATRÍCULA RETROATIVA -->
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Matrícula retroativa</span>
+          <button onclick="{{ onRetro }}" style="border: 1px solid #e5dccf; background: {{ retroBg }}; color: {{ retroFg }}; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ retroLabel }}</button>
+        </div>
+        <p style="margin: 6px 0 0; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Para quem já estuda na escola e está sendo cadastrada agora. A data de entrada define o início do ciclo, as parcelas já quitadas e as etapas de integração vencidas.</p>
+        <sc-if value="{{ retroAberto }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px;">
+            <div>
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Entrou na escola em</div>
+              <input ref="{{ desdeRef }}" type="date" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+            </div>
+            <div>
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Parcelas já pagas</div>
+              <input ref="{{ pagasRef }}" type="number" oninput="{{ onMuda }}" placeholder="0" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+            </div>
+          </div>
+          <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6; margin-top: 8px;">{{ retroResumo }}</div>
+        </sc-if>
+      </section>
+
       <!-- PASSO 4 · O QUE ACONTECE -->
       <section style="background: #f6f2ea; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">4 · O que o sistema faz ao concluir</div>
@@ -173,11 +195,12 @@
 class Component extends DCLogic {
   // sinalRecebido começa nulo: enquanto não for tocado, vale o que ficou
   // combinado nas condições, senão o "recebido" se perderia no caminho
-  state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "" };
+  state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "", retro: false };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
   nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
   tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
   parcelasRef = React.createRef(); vencRef = React.createRef(); sinalRef = React.createRef();
+  desdeRef = React.createRef(); pagasRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(r) { return ((r.current && r.current.value) || "").trim(); }
@@ -305,6 +328,26 @@ class Component extends DCLogic {
       onSinalRecebido: () => this.setState({ sinalRecebido: !sinalRec }),
       plano, planoMeses, efeitos,
 
+      retroAberto: this.state.retro,
+      retroLabel: this.state.retro ? "Não é retroativa" : "É uma matrícula retroativa",
+      retroBg: this.state.retro ? "#f6eee4" : "#fff",
+      retroFg: this.state.retro ? "#9c6f56" : "#164951",
+      onRetro: () => this.setState(s => ({ retro: !s.retro })),
+      desdeRef: this.desdeRef, pagasRef: this.pagasRef,
+      retroResumo: (() => {
+        if (!this.state.retro) return "";
+        const d = this.val(this.desdeRef);
+        if (!d) return "Informe a data de entrada para ver como o ciclo será montado.";
+        const pagas = parseInt(this.val(this.pagasRef), 10) || 0;
+        const M = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+        const ini = new Date(d + "T12:00:00");
+        const fim = new Date(ini.getFullYear(), ini.getMonth() + nParc - 1, 1);
+        return "O ciclo vai de " + M[ini.getMonth()] + " a " + M[fim.getMonth()] + ". "
+          + (pagas ? pagas + (pagas === 1 ? " parcela entra" : " parcelas entram") + " como paga(s), "
+                   + Math.max(0, nParc - pagas) + " em aberto. " : "Todas as parcelas entram em aberto. ")
+          + "As etapas de integração já vencidas entram concluídas.";
+      })(),
+
       temErro: !!this.state.erro, erro: this.state.erro,
       onConcluir: () => {
         const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
@@ -330,7 +373,9 @@ class Component extends DCLogic {
           vencDia: parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10,
           aulasContratadas: this.val(this.aulasRef),
           sinalValor: this.val(this.sinalRef) || (pr ? pr.sinalValor : ""),
-          sinalRecebido: sinalRec
+          sinalRecebido: sinalRec,
+          desde: this.state.retro ? this.val(this.desdeRef) : "",
+          parcelasPagas: this.state.retro ? this.val(this.pagasRef) : ""
         });
         this.setState({ concluida: true, erro: "" });
       }
