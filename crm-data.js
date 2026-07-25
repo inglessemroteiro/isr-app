@@ -620,6 +620,13 @@
   // Transição lead→aluna (spec 6): zero recadastro.
   // cfg: { turmaId, tipo, ciclos, moeda, valorParcela, parcelas, vencDia }
   function matricular(id, cfg) {
+    // valores digitados sem símbolo ("497,00") são normalizados com a moeda
+    // escolhida, para que parcela e sinal saiam iguais no resto do sistema
+    var moedaCfg = cfg.moeda || "R$";
+    ["valorParcela", "sinalValor", "valorTotal"].forEach(function (campo) {
+      var v = cfg[campo];
+      if (v && !/[R$€]/.test(String(v))) cfg[campo] = fmtMoney(moedaCfg, parseMoney(v));
+    });
     var particular = cfg.turmaId === "particular";
     var unit = turmasLista().filter(function (u) { return u.id === cfg.turmaId; })[0];
     var turmaLabel = particular ? "Particular" : (unit ? (unit.nivel + " · " + unit.turma) : (cfg.turmaLabel || ""));
