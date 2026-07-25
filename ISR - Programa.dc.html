@@ -85,12 +85,39 @@
               <span style="background: #f6eee4; color: #164951; font-size: 12px; font-weight: 700; padding: 7px 8px 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">{{ pt.nome }}<button onclick="{{ pt.onRemove }}" title="Tirar da turma" style="border: none; background: transparent; color: #b3a693; font-size: 14px; cursor: pointer; padding: 0 3px;">×</button></span>
             </sc-for>
           </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <select ref="{{ addRef }}" style="flex: 1; min-width: 190px; padding: 9px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
-              <sc-for list="{{ candidatas }}" as="cd" hint-placeholder-count="6"><option value="{{ cd.id }}">{{ cd.label }}</option></sc-for>
-            </select>
-            <button onclick="{{ onAdicionar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Adicionar</button>
+          <input ref="{{ addBuscaRef }}" oninput="{{ onBuscaAdd }}" placeholder="Buscar pessoa pelo nome" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+          <sc-if value="{{ temCandidatas }}">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+              <sc-for list="{{ candidatas }}" as="cd" hint-placeholder-count="6">
+                <button onclick="{{ cd.onAdd }}" style="border: 1px solid #c9dede; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cd.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ semCandidatas }}">
+            <p style="margin: 10px 0 0; font-size: 11.5px; color: #b3a693;">{{ msgCandidatas }}</p>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- RANKING -->
+      <sc-if value="{{ temRanking }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Classificação · moedas do programa</span>
+            <span style="font-size: 11px; color: #b3a693;">{{ regraMoedas }}</span>
           </div>
+          <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f4efe7;">
+              <span style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: {{ rk.bg }}; color: {{ rk.fg }}; font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ rk.posicao }}</span>
+              <div style="flex: 1; min-width: 0;">
+                <a href="{{ rk.href }}" style="font-size: 13.5px; font-weight: 700; color: #164951; text-decoration: none;">{{ rk.nome }}</a>
+                <div style="font-size: 10.5px; color: #8a7c6b;">{{ rk.detalhe }}</div>
+              </div>
+              <button onclick="{{ rk.onParticipou }}" title="Somar uma participação no grupo" style="flex: none; border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ participação</button>
+              <span style="flex: none; font-size: 15px; font-weight: 700; color: #348a8e; min-width: 58px; text-align: right;">{{ rk.moedas }}</span>
+            </div>
+          </sc-for>
+          <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">{{ premio }}</p>
         </div>
       </sc-if>
 
@@ -169,9 +196,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { turmaAberta: false, abertoId: null, busca: "", filtro: "", tick: 0 };
+  state = { turmaAberta: false, abertoId: null, busca: "", filtro: "", buscaAdd: "", tick: 0 };
   novoNomeRef = React.createRef(); novoInicioRef = React.createRef(); novoSemanasRef = React.createRef();
-  addRef = React.createRef(); buscaRef = React.createRef();
+  addBuscaRef = React.createRef(); buscaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -291,9 +318,24 @@ class Component extends DCLogic {
     });
 
     const jaDentro = prog.participantes;
-    const candidatas = CRM.getPessoas()
-      .filter(p => jaDentro.indexOf(p.id) < 0 && p.estagio !== "perdido")
-      .map(p => ({ id: p.id, label: p.nome + (p.status === "aluna" ? " · aluna" : " · lead") }));
+    const bq = (this.state.buscaAdd || "").trim().toLowerCase();
+    const candidatas = bq.length >= 2
+      ? CRM.getPessoas()
+          .filter(pp => jaDentro.indexOf(pp.id) < 0 && pp.estagio !== "perdido"
+                     && pp.nome.toLowerCase().indexOf(bq) >= 0)
+          .slice(0, 8)
+          .map(pp => ({
+            id: pp.id, label: pp.nome + (pp.status === "aluna" ? " · aluna" : " · lead"),
+            onAdd: () => {
+              CRM.addParticipante(prog.id, pp.id);
+              if (this.addBuscaRef.current) this.addBuscaRef.current.value = "";
+              this.setState({ buscaAdd: "" });
+            }
+          }))
+      : [];
+
+    const rk = CRM.rankingPrograma(prog.id);
+    const podio = ["#9ec970", "#d4a574", "#c9b9a6"];
 
     return {
       temPrograma: true, semPrograma: false,
@@ -323,11 +365,25 @@ class Component extends DCLogic {
         const p = CRM.getPessoa(pid) || { nome: "(removida)" };
         return { nome: p.nome, onRemove: () => { CRM.removeParticipante(prog.id, pid); this.bump(); } };
       }),
-      candidatas, addRef: this.addRef,
-      onAdicionar: () => {
-        const id = this.addRef.current && this.addRef.current.value;
-        if (id) { CRM.addParticipante(prog.id, id); this.bump(); }
-      },
+      candidatas,
+      temCandidatas: candidatas.length > 0,
+      semCandidatas: candidatas.length === 0,
+      msgCandidatas: bq.length >= 2 ? "Ninguém encontrado com esse nome." : "Digite ao menos duas letras do nome.",
+      addBuscaRef: this.addBuscaRef,
+      onBuscaAdd: e => this.setState({ buscaAdd: e.target.value }),
+
+      temRanking: rk.length > 0,
+      regraMoedas: "resposta +" + CRM.MOEDAS_PROGRAMA.resposta + " · participação no grupo +" + CRM.MOEDAS_PROGRAMA.participacao,
+      premio: "Quem terminar o programa com mais moedas ganha uma aula particular com a Gabi.",
+      ranking: rk.map(x => ({
+        posicao: String(x.posicao), nome: x.nome, moedas: String(x.moedas),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.pessoaId,
+        detalhe: x.respostas + (x.respostas === 1 ? " resposta" : " respostas")
+          + " · " + x.participacao + (x.participacao === 1 ? " participação" : " participações"),
+        bg: x.posicao <= 3 ? podio[x.posicao - 1] : "#f2ebe3",
+        fg: x.posicao <= 3 ? "#164951" : "#8a7c6b",
+        onParticipou: () => { CRM.somarParticipacao(prog.id, x.pessoaId, 1); this.bump(); }
+      })),
 
       buscaRef: this.buscaRef,
       onBusca: e => this.setState({ busca: e.target.value }),

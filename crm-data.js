@@ -1069,6 +1069,41 @@
   function missaoEnviada(programa, semana) {
     return !!((programa.missoesEnviadas || {})[semana]);
   }
+  // Moedas do programa: responder a missão vale moedas; participar do
+  // grupo também. Quem somar mais no fim ganha a aula particular.
+  var MOEDAS_PROGRAMA = { resposta: 20, participacao: 10 };
+  function moedasDoPrograma(programa, pessoaId) {
+    var n = 0;
+    for (var s = 1; s <= programa.semanas; s++) {
+      if (etapaFeita(programa, pessoaId, s, "audio")) n += MOEDAS_PROGRAMA.resposta;
+    }
+    n += ((programa.participacao || {})[pessoaId] || 0) * MOEDAS_PROGRAMA.participacao;
+    return n;
+  }
+  // Participação no grupo: você soma um ponto quando alguém interage.
+  function somarParticipacao(programaId, pessoaId, delta) {
+    var l = programasLista();
+    l.forEach(function (p) {
+      if (p.id !== programaId) return;
+      p.participacao = p.participacao || {};
+      p.participacao[pessoaId] = Math.max(0, (p.participacao[pessoaId] || 0) + (delta || 1));
+    });
+    programasSave(l); return l;
+  }
+  function rankingPrograma(programaId) {
+    var p = getPrograma(programaId);
+    if (!p) return [];
+    return p.participantes.map(function (pid) {
+      var pessoa = getPessoa(pid) || { nome: "(removida)" };
+      var respostas = 0;
+      for (var s = 1; s <= p.semanas; s++) if (etapaFeita(p, pid, s, "audio")) respostas++;
+      return { pessoaId: pid, nome: pessoa.nome, respostas: respostas,
+        participacao: (p.participacao || {})[pid] || 0,
+        moedas: moedasDoPrograma(p, pid) };
+    }).sort(function (a, b) { return b.moedas - a.moedas || a.nome.localeCompare(b.nome); })
+      .map(function (x, i) { return Object.assign({ posicao: i + 1 }, x); });
+  }
+
   function etapaFeita(programa, pessoaId, semana, etapa) {
     var k = pessoaId + "|" + semana;
     return !!((programa.progresso || {})[k] || {})[etapa];
@@ -1187,7 +1222,7 @@
           pulsoLabel: pulso ? pulsoMeta(pulso.nota).label : "",
           pulsoCor: pulso ? pulsoMeta(pulso.nota).cor : "#b8ada0",
           tendenciaPulso: tendenciaPulso(p.id),
-          desde: p.desde || "",
+          desde: p.desde || "", tags: (p.tags || []).slice(),
           riscos: riscos, score: score,
           saudavel: riscos.length === 0
         };
@@ -2035,6 +2070,30 @@
   // Dados cadastrais, com registro do que mudou.
   var CAMPOS_CADASTRO = { nome: "nome", whatsapp: "WhatsApp", email: "e-mail",
     nivel: "nível", professora: "professora" };
+  // ── TAGS ──────────────────────────────────────────────────────
+  // Rótulo livre por pessoa. Serve pro que a estrutura fixa não cobre:
+  // "mãe de aluno", "quer certificado", "indicou 2", "prova em março".
+  var TAGS_SUGERIDAS = ["Indicou alguém", "Quer certificado", "Prepara prova",
+    "Mudança de país", "Trabalho", "Viagem", "Retorno", "VIP"];
+  function addTag(id, tag) {
+    var t2 = String(tag || "").trim();
+    if (!t2) return null;
+    return mutate(id, function (p) {
+      p.tags = p.tags || [];
+      if (p.tags.indexOf(t2) < 0) p.tags.push(t2);
+    });
+  }
+  function removeTag(id, tag) {
+    return mutate(id, function (p) {
+      p.tags = (p.tags || []).filter(function (x) { return x !== tag; });
+    });
+  }
+  function todasAsTags() {
+    var s = {};
+    loadPessoas().forEach(function (p) { (p.tags || []).forEach(function (x) { s[x] = (s[x] || 0) + 1; }); });
+    return Object.keys(s).sort().map(function (x) { return { tag: x, n: s[x] }; });
+  }
+
   function atualizarCadastro(id, patch) {
     return mutate(id, function (p) {
       var mudou = [];
@@ -2828,6 +2887,10 @@
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
+    MOEDAS_PROGRAMA: MOEDAS_PROGRAMA, moedasDoPrograma: moedasDoPrograma,
+    somarParticipacao: somarParticipacao, rankingPrograma: rankingPrograma,
+    // tags
+    TAGS_SUGERIDAS: TAGS_SUGERIDAS, addTag: addTag, removeTag: removeTag, todasAsTags: todasAsTags,
     semanaAtualPrograma: semanaAtualPrograma, pendenciasPrograma: pendenciasPrograma,
     // acompanhamento
     TOQUE_TIPOS: TOQUE_TIPOS, PULSO_META: PULSO_META, MOTIVOS_TOQUE: MOTIVOS_TOQUE,
