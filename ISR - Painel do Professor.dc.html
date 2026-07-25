@@ -67,6 +67,23 @@
         </sc-if>
       </div>
 
+      <sc-if value="{{ ehAulaExtra }}">
+        <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+          <div style="font-size: 13px; font-weight: 700; color: #164951;">Aula extra · {{ extraTitulo }}</div>
+          <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6; margin-top: 2px;">{{ extraInfo }}</div>
+          <div style="font-size: 11.5px; color: #9c6f56; margin-top: 4px;">{{ extraResumo }}</div>
+          <div style="margin-top: 10px;">
+            <input ref="{{ buscaExtraRef }}" oninput="{{ onBuscaExtra }}" placeholder="Incluir aluna na chamada: buscar por nome" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <sc-for list="{{ candidatosExtra }}" as="cd" hint-placeholder-count="3">
+              <button onclick="{{ cd.onAdd }}" style="display: block; width: 100%; text-align: left; margin-top: 5px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; padding: 8px 11px; border-radius: 8px; cursor: pointer; font-family: inherit;">{{ cd.nome }} <span style="color: #9b8b7e;">· {{ cd.turma }}</span></button>
+            </sc-for>
+            <sc-if value="{{ semCandidatos }}">
+              <div style="font-size: 11.5px; color: #b3a693; margin-top: 6px;">Nenhuma aluna ativa com esse nome.</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ chamadaVazia }}">
         <div style="text-align: center; padding: 22px 20px;">
           <div style="font-size: 13px; color: #6b6155; margin-bottom: 4px;">{{ turmaVaziaLabel }} não tem aluna matriculada.</div>
@@ -122,21 +139,31 @@
       </sc-for>
     </div>
 
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">A chamada é registrada por turma e data. As ausências são lançadas na linha do tempo da aluna e consideradas no acompanhamento.</p>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; margin-top: 16px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Horas de aula extra</div>
+      <div style="font-size: 13px; color: #164951;">{{ horasLabel }}</div>
+      <p style="margin: 5px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">A contagem considera apenas aulas extras com chamada salva.</p>
+    </div>
+
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">A chamada é registrada por turma e data. As ausências são lançadas na linha do tempo da aluna e consideradas no acompanhamento. Na aula extra, a lista parte de quem confirmou presença e admite inclusão manual.</p>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null, salvouAgora: false, tick: 0 };
-  chamadaRef = React.createRef();
+  state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
+            salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "" };
+  chamadaRef = React.createRef(); buscaExtraRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
 
   turmaParam() {
     try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
+  }
+  eventoParam() {
+    try { return new URLSearchParams(window.location.search).get("evento") || ""; } catch (e) { return ""; }
   }
 
   diaLabel(isoStr) {
@@ -160,11 +187,14 @@ class Component extends DCLogic {
     { id: "justificada", label: "Justif.", title: "Ausência justificada (avisou antes)", cor: "#6b5b95" }
   ];
 
-  carregarChamada(turmaLabel, dataIso) {
+  // eventoId preenchido = aula extra: a lista é quem confirmou mais quem a
+  // professora incluiu na hora, não a matrícula de uma turma.
+  carregarChamada(turmaLabel, dataIso, eventoId) {
     const CRM = window.ISRCRM;
     const salva = CRM.getChamada(turmaLabel, dataIso);
     const pres = {};
-    CRM.alunasDaTurma(turmaLabel).forEach(p => {
+    const lista = eventoId ? CRM.listaChamadaExtra(eventoId) : CRM.alunasDaTurma(turmaLabel);
+    lista.forEach(p => {
       pres[p.id] = salva ? CRM.estadoPresenca(salva.presencas[p.id]) : "presente";
     });
     return pres;
@@ -172,7 +202,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef };
+    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef };
 
     const ocup = CRM.ocupacaoTurmas();
     const nomes = [];
@@ -194,15 +224,18 @@ class Component extends DCLogic {
       .map(it => {
         const dl = this.diaLabel(it.data);
         const daTurma = turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0 && it.titulo.indexOf(u.turma) >= 0)[0];
+        const ev = it.eventoId ? CRM.getEvento(it.eventoId) : null;
         return {
           dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
-          gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
+          gcal: ev ? CRM.gcalLinkEvento(ev) : CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
           onChamada: () => {
-            // sem turma casada (aula extra, particular) a chamada não se aplica —
-            // mas o botão nunca pode parecer quebrado: rola até o bloco de qualquer jeito
-            if (daTurma) {
-              this.setState({ turmaChamada: daTurma.label, chamadaData: it.data,
+            if (ev) {
+              const lbl = CRM.aulaExtraLabel(ev);
+              this.setState({ eventoChamada: ev.id, turmaChamada: lbl, chamadaData: ev.data,
+                presencas: this.carregarChamada(lbl, ev.data, ev.id), tarefas: null, salvouAgora: false });
+            } else if (daTurma) {
+              this.setState({ eventoChamada: null, turmaChamada: daTurma.label, chamadaData: it.data,
                 presencas: this.carregarChamada(daTurma.label, it.data), tarefas: null, salvouAgora: false });
             }
             const el = this.chamadaRef.current;
@@ -212,12 +245,29 @@ class Component extends DCLogic {
       });
 
     // ── chamada ──
-    const turmaSel = this.state.turmaChamada
-      || (tpTurma && tpTurma.teacher === teacher ? tpTurma.label : null)
-      || (turmasProfOcup[0] ? turmasProfOcup[0].label : null);
-    const dataSel = this.state.chamadaData || this.hojeIso();
-    const presAtual = this.state.presencas || (turmaSel ? this.carregarChamada(turmaSel, dataSel) : {});
-    const alunas = turmaSel ? CRM.alunasDaTurma(turmaSel) : [];
+    // aulas extras da professora, para escolher no seletor e para o link direto
+    const hojeIso = this.hojeIso();
+    const limiteExtra = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+    const extrasProf = CRM.eventosLista().filter(e =>
+      (!teacher || !e.responsavel || e.responsavel === teacher) && e.data >= limiteExtra);
+    // a aula aberta por link direto sempre aparece no seletor, mesmo de outra professora
+    const evLink = this.state.eventoChamada === undefined ? this.eventoParam() : this.state.eventoChamada;
+    if (evLink && !extrasProf.some(e => e.id === evLink)) {
+      const extra = CRM.getEvento(evLink);
+      if (extra) extrasProf.push(extra);
+    }
+    const evParam = this.eventoParam();
+    const evId = this.state.eventoChamada === undefined ? (evParam || null) : this.state.eventoChamada;
+    const evSel = evId ? CRM.getEvento(evId) : null;
+
+    const turmaSel = evSel ? CRM.aulaExtraLabel(evSel)
+      : (this.state.turmaChamada
+        || (tpTurma && tpTurma.teacher === teacher ? tpTurma.label : null)
+        || (turmasProfOcup[0] ? turmasProfOcup[0].label : null));
+    const dataSel = this.state.chamadaData || (evSel ? evSel.data : hojeIso);
+    const presAtual = this.state.presencas
+      || (turmaSel ? this.carregarChamada(turmaSel, dataSel, evSel ? evSel.id : null) : {});
+    const alunas = evSel ? CRM.listaChamadaExtra(evSel.id) : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
     const salva = turmaSel ? CRM.getChamada(turmaSel, dataSel) : null;
     const tarAtual = this.state.tarefas || ((salva && salva.tarefas) || {});
 
@@ -261,14 +311,75 @@ class Component extends DCLogic {
 
       turmasChamada: turmasProfOcup.map(u => ({
         id: u.label, label: u.label + " · " + u.ocupadas + (u.ocupadas === 1 ? " aluna" : " alunas"),
-        sel: u.label === turmaSel
-      })),
-      onTurmaChamada: (e) => this.setState({ turmaChamada: e.target.value, presencas: this.carregarChamada(e.target.value, dataSel), tarefas: null, salvouAgora: false }),
+        sel: !evSel && u.label === turmaSel
+      })).concat(extrasProf.map(e => ({
+        id: "ev:" + e.id,
+        label: "Aula extra · " + e.titulo + " · " + CRM.ddmm(e.data),
+        sel: !!evSel && evSel.id === e.id
+      }))),
+      onTurmaChamada: (e) => {
+        const v = e.target.value;
+        if (v.indexOf("ev:") === 0) {
+          const ev2 = CRM.getEvento(v.slice(3));
+          if (!ev2) return;
+          const lbl = CRM.aulaExtraLabel(ev2);
+          this.setState({ eventoChamada: ev2.id, turmaChamada: lbl, chamadaData: ev2.data,
+            presencas: this.carregarChamada(lbl, ev2.data, ev2.id), tarefas: null, salvouAgora: false });
+          return;
+        }
+        this.setState({ eventoChamada: null, turmaChamada: v, chamadaData: null,
+          presencas: this.carregarChamada(v, dataSel), tarefas: null, salvouAgora: false });
+      },
       chamadaData: dataSel,
       onDataChamada: (e) => {
         const v = e.target.value || this.hojeIso();
-        this.setState({ chamadaData: v, turmaChamada: turmaSel, presencas: turmaSel ? this.carregarChamada(turmaSel, v) : null, tarefas: null, salvouAgora: false });
+        this.setState({ chamadaData: v, turmaChamada: turmaSel,
+          presencas: turmaSel ? this.carregarChamada(turmaSel, v, evSel ? evSel.id : null) : null,
+          tarefas: null, salvouAgora: false });
       },
+
+      // ── aula extra: contexto, entrada manual e horas de aula ──
+      ehAulaExtra: !!evSel,
+      extraTitulo: evSel ? evSel.titulo : "",
+      extraInfo: evSel
+        ? [CRM.ddmm(evSel.data), evSel.hora, (parseInt(evSel.duracao, 10) || 60) + " minutos",
+           evSel.local, evSel.turmaAlvo ? "Apenas " + evSel.turmaAlvo : "Aberta a todas as alunas"]
+            .filter(Boolean).join(" · ")
+        : "",
+      extraResumo: evSel
+        ? (CRM.confirmadasAulaExtra(evSel).length + " confirmaram presença · "
+           + alunas.length + (alunas.length === 1 ? " na lista da chamada" : " na lista da chamada"))
+        : "",
+      buscaExtraRef: this.buscaExtraRef,
+      onBuscaExtra: (e) => this.setState({ buscaExtra: e.target.value }),
+      candidatosExtra: (() => {
+        if (!evSel) return [];
+        const q = (this.state.buscaExtra || "").trim().toLowerCase();
+        if (!q) return [];
+        const jaNaLista = {}; alunas.forEach(a => { jaNaLista[a.id] = 1; });
+        return CRM.getPessoas()
+          .filter(x => (x.status === "aluna" || x.status === "mvs")
+            && !jaNaLista[x.id] && x.nome.toLowerCase().indexOf(q) >= 0)
+          .slice(0, 6)
+          .map(x => ({ nome: x.nome, turma: x.turma || "—",
+            onAdd: () => {
+              CRM.addAlunaNaAulaExtra(evSel.id, x.id);
+              const novo = Object.assign({}, presAtual); novo[x.id] = "presente";
+              if (this.buscaExtraRef.current) this.buscaExtraRef.current.value = "";
+              this.setState({ buscaExtra: "", presencas: novo, salvouAgora: false });
+            } }));
+      })(),
+      semCandidatos: !!evSel && !!(this.state.buscaExtra || "").trim()
+        && CRM.getPessoas().filter(x => (x.status === "aluna" || x.status === "mvs")
+          && x.nome.toLowerCase().indexOf((this.state.buscaExtra || "").trim().toLowerCase()) >= 0
+          && alunas.every(a => a.id !== x.id)).length === 0,
+      horasLabel: (() => {
+        const h = CRM.horasAulaExtra(teacher, 12);
+        return h.aulas
+          ? h.horas.toString().replace(".", ",") + (h.horas === 1 ? " hora" : " horas") + " em "
+            + h.aulas + (h.aulas === 1 ? " aula extra" : " aulas extras") + " nos últimos 12 meses"
+          : "Nenhuma aula extra com chamada registrada nos últimos 12 meses.";
+      })(),
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
       chamadaRef: this.chamadaRef,
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,

@@ -2196,12 +2196,165 @@
   function eventosSave(l) { carimbarLista(l); try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEvento(dados) {
     var l = eventosLista();
-    l.push({ id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
-      responsavel: dados.responsavel || "", tipo: "aula_extra" });
+    var ev = { id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
+      responsavel: dados.responsavel || "", tipo: "aula_extra",
+      duracao: parseInt(dados.duracao, 10) || 60,
+      local: dados.local || "", descricao: dados.descricao || "",
+      vagas: parseInt(dados.vagas, 10) || 0,
+      turmaAlvo: dados.turmaAlvo || "",
+      rsvps: {}, manuais: [] };
+    l.push(ev);
     l.sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; });
-    eventosSave(l); return l;
+    eventosSave(l); return ev;
   }
   function removeEvento(id) { var l = eventosLista().filter(function (e) { return e.id !== id; }); eventosSave(l); return l; }
+  function getEvento(id) { return eventosLista().filter(function (e) { return e.id === id; })[0] || null; }
+  function updateEvento(id, patch) {
+    var l = eventosLista();
+    l.forEach(function (e) {
+      if (e.id !== id) return;
+      Object.keys(patch || {}).forEach(function (k) { if (patch[k] !== "" && patch[k] !== undefined) e[k] = patch[k]; });
+      carimbar(e);
+    });
+    eventosSave(l); return getEvento(id);
+  }
+
+  // ── AULA EXTRA ────────────────────────────────────────────────
+  // Uma aula extra não é uma turma: não tem matrícula, não tem
+  // mensalidade. Quem vai é quem confirma. A chamada dela existe
+  // por um motivo só — contar as horas de aula que a professora deu.
+  function aulaExtraLabel(ev) { return "Aula extra · " + (ev ? ev.titulo : ""); }
+  // Quem enxerga o convite: a turma alvo, ou todas as alunas ativas.
+  function convidadasAulaExtra(ev) {
+    if (!ev) return [];
+    return loadPessoas().filter(function (p) {
+      if (p.status !== "aluna" && p.status !== "mvs") return false;
+      return !ev.turmaAlvo || p.turma === ev.turmaAlvo;
+    });
+  }
+  function confirmadasAulaExtra(ev) {
+    if (!ev) return [];
+    var r = ev.rsvps || {};
+    return convidadasAulaExtra(ev).filter(function (p) { return r[p.id] === true; });
+  }
+  // A lista da chamada: quem confirmou mais quem a professora incluiu na hora.
+  function listaChamadaExtra(eventoId) {
+    var ev = getEvento(eventoId);
+    if (!ev) return [];
+    var vistos = {}, out = [];
+    confirmadasAulaExtra(ev).forEach(function (p) { vistos[p.id] = 1; out.push(p); });
+    (ev.manuais || []).forEach(function (pid) {
+      if (vistos[pid]) return;
+      var p = getPessoa(pid);
+      if (p) { vistos[pid] = 1; out.push(p); }
+    });
+    return out;
+  }
+  function addAlunaNaAulaExtra(eventoId, pessoaId) {
+    var l = eventosLista();
+    l.forEach(function (e) {
+      if (e.id !== eventoId) return;
+      e.manuais = e.manuais || [];
+      if (e.manuais.indexOf(pessoaId) < 0) e.manuais.push(pessoaId);
+      carimbar(e);
+    });
+    eventosSave(l); return listaChamadaExtra(eventoId);
+  }
+  function removeAlunaDaAulaExtra(eventoId, pessoaId) {
+    var l = eventosLista();
+    l.forEach(function (e) {
+      if (e.id !== eventoId) return;
+      e.manuais = (e.manuais || []).filter(function (x) { return x !== pessoaId; });
+      if (e.rsvps) delete e.rsvps[pessoaId];
+      carimbar(e);
+    });
+    eventosSave(l); return listaChamadaExtra(eventoId);
+  }
+  // Horas de aula dadas: só conta aula extra com chamada salva.
+  function horasAulaExtra(professora, nMeses) {
+    var limite = addDays(-30 * (nMeses || 12)), total = 0, lista = [];
+    eventosLista().forEach(function (e) {
+      if (e.data < limite) return;
+      if (professora && e.responsavel !== professora) return;
+      var ch = getChamada(aulaExtraLabel(e), e.data);
+      if (!ch) return;
+      var presentes = Object.keys(ch.presencas || {}).filter(function (k) {
+        var st = estadoPresenca(ch.presencas[k]);
+        return st === "presente" || st === "atraso";
+      }).length;
+      var h = (parseInt(e.duracao, 10) || 60) / 60;
+      total += h;
+      lista.push({ id: e.id, titulo: e.titulo, data: e.data, horas: h,
+        professora: e.responsavel, presentes: presentes });
+    });
+    lista.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    return { horas: Math.round(total * 10) / 10, aulas: lista.length, lista: lista };
+  }
+  // Link do Google Agenda com duração e local reais do evento.
+  function gcalLinkEvento(ev) {
+    if (!ev) return "";
+    var d = (ev.data || "").replace(/-/g, "");
+    var h = parseInt((ev.hora || "").replace(/\D/g, ""), 10);
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ini, fim;
+    if (!isNaN(h)) {
+      var dur = parseInt(ev.duracao, 10) || 60;
+      var fimH = h + Math.floor(dur / 60), fimM = dur % 60;
+      ini = d + "T" + p2(h) + "0000";
+      fim = d + "T" + p2(fimH) + p2(fimM) + "00";
+    } else { ini = d; fim = d; }
+    var det = [ev.descricao, ev.responsavel ? "Professora: " + ev.responsavel : "", "Inglês sem Roteiro"]
+      .filter(Boolean).join("\n");
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="
+      + encodeURIComponent("Aula extra · " + ev.titulo)
+      + "&dates=" + ini + "/" + fim
+      + "&details=" + encodeURIComponent(det)
+      + (ev.local ? "&location=" + encodeURIComponent(ev.local) : "");
+  }
+  function textoAulaExtra(ev) {
+    if (!ev) return "";
+    return "Aula extra: " + ev.titulo + "\n"
+      + "Data: " + ddmm(ev.data) + (ev.hora ? " às " + ev.hora : "") + "\n"
+      + "Duração: " + (parseInt(ev.duracao, 10) || 60) + " minutos\n"
+      + (ev.local ? "Local: " + ev.local + "\n" : "")
+      + (ev.responsavel ? "Professora: " + ev.responsavel + "\n" : "")
+      + (ev.descricao ? "\n" + ev.descricao + "\n" : "")
+      + "\nConfirme a presença na sua área de aluna.";
+  }
+  // O sistema não envia e-mail: monta a mensagem e abre o cliente de
+  // e-mail com tudo preenchido. O envio é sempre um ato da pessoa.
+  function mailtoAulaExtra(ev, destinatarios, assuntoAlt, corpoAlt) {
+    if (!ev) return "";
+    var emails = (destinatarios || []).map(function (p) { return typeof p === "string" ? p : p.email; })
+      .filter(Boolean);
+    var assunto = assuntoAlt || ("Aula extra · " + ev.titulo + " · " + ddmm(ev.data));
+    var corpo = (corpoAlt || textoAulaExtra(ev)) + "\n\nAdicionar ao Google Agenda:\n" + gcalLinkEvento(ev);
+    return "mailto:" + (emails.length === 1 ? emails[0] : "")
+      + "?" + (emails.length > 1 ? "bcc=" + encodeURIComponent(emails.join(",")) + "&" : "")
+      + "subject=" + encodeURIComponent(assunto)
+      + "&body=" + encodeURIComponent(corpo);
+  }
+  // Aulas extras que a aluna pode ver, da mais próxima em diante.
+  function aulasExtraDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return [];
+    var hoje = iso(today());
+    return eventosLista().filter(function (e) {
+      if (e.data < hoje) return false;
+      if (e.turmaAlvo && e.turmaAlvo !== p.turma) return false;
+      return true;
+    }).map(function (e) {
+      var r = (e.rsvps || {})[pessoaId];
+      var confirmadas = confirmadasAulaExtra(e).length;
+      return { id: e.id, titulo: e.titulo, data: e.data, hora: e.hora,
+        duracao: parseInt(e.duracao, 10) || 60, local: e.local || "",
+        descricao: e.descricao || "", professora: e.responsavel || "",
+        confirmou: r === true, recusou: r === false, respondeu: r !== undefined,
+        confirmadas: confirmadas, vagas: parseInt(e.vagas, 10) || 0,
+        lotada: !!e.vagas && confirmadas >= e.vagas && r !== true,
+        gcal: gcalLinkEvento(e), evento: e };
+    });
+  }
 
   // ── CHAMADA (presenças por turma e dia — Painel do Professor) ──
   var CHAMADAS_KEY = "isr_chamadas_v1";
@@ -3127,6 +3280,13 @@
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
     setOnboardingFeito: setOnboardingFeito, setProximoCheckin: setProximoCheckin, registrarCheckinFeito: registrarCheckinFeito,
     eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
+    getEvento: getEvento, updateEvento: updateEvento,
+    aulaExtraLabel: aulaExtraLabel, convidadasAulaExtra: convidadasAulaExtra,
+    confirmadasAulaExtra: confirmadasAulaExtra, listaChamadaExtra: listaChamadaExtra,
+    addAlunaNaAulaExtra: addAlunaNaAulaExtra, removeAlunaDaAulaExtra: removeAlunaDaAulaExtra,
+    horasAulaExtra: horasAulaExtra, gcalLinkEvento: gcalLinkEvento,
+    textoAulaExtra: textoAulaExtra, mailtoAulaExtra: mailtoAulaExtra,
+    aulasExtraDaAluna: aulasExtraDaAluna,
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
     chamadasDaTurma: chamadasDaTurma,
