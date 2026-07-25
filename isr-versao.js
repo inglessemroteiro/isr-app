@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-b",
+  numero: "2026.07.25-c",
   data: "25/07/2026",
-  nota: "Correção: dois botões Matricular na mesma tela"
+  nota: "Correção: o seletor de estágio mostrava Matriculada sem matricular"
 };
