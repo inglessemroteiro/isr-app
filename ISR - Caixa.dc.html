@@ -191,6 +191,36 @@
           <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar despesa</button>
         </div>
         <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês.</p>
+
+        <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b;">Categorias de despesa</span>
+            <button onclick="{{ onToggleCats }}" style="border: 1px solid #e5dccf; background: {{ catsBg }}; color: {{ catsFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ catsLabel }}</button>
+          </div>
+          <sc-if value="{{ catsAberto }}">
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
+              <sc-for list="{{ catsLista }}" as="ct" hint-placeholder-count="6">
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #eee3d6; border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 11.5px; color: #3d3529;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ ct.cor }};"></span>{{ ct.label }}
+                  <sc-if value="{{ ct.removivel }}">
+                    <button onclick="{{ ct.onRemove }}" title="Apagar categoria" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 0 4px; line-height: 1;">×</button>
+                  </sc-if>
+                  <sc-if value="{{ ct.fixa }}">
+                    <span style="width: 4px;"></span>
+                  </sc-if>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <input ref="{{ novaCatRef }}" onkeydown="{{ onNovaCatKey }}" placeholder="Nova categoria (ex. Aluguel, Contabilidade)" style="flex: 1; min-width: 170px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <button onclick="{{ onAddCat }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar categoria</button>
+            </div>
+            <sc-if value="{{ temErroCat }}">
+              <p style="margin: 7px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroCat }}</p>
+            </sc-if>
+            <p style="margin: 7px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As cinco primeiras são fixas. Uma categoria criada só pode ser apagada enquanto nenhum custo ou lançamento estiver usando ela.</p>
+          </sc-if>
+        </div>
       </div>
     </div>
 
@@ -334,9 +364,11 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
-            editandoMeta: false, copiado: false, custoVigencia: null, tick: 0 };
+            editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
+            catsAberto: false, erroCat: "" };
   custoRefs = {};
   extratoRef = React.createRef();
+  novaCatRef = React.createRef();
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
   entDescRef = React.createRef(); entValorRef = React.createRef(); entMoedaRef = React.createRef();
@@ -458,9 +490,9 @@ class Component extends DCLogic {
 
     const saidas = f.saidas.map(s => ({
       nome: s.nome, valor: CRM.fmtMoney(s.moeda, s.valor),
-      cor: CRM.catMeta(CRM.CAT_SAIDA, s.categoria).cor,
-      detalhe: s.fixo ? "Custo fixo · " + CRM.catMeta(CRM.CAT_SAIDA, s.categoria).label
-                      : "Lançamento de " + CRM.ddmm(s.data) + " · " + CRM.catMeta(CRM.CAT_SAIDA, s.categoria).label,
+      cor: CRM.catMeta(CRM.catsSaida(), s.categoria).cor,
+      detalhe: s.fixo ? "Custo fixo · " + CRM.catMeta(CRM.catsSaida(), s.categoria).label
+                      : "Lançamento de " + CRM.ddmm(s.data) + " · " + CRM.catMeta(CRM.catsSaida(), s.categoria).label,
       removivel: !!s.lancId,
       onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); }
     }));
@@ -475,7 +507,18 @@ class Component extends DCLogic {
     ];
 
     // ── custos fixos ──
-    const opcoesCatSaida = CRM.CAT_SAIDA.map(c => ({ id: c.id, label: c.label }));
+    const opcoesCatSaida = CRM.catsSaida().map(c => ({ id: c.id, label: c.label }));
+
+    // ── categorias de despesa criadas pela escola ──
+    const criarCategoria = () => {
+      const nome = ((this.novaCatRef.current && this.novaCatRef.current.value) || "").trim();
+      if (!nome) { this.setState({ erroCat: "Informe o nome da categoria." }); return; }
+      const nova = CRM.addCategoriaSaida(nome);
+      if (!nova) { this.setState({ erroCat: "Já existe uma categoria com esse nome." }); return; }
+      if (this.novaCatRef.current) this.novaCatRef.current.value = "";
+      this.setState({ erroCat: "" });
+      this.bump();
+    };
     const mesLabelDe = k => { const p = (k || "").split("-"); return p.length === 2 ? (p[1] + "/" + p[0].slice(2)) : k; };
     const custos = CRM.CUSTOS_FIXOS.map((c, i) => {
       const vigente = CRM.vigenteNoMes(c, mes.key);
@@ -489,9 +532,9 @@ class Component extends DCLogic {
       return {
         nome: c.nome, valor: CRM.fmtMoney(c.moeda, c.valor),
         corValor: vigente ? "#cf6b5c" : "#c9b9a6",
-        cor: CRM.catMeta(CRM.CAT_SAIDA, c.categoria || "outros").cor,
+        cor: CRM.catMeta(CRM.catsSaida(), c.categoria || "outros").cor,
         vigencia,
-        opcoes: CRM.CAT_SAIDA.map(o => ({ id: o.id, label: o.label, sel: (c.categoria || "outros") === o.id })),
+        opcoes: CRM.catsSaida().map(o => ({ id: o.id, label: o.label, sel: (c.categoria || "outros") === o.id })),
         onCategoria: (ev) => { CRM.updateCusto(i, { categoria: ev.target.value }); this.bump(); },
         editando: this.state.custoVigencia === i,
         inicio: (c.inicio || "").slice(0, 7), fim: (c.fim || "").slice(0, 7),
@@ -567,8 +610,31 @@ class Component extends DCLogic {
 
       numeros, metas, serie, camadas,
       catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
-      catsSaida: barras(f.porCatSaida, CRM.CAT_SAIDA),
+      catsSaida: barras(f.porCatSaida, CRM.catsSaida()),
       entradas, saidas, custos, opcoesCatSaida,
+
+      catsAberto: this.state.catsAberto,
+      catsLabel: this.state.catsAberto ? "Fechar" : "Gerenciar",
+      catsBg: this.state.catsAberto ? "#f6eee4" : "#fff",
+      catsFg: this.state.catsAberto ? "#9c6f56" : "#164951",
+      onToggleCats: () => this.setState(s => ({ catsAberto: !s.catsAberto, erroCat: "" })),
+      catsLista: CRM.catsSaida().map(c => ({
+        label: c.label, cor: c.cor,
+        removivel: !!c.criada, fixa: !c.criada,
+        onRemove: () => {
+          const r = CRM.removeCategoriaSaida(c.id);
+          if (!r.removida) {
+            this.setState({ erroCat: "\"" + c.label + "\" está em uso por algum custo ou lançamento e não pode ser apagada." });
+            return;
+          }
+          this.setState({ erroCat: "" });
+          this.bump();
+        }
+      })),
+      novaCatRef: this.novaCatRef,
+      onAddCat: criarCategoria,
+      onNovaCatKey: (e) => { if (e.key === "Enter") criarCategoria(); },
+      temErroCat: !!this.state.erroCat, erroCat: this.state.erroCat,
       semEntradas: Object.keys(f.porCatEntrada).length === 0,
       totalEntrouLabel: totalEntrou, totalSaiuLabel: duo(f.saiu),
       conservador: duo(pv.conservador), otimista: duo(pv.otimista),

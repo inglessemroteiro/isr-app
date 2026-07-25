@@ -22,9 +22,28 @@
       </div>
       <a href="ISR%20-%20Alunas.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Alunas</a>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;"><strong>Gestão de Relacionamento.</strong> Prioriza alunas para contato periódico e registra as interações realizadas e a avaliação de progresso informada pela aluna.</p>
+    <p style="margin: 0 0 16px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;"><strong>Gestão de Relacionamento.</strong> Prioriza alunas para contato periódico e registra as interações realizadas e a avaliação de progresso informada pela aluna.</p>
 
-    <!-- SEMANA -->
+    <!-- O QUE FAZER AGORA -->
+    <div style="background: #164951; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 7px;">Agora</div>
+      <div style="font-size: 19px; font-weight: 700; color: #fff; letter-spacing: -0.3px; line-height: 1.35; margin-bottom: 4px;">{{ chamada }}</div>
+      <div style="font-size: 12.5px; color: rgba(255,255,255,0.7); line-height: 1.6;">{{ chamadaDetalhe }}</div>
+      <sc-if value="{{ temProximas }}">
+        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px;">
+          <sc-for list="{{ proximas }}" as="px" hint-placeholder-count="3">
+            <button onclick="{{ px.onClick }}" style="border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); color: #fff; font-size: 12px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit; text-align: left;">{{ px.nome }} <span style="color: rgba(255,255,255,0.55); font-weight: 400;">· {{ px.porque }}</span></button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- NÚMEROS DA SEMANA -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Como está a semana</span>
+      <button onclick="{{ onDetalhes }}" style="border: 1px solid #e5dccf; background: {{ detBg }}; color: {{ detFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ detLabel }}</button>
+    </div>
+    <sc-if value="{{ detalhesAbertos }}">
     <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px;">
       <div style="display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline;">
         <div>
@@ -98,6 +117,7 @@
         </div>
       </sc-if>
     </div>
+    </sc-if>
 
     <!-- FILA -->
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
@@ -195,7 +215,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { abertoId: null, tipoSel: {}, pulsoSel: {}, filtro: "pendentes", tick: 0,
-            editandoCadencia: false };
+            editandoCadencia: false, detalhes: false };
   cadRefs = {};
   notaRefs = {}; pulsoNotaRefs = {};
 
@@ -212,7 +232,9 @@ class Component extends DCLogic {
       larguraSemana: "0%", corSemana: "#9ec970", fraseSemana: "", pulsoEscola: "—",
       pulsoEscolaNota: "", pulsoEscolaCor: "#fff",
       segmentos: [], cargaSemana: "0", cargaDia: "0", vencidas: "0", vencidasCor: "#8a7c6b",
-      cadLabel: "Ajustar", cadBg: "#fff", cadFg: "#164951", editandoCadencia: false };
+      cadLabel: "Ajustar", cadBg: "#fff", cadFg: "#164951", editandoCadencia: false,
+      chamada: "", chamadaDetalhe: "", proximas: [], temProximas: false,
+      detalhesAbertos: false, detLabel: "Ver números", detBg: "#fff", detFg: "#164951" };
 
     const toda = CRM.filaAcompanhamento();
 
@@ -357,6 +379,37 @@ class Component extends DCLogic {
         ? (comPulso.length + " de " + toda.length + (comPulso.length === 1 ? " respondeu" : " responderam"))
         : "Nenhuma avaliação registrada",
       filtros, fila, filaVazia: fila.length === 0,
+
+      // ── a tela abre dizendo o que fazer, não com números ──
+      // Antes ela empilhava avaliação, cadência, filtros e histórico sem
+      // nunca dizer por onde começar.
+      chamada: (() => {
+        const vencidas = toda.filter(f => !f.tocadaEstaSemana && f.motivos.length);
+        if (!toda.length) return "Nenhuma aluna ativa no momento.";
+        if (!vencidas.length) return "Nenhum contato pendente agora.";
+        const n = Math.min(3, vencidas.length);
+        return "Fale com " + (n === 1 ? "esta aluna" : "estas " + n + " alunas") + " hoje.";
+      })(),
+      chamadaDetalhe: (() => {
+        const vencidas = toda.filter(f => !f.tocadaEstaSemana && f.motivos.length);
+        if (!toda.length) return "";
+        if (!vencidas.length)
+          return "A cadência da semana está em dia. Voltam a aparecer aqui conforme o intervalo de cada segmento.";
+        return vencidas.length + (vencidas.length === 1 ? " aluna está" : " alunas estão")
+          + " fora da cadência. A lista completa fica abaixo, com o motivo de cada uma.";
+      })(),
+      proximas: toda.filter(f => !f.tocadaEstaSemana && f.motivos.length).slice(0, 3).map(f => ({
+        nome: f.nome,
+        porque: f.sinais && f.sinais.length ? f.sinais[0].label.toLowerCase() : "contato periódico",
+        onClick: () => this.setState({ abertoId: f.pessoaId, filtro: "pendentes" })
+      })),
+      temProximas: toda.some(f => !f.tocadaEstaSemana && f.motivos.length),
+
+      detalhesAbertos: this.state.detalhes,
+      detLabel: this.state.detalhes ? "Ocultar números" : "Ver números",
+      detBg: this.state.detalhes ? "#f6eee4" : "#fff",
+      detFg: this.state.detalhes ? "#9c6f56" : "#164951",
+      onDetalhes: () => this.setState(s => ({ detalhes: !s.detalhes })),
 
       segmentos,
       cargaSemana: String(carga.porSemana).replace(".", ","),

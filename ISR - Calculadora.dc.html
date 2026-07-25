@@ -121,6 +121,17 @@
           <button onclick="{{ onTabelaCheia }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit;">Tabela cheia</button>
         </div>
         <p style="margin: 7px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">Total do ciclo, não o valor da parcela. Em branco, aplica-se o preço de tabela.</p>
+
+        <sc-if value="{{ ehParcelado }}">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin: 14px 0 4px;">Sinal na assinatura</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input ref="{{ sinalRef }}" placeholder="Opcional" onchange="{{ onSinal }}" style="flex: 1; min-width: 0; padding: 11px 13px; font-size: 15px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+            <sc-for list="{{ sinaisSugeridos }}" as="ss" hint-placeholder-count="2">
+              <button onclick="{{ ss.onClick }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 10px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit;">{{ ss.label }}</button>
+            </sc-for>
+          </div>
+          <p style="margin: 7px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">{{ sinalNota }}</p>
+        </sc-if>
       </div>
 
       <div style="background: {{ decisaoBg }}; border-radius: 12px; padding: 16px 18px;">
@@ -206,9 +217,9 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { produtoId: "grupo_eur", fonte: "nova", ciclos: 1, forma: "parcelado", parcelas: 3,
-            total: "", tabelaAberta: false, copiado: false,
+            total: "", sinal: "", tabelaAberta: false, copiado: false,
             pac1: "grupo_eur", pac2: "addon_eur", pacDesc: "20", pacPar: "1", tick: 0 };
-  totalRef = React.createRef(); ticketRef = React.createRef();
+  totalRef = React.createRef(); ticketRef = React.createRef(); sinalRef = React.createRef();
   pacDescRef = React.createRef(); pacParRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -232,7 +243,8 @@ class Component extends DCLogic {
     const precos = CRM.precosLista();
     const r = CRM.calcularProposta({
       produtoId: this.state.produtoId, fonte: this.state.fonte, ciclos: this.state.ciclos,
-      forma: this.state.forma, parcelas: this.state.parcelas, totalProposto: this.state.total
+      forma: this.state.forma, parcelas: this.state.parcelas, totalProposto: this.state.total,
+      sinal: this.state.sinal
     });
     if (!r) return this.vazio();
 
@@ -270,7 +282,9 @@ class Component extends DCLogic {
       { rotulo: "Desconto máximo permitido", valor: r.descMax + "%" },
       { rotulo: "Piso · mínimo autorizado", valor: dinheiro(r.piso) },
       { rotulo: "Desconto que você está dando", valor: r.descDado.toFixed(1) + "%", ruim: r.descDado > r.descMax + 0.05 },
-      { rotulo: r.avista ? "Pagamento único" : r.parcelas + "× de", valor: dinheiro(r.valorParcela), forte: true },
+      { rotulo: r.avista ? "Pagamento único"
+          : (r.sinal > 0 ? "Sinal + " + r.parcelas + "× de" : r.parcelas + "× de"),
+        valor: dinheiro(r.valorParcela), forte: true },
       { rotulo: "Equivale por mês", valor: dinheiro(r.mensal) + (m === "€" ? "" : " · € " + Math.round(r.eurMes)) },
       { rotulo: "Ticket alvo da escola", valor: "€ " + r.ticketAlvo + " / mês", ruim: !alvoOk }
     ].map(l => ({
@@ -290,7 +304,8 @@ class Component extends DCLogic {
       "",
       nomeProduto + " · " + (r.ciclos === 1 ? "1 ciclo (3 meses)" : "2 ciclos (6 meses)"),
       r.avista ? ("Pagamento único de " + dinheiro(r.total))
-               : (r.parcelas + "× de " + dinheiro(r.valorParcela) + "  (total " + dinheiro(r.total) + ")"),
+               : ((r.sinal > 0 ? "sinal de " + dinheiro(r.sinal) + " + " : "")
+                  + r.parcelas + "× de " + dinheiro(r.valorParcela) + "  (total " + dinheiro(r.total) + ")"),
       r.descDado > 0.05 ? ("Condição especial: " + r.descDado.toFixed(0) + "% de desconto sobre a tabela.") : "",
       "",
       "Fica em " + dinheiro(r.mensal) + " por mês de estudo."
@@ -335,6 +350,21 @@ class Component extends DCLogic {
 
       produtoOpts, fonteOpts, cicloOpts, formaOpts, parcelaOpts,
       ehParcelado, maxParcelas: String(r.maxParcelas),
+      sinalRef: this.sinalRef,
+      onSinal: e => this.setState({ sinal: e.target.value }),
+      sinaisSugeridos: [0.2, 0.3].map(f => ({
+        label: Math.round(f * 100) + "%",
+        onClick: () => {
+          const v = Math.round(r.total * f);
+          if (this.sinalRef.current) this.sinalRef.current.value = String(v);
+          this.setState({ sinal: String(v) });
+        }
+      })),
+      sinalNota: r.sinal > 0
+        ? "Sinal de " + dinheiro(r.sinal) + " na assinatura. Restam " + dinheiro(r.aParcelar)
+          + " em " + r.parcelas + (r.parcelas === 1 ? " parcela de " : " parcelas de ") + dinheiro(r.valorParcela) + "."
+        : "O sinal sai do valor a parcelar. O ciclo de " + (3 * r.ciclos) + " meses aceita até "
+          + r.maxParcelas + " parcelas.",
       onProduto: e => this.setState({ produtoId: e.target.value, total: "", parcelas: 1 }),
       totalRef: this.totalRef, tabelaLabel: dinheiro(r.tabela),
       onTotal: e => this.setState({ total: e.target.value }),

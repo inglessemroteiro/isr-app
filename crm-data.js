@@ -544,6 +544,15 @@
     return lista;
   }
   // historico é append-only — toda escrita relevante passa por aqui
+  // Quem cuida da integração: quem tem o papel de operação, ou a gestora.
+  function donoDaIntegracao() {
+    var eq = equipeLista();
+    var op = eq.filter(function (m) { return (m.papeis || []).indexOf("operacao") >= 0; })[0];
+    if (op) return op.nome;
+    var g = eq.filter(function (m) { return (m.papeis || []).indexOf("gestora") >= 0; })[0];
+    return g ? g.nome : "Gabi";
+  }
+
   function pushHist(p, tipo, texto, quem) {
     p.historico = p.historico || [];
     p.historico.push({ data: iso(today()), tipo: tipo, texto: texto, quem: quem || "" });
@@ -774,6 +783,27 @@
         + " criado (" + n + " parcelas" + (jaPagas ? ", " + jaPagas + " já paga(s)" : "") + ")"
         + (cfg.desde ? " · entrada retroativa em " + ddmm(cfg.desde) : ""));
       pushHist(p, "onboarding", "Onboarding criado (4 checkpoints: boas-vindas, 1ª aula, 1ª semana, 1º pagamento)");
+      // Matrícula nova é notícia para duas pessoas: quem faz a integração
+      // precisa começar, e a gestão precisa saber que entrou aluna.
+      if (!retro) {
+        var quem = (gestaoUser() || {}).nome || "";
+        var ondeQuando = turmaLabel + (unit && unit.teacher ? " · com " + unit.teacher : "");
+        equipeLista().forEach(function (m) {
+          if (m.nome === quem) return; // quem fez a matrícula já sabe
+          if ((m.papeis || []).indexOf("operacao") >= 0)
+            avisar(m.nome, "Matrícula nova: " + p.nome + " · " + ondeQuando
+              + ". Comece a integração dos primeiros 30 dias.", "matricula");
+          else if ((m.papeis || []).indexOf("gestora") >= 0)
+            avisar(m.nome, "Matrícula nova: " + p.nome + " · " + ondeQuando + ".", "matricula");
+        });
+        addTarefa({
+          titulo: "Integração de " + p.nome,
+          detalhe: ondeQuando + " · boas-vindas, confirmação da 1ª aula, check-in da 1ª semana e 1º pagamento",
+          dono: donoDaIntegracao(),
+          prazo: p.onboarding[0].data,
+          por: quem
+        });
+      }
     });
   }
 
@@ -1810,13 +1840,68 @@
   }
 
   // ── REUNIÕES DO COMERCIAL (calendário da Carla) ────────────────
-  function agendarReuniao(id, dataIso, hora) {
-    return mutate(id, function (p) {
-      p.reuniao = { data: dataIso, hora: hora || "", feita: false };
-      pushHist(p, "reuniao", "Reunião agendada para " + ddmm(dataIso) + (hora ? " às " + hora : ""));
+  function agendarReuniao(id, dataIso, hora, cfg) {
+    var pes = getPessoa(id);
+    var dono = (cfg && cfg.dono) || donoComercial();
+    mutate(id, function (p) {
+      p.reuniao = { data: dataIso, hora: hora || "", feita: false,
+        dono: dono, duracao: (cfg && parseInt(cfg.duracao, 10)) || 45 };
+      pushHist(p, "reuniao", "Reunião agendada para " + ddmm(dataIso) + (hora ? " às " + hora : "")
+        + (dono ? " · " + dono : ""));
     });
+    // A reunião vira compromisso de alguém: sem tarefa, ela só existe na
+    // ficha do lead e não aparece na Central de quem precisa conduzi-la.
+    addTarefa({
+      titulo: "Conversa de matrícula: " + (pes ? pes.nome : ""),
+      detalhe: "Reunião marcada para " + ddmm(dataIso) + (hora ? " às " + hora : "")
+        + (pes && pes.email ? " · " + pes.email : ""),
+      dono: dono, prazo: dataIso,
+      por: (gestaoUser() || {}).nome || ""
+    });
+    if (dono && dono !== ((gestaoUser() || {}).nome || "")) {
+      avisar(dono, "Conversa de matrícula marcada: " + (pes ? pes.nome : "") + " · "
+        + ddmm(dataIso) + (hora ? " às " + hora : ""), "reuniao");
+    }
+    return loadPessoas();
+  }
+  function donoComercial() {
+    var c = equipeLista().filter(function (m) { return (m.papeis || []).indexOf("comercial") >= 0; })[0];
+    return c ? c.nome : "Carla";
+  }
+  // Convite do Google Agenda com a lead entre os convidados: é o convite
+  // dela que faz a reunião existir na agenda das duas.
+  function gcalReuniao(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p || !p.reuniao) return "";
+    var r = p.reuniao;
+    var d = (r.data || "").replace(/-/g, "");
+    var h = parseInt((r.hora || "").replace(/\D/g, ""), 10);
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ini, fim;
+    if (!isNaN(h)) {
+      var dur = parseInt(r.duracao, 10) || 45;
+      var totalMin = h * 60 + dur;
+      ini = d + "T" + p2(h) + "0000";
+      fim = d + "T" + p2(Math.floor(totalMin / 60)) + p2(totalMin % 60) + "00";
+    } else { ini = d; fim = d; }
+    var det = ["Conversa de matrícula · Inglês sem Roteiro",
+      p.whatsapp ? "WhatsApp: " + p.whatsapp : "",
+      p.turma ? "Turma de interesse: " + p.turma : "",
+      p.nivel ? "Nível: " + p.nivel : ""].filter(Boolean).join("\n");
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE"
+      + "&text=" + encodeURIComponent("Conversa de matrícula · " + p.nome)
+      + "&dates=" + ini + "/" + fim
+      + "&details=" + encodeURIComponent(det)
+      + (p.email ? "&add=" + encodeURIComponent(p.email) : "");
   }
   function marcarReuniaoFeita(id) {
+    var pes = getPessoa(id);
+    // a tarefa da reunião se encerra junto: ela cumpriu o papel
+    if (pes) {
+      tarefasLista().forEach(function (tf) {
+        if (!tf.feita && tf.titulo === "Conversa de matrícula: " + pes.nome) setTarefaFeita(tf.id, true);
+      });
+    }
     return mutate(id, function (p) {
       if (p.reuniao) p.reuniao.feita = true;
       pushHist(p, "reuniao", "Reunião realizada");
@@ -2427,6 +2512,8 @@
   // A escola tem uma fundadora (Gabi). As demais entram pelo cadastro de
   // Equipe, já com papéis e acesso — sem isso ninguém consegue entrar.
   var EQUIPE_PADRAO = [
+    { id: "eqGabi", nome: "Gabi", email: "gabisouza.prof@gmail.com",
+      papeis: ["gestora", "professora"], fundadora: true, valorTipo: "", valor: 0, moeda: "R$" },
     { id: "eqCarla", nome: "Carla", email: "comercial.inglessemroteiro@gmail.com",
       papeis: ["comercial", "professora"], valorTipo: "", valor: 0, moeda: "R$" },
     { id: "eqErika", nome: "Érika", email: "erikainglessemroteiro@gmail.com",
@@ -3125,13 +3212,53 @@
     { id: "extra",      label: "Aulas extras",         cor: "#d4a574" },
     { id: "outra",      label: "Outras receitas",      cor: "#b8ada0" }
   ];
-  var CAT_SAIDA = [
+  // As cinco de fábrica cobrem o começo, mas cada escola tem as suas —
+  // aluguel, contabilidade, material. Categorias criadas ficam guardadas
+  // e aparecem em toda a tela do Caixa.
+  var CAT_SAIDA_PADRAO = [
     { id: "equipe",      label: "Equipe",           cor: "#348a8e" },
     { id: "ferramentas", label: "Ferramentas",      cor: "#6b5b95" },
     { id: "marketing",   label: "Marketing",        cor: "#e07856" },
     { id: "impostos",    label: "Impostos e taxas", cor: "#9c6f56" },
     { id: "outros",      label: "Outros",           cor: "#b8ada0" }
   ];
+  var CAT_EXTRA_KEY = "isr_categorias_saida_v1";
+  var CORES_CATEGORIA = ["#5a9e4b", "#c98060", "#7b8fa8", "#a4785f", "#5e8f8f",
+    "#8f6f9e", "#b0722c", "#7a9e6b", "#9e6b7a", "#6b7a9e"];
+  function catSaidaExtras() {
+    try { return JSON.parse(localStorage.getItem(CAT_EXTRA_KEY)) || []; } catch (e) { return []; }
+  }
+  function catsSaida() { return CAT_SAIDA_PADRAO.concat(catSaidaExtras()); }
+  function slugCategoria(nome) {
+    return (nome || "").toLowerCase().trim()
+      .normalize ? (nome || "").toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")
+      : (nome || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  }
+  function addCategoriaSaida(nome) {
+    var limpo = (nome || "").trim();
+    if (!limpo) return null;
+    var id = slugCategoria(limpo);
+    if (!id) return null;
+    if (catsSaida().some(function (c) { return c.id === id; })) return null;
+    var extras = catSaidaExtras();
+    extras.push({ id: id, label: limpo, cor: CORES_CATEGORIA[extras.length % CORES_CATEGORIA.length], criada: true });
+    try { localStorage.setItem(CAT_EXTRA_KEY, JSON.stringify(extras)); } catch (e) {}
+    agendarSync();
+    return extras[extras.length - 1];
+  }
+  function removeCategoriaSaida(id) {
+    // categoria em uso não some: os lançamentos ficariam órfãos
+    var emUso = custosLista().some(function (c) { return c.categoria === id; })
+      || lancamentosLista().some(function (l) { return l.categoria === id; });
+    if (emUso) return { removida: false, motivo: "em_uso" };
+    var extras = catSaidaExtras().filter(function (c) { return c.id !== id; });
+    try { localStorage.setItem(CAT_EXTRA_KEY, JSON.stringify(extras)); } catch (e) {}
+    agendarSync();
+    return { removida: true };
+  }
+  // mantém o nome antigo para quem já consome a lista
+  var CAT_SAIDA = CAT_SAIDA_PADRAO;
   function catMeta(lista, id) {
     for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return lista[i];
     return lista[lista.length - 1];
@@ -3387,7 +3514,7 @@
       top(f.porCatEntrada, CAT_ENTRADA),
       "",
       lin("Saiu", f.saiu),
-      top(f.porCatSaida, CAT_SAIDA),
+      top(f.porCatSaida, catsSaida()),
       "",
       lin("Sobrou", f.resultado),
       lin("Ainda a receber", f.aReceber),
@@ -3408,6 +3535,8 @@
   //  Origem: planilha "calculadora de negociação ISR 2.0".
   // ══════════════════════════════════════════════════════════════
   var CICLO_MESES = 3;
+  // Regra da escola: até 4× no ciclo de 3 meses, até 7× no de 6.
+  var MAX_PARCELAS_POR_CICLO = { 1: 4, 2: 7 };
   var PRECOS_PADRAO = [
     { id: "grupo_brl", nome: "Turma online (grupo) BRL", moeda: "R$", ciclo: 1495,
       descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4, obs: "" },
@@ -3488,7 +3617,9 @@
     var descMax = tetoBase + (ciclos === 2 ? p.desc2Ciclos : 0);
     var piso = Math.round(tabela * (1 - descMax / 100) * 100) / 100;
 
-    var maxParcelas = avista ? 1 : p.maxParcelas * ciclos;
+    // O parcelamento é regra do ciclo, não do produto: até 4× no ciclo de
+    // 3 meses e até 7× no de 6 meses.
+    var maxParcelas = avista ? 1 : (MAX_PARCELAS_POR_CICLO[ciclos] || 4);
     var parcelas = avista ? 1 : Math.max(1, parseInt(cfg.parcelas, 10) || 1);
 
     var total = cfg.totalProposto != null && cfg.totalProposto !== ""
@@ -3496,13 +3627,23 @@
       : tabela;
     var descDado = tabela > 0 ? Math.round((1 - total / tabela) * 1000) / 10 : 0;
 
+    // Sinal: entra na assinatura e sai do que vai ser parcelado.
+    var sinal = cfg.sinal != null && cfg.sinal !== ""
+      ? (typeof cfg.sinal === "number" ? cfg.sinal : parseMoney(cfg.sinal)) : 0;
+    if (sinal < 0) sinal = 0;
+    if (sinal > total) sinal = total;
+    var aParcelar = Math.max(0, total - sinal);
+
     var mensal = total / (CICLO_MESES * ciclos);
     var eurMes = p.moeda === "€" ? mensal : mensal / taxaCambio();
     var alvo = ticketAlvo();
 
     var alertas = [];
     if (parcelas > maxParcelas)
-      alertas.push("Você pediu " + parcelas + " parcelas, mas o máximo pra este produto é " + maxParcelas + ".");
+      alertas.push(parcelas + " parcelas passa do limite: o ciclo de " + (CICLO_MESES * ciclos)
+        + " meses aceita até " + maxParcelas + ".");
+    if (sinal > 0 && sinal >= total)
+      alertas.push("O sinal cobre o valor inteiro. Registre como pagamento à vista.");
     if (descDado > descMax + 0.05)
       alertas.push("Desconto de " + descDado.toFixed(1) + "% passa do teto de " + descMax + "% — precisa de aprovação da Gabi.");
     if (descDado < -0.05)
@@ -3516,7 +3657,8 @@
       tabela: tabela, descMax: descMax, piso: piso,
       total: total, descDado: descDado,
       parcelas: parcelas, maxParcelas: maxParcelas,
-      valorParcela: parcelas > 0 ? total / parcelas : total,
+      sinal: sinal, aParcelar: aParcelar,
+      valorParcela: parcelas > 0 ? aParcelar / parcelas : aParcelar,
       mensal: mensal, eurMes: eurMes, ticketAlvo: alvo,
       podeFechar: podeFechar,
       decisao: podeFechar ? "Pode fechar" : "Precisa de aprovação da Gabi",
@@ -3610,7 +3752,7 @@
     estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
-    agendarReuniao: agendarReuniao, marcarReuniaoFeita: marcarReuniaoFeita,
+    agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
     renegociarContrato: renegociarContrato, setSinalRecebido: setSinalRecebido,
     caixaDetalheMes: caixaDetalheMes, processarCadastrosPendentes: processarCadastrosPendentes,
@@ -3620,6 +3762,8 @@
     custosDoMes: custosDoMes, vigenteNoMes: vigenteNoMes,
     // financeiro
     CAT_ENTRADA: CAT_ENTRADA, CAT_SAIDA: CAT_SAIDA, catMeta: catMeta,
+    catsSaida: catsSaida, addCategoriaSaida: addCategoriaSaida,
+    removeCategoriaSaida: removeCategoriaSaida,
     financeiroMes: financeiroMes, financeiroSerie: financeiroSerie, previsaoMes: previsaoMes,
     mesesFinanceiro: mesesFinanceiro, mesOffset: mesOffset,
     lancamentosLista: lancamentosLista, addLancamento: addLancamento,
