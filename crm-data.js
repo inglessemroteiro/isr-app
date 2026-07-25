@@ -619,7 +619,60 @@
 
   // Transição lead→aluna (spec 6): zero recadastro.
   // cfg: { turmaId, tipo, ciclos, moeda, valorParcela, parcelas, vencDia }
+  // ── CONDIÇÕES COMBINADAS (antes da matrícula) ────────────────
+  // A negociação fecha antes do pagamento entrar. Guardar as condições
+  // aqui evita redigitar tudo na matrícula e permite ver, no funil,
+  // quanto já está combinado mas ainda não virou contrato.
+  function salvarProposta(id, cfg) {
+    return mutate(id, function (p) {
+      var moeda = (cfg && cfg.moeda) || p.moeda || "R$";
+      var val = function (v) { return v && !/[R$€]/.test(String(v)) ? fmtMoney(moeda, parseMoney(v)) : (v || ""); };
+      var n = parseInt(cfg && cfg.parcelas, 10) || 3;
+      p.proposta = {
+        moeda: moeda,
+        valorParcela: val(cfg && cfg.valorParcela),
+        parcelas: n,
+        vencDia: parseInt(cfg && cfg.vencDia, 10) || 10,
+        sinalValor: val(cfg && cfg.sinalValor),
+        sinalRecebido: !!(cfg && cfg.sinalRecebido),
+        turmaId: (cfg && cfg.turmaId) || "",
+        em: iso(today()), por: ((gestaoUser() || {}).nome || "")
+      };
+      p.moeda = moeda;
+      var total = fmtMoney(moeda, parseMoney(p.proposta.valorParcela) * n);
+      pushHist(p, "pagamento", "Condições combinadas · " + n + " × "
+        + (p.proposta.valorParcela || "—") + " = " + total
+        + " · vencimento dia " + p.proposta.vencDia
+        + (p.proposta.sinalValor
+            ? " · sinal de " + p.proposta.sinalValor
+              + (p.proposta.sinalRecebido ? " recebido" : " ainda não recebido")
+            : ""));
+    });
+  }
+  function propostaDe(id) { var p = getPessoa(id); return (p && p.proposta) || null; }
+  function resumoProposta(pr) {
+    if (!pr || !pr.valorParcela) return "";
+    var n = parseInt(pr.parcelas, 10) || 3;
+    var total = fmtMoney(pr.moeda || "R$", parseMoney(pr.valorParcela) * n);
+    return n + " × " + pr.valorParcela + " = " + total + " · vencimento dia " + pr.vencDia
+      + (pr.sinalValor ? " · sinal de " + pr.sinalValor
+          + (pr.sinalRecebido ? " recebido" : " ainda não recebido") : "");
+  }
+
   function matricular(id, cfg) {
+    // condições já combinadas valem como padrão: o que não vier no
+    // formulário da matrícula é herdado da proposta, sem redigitar
+    var pAtual = getPessoa(id);
+    var pr = (pAtual && pAtual.proposta) || null;
+    if (pr) {
+      cfg = cfg || {};
+      if (!cfg.moeda) cfg.moeda = pr.moeda;
+      if (!cfg.valorParcela) cfg.valorParcela = pr.valorParcela;
+      if (!cfg.parcelas) cfg.parcelas = pr.parcelas;
+      if (!cfg.vencDia) cfg.vencDia = pr.vencDia;
+      if (!cfg.sinalValor) { cfg.sinalValor = pr.sinalValor; cfg.sinalRecebido = pr.sinalRecebido; }
+      if (!cfg.turmaId) cfg.turmaId = pr.turmaId;
+    }
     // valores digitados sem símbolo ("497,00") são normalizados com a moeda
     // escolhida, para que parcela e sinal saiam iguais no resto do sistema
     var moedaCfg = cfg.moeda || "R$";
@@ -3273,6 +3326,7 @@
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,
     registrarContato: registrarContato, marcarPerdido: marcarPerdido, markLost: function (id) { return marcarPerdido(id, "Outro"); },
     deleteLead: deleteLead, addHistory: addHistory, addDocumento: addDocumento, matricular: matricular,
+    salvarProposta: salvarProposta, propostaDe: propostaDe, resumoProposta: resumoProposta,
     novaPessoa: novaPessoa,
     // cobrança
     getCobranca: getCobranca, cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
