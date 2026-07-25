@@ -256,15 +256,23 @@
                     <button onclick="{{ lead.onPSinalRecebido }}" style="width: 100%; border: 1px solid {{ lead.pSinalBorda }}; background: {{ lead.pSinalBg }}; color: {{ lead.pSinalFg }}; font-size: 11.5px; font-weight: 700; padding: 9px 11px; border-radius: 8px; cursor: pointer; font-family: inherit;">{{ lead.pSinalLabel }}</button>
                   </div>
                 </div>
-                <div style="background: #fff; border-radius: 8px; padding: 11px 13px; margin-bottom: 10px;">
-                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9ab3b3; font-weight: 700; margin-bottom: 3px;">Plano de pagamento</div>
-                  <div style="font-size: 12.5px; color: #164951; line-height: 1.6;">{{ lead.pResumo }}</div>
+                <div style="border-left: 3px solid #348a8e; padding: 2px 0 2px 11px; margin-bottom: 12px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9ab3b3; font-weight: 700; margin-bottom: 2px;">Plano de pagamento</div>
+                  <div style="font-size: 13px; font-weight: 700; color: #164951; line-height: 1.6;">{{ lead.pResumo }}</div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <button onclick="{{ lead.onSalvarProposta }}" style="flex: 1; min-width: 150px; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar condições</button>
                   <button onclick="{{ lead.onPropostaVirarMatricula }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar e matricular</button>
                   <button onclick="{{ lead.onNegociarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
                 </div>
+              </div>
+            </sc-if>
+
+            <!-- CONTRATO SEM CONDIÇÕES REGISTRADAS -->
+            <sc-if value="{{ lead.faltamCondicoes }}">
+              <div style="background: #fdf6ef; border: 1px solid #f0d9c8; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="font-size: 12.5px; color: #9c6f56; line-height: 1.6;">Esta pessoa está em contrato, mas as condições de pagamento ainda não foram registradas.</div>
+                <button onclick="{{ lead.onNegociar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar condições</button>
               </div>
             </sc-if>
 
@@ -340,9 +348,9 @@
                   </div>
                 </div>
 
-                <div style="background: #f6f2ea; border-radius: 8px; padding: 11px 13px; margin-bottom: 10px;">
-                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">Plano de pagamento</div>
-                  <div style="font-size: 12.5px; color: #164951; line-height: 1.6;">{{ lead.planoResumo }}</div>
+                <div style="border-left: 3px solid #164951; padding: 2px 0 2px 11px; margin-bottom: 12px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 2px;">Plano de pagamento</div>
+                  <div style="font-size: 13px; font-weight: 700; color: #164951; line-height: 1.6;">{{ lead.planoResumo }}</div>
                 </div>
 
                 <div style="display: flex; gap: 8px;">
@@ -388,6 +396,7 @@
                 <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
                 <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Marcar como feita</button>
               </sc-if>
+              <button onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lead.condLabel }}</button>
               <button onclick="{{ lead.onMatricular }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Matricular</button>
               <span style="flex: 1;"></span>
               <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: #b9ab99; font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;">Marcar perdido...</button>
@@ -616,6 +625,11 @@ class Component extends DCLogic {
         out.onNegociar = () => this.abrirForm({ negociandoId: l.id, matriculandoId: null, perdendoId: null, pSinalRecebido: (pr ? pr.sinalRecebido : false) });
         out.onNegociarCancela = () => this.setState({ negociandoId: null });
         out.temProposta = !!pr && !out.negociando && !out.matriculando;
+        out.faltamCondicoes = !pr && l.estagio === "contrato" && !out.negociando && !out.matriculando;
+        out.condLabel = pr ? "Alterar condições" : "Condições de pagamento";
+        out.condBg = out.negociando ? "#348a8e" : (pr ? "#fff" : "#f0f7f7");
+        out.condFg = out.negociando ? "#fff" : "#348a8e";
+        out.condBorda = "#c9dede";
         out.propostaResumo = pr ? CRM.resumoProposta(pr) : "";
         out.propostaEm = pr ? CRM.ddmm(pr.em) : "";
         out.pTurmaRef = this.pTurmaRef; out.pMoedaRef = this.pMoedaRef; out.pValorRef = this.pValorRef;
@@ -692,12 +706,15 @@ class Component extends DCLogic {
         out.matValorPh = pr && pr.valorParcela ? pr.valorParcela : "Ex. 497,00";
         out.matVencPh = pr ? String(pr.vencDia) : "Ex. 10";
         out.matSinalPh = pr && pr.sinalValor ? pr.sinalValor : "Opcional. Ex. 200,00";
+        // a turma pretendida vem do cadastro (l.turma); turmaInteresse só
+        // existe quando a pessoa se inscreveu pelo formulário externo
+        const turmaPretendida = l.turmaInteresse || l.turma || "";
         out.turmasOpts = CRM.ocupacaoTurmas().map(t => ({
           id: t.id,
-          sel: pr && pr.turmaId ? pr.turmaId === t.id : (!!l.turmaInteresse && l.turmaInteresse === t.label),
+          sel: pr && pr.turmaId ? pr.turmaId === t.id : (!!turmaPretendida && turmaPretendida === t.label),
           label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "LOTADA")
         })).concat([{ id: "particular",
-          sel: pr && pr.turmaId ? pr.turmaId === "particular" : l.turmaInteresse === "Particular",
+          sel: pr && pr.turmaId ? pr.turmaId === "particular" : /^particular/i.test(turmaPretendida),
           label: "Particular · aula individual" }]);
         out.onMatricularConfirma = () => {
           // campo em branco significa "mantém o que já estava combinado":
