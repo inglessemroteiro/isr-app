@@ -1007,61 +1007,187 @@
     return PULSO_META.filter(function (x) { return x.nota === nota; })[0] || PULSO_META[2];
   }
 
-  // ── FILA DE ACOMPANHAMENTO ────────────────────────────────────
-  // Quem falar esta semana e por quê. A 80 alunas, um toque por
-  // aluna por ciclo dá ~7 por semana — é conta que cabe no dia.
-  var MOTIVOS_TOQUE = {
-    faltou:      { label: "Ausente nas últimas aulas", peso: 50, tipo: "falta",     cor: "#e07856" },
-    pulso_baixo: { label: "Relatou dificuldade",       peso: 45, tipo: "checkin",   cor: "#cf6b5c" },
-    pulso_caiu:  { label: "Avaliação em queda",        peso: 40, tipo: "checkin",   cor: "#e07856" },
-    atrasada:    { label: "Pagamento atrasado",       peso: 35, tipo: "cobranca",  cor: "#cf6b5c" },
-    nova:        { label: "Início de contrato",        peso: 32, tipo: "checkin",   cor: "#9ec970" },
-    renovacao:   { label: "Renovação próxima",         peso: 30, tipo: "renovacao", cor: "#6b5b95" },
-    sem_pulso:   { label: "Sem avaliação registrada",  peso: 25, tipo: "checkin",  cor: "#d4a574" },
-    sumida:      { label: "Sem contato há mais de 21 dias", peso: 20, tipo: "checkin", cor: "#d4a574" },
-    indo_bem:    { label: "Evolução positiva",          peso: 8, tipo: "elogio",   cor: "#9ec970" }
+  // ══════════════════════════════════════════════════════════════
+  //  SINAIS — a fonte única da verdade sobre a situação de cada pessoa
+  //  ------------------------------------------------------------
+  //  Antes, três telas calculavam a mesma coisa por conta própria:
+  //  a Central ("o que fazer hoje"), o Acompanhamento ("com quem
+  //  falar") e as Alunas ("como cada uma está"). A mesma parcela
+  //  vencida tinha três nomes e três pesos, e o limiar de renovação
+  //  era 45 dias numa tela e 30 nas outras.
+  //
+  //  Agora o catálogo abaixo define UMA vez o nome, a cor, o peso, o
+  //  limiar e a ação de cada sinal. As três telas são recortes dele:
+  //  a Central mostra os sinais acionáveis hoje, o Acompanhamento os
+  //  de relacionamento, e as Alunas todos, como retrato da situação.
+  //  Os campos "risco" e "toque" preservam os nomes que as telas já
+  //  usavam, para que o histórico e os filtros continuem válidos.
+  // ══════════════════════════════════════════════════════════════
+  var SINAIS = [
+    { id: "parcela_atrasada", label: "Pagamento atrasado", cor: "#cf6b5c", peso: 50,
+      dono: "Érika", acao: "Cobrar atraso", tpl: "pag_atraso", tipo: "cobranca",
+      risco: "inadimplente", toque: "atrasada", naCentral: true, urg: 0 },
+    { id: "falta_recente", label: "Ausências recentes", cor: "#e07856", peso: 45,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "falta",
+      risco: "faltando", toque: "faltou", naCentral: true, urg: 1 },
+    { id: "avaliacao_baixa", label: "Dificuldade relatada", cor: "#cf6b5c", peso: 45,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "travada", toque: "pulso_baixo", naCentral: true, urg: 1 },
+    { id: "avaliacao_caiu", label: "Avaliação em queda", cor: "#e07856", peso: 40,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "", toque: "pulso_caiu", naCentral: false, urg: 2 },
+    { id: "parcela_a_vencer", label: "Parcela a vencer", cor: "#d4a574", peso: 18,
+      dono: "Érika", acao: "Enviar lembrete", tpl: "pag_lembrete", tipo: "cobranca",
+      risco: "", toque: "", naCentral: true, urg: 3 },
+    { id: "onboarding_pendente", label: "Integração pendente", cor: "#9c6f56", peso: 35,
+      dono: "Érika", acao: "Mensagem do checkpoint", tpl: "onb_sessao", tipo: "checkin",
+      risco: "onboarding", toque: "onboarding", naCentral: true, urg: 2 },
+    { id: "contrato_novo", label: "Início de contrato", cor: "#9ec970", peso: 32,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "", toque: "nova", naCentral: false, urg: 3 },
+    { id: "renovacao_aberta", label: "Renovação próxima", cor: "#6b5b95", peso: 30,
+      dono: "Carla", acao: "Conversa de renovação", tpl: "renov_abrir", tipo: "renovacao",
+      risco: "renovacao", toque: "renovacao", naCentral: true, urg: 4 },
+    { id: "sem_avaliacao", label: "Sem avaliação registrada", cor: "#d4a574", peso: 25,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "", toque: "sem_pulso", naCentral: false, urg: 4 },
+    { id: "sem_contato", label: "Sem contato recente", cor: "#d4a574", peso: 20,
+      dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "sem_contato", toque: "sumida", naCentral: false, urg: 4 },
+    { id: "checkin_agendado", label: "Check-in agendado", cor: "#2a9d8f", peso: 22,
+      dono: "Gabi", acao: "Fazer check-in", tpl: "checkin_mensal", tipo: "checkin",
+      risco: "", toque: "", naCentral: true, urg: 2 },
+    { id: "evolucao_positiva", label: "Evolução positiva", cor: "#9ec970", peso: 8,
+      dono: "Gabi", acao: "Reconhecer", tpl: "checkin_mensal", tipo: "elogio",
+      risco: "", toque: "indo_bem", naCentral: false, urg: 6 }
+  ];
+  // Limiares, definidos uma vez só.
+  var LIMIARES = {
+    faltas: 2,          // ausências no ciclo que acendem o sinal
+    avaliacaoBaixa: 2,  // nota de 1 a 5
+    avaliacaoAlta: 4,
+    diasSemContato: 21, // era 21 no acompanhamento e 30 nas alunas
+    diasRenovacao: 45,  // era 45 na central e 30 nas outras duas
+    diasContratoNovo: 42,
+    diasParcelaAVencer: 3
   };
-  function filaAcompanhamento() {
+  function sinalMeta(id) { return SINAIS.filter(function (s) { return s.id === id; })[0] || null; }
+
+  // Situação de uma pessoa: os fatos crus, calculados uma vez.
+  function situacaoDe(p) {
     var hoje = iso(today());
+    var c = contratoVigente(p) || {};
+    var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+    var meses = c.meses || [];
+    var atrasadas = meses.filter(function (m) {
+      return !m.pago && (m.key + "-" + (dia < 10 ? "0" : "") + dia) < hoje;
+    });
+    var mesAtual = meses.filter(function (m) { return m.key === mesAtualKey(); })[0];
+    var diasProxVenc = null;
+    if (mesAtual && !mesAtual.pago && c.vencDia !== "auto" && !isNaN(parseInt(c.vencDia, 10))) {
+      var d = parseInt(c.vencDia, 10) - today().getDate();
+      if (d >= 0) diasProxVenc = d;
+    }
+    var ob = p.onboarding || [];
+    var dToque = diasSemToque(p.id);
+    var ultimo = (p.historico && p.historico.length) ? p.historico[p.historico.length - 1] : null;
+    return {
+      contrato: c, meses: meses,
+      atrasadas: atrasadas, atrasadasN: atrasadas.length,
+      mesAtual: mesAtual, diasProxVenc: diasProxVenc,
+      parcelasPagas: meses.filter(function (m) { return m.pago; }).length,
+      faltas: faltasDe(p.id),
+      onboarding: ob,
+      onboardingFeitos: ob.filter(function (x) { return x.feito; }).length,
+      // pendente é "para hoje ou já passou" — a Central usava esse critério
+      // e as Alunas exigiam data estritamente passada, então um checkpoint
+      // marcado para hoje aparecia numa tela e sumia na outra
+      onboardingAtrasado: ob.filter(function (x) { return !x.feito && x.data <= hoje; }),
+      pulso: ultimoPulso(p.id), tendencia: tendenciaPulso(p.id),
+      diasSemToque: dToque,
+      diasSemContato: dToque !== null ? dToque
+        : (ultimo ? daysBetween(parseISO(ultimo.data), today()) : 999),
+      diasDeCasa: p.desde ? daysBetween(parseISO(p.desde), today()) : 999,
+      diasPraRenovar: c.fim ? daysBetween(today(), parseISO(c.fim)) : null,
+      checkinVencido: p.proximoCheckin && parseISO(p.proximoCheckin)
+        && daysBetween(parseISO(p.proximoCheckin), today()) >= 0
+    };
+  }
+
+  // Os sinais acesos para uma pessoa, com o detalhe que explica cada um.
+  function sinaisDe(p, sit) {
+    var s = sit || situacaoDe(p);
+    var out = [];
+    var add = function (id, detalhe) {
+      var m = sinalMeta(id);
+      if (m) out.push({ id: id, label: m.label, cor: m.cor, peso: m.peso, dono: m.dono,
+        acao: m.acao, tpl: m.tpl, tipo: m.tipo, urg: m.urg, naCentral: m.naCentral,
+        risco: m.risco, toque: m.toque, detalhe: detalhe || m.label });
+    };
+    if (s.atrasadasN) {
+      var pri = s.atrasadas[0];
+      add("parcela_atrasada", s.atrasadasN === 1
+        ? "Parcela de " + pri.label + " atrasada (" + (pri.valor || "") + ")"
+        : s.atrasadasN + " parcelas atrasadas (desde " + pri.label + ")");
+    } else if (s.diasProxVenc !== null && s.diasProxVenc <= LIMIARES.diasParcelaAVencer) {
+      add("parcela_a_vencer", s.diasProxVenc === 0
+        ? "Parcela vence hoje (" + (s.mesAtual.valor || "") + ")"
+        : "Parcela vence em " + s.diasProxVenc + (s.diasProxVenc === 1 ? " dia" : " dias")
+          + " (" + (s.mesAtual.valor || "") + ")");
+    }
+    if (s.faltas >= LIMIARES.faltas)
+      add("falta_recente", s.faltas + (s.faltas === 1 ? " ausência no ciclo" : " ausências no ciclo"));
+    if (s.pulso && s.pulso.nota <= LIMIARES.avaliacaoBaixa)
+      add("avaliacao_baixa", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
+    if (s.tendencia < 0)
+      add("avaliacao_caiu", "Avaliação caiu " + Math.abs(s.tendencia)
+        + (Math.abs(s.tendencia) === 1 ? " ponto" : " pontos"));
+    if (s.onboardingAtrasado.length)
+      add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label);
+    if (s.diasDeCasa <= LIMIARES.diasContratoNovo)
+      add("contrato_novo", "Entrou há " + s.diasDeCasa + (s.diasDeCasa === 1 ? " dia" : " dias"));
+    if (s.diasPraRenovar !== null && s.diasPraRenovar >= 0 && s.diasPraRenovar <= LIMIARES.diasRenovacao)
+      add("renovacao_aberta", "Contrato termina em " + s.diasPraRenovar
+        + (s.diasPraRenovar === 1 ? " dia" : " dias"));
+    if (!s.pulso) add("sem_avaliacao", "Nenhuma avaliação de progresso registrada");
+    if (s.diasSemToque === null || s.diasSemToque > LIMIARES.diasSemContato)
+      add("sem_contato", s.diasSemToque === null ? "Nenhum contato registrado"
+        : "Sem contato há " + s.diasSemToque + " dias");
+    if (s.checkinVencido) add("checkin_agendado", "Check-in agendado para " + ddmm(p.proximoCheckin));
+    if (!out.length && s.pulso && s.pulso.nota >= LIMIARES.avaliacaoAlta)
+      add("evolucao_positiva", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
+    return out.sort(function (a, b) { return b.peso - a.peso; });
+  }
+
+  // ── FILA DE ACOMPANHAMENTO ────────────────────────────────────
+  // Recorte de relacionamento dos sinais. A 80 alunas, um contato por
+  // aluna por ciclo dá ~7 por semana — é conta que cabe no dia.
+  var MOTIVOS_TOQUE = (function () {
+    var m = {};
+    SINAIS.forEach(function (s) {
+      if (s.toque) m[s.toque] = { label: s.label, peso: s.peso, tipo: s.tipo, cor: s.cor, sinal: s.id };
+    });
+    return m;
+  })();
+  function filaAcompanhamento() {
     return loadPessoas()
       .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
       .map(function (p) {
-        var c = contratoVigente(p) || {};
-        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
-        var atrasadas = (c.meses || []).filter(function (m) {
-          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
-          return !m.pago && venc < hoje;
-        }).length;
-
-        var pulso = ultimoPulso(p.id);
-        var tend = tendenciaPulso(p.id);
-        var dToque = diasSemToque(p.id);
-        var faltas = faltasDe(p.id);
-        var diasDeCasa = p.desde ? daysBetween(parseISO(p.desde), today()) : 999;
-        var diasPraRenovar = c.fim ? daysBetween(today(), parseISO(c.fim)) : null;
-
-        var motivos = [];
-        if (faltas >= 2) motivos.push("faltou");
-        if (pulso && pulso.nota <= 2) motivos.push("pulso_baixo");
-        if (tend < 0) motivos.push("pulso_caiu");
-        if (atrasadas) motivos.push("atrasada");
-        if (diasDeCasa <= 42) motivos.push("nova");
-        if (diasPraRenovar !== null && diasPraRenovar >= 0 && diasPraRenovar <= 30) motivos.push("renovacao");
-        if (!pulso) motivos.push("sem_pulso");
-        if (dToque === null || dToque > 21) motivos.push("sumida");
-        if (!motivos.length && pulso && pulso.nota >= 4) motivos.push("indo_bem");
-
-        var peso = motivos.reduce(function (a, m) { return a + MOTIVOS_TOQUE[m].peso; }, 0);
-        // quem foi tocada esta semana sai da fila — não se cobra duas vezes
-        var tocadaEstaSemana = dToque !== null && dToque <= 6;
+        var s = situacaoDe(p);
+        var todos = sinaisDe(p, s);
+        var visiveis = todos.filter(function (x) { return x.toque && !estaAdiado(x.id, p.id); });
+        var motivos = visiveis.map(function (x) { return x.toque; });
+        var peso = visiveis.reduce(function (a, x) { return a + x.peso; }, 0);
+        // quem já foi contatada esta semana sai da fila — não se cobra duas vezes
+        var tocadaEstaSemana = s.diasSemToque !== null && s.diasSemToque <= 6;
         return {
           pessoaId: p.id, nome: p.nome, turma: p.turma || "", whatsapp: p.whatsapp || "",
           professora: p.professora || "",
-          motivos: motivos, peso: peso, tocadaEstaSemana: tocadaEstaSemana,
-          diasSemToque: dToque, ultimoToque: ultimoToque(p.id),
-          pulso: pulso, tendencia: tend, faltas: faltas, atrasadas: atrasadas,
-          diasDeCasa: diasDeCasa, diasPraRenovar: diasPraRenovar,
-          tipoSugerido: motivos.length ? MOTIVOS_TOQUE[motivos[0]].tipo : "checkin"
+          motivos: motivos, sinais: visiveis, peso: peso, tocadaEstaSemana: tocadaEstaSemana,
+          diasSemToque: s.diasSemToque, ultimoToque: ultimoToque(p.id),
+          pulso: s.pulso, tendencia: s.tendencia, faltas: s.faltas, atrasadas: s.atrasadasN,
+          diasDeCasa: s.diasDeCasa, diasPraRenovar: s.diasPraRenovar,
+          tipoSugerido: visiveis.length ? visiveis[0].tipo : "checkin"
         };
       })
       .sort(function (a, b) {
@@ -1398,69 +1524,45 @@
   // Todo mundo que já é aluna, com os sinais que dizem se ela está
   // bem ou se precisa de você. É a base do acompanhamento: sem isso
   // o único jeito de saber como alguém está é abrindo perfil por perfil.
-  var RISCOS = {
-    inadimplente: { label: "Pagamento atrasado", cor: "#cf6b5c", peso: 40 },
-    faltando:     { label: "Ausências recentes", cor: "#e07856", peso: 30 },
-    sem_contato:  { label: "Sem contato",        cor: "#d4a574", peso: 20 },
-    onboarding:   { label: "Integração pendente", cor: "#9c6f56", peso: 25 },
-    renovacao:    { label: "Renovação próxima",  cor: "#6b5b95", peso: 15 },
-    travada:      { label: "Dificuldade relatada", cor: "#cf6b5c", peso: 45 }
-  };
+  var RISCOS = (function () {
+    var m = {};
+    SINAIS.forEach(function (s) {
+      if (s.risco) m[s.risco] = { label: s.label, cor: s.cor, peso: s.peso, sinal: s.id };
+    });
+    return m;
+  })();
+  // Retrato da situação de cada aluna. Diferente da Central e do
+  // Acompanhamento, aqui nada é escondido por adiamento: esta tela é
+  // consulta, não fila de trabalho.
   function alunasPainel() {
-    var hoje = iso(today());
     return loadPessoas()
       .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
       .map(function (p) {
-        var c = contratoVigente(p) || {};
-        var meses = c.meses || [];
-        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
-        var atrasadas = meses.filter(function (m) {
-          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
-          return !m.pago && venc < hoje;
-        });
-        var pagas = meses.filter(function (m) { return m.pago; }).length;
-        var faltas = faltasDe(p.id);
-        var ob = p.onboarding || [];
-        var obFeitos = ob.filter(function (x) { return x.feito; }).length;
-        var obAtrasado = ob.filter(function (x) { return !x.feito && x.data < hoje; }).length;
-        // contato de verdade é toque registrado; histórico serve de reserva
-        var dt = diasSemToque(p.id);
-        var ultimo = (p.historico && p.historico.length)
-          ? p.historico[p.historico.length - 1] : null;
-        var diasSemContato = dt !== null ? dt
-          : (ultimo ? daysBetween(parseISO(ultimo.data), today()) : 999);
-        var pulso = ultimoPulso(p.id);
-        var fimContrato = c.fim || "";
-        var diasPraRenovar = fimContrato ? daysBetween(today(), parseISO(fimContrato)) : null;
-
-        var riscos = [];
-        if (atrasadas.length) riscos.push("inadimplente");
-        if (faltas >= 2) riscos.push("faltando");
-        if (obAtrasado > 0) riscos.push("onboarding");
-        if (diasSemContato > 30) riscos.push("sem_contato");
-        if (pulso && pulso.nota <= 2) riscos.push("travada");
-        if (diasPraRenovar !== null && diasPraRenovar >= 0 && diasPraRenovar <= 30) riscos.push("renovacao");
-
-        var score = riscos.reduce(function (a, r) { return a + RISCOS[r].peso; }, 0);
+        var s = situacaoDe(p);
+        var todos = sinaisDe(p, s);
+        var c = s.contrato;
+        var riscos = todos.filter(function (x) { return x.risco; }).map(function (x) { return x.risco; });
+        var score = todos.filter(function (x) { return x.risco; })
+          .reduce(function (a, x) { return a + x.peso; }, 0);
         return {
           id: p.id, nome: p.nome, turma: p.turma || "—", professora: p.professora || "—",
           nivel: p.nivel || "", status: p.status, whatsapp: p.whatsapp || "",
           moeda: c.moeda || p.moeda || "R$", parcelaValor: c.parcelaValor || "",
-          parcelasPagas: pagas, parcelasTotal: meses.length,
-          atrasadas: atrasadas.length,
-          faltas: faltas,
-          onboardingFeitos: obFeitos, onboardingTotal: ob.length,
-          diasSemContato: diasSemContato,
+          parcelasPagas: s.parcelasPagas, parcelasTotal: s.meses.length,
+          atrasadas: s.atrasadasN,
+          faltas: s.faltas,
+          onboardingFeitos: s.onboardingFeitos, onboardingTotal: s.onboarding.length,
+          diasSemContato: s.diasSemContato,
           proximoCheckin: p.proximoCheckin || "",
-          fimContrato: fimContrato, diasPraRenovar: diasPraRenovar,
+          fimContrato: c.fim || "", diasPraRenovar: s.diasPraRenovar,
           moedas: moedasDe(p.id).total,
           tarefas: tarefasDe(p.id, 4),
-          pulso: pulso ? pulso.nota : null,
-          pulsoLabel: pulso ? pulsoMeta(pulso.nota).label : "",
-          pulsoCor: pulso ? pulsoMeta(pulso.nota).cor : "#b8ada0",
-          tendenciaPulso: tendenciaPulso(p.id),
+          pulso: s.pulso ? s.pulso.nota : null,
+          pulsoLabel: s.pulso ? pulsoMeta(s.pulso.nota).label : "",
+          pulsoCor: s.pulso ? pulsoMeta(s.pulso.nota).cor : "#b8ada0",
+          tendenciaPulso: s.tendencia,
           desde: p.desde || "", tags: (p.tags || []).slice(),
-          riscos: riscos, score: score,
+          sinais: todos, riscos: riscos, score: score,
           saudavel: riscos.length === 0
         };
       })
@@ -1580,90 +1682,62 @@
   function filaParaHoje(perfilId, donoNome) {
     var itens = [];
     var pessoas = loadPessoas();
-    var key = mesAtualKey();
 
     pessoas.forEach(function (p) {
-      // R1 — follow-up de lead vence hoje/venceu
-      if (p.status === "lead" && p.estagio !== "perdido" && p.estagio !== "incompleta" && p.proximoFollowup) {
-        var d = parseISO(p.proximoFollowup);
-        if (d && daysBetween(d, today()) >= 0) {
-          itens.push({ regra: "R1", dono: "Carla", urg: 1, icon: "", cor: "#348a8e", pessoaId: p.id, nome: p.nome,
-            motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
-            acao: "Mensagem do estágio", tpl: "lead_followup" });
+      // ── leads: o funil tem regras próprias, que não são sinais de aluna ──
+      if (p.status === "lead" && p.estagio !== "perdido") {
+        if (p.estagio !== "incompleta" && p.proximoFollowup) {
+          var d = parseISO(p.proximoFollowup);
+          if (d && daysBetween(d, today()) >= 0) {
+            itens.push({ regra: "R1", sinal: "followup_lead", dono: "Carla", urg: 1, icon: "", cor: "#348a8e",
+              pessoaId: p.id, nome: p.nome,
+              motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
+              acao: "Mensagem do estágio", tpl: "lead_followup" });
+          }
         }
-      }
-      // R2 — inscrição incompleta > 24h
-      if (p.status === "lead" && p.estagio === "incompleta") {
-        var e = parseISO(p.entrouEm);
-        if (e && daysBetween(e, today()) >= 1) {
-          itens.push({ regra: "R2", dono: "Carla", urg: 2, icon: "", cor: "#9c6f56", pessoaId: p.id, nome: p.nome,
-            motivo: "Inscrição incompleta há " + daysBetween(e, today()) + "d" + (p.badge ? " · " + p.badge.toLowerCase() : ""),
-            acao: "Mensagem de inscrição", tpl: "lead_incompleta" });
-        }
-      }
-      // R3/R4 — parcelas (alunas)
-      var c = contratoVigente(p);
-      if ((p.status === "aluna" || p.status === "mvs") && c && c.vencDia !== "auto") {
-        var mes = (c.meses || []).filter(function (m) { return m.key === key; })[0];
-        if (mes && !mes.pago) {
-          var hoje = new Date().getDate(), venc = parseInt(c.vencDia, 10);
-          if (!isNaN(venc)) {
-            if (hoje > venc) {
-              itens.push({ regra: "R3", dono: "Érika", urg: 0, icon: "", cor: "#e07856", pessoaId: p.id, nome: p.nome,
-                motivo: "Parcela de " + mes.label + " atrasada (" + mes.valor + " · venceu dia " + venc + ")",
-                acao: "Cobrar atraso", tpl: "pag_atraso" });
-            } else if (venc - hoje <= 3) {
-              itens.push({ regra: "R4", dono: "Érika", urg: 3, icon: "", cor: "#d4a574", pessoaId: p.id, nome: p.nome,
-                motivo: "Parcela vence em " + (venc - hoje) + "d (" + mes.valor + ")",
-                acao: "Enviar lembrete", tpl: "pag_lembrete" });
-            }
+        if (p.estagio === "incompleta") {
+          var e = parseISO(p.entrouEm);
+          if (e && daysBetween(e, today()) >= 1) {
+            itens.push({ regra: "R2", sinal: "inscricao_incompleta", dono: "Carla", urg: 2, icon: "", cor: "#9c6f56",
+              pessoaId: p.id, nome: p.nome,
+              motivo: "Inscrição incompleta há " + daysBetween(e, today()) + "d" + (p.badge ? " · " + p.badge.toLowerCase() : ""),
+              acao: "Mensagem de inscrição", tpl: "lead_incompleta" });
           }
         }
       }
-      // R5 — contrato termina em ≤45 dias (e renovação ainda aberta)
-      if (p.status === "aluna" && c && c.fim && p.renovacao !== "renovada" && p.renovacao !== "nao_renovou") {
-        var dias = daysBetween(today(), parseISO(c.fim));
-        if (dias >= 0 && dias <= 45) {
-          itens.push({ regra: "R5", dono: "Carla", urg: 4, icon: "", cor: "#6b5b95", pessoaId: p.id, nome: p.nome,
-            motivo: "Contrato termina em " + dias + "d — abrir renovação",
-            acao: "Conversa de renovação", tpl: "renov_abrir" });
-        }
+
+      // ── alunas: os sinais do catálogo único, filtrados pelos acionáveis ──
+      if (p.status === "aluna" || p.status === "mvs") {
+        var mapaRegra = { parcela_atrasada: "R3", parcela_a_vencer: "R4", renovacao_aberta: "R5",
+          onboarding_pendente: "R10", checkin_agendado: "RC", falta_recente: "R6",
+          avaliacao_baixa: "R7" };
+        sinaisDe(p).forEach(function (sn) {
+          if (!sn.naCentral) return;
+          itens.push({ regra: mapaRegra[sn.id] || sn.id, sinal: sn.id, dono: sn.dono, urg: sn.urg,
+            icon: "", cor: sn.cor, pessoaId: p.id, nome: p.nome,
+            motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl });
+        });
       }
-      // R10 — checkpoint de onboarding pendente e vencido
-      if ((p.status === "aluna" || p.status === "mvs") && p.onboarding) {
-        var cpV = p.onboarding.filter(function (c) { return !c.feito && parseISO(c.data) && daysBetween(parseISO(c.data), today()) >= 0; })[0];
-        if (cpV) {
-          itens.push({ regra: "R10", dono: "Érika", urg: 2, icon: "", cor: "#9ec970", pessoaId: p.id, nome: p.nome,
-            motivo: "Onboarding pendente: " + cpV.label,
-            acao: "Mensagem do checkpoint", tpl: cpV.id === "d2" ? "onb_confirma1a" : "onb_sessao" });
-        }
-      }
-      // RC — check-in agendado para hoje/vencido
-      if (p.status === "aluna" && p.proximoCheckin) {
-        var dc = parseISO(p.proximoCheckin);
-        if (dc && daysBetween(dc, today()) >= 0) {
-          itens.push({ regra: "RC", dono: "Gabi", urg: 2, icon: "", cor: "#2a9d8f", pessoaId: p.id, nome: p.nome,
-            motivo: "Check-in agendado " + (daysBetween(dc, today()) === 0 ? "para hoje" : "· venceu " + ddmm(p.proximoCheckin)),
-            acao: "Fazer check-in", tpl: "checkin_mensal" });
-        }
-      }
-      // R12 — ex-aluna "momento errado" completou 6 meses
-      if (p.status === "ex-aluna" && p.motivoPerda === "Momento errado" && p.saidaEm) {
+
+      // ── ex-aluna reativável que completou 6 meses ──
+      if (p.status === "ex-aluna" && p.saidaEm && !(p.saida && p.saida.reativavel === false)) {
         var m6 = daysBetween(parseISO(p.saidaEm), today());
         if (m6 >= 180) {
-          itens.push({ regra: "R12", dono: "Carla", urg: 5, icon: "", cor: "#b8ada0", pessoaId: p.id, nome: p.nome,
-            motivo: "Saiu há " + Math.floor(m6 / 30) + " meses (momento errado) — hora de reativar",
+          itens.push({ regra: "R12", sinal: "reativar", dono: "Carla", urg: 5, icon: "", cor: "#b8ada0",
+            pessoaId: p.id, nome: p.nome,
+            motivo: "Saiu há " + Math.floor(m6 / 30) + " meses"
+              + (p.motivoPerda ? " (" + p.motivoPerda.toLowerCase() + ")" : "") + " — hora de reativar",
             acao: "Reativar", tpl: "renov_abrir" });
         }
       }
     });
 
-    // RT — pendências com prazo pra hoje ou vencido
+    // pendências com prazo para hoje ou vencido
     tarefasLista().forEach(function (tf) {
       if (tf.feita || !tf.prazo) return;
       var dp = parseISO(tf.prazo);
       if (!dp || daysBetween(dp, today()) < 0) return;
-      itens.push({ regra: "RT", dono: tf.dono || "Gabi", urg: 1, icon: "", cor: "#9c6f56",
+      itens.push({ regra: "RT", sinal: "pendencia_equipe", dono: tf.dono || "Gabi", urg: 1, icon: "", cor: "#9c6f56",
         pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
         motivo: "Pendência " + (daysBetween(dp, today()) === 0 ? "para hoje" : "venceu " + ddmm(tf.prazo)),
         acao: "Concluir", tpl: "" });
@@ -1678,19 +1752,26 @@
       itens = itens.filter(function (i) { return i.regra !== "RT" || i.dono === donoRT; });
     }
 
-    // adiados hoje ficam fora (adiar = some da fila até amanhã)
-    var adiadosRaw = localStorage.getItem("isr_fila_adiados") || "{}";
-    var adiados = {}; try { adiados = JSON.parse(adiadosRaw); } catch (e) {}
-    var hojeIso = iso(today());
-    itens = itens.filter(function (i) { return adiados[i.regra + ":" + i.pessoaId] !== hojeIso; });
+    // adiar hoje tira da fila até amanhã — e vale também no Acompanhamento
+    itens = itens.filter(function (i) { return !estaAdiado(i.sinal || i.regra, i.pessoaId); });
 
     itens.sort(function (a, b) { return a.urg - b.urg; });
     return itens;
   }
-  function adiarItem(regra, pessoaId) {
-    var adiados = {}; try { adiados = JSON.parse(localStorage.getItem("isr_fila_adiados") || "{}"); } catch (e) {}
-    adiados[regra + ":" + pessoaId] = iso(today());
-    localStorage.setItem("isr_fila_adiados", JSON.stringify(adiados));
+  // Adiar é uma decisão sobre o sinal, não sobre a tela: some da Central
+  // e do Acompanhamento até amanhã. Nas Alunas continua visível, porque
+  // lá é retrato da situação, não fila de trabalho.
+  var ADIADOS_KEY = "isr_fila_adiados";
+  function adiadosMapa() {
+    try { return JSON.parse(localStorage.getItem(ADIADOS_KEY) || "{}"); } catch (e) { return {}; }
+  }
+  function adiarItem(sinalOuRegra, pessoaId) {
+    var adiados = adiadosMapa();
+    adiados[sinalOuRegra + ":" + pessoaId] = iso(today());
+    localStorage.setItem(ADIADOS_KEY, JSON.stringify(adiados));
+  }
+  function estaAdiado(sinalOuRegra, pessoaId) {
+    return adiadosMapa()[sinalOuRegra + ":" + pessoaId] === iso(today());
   }
 
   // ── METAS DO CICLO ────────────────────────────────────────────
@@ -3427,6 +3508,8 @@
     registrarPulso: registrarPulso, pulsosDe: pulsosDe, ultimoPulso: ultimoPulso,
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
+    SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
+    situacaoDe: situacaoDe, sinaisDe: sinaisDe, estaAdiado: estaAdiado,
     // preços e negociação
     CICLO_MESES: CICLO_MESES, ESCADA_CONCESSOES: ESCADA_CONCESSOES,
     precosLista: precosLista, getPreco: getPreco, updatePreco: updatePreco,
