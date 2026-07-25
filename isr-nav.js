@@ -189,6 +189,42 @@
     spacer.style.cssText = "flex:1;min-width:8px;";
     bar.appendChild(spacer);
 
+    // ── estado da sincronização ──────────────────────────────────
+    // Sem isto, uma falha de sincronização é silenciosa: você continua
+    // trabalhando achando que salvou.
+    var sync = document.createElement("span");
+    sync.id = "isr-nav-sync";
+    sync.style.cssText = "flex:none;display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:5px 11px;border-radius:999px;margin-right:8px;cursor:default;";
+    var pino = document.createElement("span");
+    pino.style.cssText = "width:7px;height:7px;border-radius:50%;flex:none;";
+    var txt = document.createElement("span");
+    sync.appendChild(pino); sync.appendChild(txt);
+
+    function pintarSync(st) {
+      var s = (st && st.status) || "local";
+      var mapa = {
+        ok: { cor: "#9ec970", label: "sincronizado", fundo: "rgba(158,201,112,0.14)" },
+        sincronizando: { cor: "#d4a574", label: "sincronizando", fundo: "rgba(212,165,116,0.16)" },
+        erro: { cor: "#f4a099", label: "falha ao sincronizar", fundo: "rgba(244,160,153,0.18)" },
+        local: { cor: "#b8ada0", label: "só neste aparelho", fundo: "rgba(255,255,255,0.08)" }
+      };
+      var m = mapa[s] || mapa.local;
+      pino.style.background = m.cor;
+      txt.textContent = m.label;
+      txt.style.color = m.cor;
+      sync.style.background = m.fundo;
+      var quando = st && st.em ? new Date(st.em).toLocaleString("pt-BR") : "";
+      sync.title = s === "erro"
+        ? "A última tentativa de sincronizar falhou. Suas alterações estão salvas neste aparelho e serão reenviadas."
+        : (s === "local" ? "Sem banco central configurado: os dados ficam só neste aparelho."
+                         : "Última sincronização: " + quando +
+                           (st.conflitos ? " · " + st.conflitos + " registro(s) mesclado(s)" : ""));
+    }
+    try { pintarSync(window.ISRCRM && window.ISRCRM.syncEstado ? window.ISRCRM.syncEstado() : null); }
+    catch (e) { pintarSync(null); }
+    window.addEventListener("isr-sync", function (e) { pintarSync(e.detail); });
+    bar.appendChild(sync);
+
     var quem = document.createElement("span");
     quem.id = "isr-nav-quem";
     quem.textContent = user.nome;
@@ -239,6 +275,8 @@
       "#isr-nav-areas{display:none !important;}" +
       "#isr-nav-burger{display:block !important;}" +
       "#isr-nav-quem{display:none;}" +
+      "#isr-nav-sync span:last-child{display:none;}" +
+      "#isr-nav-sync{padding:6px;margin-right:4px;}" +
       "}";
     document.head.appendChild(css);
 
