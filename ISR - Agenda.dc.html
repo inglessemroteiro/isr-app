@@ -28,14 +28,54 @@
     <!-- FORM AULA EXTRA -->
     <sc-if value="{{ novoAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #f0d9c8; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98060; margin-bottom: 12px;">Nova aula extra / particular</div>
-        <div style="display: grid; grid-template-columns: 2fr 1fr 0.7fr 1fr; gap: 8px; margin-bottom: 10px;">
-          <input ref="{{ evTituloRef }}" placeholder="O quê? (ex. Particular · Renata)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98060; margin-bottom: 4px;">Nova aula extra</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">A aula extra aparece na área das alunas convidadas para confirmação de presença, gera convite para o Google Agenda e entra no Painel do Professor com chamada própria, que contabiliza as horas de aula.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ evTituloRef }}" placeholder="Título (ex. Conversação sobre viagens)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ evDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <input ref="{{ evHoraRef }}" placeholder="19h" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <input ref="{{ evRespRef }}" placeholder="Professora / responsável" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evHoraRef }}" placeholder="Horário (ex. 19h)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evDuracaoRef }}" placeholder="Duração em minutos (60)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evRespRef }}" placeholder="Professora responsável" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evLocalRef }}" placeholder="Local ou link da sala" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ evVagasRef }}" placeholder="Vagas (0 = sem limite)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ evTurmaRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ turmasAlvo }}" as="ta" hint-placeholder-count="6"><option value="{{ ta.id }}">{{ ta.label }}</option></sc-for>
+          </select>
         </div>
-        <button onclick="{{ onCriarEvento }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Adicionar</button>
+        <input ref="{{ evDescRef }}" placeholder="Descrição enviada às alunas (opcional)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 10px;" />
+        <button onclick="{{ onCriarEvento }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Criar aula extra</button>
+      </div>
+    </sc-if>
+
+    <!-- AULAS EXTRAS AGENDADAS -->
+    <sc-if value="{{ temExtras }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Aulas extras agendadas</div>
+        <sc-for list="{{ extras }}" as="ex" hint-placeholder-count="3">
+          <div style="border-top: 1px solid #f4f1ec; padding: 12px 0;">
+            <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline;">
+              <div>
+                <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ ex.titulo }}</div>
+                <div style="font-size: 12px; color: #6b6155; line-height: 1.6;">{{ ex.quando }}</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 16px; font-weight: 700; color: {{ ex.confCor }};">{{ ex.confirmadas }}</div>
+                <div style="font-size: 10.5px; color: #8a7c6b;">{{ ex.confLabel }}</div>
+              </div>
+            </div>
+            <sc-if value="{{ ex.temPendentes }}">
+              <div style="font-size: 11.5px; color: #9c6f56; margin-top: 5px;">{{ ex.pendentesLabel }}</div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+              <a href="{{ ex.gcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">Google Agenda</a>
+              <a href="{{ ex.mailto }}" style="text-decoration: none; border: 1px solid #e5dccf; color: #6b6155; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">Convite por e-mail</a>
+              <button onclick="{{ ex.onCopiar }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ex.copiarLabel }}</button>
+              <a href="{{ ex.chamadaHref }}" style="text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px;">Chamada</a>
+              <button onclick="{{ ex.onRemover }}" style="border: 1px solid #f0d9c8; background: #fff; color: #c98060; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+            </div>
+          </div>
+        </sc-for>
+        <p style="margin: 12px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O sistema não envia mensagens. "Convite por e-mail" abre o programa de e-mail com o texto e o link do Google Agenda preenchidos; o envio é feito por você.</p>
       </div>
     </sc-if>
 
@@ -183,9 +223,11 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1120px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { visao: "lista", tipo: "todos", resp: "Todos", dias: 14, semanaOffset: 0,
-    novoAberto: false, feriadosAberto: false, tick: 0 };
+    novoAberto: false, feriadosAberto: false, tick: 0, copiadoEv: "" };
   evTituloRef = React.createRef(); evDataRef = React.createRef();
   evHoraRef = React.createRef(); evRespRef = React.createRef();
+  evDuracaoRef = React.createRef(); evLocalRef = React.createRef();
+  evVagasRef = React.createRef(); evTurmaRef = React.createRef(); evDescRef = React.createRef();
   ferDataRef = React.createRef(); ferNomeRef = React.createRef(); ferFimRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -229,8 +271,10 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const refs = { evTituloRef: this.evTituloRef, evDataRef: this.evDataRef, evHoraRef: this.evHoraRef,
-      evRespRef: this.evRespRef, ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
-    if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
+      evRespRef: this.evRespRef, evDuracaoRef: this.evDuracaoRef, evLocalRef: this.evLocalRef,
+      evVagasRef: this.evVagasRef, evTurmaRef: this.evTurmaRef, evDescRef: this.evDescRef,
+      ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
+    if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
 
     const ehSemana = this.state.visao === "semana";
     const iso = d => d.toISOString().slice(0, 10);
@@ -289,11 +333,50 @@ class Component extends DCLogic {
         turmaHref: it.turmaId ? "ISR%20-%20Turma.dc.html?id=" + it.turmaId : "#",
         perfilHref: it.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + it.pessoaId : "#",
         temGcal: it.tipo !== "feriado" && it.tipo !== "aula",
-        gcal: CRM.gcalLink(it.titulo, it.data, it.hora, "Agenda · Inglês sem Roteiro"),
+        gcal: it.eventoId && CRM.getEvento(it.eventoId)
+          ? CRM.gcalLinkEvento(CRM.getEvento(it.eventoId))
+          : CRM.gcalLink(it.titulo, it.data, it.hora, "Agenda · Inglês sem Roteiro"),
         removivel: !!it.eventoId,
         onRemover: () => { CRM.removeEvento(it.eventoId); this.bump(); }
       });
     });
+
+    // ── aulas extras agendadas ──
+    const hojeIso2 = new Date().toISOString().slice(0, 10);
+    const extras = CRM.eventosLista()
+      .filter(e => e.data >= hojeIso2)
+      .map(e => {
+        const convidadas = CRM.convidadasAulaExtra(e);
+        const confirmadas = CRM.confirmadasAulaExtra(e);
+        const responderam = Object.keys(e.rsvps || {}).length;
+        const pendentes = convidadas.length - responderam;
+        return {
+          titulo: e.titulo,
+          quando: [this.diaLongo ? this.diaLongo(e.data) : CRM.ddmm(e.data), e.hora,
+                   (parseInt(e.duracao, 10) || 60) + " min",
+                   e.responsavel, e.local,
+                   e.turmaAlvo ? "Apenas " + e.turmaAlvo : "Aberta a todas as alunas"]
+            .filter(Boolean).join(" · "),
+          confirmadas: String(confirmadas.length) + (e.vagas ? "/" + e.vagas : ""),
+          confLabel: confirmadas.length === 1 ? "confirmada" : "confirmadas",
+          confCor: e.vagas && confirmadas.length >= e.vagas ? "#cf6b5c" : "#348a8e",
+          temPendentes: pendentes > 0,
+          pendentesLabel: pendentes + (pendentes === 1 ? " convidada ainda não respondeu" : " convidadas ainda não responderam"),
+          gcal: CRM.gcalLinkEvento(e),
+          mailto: CRM.mailtoAulaExtra(e, convidadas),
+          chamadaHref: "ISR%20-%20Painel%20do%20Professor.dc.html?evento=" + e.id,
+          copiarLabel: this.state.copiadoEv === e.id ? "Texto copiado" : "Copiar texto",
+          onCopiar: () => {
+            try { navigator.clipboard.writeText(CRM.textoAulaExtra(e)); } catch (err) {}
+            this.setState({ copiadoEv: e.id });
+            setTimeout(() => this.setState({ copiadoEv: "" }), 2200);
+          },
+          onRemover: () => {
+            if (!window.confirm("Cancelar a aula extra \"" + e.titulo + "\"? As confirmações registradas serão perdidas.")) return;
+            CRM.removeEvento(e.id); this.bump();
+          }
+        };
+      });
 
     // ── grade da semana ──
     const semanaDias = [];
@@ -357,11 +440,24 @@ class Component extends DCLogic {
       onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, feriadosAberto: false }),
       onCriarEvento: () => {
         const titulo = this.val(this.evTituloRef), data = this.val(this.evDataRef);
-        if (!titulo || !data) { window.alert("Preencha pelo menos o título e a data."); return; }
-        window.ISRCRM.addEvento({ titulo, data, hora: this.val(this.evHoraRef), responsavel: this.val(this.evRespRef) });
-        [this.evTituloRef, this.evHoraRef, this.evRespRef].forEach(r => { if (r.current) r.current.value = ""; });
+        if (!titulo || !data) { window.alert("Informe pelo menos o título e a data."); return; }
+        window.ISRCRM.addEvento({ titulo, data,
+          hora: this.val(this.evHoraRef), responsavel: this.val(this.evRespRef),
+          duracao: this.val(this.evDuracaoRef), local: this.val(this.evLocalRef),
+          vagas: this.val(this.evVagasRef), descricao: this.val(this.evDescRef),
+          turmaAlvo: (this.evTurmaRef.current && this.evTurmaRef.current.value) || "" });
+        [this.evTituloRef, this.evHoraRef, this.evRespRef, this.evDuracaoRef,
+         this.evLocalRef, this.evVagasRef, this.evDescRef].forEach(r => { if (r.current) r.current.value = ""; });
         this.setState({ novoAberto: false });
       },
+      turmasAlvo: [{ id: "", label: "Aberta a todas as alunas" }]
+        .concat(CRM.turmasLista().map(u => {
+          const lbl = u.nivel + " · " + u.turma;
+          return { id: lbl, label: "Apenas " + lbl };
+        })),
+      // o bloco de aulas extras respeita o mesmo filtro por tipo da legenda
+      temExtras: extras.length > 0 && (tipoAtivo === "todos" || tipoAtivo === "aula_extra"),
+      extras,
 
       feriadosAberto: this.state.feriadosAberto,
       ferBg: this.state.feriadosAberto ? "#164951" : "#fff",
