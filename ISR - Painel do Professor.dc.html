@@ -92,22 +92,37 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ temAlunas }}">
+        <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap; padding: 4px 0 10px;">
+          <span style="font-size: 11px; color: #8a7c6b;">Toque para alternar entre presente e falta.</span>
+          <span style="flex: 1;"></span>
+          <button onclick="{{ onTodasPresentes }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Todas presentes</button>
+          <button onclick="{{ onTodasFaltas }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ninguém veio</button>
+        </div>
+      </sc-if>
+
       <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
-          <a href="{{ al.perfilHref }}" style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ al.nome }}</a>
-          <sc-if value="{{ al.temFaltas }}">
-            <span style="flex: none; font-size: 10px; color: #b3a693;">{{ al.faltasInfo }}</span>
-          </sc-if>
-          <sc-for list="{{ al.estados }}" as="es" hint-placeholder-count="4">
-            <button onclick="{{ es.onClick }}" title="{{ es.title }}" style="flex: none; border: 1px solid {{ es.border }}; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer;">{{ es.label }}</button>
-          </sc-for>
-          <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno — aqui só fica registrado se ela entregou" style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer; margin-left: 6px;">{{ al.tarefaLabel }}</button>
+        <div style="border-bottom: 1px solid #f4f1ec; padding: 4px 0;">
+          <div style="display: flex; align-items: center; gap: 11px;">
+            <button onclick="{{ al.onMarcar }}" title="{{ al.marcaTitulo }}" style="flex: none; width: 30px; height: 30px; border: 2px solid {{ al.marcaBorda }}; background: {{ al.marcaBg }}; color: #fff; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 700; line-height: 1; padding: 0; font-family: inherit;">{{ al.marca }}</button>
+            <div onclick="{{ al.onMarcar }}" style="flex: 1; min-width: 0; cursor: pointer; padding: 9px 0;">
+              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ al.nome }}</div>
+              <div style="font-size: 11px; color: {{ al.estadoCor }};">{{ al.estadoLabel }}<sc-if value="{{ al.temFaltas }}"><span style="color: #b3a693;"> · {{ al.faltasInfo }}</span></sc-if></div>
+            </div>
+            <a href="{{ al.perfilHref }}" style="flex: none; font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none; padding: 8px 6px;">perfil</a>
+            <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno — aqui só fica registrado se ela entregou" style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ al.tarefaLabel }}</button>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 8px 41px;">
+            <sc-for list="{{ al.ressalvas }}" as="rv" hint-placeholder-count="2">
+              <button onclick="{{ rv.onClick }}" style="border: 1px solid {{ rv.borda }}; background: {{ rv.bg }}; color: {{ rv.fg }}; font-size: 10.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ rv.label }}</button>
+            </sc-for>
+          </div>
         </div>
       </sc-for>
 
       <sc-if value="{{ temAlunas }}">
-        <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px;">
-          <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer;">Salvar chamada</button>
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap;">
+          <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar chamada</button>
           <span style="font-size: 12px; color: #8a7c6b;">{{ resumoChamada }}</span>
           <sc-if value="{{ salvouAgora }}">
             <span style="font-size: 12px; color: #348a8e; font-weight: 700;">Salva. Faltas foram para a linha do tempo das alunas.</span>
@@ -180,6 +195,18 @@ class Component extends DCLogic {
   }
 
   tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : "#6b5b95"; }
+
+  CORES = { presente: "#348a8e", atraso: "#d4a574", falta: "#fff", justificada: "#6b5b95" };
+
+  marcar(pessoaId, estado, presAtual, turmaSel, dataSel) {
+    this.setState({ presencas: Object.assign({}, presAtual, { [pessoaId]: estado }),
+      turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false });
+  }
+  marcarTodas(estado, alunas, turmaSel, dataSel) {
+    const novo = {};
+    alunas.forEach(a => { novo[a.id] = estado; });
+    this.setState({ presencas: novo, turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false });
+  }
 
   ESTADOS = [
     { id: "presente", label: "Presente", title: "Presente", cor: "#348a8e" },
@@ -291,12 +318,33 @@ class Component extends DCLogic {
         },
         nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
         temFaltas: faltas > 0, faltasInfo: faltas + (faltas === 1 ? " falta no ciclo" : " faltas no ciclo"),
+        // Chamada de verdade é assim: todo mundo presente, e a professora
+        // marca só quem não veio. Quatro botões por aluna faziam trabalho
+        // demais para o caso comum.
+        marca: estadoAtual === "falta" ? "" : "✓",
+        marcaBg: this.CORES[estadoAtual] || "#348a8e",
+        marcaBorda: estadoAtual === "falta" ? "#e5dccf" : (this.CORES[estadoAtual] || "#348a8e"),
+        marcaTitulo: estadoAtual === "falta" ? "Marcar presença" : "Marcar falta",
+        estadoLabel: (this.ESTADOS.filter(e => e.id === estadoAtual)[0] || {}).title || "",
+        estadoCor: this.CORES[estadoAtual] || "#348a8e",
+        onMarcar: () => this.marcar(p.id, estadoAtual === "falta" ? "presente" : "falta", presAtual, turmaSel, dataSel),
+        // atraso e justificada são exceção: ficam num segundo plano
+        ressalvas: [
+          { id: "atraso", label: estadoAtual === "atraso" ? "Chegou atrasada ✓" : "Chegou atrasada" },
+          { id: "justificada", label: estadoAtual === "justificada" ? "Avisou antes ✓" : "Avisou antes" }
+        ].map(rv => {
+          const on = rv.id === estadoAtual;
+          return { label: rv.label,
+            bg: on ? this.CORES[rv.id] : "#fff", fg: on ? "#fff" : "#9b8b7e",
+            borda: on ? this.CORES[rv.id] : "#eee3d6",
+            onClick: () => this.marcar(p.id, on ? "presente" : rv.id, presAtual, turmaSel, dataSel) };
+        }),
         estados: this.ESTADOS.map(es => {
           const on = es.id === estadoAtual;
           return {
             label: es.label, title: es.title,
             bg: on ? es.cor : "#fff", fg: on ? "#fff" : "#8a7c6b", border: on ? es.cor : "#e5dccf",
-            onClick: () => this.setState({ presencas: Object.assign({}, presAtual, { [p.id]: es.id }), turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false })
+            onClick: () => this.marcar(p.id, es.id, presAtual, turmaSel, dataSel)
           };
         })
       };
@@ -381,6 +429,8 @@ class Component extends DCLogic {
             + h.aulas + (h.aulas === 1 ? " aula extra" : " aulas extras") + " nos últimos 12 meses"
           : "Nenhuma aula extra com chamada registrada nos últimos 12 meses.";
       })(),
+      onTodasPresentes: () => this.marcarTodas("presente", alunas, turmaSel, dataSel),
+      onTodasFaltas: () => this.marcarTodas("falta", alunas, turmaSel, dataSel),
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
       chamadaRef: this.chamadaRef,
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,

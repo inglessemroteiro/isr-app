@@ -716,18 +716,29 @@
         p.particular = { inicio: cfg.inicioEm || iso(today()),
           aulas: parseInt(cfg.aulasContratadas, 10) || 0, feitas: 0 };
       }
-      p.desde = iso(today());
+      // Matrícula retroativa: ao importar uma base, a aluna entrou lá atrás.
+      // Sem isto, todo mundo importado vira "matriculada hoje" e cai no
+      // segmento de primeiro ciclo, com as parcelas nascendo no mês errado.
+      p.desde = cfg.desde || iso(today());
       p.contratos = p.contratos || [];
       // o ciclo começa no mês da matrícula, não numa data fixa do calendário.
       // Se o dia de vencimento do mês corrente já passou, a primeira parcela
       // vai para o mês seguinte — ninguém cobra uma parcela já vencida.
       var inicioKey = cfg.inicioKey;
       if (!inicioKey) {
-        inicioKey = mesAtualKey();
-        var diaVenc = parseInt(cfg.vencDia, 10);
-        if (!isNaN(diaVenc) && today().getDate() > diaVenc) inicioKey = mesSeguinte(inicioKey).key;
+        // numa matrícula retroativa o ciclo começa no mês de entrada
+        if (cfg.desde) {
+          inicioKey = cfg.desde.slice(0, 7);
+        } else {
+          inicioKey = mesAtualKey();
+          var diaVenc = parseInt(cfg.vencDia, 10);
+          if (!isNaN(diaVenc) && today().getDate() > diaVenc) inicioKey = mesSeguinte(inicioKey).key;
+        }
       }
-      var mesesNovos = mkMeses(0, cfg.valorParcela || "", n, inicioKey);
+      var jaPagas = parseInt(cfg.parcelasPagas, 10);
+      if (isNaN(jaPagas) || jaPagas < 0) jaPagas = 0;
+      if (jaPagas > n) jaPagas = n;
+      var mesesNovos = mkMeses(jaPagas, cfg.valorParcela || "", n, inicioKey);
       // valor total: informado, ou calculado (parcela × nº de parcelas) pro LTV
       var moedaC = cfg.moeda || p.moeda || "R$";
       var totalCalc = cfg.valorTotal || (cfg.valorParcela ? fmtMoney(moedaC, parseMoney(cfg.valorParcela) * n) : "");
@@ -742,13 +753,26 @@
         p.contratos[p.contratos.length - 1].sinal = { valor: cfg.sinalValor, recebido: !!cfg.sinalRecebido };
         pushHist(p, "pagamento", "Sinal de " + cfg.sinalValor + (cfg.sinalRecebido ? " recebido" : " combinado (aguardando comprovante)"));
       }
+      // A integração conta a partir da entrada. Numa matrícula retroativa as
+      // etapas já vencidas entram concluídas: cobrar boas-vindas de quem está
+      // na escola há seis meses só polui a fila da equipe.
+      var base = parseISO(p.desde) || today();
+      var desloca = function (dias) {
+        var d = new Date(base); d.setDate(d.getDate() + dias); return iso(d);
+      };
+      var retro = !!cfg.desde && daysBetween(base, today()) > 0;
       p.onboarding = [
-        { id: "d0", label: "Boas-vindas enviadas", data: addDays(0), feito: false },
-        { id: "d2", label: "Confirmou a 1ª aula", data: addDays(2), feito: false },
-        { id: "d7", label: "Check-in da 1ª semana", data: addDays(7), feito: false },
-        { id: "d30", label: "1º pagamento ok + NPS", data: addDays(30), feito: false }
-      ];
-      pushHist(p, "matricula", "Matriculada · " + turmaLabel + " · contrato " + (cfg.tipo || "Matrícula") + " criado (" + n + " parcelas)");
+        { id: "d0", label: "Boas-vindas enviadas", data: desloca(0) },
+        { id: "d2", label: "Confirmou a 1ª aula", data: desloca(2) },
+        { id: "d7", label: "Check-in da 1ª semana", data: desloca(7) },
+        { id: "d30", label: "1º pagamento ok + NPS", data: desloca(30) }
+      ].map(function (c) {
+        c.feito = retro && c.data < iso(today());
+        return c;
+      });
+      pushHist(p, "matricula", "Matriculada · " + turmaLabel + " · contrato " + (cfg.tipo || "Matrícula")
+        + " criado (" + n + " parcelas" + (jaPagas ? ", " + jaPagas + " já paga(s)" : "") + ")"
+        + (cfg.desde ? " · entrada retroativa em " + ddmm(cfg.desde) : ""));
       pushHist(p, "onboarding", "Onboarding criado (4 checkpoints: boas-vindas, 1ª aula, 1ª semana, 1º pagamento)");
     });
   }
@@ -963,8 +987,9 @@
   function registrarToque(pessoaId, tipo, nota, por) {
     var l = toquesLista();
     var t = { id: "tq" + Date.now() + Math.floor(Math.random() * 1000), pessoaId: pessoaId,
-      data: iso(today()), tipo: tipo || "checkin", nota: nota || "",
-      por: por || ((gestaoUser() || {}).nome || "") };
+      data: (typeof por === "object" && por && por.data) || iso(today()),
+      tipo: tipo || "checkin", nota: nota || "",
+      por: (typeof por === "object" && por ? por.por : por) || ((gestaoUser() || {}).nome || "") };
     l.push(t); toquesSave(l);
     var meta = TOQUE_TIPOS.filter(function (x) { return x.id === t.tipo; })[0];
     addHistory(pessoaId, "contato", (meta ? meta.label : "Contato") + " por WhatsApp" + (nota ? " · " + nota : ""), t.por);
@@ -998,8 +1023,9 @@
     if (!(n >= 1 && n <= 5)) return null;
     var l = pulsosLista();
     var p = { id: "pl" + Date.now() + Math.floor(Math.random() * 1000), pessoaId: pessoaId,
-      data: iso(today()), nota: n, comentario: comentario || "",
-      por: por || ((gestaoUser() || {}).nome || "") };
+      data: (typeof por === "object" && por && por.data) || iso(today()),
+      nota: n, comentario: comentario || "",
+      por: (typeof por === "object" && por ? por.por : por) || ((gestaoUser() || {}).nome || "") };
     l.push(p); pulsosSave(l);
     var m = PULSO_META.filter(function (x) { return x.nota === n; })[0];
     addHistory(pessoaId, "nota", "Avaliação de progresso: " + n + "/5 · " + m.label + (comentario ? " — " + comentario : ""), p.por);
