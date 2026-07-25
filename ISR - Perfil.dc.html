@@ -151,7 +151,10 @@
                     <div style="display: flex; align-items: flex-end;">
                       <button onclick="{{ onRenovar }}" style="width: 100%; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar renovação</button>
                     </div>
-                    <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Um novo ciclo é aberto na sequência do atual, com as mesmas turma e professora. O contrato anterior permanece no histórico e passa a contar como renovado na análise de retenção.</p>
+                    <sc-if value="{{ temRenovPendencia }}">
+                      <div style="grid-column: 1 / -1; background: rgba(207,107,92,0.10); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: #cf6b5c; line-height: 1.55;">{{ renovPendencia }}</div>
+                    </sc-if>
+                    <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ renovInicio }} Ele mantém a turma e a professora atuais. O contrato anterior permanece no histórico e passa a contar como renovado na análise de retenção.</p>
                   </div>
                 </sc-if>
               </div>
@@ -608,6 +611,16 @@ class Component extends DCLogic {
       out.renovarFg = this.state.renovando ? "#9c6f56" : "#164951";
       out.onToggleRenovar = () => this.setState(s => ({ renovando: !s.renovando }));
       out.renParcelasRef = this.renParcelasRef; out.renValorRef = this.renValorRef;
+      const rr = CRM.resumoRenovacao(p.id) || { n: 0, totais: [], inicioNovoLabel: "" };
+      out.renovInicio = rr.inicioNovoLabel
+        ? "O ciclo novo começa em " + rr.inicioNovoLabel + "."
+        : "";
+      out.renovPendencia = rr.n
+        ? rr.n + (rr.n === 1 ? " parcela em aberto (" : " parcelas em aberto (")
+          + rr.totais.map(x => x.valor).join(" · ")
+          + "). Renovar não cancela essa cobrança: ela continua na grade acima e abre uma pendência para a equipe."
+        : "";
+      out.temRenovPendencia = rr.n > 0;
       out.onRenovar = () => {
         const g = r => (r.current && r.current.value || "").trim();
         CRM.renovarMatricula(p.id, {
@@ -638,14 +651,22 @@ class Component extends DCLogic {
         if (nv) CRM.atualizarCadastro(p.id, { nivel: nv });
         this.setState({ editandoTurma: false });
       };
-      out.mesesView = (c.meses || []).map(m => ({
+      // Quem renovou devendo continua devendo: as parcelas em aberto de
+      // ciclos anteriores aparecem antes das do ciclo atual, marcadas.
+      const herdadas = CRM.parcelasAbertas(p).filter(m => m.anterior).map(m => ({
+        label: m.label, valor: m.valor,
+        icon: "ciclo anterior",
+        border: "#cf6b5c", bg: "rgba(207,107,92,0.10)", fg: "#cf6b5c",
+        onClick: () => { CRM.setParcelaPaga(p.id, m.key, true, m.contratoIdx); this.bump(); }
+      }));
+      out.mesesView = herdadas.concat((c.meses || []).map(m => ({
         label: m.label, valor: m.valor,
         icon: m.pago ? "✓" : (m.key === key ? "●" : "…"),
         border: m.pago ? "#5a9e4b" : (m.key === key ? "#e07856" : "#e0dcd6"),
         bg: m.pago ? "rgba(90,158,75,0.12)" : "#fff",
         fg: m.pago ? "#5a9e4b" : "#6b6155",
-        onClick: () => { CRM.setParcelaPaga(p.id, m.key, !m.pago); this.bump(); }
-      }));
+        onClick: () => { CRM.setParcelaPaga(p.id, m.key, !m.pago, 0); this.bump(); }
+      })));
     }
 
     // acompanhamento · check-in (aluna)

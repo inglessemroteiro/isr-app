@@ -241,11 +241,11 @@ class Component extends DCLogic {
         out.obs = c.obs || "";
         out.mesesView = (c.meses || []).map(m => ({
           label: m.label, valor: m.valor,
-          icon: m.pago ? "✓ paga" : (m.key === key ? "● este mês" : "pendente"),
-          border: m.pago ? "#5a9e4b" : (m.key === key ? meta.color : "#e5dccf"),
-          bg: m.pago ? "rgba(90,158,75,0.12)" : "#fff",
-          fg: m.pago ? "#348a8e" : "#6b6155",
-          onClick: () => { CRM.setParcelaPaga(c.id, m.key, !m.pago); this.bump(); }
+          icon: m.anterior ? "ciclo anterior" : (m.pago ? "✓ paga" : (m.key === key ? "● este mês" : "pendente")),
+          border: m.anterior ? "#cf6b5c" : (m.pago ? "#5a9e4b" : (m.key === key ? meta.color : "#e5dccf")),
+          bg: m.anterior ? "rgba(207,107,92,0.10)" : (m.pago ? "rgba(90,158,75,0.12)" : "#fff"),
+          fg: m.anterior ? "#cf6b5c" : (m.pago ? "#348a8e" : "#6b6155"),
+          onClick: () => { CRM.setParcelaPaga(c.id, m.key, !m.pago, m.contratoIdx); this.bump(); }
         }));
         // abrem o compositor com pessoa + modelo (revisar antes de enviar)
         const compor = tpl => "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + c.id + "&tpl=" + tpl;

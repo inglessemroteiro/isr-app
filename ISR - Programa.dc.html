@@ -186,6 +186,28 @@
 
           <p style="margin: 10px 16px 6px; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Semanas cuja missão ainda não foi enviada ao grupo aparecem esmaecidas e não entram na conta de pendências.</p>
         </div>
+
+        <!-- RESPOSTAS ENVIADAS PELO APP DA ALUNA -->
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Respostas a devolver</span>
+            <span style="font-size: 11.5px; color: #6b6155;">{{ aDevolverContagem }}</span>
+          </div>
+          <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">O que as alunas escreveram no app delas. Depois de comentar no grupo, marque a devolutiva.</p>
+          <sc-if value="{{ semRespostas }}">
+            <div style="font-size: 12px; color: #b3a693; line-height: 1.6;">Nenhuma resposta esperando devolutiva.</div>
+          </sc-if>
+          <sc-for list="{{ aDevolver }}" as="rp" hint-placeholder-count="3">
+            <div style="border-top: 1px solid #f4f1ec; padding: 12px 0;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
+                <a href="{{ rp.perfilHref }}" style="font-size: 12.5px; font-weight: 700; color: #164951; text-decoration: none;">{{ rp.nome }}</a>
+                <span style="flex: none; font-size: 10.5px; color: #b3a693;">semana {{ rp.semana }} · {{ rp.em }}</span>
+              </div>
+              <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 6px; white-space: pre-wrap;">{{ rp.texto }}</div>
+              <button onclick="{{ rp.onDevolver }}" style="border: 1px solid #eee3d6; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; margin-top: 9px;">Marcar devolutiva enviada</button>
+            </div>
+          </sc-for>
+        </div>
       </sc-if>
 
     </sc-if>
@@ -204,7 +226,8 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const vazioBase = { temPrograma: false, semPrograma: true, termometro: [], participantes: [],
-      candidatas: [], alunas: [], vazio: true, vazioTexto: "", turmaAberta: false,
+      candidatas: [], alunas: [], aDevolver: [], semRespostas: true, aDevolverContagem: "",
+      vazio: true, vazioTexto: "", turmaAberta: false,
       contagem: "", temFiltro: false, subtitulo: "" };
     if (!CRM) return vazioBase;
 
@@ -309,6 +332,24 @@ class Component extends DCLogic {
       };
     });
 
+    // O que chegou pelo app da aluna e ainda espera comentário da professora.
+    const aDevolver = [];
+    filtradas.forEach(l => {
+      for (let s = 1; s <= prog.semanas; s++) {
+        if (!CRM.etapaFeita(prog, l.pessoaId, s, "audio")) continue;
+        if (CRM.etapaFeita(prog, l.pessoaId, s, "feedback")) continue;
+        const r = CRM.respostaDaSemana(prog, l.pessoaId, s);
+        if (!r || !r.texto) continue;
+        aDevolver.push({
+          nome: l.nome, semana: s, texto: r.texto,
+          em: r.em ? CRM.ddmm(r.em) : "",
+          perfilHref: "ISR%20-%20Perfil.dc.html?id=" + l.pessoaId,
+          onDevolver: () => { CRM.marcarEtapa(prog.id, l.pessoaId, s, "feedback", true); this.bump(); }
+        });
+      }
+    });
+    aDevolver.sort((a, b) => (a.em < b.em ? 1 : -1));
+
     const jaDentro = prog.participantes;
     const bq = (this.state.buscaAdd || "").trim().toLowerCase();
     const candidatas = bq.length >= 2
@@ -389,6 +430,10 @@ class Component extends DCLogic {
         : (filtradas.length + " de " + pend.linhas.length),
 
       alunas, vazio: alunas.length === 0,
+      aDevolver, semRespostas: aDevolver.length === 0,
+      aDevolverContagem: aDevolver.length
+        ? aDevolver.length + (aDevolver.length === 1 ? " resposta" : " respostas")
+        : "",
       colunas, temAlunas: alunas.length > 0,
       larguraGrade: (150 + prog.semanas * 46 + 62) + "px",
       legenda: etapas.map(e => ({ label: e.label, cor: e.cor })),
