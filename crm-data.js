@@ -324,10 +324,20 @@
   // ══════════════════════════════════════════════════════════════
   //  SEED — Pessoa única (dados FICTÍCIOS; estrutura = spec 1.3)
   // ══════════════════════════════════════════════════════════════
-  function mkMeses(pagos, valor, n) {
-    return MESES_COBRANCA.slice(0, n).map(function (m, i) {
-      return { key: m.key, label: m.label, valor: valor, pago: i < pagos };
-    });
+  // As parcelas começam no mês informado — por padrão, o mês corrente.
+  // Antes a lista era fixa a partir de julho/2026, então uma matrícula
+  // feita em novembro nascia com três parcelas vencidas no passado e a
+  // receita caía nos meses errados do Caixa.
+  function mkMeses(pagos, valor, n, inicioKey) {
+    var chave = inicioKey || mesAtualKey();
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var pr = chave.split("-");
+      var mesIdx = parseInt(pr[1], 10) - 1;
+      out.push({ key: chave, label: MES_NOMES[mesIdx], valor: valor, pago: i < pagos });
+      chave = mesSeguinte(chave).key;
+    }
+    return out;
   }
 
   function seedPessoas() {
@@ -695,8 +705,17 @@
           aulas: parseInt(cfg.aulasContratadas, 10) || 0, feitas: 0 };
       }
       p.desde = iso(today());
-      var fimIdx = Math.min(n - 1, MESES_COBRANCA.length - 1);
       p.contratos = p.contratos || [];
+      // o ciclo começa no mês da matrícula, não numa data fixa do calendário.
+      // Se o dia de vencimento do mês corrente já passou, a primeira parcela
+      // vai para o mês seguinte — ninguém cobra uma parcela já vencida.
+      var inicioKey = cfg.inicioKey;
+      if (!inicioKey) {
+        inicioKey = mesAtualKey();
+        var diaVenc = parseInt(cfg.vencDia, 10);
+        if (!isNaN(diaVenc) && today().getDate() > diaVenc) inicioKey = mesSeguinte(inicioKey).key;
+      }
+      var mesesNovos = mkMeses(0, cfg.valorParcela || "", n, inicioKey);
       // valor total: informado, ou calculado (parcela × nº de parcelas) pro LTV
       var moedaC = cfg.moeda || p.moeda || "R$";
       var totalCalc = cfg.valorTotal || (cfg.valorParcela ? fmtMoney(moedaC, parseMoney(cfg.valorParcela) * n) : "");
@@ -704,8 +723,8 @@
         tipo: cfg.tipo || "Matrícula", ciclos: cfg.ciclos || "1 Ciclo " + metasAtuais().cicloLabel,
         moeda: moedaC, valorTotal: totalCalc,
         parcelaValor: cfg.valorParcela || "", parcelas: n, vencDia: cfg.vencDia || 10,
-        fim: MESES_COBRANCA[fimIdx].key + "-28",
-        meses: mkMeses(0, cfg.valorParcela || "", n)
+        fim: mesesNovos[mesesNovos.length - 1].key + "-28",
+        meses: mesesNovos
       });
       if (cfg.sinalValor) {
         p.contratos[p.contratos.length - 1].sinal = { valor: cfg.sinalValor, recebido: !!cfg.sinalRecebido };
