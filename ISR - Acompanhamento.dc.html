@@ -45,6 +45,59 @@
       </div>
     </div>
 
+    <!-- CADÊNCIA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Cadência de contato</span>
+        <button onclick="{{ onEditarCadencia }}" style="border: 1px solid #e5dccf; background: {{ cadBg }}; color: {{ cadFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cadLabel }}</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 12px; color: #6b6155; line-height: 1.6; max-width: 720px;">Cada aluna entra num segmento pela situação em que está, e cada segmento tem seu intervalo. A carga semanal abaixo é o que a escola precisa dar para manter todas dentro da cadência.</p>
+
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f4f1ec;">
+        <div>
+          <div style="font-size: 22px; font-weight: 700; color: #164951;">{{ cargaSemana }}</div>
+          <div style="font-size: 11px; color: #6b6155;">contatos por semana</div>
+        </div>
+        <div>
+          <div style="font-size: 22px; font-weight: 700; color: #348a8e;">{{ cargaDia }}</div>
+          <div style="font-size: 11px; color: #6b6155;">por dia útil</div>
+        </div>
+        <div>
+          <div style="font-size: 22px; font-weight: 700; color: {{ vencidasCor }};">{{ vencidas }}</div>
+          <div style="font-size: 11px; color: #6b6155;">fora da cadência agora</div>
+        </div>
+      </div>
+
+      <sc-for list="{{ segmentos }}" as="sg" hint-placeholder-count="5">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #f7f4ef;">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ sg.cor }}; flex: none;"></span>
+          <span style="flex: none; min-width: 120px; font-size: 12.5px; font-weight: 700; color: #164951;">{{ sg.label }}</span>
+          <span style="flex: none; font-size: 12px; color: #6b6155;">{{ sg.contagem }}</span>
+          <sc-if value="{{ sg.temVencidas }}">
+            <span style="flex: none; background: rgba(207,107,92,0.12); color: #cf6b5c; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">{{ sg.vencidasLabel }}</span>
+          </sc-if>
+          <span style="flex: 1; min-width: 120px; font-size: 11px; color: #b3a693; line-height: 1.5;">{{ sg.desc }}</span>
+          <sc-if value="{{ editandoCadencia }}">
+            <span style="flex: none; display: flex; align-items: center; gap: 5px;">
+              <span style="font-size: 11px; color: #8a7c6b;">a cada</span>
+              <input ref="{{ sg.ref }}" placeholder="{{ sg.intervalo }}" style="width: 52px; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 7px; background: #fff; text-align: center;" />
+              <span style="font-size: 11px; color: #8a7c6b;">dias</span>
+            </span>
+          </sc-if>
+          <sc-if value="{{ sg.mostrarIntervalo }}">
+            <span style="flex: none; font-size: 11.5px; font-weight: 700; color: {{ sg.cor }};">a cada {{ sg.intervalo }} dias</span>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ editandoCadencia }}">
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;">
+          <button onclick="{{ onSalvarCadencia }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar cadência</button>
+          <span style="font-size: 11px; color: #b3a693; line-height: 1.5;">Campo em branco mantém o intervalo atual. O intervalo do segmento também define quando a aluna passa a constar como sem contato.</span>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- FILA -->
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
       <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Alunas a contatar</span>
@@ -65,6 +118,7 @@
           <div style="flex: 1; min-width: 190px;">
             <a href="{{ f.perfilHref }}" style="font-size: 15px; font-weight: 700; color: #164951; text-decoration: none;">{{ f.nome }}</a>
             <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ f.contexto }}</div>
+            <div style="font-size: 11.5px; color: {{ f.cadenciaCor }}; line-height: 1.5; margin-top: 2px;">{{ f.cadenciaTexto }}</div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">
               <sc-for list="{{ f.motivos }}" as="mt" hint-placeholder-count="2">
                 <span style="background: rgba(0,0,0,0.04); color: {{ mt.cor }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">{{ mt.label }}</span>
@@ -139,7 +193,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { abertoId: null, tipoSel: {}, pulsoSel: {}, filtro: "pendentes", tick: 0 };
+  state = { abertoId: null, tipoSel: {}, pulsoSel: {}, filtro: "pendentes", tick: 0,
+            editandoCadencia: false };
+  cadRefs = {};
   notaRefs = {}; pulsoNotaRefs = {};
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -153,13 +209,29 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { fila: [], filtros: [], filaVazia: true, tocadas: "0", meta: "0",
       larguraSemana: "0%", corSemana: "#9ec970", fraseSemana: "", pulsoEscola: "—",
-      pulsoEscolaNota: "", pulsoEscolaCor: "#fff" };
+      pulsoEscolaNota: "", pulsoEscolaCor: "#fff",
+      segmentos: [], cargaSemana: "0", cargaDia: "0", vencidas: "0", vencidasCor: "#8a7c6b",
+      cadLabel: "Ajustar", cadBg: "#fff", cadFg: "#164951", editandoCadencia: false };
 
     const toda = CRM.filaAcompanhamento();
 
-    // ── semana: um toque por aluna por ciclo dá ~1/8 da base por semana ──
+    // ── cadência: quantos contatos por semana a escola precisa dar ──
+    const carga = CRM.cargaDeContato();
+    const segmentos = carga.segmentos.map(s => {
+      if (!this.cadRefs[s.id]) this.cadRefs[s.id] = React.createRef();
+      return {
+        label: s.label, cor: s.cor, desc: s.desc, intervalo: String(s.intervalo),
+        contagem: s.alunas + (s.alunas === 1 ? " aluna" : " alunas"),
+        temVencidas: s.vencidas > 0,
+        vencidasLabel: s.vencidas + (s.vencidas === 1 ? " vencida" : " vencidas"),
+        mostrarIntervalo: !this.state.editandoCadencia,
+        ref: this.cadRefs[s.id]
+      };
+    });
+
+    // ── semana: a meta vem da cadência, não de um palpite sobre a base ──
     const tocadas = toda.filter(f => f.tocadaEstaSemana).length;
-    const meta = Math.max(1, Math.ceil(toda.length / 8));
+    const meta = Math.max(1, Math.round(carga.porSemana));
     const pct = Math.min(100, Math.round(100 * tocadas / meta));
 
     // ── pulso da escola: média das últimas respostas ──
@@ -203,8 +275,17 @@ class Component extends DCLogic {
       ].filter(Boolean).join(" · ");
 
       const tend = f.tendencia;
+      const cad = CRM.cadenciaDe(CRM.getPessoa(id));
       return {
         nome: f.nome, contexto,
+        cadenciaTexto: cad.nuncaContatada
+          ? cad.label + " · nenhum contato registrado"
+          : (cad.vencido
+              ? cad.label + " · " + cad.diasDeAtraso + (cad.diasDeAtraso === 1 ? " dia" : " dias")
+                + " além da cadência de " + cad.intervalo
+              : cad.label + " · próximo contato em " + cad.diasAteOProximo
+                + (cad.diasAteOProximo === 1 ? " dia" : " dias")),
+        cadenciaCor: cad.vencido ? "#cf6b5c" : cad.cor,
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + id,
         waHref: CRM.waLink(f.whatsapp, ""),
         opacidade: f.tocadaEstaSemana ? "0.6" : "1",
@@ -266,15 +347,33 @@ class Component extends DCLogic {
       larguraSemana: pct + "%",
       corSemana: pct >= 100 ? "#9ec970" : (pct >= 50 ? "#d4a574" : "#e07856"),
       fraseSemana: tocadas >= meta
-        ? "Meta da semana cumprida. Todas as alunas receberam contato neste ciclo."
+        ? "Cadência da semana cumprida."
         : ((meta - tocadas === 1 ? "Falta 1 contato" : "Faltam " + (meta - tocadas) + " contatos")
-           + " para cobrir todas as alunas neste ciclo."),
+           + " para manter a cadência desta semana."),
       pulsoEscola: media ? media.toFixed(1) : "—",
       pulsoEscolaCor: mediaMeta ? mediaMeta.cor : "rgba(255,255,255,0.5)",
       pulsoEscolaNota: comPulso.length
         ? (comPulso.length + " de " + toda.length + (comPulso.length === 1 ? " respondeu" : " responderam"))
         : "Nenhuma avaliação registrada",
-      filtros, fila, filaVazia: fila.length === 0
+      filtros, fila, filaVazia: fila.length === 0,
+
+      segmentos,
+      cargaSemana: String(carga.porSemana).replace(".", ","),
+      cargaDia: String(carga.porDiaUtil).replace(".", ","),
+      vencidas: String(carga.vencidas),
+      vencidasCor: carga.vencidas === 0 ? "#4f9a5e" : (carga.vencidas > carga.total / 3 ? "#cf6b5c" : "#d4a574"),
+      editandoCadencia: this.state.editandoCadencia,
+      cadLabel: this.state.editandoCadencia ? "Fechar" : "Ajustar intervalos",
+      cadBg: this.state.editandoCadencia ? "#f6eee4" : "#fff",
+      cadFg: this.state.editandoCadencia ? "#9c6f56" : "#164951",
+      onEditarCadencia: () => this.setState(s => ({ editandoCadencia: !s.editandoCadencia })),
+      onSalvarCadencia: () => {
+        Object.keys(this.cadRefs).forEach(id => {
+          const v = ((this.cadRefs[id].current && this.cadRefs[id].current.value) || "").trim();
+          if (v) CRM.setCadencia(id, v);
+        });
+        this.setState({ editandoCadencia: false });
+      }
     };
   }
 }
