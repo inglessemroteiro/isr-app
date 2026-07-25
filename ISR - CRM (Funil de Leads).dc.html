@@ -215,34 +215,69 @@
             <!-- MINI-FORM DE MATRÍCULA -->
             <sc-if value="{{ lead.matriculando }}">
               <div style="background: #eef4f4; border: 1px solid #c9dede; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #348a8e; font-weight: 700; margin-bottom: 10px;">Matricular — zero recadastro</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                  <select ref="{{ lead.matTurmaRef }}" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                    <sc-for list="{{ lead.turmasOpts }}" as="t" hint-placeholder-count="4">
-                      <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
-                    </sc-for>
-                  </select>
-                  <select ref="{{ lead.matTipoRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                    <option value="Matrícula">Matrícula</option>
-                    <option value="Auto-matrícula">Auto-matrícula</option>
-                    <option value="Renovação">Renovação</option>
-                    <option value="Continuidade">Continuidade</option>
-                  </select>
-                  <select ref="{{ lead.matMoedaRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                    <option value="R$">R$ (Brasil)</option>
-                    <option value="€">€ (Europa)</option>
-                  </select>
-                  <input ref="{{ lead.matValorRef }}" placeholder="Valor da parcela (ex. R$ 497,00)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                  <select ref="{{ lead.matParcelasRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                    <option value="3">3 parcelas</option>
-                    <option value="6">6 parcelas</option>
-                    <option value="7">7 parcelas</option>
-                    <option value="8">8 parcelas</option>
-                  </select>
-                  <input ref="{{ lead.matVencRef }}" placeholder="Dia de vencimento (ex. 10)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                  <input ref="{{ lead.matAulasRef }}" type="number" placeholder="Nº de aulas (se particular)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                  <input ref="{{ lead.matSinalRef }}" placeholder="Sinal/entrada já combinado (ex. R$ 200 — opcional)" style="grid-column: 1 / -1; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                  <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #348a8e; font-weight: 700;">Dados da matrícula</span>
+                  <a href="ISR%20-%20Calculadora.dc.html" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none;">Abrir a calculadora</a>
                 </div>
+                <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Os dados de cadastro já preenchidos são aproveitados. Aqui entram apenas turma e condições de pagamento.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin-bottom: 10px;">
+                  <div style="grid-column: 1 / -1;">
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Turma</div>
+                    <select ref="{{ lead.matTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                      <sc-for list="{{ lead.turmasOpts }}" as="t" hint-placeholder-count="4">
+                        <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
+                    <select ref="{{ lead.matTipoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                      <option value="Matrícula">Matrícula</option>
+                      <option value="Auto-matrícula">Auto-matrícula</option>
+                      <option value="Renovação">Renovação</option>
+                      <option value="Continuidade">Continuidade</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
+                    <select ref="{{ lead.matMoedaRef }}" onchange="{{ lead.onPlanoMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                      <option value="R$">R$ (Brasil)</option>
+                      <option value="€">€ (Europa)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor de cada parcela</div>
+                    <input ref="{{ lead.matValorRef }}" oninput="{{ lead.onPlanoMuda }}" placeholder="Ex. 497,00" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de parcelas</div>
+                    <select ref="{{ lead.matParcelasRef }}" onchange="{{ lead.onPlanoMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                      <sc-for list="{{ lead.parcelasOpts }}" as="po" hint-placeholder-count="8"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia de vencimento</div>
+                    <input ref="{{ lead.matVencRef }}" placeholder="Ex. 10" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Aulas contratadas (particular)</div>
+                    <input ref="{{ lead.matAulasRef }}" type="number" placeholder="Somente para aula individual" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Sinal ou entrada</div>
+                    <input ref="{{ lead.matSinalRef }}" oninput="{{ lead.onPlanoMuda }}" placeholder="Opcional. Ex. 200,00" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  </div>
+                  <div style="display: flex; align-items: flex-end;">
+                    <button onclick="{{ lead.onSinalRecebido }}" style="width: 100%; border: 1px solid {{ lead.sinalBorda }}; background: {{ lead.sinalBg }}; color: {{ lead.sinalFg }}; font-size: 11.5px; font-weight: 700; padding: 9px 11px; border-radius: 8px; cursor: pointer; font-family: inherit;">{{ lead.sinalLabel }}</button>
+                  </div>
+                </div>
+
+                <div style="background: #f6f2ea; border-radius: 8px; padding: 11px 13px; margin-bottom: 10px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">Plano de pagamento</div>
+                  <div style="font-size: 12.5px; color: #164951; line-height: 1.6;">{{ lead.planoResumo }}</div>
+                </div>
+
                 <div style="display: flex; gap: 8px;">
                   <button onclick="{{ lead.onMatricularConfirma }}" style="flex: 1; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 11px; border-radius: 999px; cursor: pointer;">Matricular</button>
                   <button onclick="{{ lead.onMatricularCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
@@ -321,7 +356,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0 };
+  state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0, sinalRecebido: false };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   matSinalRef = React.createRef();
   noteRef = React.createRef();
@@ -459,11 +494,41 @@ class Component extends DCLogic {
           label: m, onClick: () => { CRM.marcarPerdido(l.id, m); this.setState({ perdendoId: null, openId: null }); }
         }));
         out.matriculando = this.state.matriculandoId === l.id;
-        out.onMatricular = () => this.setState({ matriculandoId: l.id, perdendoId: null });
+        out.onMatricular = () => this.setState({ matriculandoId: l.id, perdendoId: null, sinalRecebido: false });
         out.onMatricularCancela = () => this.setState({ matriculandoId: null });
         out.matTurmaRef = this.matTurmaRef; out.matTipoRef = this.matTipoRef; out.matMoedaRef = this.matMoedaRef;
         out.matValorRef = this.matValorRef; out.matParcelasRef = this.matParcelasRef; out.matVencRef = this.matVencRef;
         out.matAulasRef = this.matAulasRef; out.matSinalRef = this.matSinalRef;
+        // 3 é o padrão: o ciclo da escola tem 3 meses
+        out.parcelasOpts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => ({
+          id: String(n), sel: n === 3, label: n === 1 ? "1 parcela (à vista)" : n + " parcelas"
+        }));
+        // resumo do plano: recalculado a cada digitação, para não confirmar no escuro
+        out.onPlanoMuda = () => this.setState(s => ({ tick: s.tick + 1 }));
+        out.sinalRecebido = this.state.sinalRecebido;
+        out.sinalLabel = this.state.sinalRecebido ? "Sinal recebido" : "Sinal ainda não recebido";
+        out.sinalBg = this.state.sinalRecebido ? "#348a8e" : "#fff";
+        out.sinalFg = this.state.sinalRecebido ? "#fff" : "#8a7c6b";
+        out.sinalBorda = this.state.sinalRecebido ? "#348a8e" : "#e5dccf";
+        out.onSinalRecebido = () => this.setState(s => ({ sinalRecebido: !s.sinalRecebido }));
+        out.planoResumo = (() => {
+          const g = r => ((r.current && r.current.value) || "").trim();
+          const moeda = g(this.matMoedaRef) || "R$";
+          const valor = g(this.matValorRef);
+          const n = parseInt(g(this.matParcelasRef), 10) || 3;
+          const sinal = g(this.matSinalRef);
+          if (!valor) return "Informe o valor de cada parcela para ver o total do contrato.";
+          const num = parseFloat(valor.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", "."));
+          if (isNaN(num)) return "Valor da parcela não reconhecido. Use apenas números, por exemplo 497,00.";
+          const fmt = x => moeda + " " + x.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          let txt = n + " × " + fmt(num) + " = " + fmt(num * n) + " no contrato";
+          if (sinal) {
+            const s = parseFloat(sinal.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", "."));
+            if (!isNaN(s)) txt += " · sinal de " + fmt(s)
+              + (this.state.sinalRecebido ? " já recebido" : " ainda não recebido");
+          }
+          return txt;
+        })();
         out.turmasOpts = CRM.ocupacaoTurmas().map(t => ({
           id: t.id, sel: !!l.turmaInteresse && l.turmaInteresse === t.label,
           label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "LOTADA")
@@ -474,9 +539,10 @@ class Component extends DCLogic {
             turmaId: v(this.matTurmaRef), tipo: v(this.matTipoRef) || "Matrícula",
             moeda: v(this.matMoedaRef) || "R$", valorParcela: v(this.matValorRef),
             parcelas: v(this.matParcelasRef) || 3, vencDia: parseInt(v(this.matVencRef), 10) || 10,
-            aulasContratadas: v(this.matAulasRef), sinalValor: v(this.matSinalRef)
+            aulasContratadas: v(this.matAulasRef), sinalValor: v(this.matSinalRef),
+            sinalRecebido: this.state.sinalRecebido
           });
-          this.setState({ matriculandoId: null, openId: null, tab: "matriculados" });
+          this.setState({ matriculandoId: null, openId: null, tab: "matriculados", sinalRecebido: false });
         };
       }
       return out;
