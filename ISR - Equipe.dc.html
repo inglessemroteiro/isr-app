@@ -81,6 +81,57 @@
       </sc-for>
     </div>
 
+    <!-- CARTEIRA -->
+    <section style="margin-top: 26px; border-top: 1px solid #eee3d6; padding-top: 20px;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #164951; letter-spacing: -0.3px;">Carteira das professoras</h2>
+        <button onclick="{{ onEditarCap }}" style="border: 1px solid #e5dccf; background: {{ capBg }}; color: {{ capFg }}; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ capLabel }}</button>
+      </div>
+      <p style="margin: 0 0 14px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 720px;">Quantas alunas cada professora acompanha e quanto contato por semana essa carteira exige. É a conta que diz se dá para crescer sem perder o atendimento de perto.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px;">
+        <sc-for list="{{ carteiraNumeros }}" as="cn" hint-placeholder-count="3">
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 12px 14px;">
+            <div style="font-size: 20px; font-weight: 700; color: {{ cn.cor }};">{{ cn.valor }}</div>
+            <div style="font-size: 11px; color: #6b6155; line-height: 1.4;">{{ cn.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{ carteira }}" as="ct" hint-placeholder-count="4">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-left: 4px solid {{ ct.cor }}; border-radius: 10px; padding: 13px 16px; margin-bottom: 8px;">
+          <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;">
+            <span style="flex: 1; min-width: 120px; font-size: 15px; font-weight: 700; color: #164951;">{{ ct.nome }}</span>
+            <span style="font-size: 15px; font-weight: 700; color: {{ ct.cor }};">{{ ct.ocupacao }}</span>
+            <sc-if value="{{ editandoCap }}">
+              <span style="display: inline-flex; align-items: center; gap: 5px;">
+                <span style="font-size: 11px; color: #8a7c6b;">cabe até</span>
+                <input ref="{{ ct.ref }}" placeholder="{{ ct.capacidade }}" style="width: 52px; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 7px; background: #fff; text-align: center;" />
+              </span>
+            </sc-if>
+          </div>
+          <div style="height: 7px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin: 8px 0 7px;">
+            <span style="display: block; height: 100%; width: {{ ct.largura }}; background: {{ ct.cor }};"></span>
+          </div>
+          <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6;">{{ ct.detalhe }}</div>
+          <sc-if value="{{ ct.acima }}">
+            <div style="font-size: 11.5px; color: #cf6b5c; line-height: 1.6; margin-top: 3px;">{{ ct.avisoAcima }}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ editandoCap }}">
+        <button onclick="{{ onSalvarCap }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; margin-bottom: 10px;">Salvar limites</button>
+      </sc-if>
+
+      <sc-if value="{{ temSemProfessora }}">
+        <div style="background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.35); border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 12.5px; font-weight: 700; color: #9c6f56; margin-bottom: 3px;">{{ semProfessoraTitulo }}</div>
+          <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6;">{{ semProfessoraNomes }}</div>
+        </div>
+      </sc-if>
+    </section>
+
     <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Acesso por papel: <strong>gestora</strong> vê tudo · <strong>comercial</strong> vê CRM, Mensagens, Cobrança, Turmas, Marketing e Calculadora · <strong>operação</strong> vê Cobrança e Mensagens · <strong>professora</strong> vê o Painel do Professor, a Agenda e as pendências dela · <strong>prestadora</strong> não entra no sistema (só nos custos). Valor "por aula" ainda não entra sozinho no Caixa — registre pela conciliação.</p>
 
   </div>
@@ -88,7 +139,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { novoAberto: false, papeisSel: {}, tick: 0 };
+  state = { novoAberto: false, papeisSel: {}, tick: 0, editandoCap: false };
+  capRefs = {};
   nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
   nvTipoRef = React.createRef(); nvMoedaRef = React.createRef(); nvValorRef = React.createRef();
 
@@ -135,8 +187,50 @@ class Component extends DCLogic {
       }
     }));
 
+    const cart = window.ISRCRM.carteiraProfessoras();
     return Object.assign({
       membros, vazio: membros.length === 0,
+
+      carteiraNumeros: [
+        { valor: String(cart.total), label: cart.total === 1 ? "aluna acompanhada" : "alunas acompanhadas", cor: "#164951" },
+        { valor: String(cart.vagasTotais), label: "vagas na equipe hoje", cor: cart.vagasTotais ? "#348a8e" : "#cf6b5c" },
+        { valor: String(cart.acimaDoLimite), label: cart.acimaDoLimite === 1 ? "professora acima do limite" : "professoras acima do limite",
+          cor: cart.acimaDoLimite ? "#cf6b5c" : "#5a9e4b" }
+      ],
+      carteira: cart.linhas.map(l => {
+        if (!this.capRefs[l.nome]) this.capRefs[l.nome] = React.createRef();
+        const cor = l.acima ? "#cf6b5c" : (l.pct >= 80 ? "#d4a574" : "#348a8e");
+        return {
+          nome: l.nome, cor, ref: this.capRefs[l.nome],
+          ocupacao: l.alunas + " de " + l.capacidade,
+          capacidade: String(l.capacidade),
+          largura: Math.min(100, l.pct) + "%",
+          acima: l.acima,
+          avisoAcima: "Acima do limite definido. Redistribua alunas ou aumente o limite dela.",
+          detalhe: [
+            l.turmas + (l.turmas === 1 ? " turma" : " turmas"),
+            l.contatosPorSemana.toString().replace(".", ",") + " contatos por semana",
+            l.foraDaCadencia ? l.foraDaCadencia + " fora da cadência" : "cadência em dia",
+            l.emRisco ? l.emRisco + " em risco" : ""
+          ].filter(Boolean).join(" · ")
+        };
+      }),
+      editandoCap: this.state.editandoCap,
+      capLabel: this.state.editandoCap ? "Fechar" : "Ajustar limites",
+      capBg: this.state.editandoCap ? "#f6eee4" : "#fff",
+      capFg: this.state.editandoCap ? "#9c6f56" : "#164951",
+      onEditarCap: () => this.setState(s => ({ editandoCap: !s.editandoCap })),
+      onSalvarCap: () => {
+        Object.keys(this.capRefs).forEach(nome => {
+          const v = ((this.capRefs[nome].current && this.capRefs[nome].current.value) || "").trim();
+          if (v) window.ISRCRM.setCapacidade(nome, v);
+        });
+        this.setState({ editandoCap: false });
+      },
+      temSemProfessora: cart.semProfessora.length > 0,
+      semProfessoraTitulo: cart.semProfessora.length + (cart.semProfessora.length === 1
+        ? " aluna sem professora atribuída" : " alunas sem professora atribuída"),
+      semProfessoraNomes: cart.semProfessora.map(x => x.nome + " · " + x.turma).join(" | "),
       papeisOpts,
       novoAberto: this.state.novoAberto,
       novoLabel: this.state.novoAberto ? "fechar" : "+ Nova pessoa",

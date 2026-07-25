@@ -42,31 +42,47 @@
         <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhuma aula nos próximos 7 dias para esta professora.</div>
       </sc-if>
       <sc-for list="{{ aulas }}" as="a" hint-placeholder-count="5">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid #f7f2ea;">
-          <span style="flex: none; width: 92px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: {{ a.diaCor }};">{{ a.dia }}</span>
-          <span style="flex: none; width: 40px; font-size: 12px; font-weight: 700; color: #164951;">{{ a.hora }}</span>
-          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ a.cor }}; flex: none;"></span>
-          <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #164951;">{{ a.titulo }}</span>
-          <button onclick="{{ a.onChamada }}" style="flex: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer;">Chamada</button>
-          <a href="{{ a.gcal }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e;">Google Agenda</a>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 11px 18px; border-top: 1px solid #f7f2ea;">
+          <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ a.cor }};"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.titulo }}</div>
+            <div style="font-size: 11px; color: {{ a.diaCor }};">{{ a.quando }}</div>
+          </div>
+          <a href="{{ a.gcal }}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda" style="flex: none; text-decoration: none; font-size: 11px; font-weight: 700; color: #348a8e; padding: 6px 4px;">Agenda</a>
+          <button onclick="{{ a.onChamada }}" style="flex: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Chamada</button>
         </div>
       </sc-for>
     </div>
 
     <!-- CHAMADA -->
     <div ref="{{ chamadaRef }}" style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 18px; scroll-margin-top: 64px;">
-      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">Chamada</div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 6px;">
-        <select onchange="{{ onTurmaChamada }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; max-width: 100%;">
-          <sc-for list="{{ turmasChamada }}" as="tc" hint-placeholder-count="4">
-            <option value="{{ tc.id }}" selected="{{ tc.sel }}">{{ tc.label }}</option>
-          </sc-for>
-        </select>
-        <input type="date" value="{{ chamadaData }}" onchange="{{ onDataChamada }}" style="padding: 8px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+      <!-- de que aula é esta chamada, em português -->
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 3px;">Chamada</div>
+      <div style="font-size: 20px; font-weight: 700; color: #164951; letter-spacing: -0.3px; line-height: 1.25;">{{ tituloChamada }}</div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; margin-bottom: 12px;">
+        <span style="font-size: 12.5px; color: #6b6155;">{{ subtituloChamada }}</span>
         <sc-if value="{{ jaSalva }}">
           <span style="background: rgba(90,158,75,0.14); color: #5a9e4b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 11px; border-radius: 999px;">salva em {{ salvaQuando }}</span>
         </sc-if>
       </div>
+
+      <!-- trocar de aula: as aulas de verdade, não uma lista abstrata -->
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+        <sc-for list="{{ aulasChamada }}" as="ac" hint-placeholder-count="4">
+          <button onclick="{{ ac.onClick }}" style="border: 1px solid {{ ac.borda }}; background: {{ ac.bg }}; color: {{ ac.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ac.label }}</button>
+        </sc-for>
+        <button onclick="{{ onOutraData }}" style="border: 1px dashed #e5dccf; background: #fff; color: #9b8b7e; font-size: 11.5px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ outraDataLabel }}</button>
+      </div>
+      <sc-if value="{{ escolhendoData }}">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+          <select onchange="{{ onTurmaChamada }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; max-width: 100%;">
+            <sc-for list="{{ turmasChamada }}" as="tc" hint-placeholder-count="4">
+              <option value="{{ tc.id }}" selected="{{ tc.sel }}">{{ tc.label }}</option>
+            </sc-for>
+          </select>
+          <input type="date" value="{{ chamadaData }}" onchange="{{ onDataChamada }}" style="padding: 8px 11px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+        </div>
+      </sc-if>
 
       <sc-if value="{{ ehAulaExtra }}">
         <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
@@ -94,7 +110,7 @@
 
       <sc-if value="{{ temAlunas }}">
         <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap; padding: 4px 0 10px;">
-          <span style="font-size: 11px; color: #8a7c6b;">Toque para alternar entre presente e falta.</span>
+          <span style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">{{ instrucaoChamada }}</span>
           <span style="flex: 1;"></span>
           <button onclick="{{ onTodasPresentes }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Todas presentes</button>
           <button onclick="{{ onTodasFaltas }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ninguém veio</button>
@@ -102,21 +118,25 @@
       </sc-if>
 
       <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
-        <div style="border-bottom: 1px solid #f4f1ec; padding: 4px 0;">
-          <div style="display: flex; align-items: center; gap: 11px;">
-            <button onclick="{{ al.onMarcar }}" title="{{ al.marcaTitulo }}" style="flex: none; width: 30px; height: 30px; border: 2px solid {{ al.marcaBorda }}; background: {{ al.marcaBg }}; color: #fff; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 700; line-height: 1; padding: 0; font-family: inherit;">{{ al.marca }}</button>
-            <div onclick="{{ al.onMarcar }}" style="flex: 1; min-width: 0; cursor: pointer; padding: 9px 0;">
-              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ al.nome }}</div>
-              <div style="font-size: 11px; color: {{ al.estadoCor }};">{{ al.estadoLabel }}<sc-if value="{{ al.temFaltas }}"><span style="color: #b3a693;"> · {{ al.faltasInfo }}</span></sc-if></div>
+        <div style="border-bottom: 1px solid #f4f1ec;">
+          <!-- uma linha por aluna: marca, nome, estado e as duas ações -->
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0;">
+            <button onclick="{{ al.onMarcar }}" title="{{ al.marcaTitulo }}" style="flex: none; width: 32px; height: 32px; border: 2px solid {{ al.marcaBorda }}; background: {{ al.marcaBg }}; color: #fff; border-radius: 9px; cursor: pointer; font-size: 16px; font-weight: 700; line-height: 1; padding: 0; font-family: inherit;">{{ al.marca }}</button>
+            <div onclick="{{ al.onMarcar }}" style="flex: 1; min-width: 0; cursor: pointer;">
+              <div style="font-size: 14px; font-weight: 700; color: #164951; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ al.nome }}</div>
+              <div style="font-size: 11px; color: {{ al.estadoCor }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ al.estadoLinha }}</div>
             </div>
-            <a href="{{ al.perfilHref }}" style="flex: none; font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none; padding: 8px 6px;">perfil</a>
-            <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno — aqui só fica registrado se ela entregou" style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ al.tarefaLabel }}</button>
+            <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno — aqui só fica registrado se ela entregou" style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 15px; font-weight: 700; width: 34px; height: 32px; border-radius: 9px; cursor: pointer; font-family: inherit; padding: 0;">{{ al.tarefaMarca }}</button>
+            <button onclick="{{ al.onMais }}" title="Mais opções" style="flex: none; border: 1px solid {{ al.maisBorda }}; background: {{ al.maisBg }}; color: {{ al.maisFg }}; font-size: 15px; font-weight: 700; width: 34px; height: 32px; border-radius: 9px; cursor: pointer; font-family: inherit; padding: 0; line-height: 1;">···</button>
           </div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 8px 41px;">
-            <sc-for list="{{ al.ressalvas }}" as="rv" hint-placeholder-count="2">
-              <button onclick="{{ rv.onClick }}" style="border: 1px solid {{ rv.borda }}; background: {{ rv.bg }}; color: {{ rv.fg }}; font-size: 10.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ rv.label }}</button>
-            </sc-for>
-          </div>
+          <sc-if value="{{ al.aberta }}">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 0 0 10px 42px;">
+              <sc-for list="{{ al.ressalvas }}" as="rv" hint-placeholder-count="2">
+                <button onclick="{{ rv.onClick }}" style="border: 1px solid {{ rv.borda }}; background: {{ rv.bg }}; color: {{ rv.fg }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ rv.label }}</button>
+              </sc-for>
+              <a href="{{ al.perfilHref }}" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none; padding: 6px 8px;">Abrir o perfil</a>
+            </div>
+          </sc-if>
         </div>
       </sc-for>
 
@@ -169,7 +189,8 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
-            salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "" };
+            salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
+            escolhendoData: false, linhaAberta: null };
   chamadaRef = React.createRef(); buscaExtraRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -197,6 +218,22 @@ class Component extends DCLogic {
   tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : "#6b5b95"; }
 
   CORES = { presente: "#348a8e", atraso: "#d4a574", falta: "#fff", justificada: "#6b5b95" };
+  DIA_LONGO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  MES_LONGO = ["janeiro", "fevereiro", "março", "abril", "maio", "junho",
+    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+  // "hoje, segunda, 27 de julho" em vez de 07/25/2026
+  dataPorExtenso(iso) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const d = new Date(iso + "T12:00:00");
+    const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+    const dif = Math.round((d0 - hoje) / 86400000);
+    const base = this.DIA_LONGO[d.getDay()] + ", " + d.getDate() + " de " + this.MES_LONGO[d.getMonth()];
+    if (dif === 0) return "hoje · " + base;
+    if (dif === -1) return "ontem · " + base;
+    if (dif === 1) return "amanhã · " + base;
+    return base;
+  }
 
   marcar(pessoaId, estado, presAtual, turmaSel, dataSel) {
     this.setState({ presencas: Object.assign({}, presAtual, { [pessoaId]: estado }),
@@ -255,6 +292,7 @@ class Component extends DCLogic {
         const ev = it.eventoId ? CRM.getEvento(it.eventoId) : null;
         return {
           dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
+          quando: dl.label + (it.hora ? " · " + it.hora : ""),
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
           gcal: ev ? CRM.gcalLinkEvento(ev) : CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
           onChamada: () => {
@@ -288,11 +326,32 @@ class Component extends DCLogic {
     const evId = this.state.eventoChamada === undefined ? (evParam || null) : this.state.eventoChamada;
     const evSel = evId ? CRM.getEvento(evId) : null;
 
+    // A chamada abre na aula mais próxima, não numa turma qualquer com a
+    // data de hoje: mostrar a turma de segunda num sábado é o que fazia a
+    // tela parecer abstrata.
+    const proxima = (() => {
+      const cands = CRM.agendaItens(8)
+        .filter(it => (it.tipo === "aula" || it.tipo === "aula_extra")
+          && (!teacher || !it.responsavel || it.responsavel === teacher));
+      for (let i = 0; i < cands.length; i++) {
+        const it = cands[i];
+        const ev2 = it.eventoId ? CRM.getEvento(it.eventoId) : null;
+        const lbl = ev2 ? CRM.aulaExtraLabel(ev2)
+          : (turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0
+              && it.titulo.indexOf(u.turma) >= 0)[0] || {}).label;
+        if (lbl) return { label: lbl, data: it.data, eventoId: ev2 ? ev2.id : null };
+      }
+      return null;
+    })();
+
     const turmaSel = evSel ? CRM.aulaExtraLabel(evSel)
       : (this.state.turmaChamada
         || (tpTurma && tpTurma.teacher === teacher ? tpTurma.label : null)
+        || (proxima ? proxima.label : null)
         || (turmasProfOcup[0] ? turmasProfOcup[0].label : null));
-    const dataSel = this.state.chamadaData || (evSel ? evSel.data : hojeIso);
+    const dataSel = this.state.chamadaData
+      || (evSel ? evSel.data
+        : (!this.state.turmaChamada && proxima && proxima.label === turmaSel ? proxima.data : hojeIso));
     const presAtual = this.state.presencas
       || (turmaSel ? this.carregarChamada(turmaSel, dataSel, evSel ? evSel.id : null) : {});
     const alunas = evSel ? CRM.listaChamadaExtra(evSel.id) : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
@@ -305,7 +364,8 @@ class Component extends DCLogic {
       const fez = tarAtual[p.id] === true;
       const marcada = tarAtual[p.id] !== undefined;
       return {
-        tarefaLabel: marcada ? (fez ? "Tarefa: fez" : "Tarefa: não fez") : "Tarefa",
+        tarefaLabel: marcada ? (fez ? "Fez a tarefa" : "Não fez a tarefa") : "Fez a tarefa?",
+        tarefaMarca: marcada ? (fez ? "✓" : "✕") : "—",
         tarefaBg: marcada ? (fez ? "#348a8e" : "#cf6b5c") : "#fff",
         tarefaFg: marcada ? "#fff" : "#8a7c6b",
         tarefaBorda: marcada ? (fez ? "#348a8e" : "#cf6b5c") : "#e5dccf",
@@ -325,10 +385,18 @@ class Component extends DCLogic {
         marcaBg: this.CORES[estadoAtual] || "#348a8e",
         marcaBorda: estadoAtual === "falta" ? "#e5dccf" : (this.CORES[estadoAtual] || "#348a8e"),
         marcaTitulo: estadoAtual === "falta" ? "Marcar presença" : "Marcar falta",
-        estadoLabel: (this.ESTADOS.filter(e => e.id === estadoAtual)[0] || {}).title || "",
+        estadoLinha: ({ presente: "Presente", falta: "Faltou",
+          atraso: "Chegou atrasada", justificada: "Avisou que não vinha" }[estadoAtual] || "Presente")
+          + (faltas > 0 ? " · " + faltas + (faltas === 1 ? " falta no ciclo" : " faltas no ciclo") : ""),
         estadoCor: this.CORES[estadoAtual] || "#348a8e",
         onMarcar: () => this.marcar(p.id, estadoAtual === "falta" ? "presente" : "falta", presAtual, turmaSel, dataSel),
         // atraso e justificada são exceção: ficam num segundo plano
+        // as ressalvas são exceção: ficam atrás do "···" e não ocupam a lista
+        aberta: this.state.linhaAberta === p.id,
+        onMais: () => this.setState(s => ({ linhaAberta: s.linhaAberta === p.id ? null : p.id })),
+        maisBg: this.state.linhaAberta === p.id ? "#f6eee4" : "#fff",
+        maisFg: this.state.linhaAberta === p.id ? "#9c6f56" : "#c9b9a6",
+        maisBorda: this.state.linhaAberta === p.id ? "#e5dccf" : "#eee3d6",
         ressalvas: [
           { id: "atraso", label: estadoAtual === "atraso" ? "Chegou atrasada ✓" : "Chegou atrasada" },
           { id: "justificada", label: estadoAtual === "justificada" ? "Avisou antes ✓" : "Avisou antes" }
@@ -429,13 +497,71 @@ class Component extends DCLogic {
             + h.aulas + (h.aulas === 1 ? " aula extra" : " aulas extras") + " nos últimos 12 meses"
           : "Nenhuma aula extra com chamada registrada nos últimos 12 meses.";
       })(),
+      // ── de que aula é esta chamada ──
+      tituloChamada: evSel
+        ? "Aula extra · " + evSel.titulo
+        : (turmaSel ? turmaSel.split(" · ")[0] + (turmaSel.indexOf(" · ") > 0
+            ? " · " + turmaSel.split(" · ").slice(1).join(" · ") : "")
+          : "Nenhuma turma selecionada"),
+      subtituloChamada: this.dataPorExtenso(dataSel)
+        + (alunas.length ? " · " + alunas.length + (alunas.length === 1 ? " aluna" : " alunas") : ""),
+      instrucaoChamada: "Todas começam presentes. Toque em quem faltou.",
+
+      // trocar de aula pelas aulas de verdade da semana
+      aulasChamada: (() => {
+        const vistos = {};
+        const opcoes = [];
+        CRM.agendaItens(8).filter(it => (it.tipo === "aula" || it.tipo === "aula_extra")
+          && (!teacher || !it.responsavel || it.responsavel === teacher))
+          .forEach(it => {
+            const ev2 = it.eventoId ? CRM.getEvento(it.eventoId) : null;
+            const lbl = ev2 ? CRM.aulaExtraLabel(ev2)
+              : (turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0
+                  && it.titulo.indexOf(u.turma) >= 0)[0] || {}).label;
+            if (!lbl) return;
+            const chave = lbl + "|" + it.data;
+            if (vistos[chave]) return;
+            vistos[chave] = 1;
+            const dl = this.diaLabel(it.data);
+            const marcada = lbl === turmaSel && it.data === dataSel;
+            opcoes.push({
+              label: dl.label + " · " + (it.hora || "") + " " + (ev2 ? ev2.titulo : lbl.split(" · ")[0]),
+              bg: marcada ? "#164951" : "#fff",
+              fg: marcada ? "#fff" : "#164951",
+              borda: marcada ? "#164951" : "#e5dccf",
+              onClick: () => {
+                if (ev2) {
+                  this.setState({ eventoChamada: ev2.id, turmaChamada: lbl, chamadaData: it.data,
+                    presencas: this.carregarChamada(lbl, it.data, ev2.id), tarefas: null,
+                    salvouAgora: false, escolhendoData: false });
+                } else {
+                  this.setState({ eventoChamada: null, turmaChamada: lbl, chamadaData: it.data,
+                    presencas: this.carregarChamada(lbl, it.data), tarefas: null,
+                    salvouAgora: false, escolhendoData: false });
+                }
+              }
+            });
+          });
+        return opcoes.slice(0, 6);
+      })(),
+      escolhendoData: this.state.escolhendoData,
+      outraDataLabel: this.state.escolhendoData ? "fechar" : "outra aula ou data",
+      onOutraData: () => this.setState(s => ({ escolhendoData: !s.escolhendoData })),
+
       onTodasPresentes: () => this.marcarTodas("presente", alunas, turmaSel, dataSel),
       onTodasFaltas: () => this.marcarTodas("falta", alunas, turmaSel, dataSel),
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
       chamadaRef: this.chamadaRef,
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
       turmaVaziaLabel: turmaSel || "Esta turma",
-      resumoChamada: nPres + (nPres === 1 ? " presente" : " presentes") + (nAtr ? " (" + nAtr + " com atraso)" : "") + " · " + nFal + (nFal === 1 ? " falta" : " faltas") + (nJus ? " · " + nJus + (nJus === 1 ? " justificada" : " justificadas") : ""),
+      resumoChamada: alunas.length
+        ? (nFal + nJus === 0
+            ? "Todas presentes" + (nAtr ? ", " + nAtr + " com atraso" : "") + "."
+            : nPres + " de " + alunas.length + " presentes"
+              + (nAtr ? " (" + nAtr + " com atraso)" : "")
+              + " · " + (nFal + nJus) + (nFal + nJus === 1 ? " ausente" : " ausentes")
+              + (nJus ? ", " + nJus + " com aviso" : "") + ".")
+        : "",
       salvouAgora: this.state.salvouAgora,
       onSalvarChamada: () => {
         CRM.salvarChamada(turmaSel, dataSel, presAtual, (user && user.nome) || "", tarAtual);

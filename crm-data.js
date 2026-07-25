@@ -1110,6 +1110,9 @@
     { id: "onboarding_pendente", label: "Integração pendente", cor: "#9c6f56", peso: 35,
       dono: "Érika", acao: "Mensagem do checkpoint", tpl: "onb_sessao", tipo: "checkin",
       risco: "onboarding", toque: "onboarding", naCentral: true, urg: 2 },
+    { id: "onboarding_travado", label: "Integração travada", cor: "#cf6b5c", peso: 48,
+      dono: "Érika", acao: "Mensagem do checkpoint", tpl: "onb_sessao", tipo: "checkin",
+      risco: "onboarding_travado", toque: "onboarding_travado", naCentral: true, urg: 0 },
     { id: "contrato_novo", label: "Início de contrato", cor: "#9ec970", peso: 32,
       dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
       risco: "", toque: "nova", naCentral: false, urg: 3 },
@@ -1216,8 +1219,18 @@
     if (s.tendencia < 0)
       add("avaliacao_caiu", "Avaliação caiu " + Math.abs(s.tendencia)
         + (Math.abs(s.tendencia) === 1 ? " ponto" : " pontos"));
-    if (s.onboardingAtrasado.length)
-      add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label);
+    // A integração é o portão: aluna que já teve aula sem ela concluída
+    // está estudando sem ninguém ter conferido se ela entrou de verdade.
+    if (s.onboardingAtrasado.length) {
+      var travado = s.onboardingAtrasado.filter(function (c) {
+        return daysBetween(parseISO(c.data), today()) >= 7;
+      });
+      if (travado.length)
+        add("onboarding_travado", "Integração parada há " + daysBetween(parseISO(travado[0].data), today())
+          + " dias em: " + travado[0].label);
+      else
+        add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label);
+    }
     if (s.diasDeCasa <= LIMIARES.diasContratoNovo)
       add("contrato_novo", "Entrou há " + s.diasDeCasa + (s.diasDeCasa === 1 ? " dia" : " dias"));
     if (s.diasPraRenovar !== null && s.diasPraRenovar >= 0 && s.diasPraRenovar <= LIMIARES.diasRenovacao)
@@ -1700,11 +1713,81 @@
       }).sort(function (a, b) { return a.data < b.data ? 1 : -1; });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  CARTEIRA POR PROFESSORA
+  //  ------------------------------------------------------------
+  //  Chegar a 80 alunas sem perder o atendimento de perto depende de
+  //  saber quem cuida de quem, e quando alguém passou do que aguenta.
+  // ══════════════════════════════════════════════════════════════
+  var CAPACIDADE_KEY = "isr_capacidade_v1";
+  var CAPACIDADE_PADRAO = 25;
+  function capacidades() {
+    try { return JSON.parse(localStorage.getItem(CAPACIDADE_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function setCapacidade(nome, n) {
+    var m = capacidades();
+    var v = parseInt(n, 10);
+    if (!isNaN(v) && v > 0) m[nome] = v; else delete m[nome];
+    try { localStorage.setItem(CAPACIDADE_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return m;
+  }
+  function carteiraProfessoras() {
+    var caps = capacidades();
+    var ativas = loadPessoas().filter(function (p) { return p.status === "aluna" || p.status === "mvs"; });
+    var porProf = {};
+    var nomes = [];
+    equipeLista().forEach(function (m) {
+      if ((m.papeis || []).indexOf("professora") < 0) return;
+      nomes.push(m.nome);
+      porProf[m.nome] = [];
+    });
+    ativas.forEach(function (p) {
+      var n = p.professora || "";
+      if (!n) return;
+      if (!porProf[n]) { porProf[n] = []; nomes.push(n); }
+      porProf[n].push(p);
+    });
+    var semProfessora = ativas.filter(function (p) { return !p.professora; });
+    var linhas = nomes.map(function (n) {
+      var alunas = porProf[n] || [];
+      var cap = caps[n] || CAPACIDADE_PADRAO;
+      var turmas = [];
+      alunas.forEach(function (p) { if (p.turma && turmas.indexOf(p.turma) < 0) turmas.push(p.turma); });
+      // quanto contato por semana essa carteira exige
+      var porSemana = 0, foraDaCadencia = 0, emRisco = 0;
+      alunas.forEach(function (p) {
+        var c = cadenciaDe(p);
+        porSemana += 7 / c.intervalo;
+        if (c.vencido) foraDaCadencia++;
+        if (c.segmento === "em_risco") emRisco++;
+      });
+      var pct = cap > 0 ? Math.round(100 * alunas.length / cap) : 0;
+      return {
+        nome: n, alunas: alunas.length, capacidade: cap, pct: pct,
+        acima: alunas.length > cap,
+        vagas: Math.max(0, cap - alunas.length),
+        turmas: turmas.length, listaTurmas: turmas,
+        contatosPorSemana: Math.round(porSemana * 10) / 10,
+        foraDaCadencia: foraDaCadencia, emRisco: emRisco,
+        nomes: alunas.map(function (p) { return p.nome; }).sort()
+      };
+    }).sort(function (a, b) { return b.pct - a.pct || a.nome.localeCompare(b.nome); });
+    var total = ativas.length;
+    var capTotal = linhas.reduce(function (a, l) { return a + l.capacidade; }, 0);
+    return { linhas: linhas, total: total, capacidadeTotal: capTotal,
+      vagasTotais: Math.max(0, capTotal - total),
+      semProfessora: semProfessora.map(function (p) { return { id: p.id, nome: p.nome, turma: p.turma || "—" }; }),
+      acimaDoLimite: linhas.filter(function (l) { return l.acima; }).length };
+  }
+
   // ── PAINEL DE ALUNAS ──────────────────────────────────────────
   // Todo mundo que já é aluna, com os sinais que dizem se ela está
   // bem ou se precisa de você. É a base do acompanhamento: sem isso
   // o único jeito de saber como alguém está é abrindo perfil por perfil.
   var RISCOS = (function () {
+    // "onboarding_travado" é um risco próprio: aparece nas Alunas como
+    // situação, não só como pendência da fila
     var m = {};
     SINAIS.forEach(function (s) {
       if (s.risco) m[s.risco] = { label: s.label, cor: s.cor, peso: s.peso, sinal: s.id };
@@ -2322,6 +2405,144 @@
       out[k] = String(vl) >= String(vr) ? l : r;
     });
     return out;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  VERSÃO DO BANCO, BACKUP E EXPORTAÇÃO
+  //  ------------------------------------------------------------
+  //  Antes de entrar dado real é preciso poder voltar atrás. O banco
+  //  passa a ter versão declarada, cópias automáticas antes de toda
+  //  operação de risco, e exportação para arquivo.
+  // ══════════════════════════════════════════════════════════════
+  var ESQUEMA_VERSAO = 4;
+  var ESQUEMA_KEY = "isr_esquema_versao";
+  var BACKUP_KEY = "isr_backups_v1";
+  var MAX_BACKUPS = 5;
+
+  function esquemaVersao() {
+    try { return parseInt(localStorage.getItem(ESQUEMA_KEY), 10) || 0; } catch (e) { return 0; }
+  }
+  function setEsquemaVersao(v) {
+    try { localStorage.setItem(ESQUEMA_KEY, String(v)); } catch (e) {}
+  }
+
+  var CHAVES_DADOS = [PESSOAS_KEY, "isr_templates_v1", "isr_custos_v1", "isr_turmas_v1",
+    "isr_eventos_v1", "isr_chamadas_v1", "isr_tarefas_v1", "isr_feriados_v1", "isr_metas_v1",
+    "isr_moedas_v1", "isr_equipe_v1", "isr_calc_v1", "isr_lancamentos_v1", "isr_cambio_v1",
+    "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
+    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1"];
+
+  function snapshotDados() {
+    var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
+    CHAVES_DADOS.forEach(function (k) {
+      try { var v = localStorage.getItem(k); if (v !== null) d[k] = v; } catch (e) {}
+    });
+    return d;
+  }
+  function backupsLista() {
+    try { return JSON.parse(localStorage.getItem(BACKUP_KEY)) || []; } catch (e) { return []; }
+  }
+  // Cópia antes de toda operação que pode destruir dado. Guarda as cinco
+  // últimas: mais que isso não cabe no armazenamento do navegador.
+  function criarBackup(motivo) {
+    var l = backupsLista();
+    l.unshift({ id: "bk" + Date.now(), em: new Date().toISOString(),
+      motivo: motivo || "manual", dados: snapshotDados() });
+    l = l.slice(0, MAX_BACKUPS);
+    try { localStorage.setItem(BACKUP_KEY, JSON.stringify(l)); }
+    catch (e) {
+      // sem espaço: guarda só o mais recente
+      try { localStorage.setItem(BACKUP_KEY, JSON.stringify(l.slice(0, 1))); } catch (e2) {}
+    }
+    return l[0];
+  }
+  function restaurarBackup(id) {
+    var bk = backupsLista().filter(function (b) { return b.id === id; })[0];
+    if (!bk) return { restaurado: false, motivo: "nao_encontrado" };
+    criarBackup("antes de restaurar");
+    CHAVES_DADOS.forEach(function (k) {
+      try {
+        if (bk.dados[k] !== undefined) localStorage.setItem(k, bk.dados[k]);
+        else localStorage.removeItem(k);
+      } catch (e) {}
+    });
+    agendarSync();
+    return { restaurado: true, em: bk.em, motivo: bk.motivo };
+  }
+  function apagarBackup(id) {
+    var l = backupsLista().filter(function (b) { return b.id !== id; });
+    try { localStorage.setItem(BACKUP_KEY, JSON.stringify(l)); } catch (e) {}
+    return l;
+  }
+
+  // Exportação: o dado é da escola, não do navegador.
+  function exportarTudo() {
+    return JSON.stringify(snapshotDados(), null, 2);
+  }
+  function importarTudo(texto) {
+    var d;
+    try { d = JSON.parse(texto); } catch (e) { return { ok: false, erro: "Arquivo não é um JSON válido." }; }
+    if (!d || typeof d !== "object") return { ok: false, erro: "Arquivo vazio ou em formato inesperado." };
+    if (!d[PESSOAS_KEY]) return { ok: false, erro: "O arquivo não contém o cadastro de pessoas." };
+    criarBackup("antes de importar arquivo");
+    var n = 0;
+    CHAVES_DADOS.forEach(function (k) {
+      if (d[k] === undefined) return;
+      try { localStorage.setItem(k, d[k]); n++; } catch (e) {}
+    });
+    setEsquemaVersao(parseInt(d._versao, 10) || ESQUEMA_VERSAO);
+    agendarSync();
+    var pessoas = 0;
+    try { pessoas = (JSON.parse(d[PESSOAS_KEY]) || []).length; } catch (e) {}
+    return { ok: true, blocos: n, pessoas: pessoas, versao: d._versao || null, em: d._em || "" };
+  }
+
+  // Exportação de uma pessoa — o que o GDPR chama de portabilidade.
+  function exportarPessoa(id) {
+    var p = getPessoa(id);
+    if (!p) return null;
+    return JSON.stringify({
+      pessoa: p,
+      contatos: toquesLista().filter(function (x) { return x.pessoaId === id; }),
+      avaliacoes: pulsosLista().filter(function (x) { return x.pessoaId === id; }),
+      presencas: (function () {
+        var m = chamadasAll(), out = [];
+        Object.keys(m).forEach(function (k) {
+          if (m[k].presencas && m[k].presencas[id] !== undefined)
+            out.push({ turma: m[k].turma, data: m[k].data, estado: estadoPresenca(m[k].presencas[id]) });
+        });
+        return out;
+      })(),
+      moedas: moedasDe(id),
+      exportadoEm: new Date().toISOString()
+    }, null, 2);
+  }
+  // Exclusão a pedido da pessoa: apaga o cadastro e tudo que aponta para ela.
+  function apagarPessoa(id, motivo) {
+    var p = getPessoa(id);
+    if (!p) return { apagado: false };
+    criarBackup("antes de apagar " + p.nome);
+    savePessoas(loadPessoas().filter(function (x) { return x.id !== id; }));
+    toquesSave(toquesLista().filter(function (x) { return x.pessoaId !== id; }));
+    pulsosSave(pulsosLista().filter(function (x) { return x.pessoaId !== id; }));
+    var m = chamadasAll();
+    Object.keys(m).forEach(function (k) {
+      if (m[k].presencas) delete m[k].presencas[id];
+      if (m[k].tarefas) delete m[k].tarefas[id];
+    });
+    chamadasSaveLocal(m);
+    programasSave(programasLista().map(function (pr) {
+      pr.participantes = (pr.participantes || []).filter(function (x) { return x !== id; });
+      if (pr.progresso) delete pr.progresso[id];
+      if (pr.moedas) delete pr.moedas[id];
+      return pr;
+    }));
+    eventosSave(eventosLista().map(function (e) {
+      if (e.rsvps) delete e.rsvps[id];
+      e.manuais = (e.manuais || []).filter(function (x) { return x !== id; });
+      return e;
+    }));
+    return { apagado: true, nome: p.nome, motivo: motivo || "" };
   }
 
   function payloadLocal() {
@@ -3802,6 +4023,11 @@
     registrarPulso: registrarPulso, pulsosDe: pulsosDe, ultimoPulso: ultimoPulso,
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
+    carteiraProfessoras: carteiraProfessoras, capacidades: capacidades, setCapacidade: setCapacidade,
+    ESQUEMA_VERSAO: ESQUEMA_VERSAO, esquemaVersao: esquemaVersao, setEsquemaVersao: setEsquemaVersao,
+    criarBackup: criarBackup, backupsLista: backupsLista, restaurarBackup: restaurarBackup,
+    apagarBackup: apagarBackup, exportarTudo: exportarTudo, importarTudo: importarTudo,
+    exportarPessoa: exportarPessoa, apagarPessoa: apagarPessoa,
     SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
     SEGMENTOS: SEGMENTOS, segmentoMeta: segmentoMeta, segmentoDe: segmentoDe,
     cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,
