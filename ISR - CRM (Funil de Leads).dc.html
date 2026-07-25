@@ -330,7 +330,8 @@
               </sc-if>
               <sc-if value="{{ lead.temReuniao }}">
                 <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
-                <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Marcar como feita</button>
+                <a href="{{ lead.gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Google Agenda</a>
+                <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar como feita</button>
               </sc-if>
               <button onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lead.condLabel }}</button>
               <a href="{{ lead.matriculaHref }}" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Matricular</a>
@@ -548,8 +549,9 @@ class Component extends DCLogic {
           if (!data) return;
           CRM.setStage(l.id, "reuniao");
           CRM.agendarReuniao(l.id, data, (this.reuHoraRef.current && this.reuHoraRef.current.value) || "");
-          this.setState({ agendandoReuniaoId: null });
+          this.setState({ agendandoReuniaoId: null, openId: l.id, tab: "reuniao" });
         };
+        out.gcalReuniao = CRM.gcalReuniao(l.id);
         out.onReuniaoFeita = () => { CRM.marcarReuniaoFeita(l.id); this.bump(); };
         out.onExcluir = () => { if (confirm("Excluir este lead? Não dá para desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
         out.perdendo = this.state.perdendoId === l.id;

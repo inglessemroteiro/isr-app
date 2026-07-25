@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-f",
+  numero: "2026.07.25-g",
   data: "25/07/2026",
-  nota: "Chamada por seleção, Programa em grade e matrícula retroativa"
+  nota: "Categorias de despesa, sinal na calculadora, reunião no Google Agenda"
 };
