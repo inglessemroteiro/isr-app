@@ -1072,6 +1072,12 @@
     diasParcelaAVencer: 3
   };
   function sinalMeta(id) { return SINAIS.filter(function (s) { return s.id === id; })[0] || null; }
+  // Intervalo da cadência sem recorrer a sinaisDe — evita recursão, já que
+  // é sinaisDe quem chama isto enquanto ainda está montando a lista.
+  function intervaloCadenciaDe(p, s, sinaisParciais) {
+    var seg = segmentoDe(p, s, sinaisParciais || []);
+    return cadenciaConfig()[seg];
+  }
 
   // Situação de uma pessoa: os fatos crus, calculados uma vez.
   function situacaoDe(p) {
@@ -1150,13 +1156,119 @@
       add("renovacao_aberta", "Contrato termina em " + s.diasPraRenovar
         + (s.diasPraRenovar === 1 ? " dia" : " dias"));
     if (!s.pulso) add("sem_avaliacao", "Nenhuma avaliação de progresso registrada");
-    if (s.diasSemToque === null || s.diasSemToque > LIMIARES.diasSemContato)
+    // o intervalo vem da cadência do segmento, não de um número fixo:
+    // aluna nova cobra em 7 dias, aluna estável em 30
+    var intervalo = intervaloCadenciaDe(p, s, out);
+    if (s.diasSemToque === null || s.diasSemToque > intervalo)
       add("sem_contato", s.diasSemToque === null ? "Nenhum contato registrado"
-        : "Sem contato há " + s.diasSemToque + " dias");
+        : "Sem contato há " + s.diasSemToque + " dias · a cadência pede a cada " + intervalo);
     if (s.checkinVencido) add("checkin_agendado", "Check-in agendado para " + ddmm(p.proximoCheckin));
     if (!out.length && s.pulso && s.pulso.nota >= LIMIARES.avaliacaoAlta)
       add("evolucao_positiva", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
     return out.sort(function (a, b) { return b.peso - a.peso; });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  CADÊNCIA DE CONTATO
+  //  ------------------------------------------------------------
+  //  Um intervalo só para todo mundo não funciona: aluna nova precisa
+  //  de contato semanal, aluna estável de dois anos não. Um número
+  //  único ou é frouxo para quem precisa, ou sufocante para quem não.
+  //
+  //  Cada aluna cai num segmento pela situação dela, e cada segmento
+  //  tem seu intervalo. Assim a conta de quantos contatos por semana
+  //  a escola precisa dar passa a ser previsível — que é o que permite
+  //  crescer sem perder o atendimento de perto.
+  // ══════════════════════════════════════════════════════════════
+  var CADENCIA_KEY = "isr_cadencia_v1";
+  var SEGMENTOS = [
+    { id: "em_risco", label: "Em risco", dias: 7, cor: "#cf6b5c", ordem: 1,
+      desc: "Pagamento atrasado, ausências ou dificuldade relatada. Enquanto durar, contato semanal." },
+    { id: "nova", label: "Primeiro ciclo", dias: 7, cor: "#9ec970", ordem: 2,
+      desc: "Nos primeiros 42 dias a aluna decide se fica. É onde o contato rende mais." },
+    { id: "programa", label: "No programa", dias: 7, cor: "#348a8e", ordem: 3,
+      desc: "Participa de um programa no WhatsApp, que já pressupõe devolutiva semanal." },
+    { id: "renovacao", label: "Perto de renovar", dias: 14, cor: "#6b5b95", ordem: 4,
+      desc: "O ciclo termina em breve. A conversa de renovação precisa de terreno preparado." },
+    { id: "estavel", label: "Estável", dias: 30, cor: "#8a7c6b", ordem: 5,
+      desc: "Em dia, presente e avaliando bem. Contato mensal mantém o vínculo sem sufocar." }
+  ];
+  function cadenciaConfig() {
+    var base = {};
+    SEGMENTOS.forEach(function (s) { base[s.id] = s.dias; });
+    try {
+      var m = JSON.parse(localStorage.getItem(CADENCIA_KEY));
+      if (m) Object.keys(m).forEach(function (k) {
+        var n = parseInt(m[k], 10);
+        if (base[k] !== undefined && !isNaN(n) && n > 0) base[k] = n;
+      });
+    } catch (e) {}
+    return base;
+  }
+  function setCadencia(segmentoId, dias) {
+    var m = {}; try { m = JSON.parse(localStorage.getItem(CADENCIA_KEY)) || {}; } catch (e) {}
+    var n = parseInt(dias, 10);
+    if (!isNaN(n) && n > 0) m[segmentoId] = n;
+    try { localStorage.setItem(CADENCIA_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return cadenciaConfig();
+  }
+  function segmentoMeta(id) { return SEGMENTOS.filter(function (s) { return s.id === id; })[0] || SEGMENTOS[4]; }
+  // A pessoa está em vários segmentos ao mesmo tempo; vale o mais exigente.
+  var SINAIS_DE_RISCO = ["parcela_atrasada", "falta_recente", "avaliacao_baixa", "avaliacao_caiu"];
+  function segmentoDe(p, sit, sinais) {
+    var s = sit || situacaoDe(p);
+    var sn = sinais || sinaisDe(p, s);
+    if (sn.some(function (x) { return SINAIS_DE_RISCO.indexOf(x.id) >= 0; })) return "em_risco";
+    if (s.diasDeCasa <= LIMIARES.diasContratoNovo) return "nova";
+    var noPrograma = programasLista().some(function (pr) {
+      return !pr.encerrado && (pr.participantes || []).indexOf(p.id) >= 0;
+    });
+    if (noPrograma) return "programa";
+    if (s.diasPraRenovar !== null && s.diasPraRenovar >= 0 && s.diasPraRenovar <= LIMIARES.diasRenovacao)
+      return "renovacao";
+    return "estavel";
+  }
+  function cadenciaDe(p, sit, sinais) {
+    var s = sit || situacaoDe(p);
+    var segId = segmentoDe(p, s, sinais);
+    var meta = segmentoMeta(segId);
+    var intervalo = cadenciaConfig()[segId];
+    var d = s.diasSemToque;
+    var nunca = d === null;
+    var atraso = nunca ? null : d - intervalo;
+    return {
+      segmento: segId, label: meta.label, cor: meta.cor, desc: meta.desc,
+      intervalo: intervalo, diasSemContato: d, nuncaContatada: nunca,
+      vencido: nunca || d > intervalo,
+      diasDeAtraso: atraso !== null && atraso > 0 ? atraso : 0,
+      diasAteOProximo: nunca ? 0 : Math.max(0, intervalo - d)
+    };
+  }
+  // Quantos contatos por semana a escola precisa dar para manter a cadência.
+  function cargaDeContato() {
+    var cfg = cadenciaConfig();
+    var porSeg = {}, total = 0, vencidas = 0, semanal = 0;
+    SEGMENTOS.forEach(function (s) {
+      porSeg[s.id] = { id: s.id, label: s.label, cor: s.cor, desc: s.desc,
+        intervalo: cfg[s.id], alunas: 0, vencidas: 0, porSemana: 0 };
+    });
+    loadPessoas().forEach(function (p) {
+      if (p.status !== "aluna" && p.status !== "mvs") return;
+      var c = cadenciaDe(p);
+      var r = porSeg[c.segmento];
+      r.alunas++; total++;
+      if (c.vencido) { r.vencidas++; vencidas++; }
+      r.porSemana += 7 / c.intervalo;
+    });
+    SEGMENTOS.forEach(function (s) {
+      porSeg[s.id].porSemana = Math.round(porSeg[s.id].porSemana * 10) / 10;
+      semanal += porSeg[s.id].porSemana;
+    });
+    return { segmentos: SEGMENTOS.map(function (s) { return porSeg[s.id]; }),
+      total: total, vencidas: vencidas,
+      porSemana: Math.round(semanal * 10) / 10,
+      porDiaUtil: Math.round(semanal / 5 * 10) / 10 };
   }
 
   // ── FILA DE ACOMPANHAMENTO ────────────────────────────────────
@@ -3509,6 +3621,9 @@
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
     SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
+    SEGMENTOS: SEGMENTOS, segmentoMeta: segmentoMeta, segmentoDe: segmentoDe,
+    cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,
+    cadenciaDe: cadenciaDe, cargaDeContato: cargaDeContato,
     situacaoDe: situacaoDe, sinaisDe: sinaisDe, estaAdiado: estaAdiado,
     // preços e negociação
     CICLO_MESES: CICLO_MESES, ESCADA_CONCESSOES: ESCADA_CONCESSOES,
