@@ -286,7 +286,7 @@
     try { var st = JSON.parse(localStorage.getItem(TURMAS_KEY)); if (st && st.length) return st; } catch (e) {}
     return UNITS.map(function (u) { return Object.assign({ capacidade: CAPACIDADE_PADRAO }, u); });
   }
-  function turmasSave(list) { try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  function turmasSave(list) { carimbarLista(list); try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
   function addTurma(dados) {
     var list = turmasLista();
     list.push({ id: "t" + Date.now(), nivel: dados.nivel || "", turma: dados.turma || "",
@@ -297,7 +297,7 @@
   }
   function updateTurma(id, patch) {
     var list = turmasLista();
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) { Object.assign(list[i], patch); break; }
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) { Object.assign(list[i], patch); carimbar(list[i]); break; }
     turmasSave(list); return list;
   }
   function removeTurma(id) {
@@ -519,9 +519,19 @@
   function getPessoa(id) { return loadPessoas().filter(function (p) { return p.id === id; })[0] || null; }
   function mutate(id, fn) {
     var list = loadPessoas();
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) { fn(list[i]); break; }
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) { fn(list[i]); carimbar(list[i]); break; }
     savePessoas(list);
     return list;
+  }
+  // Carimbo de versão: é o que permite mesclar edições de duas pessoas
+  // sem uma apagar a outra. Todo registro alterado leva a hora da alteração.
+  function carimbar(reg) {
+    if (reg && typeof reg === "object") reg._v = Date.now();
+    return reg;
+  }
+  function carimbarLista(lista) {
+    (lista || []).forEach(function (r) { if (r && !r._v) r._v = Date.now(); });
+    return lista;
   }
   // historico é append-only — toda escrita relevante passa por aqui
   function pushHist(p, tipo, texto, quem) {
@@ -858,7 +868,7 @@
     try { var l = JSON.parse(localStorage.getItem(TOQUES_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
-  function toquesSave(l) { try { localStorage.setItem(TOQUES_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function toquesSave(l) { carimbarLista(l); try { localStorage.setItem(TOQUES_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function registrarToque(pessoaId, tipo, nota, por) {
     var l = toquesLista();
     var t = { id: "tq" + Date.now() + Math.floor(Math.random() * 1000), pessoaId: pessoaId,
@@ -891,7 +901,7 @@
     try { var l = JSON.parse(localStorage.getItem(PULSOS_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
-  function pulsosSave(l) { try { localStorage.setItem(PULSOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function pulsosSave(l) { carimbarLista(l); try { localStorage.setItem(PULSOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function registrarPulso(pessoaId, nota, comentario, por) {
     var n = parseInt(nota, 10);
     if (!(n >= 1 && n <= 5)) return null;
@@ -1005,7 +1015,7 @@
     try { var l = JSON.parse(localStorage.getItem(PROGRAMAS_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
-  function programasSave(l) { try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function programasSave(l) { carimbarLista(l); try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addPrograma(dados) {
     var l = programasLista();
     var p = { id: "pg" + Date.now(), nome: dados.nome || "Programa Sem Roteiro",
@@ -1022,7 +1032,7 @@
   }
   function updatePrograma(id, patch) {
     var l = programasLista();
-    l.forEach(function (p) { if (p.id === id) Object.assign(p, patch); });
+    l.forEach(function (p) { if (p.id === id) { Object.assign(p, patch); carimbar(p); } });
     programasSave(l); return l;
   }
   function removePrograma(id) {
@@ -1031,7 +1041,7 @@
   function addParticipante(programaId, pessoaId) {
     var l = programasLista();
     l.forEach(function (p) {
-      if (p.id === programaId && p.participantes.indexOf(pessoaId) < 0) p.participantes.push(pessoaId);
+      if (p.id === programaId && p.participantes.indexOf(pessoaId) < 0) { p.participantes.push(pessoaId); carimbar(p); }
     });
     programasSave(l); return l;
   }
@@ -1052,6 +1062,7 @@
       p.progresso[k] = p.progresso[k] || {};
       if (valor) p.progresso[k][etapa] = iso(today());
       else delete p.progresso[k][etapa];
+      carimbar(p);
     });
     programasSave(l); return l;
   }
@@ -1063,6 +1074,7 @@
       p.missoesEnviadas = p.missoesEnviadas || {};
       if (valor) p.missoesEnviadas[semana] = iso(today());
       else delete p.missoesEnviadas[semana];
+      carimbar(p);
     });
     programasSave(l); return l;
   }
@@ -1087,6 +1099,7 @@
       if (p.id !== programaId) return;
       p.participacao = p.participacao || {};
       p.participacao[pessoaId] = Math.max(0, (p.participacao[pessoaId] || 0) + (delta || 1));
+      carimbar(p);
     });
     programasSave(l); return l;
   }
@@ -1251,7 +1264,7 @@
   // ── PENDÊNCIAS (tarefas da equipe — Gabi distribui, cada uma vê a sua) ──
   var TAREFAS_KEY = "isr_tarefas_v1";
   function tarefasLista() { try { return JSON.parse(localStorage.getItem(TAREFAS_KEY)) || []; } catch (e) { return []; } }
-  function tarefasSave(l) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function tarefasSave(l) { carimbarLista(l); try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addTarefa(dados) {
     var l = tarefasLista();
     l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
@@ -1263,6 +1276,7 @@
     var l = tarefasLista();
     l.forEach(function (tf) {
       if (tf.id !== id) return;
+      carimbar(tf);
       var virouFeita = !!feita && !tf.feita;
       tf.feita = !!feita; tf.feitaEm = feita ? iso(today()) : "";
       // quem pediu fica sabendo — senão a pessoa fica perguntando "já saiu?"
@@ -1279,7 +1293,7 @@
   function avisosLista() {
     try { return JSON.parse(localStorage.getItem(AVISOS_KEY)) || []; } catch (e) { return []; }
   }
-  function avisosSave(l) { try { localStorage.setItem(AVISOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function avisosSave(l) { carimbarLista(l); try { localStorage.setItem(AVISOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function avisar(para, texto, tipo) {
     if (!para || !texto) return null;
     var l = avisosLista();
@@ -1714,10 +1728,61 @@
     clearTimeout(syncTimer);
     syncTimer = setTimeout(enviarSync, 1500); // agrupa edições em sequência
   }
-  function enviarSync() {
-    var url = backendUrl();
-    if (!url) return;
-    var payload = {
+  // ══════════════════════════════════════════════════════════════
+  //  SINCRONIZAÇÃO COM MESCLAGEM
+  //  ------------------------------------------------------------
+  //  Antes: cada navegador enviava o banco inteiro e o último a salvar
+  //  apagava o trabalho do outro, sem aviso. Agora, antes de gravar, o
+  //  sistema lê o estado do servidor e mescla registro a registro:
+  //  para cada id, vence a versão mais recente. Ninguém perde trabalho
+  //  por ter salvo primeiro.
+  // ══════════════════════════════════════════════════════════════
+  var SYNC_ESTADO_KEY = "isr_sync_estado";
+  function syncEstado() {
+    try { return JSON.parse(localStorage.getItem(SYNC_ESTADO_KEY)) || { status: "local" }; }
+    catch (e) { return { status: "local" }; }
+  }
+  function setSyncEstado(st) {
+    try { localStorage.setItem(SYNC_ESTADO_KEY, JSON.stringify(st)); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent("isr-sync", { detail: st })); } catch (e) {}
+    return st;
+  }
+
+  // Mescla duas listas de registros por id. Vence o _v mais alto.
+  // Sem _v, o registro remoto é considerado antigo (o local acabou de ser escrito).
+  function mesclarLista(local, remoto, campoId) {
+    var id = campoId || "id";
+    var mapa = {}, ordem = [], conflitos = 0;
+    (remoto || []).forEach(function (r) {
+      if (!r || !r[id]) return;
+      mapa[r[id]] = r; ordem.push(r[id]);
+    });
+    (local || []).forEach(function (l) {
+      if (!l || !l[id]) return;
+      var r = mapa[l[id]];
+      if (!r) { mapa[l[id]] = l; ordem.push(l[id]); return; }
+      var vl = l._v || 0, vr = r._v || 0;
+      if (vl !== vr) conflitos++;
+      mapa[l[id]] = vl >= vr ? l : r;
+    });
+    return { lista: ordem.map(function (k) { return mapa[k]; }), conflitos: conflitos };
+  }
+  // Mapas (chamadas, progresso) mesclam por chave: quem tem valor vence,
+  // e havendo os dois, o mais recente.
+  function mesclarMapa(local, remoto) {
+    var out = Object.assign({}, remoto || {});
+    Object.keys(local || {}).forEach(function (k) {
+      var l = local[k], r = out[k];
+      if (!r) { out[k] = l; return; }
+      var vl = (l && l.salvoEm) || (l && l._v) || 0;
+      var vr = (r && r.salvoEm) || (r && r._v) || 0;
+      out[k] = String(vl) >= String(vr) ? l : r;
+    });
+    return out;
+  }
+
+  function payloadLocal() {
+    return {
       pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
@@ -1727,10 +1792,80 @@
       programas: programasLista(), avisos: avisosLista(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
-    try {
-      fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "sistemaSave", data: payload }) }).catch(function () {});
-    } catch (e) {}
+  }
+
+  function aplicarRemoto(d) {
+    if (!d) return;
+    if (d.pessoas) savePessoasLocal(d.pessoas);
+    if (d.custos) custosSaveLocal(d.custos);
+    if (d.templates) tplSaveLocal(d.templates);
+    var grava = function (k, v) { if (v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+    grava(TURMAS_KEY, d.turmas); grava(EVENTOS_KEY, d.eventos); grava(CHAMADAS_KEY, d.chamadas);
+    grava(TAREFAS_KEY, d.tarefas); grava(FERIADOS_KEY, d.feriados); grava(METAS_KEY, d.metas);
+    grava(MOEDAS_KEY, d.moedas); grava(EQUIPE_KEY, d.equipe); grava(CALC_KEY, d.calc);
+    grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
+    grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
+    if (d.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.cambio)); } catch (e) {} }
+  }
+
+  // Lê o servidor, mescla com o local e devolve o resultado da mesclagem.
+  function mesclarComRemoto(remoto) {
+    var local = payloadLocal();
+    if (!remoto) return { data: local, conflitos: 0 };
+    var conflitos = 0;
+    var lista = function (campo, idCampo) {
+      var r = mesclarLista(local[campo], remoto[campo], idCampo);
+      conflitos += r.conflitos;
+      return r.lista;
+    };
+    var data = {
+      pessoas: lista("pessoas"),
+      custos: local.custos,               // lista curta e sem id: última edição vale
+      templates: local.templates,
+      turmas: lista("turmas"),
+      eventos: lista("eventos"),
+      chamadas: mesclarMapa(local.chamadas, remoto.chamadas),
+      tarefas: lista("tarefas"),
+      feriados: lista("feriados"),
+      metas: local.metas,
+      moedas: mesclarMapa(local.moedas, remoto.moedas),
+      equipe: lista("equipe"),
+      calc: local.calc,
+      lancamentos: lista("lancamentos"),
+      toques: lista("toques"),
+      pulsos: lista("pulsos"),
+      precos: lista("precos"),
+      programas: lista("programas"),
+      avisos: lista("avisos"),
+      cambio: local.cambio,
+      atualizadoEm: new Date().toISOString(),
+      por: (gestaoUser() || {}).email || ""
+    };
+    return { data: data, conflitos: conflitos };
+  }
+
+  var syncEmCurso = false;
+  function enviarSync() {
+    var url = backendUrl();
+    if (!url) { setSyncEstado({ status: "local", em: new Date().toISOString() }); return; }
+    if (syncEmCurso) { agendarSync(); return; }
+    syncEmCurso = true;
+    setSyncEstado({ status: "sincronizando" });
+    fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var m = mesclarComRemoto(d && d.ok ? d.data : null);
+        aplicarRemoto(m.data);            // o local já fica com o resultado da mesclagem
+        return fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sistemaSave", data: m.data }) })
+          .then(function () {
+            setSyncEstado({ status: "ok", em: m.data.atualizadoEm, conflitos: m.conflitos });
+          });
+      })
+      .catch(function () {
+        setSyncEstado({ status: "erro", em: new Date().toISOString() });
+      })
+      .then(function () { syncEmCurso = false; });
   }
   function carregarDoBackend(cb) {
     var url = backendUrl();
@@ -1846,7 +1981,7 @@
     } catch (e) {}
     return EQUIPE_PADRAO.map(function (m) { return Object.assign({}, m, { papeis: m.papeis.slice() }); });
   }
-  function equipeSave(l) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function equipeSave(l) { carimbarLista(l); try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEquipe(dados) {
     var l = equipeLista();
     l.push({ id: "eq" + Date.now(), nome: (dados.nome || "").trim(), email: (dados.email || "").trim().toLowerCase(),
@@ -1856,7 +1991,7 @@
   }
   function updateEquipe(id, patch) {
     var l = equipeLista();
-    l.forEach(function (m) { if (m.id === id) Object.assign(m, patch); });
+    l.forEach(function (m) { if (m.id === id) { Object.assign(m, patch); carimbar(m); } });
     equipeSave(l); return l;
   }
   function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
@@ -1910,7 +2045,7 @@
   function eventosLista() {
     try { return JSON.parse(localStorage.getItem(EVENTOS_KEY)) || []; } catch (e) { return []; }
   }
-  function eventosSave(l) { try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function eventosSave(l) { carimbarLista(l); try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEvento(dados) {
     var l = eventosLista();
     l.push({ id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
@@ -2400,7 +2535,7 @@
     try { var l = JSON.parse(localStorage.getItem(LANC_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
-  function lancamentosSave(l) { try { localStorage.setItem(LANC_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function lancamentosSave(l) { carimbarLista(l); try { localStorage.setItem(LANC_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addLancamento(dados) {
     var l = lancamentosLista();
     l.push({ id: "lc" + Date.now() + Math.floor(Math.random() * 1000),
@@ -2708,10 +2843,10 @@
     try { var l = JSON.parse(localStorage.getItem(PRECOS_KEY)); if (l && l.length) return l; } catch (e) {}
     return PRECOS_PADRAO.map(function (p) { return Object.assign({}, p); });
   }
-  function precosSave(list) { try { localStorage.setItem(PRECOS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  function precosSave(list) { carimbarLista(list); try { localStorage.setItem(PRECOS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
   function updatePreco(id, patch) {
     var l = precosLista();
-    l.forEach(function (p) { if (p.id === id) Object.assign(p, patch); });
+    l.forEach(function (p) { if (p.id === id) { Object.assign(p, patch); carimbar(p); } });
     precosSave(l); return l;
   }
   function getPreco(id) { return precosLista().filter(function (p) { return p.id === id; })[0] || null; }
@@ -2905,6 +3040,7 @@
     ticketAlvo: ticketAlvo, setTicketAlvo: setTicketAlvo,
     calcularProposta: calcularProposta, calcularPacote: calcularPacote,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
+    syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     // perfil
     ltv: ltv, contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
