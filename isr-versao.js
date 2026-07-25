@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-d",
+  numero: "2026.07.25-e",
   data: "25/07/2026",
-  nota: "Matrícula ganha tela própria, do funil até Alunas"
+  nota: "A pílula Matriculados do perfil abre a tela de matrícula"
 };

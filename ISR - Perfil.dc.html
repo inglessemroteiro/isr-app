@@ -295,6 +295,7 @@
                   <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
                 </sc-for>
               </div>
+              <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ avisoFunil }}</p>
               <div style="font-size: 10px; color: #9b8b7e; margin: 12px 0 6px;">Turma de interesse <span style="color: #b8ada0;">(vira sugestão na matrícula)</span></div>
               <select onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
                 <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
@@ -721,9 +722,21 @@ class Component extends DCLogic {
     if (out.ehLead) {
       out.stageOptions = CRM.STAGES.map(s => {
         const sel = s.id === p.estagio;
-        return { label: s.short, onPick: () => { CRM.setStage(p.id, s.id); this.bump(); },
+        return {
+          label: s.short,
+          // Matricular exige turma e condições de pagamento: marcar só o
+          // estágio deixava a pessoa "matriculada" sem contrato, sem turma
+          // e fora do cadastro de Alunas. A pílula leva para a tela.
+          onPick: () => {
+            if (s.id === "matriculado") {
+              window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id;
+              return;
+            }
+            CRM.setStage(p.id, s.id); this.bump();
+          },
           bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color };
       });
+      out.avisoFunil = "Matriculados abre a tela de matrícula, onde entram turma e condições de pagamento.";
       out.followupAtual = p.proximoFollowup ? (CRM.ddmm(p.proximoFollowup) + " (" + this.emQuando(p.proximoFollowup) + ")") : "não agendado";
       out.followups = CRM.followupPresets().map(f => ({
         label: f.label, onClick: () => { CRM.setFollowup(p.id, f.iso, f.label); this.bump(); }
