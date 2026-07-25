@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-c",
+  numero: "2026.07.25-d",
   data: "25/07/2026",
-  nota: "Correção: o seletor de estágio mostrava Matriculada sem matricular"
+  nota: "Matrícula ganha tela própria, do funil até Alunas"
 };

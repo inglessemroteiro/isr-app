@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Comercial · Matrícula</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 760px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <sc-if value="{{ semPessoa }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 40px 22px; text-align: center;">
+        <div style="font-size: 15px; color: #6b6155; margin-bottom: 12px;">Nenhuma pessoa selecionada para matrícula.</div>
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px;">Ir para o CRM</a>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+      <!-- CABEÇALHO -->
+      <header style="margin-bottom: 6px;">
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="font-size: 11.5px; font-weight: 700; color: #2a9d8f; text-decoration: none;">← Voltar ao CRM</a>
+        <p style="margin: 10px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Matrícula de {{ nome }}</h1>
+      </header>
+      <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6;">Confira os dados, escolha a turma e defina as condições de pagamento. Ao concluir, a pessoa passa a constar em Alunas, com contrato, cobrança e integração criados.</p>
+
+      <!-- PASSO 1 · DADOS -->
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">1 · Dados da aluna</div>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Vieram do cadastro. Corrija o que estiver desatualizado.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nome completo</div>
+            <input ref="{{ nomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">WhatsApp</div>
+            <input ref="{{ zapRef }}" placeholder="{{ whatsapp }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">E-mail</div>
+            <input ref="{{ emailRef }}" placeholder="{{ email }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nível</div>
+            <input ref="{{ nivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+        </div>
+      </section>
+
+      <!-- PASSO 2 · TURMA -->
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">2 · Turma</div>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo vêm junto com a turma escolhida.</p>
+        <select ref="{{ turmaRef }}" onchange="{{ onTurma }}" style="width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
+          <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="6">
+            <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
+          </sc-for>
+        </select>
+        <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 8px;">{{ turmaInfo }}</div>
+        <sc-if value="{{ turmaLotada }}">
+          <div style="background: rgba(207,107,92,0.08); border: 1px solid rgba(207,107,92,0.25); border-radius: 9px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: #cf6b5c; line-height: 1.5;">Esta turma está sem vaga. A matrícula é possível, mas a turma passa da capacidade definida.</div>
+        </sc-if>
+        <sc-if value="{{ ehParticular }}">
+          <div style="margin-top: 10px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de aulas contratadas</div>
+            <input ref="{{ aulasRef }}" type="number" placeholder="Ex. 12" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+        </sc-if>
+      </section>
+
+      <!-- PASSO 3 · PAGAMENTO -->
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">3 · Condições de pagamento</span>
+          <a href="ISR%20-%20Calculadora.dc.html" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none;">Abrir a calculadora</a>
+        </div>
+        <sc-if value="{{ temProposta }}">
+          <div style="background: rgba(52,138,142,0.07); border-radius: 9px; padding: 9px 12px; margin: 8px 0 0; font-size: 11.5px; color: #2a7a7e; line-height: 1.5;">Condições combinadas em {{ propostaEm }}: {{ propostaResumo }}</div>
+        </sc-if>
+        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela cai no mês corrente. Se o dia de vencimento já passou, ela vai para o mês seguinte.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
+            <select ref="{{ tipoRef }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
+              <option value="Matrícula">Matrícula</option>
+              <option value="Auto-matrícula">Auto-matrícula</option>
+              <option value="Renovação">Renovação</option>
+              <option value="Continuidade">Continuidade</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
+            <select ref="{{ moedaRef }}" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
+              <option value="R$" selected="{{ moedaBrl }}">R$ (Brasil)</option>
+              <option value="€" selected="{{ moedaEur }}">€ (Europa)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor de cada parcela</div>
+            <input ref="{{ valorRef }}" oninput="{{ onMuda }}" placeholder="{{ valorPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de parcelas</div>
+            <select ref="{{ parcelasRef }}" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
+              <sc-for list="{{ parcelasOpts }}" as="po" hint-placeholder-count="12"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia de vencimento</div>
+            <input ref="{{ vencRef }}" placeholder="{{ vencPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Sinal ou entrada</div>
+            <input ref="{{ sinalRef }}" oninput="{{ onMuda }}" placeholder="{{ sinalPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button onclick="{{ onSinalRecebido }}" style="width: 100%; border: 1px solid {{ sinalBorda }}; background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 12px; font-weight: 700; padding: 10px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ sinalLabel }}</button>
+          </div>
+        </div>
+        <div style="border-left: 3px solid #164951; padding: 3px 0 3px 12px; margin-top: 14px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 2px;">Plano de pagamento</div>
+          <div style="font-size: 14px; font-weight: 700; color: #164951; line-height: 1.6;">{{ plano }}</div>
+          <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.6; margin-top: 2px;">{{ planoMeses }}</div>
+        </div>
+      </section>
+
+      <!-- PASSO 4 · O QUE ACONTECE -->
+      <section style="background: #f6f2ea; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">4 · O que o sistema faz ao concluir</div>
+        <sc-for list="{{ efeitos }}" as="ef" hint-placeholder-count="5">
+          <div style="display: flex; gap: 9px; align-items: flex-start; padding: 5px 0;">
+            <span style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: {{ ef.cor }}; margin-top: 6px;"></span>
+            <span style="font-size: 12.5px; color: #3d3529; line-height: 1.6;">{{ ef.texto }}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <sc-if value="{{ temErro }}">
+        <div style="background: rgba(207,107,92,0.09); border: 1px solid rgba(207,107,92,0.3); border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; font-size: 12.5px; color: #b0523f; line-height: 1.6;">{{ erro }}</div>
+      </sc-if>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button onclick="{{ onConcluir }}" style="flex: 1; min-width: 220px; border: none; background: #348a8e; color: #fff; font-size: 14px; font-weight: 700; padding: 15px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Concluir matrícula</button>
+        <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 14px 20px; border-radius: 999px;">Cancelar</a>
+      </div>
+    </sc-if>
+
+    <!-- CONCLUÍDA -->
+    <sc-if value="{{ concluida }}">
+      <div style="background: #fdfbf8; border: 1px solid rgba(90,158,75,0.35); border-radius: 12px; padding: 30px 24px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #5a9e4b; margin-bottom: 8px;">Matrícula concluída</div>
+        <h1 style="margin: 0 0 6px; font-size: 24px; font-weight: 700; color: #164951; letter-spacing: -0.5px;">{{ nome }} agora é aluna</h1>
+        <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.7;">{{ resumoFinal }}</p>
+        <div style="display: flex; gap: 9px; justify-content: center; flex-wrap: wrap;">
+          <a href="ISR%20-%20Alunas.dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 12px 22px; border-radius: 999px;">Ver em Alunas</a>
+          <a href="{{ perfilHref }}" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12.5px; font-weight: 700; padding: 12px 22px; border-radius: 999px;">Abrir o perfil</a>
+          <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; border: 1px solid #e5dccf; color: #6b6155; font-size: 12.5px; font-weight: 700; padding: 12px 22px; border-radius: 999px;">Voltar ao CRM</a>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;760px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // sinalRecebido começa nulo: enquanto não for tocado, vale o que ficou
+  // combinado nas condições, senão o "recebido" se perderia no caminho
+  state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "" };
+  nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
+  nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
+  tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
+  parcelasRef = React.createRef(); vencRef = React.createRef(); sinalRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  val(r) { return ((r.current && r.current.value) || "").trim(); }
+  paraNumero(v) {
+    return parseFloat(String(v).replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", "."));
+  }
+  idParam() {
+    try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { semPessoa: true, ok: false, concluida: false, turmas: [], parcelasOpts: [], efeitos: [] };
+    if (!CRM) return vazio;
+
+    const p = CRM.getPessoa(this.idParam());
+    if (!p) return vazio;
+
+    if (this.state.concluida) {
+      const c = (p.contratos || [])[0] || {};
+      const meses = c.meses || [];
+      return {
+        semPessoa: false, ok: false, concluida: true,
+        nome: p.nome, turmas: [], parcelasOpts: [], efeitos: [],
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+        resumoFinal: [p.turma, p.professora ? "com " + p.professora : "",
+          meses.length ? meses.length + " parcelas de " + (c.parcelaValor || "") : "",
+          meses.length ? "de " + meses[0].label + " a " + meses[meses.length - 1].label : ""]
+          .filter(Boolean).join(" · ") + ". A integração dos primeiros 30 dias já está na fila da equipe."
+      };
+    }
+
+    const pr = CRM.propostaDe(p.id);
+    const sinalRec = this.state.sinalRecebido === null
+      ? !!(pr && pr.sinalRecebido) : this.state.sinalRecebido;
+    const ocup = CRM.ocupacaoTurmas();
+    const pretendida = p.turmaInteresse || p.turma || "";
+    const turmaSel = this.state.turmaId
+      || (pr && pr.turmaId)
+      || (ocup.filter(t => t.label === pretendida)[0] || {}).id
+      || (/^particular/i.test(pretendida) ? "particular" : "")
+      || (ocup[0] ? ocup[0].id : "particular");
+
+    const turmas = ocup.map(t => ({
+      id: t.id, sel: t.id === turmaSel,
+      label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "sem vaga")
+    })).concat([{ id: "particular", sel: turmaSel === "particular", label: "Particular · aula individual" }]);
+
+    const unidade = ocup.filter(t => t.id === turmaSel)[0] || null;
+    const ehParticular = turmaSel === "particular";
+
+    // ── plano de pagamento, recalculado a cada digitação ──
+    const moeda = this.val(this.moedaRef) || (pr ? pr.moeda : (p.moeda || "R$"));
+    const valor = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
+    const nParc = parseInt(this.val(this.parcelasRef), 10) || (pr ? parseInt(pr.parcelas, 10) : 3) || 3;
+    const sinal = this.val(this.sinalRef) || (pr ? pr.sinalValor : "");
+    const num = valor ? this.paraNumero(valor) : NaN;
+    const fmt = x => moeda + " " + x.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    let plano, planoMeses = "";
+    if (!valor) {
+      plano = "Informe o valor de cada parcela.";
+    } else if (isNaN(num)) {
+      plano = "Valor não reconhecido. Use apenas números, por exemplo 497,00.";
+    } else {
+      plano = nParc + " × " + fmt(num) + " = " + fmt(num * nParc);
+      if (sinal) {
+        const s = this.paraNumero(sinal);
+        if (!isNaN(s)) plano += " · sinal de " + fmt(s)
+          + (sinalRec ? " já recebido" : " ainda não recebido");
+      }
+      // de que mês a que mês as parcelas vão cair
+      const diaVenc = parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10;
+      const hoje = new Date();
+      const primeiro = new Date(hoje.getFullYear(), hoje.getMonth() + (hoje.getDate() > diaVenc ? 1 : 0), 1);
+      const M = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+      const ultimo = new Date(primeiro.getFullYear(), primeiro.getMonth() + nParc - 1, 1);
+      planoMeses = "Parcelas de " + M[primeiro.getMonth()] + " a " + M[ultimo.getMonth()]
+        + ", com vencimento no dia " + diaVenc + ".";
+    }
+
+    const nomeTurma = unidade ? unidade.nivel + " · " + unidade.turma : "Particular";
+    const efeitos = [
+      { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + p.nome
+        + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
+      { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e na lista de chamada da turma." },
+      { cor: "#d4a574", texto: "As parcelas entram na Cobrança e no Caixa, na categoria da turma." },
+      { cor: "#9ec970", texto: "A integração dos primeiros 30 dias é criada e cai na fila da equipe: boas-vindas, confirmação da primeira aula, check-in da primeira semana e primeiro pagamento." },
+      { cor: "#2a9d8f", texto: "Os materiais do ciclo da turma passam a aparecer na área da aluna." }
+    ];
+
+    return {
+      semPessoa: false, ok: true, concluida: false,
+      nome: p.nome, whatsapp: p.whatsapp || "—", email: p.email || "—", nivel: p.nivel || "—",
+      nomeRef: this.nomeRef, zapRef: this.zapRef, emailRef: this.emailRef, nivelRef: this.nivelRef,
+
+      turmas, turmaRef: this.turmaRef,
+      onTurma: e => this.setState({ turmaId: e.target.value }),
+      turmaInfo: unidade
+        ? [unidade.teacher ? "Professora: " + unidade.teacher : "",
+           unidade.projeto ? "Projeto: " + unidade.projeto : "",
+           unidade.ocupadas + " de " + unidade.capacidade + " vagas ocupadas"].filter(Boolean).join(" · ")
+        : "Aula individual, sem turma fixa. Combine o horário direto com a aluna.",
+      turmaLotada: !!unidade && unidade.vagas <= 0,
+      ehParticular, aulasRef: this.aulasRef,
+
+      temProposta: !!pr,
+      propostaEm: pr ? CRM.ddmm(pr.em) : "",
+      propostaResumo: pr ? CRM.resumoProposta(pr) : "",
+      tipoRef: this.tipoRef, moedaRef: this.moedaRef, valorRef: this.valorRef,
+      parcelasRef: this.parcelasRef, vencRef: this.vencRef, sinalRef: this.sinalRef,
+      moedaBrl: moeda !== "€", moedaEur: moeda === "€",
+      valorPh: pr && pr.valorParcela ? pr.valorParcela : "Ex. 497,00",
+      vencPh: pr ? String(pr.vencDia) : "Ex. 10",
+      sinalPh: pr && pr.sinalValor ? pr.sinalValor : "Opcional. Ex. 200,00",
+      parcelasOpts: [1,2,3,4,5,6,7,8,9,10,11,12].map(n => ({
+        id: String(n), sel: n === nParc,
+        label: n === 1 ? "1 parcela (à vista)" : n + " parcelas"
+      })),
+      onMuda: () => this.bump(),
+      sinalLabel: sinalRec ? "Sinal recebido" : "Sinal ainda não recebido",
+      sinalBg: sinalRec ? "#348a8e" : "#fff",
+      sinalFg: sinalRec ? "#fff" : "#8a7c6b",
+      sinalBorda: sinalRec ? "#348a8e" : "#e5dccf",
+      onSinalRecebido: () => this.setState({ sinalRecebido: !sinalRec }),
+      plano, planoMeses, efeitos,
+
+      temErro: !!this.state.erro, erro: this.state.erro,
+      onConcluir: () => {
+        const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
+        if (!v) { this.setState({ erro: "Informe o valor de cada parcela antes de concluir." }); return; }
+        if (isNaN(this.paraNumero(v))) {
+          this.setState({ erro: "O valor da parcela não foi reconhecido. Use apenas números, por exemplo 497,00." });
+          return;
+        }
+        // dados de cadastro: campo em branco mantém o que já estava
+        const cad = {};
+        if (this.val(this.nomeRef)) cad.nome = this.val(this.nomeRef);
+        if (this.val(this.zapRef)) cad.whatsapp = this.val(this.zapRef);
+        if (this.val(this.emailRef)) cad.email = this.val(this.emailRef);
+        if (this.val(this.nivelRef)) cad.nivel = this.val(this.nivelRef);
+        if (Object.keys(cad).length) CRM.atualizarCadastro(p.id, cad);
+
+        CRM.matricular(p.id, {
+          turmaId: turmaSel,
+          tipo: this.val(this.tipoRef) || "Matrícula",
+          moeda: moeda,
+          valorParcela: v,
+          parcelas: nParc,
+          vencDia: parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10,
+          aulasContratadas: this.val(this.aulasRef),
+          sinalValor: this.val(this.sinalRef) || (pr ? pr.sinalValor : ""),
+          sinalRecebido: sinalRec
+        });
+        this.setState({ concluida: true, erro: "" });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
