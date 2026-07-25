@@ -1170,6 +1170,151 @@
       missaoDaSemana: sem >= 1 ? (p.missoes[sem - 1] || "") : "" };
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  SAÍDA E RENOVAÇÃO
+  //  ------------------------------------------------------------
+  //  Antes, quem não renovava simplesmente sumia da lista: não havia
+  //  como responder "quantas perdi neste ciclo e por quê". Toda saída
+  //  passa a ter tipo, motivo e data — e a renovação vira um evento
+  //  registrado, não um contrato novo aparecendo do nada.
+  // ══════════════════════════════════════════════════════════════
+  var TIPOS_SAIDA = [
+    { id: "pausou",   label: "Pausou",             cor: "#d4a574", reativavel: true,
+      desc: "Vai voltar; parou por um motivo pontual" },
+    { id: "saiu",     label: "Saiu",               cor: "#cf6b5c", reativavel: true,
+      desc: "Encerrou sem previsão de retorno" },
+    { id: "concluiu", label: "Concluiu o objetivo", cor: "#5a9e4b", reativavel: false,
+      desc: "Chegou onde queria chegar" }
+  ];
+  var MOTIVOS_SAIDA = [
+    "Financeiro", "Horário incompatível", "Falta de tempo", "Não sentiu evolução",
+    "Mudou de objetivo", "Mudança de país ou cidade", "Insatisfação com a aula",
+    "Motivo pessoal", "Outro"
+  ];
+  function encerrarMatricula(id, cfg) {
+    return mutate(id, function (p) {
+      var tipo = (cfg && cfg.tipo) || "saiu";
+      var meta = TIPOS_SAIDA.filter(function (x) { return x.id === tipo; })[0] || TIPOS_SAIDA[1];
+      p.statusAnterior = p.status;
+      p.estagioAnterior = p.estagio;
+      p.status = "ex-aluna";
+      p.estagio = "perdido";
+      p.motivoPerda = (cfg && cfg.motivo) || "Outro";
+      p.saidaEm = (cfg && cfg.data) || iso(today());
+      p.saida = {
+        data: (cfg && cfg.data) || iso(today()),
+        tipo: tipo,
+        motivo: (cfg && cfg.motivo) || "Outro",
+        detalhe: (cfg && cfg.detalhe) || "",
+        reativavel: cfg && cfg.reativavel !== undefined ? !!cfg.reativavel : meta.reativavel,
+        turma: p.turma || "", por: ((gestaoUser() || {}).nome || "")
+      };
+      pushHist(p, "estagio", meta.label + " · " + p.saida.motivo
+        + (p.saida.detalhe ? " — " + p.saida.detalhe : ""));
+    });
+  }
+  function reabrirMatricula(id) {
+    return mutate(id, function (p) {
+      if (p.status !== "ex-aluna") return;
+      p.status = p.statusAnterior || "aluna";
+      p.estagio = p.estagioAnterior || "matriculado";
+      delete p.statusAnterior; delete p.estagioAnterior;
+      delete p.motivoPerda; delete p.saidaEm;
+      pushHist(p, "estagio", "Matrícula reaberta"
+        + (p.saida ? " · havia " + (p.saida.tipo === "pausou" ? "pausado" : "saído") + " em " + ddmm(p.saida.data) : ""));
+      delete p.saida;
+    });
+  }
+  // Renovação: novo contrato no lugar do anterior, com o registro do evento.
+  function renovarMatricula(id, cfg) {
+    var anterior = null;
+    var p0 = getPessoa(id) || {};
+    if ((p0.contratos || []).length) anterior = p0.contratos[0];
+    var fimAnterior = anterior && anterior.fim ? anterior.fim.slice(0, 7) : "";
+    // renovar não é rematricular: turma, professora e formatos continuam os mesmos
+    var turmaAntes = p0.turma || "", profAntes = p0.professora || "";
+    var formatosAntes = (p0.formatos || []).slice();
+    var desdeAntes = p0.desde || "";
+    var r = matricular(id, cfg || {});
+    mutate(id, function (p) {
+      var c = contratoVigente(p);
+      if (!c) return;
+      c.renovacao = true;
+      if (!(cfg && cfg.turmaId)) {
+        p.turma = turmaAntes; p.professora = profAntes;
+        p.formatos = formatosAntes; p.desde = desdeAntes;
+      }
+      // o ciclo novo começa depois do anterior, não em cima dele
+      if (fimAnterior && (c.meses || []).length) {
+        var k = fimAnterior;
+        c.meses = c.meses.map(function (m) {
+          var prox = mesSeguinte(k); k = prox.key;
+          return { key: prox.key, label: prox.label, valor: m.valor, pago: false };
+        });
+        c.fim = c.meses[c.meses.length - 1].key + "-28";
+      }
+      pushHist(p, "renovacao", "Contrato renovado"
+        + (c.meses && c.meses.length ? " · " + c.meses[0].label + " a " + c.meses[c.meses.length - 1].label : ""));
+    });
+    return r;
+  }
+
+  // Taxa de renovação: de todos os contratos que terminaram no período,
+  // quantos tiveram continuidade. É a pergunta central de retenção.
+  function retencao(nMeses) {
+    var n = nMeses || 6;
+    var limite = addDays(-30 * n), hoje = iso(today());
+    var terminados = [], renovados = [], perdidos = [], pendentes = [];
+    loadPessoas().forEach(function (p) {
+      var cs = p.contratos || [];
+      cs.forEach(function (c, i) {
+        if (!c.fim || c.fim > hoje || c.fim < limite) return;
+        var reg = { pessoaId: p.id, nome: p.nome, fim: c.fim, turma: c.turma || p.turma || "" };
+        terminados.push(reg);
+        // houve contrato criado depois deste? (contratos entram com unshift)
+        if (i > 0) { renovados.push(reg); return; }
+        // sem contrato novo: ou ela ainda está ativa e a decisão não veio,
+        // ou ela saiu de fato. Só o segundo caso conta como perda.
+        if (p.status === "aluna" || p.status === "mvs") { pendentes.push(reg); return; }
+        reg.saida = p.saida || null;
+        perdidos.push(reg);
+      });
+    });
+    var decididos = renovados.length + perdidos.length;
+    return { meses: n, terminados: terminados.length,
+      renovados: renovados.length, perdidos: perdidos.length,
+      pendentes: pendentes.length, decididos: decididos,
+      taxa: decididos ? Math.round(100 * renovados.length / decididos) : null,
+      listaPerdidos: perdidos, listaPendentes: pendentes };
+  }
+  // Por que a gente perde aluna: motivos agregados no período.
+  function saidasResumo(nMeses) {
+    var n = nMeses || 12;
+    var limite = addDays(-30 * n);
+    var porMotivo = {}, porTipo = {}, total = 0;
+    loadPessoas().forEach(function (p) {
+      if (!p.saida || p.saida.data < limite) return;
+      total++;
+      porMotivo[p.saida.motivo] = (porMotivo[p.saida.motivo] || 0) + 1;
+      porTipo[p.saida.tipo] = (porTipo[p.saida.tipo] || 0) + 1;
+    });
+    return { meses: n, total: total,
+      motivos: Object.keys(porMotivo).map(function (k) { return { motivo: k, n: porMotivo[k] }; })
+        .sort(function (a, b) { return b.n - a.n; }),
+      tipos: TIPOS_SAIDA.map(function (t2) { return { tipo: t2.id, label: t2.label, cor: t2.cor, n: porTipo[t2.id] || 0 }; }) };
+  }
+  function exAlunas() {
+    return loadPessoas().filter(function (p) { return p.status === "ex-aluna" && p.saida; })
+      .map(function (p) {
+        var meta = TIPOS_SAIDA.filter(function (x) { return x.id === p.saida.tipo; })[0] || TIPOS_SAIDA[1];
+        return { id: p.id, nome: p.nome, whatsapp: p.whatsapp || "",
+          turma: p.saida.turma, data: p.saida.data, tipo: p.saida.tipo,
+          tipoLabel: meta.label, cor: meta.cor, motivo: p.saida.motivo,
+          detalhe: p.saida.detalhe, reativavel: p.saida.reativavel,
+          diasFora: daysBetween(parseISO(p.saida.data), today()) };
+      }).sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+
   // ── PAINEL DE ALUNAS ──────────────────────────────────────────
   // Todo mundo que já é aluna, com os sinais que dizem se ela está
   // bem ou se precisa de você. É a base do acompanhamento: sem isso
@@ -1703,7 +1848,10 @@
 
   // ── REATIVAÇÃO (compat CRM) ───────────────────────────────────
   function reativacao() {
-    return loadPessoas().filter(function (p) { return p.status === "ex-aluna"; }).map(function (p) {
+    return loadPessoas().filter(function (p) {
+      // quem concluiu o objetivo não entra em reativação
+      return p.status === "ex-aluna" && !(p.saida && p.saida.reativavel === false);
+    }).map(function (p) {
       return { id: p.id, nome: p.nome, telefone: p.whatsapp,
         motivo: (p.historico || []).filter(function (h) { return h.tipo === "perdido"; }).map(function (h) { return h.texto; })[0] || p.motivoPerda,
         ultimaTurma: p.turma };
@@ -3010,6 +3158,11 @@
     ticketMedio: ticketMedio, taxaConversao: taxaConversao,
     resumoFinanceiroTexto: resumoFinanceiroTexto, reunioesResumo: reunioesResumo,
     alunasPainel: alunasPainel, RISCOS: RISCOS, tarefasDe: tarefasDe,
+    // saída e renovação
+    TIPOS_SAIDA: TIPOS_SAIDA, MOTIVOS_SAIDA: MOTIVOS_SAIDA,
+    encerrarMatricula: encerrarMatricula, reabrirMatricula: reabrirMatricula,
+    renovarMatricula: renovarMatricula, retencao: retencao,
+    saidasResumo: saidasResumo, exAlunas: exAlunas,
     // edição depois da matrícula
     atualizarContrato: atualizarContrato, mudarTurma: mudarTurma,
     atualizarCadastro: atualizarCadastro, setOnboardingData: setOnboardingData,

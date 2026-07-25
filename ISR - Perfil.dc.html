@@ -135,6 +135,25 @@
                 <input ref="{{ renegValorRef }}" placeholder="Novo valor (ex. R$ 350)" style="flex: 1; min-width: 120px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
                 <button onclick="{{ onRenegociar }}" title="Recalcula todas as parcelas em aberto com o novo valor" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Renegociar parcelas em aberto</button>
               </div>
+              <div style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px;">
+                  <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Renovação</span>
+                  <button onclick="{{ onToggleRenovar }}" style="border: 1px solid #e5dccf; background: {{ renovarBg }}; color: {{ renovarFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ renovarLabel }}</button>
+                </div>
+                <div style="font-size: 11.5px; color: {{ renovacaoCor }}; line-height: 1.5;">{{ renovacaoStatus }}</div>
+                <sc-if value="{{ renovando }}">
+                  <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nº de parcelas</div>
+                      <input ref="{{ renParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Valor da parcela</div>
+                      <input ref="{{ renValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div style="display: flex; align-items: flex-end;">
+                      <button onclick="{{ onRenovar }}" style="width: 100%; border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar renovação</button>
+                    </div>
+                    <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Um novo ciclo é aberto na sequência do atual, com as mesmas turma e professora. O contrato anterior permanece no histórico e passa a contar como renovado na análise de retenção.</p>
+                  </div>
+                </sc-if>
+              </div>
             </div>
 
             <!-- LTV -->
@@ -288,6 +307,40 @@
             </div>
           </sc-if>
 
+          <!-- ENCERRAR / REABRIR MATRÍCULA -->
+          <sc-if value="{{ podeEncerrar }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Encerrar matrícula</span>
+                <button onclick="{{ onToggleSaida }}" style="border: 1px solid #e5dccf; background: {{ saidaBg }}; color: {{ saidaFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ saidaLabel }}</button>
+              </div>
+              <sc-if value="{{ encerrando }}">
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                  <sc-for list="{{ tiposSaida }}" as="ts" hint-placeholder-count="3">
+                    <button onclick="{{ ts.onClick }}" title="{{ ts.desc }}" style="border: 1px solid {{ ts.borda }}; background: {{ ts.bg }}; color: {{ ts.fg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ts.label }}</button>
+                  </sc-for>
+                </div>
+                <select ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                  <sc-for list="{{ motivosSaida }}" as="ms" hint-placeholder-count="8"><option value="{{ ms.v }}">{{ ms.v }}</option></sc-for>
+                </select>
+                <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap;">
+                  <input ref="{{ saidaDetalheRef }}" placeholder="Nas palavras dela (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <button onclick="{{ onEncerrar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
+                </div>
+                <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O motivo alimenta a análise de retenção. Sem ele, não há como saber por que a escola perde aluna.</p>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ estaEncerrada }}">
+            <div style="background: #f6f2ea; border-left: 4px solid {{ saidaCor }}; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Matrícula encerrada</div>
+              <div style="font-size: 14px; font-weight: 700; color: {{ saidaCor }};">{{ saidaTipoLabel }} · {{ saidaMotivo }}</div>
+              <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 3px;">{{ saidaContexto }}</div>
+              <button onclick="{{ onReabrir }}" style="margin-top: 12px; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Reabrir matrícula</button>
+            </div>
+          </sc-if>
+
           <!-- DOCUMENTOS -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Documentos</div>
@@ -324,12 +377,15 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false };
+  state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false,
+            encerrando: false, tipoSaida: "saiu", renovando: false };
   cadNomeRef = React.createRef(); cadZapRef = React.createRef(); cadEmailRef = React.createRef();
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
   ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
   turSelRef = React.createRef(); turNivelRef = React.createRef();
   tagRef = React.createRef();
+  saidaMotivoRef = React.createRef(); saidaDetalheRef = React.createRef();
+  renParcelasRef = React.createRef(); renValorRef = React.createRef();
   noteRef = React.createRef();
   docNomeRef = React.createRef();
   docLinkRef = React.createRef();
@@ -406,6 +462,37 @@ class Component extends DCLogic {
       estagioBg: stageMeta ? stageMeta.bg : "", estagioFg: stageMeta ? stageMeta.color : "",
       nome: p.nome, statusLabel: st.label, statusColor: st.color, statusBg: st.bg,
       whatsappAtual: p.whatsapp || "", emailAtual: p.email || "",
+      podeEncerrar: (p.status === "aluna" || p.status === "mvs"),
+      estaEncerrada: p.status === "ex-aluna" && !!p.saida,
+      saidaTipoLabel: p.saida ? (CRM.TIPOS_SAIDA.filter(x => x.id === p.saida.tipo)[0] || {}).label || "" : "",
+      saidaCor: p.saida ? (CRM.TIPOS_SAIDA.filter(x => x.id === p.saida.tipo)[0] || {}).cor || "#8a7c6b" : "#8a7c6b",
+      saidaMotivo: p.saida ? p.saida.motivo : "",
+      saidaContexto: p.saida
+        ? (CRM.ddmm(p.saida.data) + (p.saida.detalhe ? " · " + p.saida.detalhe : "")
+           + (p.saida.reativavel ? " · pode ser reativada" : ""))
+        : "",
+      onReabrir: () => { CRM.reabrirMatricula(p.id); this.bump(); },
+      encerrando: this.state.encerrando,
+      saidaLabel: this.state.encerrando ? "Cancelar" : "Registrar saída",
+      saidaBg: this.state.encerrando ? "#f6eee4" : "#fff",
+      saidaFg: this.state.encerrando ? "#9c6f56" : "#164951",
+      onToggleSaida: () => this.setState(s => ({ encerrando: !s.encerrando })),
+      tiposSaida: CRM.TIPOS_SAIDA.map(x => {
+        const on = this.state.tipoSaida === x.id;
+        return { label: x.label, desc: x.desc,
+          bg: on ? x.cor : "#fff", fg: on ? "#fff" : "#8a7c6b", borda: on ? x.cor : "#e5dccf",
+          onClick: () => this.setState({ tipoSaida: x.id }) };
+      }),
+      motivosSaida: CRM.MOTIVOS_SAIDA.map(v => ({ v })),
+      saidaMotivoRef: this.saidaMotivoRef, saidaDetalheRef: this.saidaDetalheRef,
+      onEncerrar: () => {
+        CRM.encerrarMatricula(p.id, {
+          tipo: this.state.tipoSaida,
+          motivo: (this.saidaMotivoRef.current && this.saidaMotivoRef.current.value) || "Outro",
+          detalhe: (this.saidaDetalheRef.current && this.saidaDetalheRef.current.value || "").trim()
+        });
+        this.setState({ encerrando: false });
+      },
       tags: (p.tags || []).map(x => ({ nome: x, onRemove: () => { CRM.removeTag(p.id, x); this.bump(); } })),
       tagsSugeridas: CRM.TAGS_SUGERIDAS.concat(CRM.todasAsTags().map(x => x.tag))
         .filter((v, i, a) => a.indexOf(v) === i && (p.tags || []).indexOf(v) < 0)
@@ -496,6 +583,41 @@ class Component extends DCLogic {
       };
       out.contratoVenc = c.vencDia === "auto" ? "auto matrícula" : "venc. dia " + c.vencDia;
       out.contratoFim = c.fim ? CRM.ddmm(c.fim) + "/" + c.fim.slice(0, 4) : "—";
+
+      // ── renovação ──
+      const hojeIso = new Date().toISOString().slice(0, 10);
+      const diasFim = c.fim
+        ? Math.round((new Date(c.fim + "T00:00:00") - new Date(hojeIso + "T00:00:00")) / 86400000)
+        : null;
+      const jaRenovado = (p.contratos || []).length > 1;
+      out.renovacaoStatus = diasFim === null
+        ? "O contrato não tem data de término definida."
+        : (diasFim < 0
+            ? "O ciclo terminou em " + out.contratoFim + ". A renovação ainda não foi registrada."
+            : (diasFim <= 45
+                ? "O ciclo termina em " + out.contratoFim + ", daqui a " + diasFim + (diasFim === 1 ? " dia." : " dias.")
+                : "O ciclo termina em " + out.contratoFim + "."))
+        + (jaRenovado ? " Este é o " + (p.contratos.length) + "º contrato da aluna." : "");
+      out.renovacaoCor = diasFim !== null && diasFim < 0 ? "#cf6b5c"
+        : (diasFim !== null && diasFim <= 45 ? "#9c6f56" : "#8a7c6b");
+      out.renovando = this.state.renovando;
+      out.renovarLabel = this.state.renovando ? "Cancelar" : "Renovar ciclo";
+      out.renovarBg = this.state.renovando ? "#f6eee4" : "#fff";
+      out.renovarFg = this.state.renovando ? "#9c6f56" : "#164951";
+      out.onToggleRenovar = () => this.setState(s => ({ renovando: !s.renovando }));
+      out.renParcelasRef = this.renParcelasRef; out.renValorRef = this.renValorRef;
+      out.onRenovar = () => {
+        const g = r => (r.current && r.current.value || "").trim();
+        CRM.renovarMatricula(p.id, {
+          tipo: "Renovação",
+          ciclos: c.ciclos,
+          moeda: c.moeda || p.moeda,
+          vencDia: c.vencDia,
+          parcelas: parseInt(g(this.renParcelasRef), 10) || (c.meses || []).length || 3,
+          valorParcela: g(this.renValorRef) || c.parcelaValor || ""
+        });
+        this.setState({ renovando: false });
+      };
       out.ltvValor = CRM.ltv(p);
       out.editandoTurma = this.state.editandoTurma;
       out.edTurLabel = this.state.editandoTurma ? "Fechar" : "Editar";
