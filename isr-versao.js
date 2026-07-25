@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-g",
+  numero: "2026.07.25-h",
   data: "25/07/2026",
-  nota: "Categorias de despesa, sinal na calculadora, reunião no Google Agenda"
+  nota: "Chamada refeita, cópia de segurança dos dados e carteira das professoras"
 };

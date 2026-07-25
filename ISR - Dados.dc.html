@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Escola · Dados</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 860px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="margin-bottom: 6px;">
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Escola</p>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Dados da escola</h1>
+    </header>
+    <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;"><strong>Cópias, exportação e retenção.</strong> Antes de qualquer operação de risco o sistema guarda uma cópia. Aqui é possível restaurá-la, levar os dados para fora e conferir a versão do banco.</p>
+
+    <!-- ESTADO -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px;">
+      <sc-for list="{{ numeros }}" as="nm" hint-placeholder-count="4">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 13px 15px;">
+          <div style="font-size: 20px; font-weight: 700; color: {{ nm.cor }};">{{ nm.valor }}</div>
+          <div style="font-size: 11px; color: #6b6155; line-height: 1.4;">{{ nm.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- CÓPIAS -->
+    <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Cópias de segurança</span>
+        <button onclick="{{ onCriar }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Copiar agora</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">São guardadas as cinco mais recentes, no próprio navegador. Uma cópia é criada sozinha antes de importar arquivo, apagar pessoa ou restaurar.</p>
+      <sc-if value="{{ semBackups }}">
+        <div style="font-size: 12.5px; color: #b8ada0; line-height: 1.6;">Nenhuma cópia ainda. A primeira será criada na próxima operação de risco, ou agora se você quiser.</div>
+      </sc-if>
+      <sc-for list="{{ backups }}" as="bk" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
+          <div style="flex: 1; min-width: 170px;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ bk.quando }}</div>
+            <div style="font-size: 11.5px; color: #8a7c6b;">{{ bk.detalhe }}</div>
+          </div>
+          <button onclick="{{ bk.onRestaurar }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Restaurar</button>
+          <button onclick="{{ bk.onApagar }}" style="border: none; background: transparent; color: #c9b9a6; font-size: 15px; cursor: pointer; padding: 2px 6px;">×</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{ temAviso }}">
+        <div style="background: rgba(90,158,75,0.1); border-radius: 9px; padding: 10px 13px; margin-top: 12px; font-size: 12.5px; color: #3d6b32; line-height: 1.6;">{{ aviso }}</div>
+      </sc-if>
+    </section>
+
+    <!-- EXPORTAR / IMPORTAR -->
+    <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Levar os dados para fora</div>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O arquivo contém tudo: pessoas, contratos, turmas, chamadas, contatos, avaliações, financeiro e configurações. Guarde fora do computador — é o que permite recomeçar em outro aparelho.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <button onclick="{{ onExportar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Baixar arquivo</button>
+        <button onclick="{{ onCopiar }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ copiarLabel }}</button>
+        <span style="font-size: 11.5px; color: #8a7c6b;">{{ tamanho }}</span>
+      </div>
+
+      <div style="border-top: 1px solid #f4f1ec; margin-top: 16px; padding-top: 14px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Restaurar de um arquivo</div>
+        <p style="margin: 0 0 10px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Cole aqui o conteúdo de um arquivo exportado. Os dados atuais são copiados antes de qualquer substituição.</p>
+        <textarea ref="{{ importRef }}" placeholder="Cole o conteúdo do arquivo" style="width: 100%; box-sizing: border-box; min-height: 84px; padding: 10px 12px; font-size: 11.5px; font-family: monospace; color: #3d3529; border: 1px solid #e5dccf; border-radius: 9px; background: #fff; resize: vertical;"></textarea>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px;">
+          <button onclick="{{ onImportar }}" style="border: 1px solid #f0d9c8; background: #fff; color: #c98060; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Substituir pelos dados do arquivo</button>
+          <sc-if value="{{ temErro }}">
+            <span style="font-size: 12px; color: #cf6b5c; line-height: 1.5;">{{ erro }}</span>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+
+    <!-- RETENÇÃO -->
+    <section style="background: #f6f2ea; border-radius: 12px; padding: 18px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Dados de uma aluna</div>
+      <p style="margin: 0 0 4px; font-size: 12.5px; color: #3d3529; line-height: 1.6;">Cada aluna tem direito a receber uma cópia dos próprios dados e a pedir que sejam apagados. As duas ações estão no perfil dela, no bloco "Dados pessoais".</p>
+      <p style="margin: 0; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Apagar remove o cadastro, os contatos registrados, as avaliações, as presenças, a participação em programas e as confirmações de aula extra. É definitivo — por isso uma cópia da base é criada antes.</p>
+    </section>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;860px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tick: 0, copiado: false, aviso: "", erro: "" };
+  importRef = React.createRef();
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  quando(iso) {
+    const d = new Date(iso);
+    const p = n => (n < 10 ? "0" : "") + n;
+    return p(d.getDate()) + "/" + p(d.getMonth() + 1) + " às " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { numeros: [], backups: [], semBackups: true, temAviso: false, temErro: false,
+      copiarLabel: "Copiar", tamanho: "" };
+
+    const bks = CRM.backupsLista();
+    const arq = CRM.exportarTudo();
+    const pessoas = CRM.getPessoas();
+
+    return {
+      numeros: [
+        { valor: String(pessoas.length), label: "pessoas no cadastro", cor: "#164951" },
+        { valor: String(pessoas.filter(p => p.status === "aluna" || p.status === "mvs").length),
+          label: "alunas ativas", cor: "#348a8e" },
+        { valor: String(bks.length), label: bks.length === 1 ? "cópia guardada" : "cópias guardadas",
+          cor: bks.length ? "#5a9e4b" : "#d4a574" },
+        { valor: "v" + CRM.ESQUEMA_VERSAO, label: "versão do banco", cor: "#8a7c6b" }
+      ],
+      backups: bks.map(b => ({
+        quando: this.quando(b.em),
+        detalhe: b.motivo === "manual" ? "Cópia feita por você" : "Automática · " + b.motivo,
+        onRestaurar: () => {
+          if (!window.confirm("Restaurar a cópia de " + this.quando(b.em)
+            + "? Os dados atuais serão substituídos. Uma cópia deles é guardada antes.")) return;
+          const r = CRM.restaurarBackup(b.id);
+          this.setState({ aviso: r.restaurado ? "Dados restaurados da cópia de " + this.quando(b.em) + "." : "", erro: "" });
+          this.bump();
+        },
+        onApagar: () => { CRM.apagarBackup(b.id); this.bump(); }
+      })),
+      semBackups: bks.length === 0,
+      onCriar: () => {
+        CRM.criarBackup("manual");
+        this.setState({ aviso: "Cópia criada.", erro: "" });
+        this.bump();
+      },
+
+      tamanho: Math.max(1, Math.round(arq.length / 1024)) + " kB",
+      onExportar: () => {
+        const hoje = new Date().toISOString().slice(0, 10);
+        const blob = new Blob([arq], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "isr-dados-" + hoje + ".json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      },
+      copiarLabel: this.state.copiado ? "Copiado" : "Copiar para a área de transferência",
+      onCopiar: () => {
+        try { navigator.clipboard.writeText(arq); } catch (e) {}
+        this.setState({ copiado: true });
+        setTimeout(() => this.setState({ copiado: false }), 2200);
+      },
+
+      importRef: this.importRef,
+      onImportar: () => {
+        const txt = (this.importRef.current && this.importRef.current.value) || "";
+        if (!txt.trim()) { this.setState({ erro: "Cole o conteúdo do arquivo antes de substituir." }); return; }
+        if (!window.confirm("Substituir todos os dados pelos do arquivo? Uma cópia dos atuais é guardada antes.")) return;
+        const r = CRM.importarTudo(txt);
+        if (!r.ok) { this.setState({ erro: r.erro, aviso: "" }); return; }
+        if (this.importRef.current) this.importRef.current.value = "";
+        this.setState({ erro: "", aviso: "Arquivo importado: " + r.pessoas + " pessoas em " + r.blocos + " blocos de dados." });
+        this.bump();
+      },
+      temAviso: !!this.state.aviso, aviso: this.state.aviso,
+      temErro: !!this.state.erro, erro: this.state.erro
+    };
+  }
+}
+</script>
+</body>
+</html>
