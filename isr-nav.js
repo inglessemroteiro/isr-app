@@ -225,6 +225,40 @@
     window.addEventListener("isr-sync", function (e) { pintarSync(e.detail); });
     bar.appendChild(sync);
 
+    // ── versão publicada ─────────────────────────────────────────
+    // Toca para forçar a atualização: o navegador do celular às vezes
+    // segura a versão antiga mesmo depois de uma publicação nova.
+    var ver = document.createElement("button");
+    ver.id = "isr-nav-versao";
+    var V = window.ISR_VERSAO || { numero: "?", data: "", nota: "" };
+    ver.textContent = "v" + V.numero;
+    ver.title = "Versão publicada: " + V.numero + (V.data ? " · " + V.data : "")
+      + (V.nota ? "\n" + V.nota : "")
+      + "\n\nToque para descartar a cópia guardada pelo navegador e recarregar.";
+    ver.style.cssText = "flex:none;border:1px solid rgba(255,255,255,0.14);background:transparent;"
+      + "color:rgba(255,255,255,0.45);font-size:10px;font-family:inherit;padding:4px 9px;"
+      + "border-radius:999px;margin-right:8px;cursor:pointer;white-space:nowrap;";
+    ver.onclick = function () {
+      ver.textContent = "atualizando";
+      var passos = [];
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        passos.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+          return Promise.all(rs.map(function (r) { return r.unregister(); }));
+        }).catch(function () {}));
+      }
+      if (window.caches && caches.keys) {
+        passos.push(caches.keys().then(function (ks) {
+          return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+        }).catch(function () {}));
+      }
+      Promise.all(passos).then(function () {
+        // a query quebra o cache do próprio endereço
+        var u = location.href.split("#")[0];
+        location.replace(u + (u.indexOf("?") >= 0 ? "&" : "?") + "_v=" + Date.now());
+      });
+    };
+    bar.appendChild(ver);
+
     var quem = document.createElement("span");
     quem.id = "isr-nav-quem";
     quem.textContent = user.nome;
@@ -276,6 +310,7 @@
       "#isr-nav-burger{display:block !important;}" +
       "#isr-nav-quem{display:none;}" +
       "#isr-nav-sync span:last-child{display:none;}" +
+      "#isr-nav-versao{padding:4px 7px;margin-right:4px;font-size:9px;}" +
       "#isr-nav-sync{padding:6px;margin-right:4px;}" +
       "}";
     document.head.appendChild(css);
