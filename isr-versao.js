@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-a",
+  numero: "2026.07.25-b",
   data: "25/07/2026",
-  nota: "Cadência de contato por segmento"
+  nota: "Correção: dois botões Matricular na mesma tela"
 };
