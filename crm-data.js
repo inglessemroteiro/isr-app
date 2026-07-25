@@ -552,7 +552,19 @@
 
   // ── AÇÕES (spec: todo dado nasce de uma ação) ─────────────────
   function updateLead(id, patch) { return mutate(id, function (p) { Object.assign(p, patch); }); }
+  // Rede de segurança: "matriculado" é consequência de matricular(), não um
+  // rótulo que se escolhe. Marcar só o estágio deixava a pessoa aparecendo
+  // como matriculada sem contrato, sem turma e fora do cadastro de Alunas.
   function setStage(id, stageId) {
+    if (stageId === "matriculado") {
+      var atual = getPessoa(id);
+      if (!atual || atual.status !== "aluna") {
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn("ISR: matrícula depende de turma e contrato — use matricular().");
+        }
+        return loadPessoas();
+      }
+    }
     var st = STAGES.filter(function (s) { return s.id === stageId; })[0];
     return mutate(id, function (p) { p.estagio = stageId; pushHist(p, "estagio", "Estágio → " + (st ? st.label : stageId)); });
   }
