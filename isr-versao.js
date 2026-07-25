@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-h",
+  numero: "2026.07.25-i",
   data: "25/07/2026",
-  nota: "Chamada refeita, cópia de segurança dos dados e carteira das professoras"
+  nota: "App da aluna interativo e renovação com parcela em aberto"
 };

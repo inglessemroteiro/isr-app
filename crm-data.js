@@ -514,8 +514,61 @@
   // ── STORE ─────────────────────────────────────────────────────
   function ensureSeed() {
     if (localStorage.getItem(SEED_FLAG)) return;
-    localStorage.setItem(PESSOAS_KEY, JSON.stringify(seedPessoas()));
+    var lista = seedPessoas();
+    localStorage.setItem(PESSOAS_KEY, JSON.stringify(lista));
     localStorage.setItem(SEED_FLAG, "1");
+    semearProgramaDemo(lista);
+    semearChamadasDemo(lista);
+  }
+
+  // Sem programa e sem chamada, a área da aluna abre vazia e não dá para
+  // ver o que ela faz. O exemplo abaixo é fictício, como o resto do seed.
+  function semearProgramaDemo(lista) {
+    try {
+      if ((JSON.parse(localStorage.getItem("isr_programas_v1")) || []).length) return;
+    } catch (e) {}
+    var alunas = lista.filter(function (p) { return p.status === "aluna"; }).slice(0, 5);
+    if (!alunas.length) return;
+    var d = today(); d.setDate(d.getDate() - 21); // começou há três semanas
+    var pg = { id: "pgDemo", nome: "Programa Sem Roteiro", inicio: iso(d),
+      semanas: 8, diaFeedback: 5, missoes: MISSOES_PILOTO.slice(),
+      participantes: alunas.map(function (p) { return p.id; }),
+      progresso: {}, respostas: {}, missoesEnviadas: { 1: iso(d), 2: iso(d), 3: iso(today()) },
+      participacao: {} };
+    alunas.forEach(function (p, i) {
+      for (var s = 1; s <= 2; s++) {
+        if (i > 2 && s === 2) continue; // nem todo mundo responde tudo
+        pg.progresso[p.id + "|" + s] = { audio: iso(d), feedback: iso(d) };
+        pg.respostas[p.id + "|" + s] = { texto: "Resposta da semana " + s + ".", em: iso(d) };
+      }
+      pg.participacao[p.id] = i < 3 ? 2 : 1;
+    });
+    try { localStorage.setItem("isr_programas_v1", JSON.stringify([pg])); } catch (e) {}
+  }
+
+  function semearChamadasDemo(lista) {
+    try {
+      if (Object.keys(JSON.parse(localStorage.getItem("isr_chamadas_v1")) || {}).length) return;
+    } catch (e) {}
+    var mapa = {};
+    var porTurma = {};
+    lista.forEach(function (p) {
+      if (p.status !== "aluna" || !p.turma) return;
+      (porTurma[p.turma] = porTurma[p.turma] || []).push(p);
+    });
+    Object.keys(porTurma).forEach(function (turma) {
+      for (var semana = 1; semana <= 4; semana++) {
+        var d = today(); d.setDate(d.getDate() - semana * 7);
+        var data = iso(d);
+        var presencas = {};
+        porTurma[turma].forEach(function (p, i) {
+          presencas[p.id] = (semana === 2 && i === 1) ? "falta" : "presente";
+        });
+        mapa[turma + "|" + data] = { turma: turma, data: data, presencas: presencas,
+          tarefas: {}, salvoEm: data };
+      }
+    });
+    try { localStorage.setItem("isr_chamadas_v1", JSON.stringify(mapa)); } catch (e) {}
   }
   function loadPessoas() {
     ensureSeed();
@@ -851,11 +904,25 @@
   function contratoVigente(p) { return (p.contratos && p.contratos[0]) || null; }
   function toCobrancaShape(p) {
     var c = contratoVigente(p);
+    // Renovar não perdoa dívida: o que ficou em aberto no ciclo anterior
+    // continua a cobrar junto do ciclo novo. Sem isto a parcela some da
+    // tela no dia em que a renovação é registrada.
+    var atrasHerdado = [];
+    (p.contratos || []).forEach(function (cx, idx) {
+      if (idx === 0) return;
+      (cx.meses || []).forEach(function (m) {
+        if (!m.pago) atrasHerdado.push(Object.assign({}, m, { anterior: true, contratoIdx: idx }));
+      });
+    });
+    var meses = atrasHerdado.concat((c.meses || []).map(function (m) {
+      return Object.assign({}, m, { anterior: false, contratoIdx: 0 });
+    }));
     return {
       id: p.id, nome: p.nome, telefone: p.whatsapp,
       tipo: c.tipo, ciclos: c.ciclos, moeda: c.moeda,
       valorTotal: c.valorTotal, parcelaValor: c.parcelaValor,
-      parcelas: c.parcelas, vencDia: c.vencDia, meses: c.meses || [],
+      parcelas: c.parcelas, vencDia: c.vencDia, meses: meses,
+      herdadas: atrasHerdado.length,
       obs: p.obsCobranca || "", fim: c.fim || ""
     };
   }
@@ -880,17 +947,61 @@
     return "em_dia";
   }
   // Grade de parcelas: mesma escrita no Perfil e na Cobrança (spec 5/8)
-  function setParcelaPaga(pessoaId, mesKey, pago) {
+  // A parcela pode estar num contrato que já não é o vigente: quem renovou
+  // com parcela em aberto continua devendo, e a marcação precisa chegar lá.
+  // contratoIdx vem da grade (parcelasAbertas); sem ele, vale o vigente.
+  function setParcelaPaga(pessoaId, mesKey, pago, contratoIdx) {
     return mutate(pessoaId, function (p) {
-      var c = contratoVigente(p);
+      var cs = p.contratos || [];
+      var idx = contratoIdx === undefined || contratoIdx === null ? null : parseInt(contratoIdx, 10);
+      // sem índice: o contrato mais antigo que ainda tem esse mês em aberto
+      if (idx === null) {
+        idx = 0;
+        for (var i = cs.length - 1; i >= 0; i--) {
+          var achou = (cs[i].meses || []).filter(function (m) { return m.key === mesKey && !m.pago; })[0];
+          if (achou) { idx = i; break; }
+        }
+      }
+      var c = cs[idx];
       if (!c) return;
+      var deAntes = idx > 0 ? " · ciclo anterior" : "";
       (c.meses || []).forEach(function (m) {
         if (m.key === mesKey) {
           m.pago = pago;
-          pushHist(p, "pagamento", "Parcela de " + m.label + " marcada " + (pago ? "PAGA" : "pendente") + " (" + m.valor + ")");
+          pushHist(p, "pagamento", "Parcela de " + m.label + " marcada " + (pago ? "PAGA" : "pendente") + " (" + m.valor + ")" + deAntes);
         }
       });
     });
+  }
+
+  // Toda parcela em aberto da pessoa, em qualquer contrato. É o que a
+  // escola tem a receber dela — não só o que está no contrato vigente.
+  function parcelasAbertas(pessoaOuId) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return [];
+    var hoje = mesAtualKey();
+    var out = [];
+    (p.contratos || []).forEach(function (c, idx) {
+      (c.meses || []).forEach(function (m) {
+        if (m.pago) return;
+        out.push({ key: m.key, label: m.label, valor: m.valor,
+          contratoIdx: idx, anterior: idx > 0,
+          moeda: c.moeda || "R$",
+          vencida: m.key <= hoje });
+      });
+    });
+    return out.sort(function (a, b) { return a.key < b.key ? -1 : 1; });
+  }
+
+  // Só o que ficou para trás de contratos já encerrados.
+  function pendenciaAnterior(pessoaOuId) {
+    var abertas = parcelasAbertas(pessoaOuId).filter(function (m) { return m.anterior; });
+    var porMoeda = {};
+    abertas.forEach(function (m) {
+      porMoeda[m.moeda] = (porMoeda[m.moeda] || 0) + parseMoney(m.valor);
+    });
+    return { parcelas: abertas, n: abertas.length,
+      totais: Object.keys(porMoeda).map(function (k) { return { moeda: k, valor: fmtMoney(k, porMoeda[k]) }; }) };
   }
   function cobrancaResumo() {
     var key = mesAtualKey();
@@ -1642,19 +1753,59 @@
         p.turma = turmaAntes; p.professora = profAntes;
         p.formatos = formatosAntes; p.desde = desdeAntes;
       }
-      // o ciclo novo começa depois do anterior, não em cima dele
-      if (fimAnterior && (c.meses || []).length) {
-        var k = fimAnterior;
+      // O ciclo novo começa depois do anterior — mas nunca no passado.
+      // Renovação registrada com atraso criava parcelas já vencidas.
+      if ((c.meses || []).length) {
+        var k = mesAnterior(primeiroMesDoCiclo(fimAnterior, c.vencDia)).key;
         c.meses = c.meses.map(function (m) {
           var prox = mesSeguinte(k); k = prox.key;
           return { key: prox.key, label: prox.label, valor: m.valor, pago: false };
         });
         c.fim = c.meses[c.meses.length - 1].key + "-28";
       }
+      // O que ficou em aberto no ciclo anterior continua devido. Fica
+      // registrado no contrato novo para a equipe ver de onde vem.
+      var pend = pendenciaAnterior(p);
+      if (pend.n) {
+        c.pendenciaAnterior = { parcelas: pend.n,
+          totais: pend.totais.map(function (x) { return x.moeda + " " + x.valor; }).join(" · ") };
+      }
       pushHist(p, "renovacao", "Contrato renovado"
-        + (c.meses && c.meses.length ? " · " + c.meses[0].label + " a " + c.meses[c.meses.length - 1].label : ""));
+        + (c.meses && c.meses.length ? " · " + c.meses[0].label + " a " + c.meses[c.meses.length - 1].label : "")
+        + (pend.n ? " · " + pend.n + " parcela(s) do ciclo anterior seguem em aberto" : ""));
     });
+    var depois = pendenciaAnterior(id);
+    if (depois.n) {
+      var pf = getPessoa(id) || {};
+      addTarefa({ titulo: "Cobrar o que ficou do ciclo anterior · " + (pf.nome || ""),
+        detalhe: depois.n + " parcela(s) em aberto · "
+          + depois.totais.map(function (x) { return x.valor; }).join(" · ")
+          + ". A renovação foi registrada e a cobrança continua.",
+        dono: donoDaIntegracao ? donoDaIntegracao() : "Gabi",
+        prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
+    }
     return r;
+  }
+
+  // O que a tela precisa mostrar ANTES de confirmar a renovação.
+  function resumoRenovacao(id) {
+    var p = getPessoa(id);
+    if (!p) return null;
+    var c = contratoVigente(p);
+    var abertas = parcelasAbertas(p);
+    var fim = c && c.fim ? c.fim.slice(0, 7) : "";
+    var mesHoje = mesAtualKey();
+    var inicioKey = primeiroMesDoCiclo(fim, c ? c.vencDia : null);
+    var prox = { key: inicioKey, label: mesSeguinte(mesAnterior(inicioKey).key).label };
+    var porMoeda = {};
+    abertas.forEach(function (m) { porMoeda[m.moeda] = (porMoeda[m.moeda] || 0) + parseMoney(m.valor); });
+    return {
+      abertas: abertas, n: abertas.length,
+      totais: Object.keys(porMoeda).map(function (k) { return { moeda: k, valor: fmtMoney(k, porMoeda[k]) }; }),
+      vencidas: abertas.filter(function (m) { return m.vencida; }).length,
+      fimAtual: fim, inicioNovo: prox.key, inicioNovoLabel: prox.label,
+      atrasada: !!(fim && fim < mesHoje)
+    };
   }
 
   // Taxa de renovação: de todos os contratos que terminaram no período,
@@ -3095,6 +3246,25 @@
       if (mudou.length) pushHist(p, "renovacao", "Contrato editado · " + mudou.join(" · "));
     });
   }
+  // Em que mês a primeira parcela de um ciclo deve cair.
+  // Duas regras somadas: nunca antes do fim do ciclo anterior, e nunca
+  // num mês cujo dia de vencimento já passou (senão nasce vencida).
+  function primeiroMesDoCiclo(fimAnteriorKey, vencDia) {
+    var base = mesAtualKey();
+    var d = parseInt(vencDia, 10);
+    if (!isNaN(d) && today().getDate() > d) base = mesSeguinte(base).key;
+    if (fimAnteriorKey) {
+      var depois = mesSeguinte(fimAnteriorKey).key;
+      if (depois > base) base = depois;
+    }
+    return base;
+  }
+  function mesAnterior(key) {
+    var pr = key.split("-");
+    var d = new Date(parseInt(pr[0], 10), parseInt(pr[1], 10) - 2, 1);
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    return { key: d.getFullYear() + "-" + p2(d.getMonth() + 1), label: MES_NOMES[d.getMonth()] };
+  }
   function mesSeguinte(key) {
     var pr = key.split("-");
     var d = new Date(parseInt(pr[0], 10), parseInt(pr[1], 10), 1); // mês seguinte
@@ -3281,6 +3451,18 @@
       if (p.onboarding && p.onboarding.length && p.onboarding.every(function (c) { return c.feito; }))
         extrato.push({ em: "", label: "Onboarding completo", valor: MOEDAS_REGRAS.onboardingCompleto });
     }
+    programasLista().forEach(function (pg) {
+      if ((pg.participantes || []).indexOf(pessoaId) < 0) return;
+      for (var s = 1; s <= pg.semanas; s++) {
+        if (!etapaFeita(pg, pessoaId, s, "audio")) continue;
+        var r = ((pg.respostas || {})[pessoaId + "|" + s]) || {};
+        extrato.push({ em: r.em || "", label: "Missão da semana " + s + " respondida",
+          valor: MOEDAS_PROGRAMA.resposta });
+      }
+      var part = (pg.participacao || {})[pessoaId] || 0;
+      if (part) extrato.push({ em: "", label: "Participação no grupo (" + part + ")",
+        valor: part * MOEDAS_PROGRAMA.participacao });
+    });
     (moedasAjustesAll()[pessoaId] || []).forEach(function (a) {
       extrato.push({ em: a.em, label: a.motivo || (a.valor > 0 ? "Bônus da escola" : "Resgate"), valor: a.valor });
     });
@@ -3308,6 +3490,147 @@
     mutate(pessoaId, function (pp) {
       pushHist(pp, "contato", "Pediu correção de tarefa" + (texto ? " · " + texto : ""));
     });
+  }
+
+  // ── O QUE A ALUNA VÊ DO PRÓPRIO PERCURSO ─────────────────────
+  //
+  // Até aqui o app da aluna só mostrava o que a escola sabia dela:
+  // próxima aula, parcelas, materiais. Nada do que ela mesma fez.
+  // As funções abaixo devolvem o percurso dela e as ações que
+  // dependem dela — é isso que dá o que fazer entre uma aula e outra.
+
+  // Em que semana do programa estamos hoje (1 .. semanas).
+  function semanaDoPrograma(programa, dataIso) {
+    if (!programa) return 0;
+    var ini = parseISO(programa.inicio);
+    var ref = dataIso ? (parseISO(dataIso) || today()) : today();
+    if (!ini) return 1;
+    var s = Math.floor(daysBetween(ini, ref) / 7) + 1;
+    if (s < 1) s = 1;
+    if (s > programa.semanas) s = programa.semanas;
+    return s;
+  }
+
+  function respostaDaSemana(programa, pessoaId, semana) {
+    var k = pessoaId + "|" + semana;
+    return ((programa.respostas || {})[k]) || null;
+  }
+
+  // A aluna responde a missão da semana pelo próprio app. Isso marca a
+  // etapa "audio" — a mesma marca que a professora usa na tela Programa —
+  // guarda o texto e avisa quem acompanha a turma.
+  function responderMissao(programaId, pessoaId, semana, texto) {
+    var l = programasLista();
+    var achou = null;
+    l.forEach(function (pg) {
+      if (pg.id !== programaId) return;
+      pg.respostas = pg.respostas || {};
+      pg.respostas[pessoaId + "|" + semana] = { texto: texto || "", em: iso(today()) };
+      pg.progresso = pg.progresso || {};
+      var k = pessoaId + "|" + semana;
+      pg.progresso[k] = pg.progresso[k] || {};
+      pg.progresso[k].audio = iso(today());
+      carimbar(pg); achou = pg;
+    });
+    if (!achou) return null;
+    programasSave(l);
+    var pessoa = getPessoa(pessoaId);
+    if (pessoa) {
+      mutate(pessoaId, function (pp) {
+        pushHist(pp, "contato", "Respondeu a missão da semana " + semana);
+      });
+      var dono = ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0 ? pessoa.professora : "Gabi";
+      avisar(dono, pessoa.nome + " respondeu a missão da semana " + semana + ". Falta a devolutiva.", "programa");
+    }
+    return achou;
+  }
+
+  // Tudo o que a aluna precisa saber do programa dela, num objeto só.
+  function programaDaAluna(pessoaId) {
+    var pg = programasLista().filter(function (x) {
+      return (x.participantes || []).indexOf(pessoaId) >= 0;
+    })[0];
+    if (!pg) return null;
+    var semana = semanaDoPrograma(pg);
+    var respostas = 0;
+    for (var s = 1; s <= pg.semanas; s++) if (etapaFeita(pg, pessoaId, s, "audio")) respostas++;
+    var pos = rankingPrograma(pg.id).filter(function (r) { return r.pessoaId === pessoaId; })[0];
+    return {
+      programa: pg, id: pg.id, nome: pg.nome,
+      semana: semana, semanas: pg.semanas,
+      missao: (pg.missoes || [])[semana - 1] || "",
+      enviada: missaoEnviada(pg, semana),
+      respondeu: etapaFeita(pg, pessoaId, semana, "audio"),
+      devolutiva: etapaFeita(pg, pessoaId, semana, "feedback"),
+      resposta: respostaDaSemana(pg, pessoaId, semana),
+      respostas: respostas,
+      posicao: pos ? pos.posicao : 0,
+      participantes: (pg.participantes || []).length,
+      moedas: moedasDoPrograma(pg, pessoaId)
+    };
+  }
+
+  // A última aula em que ela esteve presente e ainda não avaliou.
+  function aulaAAvaliar(pessoaId) {
+    var cham = chamadasAll();
+    var minhas = [];
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      var est = estadoPresenca(ch.presencas[pessoaId]);
+      if (est !== "presente" && est !== "atraso") return;
+      minhas.push(ch);
+    });
+    if (!minhas.length) return null;
+    minhas.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    var ultima = minhas[0];
+    var jaAvaliou = pulsosDe(pessoaId).some(function (x) { return x.data >= ultima.data; });
+    if (jaAvaliou) return null;
+    return { data: ultima.data, turma: ultima.turma || "" };
+  }
+
+  // Frequência, sequência de presenças e tempo de casa.
+  function jornadaDaAluna(pessoaId) {
+    var cham = chamadasAll();
+    var minhas = [];
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      minhas.push({ data: ch.data, estado: estadoPresenca(ch.presencas[pessoaId]) });
+    });
+    minhas.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    var presentes = minhas.filter(function (x) { return x.estado === "presente" || x.estado === "atraso"; }).length;
+    var faltas = minhas.filter(function (x) { return x.estado === "falta"; }).length;
+    var sequencia = 0;
+    for (var i = 0; i < minhas.length; i++) {
+      if (minhas[i].estado === "falta") break;
+      sequencia++;
+    }
+    var p = getPessoa(pessoaId) || {};
+    var meses = p.desde ? Math.max(1, Math.round(daysBetween(parseISO(p.desde), today()) / 30)) : 0;
+    return {
+      aulas: minhas.length, presentes: presentes, faltas: faltas,
+      frequencia: minhas.length ? Math.round((presentes / minhas.length) * 100) : 0,
+      sequencia: sequencia, meses: meses, desde: p.desde || "",
+      ultima: minhas[0] ? minhas[0].data : ""
+    };
+  }
+
+  // O que ela já pode resgatar e quanto falta para a próxima recompensa.
+  function recompensasDaAluna(pessoaId) {
+    var saldo = moedasDe(pessoaId).total;
+    var ordenados = MOEDAS_RESGATES.slice().sort(function (a, b) { return a.custo - b.custo; });
+    var disponiveis = ordenados.filter(function (r) { return saldo >= r.custo; });
+    var bloqueados = ordenados.filter(function (r) { return saldo < r.custo; });
+    var prox = bloqueados[0] || null;
+    var base = disponiveis.length ? disponiveis[disponiveis.length - 1].custo : 0;
+    var pct = 0;
+    if (prox) {
+      var faixa = prox.custo - base;
+      pct = faixa > 0 ? Math.round(Math.min(100, Math.max(0, ((saldo - base) / faixa) * 100))) : 100;
+    }
+    return { saldo: saldo, disponiveis: disponiveis, bloqueados: bloqueados,
+      proxima: prox, faltam: prox ? prox.custo - saldo : 0, pct: prox ? pct : 100 };
   }
 
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
@@ -3964,6 +4287,10 @@
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
     chamadasDaTurma: chamadasDaTurma,
+    semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
+    responderMissao: responderMissao, programaDaAluna: programaDaAluna,
+    aulaAAvaliar: aulaAAvaliar, jornadaDaAluna: jornadaDaAluna,
+    recompensasDaAluna: recompensasDaAluna,
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
@@ -4011,6 +4338,8 @@
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
+    parcelasAbertas: parcelasAbertas, pendenciaAnterior: pendenciaAnterior,
+    resumoRenovacao: resumoRenovacao,
     MOEDAS_PROGRAMA: MOEDAS_PROGRAMA, moedasDoPrograma: moedasDoPrograma,
     somarParticipacao: somarParticipacao, rankingPrograma: rankingPrograma,
     // tags

@@ -43,7 +43,7 @@
             <div style="font-size: 25px; font-weight: 600; color: #fff; letter-spacing: -0.5px; line-height: 1.2;">{{ aulaQuando }}</div>
             <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 6px;">{{ turmaLabel }}</div>
             <sc-if value="{{ temMeet }}">
-              <a href="{{ meet }}" target="_blank" rel="noopener" style="display: inline-block; margin-top: 20px; text-decoration: none; background: #fc9082; color: #164951; font-size: 16px; font-weight: 600; padding: 14px 28px; border-radius: 12px; transition: opacity 200ms cubic-bezier(0.4,0,0.2,1);">Entrar na aula</a>
+              <a href="{{ meet }}" target="_blank" rel="noopener" style="display: inline-block; margin-top: 20px; text-decoration: none; background: #fc9082; color: #164951; font-size: 16px; font-weight: 600; padding: 14px 28px; border-radius: 12px;">Entrar na aula</a>
             </sc-if>
           </sc-if>
           <sc-if value="{{ semAula }}">
@@ -51,58 +51,184 @@
           </sc-if>
         </div>
 
-        <!-- TAREFA DA SEMANA -->
-        <sc-if value="{{ temTarefa }}">
-          <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
-              <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465;">Tarefa da semana</span>
-              <span style="font-size: 12px; color: #a89787;">{{ tarefaEm }}</span>
-            </div>
-            <div style="font-size: 16px; color: #164951; line-height: 1.65; margin-bottom: 16px;">{{ tarefaTexto }}</div>
-            <sc-if value="{{ semPedido }}">
-              <div style="display: flex; gap: 8px;">
-                <input ref="{{ corrTextoRef }}" placeholder="Qual parte? (ex. página 12)" style="flex: 1; min-width: 0; border: none; background: #f5f5f0; color: #164951; font-size: 16px; padding: 14px 16px; border-radius: 12px; font-family: inherit;" />
-                <button onclick="{{ onPedirCorrecao }}" style="border: none; background: #f2ebe3; color: #164951; font-size: 16px; font-weight: 600; padding: 14px 18px; border-radius: 12px; cursor: pointer; font-family: inherit; white-space: nowrap;">Pedir correção</button>
-              </div>
-            </sc-if>
-            <sc-if value="{{ pedidoFeito }}">
-              <div style="font-size: 16px; color: #348a8e;">Pedido enviado para a professora.</div>
-            </sc-if>
+        <!-- ═══ SUA SEMANA ═══ -->
+        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px;">
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465;">Sua semana</span>
+            <span style="font-size: 12px; font-weight: 600; color: {{ semanaCor }};">{{ semanaContagem }}</span>
           </div>
-        </sc-if>
+          <sc-if value="{{ temSemana }}">
+            <div style="height: 6px; border-radius: 999px; background: #f0efe9; overflow: hidden; margin-bottom: 4px;">
+              <div style="height: 6px; border-radius: 999px; background: {{ semanaCor }}; width: {{ semanaPct }};"></div>
+            </div>
+            <div style="font-size: 14px; color: #8a7465; line-height: 1.6; margin-bottom: 18px;">{{ semanaFrase }}</div>
+          </sc-if>
 
-        <!-- AULAS EXTRAS -->
-        <sc-if value="{{ temExtras }}">
-          <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
-            <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">Aulas extras</div>
-            <sc-for list="{{ extras }}" as="ex" hint-placeholder-count="2">
-              <div style="padding: 12px 0;">
-                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                  <div style="font-size: 20px; font-weight: 600; color: #164951; line-height: 1.3;">{{ ex.titulo }}</div>
-                  <sc-if value="{{ ex.respondeu }}">
-                    <span style="font-size: 12px; font-weight: 600; color: {{ ex.statusCor }};">{{ ex.statusLabel }}</span>
+          <!-- desafio da semana -->
+          <sc-if value="{{ temMissao }}">
+            <div style="border-top: 1px solid #f0efe9; padding-top: 18px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid {{ missaoBorda }}; background: {{ missaoBg }}; color: #fff; font-size: 13px; font-weight: 700; line-height: 19px; text-align: center; margin-top: 2px;">{{ missaoMarca }}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">Desafio da semana {{ missaoSemana }}</span>
+                    <span style="flex: none; font-size: 12px; font-weight: 600; color: #348a8e;">+{{ missaoMoedas }}</span>
+                  </div>
+                  <div style="font-size: 16px; color: #164951; line-height: 1.65; margin-top: 8px;">{{ missaoTexto }}</div>
+
+                  <sc-if value="{{ missaoAberta }}">
+                    <textarea ref="{{ missaoRef }}" rows="3" placeholder="Escreva sua resposta" style="width: 100%; box-sizing: border-box; border: none; background: #f5f5f0; color: #164951; font-size: 16px; padding: 14px 16px; border-radius: 12px; font-family: inherit; line-height: 1.6; margin-top: 12px; resize: vertical;"></textarea>
+                    <div style="font-size: 12px; color: #a89787; line-height: 1.6; margin-top: 6px;">Se preferir gravar áudio, mande no grupo e escreva aqui o que gravou.</div>
+                    <button onclick="{{ onResponderMissao }}" style="width: 100%; border: none; background: #fc9082; color: #164951; font-size: 16px; font-weight: 600; padding: 14px; border-radius: 12px; cursor: pointer; font-family: inherit; margin-top: 10px;">Enviar resposta</button>
+                    <sc-if value="{{ missaoErro }}">
+                      <div style="font-size: 14px; color: #c25a4a; margin-top: 8px; line-height: 1.5;">{{ missaoErro }}</div>
+                    </sc-if>
+                  </sc-if>
+
+                  <sc-if value="{{ missaoRespondida }}">
+                    <div style="background: #f5f5f0; border-radius: 12px; padding: 14px 16px; margin-top: 12px;">
+                      <div style="font-size: 12px; font-weight: 600; color: #5a8a3a; margin-bottom: 6px;">Enviada {{ missaoEm }}</div>
+                      <div style="font-size: 16px; color: #164951; line-height: 1.6;">{{ missaoResposta }}</div>
+                    </div>
+                    <div style="font-size: 14px; color: {{ devolutivaCor }}; margin-top: 10px; line-height: 1.5;">{{ devolutivaTexto }}</div>
                   </sc-if>
                 </div>
-                <div style="font-size: 12px; color: #8a7465; margin-top: 4px; line-height: 1.6;">{{ ex.quando }}</div>
-                <sc-if value="{{ ex.temDescricao }}">
-                  <div style="font-size: 14px; color: #164951; margin-top: 8px; line-height: 1.6;">{{ ex.descricao }}</div>
-                </sc-if>
-                <sc-if value="{{ ex.lotada }}">
-                  <div style="font-size: 12px; color: #c25a4a; margin-top: 8px;">As vagas desta aula já foram preenchidas.</div>
-                </sc-if>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
-                  <button onclick="{{ ex.onVou }}" style="border: none; background: {{ ex.vouBg }}; color: {{ ex.vouFg }}; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; transition: background 200ms cubic-bezier(0.4,0,0.2,1);">Confirmar presença</button>
-                  <button onclick="{{ ex.onNaoVou }}" style="border: none; background: {{ ex.naoBg }}; color: {{ ex.naoFg }}; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; transition: background 200ms cubic-bezier(0.4,0,0.2,1);">Não poderei</button>
-                  <sc-if value="{{ ex.confirmou }}">
-                    <a href="{{ ex.gcal }}" target="_blank" rel="noopener" style="text-decoration: none; background: #f2ebe3; color: #8a7465; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px;">Adicionar ao Google Agenda</a>
-                    <a href="{{ ex.mailto }}" style="text-decoration: none; background: #f2ebe3; color: #8a7465; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px;">Receber por e-mail</a>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- tarefa da semana -->
+          <sc-if value="{{ temTarefa }}">
+            <div style="border-top: 1px solid #f0efe9; padding-top: 18px; margin-top: 18px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid {{ tarefaBorda }}; background: {{ tarefaBg }}; color: #fff; font-size: 13px; font-weight: 700; line-height: 19px; text-align: center; margin-top: 2px;">{{ tarefaMarca }}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">Tarefa da semana</span>
+                    <span style="flex: none; font-size: 12px; color: #a89787;">{{ tarefaEm }}</span>
+                  </div>
+                  <div style="font-size: 16px; color: #164951; line-height: 1.65; margin-top: 8px;">{{ tarefaTexto }}</div>
+                  <sc-if value="{{ semPedido }}">
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                      <input ref="{{ corrTextoRef }}" placeholder="Qual parte? (ex. página 12)" style="flex: 1; min-width: 0; border: none; background: #f5f5f0; color: #164951; font-size: 16px; padding: 14px 16px; border-radius: 12px; font-family: inherit;" />
+                      <button onclick="{{ onPedirCorrecao }}" style="border: none; background: #f2ebe3; color: #164951; font-size: 16px; font-weight: 600; padding: 14px 18px; border-radius: 12px; cursor: pointer; font-family: inherit; white-space: nowrap;">Pedir correção</button>
+                    </div>
                   </sc-if>
+                  <sc-if value="{{ pedidoFeito }}">
+                    <div style="font-size: 16px; color: #348a8e; margin-top: 12px;">Pedido enviado para a professora.</div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- como foi a última aula -->
+          <sc-if value="{{ temPulso }}">
+            <div style="border-top: 1px solid #f0efe9; padding-top: 18px; margin-top: 18px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #e3d9cc; background: transparent; margin-top: 2px;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">Como foi a aula de {{ pulsoQuando }}?</div>
+                  <div style="font-size: 14px; color: #8a7465; line-height: 1.6; margin-top: 4px;">Só a sua professora vê. Serve para ela ajustar a próxima aula.</div>
+                  <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <sc-for list="{{ notas }}" as="nt" hint-placeholder-count="5">
+                      <button onclick="{{ nt.onClick }}" title="{{ nt.title }}" style="flex: 1; border: 1px solid #e3d9cc; background: #fff; color: #164951; font-size: 16px; font-weight: 600; height: 46px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ nt.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a89787; margin-top: 6px;">
+                    <span>Difícil</span><span>Ótima</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- aulas extras -->
+          <sc-if value="{{ temExtras }}">
+            <sc-for list="{{ extras }}" as="ex" hint-placeholder-count="2">
+              <div style="border-top: 1px solid #f0efe9; padding-top: 18px; margin-top: 18px;">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                  <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid {{ ex.borda }}; background: {{ ex.bgMarca }}; color: #fff; font-size: 13px; font-weight: 700; line-height: 19px; text-align: center; margin-top: 2px;">{{ ex.marca }}</span>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                      <span style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">{{ ex.titulo }}</span>
+                      <span style="flex: none; font-size: 12px; font-weight: 600; color: #348a8e;">+{{ ex.moedas }}</span>
+                    </div>
+                    <div style="font-size: 14px; color: #8a7465; margin-top: 4px; line-height: 1.6;">{{ ex.quando }}</div>
+                    <sc-if value="{{ ex.temDescricao }}">
+                      <div style="font-size: 16px; color: #164951; margin-top: 8px; line-height: 1.65;">{{ ex.descricao }}</div>
+                    </sc-if>
+                    <sc-if value="{{ ex.lotada }}">
+                      <div style="font-size: 14px; color: #c25a4a; margin-top: 8px;">As vagas desta aula já foram preenchidas.</div>
+                    </sc-if>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                      <button onclick="{{ ex.onVou }}" style="border: none; background: {{ ex.vouBg }}; color: {{ ex.vouFg }}; font-size: 14px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ex.vouLabel }}</button>
+                      <button onclick="{{ ex.onNaoVou }}" style="border: none; background: {{ ex.naoBg }}; color: {{ ex.naoFg }}; font-size: 14px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Não poderei</button>
+                      <sc-if value="{{ ex.confirmou }}">
+                        <a href="{{ ex.gcal }}" target="_blank" rel="noopener" style="text-decoration: none; background: #f2ebe3; color: #8a7465; font-size: 14px; font-weight: 600; padding: 11px 18px; border-radius: 999px;">Adicionar ao Google Agenda</a>
+                        <a href="{{ ex.mailto }}" style="text-decoration: none; background: #f2ebe3; color: #8a7465; font-size: 14px; font-weight: 600; padding: 11px 18px; border-radius: 999px;">Receber por e-mail</a>
+                      </sc-if>
+                    </div>
+                  </div>
                 </div>
               </div>
             </sc-for>
-            <p style="margin: 12px 0 0; font-size: 12px; color: #a89c8e; line-height: 1.6;">A confirmação registra sua presença na lista da aula. "Receber por e-mail" abre seu programa de e-mail com os dados da aula preenchidos.</p>
+          </sc-if>
+
+          <sc-if value="{{ semanaVazia }}">
+            <div style="font-size: 16px; color: #8a7465; line-height: 1.65;">Nada pendente esta semana. Sua próxima aula já está marcada acima.</div>
+          </sc-if>
+        </div>
+
+        <!-- ═══ SEU CAMINHO ═══ -->
+        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
+          <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">Seu caminho até aqui</div>
+          <sc-if value="{{ semJornada }}">
+            <div style="font-size: 16px; color: #8a7465; line-height: 1.65;">{{ semJornadaTexto }}</div>
+          </sc-if>
+          <div style="display: flex; gap: 8px;">
+            <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="3">
+              <div style="flex: 1; min-width: 0; background: #f5f5f0; border-radius: 12px; padding: 16px 12px; text-align: center;">
+                <div style="font-size: 25px; font-weight: 600; color: {{ nu.cor }}; letter-spacing: -0.5px; line-height: 1;">{{ nu.valor }}</div>
+                <div style="font-size: 12px; color: #8a7465; margin-top: 6px; line-height: 1.4;">{{ nu.label }}</div>
+              </div>
+            </sc-for>
           </div>
-        </sc-if>
+          <sc-if value="{{ temPrograma }}">
+            <div style="margin-top: 18px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+                <span style="font-size: 16px; font-weight: 600; color: #164951;">{{ programaNome }}</span>
+                <span style="font-size: 12px; color: #8a7465;">{{ programaSemanaLabel }}</span>
+              </div>
+              <div style="height: 6px; border-radius: 999px; background: #f0efe9; overflow: hidden;">
+                <div style="height: 6px; border-radius: 999px; background: #348a8e; width: {{ programaPct }};"></div>
+              </div>
+              <div style="font-size: 14px; color: #8a7465; margin-top: 8px; line-height: 1.6;">{{ programaFrase }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ jornadaNota }}">
+            <div style="font-size: 14px; color: #8a7465; margin-top: 16px; line-height: 1.6;">{{ jornadaNota }}</div>
+          </sc-if>
+        </div>
+
+        <!-- ═══ PRÓXIMA RECOMPENSA ═══ -->
+        <button onclick="{{ irMoedas }}" style="display: block; width: 100%; text-align: left; border: none; background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06); cursor: pointer; font-family: inherit;">
+          <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 10px;">Próxima recompensa</div>
+          <sc-if value="{{ temProxRec }}">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+              <span style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">{{ proxRecNome }}</span>
+              <span style="flex: none; font-size: 12px; font-weight: 600; color: #8a7465;">{{ proxRecCusto }}</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: #f0efe9; overflow: hidden; margin-top: 12px;">
+              <div style="height: 8px; border-radius: 999px; background: #9ec970; width: {{ proxRecPct }};"></div>
+            </div>
+            <div style="font-size: 14px; color: #8a7465; margin-top: 10px; line-height: 1.6;">{{ proxRecFrase }}</div>
+          </sc-if>
+          <sc-if value="{{ podeResgatar }}">
+            <div style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">{{ podeResgatarLabel }}</div>
+            <div style="font-size: 14px; color: #348a8e; margin-top: 8px;">Abrir a lojinha</div>
+          </sc-if>
+        </button>
 
         <!-- ATALHOS -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -188,50 +314,82 @@
 
       <!-- ═══ MOEDAS ═══ -->
       <sc-if value="{{ tabMoedas }}">
-        <div style="background: #164951; border-radius: 12px; padding: 32px 24px; text-align: center; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(22,73,81,0.12);">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: #9ec970; margin: 0 auto 16px;"></div>
+        <div style="background: #164951; border-radius: 12px; padding: 28px 24px; text-align: center; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(22,73,81,0.12);">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: #9ec970; margin: 0 auto 14px;"></div>
           <div style="font-size: 49px; font-weight: 600; color: #fff; letter-spacing: -1.5px; line-height: 1;">{{ moedasTotal }}</div>
           <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #9ec970; margin-top: 8px;">Suas moedas</div>
+          <sc-if value="{{ temProxRec }}">
+            <div style="height: 8px; border-radius: 999px; background: rgba(255,255,255,0.15); overflow: hidden; margin-top: 20px;">
+              <div style="height: 8px; border-radius: 999px; background: #9ec970; width: {{ proxRecPct }};"></div>
+            </div>
+            <div style="font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 10px; line-height: 1.5;">{{ proxRecFrase }}</div>
+          </sc-if>
         </div>
 
-        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
-          <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">Como ganhar moedas</div>
-          <sc-for list="{{ ganharGrupos }}" as="gg" hint-placeholder-count="3">
-            <div style="margin-bottom: 20px;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ gg.cor }};"></span>
-                <span style="font-size: 16px; font-weight: 600; color: #164951;">{{ gg.grupo }}</span>
+        <sc-if value="{{ resgateMsg }}">
+          <div style="background: #f2ebe3; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; font-size: 16px; color: #164951; line-height: 1.5;">{{ resgateMsg }}</div>
+        </sc-if>
+
+        <!-- o que ela já pode resgatar hoje -->
+        <sc-if value="{{ temDisponiveis }}">
+          <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5a8a3a; margin-bottom: 16px;">Você já pode resgatar</div>
+            <sc-for list="{{ disponiveis }}" as="rg" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 12px; background: rgba(158,201,112,0.16); border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 16px; font-weight: 600; color: #164951; line-height: 1.4;">{{ rg.nome }}</div>
+                  <div style="font-size: 12px; font-weight: 600; color: #5a8a3a; margin-top: 6px;">{{ rg.custo }} moedas</div>
+                </div>
+                <button onclick="{{ rg.onResgatar }}" style="flex: none; border: none; background: #fc9082; color: #164951; font-size: 14px; font-weight: 600; padding: 12px 18px; border-radius: 12px; cursor: pointer; font-family: inherit;">Resgatar</button>
               </div>
-              <sc-for list="{{ gg.itens }}" as="gi" hint-placeholder-count="4">
-                <div style="display: flex; justify-content: space-between; padding: 5px 0 5px 16px; font-size: 16px; color: #8a7465;">
-                  <span>{{ gi.label }}</span><span style="color: #348a8e; font-weight: 600;">+{{ gi.valor }}</span>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- as próximas -->
+        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
+          <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">{{ tituloBloqueados }}</div>
+          <sc-for list="{{ bloqueados }}" as="rg" hint-placeholder-count="4">
+            <div style="background: {{ rg.bg }}; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                <span style="font-size: 16px; font-weight: 600; color: {{ rg.titCor }}; line-height: 1.4;">{{ rg.nome }}</span>
+                <span style="flex: none; font-size: 12px; font-weight: 600; color: {{ rg.custoCor }};">{{ rg.custo }}</span>
+              </div>
+              <div style="height: 5px; border-radius: 999px; background: {{ rg.trilha }}; overflow: hidden; margin-top: 12px;">
+                <div style="height: 5px; border-radius: 999px; background: #9ec970; width: {{ rg.pct }};"></div>
+              </div>
+              <div style="font-size: 12px; color: {{ rg.custoCor }}; margin-top: 8px;">{{ rg.faltamLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- como ganhar -->
+        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
+          <button onclick="{{ onVerGanhar }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit;">
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465;">Como ganhar moedas</span>
+            <span style="font-size: 14px; color: #348a8e; font-weight: 600;">{{ verGanharLabel }}</span>
+          </button>
+          <sc-if value="{{ verGanhar }}">
+            <div style="margin-top: 18px;">
+              <sc-for list="{{ ganharGrupos }}" as="gg" hint-placeholder-count="3">
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ gg.cor }};"></span>
+                    <span style="font-size: 16px; font-weight: 600; color: #164951;">{{ gg.grupo }}</span>
+                  </div>
+                  <sc-for list="{{ gg.itens }}" as="gi" hint-placeholder-count="4">
+                    <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0 5px 16px; font-size: 16px; color: #8a7465;">
+                      <span style="line-height: 1.5;">{{ gi.label }}</span><span style="flex: none; color: #348a8e; font-weight: 600;">+{{ gi.valor }}</span>
+                    </div>
+                  </sc-for>
                 </div>
               </sc-for>
+              <div style="font-size: 14px; color: #a89787; line-height: 1.6; padding-top: 12px; border-top: 1px solid #f0efe9;">Créditos automáticos: parcela paga em dia +{{ regraParcela }} · integração concluída +{{ regraOnboarding }} · presença em aula +{{ regraPresenca }} · desafio da semana respondido +{{ regraMissao }}.</div>
             </div>
-          </sc-for>
-          <div style="font-size: 12px; color: #a89787; line-height: 1.6; padding-top: 12px; border-top: 1px solid #f0efe9;">Créditos automáticos: parcela paga em dia +{{ regraParcela }} · integração concluída +{{ regraOnboarding }} · presença em aula +{{ regraPresenca }}.</div>
-        </div>
-
-        <!-- LOJINHA -->
-        <div style="background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
-          <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">Resgatar</div>
-          <sc-if value="{{ resgateMsg }}">
-            <div style="background: #f2ebe3; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-size: 16px; color: #164951; line-height: 1.5;">{{ resgateMsg }}</div>
           </sc-if>
-          <sc-for list="{{ resgates }}" as="rg" hint-placeholder-count="5">
-            <div style="display: flex; align-items: center; gap: 12px; background: {{ rg.bg }}; border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;">
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 16px; font-weight: 600; color: {{ rg.titCor }}; line-height: 1.4;">{{ rg.nome }}</div>
-                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;">
-                  <span style="width: 10px; height: 10px; border-radius: 50%; background: #9ec970;"></span>
-                  <span style="font-size: 12px; font-weight: 600; color: {{ rg.custoCor }};">{{ rg.custo }} moedas</span>
-                </div>
-              </div>
-              <button onclick="{{ rg.onResgatar }}" style="flex: none; border: none; background: {{ rg.btnBg }}; color: {{ rg.btnFg }}; font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ rg.btnLabel }}</button>
-            </div>
-          </sc-for>
         </div>
 
+        <!-- extrato -->
         <div style="background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(22,73,81,0.06);">
           <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #8a7465; margin-bottom: 16px;">Extrato</div>
           <sc-if value="{{ semMoedas }}">
@@ -239,7 +397,7 @@
           </sc-if>
           <sc-for list="{{ moedasExtrato }}" as="mo" hint-placeholder-count="5">
             <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0efe9;">
-              <span style="flex: 1; font-size: 16px; color: #164951;">{{ mo.label }}</span>
+              <span style="flex: 1; font-size: 16px; color: #164951; line-height: 1.5;">{{ mo.label }}</span>
               <sc-if value="{{ mo.em }}"><span style="flex: none; font-size: 12px; color: #a89787;">{{ mo.em }}</span></sc-if>
               <span style="flex: none; font-size: 16px; font-weight: 600; color: {{ mo.cor }};">{{ mo.valorLabel }}</span>
             </div>
@@ -265,8 +423,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;420px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { tab: "inicio", pedidoFeito: false, resgateMsg: "", tick: 0 };
+  state = { tab: "inicio", pedidoFeito: false, resgateMsg: "", tick: 0,
+            missaoErro: "", verGanhar: false };
   corrTextoRef = React.createRef();
+  missaoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -293,9 +453,10 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { corrTextoRef: this.corrTextoRef };
+    const refs = { corrTextoRef: this.corrTextoRef, missaoRef: this.missaoRef };
     const nada = Object.assign({ ok: false, naoEncontrada: true, tabs: [], materiais: [],
-      parcelas: [], extras: [], documentos: [], moedasExtrato: [], ganharGrupos: [], resgates: [] }, refs);
+      parcelas: [], extras: [], documentos: [], moedasExtrato: [], ganharGrupos: [],
+      disponiveis: [], bloqueados: [], numeros: [], notas: [] }, refs);
     if (!CRM) return nada;
 
     let p = CRM.getPessoa(this.alunaId());
@@ -348,7 +509,12 @@ class Component extends DCLogic {
       statusLabel: x.confirmou ? "Presença confirmada" : "Ausência informada",
       statusCor: x.confirmou ? "#5a8a3a" : "#8a7465",
       vouBg: x.confirmou ? "#348a8e" : "#fc9082", vouFg: "#fff",
+      vouLabel: x.confirmou ? "Presença confirmada" : "Confirmar presença",
       naoBg: x.recusou ? "#8a7465" : "#f2ebe3", naoFg: x.recusou ? "#fff" : "#8a7465",
+      marca: x.confirmou ? "\u2713" : "",
+      borda: x.confirmou ? "#9ec970" : "#e3d9cc",
+      bgMarca: x.confirmou ? "#9ec970" : "transparent",
+      moedas: 15,
       gcal: x.gcal,
       mailto: CRM.mailtoAulaExtra(x.evento, [p.email].filter(Boolean),
         "Confirmação · " + x.titulo,
@@ -374,6 +540,34 @@ class Component extends DCLogic {
     const moedas = CRM.moedasDe(p.id);
     const tc = turmaRaw && turmaRaw.tarefaCasa ? turmaRaw.tarefaCasa : null;
 
+    // ── o que depende dela nesta semana ──
+    const pg = CRM.programaDaAluna(p.id);
+    const jornada = CRM.jornadaDaAluna(p.id);
+    const rec = CRM.recompensasDaAluna(p.id);
+    const aval = CRM.aulaAAvaliar(p.id);
+    const temMissao = !!(pg && pg.missao);
+    const missaoRespondida = !!(pg && pg.respondeu);
+    const extrasAResponder = extras.filter(e => !e.respondeu).length;
+
+    // a conta é do que ela pode fazer, não do que a escola registrou
+    const pendencias = [];
+    if (temMissao) pendencias.push(missaoRespondida);
+    if (tc) pendencias.push(!!this.state.pedidoFeito);
+    if (aval) pendencias.push(false);
+    extras.forEach(e => pendencias.push(!!e.respondeu));
+    const feitas = pendencias.filter(Boolean).length;
+    const totalSemana = pendencias.length;
+    const faltando = totalSemana - feitas;
+    const semanaCor = faltando === 0 ? "#9ec970" : "#348a8e";
+
+    const NOTAS = [
+      { n: 1, label: "1", title: "Muito difícil de acompanhar" },
+      { n: 2, label: "2", title: "Difícil" },
+      { n: 3, label: "3", title: "Deu para acompanhar" },
+      { n: 4, label: "4", title: "Boa" },
+      { n: 5, label: "5", title: "Ótima" }
+    ];
+
     return Object.assign({
       ok: true, naoEncontrada: false,
       primeiroNome: CRM.firstName(p.nome),
@@ -388,8 +582,88 @@ class Component extends DCLogic {
       aulaQuando: prox ? this.diaLabel(prox.data, prox.hora) : "",
       turmaLabel: p.turma || "—",
       temMeet: !!(turmaRaw && turmaRaw.meet), meet: turmaRaw ? (turmaRaw.meet || "#") : "#",
+      // ── sua semana ──
+      semanaContagem: totalSemana ? feitas + " de " + totalSemana : "",
+      semanaPct: (totalSemana ? Math.round((feitas / totalSemana) * 100) : 0) + "%",
+      semanaCor,
+      semanaFrase: totalSemana === 0
+        ? "Nada pendente esta semana."
+        : (faltando === 0
+            ? "Tudo feito. As moedas já entraram na sua carteira."
+            : (faltando === 1 ? "Falta uma coisa para fechar a semana."
+                              : "Faltam " + faltando + " coisas para fechar a semana.")),
+      semanaVazia: totalSemana === 0, temSemana: totalSemana > 0,
+
+      temMissao,
+      missaoSemana: pg ? pg.semana : 0,
+      missaoTexto: pg ? pg.missao : "",
+      missaoMoedas: CRM.MOEDAS_PROGRAMA ? CRM.MOEDAS_PROGRAMA.resposta : 20,
+      missaoAberta: temMissao && !missaoRespondida,
+      missaoRespondida,
+      missaoMarca: missaoRespondida ? "\u2713" : "",
+      missaoBorda: missaoRespondida ? "#9ec970" : "#e3d9cc",
+      missaoBg: missaoRespondida ? "#9ec970" : "transparent",
+      missaoResposta: pg && pg.resposta ? pg.resposta.texto : "",
+      missaoEm: pg && pg.resposta ? "em " + CRM.ddmm(pg.resposta.em) : "",
+      missaoErro: this.state.missaoErro,
+      devolutivaTexto: pg && pg.devolutiva
+        ? "Sua professora já respondeu. Veja no grupo."
+        : "Sua professora vai comentar sua resposta.",
+      devolutivaCor: pg && pg.devolutiva ? "#5a8a3a" : "#8a7465",
+      onResponderMissao: () => {
+        const txt = ((this.missaoRef.current && this.missaoRef.current.value) || "").trim();
+        if (!txt) { this.setState({ missaoErro: "Escreva sua resposta antes de enviar." }); return; }
+        CRM.responderMissao(pg.id, p.id, pg.semana, txt);
+        this.setState({ missaoErro: "" });
+        this.bump();
+      },
+
       temTarefa: !!tc, tarefaTexto: tc ? tc.texto : "", tarefaEm: tc ? CRM.ddmm(tc.em) : "",
+      tarefaMarca: this.state.pedidoFeito ? "\u2713" : "",
+      tarefaBorda: this.state.pedidoFeito ? "#9ec970" : "#e3d9cc",
+      tarefaBg: this.state.pedidoFeito ? "#9ec970" : "transparent",
       semPedido: !this.state.pedidoFeito, pedidoFeito: this.state.pedidoFeito,
+
+      temPulso: !!aval,
+      pulsoQuando: aval ? this.diaLabel(aval.data) : "",
+      notas: NOTAS.map(x => ({
+        label: x.label, title: x.title,
+        onClick: () => { CRM.registrarPulso(p.id, x.n, "", p.nome); this.bump(); }
+      })),
+
+      // ── seu caminho ──
+      semJornada: jornada.aulas === 0,
+      semJornadaTexto: "Sua primeira aula ainda não foi registrada. Os números aparecem aqui depois da chamada.",
+      numeros: jornada.aulas === 0 ? [] : [
+        { valor: String(jornada.presentes), label: jornada.presentes === 1 ? "aula feita" : "aulas feitas", cor: "#164951" },
+        { valor: jornada.aulas ? jornada.frequencia + "%" : "—", label: "de presença", cor: "#348a8e" },
+        { valor: String(jornada.sequencia), label: "seguidas sem faltar", cor: jornada.sequencia >= 3 ? "#5a8a3a" : "#164951" }
+      ],
+      jornadaNota: jornada.meses
+        ? "Você está com a ISR há " + jornada.meses + (jornada.meses === 1 ? " mês." : " meses.")
+        : "",
+      temPrograma: !!pg,
+      programaNome: pg ? pg.nome : "",
+      programaSemanaLabel: pg ? "semana " + pg.semana + " de " + pg.semanas : "",
+      programaPct: pg ? Math.round((pg.semana / pg.semanas) * 100) + "%" : "0%",
+      programaFrase: pg
+        ? (pg.respostas + (pg.respostas === 1 ? " desafio respondido" : " desafios respondidos")
+           + (pg.posicao ? " · " + pg.posicao + "\u00ba lugar entre " + pg.participantes : ""))
+        : "",
+
+      // ── próxima recompensa ──
+      temProxRec: !!rec.proxima,
+      proxRecNome: rec.proxima ? rec.proxima.nome : "",
+      proxRecCusto: rec.proxima ? rec.proxima.custo + " moedas" : "",
+      proxRecPct: rec.pct + "%",
+      proxRecFrase: rec.proxima
+        ? "Faltam " + rec.faltam + (rec.faltam === 1 ? " moeda." : " moedas.")
+        : "",
+      podeResgatar: !rec.proxima && rec.disponiveis.length > 0,
+      podeResgatarLabel: rec.disponiveis.length
+        ? "Você pode resgatar tudo da lojinha."
+        : "",
+
       onPedirCorrecao: () => {
         const txt = ((this.corrTextoRef.current && this.corrTextoRef.current.value) || "").trim();
         CRM.solicitarCorrecao(p.id, txt);
@@ -430,25 +704,38 @@ class Component extends DCLogic {
       semMoedas: moedas.extrato.length === 0,
       regraPresenca: CRM.MOEDAS_REGRAS.presenca, regraAtraso: CRM.MOEDAS_REGRAS.atraso,
       regraParcela: CRM.MOEDAS_REGRAS.parcelaPaga, regraOnboarding: CRM.MOEDAS_REGRAS.onboardingCompleto,
+      regraMissao: CRM.MOEDAS_PROGRAMA ? CRM.MOEDAS_PROGRAMA.resposta : 20,
+      verGanhar: this.state.verGanhar,
+      verGanharLabel: this.state.verGanhar ? "Fechar" : "Ver a lista",
+      onVerGanhar: () => this.setState({ verGanhar: !this.state.verGanhar }),
       ganharGrupos: CRM.MOEDAS_BONUS.map(g => ({ grupo: g.grupo, cor: g.cor,
         itens: g.itens.map(i => ({ label: i.label, valor: i.valor })) })),
       resgateMsg: this.state.resgateMsg,
-      resgates: CRM.MOEDAS_RESGATES.map(r => {
-        const pode = moedas.total >= r.custo;
+
+      temDisponiveis: rec.disponiveis.length > 0,
+      disponiveis: rec.disponiveis.slice().reverse().map(r => ({
+        nome: r.nome, custo: String(r.custo),
+        onResgatar: () => {
+          const res = CRM.resgatarRecompensa(p.id, r.id);
+          this.setState({ resgateMsg: res.ok
+            ? "Resgate solicitado: " + r.nome + ". A escola já recebeu o pedido e entra em contato."
+            : "Não foi possível concluir. Tente novamente." });
+          this.bump();
+        }
+      })),
+      tituloBloqueados: rec.disponiveis.length ? "As próximas" : "O que dá para conquistar",
+      bloqueados: rec.bloqueados.map((r, i) => {
         const vip = !!r.vip;
+        const faltam = r.custo - moedas.total;
         return {
-          nome: r.nome, custo: String(r.custo),
+          nome: r.nome, custo: r.custo + " moedas",
           bg: vip ? "#164951" : "#f5f5f0",
           titCor: vip ? "#fff" : "#164951",
           custoCor: vip ? "rgba(255,255,255,0.75)" : "#8a7465",
-          btnBg: pode ? "#fc9082" : (vip ? "rgba(255,255,255,0.12)" : "#e8e6df"),
-          btnFg: pode ? "#164951" : (vip ? "rgba(255,255,255,0.6)" : "#a89787"),
-          btnLabel: pode ? "Resgatar" : "Faltam " + (r.custo - moedas.total),
-          onResgatar: () => {
-            if (!pode) { this.setState({ resgateMsg: "Faltam " + (r.custo - moedas.total) + " moedas para este resgate." }); return; }
-            const res = CRM.resgatarRecompensa(p.id, r.id);
-            this.setState({ resgateMsg: res.ok ? "Resgate solicitado. A escola já recebeu o pedido e entrará em contato." : "Não foi possível concluir. Tente novamente." });
-          }
+          trilha: vip ? "rgba(255,255,255,0.15)" : "#e8e6df",
+          pct: Math.round(Math.min(100, (moedas.total / r.custo) * 100)) + "%",
+          faltamLabel: "Faltam " + faltam + (faltam === 1 ? " moeda" : " moedas")
+            + (i === 0 ? " — é a mais perto" : "")
         };
       })
     }, refs);
