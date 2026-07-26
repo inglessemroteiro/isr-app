@@ -39,8 +39,7 @@
         { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
         { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Agenda do comercial", desc: "O que foi executado, dia a dia", href: "ISR - Agenda do Comercial.dc.html", perfis: ["gestora", "comercial"] }
+        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
       ]
     },
     {

@@ -261,7 +261,8 @@
   };
 
   // ── PEDAGÓGICO — units of study (demo, estrutura da planilha) ──
-  var CAPACIDADE_PADRAO = 10;
+  // as turmas da ISR são pequenas de propósito: 2 a 5 alunas.
+  var CAPACIDADE_PADRAO = 5;
   var UNITS = [
     { id: "t1", nivel: "First Steps (A0)", turma: "WED 14h BR | 19h NL", teacher: "Carla", cycle: "2.2026",
       projeto: "My People Map", notebook: "[ON-FIR][Student_Notebook] My_People_Map_26.2" },
@@ -1761,9 +1762,9 @@
 
     var dono = donoDaIntegracao();
     avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
-      + ". Mande a missão da semana e adicione ao grupo.", "programa");
+      + ". Mande o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
-      detalhe: "Adicionar ao grupo do WhatsApp e enviar a missão da semana atual."
+      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual."
         + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
       dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
 
@@ -2159,7 +2160,9 @@
   //  saber quem cuida de quem, e quando alguém passou do que aguenta.
   // ══════════════════════════════════════════════════════════════
   var CAPACIDADE_KEY = "isr_capacidade_v1";
-  var CAPACIDADE_PADRAO = 25;
+  // quantas alunas uma professora aguenta acompanhar — não confundir com o
+  // tamanho da turma, que é outra coisa (CAPACIDADE_PADRAO, lá em cima).
+  var CARTEIRA_PADRAO = 25;
   function capacidades() {
     try { return JSON.parse(localStorage.getItem(CAPACIDADE_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -2190,7 +2193,7 @@
     var semProfessora = ativas.filter(function (p) { return !p.professora; });
     var linhas = nomes.map(function (n) {
       var alunas = porProf[n] || [];
-      var cap = caps[n] || CAPACIDADE_PADRAO;
+      var cap = caps[n] || CARTEIRA_PADRAO;
       var turmas = [];
       alunas.forEach(function (p) { if (p.turma && turmas.indexOf(p.turma) < 0) turmas.push(p.turma); });
       // quanto contato por semana essa carteira exige
@@ -3859,6 +3862,9 @@
           var c = contratoVigente(a);
           return soma + (c ? parseMoney(c.parcelaValor) : 0);
         }, 0);
+        // quem está com parcela em aberto. A fatia da professora não muda
+        // por causa disso: a base é a matrícula ativa, não o que entrou.
+        var devendo = alunas.filter(function (a) { return parcelasAbertas(a).length > 0; });
         var dadas = aulasDadasNoMes(label, mes);
         var freq = frequenciaDaTurma(label);
         var freqOk = freq.pct !== null && freq.pct >= cfg.metaFrequencia;
@@ -3870,6 +3876,9 @@
         var valor = Math.max(porFatia, porPiso);
         return { label: label, nivel: u.nivel, horario: u.turma,
           alunas: alunas.length, receita: receita,
+          inadimplentes: devendo.length,
+          abaixoDoMinimo: alunas.length < MINIMO_TURMA,
+          faltamAlunas: Math.max(0, MINIMO_TURMA - alunas.length),
           aulas: dadas.aulas, pctTarefa: dadas.pctTarefa,
           frequencia: freq.pct, freqOk: freqOk, tarefaOk: tarefaOk, metaOk: metaOk,
           pct: pct, porFatia: porFatia, porPiso: porPiso,
@@ -3888,6 +3897,7 @@
     var total = fixo + somaTurmas + vPart + vExtras;
 
     var receitaTotal = turmas.reduce(function (s, x) { return s + x.receita; }, 0);
+    var inadimplentes = turmas.reduce(function (s, x) { return s + x.inadimplentes; }, 0);
 
     return {
       nome: nome, mes: mes, moeda: moeda, cfg: cfg,
@@ -3896,7 +3906,8 @@
       extras: { dadas: extras.dadas, incluidas: cfg.extrasIncluidas,
         excedente: excedente, valor: vExtras, titulos: extras.titulos },
       total: total,
-      receitaTurmas: receitaTotal,
+      receitaTurmas: receitaTotal, inadimplentes: inadimplentes,
+      turmasAbaixoDoMinimo: turmas.filter(function (x) { return x.abaixoDoMinimo; }).length,
       pctDaReceita: receitaTotal ? Math.round((total / receitaTotal) * 1000) / 10 : null,
       fmt: function (v) { return fmtMoney(moeda, v); }
     };
@@ -4214,6 +4225,21 @@
   var AULAS_POR_CICLO_PADRAO = 10;
   var AULAS_CICLO_KEY = "isr_aulas_ciclo_v1";
 
+  // ── TAMANHO MÍNIMO DA TURMA ───────────────────────────────────
+  //
+  // Abaixo de 3 alunas a turma não se paga: o custo da professora é o
+  // mesmo e a receita cai. A regra vale para abrir e para manter.
+  var MINIMO_TURMA = 3;
+
+  function turmasAbaixoDoMinimo() {
+    return turmasLista().map(function (u) {
+      var label = u.nivel + " · " + u.turma;
+      var n = alunasDaTurma(label).length;
+      return { label: label, nivel: u.nivel, horario: u.turma,
+        professora: u.teacher, alunas: n, faltam: Math.max(0, MINIMO_TURMA - n) };
+    }).filter(function (x) { return x.alunas < MINIMO_TURMA; });
+  }
+
   function aulasPorCiclo() {
     try {
       var n = parseInt(localStorage.getItem(AULAS_CICLO_KEY), 10);
@@ -4393,7 +4419,7 @@
       for (var s = 1; s <= pg.semanas; s++) {
         if (!etapaFeita(pg, pessoaId, s, "audio")) continue;
         var r = ((pg.respostas || {})[pessoaId + "|" + s]) || {};
-        extrato.push({ em: r.em || "", label: "Missão da semana " + s + " respondida",
+        extrato.push({ em: r.em || "", label: "Desafio da semana " + s + " respondido",
           valor: MOEDAS_PROGRAMA.resposta });
       }
       var part = (pg.participacao || {})[pessoaId] || 0;
@@ -4474,10 +4500,10 @@
     var pessoa = getPessoa(pessoaId);
     if (pessoa) {
       mutate(pessoaId, function (pp) {
-        pushHist(pp, "contato", "Respondeu a missão da semana " + semana);
+        pushHist(pp, "contato", "Respondeu ao desafio da semana " + semana);
       });
       var dono = ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0 ? pessoa.professora : "Gabi";
-      avisar(dono, pessoa.nome + " respondeu a missão da semana " + semana + ". Falta a devolutiva.", "programa");
+      avisar(dono, pessoa.nome + " respondeu ao desafio da semana " + semana + ". Falta a devolutiva.", "programa");
     }
     return achou;
   }
@@ -5294,6 +5320,7 @@
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
+    MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
     progressoCiclo: progressoCiclo,
     contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
     setParticularPago: setParticularPago, produtosDe: produtosDe,

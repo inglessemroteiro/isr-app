@@ -23,7 +23,7 @@
         <button onclick="{{ onToggleNova }}" style="border: none; background: {{ novaBg }}; color: {{ novaFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novaLabel }}</button>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;"><strong>Cadastro de Turmas.</strong> Gerencia turmas regulares, alunas particulares, projetos do ciclo e materiais vinculados. A ocupação é calculada automaticamente a partir das matrículas.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 680px;">Turmas regulares, alunas particulares, projetos do ciclo e materiais vinculados. A ocupação vem das matrículas. Turmas abaixo de 3 alunas ficam sinalizadas: é o mínimo para abrir e para manter.</p>
 
     <!-- FORM NOVA TURMA -->
     <sc-if value="{{ novaAberta }}">
@@ -96,6 +96,9 @@
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 12.5px; font-weight: 700; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
                 <span style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px;">{{ u.vagaLabel }}</span>
+                <sc-if value="{{ u.abaixoDoMinimo }}">
+                  <span title="{{ u.minimoTitulo }}" style="display: inline-block; white-space: nowrap; background: rgba(207,107,92,0.14); color: #b05c4c; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px; margin-left: 5px;">{{ u.minimoLabel }}</span>
+                </sc-if>
               </div>
               <div style="height: 6px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-top: 5px; max-width: 110px;">
                 <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
@@ -217,6 +220,10 @@ class Component extends DCLogic {
     const turmas = base.filter(test).map(u => {
       const pct = Math.min(100, Math.round(100 * u.ocupadas / u.capacidade));
       const lotada = u.vagas <= 0, umaVaga = u.vagas === 1;
+      // abaixo de 3 alunas a turma não se paga: o custo da professora é o
+      // mesmo e a receita cai. Vale para abrir e para manter.
+      const minimo = CRM.MINIMO_TURMA || 3;
+      const abaixoDoMinimo = u.ocupadas < minimo;
       const editando = this.state.editId === u.id;
       return {
         turmaHref: "ISR%20-%20Turma.dc.html?id=" + u.id,
@@ -230,6 +237,9 @@ class Component extends DCLogic {
         vagaLabel: lotada ? "Lotada" : (u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
         vagaBg: lotada ? "rgba(207,107,92,0.14)" : (umaVaga ? "#f9dfc6" : "rgba(52,138,142,0.14)"),
         vagaFg: lotada ? "#b05c4c" : (umaVaga ? "#b0722c" : "#348a8e"),
+        abaixoDoMinimo,
+        minimoLabel: "faltam " + (minimo - u.ocupadas) + " p/ o mín.",
+        minimoTitulo: "Mínimo de " + minimo + " alunas para abrir e para manter a turma",
         material: u.notebook || "Sem caderno vinculado neste ciclo",
         materialCurto: (u.notebook || "—").slice(0, 30),
         editando,
