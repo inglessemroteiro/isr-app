@@ -115,9 +115,9 @@
         <span style="flex: none; font-size: 11.5px; color: #2a9d8f; font-weight: 700;">{{ verRegrasLabel }}</span>
       </button>
       <sc-if value="{{ verRegras }}">
-        <p style="margin: 14px 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Mudar aqui recalcula o mês inteiro. O piso garante que nenhuma professora receba menos do que receberia por hora de aula. A base da fatia são as matrículas ativas: parcela em aberto não reduz o pagamento da professora.</p>
+        <p style="margin: 14px 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Mudar aqui recalcula o mês inteiro. O piso garante que nenhuma professora receba menos do que receberia por hora de aula. A base da fatia são as matrículas ativas: parcela em aberto não reduz o pagamento da professora. Mensalidade em euro entra na folha convertida pela taxa abaixo. O teto limita o que uma professora custa sobre a receita das turmas dela: sem ele, quem tem uma turma só sai mais caro em proporção do que quem tem duas.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-          <sc-for list="{{ campos }}" as="cp" hint-placeholder-count="8">
+          <sc-for list="{{ campos }}" as="cp" hint-placeholder-count="11">
             <div>
               <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">{{ cp.label }}</div>
               <input ref="{{ cp.ref }}" placeholder="{{ cp.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -186,8 +186,12 @@ class Component extends DCLogic {
           : "frequência " + t.frequencia + "%" + (t.freqOk ? "" : " — abaixo de " + cfg.metaFrequencia + "%"));
         porQue.push(t.pctTarefa === null ? "sem tarefa registrada"
           : "tarefa marcada em " + t.pctTarefa + "% das aulas" + (t.tarefaOk ? "" : " — abaixo de " + cfg.metaTarefas + "%"));
+        const brutoLabel = t.moedaMista
+          ? CRM.fmtMoney("R$", t.bruto["R$"]) + " + " + CRM.fmtMoney("€", t.bruto["€"])
+            + " (= " + $(t.receita) + " ao câmbio de " + $(cfg.cambioEur) + ")"
+          : $(t.receita);
         const base = t.alunas + (t.alunas === 1 ? " aluna" : " alunas")
-          + " · " + $(t.receita) + " de mensalidade · " + t.aulas
+          + " · " + brutoLabel + " de mensalidade · " + t.aulas
           + (t.aulas === 1 ? " aula dada" : " aulas dadas");
         itens.push({
           cor: t.metaOk ? "#5a9e4b" : "#d4a574",
@@ -217,6 +221,14 @@ class Component extends DCLogic {
           + (p.particulares.alunas.length ? " · " + p.particulares.alunas.join(", ") : "")
           + " · " + $(cfg.aulaParticular) + " por aula.",
         detCor: "#8a7c6b", valor: $(p.particulares.valor)
+      });
+
+      if (p.tetoAplicado) itens.push({
+        cor: "#cf6b5c",
+        titulo: "Teto de " + cfg.tetoPct + "% da receita das turmas",
+        detalhe: "Fixo mais fatia dariam " + $(p.fixo + p.somaTurmas) + " sobre "
+          + $(p.receitaTurmas) + " de mensalidade. O teto cortou " + $(p.cortePeloTeto) + ".",
+        detCor: "#cf6b5c", valor: "− " + $(p.cortePeloTeto)
       });
 
       if (p.extras.dadas) itens.push({
@@ -279,7 +291,9 @@ class Component extends DCLogic {
       { id: "metaTarefas", label: "Meta de tarefa", ajuda: "% das aulas com tarefa marcada" },
       { id: "aulaParticular", label: "Aula particular", ajuda: "por aula dada" },
       { id: "extrasIncluidas", label: "Extras incluídas", ajuda: "já pagas pelo fixo" },
-      { id: "aulaExtraAlem", label: "Extra além da cota", ajuda: "por aula" }
+      { id: "aulaExtraAlem", label: "Extra além da cota", ajuda: "por aula" },
+      { id: "tetoPct", label: "Teto por professora", ajuda: "% máximo da receita das turmas dela" },
+      { id: "cambioEur", label: "Euro em reais", ajuda: "quanto vale € 1 na folha" }
     ];
 
     return {
