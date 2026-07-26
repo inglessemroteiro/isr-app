@@ -118,7 +118,11 @@
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
                 <input ref="{{ edNivelRef }}" placeholder="Nível: {{ u.nivel }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edHorarioRef }}" placeholder="Dia e horário: {{ u.turma }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <input ref="{{ edTeacherRef }}" placeholder="Professora: {{ u.teacher }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <select ref="{{ edTeacherRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ u.profOpts }}" as="po" hint-placeholder-count="6">
+                    <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+                  </sc-for>
+                </select>
                 <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <input ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ u.capacidade }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -216,7 +220,10 @@ class Component extends DCLogic {
       };
     });
 
-    const test = (ABAS.filter(a => a.id === abaAtiva)[0] || ABAS[0]).test;
+    const professoras = CRM.equipeLista()
+      .filter(m => (m.papeis || []).indexOf("professora") >= 0)
+      .map(m => m.nome);
+        const test = (ABAS.filter(a => a.id === abaAtiva)[0] || ABAS[0]).test;
     const turmas = base.filter(test).map(u => {
       const pct = Math.min(100, Math.round(100 * u.ocupadas / u.capacidade));
       const lotada = u.vagas <= 0, umaVaga = u.vagas === 1;
@@ -243,6 +250,10 @@ class Component extends DCLogic {
         material: u.notebook || "Sem caderno vinculado neste ciclo",
         materialCurto: (u.notebook || "—").slice(0, 30),
         editando,
+        // a professora vem da Equipe: nome digitado à mão desliga a turma
+        // da folha de pagamento sem avisar ninguém.
+        profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
+          .concat(professoras.map(n => ({ id: n, label: n, sel: n === u.teacher }))),
         editLabel: editando ? "editando…" : "editar",
         editBg: editando ? "#164951" : "#fff",
         editFg: editando ? "#fff" : "#164951",
