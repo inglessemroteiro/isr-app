@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Agenda do Comercial</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+<link rel="stylesheet" href="./isr-tokens.css">
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0 0 48px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #3d3529; -webkit-font-smoothing: antialiased;">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 26px 20px 0;">
+
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #2a9d8f; margin-bottom: 6px;">Inglês sem Roteiro · Comercial</div>
+    <h1 style="margin: 0 0 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.7px; color: #164951;">Agenda do Comercial</h1>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 740px;">O que foi executado, dia a dia: leads que entraram, contatos feitos, reuniões de matrícula e matrículas fechadas. Serve para ver a distribuição do trabalho — e os dias em que nada aconteceu.</p>
+
+    <!-- PERÍODO -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;">
+      <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="3">
+        <button onclick="{{ pd.onPick }}" style="border: 1px solid #e5dccf; background: {{ pd.bg }}; color: {{ pd.fg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.label }}</button>
+      </sc-for>
+    </div>
+
+    <!-- NÚMEROS DO PERÍODO -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px;">
+      <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="5">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 15px 17px;">
+          <div style="font-size: 25px; font-weight: 700; color: {{ nu.cor }}; letter-spacing: -0.6px; line-height: 1;">{{ nu.valor }}</div>
+          <div style="font-size: 11px; color: #8a7c6b; margin-top: 6px; line-height: 1.4;">{{ nu.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- LEITURA -->
+    <div style="background: #164951; border-radius: 14px; padding: 18px 20px; margin-bottom: 18px;">
+      <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #9ec970; margin-bottom: 6px;">O que os números dizem</div>
+      <div style="font-size: 15px; color: #fff; line-height: 1.6;">{{ leitura }}</div>
+      <sc-if value="{{ temAlerta }}">
+        <div style="font-size: 13px; color: #fc9082; line-height: 1.6; margin-top: 8px;">{{ alerta }}</div>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+
+      <!-- CALENDÁRIO DE ATIVIDADE -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Dia a dia</span>
+          <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">quanto mais escuro, mais atividade</span>
+        </div>
+        <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Toque num dia para ver o que aconteceu nele.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px;">
+          <sc-for list="{{ cabecalhoSemana }}" as="cs" hint-placeholder-count="7">
+            <div style="text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">{{ cs }}</div>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+          <sc-for list="{{ celulas }}" as="cl" hint-placeholder-count="35">
+            <button onclick="{{ cl.onPick }}" title="{{ cl.title }}" style="aspect-ratio: 1; border: 1px solid {{ cl.borda }}; background: {{ cl.bg }}; color: {{ cl.fg }}; border-radius: 8px; cursor: {{ cl.cursor }}; font-family: inherit; font-size: 11px; font-weight: 700; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+              <span>{{ cl.dia }}</span>
+              <sc-if value="{{ cl.temPonto }}">
+                <span style="width: 4px; height: 4px; border-radius: 50%; background: {{ cl.pontoCor }};"></span>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
+          <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 9px; height: 9px; border-radius: 3px; background: {{ lg.cor }};"></span>
+              <span style="font-size: 11px; color: #6b6155;">{{ lg.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- DIA SELECIONADO -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">{{ tituloDia }}</div>
+        <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">{{ subtituloDia }}</p>
+
+        <sc-if value="{{ diaVazio }}">
+          <div style="font-size: 13px; color: #b3a693; line-height: 1.6;">Nada registrado neste dia.</div>
+        </sc-if>
+
+        <sc-for list="{{ itensDoDia }}" as="it" hint-placeholder-count="6">
+          <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
+            <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ it.cor }}; margin-top: 6px;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <a href="{{ it.href }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: none;">{{ it.nome }}</a>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ it.detalhe }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- QUEM FEZ O QUÊ -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px; margin-top: 16px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Quem executou</div>
+      <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Contatos e reuniões registrados no período, por pessoa da equipe.</p>
+      <sc-if value="{{ semPessoas }}">
+        <div style="font-size: 13px; color: #b3a693; line-height: 1.6;">Nenhum contato registrado no período. Contatos entram quando a equipe usa os botões de mensagem no CRM ou no Perfil.</div>
+      </sc-if>
+      <sc-for list="{{ pessoas }}" as="pe" hint-placeholder-count="3">
+        <div style="padding: 11px 0; border-bottom: 1px solid #f4f1ec;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ pe.nome }}</span>
+            <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">{{ pe.resumo }}</span>
+          </div>
+          <div style="height: 7px; border-radius: 999px; background: #f0ede8; overflow: hidden;">
+            <div style="height: 7px; border-radius: 999px; background: #2a9d8f; width: {{ pe.pct }};"></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- DISTRIBUIÇÃO NA SEMANA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px; margin-top: 16px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Distribuição na semana</div>
+      <p style="margin: 0 0 16px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Em que dias da semana o trabalho comercial acontece. Vale para escolher onde encaixar os blocos de contato.</p>
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; min-height: 118px; padding-bottom: 4px;">
+        <sc-for list="{{ semana }}" as="sm" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 700; color: {{ sm.cor }};">{{ sm.n }}</span>
+            <div style="width: 100%; height: {{ sm.altura }}; border-radius: 6px 6px 0 0; background: {{ sm.cor }};"></div>
+            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">{{ sm.dia }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { dias: 30, diaSel: "", tick: 0 };
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { periodos: [], numeros: [], celulas: [], legenda: [], itensDoDia: [],
+      pessoas: [], semana: [], cabecalhoSemana: [], leitura: "", tituloDia: "", subtituloDia: "" };
+    if (!CRM || !CRM.agendaComercial) return vazio;
+
+    const ag = CRM.agendaComercial(this.state.dias);
+    const t = ag.totais;
+
+    const CORES = { entrada: "#e07856", contato: "#2a9d8f", reuniao: "#6b5b95", matricula: "#5a9e4b" };
+
+    // dia selecionado: o último com atividade, se ela ainda não escolheu
+    const comAlgo = ag.dias.filter(d => d.total > 0);
+    const diaSel = this.state.diaSel
+      || (comAlgo.length ? comAlgo[comAlgo.length - 1].data : (ag.dias[ag.dias.length - 1] || {}).data)
+      || "";
+    const dSel = ag.dias.filter(d => d.data === diaSel)[0] || null;
+
+    // ── calendário: alinhado à semana, domingo primeiro ──
+    const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+    const celulas = [];
+    if (ag.dias.length) {
+      const primeiro = new Date(ag.dias[0].data + "T12:00:00");
+      for (let i = 0; i < primeiro.getDay(); i++) {
+        celulas.push({ dia: "", bg: "transparent", borda: "transparent", fg: "transparent",
+          cursor: "default", title: "", temPonto: false, onPick: () => {} });
+      }
+    }
+    // a escala de cor é relativa ao dia mais movimentado do período
+    const teto = Math.max(1, ag.pico ? ag.pico.total : 1);
+    ag.dias.forEach(d => {
+      const intensidade = d.total / teto;
+      const sel = d.data === diaSel;
+      const fundo = d.total === 0
+        ? (d.fimDeSemana ? "#f7f4ef" : "#fff")
+        : "rgba(42,157,143," + (0.12 + intensidade * 0.62).toFixed(2) + ")";
+      const partes = [];
+      if (d.entradas.length) partes.push(d.entradas.length + " entrou");
+      if (d.contatos.length) partes.push(d.contatos.length + " contato(s)");
+      if (d.reunioes.length) partes.push(d.reunioes.length + " reunião(ões)");
+      if (d.matriculas.length) partes.push(d.matriculas.length + " matrícula(s)");
+      celulas.push({
+        dia: String(parseInt(d.data.slice(8, 10), 10)),
+        bg: fundo,
+        borda: sel ? "#164951" : (d.total ? "transparent" : "#eee3d6"),
+        fg: intensidade > 0.55 ? "#fff" : "#6b6155",
+        cursor: "pointer",
+        title: CRM.ddmm(d.data) + (partes.length ? " · " + partes.join(" · ") : " · nada registrado"),
+        temPonto: d.matriculas.length > 0,
+        pontoCor: intensidade > 0.55 ? "#9ec970" : "#5a9e4b",
+        onPick: () => this.setState({ diaSel: d.data })
+      });
+    });
+
+    // ── o que aconteceu no dia escolhido ──
+    const itensDoDia = [];
+    if (dSel) {
+      dSel.matriculas.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.matricula,
+        detalhe: "Matriculada" + (x.turma ? " · " + x.turma : ""),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
+      dSel.reunioes.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.reuniao,
+        detalhe: "Reunião de matrícula" + (x.hora ? " às " + x.hora : "")
+          + (x.dono ? " · " + x.dono : "") + (x.feita ? " · feita" : " · marcada"),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
+      dSel.contatos.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.contato,
+        detalhe: "Contato" + (x.por ? " por " + x.por : ""),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
+      dSel.entradas.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.entrada,
+        detalhe: "Entrou como lead" + (x.canal ? " · " + x.canal : ""),
+        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
+    }
+
+    // ── leitura em uma frase, não só números soltos ──
+    let leitura;
+    if (t.contatos === 0 && t.entradas === 0) {
+      leitura = "Nenhuma atividade comercial registrada no período.";
+    } else {
+      const co = ag.coorte || { entraram: 0, fecharam: 0 };
+      leitura = t.entradas + (t.entradas === 1 ? " pessoa entrou" : " pessoas entraram")
+        + " no período"
+        + (co.entraram ? ", e " + co.fecharam + " dessas já fechou" + (co.fecharam === 1 ? "" : "ram") : "")
+        + ". Foram " + t.contatos + (t.contatos === 1 ? " contato" : " contatos")
+        + ", " + ag.porDiaUtil + " por dia útil"
+        + (t.matriculas ? ", e " + t.matriculas + (t.matriculas === 1 ? " matrícula fechada" : " matrículas fechadas")
+           + " no período (contando quem entrou antes)" : "")
+        + ".";
+    }
+    const alerta = ag.diasSemNada > 0
+      ? ag.diasSemNada + " de " + ag.diasUteis + " dias úteis passaram sem nenhum registro."
+      : "";
+
+    const totalPessoa = ag.porPessoa.reduce((a, x) => a + x.contatos + x.reunioes, 0) || 1;
+    const maiorSemana = Math.max.apply(null, ag.porDiaSemana.map(x => x.n).concat([1]));
+
+    return {
+      periodos: [
+        { d: 14, label: "14 dias" }, { d: 30, label: "30 dias" }, { d: 90, label: "90 dias" }
+      ].map(x => ({
+        label: x.label,
+        bg: this.state.dias === x.d ? "#164951" : "#fff",
+        fg: this.state.dias === x.d ? "#fff" : "#164951",
+        onPick: () => this.setState({ dias: x.d, diaSel: "" })
+      })),
+
+      numeros: [
+        { valor: String(t.entradas), label: "leads entraram", cor: CORES.entrada },
+        { valor: String(t.contatos), label: "contatos feitos", cor: CORES.contato },
+        { valor: String(t.reunioes), label: "reuniões", cor: CORES.reuniao },
+        { valor: String(t.matriculas), label: "matrículas", cor: CORES.matricula },
+        { valor: ag.conversao === null ? "—" : ag.conversao + "%",
+          label: "de quem entrou já fechou", cor: "#164951" }
+      ],
+
+      leitura, alerta, temAlerta: !!alerta,
+
+      cabecalhoSemana: DIAS,
+      celulas,
+      legenda: [
+        { cor: CORES.entrada, label: "lead entrou" },
+        { cor: CORES.contato, label: "contato feito" },
+        { cor: CORES.reuniao, label: "reunião" },
+        { cor: CORES.matricula, label: "matrícula" }
+      ],
+
+      tituloDia: dSel ? CRM.ddmm(dSel.data) + " · " + dSel.diaSemana : "Nenhum dia escolhido",
+      subtituloDia: dSel
+        ? (dSel.total ? dSel.total + (dSel.total === 1 ? " registro neste dia" : " registros neste dia")
+                      : "Sem registro neste dia")
+        : "",
+      itensDoDia, diaVazio: itensDoDia.length === 0,
+
+      pessoas: ag.porPessoa.map(x => ({
+        nome: x.nome,
+        resumo: x.contatos + (x.contatos === 1 ? " contato" : " contatos")
+          + (x.reunioes ? " · " + x.reunioes + (x.reunioes === 1 ? " reunião" : " reuniões") : ""),
+        pct: Math.round(((x.contatos + x.reunioes) / totalPessoa) * 100) + "%"
+      })),
+      semPessoas: ag.porPessoa.length === 0,
+
+      semana: ag.porDiaSemana.map(x => ({
+        dia: x.dia, n: String(x.n),
+        altura: Math.max(4, Math.round((x.n / maiorSemana) * 76)) + "px",
+        cor: x.n === 0 ? "#e8e2d8" : (x.n === maiorSemana ? "#164951" : "#7fb8be")
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
