@@ -50,9 +50,10 @@
         </sc-if>
       </section>
 
-      <!-- PASSO 1 · DADOS -->
+      <!-- PASSO 2 · DADOS -->
+      <sc-if value="{{ mostraResto }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">2 · Dados da aluna</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">{{ nDados }}Dados da aluna</div>
         <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Vieram do cadastro. Corrija o que estiver desatualizado.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
           <div>
@@ -89,7 +90,7 @@
       <!-- PASSO 3 · TURMA -->
       <sc-if value="{{ querTurma }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">3 · Turma</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">{{ nTurma }}Turma</div>
         <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo vêm junto com a turma escolhida.</p>
         <select ref="{{ turmaRef }}" onchange="{{ onTurma }}" style="width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
           <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="6">
@@ -112,7 +113,7 @@
       <!-- PASSO 4 · PACOTE DE AULAS PARTICULARES -->
       <sc-if value="{{ querParticular }}">
         <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">4 · Aulas particulares</div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">{{ nParticular }}Aulas particulares</div>
           <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O pacote tem número de aulas e valor próprios. As aulas dadas são registradas no Perfil dela.</p>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
             <div>
@@ -135,7 +136,7 @@
       <sc-if value="{{ temMensalidade }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">5 · Condições de pagamento</span>
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">{{ nPagamento }}Condições de pagamento</span>
           <a href="ISR%20-%20Calculadora.dc.html" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none;">Abrir a calculadora</a>
         </div>
         <sc-if value="{{ temProposta }}">
@@ -190,7 +191,8 @@
 
       </sc-if>
 
-      <!-- MATRÍCULA RETROATIVA -->
+      <!-- MATRÍCULA RETROATIVA · só existe quando há parcelas a datar -->
+      <sc-if value="{{ temMensalidade }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Matrícula retroativa</span>
@@ -212,10 +214,12 @@
         </sc-if>
       </section>
 
-      <!-- PASSO 3B · ACOMPANHAMENTO (produto à parte) -->
+      </sc-if>
+
+      <!-- ACOMPANHAMENTO -->
       <sc-if value="{{ querPrograma }}">
         <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">6 · Acompanhamento</div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">{{ nPrograma }}Acompanhamento</div>
           <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Escolha o programa em que ela entra.</p>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <sc-for list="{{ programas }}" as="pgm" hint-placeholder-count="2">
@@ -233,7 +237,7 @@
 
       <!-- PASSO 4 · O QUE ACONTECE -->
       <section style="background: #f6f2ea; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">7 · O que o sistema faz ao concluir</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">{{ nResumo }}O que o sistema faz ao concluir</div>
         <sc-for list="{{ efeitos }}" as="ef" hint-placeholder-count="5">
           <div style="display: flex; gap: 9px; align-items: flex-start; padding: 5px 0;">
             <span style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: {{ ef.cor }}; margin-top: 6px;"></span>
@@ -242,12 +246,18 @@
         </sc-for>
       </section>
 
+      </sc-if>
+
+      <sc-if value="{{ semProdutoAviso }}">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 16px; font-size: 13px; color: #8a7c6b; line-height: 1.6;">Escolha acima o que ela contratou. Os campos seguintes mudam conforme a escolha: turma e mensalidade só aparecem para quem estuda em turma ou tem pacote de aulas.</div>
+      </sc-if>
+
       <sc-if value="{{ temErro }}">
         <div style="background: rgba(207,107,92,0.09); border: 1px solid rgba(207,107,92,0.3); border-radius: 10px; padding: 12px 15px; margin-bottom: 12px; font-size: 12.5px; color: #b0523f; line-height: 1.6;">{{ erro }}</div>
       </sc-if>
 
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <button onclick="{{ onConcluir }}" style="flex: 1; min-width: 220px; border: none; background: #348a8e; color: #fff; font-size: 14px; font-weight: 700; padding: 15px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Concluir matrícula</button>
+        <button onclick="{{ onConcluir }}" style="flex: 1; min-width: 220px; border: none; background: {{ concluirBg }}; color: #fff; font-size: 14px; font-weight: 700; padding: 15px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ concluirLabel }}</button>
         <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="text-decoration: none; border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 14px 20px; border-radius: 999px;">Cancelar</a>
       </div>
     </sc-if>
@@ -375,18 +385,29 @@ class Component extends DCLogic {
     const listaProgramas = CRM.programasLista();
     const programaSel = this.state.programaId || "";
     // ── o que ela comprou ──
-    const escolha = this.state.produtos || { turma: true, particular: false, programa: false };
+    // Nada vem marcado. Vinha "turma" por padrão e clicar em
+    // Acompanhamento somava os dois, deixando o passo da turma na tela
+    // pedindo uma turma que aquele produto não tem.
+    const escolha = this.state.produtos || { turma: false, particular: false, programa: false };
     const querTurma = !!escolha.turma;
     const querParticular = !!escolha.particular;
     const querPrograma = !!escolha.programa && listaProgramas.length > 0;
     const nenhumProduto = !querTurma && !querParticular && !escolha.programa;
     const temMensalidade = querTurma || querParticular;
     const alternar = chave => this.setState(s => {
-      const base = s.produtos || { turma: true, particular: false, programa: false };
+      const base = s.produtos || { turma: false, particular: false, programa: false };
       const novo = Object.assign({}, base);
       novo[chave] = !novo[chave];
       return { produtos: novo, erro: "" };
     });
+
+    // contador dos passos que realmente aparecem
+    let nPasso = nenhumProduto ? 1 : 2;
+    const passo = mostra => {
+      if (nenhumProduto || !mostra) return "";
+      nPasso += 1;
+      return nPasso + " · ";
+    };
 
     const progAtual = listaProgramas.filter(x => x.id === programaSel)[0] || null;
     const progNome = progAtual ? progAtual.nome : "";
@@ -482,6 +503,17 @@ class Component extends DCLogic {
         { id: "pais", label: "País", exemplo: "Brasil" }
       ].map(cx => ({ label: cx.label, ref: this.docRefs[cx.id], atual: p[cx.id] || cx.exemplo })),
 
+      // A numeração acompanha o que está na tela: sem produto escolhido,
+      // só existe o passo 1; escolhido, os passos seguintes se numeram
+      // na ordem em que aparecem.
+      nDados: nenhumProduto ? "" : "2 · ",
+      nTurma: passo(querTurma),
+      nParticular: passo(querParticular),
+      nPagamento: passo(temMensalidade),
+      nPrograma: passo(querPrograma),
+      nResumo: passo(true),
+      mostraResto: !nenhumProduto,
+
       opcoesProduto: [
         { id: "turma", nome: "Turma em grupo", sub: "Aulas semanais, contrato por ciclo", on: querTurma },
         { id: "particular", nome: "Aulas particulares", sub: "Pacote de aulas individuais", on: querParticular },
@@ -501,7 +533,9 @@ class Component extends DCLogic {
         subCor: op.on ? "#8a7c6b" : "#b3a693",
         onPick: () => alternar(op.id)
       })),
-      semProduto: nenhumProduto,
+      semProduto: nenhumProduto, semProdutoAviso: nenhumProduto,
+      concluirBg: nenhumProduto ? "#b8ada0" : "#348a8e",
+      concluirLabel: nenhumProduto ? "Escolha um produto acima" : "Concluir matrícula",
       querTurma, querParticular, querPrograma, temMensalidade,
       partAulasRef: this.partAulasRef, partValorRef: this.partValorRef, partPagoRef: this.partPagoRef,
 

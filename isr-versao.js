@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-e",
+  numero: "2026.07.26-f",
   data: "26/07/2026",
-  nota: "Agenda do comercial: o que foi executado, dia a dia"
+  nota: "Matrícula: escolher o produto não some com o passo errado"
 };
