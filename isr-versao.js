@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-d",
+  numero: "2026.07.26-e",
   data: "26/07/2026",
-  nota: "A avaliação da aula responde: eco da nota e campo aberto"
+  nota: "Agenda do comercial: o que foi executado, dia a dia"
 };

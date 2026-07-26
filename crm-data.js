@@ -521,6 +521,7 @@
     semearProgramaDemo(lista);
     semearChamadasDemo(lista);
     semearAulaExtraDemo(lista);
+    semearContatosDemo(lista);
   }
 
   // Sem programa e sem chamada, a área da aluna abre vazia e não dá para
@@ -598,6 +599,32 @@
       turmaAlvo: "", rsvps: {}, manuais: alunas.map(function (p) { return p.id; }),
       criadoEm: iso(today()) };
     try { localStorage.setItem("isr_eventos_v1", JSON.stringify([ev])); } catch (e) {}
+  }
+
+  // Sem contatos registrados, a agenda do comercial abre zerada e não dá
+  // para ver a distribuição do trabalho.
+  function semearContatosDemo(lista) {
+    try {
+      if ((JSON.parse(localStorage.getItem("isr_toques_v1")) || []).length) return;
+    } catch (e) {}
+    var alvos = lista.filter(function (p) {
+      return p.status === "lead" || p.status === "aluna";
+    }).slice(0, 8);
+    if (!alvos.length) return;
+    var quem = ["Carla", "Carla", "Gabi", "Carla", "Érika", "Gabi"];
+    var out = [];
+    alvos.forEach(function (p, i) {
+      // dois contatos por pessoa, espalhados em dias úteis das últimas semanas
+      [3 + i * 2, 11 + i].forEach(function (atras, k) {
+        var d = today(); d.setDate(d.getDate() - atras);
+        if (d.getDay() === 0) d.setDate(d.getDate() - 2);
+        if (d.getDay() === 6) d.setDate(d.getDate() - 1);
+        out.push({ id: "tq" + i + "" + k, pessoaId: p.id, data: iso(d),
+          tipo: k === 0 ? "whatsapp" : "followup",
+          nota: "", por: quem[(i + k) % quem.length] });
+      });
+    });
+    try { localStorage.setItem("isr_toques_v1", JSON.stringify(out)); } catch (e) {}
   }
 
   function semearChamadasDemo(lista) {
@@ -3685,6 +3712,103 @@
     });
   }
 
+  // ── AGENDA DO COMERCIAL ───────────────────────────────────────
+  //
+  // Quatro coisas acontecem no comercial e ficam espalhadas: leads que
+  // entram, contatos feitos, reuniões e matrículas. Aqui elas viram uma
+  // linha do tempo só, para dar para ver a distribuição do trabalho —
+  // em que dias houve movimento e em que dias não houve nada.
+  var DIA_CURTO = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
+  function agendaComercial(nDias) {
+    var n = nDias || 30;
+    var inicio = addDays(-(n - 1));
+    var hoje = iso(today());
+    var mapa = {};
+    for (var i = 0; i < n; i++) {
+      var dia = addDays(-(n - 1) + i);
+      var d = parseISO(dia);
+      mapa[dia] = { data: dia, diaSemana: DIA_CURTO[d.getDay()],
+        fimDeSemana: d.getDay() === 0 || d.getDay() === 6,
+        entradas: [], contatos: [], reunioes: [], matriculas: [] };
+    }
+    var dentro = function (x) { return x && x >= inicio && x <= hoje && mapa[x]; };
+
+    loadPessoas().forEach(function (p) {
+      if (dentro(p.entrouEm)) mapa[p.entrouEm].entradas.push({ id: p.id, nome: p.nome,
+        canal: (p.origem || {}).canal || "" });
+      // matrícula: a data de entrada de quem virou cliente
+      if (dentro(p.desde) && p.status !== "lead")
+        mapa[p.desde].matriculas.push({ id: p.id, nome: p.nome, turma: p.turma || "" });
+      var r = p.reuniao;
+      if (r && dentro(r.data)) mapa[r.data].reunioes.push({ id: p.id, nome: p.nome,
+        hora: r.hora || "", dono: r.dono || "", feita: !!r.feita });
+    });
+
+    toquesLista().forEach(function (x) {
+      if (!dentro(x.data)) return;
+      var pe = getPessoa(x.pessoaId);
+      mapa[x.data].contatos.push({ id: x.pessoaId, nome: pe ? pe.nome : "(removida)",
+        por: x.por || "", tipo: x.tipo || "contato" });
+    });
+
+    var dias = Object.keys(mapa).sort().map(function (k) {
+      var d = mapa[k];
+      d.total = d.entradas.length + d.contatos.length + d.reunioes.length + d.matriculas.length;
+      return d;
+    });
+
+    var totais = { entradas: 0, contatos: 0, reunioes: 0, matriculas: 0 };
+    var porPessoa = {}, porDiaSemana = [0, 0, 0, 0, 0, 0, 0];
+    dias.forEach(function (d) {
+      totais.entradas += d.entradas.length;
+      totais.contatos += d.contatos.length;
+      totais.reunioes += d.reunioes.length;
+      totais.matriculas += d.matriculas.length;
+      porDiaSemana[DIA_CURTO.indexOf(d.diaSemana)] += d.total;
+      d.contatos.forEach(function (c) {
+        var nome = c.por || "sem responsável";
+        porPessoa[nome] = porPessoa[nome] || { nome: nome, contatos: 0, reunioes: 0 };
+        porPessoa[nome].contatos++;
+      });
+      d.reunioes.forEach(function (r) {
+        var nome = r.dono || "sem responsável";
+        porPessoa[nome] = porPessoa[nome] || { nome: nome, contatos: 0, reunioes: 0 };
+        porPessoa[nome].reunioes++;
+      });
+    });
+
+    var uteis = dias.filter(function (d) { return !d.fimDeSemana; });
+    var vazios = uteis.filter(function (d) { return d.total === 0; });
+    var pico = dias.reduce(function (a, b) { return b.total > a.total ? b : a; }, dias[0] || { total: 0 });
+
+    return {
+      dias: dias, totais: totais,
+      diasUteis: uteis.length, diasSemNada: vazios.length,
+      porDiaUtil: uteis.length ? Math.round((totais.contatos / uteis.length) * 10) / 10 : 0,
+      porPessoa: Object.keys(porPessoa).map(function (k) { return porPessoa[k]; })
+        .sort(function (a, b) { return (b.contatos + b.reunioes) - (a.contatos + a.reunioes); }),
+      porDiaSemana: DIA_CURTO.map(function (lbl, i) { return { dia: lbl, n: porDiaSemana[i] }; }),
+      pico: pico,
+      // Conversão só faz sentido sobre a mesma gente: de quem entrou no
+      // período, quantas já fecharam. Comparar com o total de matrículas
+      // dava mais de 100%, porque muita gente que fechou entrou antes.
+      conversao: (function () {
+        var entraram = loadPessoas().filter(function (p) {
+          return dentro(p.entrouEm);
+        });
+        if (!entraram.length) return null;
+        var fecharam = entraram.filter(function (p) { return p.status !== "lead"; });
+        return Math.round((fecharam.length / entraram.length) * 100);
+      })(),
+      coorte: (function () {
+        var entraram = loadPessoas().filter(function (p) { return dentro(p.entrouEm); });
+        return { entraram: entraram.length,
+          fecharam: entraram.filter(function (p) { return p.status !== "lead"; }).length };
+      })()
+    };
+  }
+
   // ── GRAVAÇÕES DAS AULAS ───────────────────────────────────────
   //
   // Duas regras de acesso, e elas não são a mesma: a gravação de aula
@@ -4844,6 +4968,7 @@
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
     enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
+    agendaComercial: agendaComercial,
     comentarPulso: comentarPulso,
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
