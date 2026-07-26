@@ -1228,6 +1228,36 @@
     addHistory(pessoaId, "nota", "Avaliação de progresso: " + n + "/5 · " + m.label + (comentario ? " — " + comentario : ""), p.por);
     return p;
   }
+  // A aluna dá a nota primeiro e só depois escreve, se quiser. Isto
+  // completa o mesmo registro em vez de criar uma segunda avaliação.
+  function comentarPulso(pulsoId, comentario) {
+    var l = pulsosLista(), achou = null;
+    l.forEach(function (x) {
+      if (x.id !== pulsoId) return;
+      x.comentario = comentario || "";
+      achou = x;
+    });
+    if (!achou) return null;
+    pulsosSave(l);
+    if (comentario) {
+      var m = PULSO_META.filter(function (x) { return x.nota === achou.nota; })[0] || {};
+      addHistory(achou.pessoaId, "nota",
+        "Comentário da avaliação " + achou.nota + "/5" + (m.label ? " · " + m.label : "")
+        + " — " + comentario, achou.por);
+      // Nota baixa com relato vira pendência de quem acompanha a turma.
+      if (achou.nota <= 2) {
+        var pessoa = getPessoa(achou.pessoaId);
+        var dono = pessoa && ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0
+          ? pessoa.professora : "Gabi";
+        avisar(dono, (pessoa ? pessoa.nome : "Uma aluna") + " avaliou a última aula em "
+          + achou.nota + "/5: “" + comentario + "”", "acompanhamento");
+        addTarefa({ titulo: "Falar com " + (pessoa ? pessoa.nome : "a aluna") + " sobre a última aula",
+          detalhe: "Avaliação " + achou.nota + "/5 — “" + comentario + "”",
+          dono: dono, prazo: iso(today()), por: pessoa ? pessoa.nome : "" });
+      }
+    }
+    return achou;
+  }
   function pulsosDe(pessoaId) {
     return pulsosLista().filter(function (p) { return p.pessoaId === pessoaId; })
       .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
@@ -4814,6 +4844,7 @@
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
     enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
+    comentarPulso: comentarPulso,
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
