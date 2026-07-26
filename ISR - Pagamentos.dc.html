@@ -151,10 +151,28 @@
       </sc-for>
       <sc-if value="{{ temParcelasComissao }}">
         <div style="border-top: 1px solid #f4f1ec; margin-top: 6px; padding-top: 12px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Comissão que cai neste mês, de vendas anteriores</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Comissão liberada neste mês</span>
+            <span style="flex: none; font-size: 12px; font-weight: 700; color: #164951;">{{ totalLiberado }}</span>
+          </div>
+          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">A comissão acompanha a parcela: entra quando a aluna paga.</p>
           <sc-for list="{{ parcelasComissao }}" as="pc" hint-placeholder-count="4">
             <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; color: #6b6155;">
               <span>{{ pc.nome }}</span><span style="flex: none; font-weight: 700; color: #164951;">{{ pc.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ temAguardando }}">
+        <div style="border-top: 1px solid #f4f1ec; margin-top: 6px; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #b05c4c; font-weight: 700;">Aguardando a aluna pagar</span>
+            <span style="flex: none; font-size: 12px; font-weight: 700; color: #b05c4c;">{{ totalAguardando }}</span>
+          </div>
+          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">Parcelas deste mês ainda em aberto. A comissão entra quando o pagamento cair.</p>
+          <sc-for list="{{ aguardando }}" as="ag" hint-placeholder-count="4">
+            <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; color: #8a7c6b;">
+              <span>{{ ag.nome }}</span><span style="flex: none; font-weight: 700; color: #b05c4c;">{{ ag.valor }}</span>
             </div>
           </sc-for>
         </div>
@@ -202,7 +220,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const vazio = { meses: [], linhas: [], semLinhas: true, campos: [],
-      comercialItens: [], parcelasComissao: [], resumo: [], fixos: [] };
+      comercialItens: [], parcelasComissao: [], aguardando: [], resumo: [], fixos: [] };
     if (!CRM || !CRM.folhaPagamento) return vazio;
 
     const cfg = CRM.configPagamento();
@@ -456,8 +474,17 @@ class Component extends DCLogic {
         this.bump();
       },
       temParcelasComissao: aPagar.linhas.length > 0,
+      totalLiberado: $(aPagar.total),
       parcelasComissao: aPagar.linhas.map(l => ({
-        nome: l.nome + " · venda de " + l.mesVenda + " · " + l.pct + "% em " + l.parcelas + "x",
+        nome: l.nome + " · venda de " + l.mesVenda + " · parcela " + l.parcelaN
+          + " de " + l.parcelas + " · " + l.pct + "%",
+        valor: $(l.valor)
+      })),
+      temAguardando: aPagar.aguardando.length > 0,
+      totalAguardando: $(aPagar.totalAguardando),
+      aguardando: aPagar.aguardando.map(l => ({
+        nome: l.nome + " · venda de " + l.mesVenda + " · parcela " + l.parcelaN
+          + " de " + l.parcelas + " · " + l.pct + "%",
         valor: $(l.valor)
       })),
 

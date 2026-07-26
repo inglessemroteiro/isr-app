@@ -140,9 +140,52 @@
                   </button>
                 </sc-for>
               </div>
-              <div style="display: flex; gap: 6px; margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px; align-items: center; flex-wrap: wrap;">
-                <input ref="{{ renegValorRef }}" placeholder="Novo valor (ex. R$ 350)" style="flex: 1; min-width: 120px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-                <button onclick="{{ onRenegociar }}" title="Recalcula todas as parcelas em aberto com o novo valor" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Renegociar parcelas em aberto</button>
+              <div style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Renegociar</span>
+                  <button onclick="{{ onToggleReneg }}" style="border: 1px solid #e5dccf; background: {{ renegBg }}; color: {{ renegFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ renegLabel }}</button>
+                </div>
+
+                <sc-if value="{{ renegAberto }}">
+                  <div style="background: #faf8f3; border: 1px solid #eee3d6; border-radius: 10px; padding: 12px;">
+                    <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Soma o que está em aberto com o que ela vai contratar agora e divide no número de parcelas que cabe no ciclo.</p>
+
+                    <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 11.5px; color: #6b6155; padding: 4px 0;">
+                      <span>Em aberto · {{ renegNAbertas }}</span>
+                      <span style="font-weight: 700; color: #cf6b5c;">{{ renegEmAberto }}</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0;">
+                      <input ref="{{ renegNovoRef }}" oninput="{{ onRenegCalc }}" placeholder="Novo ciclo (opcional)" style="border: 1px solid #eee3d6; background: #fff; color: #164951; font-size: 11.5px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                      <input ref="{{ renegDescRef }}" oninput="{{ onRenegCalc }}" placeholder="Desconto (opcional)" style="border: 1px solid #eee3d6; background: #fff; color: #164951; font-size: 11.5px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                    </div>
+
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                      <sc-for list="{{ renegCiclos }}" as="rc" hint-placeholder-count="2">
+                        <button onclick="{{ rc.onPick }}" style="flex: 1; border: 1px solid {{ rc.borda }}; background: {{ rc.bg }}; color: {{ rc.fg }}; font-size: 11px; font-weight: 700; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-family: inherit;">{{ rc.label }}</button>
+                      </sc-for>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 8px 0; border-top: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8;">
+                      <span style="font-weight: 700; color: #164951;">Total a parcelar</span>
+                      <span style="font-weight: 700; color: #164951;">{{ renegTotal }}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
+                      <sc-for list="{{ renegOpcoes }}" as="ro" hint-placeholder-count="7">
+                        <button onclick="{{ ro.onPick }}" style="border: 1px solid {{ ro.borda }}; background: {{ ro.bg }}; color: {{ ro.fg }}; font-size: 11px; font-weight: 700; padding: 7px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ro.label }}</button>
+                      </sc-for>
+                    </div>
+
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                      <button onclick="{{ onAplicarReneg }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Fechar acordo</button>
+                      <span style="font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ renegAviso }}</span>
+                    </div>
+                    <sc-if value="{{ renegErro }}">
+                      <p style="margin: 8px 0 0; font-size: 11px; color: #cf6b5c;">{{ renegErro }}</p>
+                    </sc-if>
+                  </div>
+                </sc-if>
               </div>
               <div style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px;">
@@ -455,7 +498,8 @@
 class Component extends DCLogic {
   state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false,
             encerrando: false, tipoSaida: "saiu", renovando: false,
-            abrindoProduto: "", progPago: false };
+            abrindoProduto: "", progPago: false,
+            renegAberto: false, renegMeses: 3, renegParcelas: 0, renegTick: 0, renegErro: "" };
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
@@ -475,6 +519,7 @@ class Component extends DCLogic {
   checkinDateRef = React.createRef();
   pacAulasRef = React.createRef();
   renegValorRef = React.createRef();
+  renegNovoRef = React.createRef(); renegDescRef = React.createRef();
   moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
   moedasBonusRef = React.createRef();
 
@@ -660,12 +705,63 @@ class Component extends DCLogic {
         out.sinalFg = c.sinal.recebido ? "#5a9e4b" : "#c96a48";
         out.onSinalRecebido = () => { CRM.setSinalRecebido(p.id, true); this.bump(); };
       }
-      out.renegValorRef = this.renegValorRef;
-      out.onRenegociar = () => {
-        const v = ((this.renegValorRef.current && this.renegValorRef.current.value) || "").trim();
-        if (!v) return;
-        CRM.renegociarContrato(p.id, { novoValor: v, motivo: "renegociação" });
-        this.renegValorRef.current.value = "";
+      // ── renegociação: soma o em aberto com o novo ciclo e divide ──
+      const vv = r => ((r.current && r.current.value) || "").trim();
+      const simCfg = {
+        novoCiclo: vv(this.renegNovoRef),
+        desconto: vv(this.renegDescRef),
+        mesesCiclo: this.state.renegMeses,
+        parcelas: this.state.renegParcelas
+      };
+      const sim = CRM.simularRenegociacao(p.id, simCfg) || { opcoes: [], abertas: [] };
+
+      out.renegAberto = this.state.renegAberto;
+      out.renegLabel = this.state.renegAberto ? "fechar" : "calcular";
+      out.renegBg = this.state.renegAberto ? "#164951" : "#fff";
+      out.renegFg = this.state.renegAberto ? "#fff" : "#164951";
+      out.onToggleReneg = () => this.setState(s => ({
+        renegAberto: !s.renegAberto, renegParcelas: 0, renegErro: "" }));
+
+      out.renegNovoRef = this.renegNovoRef;
+      out.renegDescRef = this.renegDescRef;
+      out.onRenegCalc = () => this.setState(s => ({ renegTick: s.renegTick + 1 }));
+
+      out.renegNAbertas = sim.nAbertas + (sim.nAbertas === 1 ? " parcela" : " parcelas");
+      out.renegEmAberto = CRM.fmtMoney(sim.moeda, sim.emAberto || 0);
+      out.renegTotal = CRM.fmtMoney(sim.moeda, sim.total || 0);
+      out.renegErro = this.state.renegErro;
+
+      out.renegCiclos = [3, 6].map(m => ({
+        label: "Ciclo de " + m + " meses",
+        bg: this.state.renegMeses === m ? "#164951" : "#fff",
+        fg: this.state.renegMeses === m ? "#fff" : "#164951",
+        borda: this.state.renegMeses === m ? "#164951" : "#e5dccf",
+        onPick: () => this.setState({ renegMeses: m, renegParcelas: 0, renegErro: "" })
+      }));
+
+      out.renegOpcoes = (sim.opcoes || []).map(o => ({
+        label: o.label,
+        bg: this.state.renegParcelas === o.n ? "#348a8e" : "#fff",
+        fg: this.state.renegParcelas === o.n ? "#fff" : "#164951",
+        borda: this.state.renegParcelas === o.n ? "#348a8e" : "#e5dccf",
+        onPick: () => this.setState({ renegParcelas: o.n, renegErro: "" })
+      }));
+      out.renegAviso = "Ciclo de " + this.state.renegMeses + " meses aceita até "
+        + CRM.maxParcelasDoCiclo(this.state.renegMeses) + " parcelas. "
+        + "As parcelas em aberto somem e viram estas.";
+
+      out.onAplicarReneg = () => {
+        if (!this.state.renegParcelas) {
+          this.setState({ renegErro: "Escolha em quantas parcelas." }); return;
+        }
+        if (!sim.total) {
+          this.setState({ renegErro: "Não há nada em aberto para renegociar." }); return;
+        }
+        CRM.aplicarRenegociacao(p.id, Object.assign({}, simCfg,
+          { parcelas: this.state.renegParcelas, motivo: "renegociação" }));
+        this.setState({ renegAberto: false, renegParcelas: 0, renegErro: "" });
+        if (this.renegNovoRef.current) this.renegNovoRef.current.value = "";
+        if (this.renegDescRef.current) this.renegDescRef.current.value = "";
         this.bump();
       };
       out.contratoTipo = c.tipo; out.contratoCiclos = c.ciclos;

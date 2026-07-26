@@ -3582,6 +3582,80 @@
     });
     return n;
   }
+  // ── RENEGOCIAÇÃO ──────────────────────────────────────────────
+  //
+  // Quando alguém atrasa e volta a negociar, a conta é sempre a mesma:
+  // o que ficou em aberto mais o que ela está contratando agora, dividido
+  // num número de parcelas que caiba no ciclo. Ciclo de 3 meses aceita até
+  // 4 parcelas; de 6 meses, até 7 — uma a mais que os meses, porque a
+  // primeira costuma sair na assinatura.
+  var PARCELAS_MAX = { 3: 4, 6: 7 };
+
+  function maxParcelasDoCiclo(mesesCiclo) {
+    var n = parseInt(mesesCiclo, 10);
+    if (PARCELAS_MAX[n]) return PARCELAS_MAX[n];
+    if (!n || n < 1) return 4;
+    return n + 1;
+  }
+
+  function simularRenegociacao(pessoaOuId, cfg) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return null;
+    var opc = cfg || {};
+    var moeda = (contratoVigente(p) || {}).moeda || p.moeda || "R$";
+
+    // parcelasAbertas devolve o valor formatado; aqui a conta é numérica
+    var abertas = parcelasAbertas(p).map(function (x) {
+      return Object.assign({}, x, { bruto: parseMoney(x.valor) });
+    });
+    var emAberto = abertas.reduce(function (s, x) { return s + x.bruto; }, 0);
+    var novo = parseMoney(opc.novoCiclo || 0);
+    var desconto = parseMoney(opc.desconto || 0);
+    var total = Math.max(0, emAberto + novo - desconto);
+
+    var meses = parseInt(opc.mesesCiclo, 10) || 3;
+    var max = maxParcelasDoCiclo(meses);
+    var opcoes = [];
+    for (var n = 1; n <= max; n++) {
+      opcoes.push({ n: n, valor: total / n,
+        label: n + "x de " + fmtMoney(moeda, total / n) });
+    }
+
+    return { moeda: moeda, emAberto: emAberto, nAbertas: abertas.length,
+      abertas: abertas, novoCiclo: novo, desconto: desconto, total: total,
+      mesesCiclo: meses, maxParcelas: max, opcoes: opcoes,
+      escolhida: opc.parcelas ? opcoes.filter(function (o) { return o.n === parseInt(opc.parcelas, 10); })[0] : null };
+  }
+
+  // Fecha o acordo: apaga as parcelas em aberto e cria as novas.
+  function aplicarRenegociacao(id, cfg) {
+    var sim = simularRenegociacao(id, cfg);
+    if (!sim || !sim.total) return null;
+    var n = parseInt(cfg.parcelas, 10) || sim.maxParcelas;
+    var valor = fmtMoney(sim.moeda, sim.total / n);
+
+    return mutate(id, function (p) {
+      // tira o que estava em aberto de todos os contratos
+      (p.contratos || []).forEach(function (c) {
+        c.meses = (c.meses || []).filter(function (m) { return m.pago; });
+      });
+      var c = contratoVigente(p);
+      if (!c) return;
+      var venc = parseInt(cfg.vencDia, 10) || c.vencDia || 10;
+      var inicio = cfg.primeiroMes || mesSeguinte(mesAtualKey()).key;
+      c.parcelaValor = valor;
+      c.parcelas = n;
+      c.vencDia = venc;
+      c.meses = (c.meses || []).concat(mkMeses(0, valor, n, inicio));
+      pushHist(p, "renovacao",
+        "Renegociado · " + fmtMoney(sim.moeda, sim.emAberto) + " em aberto"
+        + (sim.novoCiclo ? " + " + fmtMoney(sim.moeda, sim.novoCiclo) + " do novo ciclo" : "")
+        + (sim.desconto ? " − " + fmtMoney(sim.moeda, sim.desconto) + " de desconto" : "")
+        + " = " + fmtMoney(sim.moeda, sim.total) + " em " + n + "x de " + valor
+        + (cfg.motivo ? " · " + cfg.motivo : ""));
+    });
+  }
+
   function renegociarContrato(id, cfg) {
     return mutate(id, function (p) {
       var c = contratoVigente(p);
@@ -4069,8 +4143,11 @@
     var somaTurmas = turmas.reduce(function (s, x) { return s + x.valor; }, 0);
     var vPart = part.aulas * cfg.aulaParticular;
     var vExtras = excedente * cfg.aulaExtraAlem;
-    // o fixo só faz sentido para quem tem turma; sem turma, não há reunião
-    var fixo = turmas.length ? cfg.fixo : 0;
+    // O fixo cobre a reunião semanal e as aulas extras incluídas. Quem tem
+    // turma só no cadastro — sem aluna e sem aula dada no mês — não fez esse
+    // trabalho, então não recebe o fixo por ela.
+    var comMovimento = turmas.filter(function (t) { return t.alunas > 0 || t.aulas > 0; });
+    var fixo = comMovimento.length ? cfg.fixo : 0;
 
     var receitaTotal = turmas.reduce(function (s, x) { return s + x.receita; }, 0);
 
@@ -4090,6 +4167,8 @@
     return {
       nome: nome, mes: mes, moeda: moeda, cfg: cfg,
       fixo: fixo, turmas: turmas, somaTurmas: somaTurmas,
+      turmasComMovimento: comMovimento.length,
+      turmasParadas: turmas.length - comMovimento.length,
       particulares: { aulas: part.aulas, alunas: part.alunas, valor: vPart },
       extras: { dadas: extras.dadas, incluidas: cfg.extrasIncluidas,
         excedente: excedente, valor: vExtras, titulos: extras.titulos },
@@ -4187,25 +4266,29 @@
   // cujas parcelas ainda correm — é assim que a planilha paga.
   function comissaoAPagar(mesKey, porQuem) {
     var mes = mesKey || mesAtualKey();
-    var linhas = [];
+    var liberadas = [], aguardando = [];
     // olha 12 meses para trás procurando vendas cujas parcelas alcançam o mês
     for (var i = 0; i < 12; i++) {
       var d = new Date(); d.setMonth(d.getMonth() - i);
-      var mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(2 - 2 + 0).slice(-2);
-      mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+      var mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
       var fech = comissaoComercial(mv, porQuem);
       fech.vendas.forEach(function (v) {
         var p = getPessoa(v.id);
         var c = p ? contratoVigente(p) : null;
         if (!c) return;
-        var cai = (c.meses || []).some(function (m) { return m.key === mes; });
-        if (!cai) return;
-        linhas.push({ nome: v.nome, mesVenda: mv, contrato: v.contrato,
-          parcelas: v.parcelas, pct: v.pct, valor: v.porParcela });
+        var parcela = (c.meses || []).filter(function (m) { return m.key === mes; })[0];
+        if (!parcela) return;
+        var qual = (c.meses || []).map(function (m) { return m.key; }).indexOf(mes) + 1;
+        var linha = { nome: v.nome, mesVenda: mv, contrato: v.contrato,
+          parcelas: v.parcelas, parcelaN: qual, pct: v.pct,
+          paga: !!parcela.pago, valor: v.porParcela };
+        // a comissão acompanha a parcela: só entra quando a aluna paga
+        if (parcela.pago) liberadas.push(linha); else aguardando.push(linha);
       });
     }
-    return { mes: mes, linhas: linhas,
-      total: linhas.reduce(function (s, x) { return s + x.valor; }, 0) };
+    return { mes: mes, linhas: liberadas, aguardando: aguardando,
+      total: liberadas.reduce(function (s, x) { return s + x.valor; }, 0),
+      totalAguardando: aguardando.reduce(function (s, x) { return s + x.valor; }, 0) };
   }
 
   // Todas as professoras do mês, com o total da folha.
@@ -4218,8 +4301,10 @@
     turmasLista().forEach(function (u) {
       if (u.teacher && nomes.indexOf(u.teacher) < 0) nomes.push(u.teacher);
     });
+    // quem não tem nada a receber não é linha da folha. Turma parada no
+    // cadastro não põe ninguém aqui.
     var linhas = nomes.map(function (n) { return pagamentoProfessora(n, mes); })
-      .filter(function (x) { return x.total > 0 || x.turmas.length; });
+      .filter(function (x) { return x.total > 0; });
     var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
     var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
     // quem tem valor mensal no cadastro da Equipe — operação, prestadoras —
@@ -5535,6 +5620,8 @@
     agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
     renegociarContrato: renegociarContrato, setSinalRecebido: setSinalRecebido,
+    simularRenegociacao: simularRenegociacao, aplicarRenegociacao: aplicarRenegociacao,
+    maxParcelasDoCiclo: maxParcelasDoCiclo,
     caixaDetalheMes: caixaDetalheMes, processarCadastrosPendentes: processarCadastrosPendentes,
     // caixa
     get CUSTOS_FIXOS() { return custosLista(); }, custosTotais: custosTotais, projecaoCaixa: projecaoCaixa,
