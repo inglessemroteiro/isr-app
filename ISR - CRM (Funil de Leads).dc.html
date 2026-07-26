@@ -309,16 +309,26 @@
               </div>
             </sc-if>
 
-            <!-- MINI-FORM DE REUNIÃO -->
+            <!-- AGENDAR A CONVERSA DE MATRÍCULA -->
             <sc-if value="{{ lead.agendandoReuniao }}">
-              <div style="background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 10px;">Data da conversa de matrícula — entra na Agenda da escola</div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                  <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                  <input ref="{{ lead.reuHoraRef }}" placeholder="Hora (ex. 15h)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; width: 110px;" />
-                  <button onclick="{{ lead.onAgendarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">Marcar</button>
-                  <button onclick="{{ lead.onAgendarCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 10px 8px; cursor: pointer;">cancelar</button>
+              <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
+                <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ lead.donoReuniao }}, vira pendência na Central e libera o convite com o link para mandar à lead.</p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
+                    <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                  </div>
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
+                    <input ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                  </div>
+                  <button onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
+                  <button onclick="{{ lead.onAgendarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
                 </div>
+                <sc-if value="{{ lead.erroReuniao }}">
+                  <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">{{ lead.erroReuniao }}</p>
+                </sc-if>
               </div>
             </sc-if>
 
@@ -331,6 +341,7 @@
               <sc-if value="{{ lead.temReuniao }}">
                 <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
                 <a href="{{ lead.gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Google Agenda</a>
+                <a href="{{ lead.waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Mandar o convite</a>
                 <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar como feita</button>
               </sc-if>
               <button onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lead.condLabel }}</button>
@@ -370,7 +381,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0,
-    sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "" };
+    sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "" };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   matSinalRef = React.createRef();
   formRef = React.createRef();
@@ -496,11 +507,15 @@ class Component extends DCLogic {
           // mudanças. O seletor precisa voltar ao estágio real na hora, senão
           // mostra "Matriculada" enquanto a pessoa continua lead — e quem
           // fecha o formulário sai achando que matriculou.
-          const abreFormulario = { contrato: 1, matriculado: 1, perdido: 1 };
+          const abreFormulario = { reuniao: 1, contrato: 1, matriculado: 1, perdido: 1 };
           if (abreFormulario[val]) {
             e.target.value = l.estagio;
             const prv = CRM.propostaDe(l.id);
-            if (val === "contrato") {
+            if (val === "reuniao") {
+              // reunião sem dia e hora não vai para agenda nenhuma
+              this.abrirForm({ openId: l.id, agendandoReuniaoId: l.id,
+                negociandoId: null, matriculandoId: null, perdendoId: null });
+            } else if (val === "contrato") {
               this.abrirForm({ openId: l.id, negociandoId: l.id, matriculandoId: null, perdendoId: null,
                 pSinalRecebido: !!(prv && prv.sinalRecebido) });
             } else if (val === "matriculado") {
@@ -537,20 +552,32 @@ class Component extends DCLogic {
         out.onNoteKey = (e) => { if (e.key === "Enter") { e.preventDefault(); this.saveNote(l.id); } };
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
         out.agendandoReuniao = this.state.agendandoReuniaoId === l.id;
-        void 0;
         out.semReuniao = !(l.reuniao && !l.reuniao.feita) && this.state.agendandoReuniaoId !== l.id;
         out.temReuniao = !!(l.reuniao && !l.reuniao.feita);
         out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " · " + l.reuniao.hora : "")) : "";
         out.reuDataRef = this.reuDataRef; out.reuHoraRef = this.reuHoraRef;
         out.onAgendar = () => this.setState({ agendandoReuniaoId: l.id, matriculandoId: null, perdendoId: null });
-        out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null });
+        out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null, erroReuniao: "" });
+        out.erroReuniao = this.state.erroReuniao || "";
+        out.donoReuniao = CRM.donoComercial ? CRM.donoComercial() : "quem cuida do comercial";
         out.onAgendarConfirma = () => {
           const data = (this.reuDataRef.current && this.reuDataRef.current.value) || "";
-          if (!data) return;
+          if (!data) { this.setState({ erroReuniao: "Escolha o dia da conversa." }); return; }
+          const hora = (this.reuHoraRef.current && this.reuHoraRef.current.value) || "";
           CRM.setStage(l.id, "reuniao");
-          CRM.agendarReuniao(l.id, data, (this.reuHoraRef.current && this.reuHoraRef.current.value) || "");
-          this.setState({ agendandoReuniaoId: null, openId: l.id, tab: "reuniao" });
+          CRM.agendarReuniao(l.id, data, hora);
+          // a lead muda de estágio: vai para a aba Reunião com o card aberto,
+          // para o convite e o Google Agenda ficarem à mão.
+          this.setState({ agendandoReuniaoId: null, tab: "reuniao", openId: l.id, erroReuniao: "" });
         };
+        // convite pronto para mandar à lead, com dia, hora e o link do Meet
+        out.waReuniao = (function () {
+          if (!l.reuniao) return "#";
+          const quando = CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " às " + l.reuniao.hora : "");
+          return CRM.waLink(l.whatsapp,
+            "Oi, " + CRM.firstName(l.nome) + "! Nossa conversa está marcada para " + quando
+            + ". Vou te mandar o link por aqui um pouco antes. Até lá!");
+        })();
         out.gcalReuniao = CRM.gcalReuniao(l.id);
         out.onReuniaoFeita = () => { CRM.marcarReuniaoFeita(l.id); this.bump(); };
         out.onExcluir = () => { if (confirm("Excluir este lead? Não dá para desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
