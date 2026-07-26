@@ -538,7 +538,9 @@
       "Olívia Castro", "Laura Pimentel", "Cecília Braga", "Elisa Fontes",
       "Antonia Rangel", "Maitê Cordeiro"
     ];
+    // parte das alunas paga em euro — é assim na escola de verdade
     var MENSALIDADE = "R$ 497,00";
+    var MENSALIDADE_EUR = "€ 89,00";
     var META = 3; // cada turma do exemplo fica com pelo menos o mínimo
     var k = 0, n = 0;
 
@@ -552,10 +554,13 @@
       n += 1;
       while (tem < alvo && k < NOMES.length) {
         var nome = NOMES[k]; k += 1; tem += 1;
+        var euro = k % 3 === 0;                       // uma a cada três em euro
+        var moedaAl = euro ? "€" : "R$";
+        var mensal = euro ? MENSALIDADE_EUR : MENSALIDADE;
         lista.push({
           id: "pd" + k, nome: nome,
           whatsapp: "+55 11 97000-" + String(1000 + k).slice(-4),
-          email: nome.toLowerCase().split(" ")[0] + "@exemplo.com", moeda: "R$",
+          email: nome.toLowerCase().split(" ")[0] + "@exemplo.com", moeda: moedaAl,
           status: "aluna", estagio: "matriculado", badge: "",
           origem: { canal: "Indicação", detalhe: "", veioDe: "", entrouPor: "" },
           formatos: ["grupo"], turma: label, professora: u.teacher,
@@ -564,9 +569,10 @@
           desde: addDays(-100 - k),
           proximoFollowup: "",
           contratos: [{ tipo: "Matrícula", ciclos: "Ciclo " + (u.cycle || "2.2026"),
-            moeda: "R$", valorTotal: "R$ 1.491,00", parcelaValor: MENSALIDADE,
+            moeda: moedaAl, valorTotal: euro ? "€ 267,00" : "R$ 1.491,00",
+            parcelaValor: mensal,
             parcelas: 3, vencDia: 10, fim: addDays(60),
-            meses: mkMeses(1, MENSALIDADE, 3) }],
+            meses: mkMeses(1, mensal, 3) }],
           documentos: [],
           historico: [{ data: addDays(-100 - k), tipo: "matricula",
             texto: "Matriculada · " + u.nivel }]
@@ -3853,8 +3859,20 @@
     aulaExtraAlem: 85,     // por aula extra além da cota
     extrasIncluidas: 2,    // aulas extras já pagas pelo fixo
     metaFrequencia: 85,    // % de presença no ciclo
-    metaTarefas: 80        // % das chamadas do mês com tarefa marcada
+    metaTarefas: 80,       // % das chamadas do mês com tarefa marcada
+    tetoPct: 32,           // teto: a professora nunca custa mais que isto da receita das turmas dela
+    cambioEur: 6.20        // quantos R$ vale 1 €, para a folha em R$
   };
+
+  // Parte das mensalidades é em euro. Sem converter, € 125 e R$ 125 entravam
+  // na mesma soma e a fatia da professora saía errada. Toda conta de
+  // pagamento passa por aqui antes de somar.
+  function emMoedaDaFolha(valor, moeda, cfg) {
+    var c = cfg || configPagamento();
+    if (moeda === "€" && (c.moeda || "R$") !== "€") return valor * (c.cambioEur || 1);
+    if (moeda !== "€" && (c.moeda || "R$") === "€") return valor / (c.cambioEur || 1);
+    return valor;
+  }
 
   function configPagamento() {
     var base = {};
@@ -3946,11 +3964,20 @@
       .map(function (u) {
         var label = u.nivel + " · " + u.turma;
         var alunas = alunasDaTurma(label);
-        // a receita da turma é o que as alunas ativas pagam por mês
+        // a receita da turma é o que as alunas ativas pagam por mês.
+        // Parte das mensalidades é em euro: cada uma é convertida antes de
+        // entrar na soma, e o bruto por moeda fica guardado para a tela.
+        var bruto = { "R$": 0, "€": 0 };
         var receita = alunas.reduce(function (soma, a) {
           var c = contratoVigente(a);
-          return soma + (c ? parseMoney(c.parcelaValor) : 0);
+          if (!c) return soma;
+          var v = parseMoney(c.parcelaValor);
+          var m = c.moeda || a.moeda || "R$";
+          if (bruto[m] === undefined) bruto[m] = 0;
+          bruto[m] += v;
+          return soma + emMoedaDaFolha(v, m, cfg);
         }, 0);
+        var temEuro = bruto["€"] > 0 && bruto["R$"] > 0;
         // quem está com parcela em aberto. A fatia da professora não muda
         // por causa disso: a base é a matrícula ativa, não o que entrou.
         var devendo = alunas.filter(function (a) { return parcelasAbertas(a).length > 0; });
@@ -3965,6 +3992,7 @@
         var valor = Math.max(porFatia, porPiso);
         return { label: label, nivel: u.nivel, horario: u.turma,
           alunas: alunas.length, receita: receita,
+          bruto: bruto, moedaMista: temEuro,
           inadimplentes: devendo.length,
           abaixoDoMinimo: alunas.length < MINIMO_TURMA,
           faltamAlunas: Math.max(0, MINIMO_TURMA - alunas.length),
@@ -3983,9 +4011,20 @@
     var vExtras = excedente * cfg.aulaExtraAlem;
     // o fixo só faz sentido para quem tem turma; sem turma, não há reunião
     var fixo = turmas.length ? cfg.fixo : 0;
-    var total = fixo + somaTurmas + vPart + vExtras;
 
     var receitaTotal = turmas.reduce(function (s, x) { return s + x.receita; }, 0);
+
+    // TETO: o piso protege a professora, o teto protege a escola. Sem ele, quem
+    // tem uma turma só levava o fixo inteiro em cima de pouca receita — 35% de
+    // uma turma de 4, contra 30% de quem tem duas. O teto vale sobre a parte de
+    // turma (fixo + fatia); particular e extra são serviço à parte e ficam fora.
+    var parteTurma = fixo + somaTurmas;
+    var teto = receitaTotal * (cfg.tetoPct || 100) / 100;
+    var tetoAplicado = receitaTotal > 0 && parteTurma > teto;
+    var cortePeloTeto = tetoAplicado ? parteTurma - teto : 0;
+    if (tetoAplicado) parteTurma = teto;
+
+    var total = parteTurma + vPart + vExtras;
     var inadimplentes = turmas.reduce(function (s, x) { return s + x.inadimplentes; }, 0);
 
     return {
@@ -3996,6 +4035,8 @@
         excedente: excedente, valor: vExtras, titulos: extras.titulos },
       total: total,
       receitaTurmas: receitaTotal, inadimplentes: inadimplentes,
+      tetoAplicado: tetoAplicado, teto: teto, cortePeloTeto: cortePeloTeto,
+      parteTurma: parteTurma,
       turmasAbaixoDoMinimo: turmas.filter(function (x) { return x.abaixoDoMinimo; }).length,
       pctDaReceita: receitaTotal ? Math.round((total / receitaTotal) * 1000) / 10 : null,
       fmt: function (v) { return fmtMoney(moeda, v); }
@@ -4057,10 +4098,14 @@
     var faixa = faixaComissao(vendas.length);
     var meta = META_POR_VENDA * Math.max(1, vendas.length);
 
-    // cada venda gera uma comissão que se espalha nas parcelas dela
+    // cada venda gera uma comissão que se espalha nas parcelas dela.
+    // Contrato em euro vira a moeda da folha antes de virar comissão.
+    var cfgP = configPagamento();
     var detalhe = vendas.map(function (v) {
-      var comissao = v.contrato * faixa.pct / 100;
-      return Object.assign({}, v, { pct: faixa.pct, comissao: comissao,
+      var contrato = emMoedaDaFolha(v.contrato, v.moeda, cfgP);
+      var comissao = contrato * faixa.pct / 100;
+      return Object.assign({}, v, { contratoOriginal: v.contrato, contrato: contrato,
+        pct: faixa.pct, comissao: comissao,
         porParcela: v.parcelas ? comissao / v.parcelas : comissao });
     });
     var comissaoTotal = detalhe.reduce(function (s, x) { return s + x.comissao; }, 0);
@@ -4415,6 +4460,53 @@
     Object.keys(m).forEach(function (k) { if (m[k].turma === turmaLabel) out.push(m[k]); });
     out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
     return out;
+  }
+
+  // ── DIÁRIO DE CLASSE ──────────────────────────────────────────
+  //
+  // O diário é a grade de sempre: alunas nas linhas, aulas nas colunas,
+  // uma letra por célula. A professora vê o ciclo inteiro de uma vez —
+  // quem está sumindo, quem entrega tarefa — em vez de uma lista solta
+  // do dia. A coluna da aula escolhida é a que se preenche.
+  function diarioDaTurma(turmaLabel, dataAtualIso, nAulas) {
+    var limite = nAulas || aulasPorCiclo();
+    var alunas = alunasDaTurma(turmaLabel);
+    var salvas = chamadasDaTurma(turmaLabel);           // mais recente primeiro
+
+    var datas = salvas.map(function (c) { return c.data; });
+    if (dataAtualIso && datas.indexOf(dataAtualIso) < 0) datas.push(dataAtualIso);
+    datas.sort();                                      // cronológico
+    if (datas.length > limite) datas = datas.slice(datas.length - limite);
+
+    var porData = {};
+    salvas.forEach(function (c) { porData[c.data] = c; });
+
+    var aulas = datas.map(function (d, i) {
+      var c = porData[d];
+      return { data: d, label: ddmm(d), n: i + 1,
+        salva: !!c, atual: d === dataAtualIso };
+    });
+
+    var linhas = alunas.map(function (p) {
+      var celulas = datas.map(function (d) {
+        var c = porData[d];
+        var estado = c ? estadoPresenca((c.presencas || {})[p.id]) : null;
+        var tar = c && c.tarefas ? c.tarefas[p.id] : undefined;
+        return { data: d, estado: estado, tarefa: tar, atual: d === dataAtualIso,
+          registrada: !!c };
+      });
+      var contadas = celulas.filter(function (x) { return x.registrada; });
+      var presentes = contadas.filter(function (x) {
+        return x.estado === "presente" || x.estado === "atraso";
+      }).length;
+      return { id: p.id, nome: p.nome, celulas: celulas,
+        aulas: contadas.length, presentes: presentes,
+        faltas: contadas.filter(function (x) { return x.estado === "falta"; }).length,
+        frequencia: contadas.length ? Math.round((presentes / contadas.length) * 100) : null };
+    });
+
+    return { turma: turmaLabel, aulas: aulas, linhas: linhas,
+      total: limite, dadas: datas.filter(function (d) { return porData[d]; }).length };
   }
 
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
@@ -5399,6 +5491,7 @@
     vendasDoMes: vendasDoMes, comissaoComercial: comissaoComercial,
     comissaoAPagar: comissaoAPagar,
     configPagamento: configPagamento, setConfigPagamento: setConfigPagamento,
+    emMoedaDaFolha: emMoedaDaFolha,
     pagamentoProfessora: pagamentoProfessora, folhaPagamento: folhaPagamento,
     aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
     particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
@@ -5410,6 +5503,7 @@
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
+    diarioDaTurma: diarioDaTurma,
     MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
     progressoCiclo: progressoCiclo,
     contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
