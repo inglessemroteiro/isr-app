@@ -12,7 +12,7 @@
      Comercial   → CRM · Mensagens · Calculadora · Marketing · Agenda
      Financeiro  → Cobrança · Caixa
      Pedagógico  → Acompanhamento · Programa · Alunas · Turmas · Painel · App
-     Escola      → Equipe · Conexão
+     Escola      → Pagamentos · Equipe · Conexão
 
    Cada tela declara quais perfis a enxergam; uma área só aparece
    se sobrar pelo menos uma tela nela.
@@ -39,8 +39,7 @@
         { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
         { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Agenda do comercial", desc: "O que foi executado, dia a dia", href: "ISR - Agenda do Comercial.dc.html", perfis: ["gestora", "comercial"] }
+        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
       ]
     },
     {
@@ -64,6 +63,7 @@
     {
       id: "escola", label: "Escola", cor: "#9c6f56",
       itens: [
+        { label: "Pagamentos", desc: "Fechamento do mês da equipe", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
         { label: "Equipe", desc: "Integrantes, papéis, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
         { label: "Conexão", desc: "Configuração da base de dados central", href: "gestao.html?config", perfis: ["gestora"] },
         { label: "Dados", desc: "Cópias de segurança, exportação e retenção", href: "ISR%20-%20Dados.dc.html", perfis: ["gestora"] }

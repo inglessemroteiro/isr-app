@@ -261,7 +261,8 @@
   };
 
   // ── PEDAGÓGICO — units of study (demo, estrutura da planilha) ──
-  var CAPACIDADE_PADRAO = 10;
+  // as turmas da ISR são pequenas de propósito: 2 a 5 alunas.
+  var CAPACIDADE_PADRAO = 5;
   var UNITS = [
     { id: "t1", nivel: "First Steps (A0)", turma: "WED 14h BR | 19h NL", teacher: "Carla", cycle: "2.2026",
       projeto: "My People Map", notebook: "[ON-FIR][Student_Notebook] My_People_Map_26.2" },
@@ -946,7 +947,8 @@
   // ── COMPAT: visão "leads" (CRM) sobre Pessoas ─────────────────
   function toLeadShape(p) {
     return {
-      id: p.id, nome: p.nome, telefone: p.whatsapp, email: p.email,
+      id: p.id, nome: p.nome, telefone: p.whatsapp, whatsapp: p.whatsapp, email: p.email,
+      reuniao: p.reuniao || null,
       canal: (p.origem && p.origem.canal) || "—",
       origemDetalhe: (p.origem && p.origem.detalhe) || "",
       veioDe: (p.origem && p.origem.veioDe) || "",
@@ -1760,9 +1762,9 @@
 
     var dono = donoDaIntegracao();
     avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
-      + ". Mande a missão da semana e adicione ao grupo.", "programa");
+      + ". Mande o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
-      detalhe: "Adicionar ao grupo do WhatsApp e enviar a missão da semana atual."
+      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual."
         + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
       dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
 
@@ -2158,7 +2160,9 @@
   //  saber quem cuida de quem, e quando alguém passou do que aguenta.
   // ══════════════════════════════════════════════════════════════
   var CAPACIDADE_KEY = "isr_capacidade_v1";
-  var CAPACIDADE_PADRAO = 25;
+  // quantas alunas uma professora aguenta acompanhar — não confundir com o
+  // tamanho da turma, que é outra coisa (CAPACIDADE_PADRAO, lá em cima).
+  var CARTEIRA_PADRAO = 25;
   function capacidades() {
     try { return JSON.parse(localStorage.getItem(CAPACIDADE_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -2189,7 +2193,7 @@
     var semProfessora = ativas.filter(function (p) { return !p.professora; });
     var linhas = nomes.map(function (n) {
       var alunas = porProf[n] || [];
-      var cap = caps[n] || CAPACIDADE_PADRAO;
+      var cap = caps[n] || CARTEIRA_PADRAO;
       var turmas = [];
       alunas.forEach(function (p) { if (p.turma && turmas.indexOf(p.turma) < 0) turmas.push(p.turma); });
       // quanto contato por semana essa carteira exige
@@ -3195,8 +3199,47 @@
   }
   function updateEquipe(id, patch) {
     var l = equipeLista();
+    var antes = l.filter(function (m) { return m.id === id; })[0];
+    var nomeAntigo = antes ? antes.nome : "";
     l.forEach(function (m) { if (m.id === id) { Object.assign(m, patch); carimbar(m); } });
-    equipeSave(l); return l;
+    equipeSave(l);
+    // o nome da pessoa é a chave que liga turma, aluna, tarefa e reunião a ela.
+    // Trocar o nome sem levar isso junto quebra a folha de pagamento e a agenda.
+    if (patch && patch.nome && nomeAntigo && patch.nome !== nomeAntigo) {
+      renomearNaEquipe(nomeAntigo, patch.nome);
+    }
+    return l;
+  }
+
+  // Troca o nome de uma pessoa da equipe em tudo que aponta para ela.
+  function renomearNaEquipe(de, para) {
+    if (!de || !para || de === para) return;
+
+    var turmas = turmasLista(), mexeuTurma = false;
+    turmas.forEach(function (u) { if (u.teacher === de) { u.teacher = para; mexeuTurma = true; } });
+    if (mexeuTurma) turmasSave(turmas);
+
+    var pessoas = loadPessoas(), mexeuPessoa = false;
+    pessoas.forEach(function (p) {
+      if (p.professora === de) { p.professora = para; mexeuPessoa = true; }
+      if (p.reuniao && p.reuniao.dono === de) { p.reuniao.dono = para; mexeuPessoa = true; }
+      (p.historico || []).forEach(function (h) {
+        if (h.por === de) { h.por = para; mexeuPessoa = true; }
+      });
+    });
+    if (mexeuPessoa) savePessoas(pessoas);
+
+    var tarefas = tarefasLista(), mexeuTarefa = false;
+    tarefas.forEach(function (x) { if (x.dono === de) { x.dono = para; mexeuTarefa = true; } });
+    if (mexeuTarefa) tarefasSave(tarefas);
+
+    // a carteira é indexada pelo nome
+    var caps = capacidades();
+    if (caps[de] !== undefined) {
+      caps[para] = caps[de]; delete caps[de];
+      try { localStorage.setItem(CAPACIDADE_KEY, JSON.stringify(caps)); } catch (e) {}
+    }
+    agendarSync();
   }
   function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
   function equipeCustosMensais(key) {
@@ -3742,6 +3785,293 @@
     });
   }
 
+  // ── PAGAMENTO DA EQUIPE ───────────────────────────────────────
+  //
+  // O modelo antigo pagava por hora de aula: R$ 85 valia igual numa
+  // turma de 2 e numa de 5, então a professora não tinha participação
+  // no que a escola mais precisa — encher e segurar turma. Aqui ela
+  // ganha uma fatia da turma dela, com piso para nunca receber menos
+  // do que receberia por hora.
+  var PAGAMENTO_KEY = "isr_pagamento_v1";
+  var PAGAMENTO_PADRAO = {
+    moeda: "R$",
+    fixo: 200,             // reunião semanal + as aulas extras incluídas
+    pctBase: 25,           // % da receita da turma
+    pctMeta: 30,           // % quando as metas do ciclo estão em dia
+    pisoAula: 85,          // piso por aula dada na turma
+    aulaParticular: 85,    // por aula particular dada
+    aulaExtraAlem: 85,     // por aula extra além da cota
+    extrasIncluidas: 2,    // aulas extras já pagas pelo fixo
+    metaFrequencia: 85,    // % de presença no ciclo
+    metaTarefas: 80        // % das chamadas do mês com tarefa marcada
+  };
+
+  function configPagamento() {
+    var base = {};
+    Object.keys(PAGAMENTO_PADRAO).forEach(function (k) { base[k] = PAGAMENTO_PADRAO[k]; });
+    try {
+      var g = JSON.parse(localStorage.getItem(PAGAMENTO_KEY));
+      if (g) Object.keys(g).forEach(function (k) { if (k in base) base[k] = g[k]; });
+    } catch (e) {}
+    return base;
+  }
+  function setConfigPagamento(patch) {
+    var cfg = configPagamento();
+    Object.keys(patch || {}).forEach(function (k) {
+      if (!(k in cfg)) return;
+      var v = k === "moeda" ? patch[k] : parseFloat(String(patch[k]).replace(",", "."));
+      if (k === "moeda") { cfg[k] = v; return; }
+      if (!isNaN(v) && v >= 0) cfg[k] = v;
+    });
+    try { localStorage.setItem(PAGAMENTO_KEY, JSON.stringify(cfg)); } catch (e) {}
+    agendarSync();
+    return cfg;
+  }
+
+  function mesDe(isoStr) { return (isoStr || "").slice(0, 7); }
+
+  // Aulas dadas de uma turma no mês: uma chamada salva é uma aula dada.
+  function aulasDadasNoMes(turmaLabel, mesKey) {
+    var m = chamadasAll(), n = 0, comTarefa = 0;
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (ch.turma !== turmaLabel || mesDe(ch.data) !== mesKey) return;
+      n++;
+      if (ch.tarefas && Object.keys(ch.tarefas).length) comTarefa++;
+    });
+    return { aulas: n, comTarefa: comTarefa,
+      pctTarefa: n ? Math.round((comTarefa / n) * 100) : null };
+  }
+
+  // Frequência da turma no ciclo corrente (últimos CICLO_MESES meses).
+  function frequenciaDaTurma(turmaLabel, nMeses) {
+    var limite = addDays(-30 * (nMeses || CICLO_MESES));
+    var m = chamadasAll(), presentes = 0, marcas = 0;
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (ch.turma !== turmaLabel || ch.data < limite) return;
+      Object.keys(ch.presencas || {}).forEach(function (pid) {
+        marcas++;
+        var st = estadoPresenca(ch.presencas[pid]);
+        if (st === "presente" || st === "atraso") presentes++;
+      });
+    });
+    return { marcas: marcas, presentes: presentes,
+      pct: marcas ? Math.round((presentes / marcas) * 100) : null };
+  }
+
+  // Aulas particulares dadas por uma professora no mês, pela linha do tempo.
+  function particularesNoMes(professora, mesKey) {
+    var n = 0, alunas = [];
+    loadPessoas().forEach(function (p) {
+      if (professora && (p.particular ? p.particular.professora : p.professora) !== professora
+          && p.professora !== professora) return;
+      (p.historico || []).forEach(function (h) {
+        if (mesDe(h.data) !== mesKey) return;
+        if (String(h.texto || "").indexOf("Aula particular dada") !== 0) return;
+        n++;
+        if (alunas.indexOf(p.nome) < 0) alunas.push(p.nome);
+      });
+    });
+    return { aulas: n, alunas: alunas };
+  }
+
+  // Aulas extras dadas por uma professora no mês.
+  function extrasNoMes(professora, mesKey) {
+    var lista = eventosLista().filter(function (e) {
+      return mesDe(e.data) === mesKey
+        && (!professora || e.responsavel === professora || e.professora === professora);
+    });
+    return { dadas: lista.length,
+      titulos: lista.map(function (e) { return e.titulo; }) };
+  }
+
+  // ── O FECHAMENTO DE UMA PROFESSORA NUM MÊS ────────────────────
+  function pagamentoProfessora(nome, mesKey, cfgAlt) {
+    var cfg = Object.assign(configPagamento(), cfgAlt || {});
+    var mes = mesKey || mesAtualKey();
+    var moeda = cfg.moeda || "R$";
+
+    var turmas = turmasLista().filter(function (u) { return u.teacher === nome; })
+      .map(function (u) {
+        var label = u.nivel + " · " + u.turma;
+        var alunas = alunasDaTurma(label);
+        // a receita da turma é o que as alunas ativas pagam por mês
+        var receita = alunas.reduce(function (soma, a) {
+          var c = contratoVigente(a);
+          return soma + (c ? parseMoney(c.parcelaValor) : 0);
+        }, 0);
+        // quem está com parcela em aberto. A fatia da professora não muda
+        // por causa disso: a base é a matrícula ativa, não o que entrou.
+        var devendo = alunas.filter(function (a) { return parcelasAbertas(a).length > 0; });
+        var dadas = aulasDadasNoMes(label, mes);
+        var freq = frequenciaDaTurma(label);
+        var freqOk = freq.pct !== null && freq.pct >= cfg.metaFrequencia;
+        var tarefaOk = dadas.pctTarefa !== null && dadas.pctTarefa >= cfg.metaTarefas;
+        var metaOk = freqOk && tarefaOk;
+        var pct = metaOk ? cfg.pctMeta : cfg.pctBase;
+        var porFatia = receita * pct / 100;
+        var porPiso = dadas.aulas * cfg.pisoAula;
+        var valor = Math.max(porFatia, porPiso);
+        return { label: label, nivel: u.nivel, horario: u.turma,
+          alunas: alunas.length, receita: receita,
+          inadimplentes: devendo.length,
+          abaixoDoMinimo: alunas.length < MINIMO_TURMA,
+          faltamAlunas: Math.max(0, MINIMO_TURMA - alunas.length),
+          aulas: dadas.aulas, pctTarefa: dadas.pctTarefa,
+          frequencia: freq.pct, freqOk: freqOk, tarefaOk: tarefaOk, metaOk: metaOk,
+          pct: pct, porFatia: porFatia, porPiso: porPiso,
+          pisoAplicado: porPiso > porFatia, valor: valor };
+      });
+
+    var part = particularesNoMes(nome, mes);
+    var extras = extrasNoMes(nome, mes);
+    var excedente = Math.max(0, extras.dadas - cfg.extrasIncluidas);
+
+    var somaTurmas = turmas.reduce(function (s, x) { return s + x.valor; }, 0);
+    var vPart = part.aulas * cfg.aulaParticular;
+    var vExtras = excedente * cfg.aulaExtraAlem;
+    // o fixo só faz sentido para quem tem turma; sem turma, não há reunião
+    var fixo = turmas.length ? cfg.fixo : 0;
+    var total = fixo + somaTurmas + vPart + vExtras;
+
+    var receitaTotal = turmas.reduce(function (s, x) { return s + x.receita; }, 0);
+    var inadimplentes = turmas.reduce(function (s, x) { return s + x.inadimplentes; }, 0);
+
+    return {
+      nome: nome, mes: mes, moeda: moeda, cfg: cfg,
+      fixo: fixo, turmas: turmas, somaTurmas: somaTurmas,
+      particulares: { aulas: part.aulas, alunas: part.alunas, valor: vPart },
+      extras: { dadas: extras.dadas, incluidas: cfg.extrasIncluidas,
+        excedente: excedente, valor: vExtras, titulos: extras.titulos },
+      total: total,
+      receitaTurmas: receitaTotal, inadimplentes: inadimplentes,
+      turmasAbaixoDoMinimo: turmas.filter(function (x) { return x.abaixoDoMinimo; }).length,
+      pctDaReceita: receitaTotal ? Math.round((total / receitaTotal) * 1000) / 10 : null,
+      fmt: function (v) { return fmtMoney(moeda, v); }
+    };
+  }
+
+  // ── COMISSÃO DO COMERCIAL ─────────────────────────────────────
+  //
+  // A regra vem da planilha da Gabi, conferida caso a caso:
+  //   comissão de cada venda = (contrato total × %) ÷ nº de parcelas,
+  //   lançada nos meses em que as parcelas correm.
+  // A % depende de quantas vendas a pessoa fechou no mês, e a partir
+  // de 8 vendas entra bônus.
+  var COMISSAO_FAIXAS = [
+    { vendas: 1,  pct: 1,   situacao: "Fora da meta" },
+    { vendas: 2,  pct: 1,   situacao: "Muito abaixo" },
+    { vendas: 3,  pct: 2,   situacao: "Abaixo" },
+    { vendas: 4,  pct: 2,   situacao: "Média" },
+    { vendas: 5,  pct: 2.5, situacao: "Desejado" },
+    { vendas: 6,  pct: 3,   situacao: "Over" },
+    { vendas: 7,  pct: 3,   situacao: "Over" },
+    { vendas: 8,  pct: 4,   situacao: "Over", bonus: 200 },
+    { vendas: 9,  pct: 5,   situacao: "Over", bonus: 300 },
+    { vendas: 10, pct: 5,   situacao: "Over", bonus: 500 }
+  ];
+  var COMERCIAL_FIXO = 1200;
+  var META_POR_VENDA = 3500;
+
+  function faixaComissao(nVendas) {
+    if (nVendas <= 0) return { vendas: 0, pct: 0, situacao: "Sem venda", bonus: 0 };
+    var f = COMISSAO_FAIXAS[Math.min(nVendas, COMISSAO_FAIXAS.length) - 1];
+    return { vendas: nVendas, pct: f.pct, situacao: f.situacao, bonus: f.bonus || 0 };
+  }
+
+  // As vendas de um mês: quem virou cliente naquele mês.
+  function vendasDoMes(mesKey, porQuem) {
+    var mes = mesKey || mesAtualKey();
+    return loadPessoas().filter(function (p) {
+      if (p.status === "lead") return false;
+      if (mesDe(p.desde) !== mes) return false;
+      if (porQuem && (p.vendidoPor || p.professora) !== porQuem) return false;
+      return true;
+    }).map(function (p) {
+      var c = contratoVigente(p) || {};
+      var meses = c.meses || [];
+      var total = meses.reduce(function (s, m) { return s + parseMoney(m.valor); }, 0);
+      if (!total && p.programa) total = parseMoney(p.programa.valor);
+      return { id: p.id, nome: p.nome, contrato: total,
+        parcelas: meses.length || 1,
+        primeiroMes: meses.length ? meses[0].key : mes,
+        moeda: c.moeda || (p.programa ? p.programa.moeda : "R$") };
+    });
+  }
+
+  // O fechamento do comercial num mês: fixo, comissão e bônus.
+  function comissaoComercial(mesKey, porQuem) {
+    var mes = mesKey || mesAtualKey();
+    var vendas = vendasDoMes(mes, porQuem);
+    var faixa = faixaComissao(vendas.length);
+    var meta = META_POR_VENDA * Math.max(1, vendas.length);
+
+    // cada venda gera uma comissão que se espalha nas parcelas dela
+    var detalhe = vendas.map(function (v) {
+      var comissao = v.contrato * faixa.pct / 100;
+      return Object.assign({}, v, { pct: faixa.pct, comissao: comissao,
+        porParcela: v.parcelas ? comissao / v.parcelas : comissao });
+    });
+    var comissaoTotal = detalhe.reduce(function (s, x) { return s + x.comissao; }, 0);
+
+    return { mes: mes, quem: porQuem || "", vendas: detalhe, nVendas: vendas.length,
+      situacao: faixa.situacao, pct: faixa.pct, bonus: faixa.bonus,
+      fixo: COMERCIAL_FIXO, comissao: comissaoTotal,
+      total: COMERCIAL_FIXO + comissaoTotal + faixa.bonus,
+      faturamento: detalhe.reduce(function (s, x) { return s + x.contrato; }, 0),
+      metaFaturamento: meta,
+      cac: (function () {
+        var fat = detalhe.reduce(function (s, x) { return s + x.contrato; }, 0);
+        if (!fat) return null;
+        return Math.round(((COMERCIAL_FIXO + comissaoTotal + faixa.bonus) / fat) * 1000) / 10;
+      })() };
+  }
+
+  // O que sai de comissão num mês, contando as vendas de meses anteriores
+  // cujas parcelas ainda correm — é assim que a planilha paga.
+  function comissaoAPagar(mesKey, porQuem) {
+    var mes = mesKey || mesAtualKey();
+    var linhas = [];
+    // olha 12 meses para trás procurando vendas cujas parcelas alcançam o mês
+    for (var i = 0; i < 12; i++) {
+      var d = new Date(); d.setMonth(d.getMonth() - i);
+      var mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(2 - 2 + 0).slice(-2);
+      mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+      var fech = comissaoComercial(mv, porQuem);
+      fech.vendas.forEach(function (v) {
+        var p = getPessoa(v.id);
+        var c = p ? contratoVigente(p) : null;
+        if (!c) return;
+        var cai = (c.meses || []).some(function (m) { return m.key === mes; });
+        if (!cai) return;
+        linhas.push({ nome: v.nome, mesVenda: mv, contrato: v.contrato,
+          parcelas: v.parcelas, pct: v.pct, valor: v.porParcela });
+      });
+    }
+    return { mes: mes, linhas: linhas,
+      total: linhas.reduce(function (s, x) { return s + x.valor; }, 0) };
+  }
+
+  // Todas as professoras do mês, com o total da folha.
+  function folhaPagamento(mesKey) {
+    var mes = mesKey || mesAtualKey();
+    var nomes = [];
+    equipeLista().forEach(function (m) {
+      if ((m.papeis || []).indexOf("professora") >= 0 && nomes.indexOf(m.nome) < 0) nomes.push(m.nome);
+    });
+    turmasLista().forEach(function (u) {
+      if (u.teacher && nomes.indexOf(u.teacher) < 0) nomes.push(u.teacher);
+    });
+    var linhas = nomes.map(function (n) { return pagamentoProfessora(n, mes); })
+      .filter(function (x) { return x.total > 0 || x.turmas.length; });
+    var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
+    var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
+    return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      pctDaReceita: receita ? Math.round((total / receita) * 1000) / 10 : null,
+      moeda: configPagamento().moeda };
+  }
+
   // ── AGENDA DO COMERCIAL ───────────────────────────────────────
   //
   // Quatro coisas acontecem no comercial e ficam espalhadas: leads que
@@ -3934,6 +4264,21 @@
   var AULAS_POR_CICLO_PADRAO = 10;
   var AULAS_CICLO_KEY = "isr_aulas_ciclo_v1";
 
+  // ── TAMANHO MÍNIMO DA TURMA ───────────────────────────────────
+  //
+  // Abaixo de 3 alunas a turma não se paga: o custo da professora é o
+  // mesmo e a receita cai. A regra vale para abrir e para manter.
+  var MINIMO_TURMA = 3;
+
+  function turmasAbaixoDoMinimo() {
+    return turmasLista().map(function (u) {
+      var label = u.nivel + " · " + u.turma;
+      var n = alunasDaTurma(label).length;
+      return { label: label, nivel: u.nivel, horario: u.turma,
+        professora: u.teacher, alunas: n, faltam: Math.max(0, MINIMO_TURMA - n) };
+    }).filter(function (x) { return x.alunas < MINIMO_TURMA; });
+  }
+
   function aulasPorCiclo() {
     try {
       var n = parseInt(localStorage.getItem(AULAS_CICLO_KEY), 10);
@@ -4113,7 +4458,7 @@
       for (var s = 1; s <= pg.semanas; s++) {
         if (!etapaFeita(pg, pessoaId, s, "audio")) continue;
         var r = ((pg.respostas || {})[pessoaId + "|" + s]) || {};
-        extrato.push({ em: r.em || "", label: "Missão da semana " + s + " respondida",
+        extrato.push({ em: r.em || "", label: "Desafio da semana " + s + " respondido",
           valor: MOEDAS_PROGRAMA.resposta });
       }
       var part = (pg.participacao || {})[pessoaId] || 0;
@@ -4194,10 +4539,10 @@
     var pessoa = getPessoa(pessoaId);
     if (pessoa) {
       mutate(pessoaId, function (pp) {
-        pushHist(pp, "contato", "Respondeu a missão da semana " + semana);
+        pushHist(pp, "contato", "Respondeu ao desafio da semana " + semana);
       });
       var dono = ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0 ? pessoa.professora : "Gabi";
-      avisar(dono, pessoa.nome + " respondeu a missão da semana " + semana + ". Falta a devolutiva.", "programa");
+      avisar(dono, pessoa.nome + " respondeu ao desafio da semana " + semana + ". Falta a devolutiva.", "programa");
     }
     return achou;
   }
@@ -4925,6 +5270,7 @@
     // cobrança
     getCobranca: getCobranca, cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
     setParcelaPaga: setParcelaPaga, entradasPrevistas: entradasPrevistas,
+    MES_NOMES: MES_NOMES, mesSeguinte: mesSeguinte, mesAnterior: mesAnterior,
     parseMoney: parseMoney, fmtMoney: fmtMoney, mesAtualKey: mesAtualKey,
     // renovações
     renovacoes: renovacoes, setRenovacao: setRenovacao, taxaRenovacao: taxaRenovacao,
@@ -4952,6 +5298,7 @@
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
+    renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
@@ -4998,6 +5345,13 @@
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
     enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
+    COMISSAO_FAIXAS: COMISSAO_FAIXAS, faixaComissao: faixaComissao,
+    vendasDoMes: vendasDoMes, comissaoComercial: comissaoComercial,
+    comissaoAPagar: comissaoAPagar,
+    configPagamento: configPagamento, setConfigPagamento: setConfigPagamento,
+    pagamentoProfessora: pagamentoProfessora, folhaPagamento: folhaPagamento,
+    aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
+    particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
     encerrarPrograma: encerrarPrograma, reabrirPrograma: reabrirPrograma,
     programasAbertos: programasAbertos, resumoProgramas: resumoProgramas,
     agendaComercial: agendaComercial,
@@ -5006,6 +5360,7 @@
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
+    MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
     progressoCiclo: progressoCiclo,
     contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
     setParticularPago: setParticularPago, produtosDe: produtosDe,

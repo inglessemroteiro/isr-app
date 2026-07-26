@@ -21,7 +21,7 @@
       </div>
       <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>Cadastro de Equipe.</strong> Registra integrantes, papéis, permissões de acesso e remuneração. Os papéis são cumulativos <em>e</em> professora. Prestadoras com valor mensal entram sozinhas nos custos do Caixa; prestadora sem papel de acesso não entra no sistema.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Integrantes, papéis, permissões de acesso e remuneração. Os papéis são cumulativos: a mesma pessoa pode ser comercial e professora. Prestadoras com valor mensal entram sozinhas nos custos do Caixa; prestadora sem papel de acesso não entra no sistema. Trocar o nome de alguém leva junto as turmas, alunas, tarefas e reuniões no nome dela.</p>
 
     <!-- FORM NOVA PESSOA -->
     <sc-if value="{{ novoAberto }}">
@@ -76,8 +76,49 @@
           </div>
           <span style="font-size: 12px; color: #6b6155; word-break: break-all;">{{ mb.email }}</span>
           <span style="font-size: 12px; font-weight: 700; color: {{ mb.remCor }};">{{ mb.remuneracao }}</span>
-          <button onclick="{{ mb.onRemover }}" style="justify-self: end; border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px; cursor: pointer;">remover</button>
+          <div style="justify-self: end; display: flex; gap: 2px; align-items: center;">
+            <button onclick="{{ mb.onEditar }}" style="border: none; background: transparent; color: {{ mb.editFg }}; font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; font-family: inherit;">{{ mb.editLabel }}</button>
+            <button onclick="{{ mb.onRemover }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px; cursor: pointer;">remover</button>
+          </div>
         </div>
+
+        <sc-if value="{{ mb.editando }}">
+          <div style="background: #f6f2ea; border-top: 1px solid #f2e9dd; padding: 16px 18px; min-width: 640px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Editar {{ mb.nome }}</div>
+            <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ mb.avisoNome }}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+              <input ref="{{ mb.nomeRef }}" placeholder="Nome" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <input ref="{{ mb.emailRef }}" placeholder="E-mail de acesso" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            </div>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Papéis</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <sc-for list="{{ mb.papeisOpts }}" as="ep" hint-placeholder-count="5">
+                <button onclick="{{ ep.onToggle }}" style="border: 1px solid {{ ep.border }}; background: {{ ep.bg }}; color: {{ ep.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ep.label }}</button>
+              </sc-for>
+            </div>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+              <select ref="{{ mb.tipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ mb.tipoOpts }}" as="to" hint-placeholder-count="3">
+                  <option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option>
+                </sc-for>
+              </select>
+              <select ref="{{ mb.moedaRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ mb.moedaOpts }}" as="mo" hint-placeholder-count="2">
+                  <option value="{{ mo.id }}" selected="{{ mo.sel }}">{{ mo.label }}</option>
+                </sc-for>
+              </select>
+              <input ref="{{ mb.valorRef }}" type="number" placeholder="{{ mb.valorPlaceholder }}" style="width: 130px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button onclick="{{ mb.onSalvar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+              <button onclick="{{ mb.onCancelar }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+              <sc-if value="{{ mb.erro }}">
+                <span style="font-size: 12px; color: #cf6b5c; font-weight: 600;">{{ mb.erro }}</span>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
       </sc-for>
     </div>
 
@@ -139,8 +180,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { novoAberto: false, papeisSel: {}, tick: 0, editandoCap: false };
+  state = { novoAberto: false, papeisSel: {}, tick: 0, editandoCap: false,
+    editId: null, edPapeis: {}, edErro: "" };
   capRefs = {};
+  edRefs = {};
   nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
   nvTipoRef = React.createRef(); nvMoedaRef = React.createRef(); nvValorRef = React.createRef();
 
@@ -174,18 +217,102 @@ class Component extends DCLogic {
     const corDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || {}).cor || "#8a7c6b";
     const labelDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || { label: id }).label;
 
-    const membros = CRM.equipeLista().map(m => ({
-      nome: m.nome,
-      email: m.email || "— (sem acesso)",
-      papeis: (m.papeis || []).map(id => ({ label: labelDe(id), bg: corDe(id), fg: "#fff" })),
-      remuneracao: m.valor > 0 ? CRM.fmtMoney(m.moeda || "R$", m.valor) + (m.valorTipo === "por_aula" ? " / aula" : " / mês") : "—",
-      remCor: m.valor > 0 ? "#164951" : "#b3a693",
-      onRemover: () => {
-        if (window.confirm("Remover " + m.nome + " da equipe? (Isso corta o acesso dela ao sistema.)")) {
-          CRM.removeEquipe(m.id); this.bump();
-        }
+    const membros = CRM.equipeLista().map(m => {
+      const editando = this.state.editId === m.id;
+      if (!this.edRefs[m.id]) {
+        this.edRefs[m.id] = { nome: React.createRef(), email: React.createRef(),
+          tipo: React.createRef(), moeda: React.createRef(), valor: React.createRef() };
       }
-    }));
+      const r = this.edRefs[m.id];
+      // enquanto edita, os papéis marcados vivem no estado; fora disso, vêm do cadastro
+      const marcados = editando ? this.state.edPapeis : {};
+      // quantas turmas e alunas dependem do nome desta pessoa
+      const nTurmas = CRM.turmasLista().filter(u => u.teacher === m.nome).length;
+      const nAlunas = CRM.getPessoas()
+        .filter(p => p.professora === m.nome && (p.status === "aluna" || p.status === "mvs")).length;
+
+      return {
+        nome: m.nome,
+        email: m.email || "— (sem acesso)",
+        papeis: (m.papeis || []).map(id => ({ label: labelDe(id), bg: corDe(id), fg: "#fff" })),
+        remuneracao: m.valor > 0 ? CRM.fmtMoney(m.moeda || "R$", m.valor) + (m.valorTipo === "por_aula" ? " / aula" : " / mês") : "—",
+        remCor: m.valor > 0 ? "#164951" : "#b3a693",
+
+        editando,
+        editLabel: editando ? "fechar" : "editar",
+        editFg: editando ? "#164951" : "#8a7c6b",
+        erro: editando ? this.state.edErro : "",
+        avisoNome: nTurmas || nAlunas
+          ? "Trocar o nome leva junto " + (nTurmas ? nTurmas + (nTurmas === 1 ? " turma" : " turmas") : "")
+            + (nTurmas && nAlunas ? " e " : "")
+            + (nAlunas ? nAlunas + (nAlunas === 1 ? " aluna" : " alunas") : "")
+            + ", além das tarefas e reuniões no nome dela."
+          : "Nada depende deste nome ainda.",
+
+        nomeRef: r.nome, emailRef: r.email,
+        tipoRef: r.tipo, moedaRef: r.moeda, valorRef: r.valor,
+        valorPlaceholder: m.valor > 0 ? String(m.valor) : "Valor (ex. 1200)",
+        tipoOpts: [
+          { id: "", label: "Sem valor fixo" },
+          { id: "mensal", label: "Mensal (fixo)" },
+          { id: "por_aula", label: "Por aula (variável)" }
+        ].map(o => Object.assign({ sel: (m.valorTipo || "") === o.id }, o)),
+        moedaOpts: [{ id: "R$", label: "R$" }, { id: "€", label: "€" }]
+          .map(o => Object.assign({ sel: (m.moeda || "R$") === o.id }, o)),
+
+        papeisOpts: this.PAPEIS.map(pp => {
+          const on = !!marcados[pp.id];
+          return {
+            label: pp.label,
+            bg: on ? pp.cor : "#fff", fg: on ? "#fff" : pp.cor, border: pp.cor,
+            onToggle: () => this.setState({
+              edPapeis: Object.assign({}, marcados, { [pp.id]: !on }), edErro: ""
+            })
+          };
+        }),
+
+        onEditar: () => {
+          if (editando) { this.setState({ editId: null, edErro: "" }); return; }
+          const marca = {};
+          (m.papeis || []).forEach(id => { marca[id] = true; });
+          this.setState({ editId: m.id, edPapeis: marca, edErro: "", novoAberto: false });
+          // os campos são preenchidos depois que a linha aparece
+          setTimeout(() => {
+            if (r.nome.current) r.nome.current.value = m.nome || "";
+            if (r.email.current) r.email.current.value = m.email || "";
+            if (r.valor.current) r.valor.current.value = m.valor > 0 ? String(m.valor) : "";
+          }, 0);
+        },
+        onCancelar: () => this.setState({ editId: null, edErro: "" }),
+        onSalvar: () => {
+          const nome = this.val(r.nome);
+          const email = this.val(r.email).toLowerCase();
+          const papeis = Object.keys(marcados).filter(k => marcados[k]);
+          if (!nome) { this.setState({ edErro: "O nome não pode ficar em branco." }); return; }
+          if (!papeis.length) { this.setState({ edErro: "Marque pelo menos um papel." }); return; }
+          if (!email && papeis.some(x => x !== "prestadora")) {
+            this.setState({ edErro: "Quem entra no sistema precisa de e-mail." }); return;
+          }
+          if (nome !== m.nome && (nTurmas || nAlunas)
+              && !window.confirm("Renomear " + m.nome + " para " + nome
+                + "? As turmas, alunas, tarefas e reuniões no nome dela passam junto.")) return;
+          CRM.updateEquipe(m.id, {
+            nome, email, papeis,
+            valorTipo: this.val(r.tipo),
+            moeda: this.val(r.moeda) || "R$",
+            valor: parseFloat(this.val(r.valor)) || 0
+          });
+          this.setState({ editId: null, edErro: "" });
+          this.bump();
+        },
+
+        onRemover: () => {
+          if (window.confirm("Remover " + m.nome + " da equipe? (Isso corta o acesso dela ao sistema.)")) {
+            CRM.removeEquipe(m.id); this.setState({ editId: null }); this.bump();
+          }
+        }
+      };
+    });
 
     const cart = window.ISRCRM.carteiraProfessoras();
     return Object.assign({

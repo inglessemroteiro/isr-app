@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Pagamentos da equipe</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+<link rel="stylesheet" href="./isr-tokens.css">
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0 0 48px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #3d3529; -webkit-font-smoothing: antialiased;">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 26px 20px 0;">
+
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #2a9d8f; margin-bottom: 6px;">Inglês sem Roteiro · Escola</div>
+    <h1 style="margin: 0 0 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.7px; color: #164951;">Pagamentos da equipe</h1>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;">O fechamento do mês, calculado do que já está registrado: turmas, alunas ativas, aulas dadas, frequência do ciclo e devolutivas. Nada aqui é digitado à mão.</p>
+
+    <!-- MÊS -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;">
+      <sc-for list="{{ meses }}" as="ms" hint-placeholder-count="4">
+        <button onclick="{{ ms.onPick }}" style="border: 1px solid #e5dccf; background: {{ ms.bg }}; color: {{ ms.fg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ms.label }}</button>
+      </sc-for>
+    </div>
+
+    <!-- TOTAL -->
+    <div style="background: #164951; border-radius: 14px; padding: 20px 22px; margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #9ec970; margin-bottom: 6px;">Folha do mês · professoras</div>
+          <div style="font-size: 31px; font-weight: 700; color: #fff; letter-spacing: -0.8px; line-height: 1;">{{ totalFolha }}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 6px;">das mensalidades das turmas</div>
+          <div style="font-size: 25px; font-weight: 700; color: {{ pctCor }}; letter-spacing: -0.6px; line-height: 1;">{{ pctFolha }}</div>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.6; margin-top: 12px;">{{ leitura }}</div>
+    </div>
+
+    <!-- PROFESSORAS -->
+    <sc-if value="{{ semLinhas }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 20px; margin-bottom: 16px; font-size: 13px; color: #8a7c6b; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
+    </sc-if>
+
+    <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="3">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;">
+          <div>
+            <div style="font-size: 17px; font-weight: 700; color: #164951;">{{ ln.nome }}</div>
+            <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px;">{{ ln.resumo }}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.5px;">{{ ln.total }}</div>
+            <div style="font-size: 11px; color: #b3a693; margin-top: 2px;">{{ ln.pctLabel }}</div>
+          </div>
+        </div>
+
+        <!-- linhas do cálculo -->
+        <sc-for list="{{ ln.itens }}" as="it" hint-placeholder-count="4">
+          <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid #f4f1ec;">
+            <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ it.cor }}; margin-top: 6px;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ it.titulo }}</div>
+              <div style="font-size: 11.5px; color: {{ it.detCor }}; margin-top: 3px; line-height: 1.55;">{{ it.detalhe }}</div>
+            </div>
+            <div style="flex: none; font-size: 14px; font-weight: 700; color: #164951;">{{ it.valor }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <!-- COMERCIAL -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <div style="font-size: 17px; font-weight: 700; color: #164951;">Comercial</div>
+          <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px;">{{ comercialResumo }}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.5px;">{{ comercialTotal }}</div>
+          <div style="font-size: 11px; color: #b3a693; margin-top: 2px;">{{ comercialCac }}</div>
+        </div>
+      </div>
+      <p style="margin: 0 0 10px; font-size: 11.5px; color: #b3a693; line-height: 1.55;">A comissão de cada venda é o contrato vezes a porcentagem da faixa, dividida pelas parcelas — a mesma regra da planilha.</p>
+      <sc-for list="{{ comercialItens }}" as="ci" hint-placeholder-count="4">
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid #f4f1ec;">
+          <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ ci.cor }}; margin-top: 6px;"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ ci.titulo }}</div>
+            <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px; line-height: 1.55;">{{ ci.detalhe }}</div>
+          </div>
+          <div style="flex: none; font-size: 14px; font-weight: 700; color: #164951;">{{ ci.valor }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ temParcelasComissao }}">
+        <div style="border-top: 1px solid #f4f1ec; margin-top: 6px; padding-top: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Comissão que cai neste mês, de vendas anteriores</div>
+          <sc-for list="{{ parcelasComissao }}" as="pc" hint-placeholder-count="4">
+            <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; color: #6b6155;">
+              <span>{{ pc.nome }}</span><span style="flex: none; font-weight: 700; color: #164951;">{{ pc.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- REGRAS -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px;">
+      <button onclick="{{ onVerRegras }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit;">
+        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Regras do pagamento</span>
+        <span style="flex: none; font-size: 11.5px; color: #2a9d8f; font-weight: 700;">{{ verRegrasLabel }}</span>
+      </button>
+      <sc-if value="{{ verRegras }}">
+        <p style="margin: 14px 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Mudar aqui recalcula o mês inteiro. O piso garante que nenhuma professora receba menos do que receberia por hora de aula. A base da fatia são as matrículas ativas: parcela em aberto não reduz o pagamento da professora.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+          <sc-for list="{{ campos }}" as="cp" hint-placeholder-count="8">
+            <div>
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">{{ cp.label }}</div>
+              <input ref="{{ cp.ref }}" placeholder="{{ cp.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <div style="font-size: 10px; color: #b3a693; margin-top: 3px; line-height: 1.4;">{{ cp.ajuda }}</div>
+            </div>
+          </sc-for>
+          <div style="display: flex; align-items: flex-end;">
+            <button onclick="{{ onSalvarRegras }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Salvar regras</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { mes: "", verRegras: false, tick: 0 };
+  campoRefs = {};
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  campoRef(id) {
+    if (!this.campoRefs[id]) this.campoRefs[id] = React.createRef();
+    return this.campoRefs[id];
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { meses: [], linhas: [], semLinhas: true, campos: [],
+      comercialItens: [], parcelasComissao: [], leitura: "" };
+    if (!CRM || !CRM.folhaPagamento) return vazio;
+
+    const cfg = CRM.configPagamento();
+    const moeda = cfg.moeda || "R$";
+    const $ = v => CRM.fmtMoney(moeda, v);
+
+    // ── meses recentes ──
+    const hoje = new Date();
+    const opcoes = [];
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const key = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+      opcoes.push({ key, label: CRM.MES_NOMES[d.getMonth()] + " " + d.getFullYear() });
+    }
+    const mes = this.state.mes || opcoes[0].key;
+
+    const folha = CRM.folhaPagamento(mes);
+
+    // ── uma professora vira uma lista de linhas do cálculo ──
+    const linhas = folha.linhas.map(p => {
+      const itens = [];
+      if (p.fixo) itens.push({
+        cor: "#8a7465", titulo: "Fixo do mês",
+        detalhe: "Reunião semanal e " + cfg.extrasIncluidas + " aulas extras incluídas.",
+        detCor: "#8a7c6b", valor: $(p.fixo)
+      });
+
+      // turma sem aluna e sem aula dada não é linha de pagamento
+      const ativas = p.turmas.filter(t => t.alunas > 0 || t.aulas > 0);
+      const paradas = p.turmas.length - ativas.length;
+      ativas.forEach(t => {
+        const porQue = [];
+        porQue.push(t.frequencia === null ? "sem chamada no ciclo"
+          : "frequência " + t.frequencia + "%" + (t.freqOk ? "" : " — abaixo de " + cfg.metaFrequencia + "%"));
+        porQue.push(t.pctTarefa === null ? "sem tarefa registrada"
+          : "tarefa marcada em " + t.pctTarefa + "% das aulas" + (t.tarefaOk ? "" : " — abaixo de " + cfg.metaTarefas + "%"));
+        const base = t.alunas + (t.alunas === 1 ? " aluna" : " alunas")
+          + " · " + $(t.receita) + " de mensalidade · " + t.aulas
+          + (t.aulas === 1 ? " aula dada" : " aulas dadas");
+        itens.push({
+          cor: t.metaOk ? "#5a9e4b" : "#d4a574",
+          titulo: t.label + " · " + t.pct + "%",
+          detalhe: base + ". " + porQue.join(" · ") + "."
+            + (t.pisoAplicado ? " Piso aplicado: a fatia daria " + $(t.porFatia) + "." : "")
+            + (t.abaixoDoMinimo ? " Abaixo do mínimo de " + CRM.MINIMO_TURMA
+               + " alunas: faltam " + t.faltamAlunas + "." : "")
+            + (t.inadimplentes ? " " + t.inadimplentes
+               + (t.inadimplentes === 1 ? " aluna com parcela em aberto" : " alunas com parcela em aberto")
+               + " — não muda o que a professora recebe." : ""),
+          detCor: (t.pisoAplicado || t.abaixoDoMinimo) ? "#cf6b5c" : "#8a7c6b",
+          valor: $(t.valor)
+        });
+      });
+
+      if (paradas) itens.push({
+        cor: "#e0dcd6",
+        titulo: paradas + (paradas === 1 ? " turma sem movimento" : " turmas sem movimento"),
+        detalhe: "Sem aluna e sem aula dada no mês. Não entra no pagamento.",
+        detCor: "#b3a693", valor: $(0)
+      });
+
+      if (p.particulares.aulas) itens.push({
+        cor: "#6b5b95", titulo: "Aulas particulares",
+        detalhe: p.particulares.aulas + (p.particulares.aulas === 1 ? " aula dada" : " aulas dadas")
+          + (p.particulares.alunas.length ? " · " + p.particulares.alunas.join(", ") : "")
+          + " · " + $(cfg.aulaParticular) + " por aula.",
+        detCor: "#8a7c6b", valor: $(p.particulares.valor)
+      });
+
+      if (p.extras.dadas) itens.push({
+        cor: "#d4a574",
+        titulo: "Aulas extras",
+        detalhe: p.extras.dadas + " no mês, " + p.extras.incluidas + " já cobertas pelo fixo."
+          + (p.extras.excedente
+              ? " " + p.extras.excedente + " além da cota a " + $(cfg.aulaExtraAlem) + "."
+              : " Nada a pagar por fora."),
+        detCor: "#8a7c6b", valor: $(p.extras.valor)
+      });
+
+      return {
+        nome: p.nome,
+        resumo: (function () {
+          if (!ativas.length) return "sem turma com movimento neste mês";
+          const nAl = ativas.reduce((s, t) => s + t.alunas, 0);
+          return ativas.length + (ativas.length === 1 ? " turma" : " turmas")
+            + " · " + nAl + (nAl === 1 ? " aluna" : " alunas");
+        })(),
+        total: $(p.total),
+        pctLabel: p.pctDaReceita === null ? "" : p.pctDaReceita + "% da receita das turmas dela",
+        itens
+      };
+    });
+
+    // ── comercial ──
+    const com = CRM.comissaoComercial(mes);
+    const aPagar = CRM.comissaoAPagar(mes);
+    const comercialItens = [
+      { cor: "#8a7465", titulo: "Fixo do comercial", detalhe: "Valor fixo do mês.", valor: $(com.fixo) },
+      { cor: "#2a9d8f", titulo: "Comissão das vendas do mês",
+        detalhe: com.nVendas + (com.nVendas === 1 ? " venda" : " vendas") + " · faixa " + com.situacao
+          + " · " + com.pct + "% sobre " + $(com.faturamento) + " de contratos fechados.",
+        valor: $(com.comissao) }
+    ];
+    if (com.bonus) comercialItens.push({ cor: "#e07856", titulo: "Bônus",
+      detalhe: "A partir de 8 vendas no mês.", valor: $(com.bonus) });
+
+    // ── leitura ──
+    let leitura;
+    if (!folha.linhas.length) {
+      leitura = "Nenhuma turma com professora atribuída neste mês.";
+    } else if (folha.pctDaReceita === null) {
+      leitura = "As turmas ainda não têm mensalidade registrada, então só o piso por aula foi aplicado.";
+    } else {
+      const comPiso = folha.linhas.reduce((s, p) => s + p.turmas.filter(t => t.pisoAplicado).length, 0);
+      leitura = folha.linhas.length + (folha.linhas.length === 1 ? " professora" : " professoras")
+        + " · " + $(folha.total) + " sobre " + $(folha.receitaTurmas) + " de mensalidades."
+        + (comPiso ? " " + comPiso + (comPiso === 1 ? " turma pagou pelo piso" : " turmas pagaram pelo piso")
+            + ", porque a fatia daria menos que a hora de aula." : "");
+    }
+
+    const CAMPOS = [
+      { id: "fixo", label: "Fixo mensal", ajuda: "reunião + extras incluídas" },
+      { id: "pctBase", label: "% da turma", ajuda: "sem as metas do ciclo" },
+      { id: "pctMeta", label: "% com metas", ajuda: "frequência e devolutiva em dia" },
+      { id: "pisoAula", label: "Piso por aula", ajuda: "nunca menos que isto" },
+      { id: "metaFrequencia", label: "Meta de frequência", ajuda: "% de presença no ciclo" },
+      { id: "metaTarefas", label: "Meta de tarefa", ajuda: "% das aulas com tarefa marcada" },
+      { id: "aulaParticular", label: "Aula particular", ajuda: "por aula dada" },
+      { id: "extrasIncluidas", label: "Extras incluídas", ajuda: "já pagas pelo fixo" },
+      { id: "aulaExtraAlem", label: "Extra além da cota", ajuda: "por aula" }
+    ];
+
+    return {
+      meses: opcoes.map(o => ({
+        label: o.label,
+        bg: o.key === mes ? "#164951" : "#fff",
+        fg: o.key === mes ? "#fff" : "#164951",
+        onPick: () => this.setState({ mes: o.key })
+      })),
+
+      totalFolha: $(folha.total),
+      pctFolha: folha.pctDaReceita === null ? "—" : folha.pctDaReceita + "%",
+      pctCor: folha.pctDaReceita === null ? "#b3a693"
+        : (folha.pctDaReceita > 40 ? "#fc9082" : "#9ec970"),
+      leitura,
+
+      linhas, semLinhas: linhas.length === 0,
+
+      comercialResumo: com.nVendas
+        ? com.nVendas + (com.nVendas === 1 ? " venda no mês · " : " vendas no mês · ") + com.situacao
+        : "sem venda registrada neste mês",
+      comercialTotal: $(com.total),
+      comercialCac: com.cac === null ? "" : "CAC " + com.cac + "%",
+      comercialItens,
+      temParcelasComissao: aPagar.linhas.length > 0,
+      parcelasComissao: aPagar.linhas.map(l => ({
+        nome: l.nome + " · venda de " + l.mesVenda + " · " + l.pct + "% em " + l.parcelas + "x",
+        valor: $(l.valor)
+      })),
+
+      verRegras: this.state.verRegras,
+      verRegrasLabel: this.state.verRegras ? "Fechar" : "Ver e mudar",
+      onVerRegras: () => this.setState(s => ({ verRegras: !s.verRegras })),
+      campos: CAMPOS.map(c => ({
+        label: c.label, ajuda: c.ajuda, ref: this.campoRef(c.id),
+        atual: String(cfg[c.id])
+      })),
+      onSalvarRegras: () => {
+        const patch = {};
+        CAMPOS.forEach(c => {
+          const v = (this.campoRefs[c.id] && this.campoRefs[c.id].current && this.campoRefs[c.id].current.value || "").trim();
+          if (v) patch[c.id] = v;
+        });
+        CRM.setConfigPagamento(patch);
+        CAMPOS.forEach(c => { if (this.campoRefs[c.id] && this.campoRefs[c.id].current) this.campoRefs[c.id].current.value = ""; });
+        this.bump();
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
