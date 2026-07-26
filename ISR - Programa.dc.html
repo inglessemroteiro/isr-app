@@ -29,10 +29,28 @@
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">{{ subtitulo }}</p>
 
-    <!-- SEM PROGRAMA -->
-    <sc-if value="{{ semPrograma }}">
+    <!-- TURMAS DO ACOMPANHAMENTO -->
+    <sc-if value="{{ temPrograma }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turmas do acompanhamento</span>
+          <button onclick="{{ onNovaTurma }}" style="flex: none; border: 1px solid #e5dccf; background: {{ novaBg }}; color: {{ novaFg }}; font-size: 11.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ novaLabel }}</button>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <sc-for list="{{ turmasPrograma }}" as="tp" hint-placeholder-count="3">
+            <button onclick="{{ tp.onPick }}" title="{{ tp.title }}" style="text-align: left; border: 1px solid {{ tp.borda }}; background: {{ tp.bg }}; padding: 9px 14px; border-radius: 10px; cursor: pointer; font-family: inherit;">
+              <div style="font-size: 12.5px; font-weight: 700; color: {{ tp.fg }};">{{ tp.nome }}</div>
+              <div style="font-size: 10.5px; color: {{ tp.subCor }}; margin-top: 2px;">{{ tp.sub }}</div>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- CRIAR TURMA -->
+    <sc-if value="{{ mostraCriar }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 22px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Criar a turma do programa</div>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">{{ tituloCriar }}</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
           <input ref="{{ novoNomeRef }}" placeholder="Nome da turma (ex. Piloto · 1ª turma)" style="flex: 1; min-width: 200px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
           <label style="font-size: 12px; color: #8a7c6b;">começa
@@ -83,6 +101,9 @@
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Quem participa</span>
             <span style="flex: none; font-size: 11.5px; color: #6b6155;">{{ resumoParticipantes }}</span>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+            <button onclick="{{ onEncerrarTurma }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ encerradaLabel }}</button>
           </div>
           <p style="margin: 0 0 14px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O acompanhamento é vendido à parte, por {{ precoPrograma }}. Quase ninguém aqui é aluna de turma — e quem for, participa das duas coisas.</p>
 
@@ -270,7 +291,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { turmaAberta: false, abertoId: null, busca: "", filtro: "", buscaAdd: "",
-            tick: 0, pagoNovo: false };
+            tick: 0, pagoNovo: false, programaId: "", criando: false };
   novoNomeRef = React.createRef(); novoInicioRef = React.createRef(); novoSemanasRef = React.createRef();
   addBuscaRef = React.createRef(); buscaRef = React.createRef();
   precoRef = React.createRef(); moedaRef = React.createRef(); pagoRef = React.createRef();
@@ -288,19 +309,50 @@ class Component extends DCLogic {
       contagem: "", temFiltro: false, subtitulo: "" };
     if (!CRM) return vazioBase;
 
-    const prog = CRM.getPrograma();
-    if (!prog) return Object.assign({}, vazioBase, {
-      subtitulo: "Acompanhamento de Programa Assíncrono. A missão vai ao grupo uma vez por semana; aqui se acompanha quem respondeu e a quem a devolutiva já foi enviada. Crie a turma para iniciar.",
+    // ── qual turma do acompanhamento está aberta na tela ──
+    const resumos = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
+    const escolhida = this.state.programaId
+      && resumos.some(r => r.id === this.state.programaId)
+      ? this.state.programaId
+      : (resumos.filter(r => !r.encerrada)[0] || resumos[0] || {}).id;
+    const prog = escolhida ? CRM.getPrograma(escolhida) : null;
+
+    const criarForm = {
       novoNomeRef: this.novoNomeRef, novoInicioRef: this.novoInicioRef, novoSemanasRef: this.novoSemanasRef,
       onCriar: () => {
         const nome = (this.novoNomeRef.current && this.novoNomeRef.current.value || "").trim();
-        CRM.addPrograma({
-          nome: nome || "Programa Sem Roteiro · piloto",
+        const novo = CRM.addPrograma({
+          nome: nome || "Acompanhamento · turma " + (resumos.length + 1),
           inicio: (this.novoInicioRef.current && this.novoInicioRef.current.value) || undefined,
           semanas: (this.novoSemanasRef.current && this.novoSemanasRef.current.value) || 8
         });
-        this.setState({ turmaAberta: true });
+        if (this.novoNomeRef.current) this.novoNomeRef.current.value = "";
+        // a turma nova entra aberta na tela, pronta para receber gente
+        this.setState({ programaId: novo ? novo.id : "", criando: false, turmaAberta: true });
       }
+    };
+
+    const turmasPrograma = resumos.map(r => {
+      const sel = r.id === escolhida;
+      return {
+        nome: r.nome,
+        sub: (r.encerrada ? "encerrada · " : "semana " + r.semana + " de " + r.semanas + " · ")
+          + r.participantes + (r.participantes === 1 ? " participante" : " participantes"),
+        title: (r.encerrada ? "Turma encerrada em " + CRM.ddmm(r.encerrada)
+                            : "Começou em " + CRM.ddmm(r.inicio))
+          + " · " + r.moeda + " " + r.preco + " por participante",
+        bg: sel ? "#164951" : (r.encerrada ? "#f7f4ef" : "#fff"),
+        fg: sel ? "#fff" : (r.encerrada ? "#b3a693" : "#164951"),
+        subCor: sel ? "rgba(255,255,255,0.7)" : "#b3a693",
+        borda: sel ? "#164951" : "#e5dccf",
+        onPick: () => this.setState({ programaId: r.id, criando: false })
+      };
+    });
+
+    if (!prog) return Object.assign({}, vazioBase, criarForm, {
+      mostraCriar: true,
+      tituloCriar: "Criar a primeira turma do acompanhamento",
+      subtitulo: "Acompanhamento de Programa Assíncrono. A missão vai ao grupo uma vez por semana; aqui se acompanha quem respondeu e a quem a devolutiva já foi enviada. Crie a turma para iniciar.",
     });
 
     const sem = CRM.semanaAtualPrograma(prog);
@@ -497,6 +549,23 @@ class Component extends DCLogic {
       turmaBg: this.state.turmaAberta ? "#164951" : "#fff",
       turmaFg: this.state.turmaAberta ? "#fff" : "#164951",
       onToggleTurma: () => this.setState(s => ({ turmaAberta: !s.turmaAberta })),
+      // ── turmas do acompanhamento ──
+      turmasPrograma,
+      mostraCriar: this.state.criando,
+      tituloCriar: "Nova turma do acompanhamento",
+      novaLabel: this.state.criando ? "Cancelar" : "+ Nova turma",
+      novaBg: this.state.criando ? "#f6eee4" : "#fff",
+      novaFg: this.state.criando ? "#9c6f56" : "#164951",
+      onNovaTurma: () => this.setState(s => ({ criando: !s.criando })),
+      novoNomeRef: this.novoNomeRef, novoInicioRef: this.novoInicioRef, novoSemanasRef: this.novoSemanasRef,
+      onCriar: criarForm.onCriar,
+      encerradaLabel: prog.encerrada ? "Reabrir turma" : "Encerrar turma",
+      onEncerrarTurma: () => {
+        if (prog.encerrada) CRM.reabrirPrograma(prog.id);
+        else CRM.encerrarPrograma(prog.id);
+        this.bump();
+      },
+
       turmasParaAdicionar,
       temTurmasParaAdicionar: turmasParaAdicionar.length > 0,
       participantes, semParticipantes: participantes.length === 0,

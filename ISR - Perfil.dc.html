@@ -215,7 +215,7 @@
                 <div style="background: #faf8f3; border-radius: 10px; padding: 13px; margin-top: 12px;">
                   <div style="font-size: 11px; font-weight: 700; color: #164951; margin-bottom: 9px;">Acompanhamento</div>
                   <sc-if value="{{ semProgramas }}">
-                    <p style="margin: 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">Nenhum programa criado ainda. Crie um na tela Programa.</p>
+                    <p style="margin: 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">{{ semProgramasTexto }}</p>
                   </sc-if>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <sc-for list="{{ programasOpts }}" as="pgm" hint-placeholder-count="2">
@@ -800,10 +800,17 @@ class Component extends DCLogic {
         });
         this.setState({ abrindoProduto: "" });
       };
-      const progsDisponiveis = CRM.programasLista();
+      const progsDisponiveis = CRM.programasAbertos ? CRM.programasAbertos() : CRM.programasLista();
+      const resumoPg = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
       out.semProgramas = progsDisponiveis.length === 0;
+      out.semProgramasTexto = "Nenhuma turma aberta do acompanhamento. Abra uma na tela Programa.";
       out.programasOpts = progsDisponiveis.map(pgm => ({
-        label: "+ " + pgm.nome + " · " + (pgm.moeda || "€") + " " + (pgm.preco || "27,00"),
+        label: "+ " + pgm.nome
+          + (function () {
+              const r = resumoPg.filter(x => x.id === pgm.id)[0];
+              return r ? " · semana " + r.semana + " de " + r.semanas : "";
+            })()
+          + " · " + (pgm.moeda || "€") + " " + (pgm.preco || "27,00"),
         onAdd: () => {
           CRM.matricularNoPrograma(p.id, { programaId: pgm.id, pago: !!this.state.progPago });
           this.setState({ abrindoProduto: "", progPago: false });
