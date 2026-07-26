@@ -390,7 +390,7 @@
     <div>
 
       <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
-        <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="3">
+        <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="4">
           <button onclick="{{ pd.onPick }}" style="border: 1px solid #e5dccf; background: {{ pd.bg }}; color: {{ pd.fg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.label }}</button>
         </sc-for>
       </div>
@@ -412,59 +412,46 @@
         </sc-if>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
-
-        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Calendário</span>
-            <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">tom mais escuro = mais registros</span>
-          </div>
-          <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Selecione um dia para ver os registros dele.</p>
-
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px;">
-            <sc-for list="{{ cabecalhoSemana }}" as="cs" hint-placeholder-count="7">
-              <div style="text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">{{ cs }}</div>
-            </sc-for>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-            <sc-for list="{{ celulas }}" as="cl" hint-placeholder-count="35">
-              <button onclick="{{ cl.onPick }}" title="{{ cl.title }}" style="aspect-ratio: 1; border: 1px solid {{ cl.borda }}; background: {{ cl.bg }}; color: {{ cl.fg }}; border-radius: 8px; cursor: {{ cl.cursor }}; font-family: inherit; font-size: 11px; font-weight: 700; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
-                <span>{{ cl.dia }}</span>
-                <sc-if value="{{ cl.temPonto }}">
-                  <span style="width: 4px; height: 4px; border-radius: 50%; background: {{ cl.pontoCor }};"></span>
-                </sc-if>
-              </button>
-            </sc-for>
-          </div>
-
-          <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
-            <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="4">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 9px; height: 9px; border-radius: 3px; background: {{ lg.cor }};"></span>
-                <span style="font-size: 11px; color: #6b6155;">{{ lg.label }}</span>
-              </div>
-            </sc-for>
-          </div>
+      <!-- EXTRATO: um lançamento por linha, do mais recente para o mais antigo -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Extrato</span>
+          <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">{{ extratoResumo }}</span>
         </div>
 
-        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px;">
-          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">{{ tituloDia }}</div>
-          <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">{{ subtituloDia }}</p>
-
-          <sc-if value="{{ diaVazio }}">
-            <div style="font-size: 13px; color: #b3a693; line-height: 1.6;">Sem registros neste dia.</div>
-          </sc-if>
-
-          <sc-for list="{{ itensDoDia }}" as="it" hint-placeholder-count="6">
-            <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
-              <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ it.cor }}; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <a href="{{ it.href }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: none;">{{ it.nome }}</a>
-                <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ it.detalhe }}</div>
-              </div>
-            </div>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px;">
+          <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="5">
+            <button onclick="{{ ft.onPick }}" style="border: 1px solid {{ ft.borda }}; background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ft.label }}</button>
           </sc-for>
         </div>
+
+        <sc-if value="{{ extratoVazio }}">
+          <div style="font-size: 13px; color: #b3a693; line-height: 1.6; padding: 12px 0;">Nenhum registro deste tipo no período.</div>
+        </sc-if>
+
+        <sc-for list="{{ extrato }}" as="dia" hint-placeholder-count="12">
+          <div style="border-top: 1px solid #f2e9dd;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 11px 0 6px;">
+              <span style="font-size: 11.5px; font-weight: 700; color: #164951;">{{ dia.titulo }}</span>
+              <span style="flex: none; font-size: 11px; color: #b3a693;">{{ dia.contagem }}</span>
+            </div>
+            <sc-for list="{{ dia.itens }}" as="it" hint-placeholder-count="4">
+              <div style="display: flex; align-items: flex-start; gap: 10px; padding: 7px 0 9px;">
+                <span style="flex: none; background: {{ it.tagBg }}; color: {{ it.tagFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 9px; border-radius: 999px; white-space: nowrap; margin-top: 1px;">{{ it.tag }}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <a href="{{ it.href }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: none;">{{ it.nome }}</a>
+                  <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ it.detalhe }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ temMais }}">
+          <div style="border-top: 1px solid #f2e9dd; padding-top: 12px; margin-top: 4px;">
+            <button onclick="{{ onVerMais }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ verMaisLabel }}</button>
+          </div>
+        </sc-if>
       </div>
 
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px; margin-top: 16px;">
@@ -512,7 +499,7 @@
 class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0,
     sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "",
-    vista: "funil", dias: 30, diaSel: "" };
+    vista: "funil", dias: 30, filtro: "tudo", extratoN: 0 };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   matSinalRef = React.createRef();
   formRef = React.createRef();
@@ -586,71 +573,56 @@ class Component extends DCLogic {
 
   // O que foi executado no período, por data. Alimenta a vista "Atividade".
   vistaDeAtividade(CRM) {
-    const vazio = { periodos: [], numeros: [], celulas: [], legenda: [], itensDoDia: [],
-      pessoas: [], semana: [], cabecalhoSemana: [], leitura: "", alerta: "", temAlerta: false,
-      tituloDia: "", subtituloDia: "", diaVazio: true, semPessoas: true };
+    const vazio = { periodos: [], numeros: [], extrato: [], filtros: [],
+      pessoas: [], semana: [], leitura: "", alerta: "", temAlerta: false,
+      extratoVazio: true, extratoResumo: "", temMais: false, semPessoas: true };
     if (!CRM.agendaComercial) return vazio;
 
     const ag = CRM.agendaComercial(this.state.dias);
     const t = ag.totais;
     const CORES = { entrada: "#e07856", contato: "#2a9d8f", reuniao: "#6b5b95", matricula: "#5a9e4b" };
 
-    // dia selecionado: o último com registro, enquanto ela não escolher
-    const comAlgo = ag.dias.filter(d => d.total > 0);
-    const diaSel = this.state.diaSel
-      || (comAlgo.length ? comAlgo[comAlgo.length - 1].data : (ag.dias[ag.dias.length - 1] || {}).data)
-      || "";
-    const dSel = ag.dias.filter(d => d.data === diaSel)[0] || null;
+    // ── extrato: um lançamento por linha, do mais recente para o mais antigo ──
+    const TIPOS = {
+      entrada:   { tag: "entrou",    bg: "rgba(224,120,86,0.14)",  fg: "#c96a48" },
+      contato:   { tag: "contato",   bg: "rgba(42,157,143,0.14)",  fg: "#2a9d8f" },
+      reuniao:   { tag: "conversa",  bg: "rgba(107,91,149,0.14)",  fg: "#6b5b95" },
+      matricula: { tag: "matrícula", bg: "rgba(90,158,75,0.14)",   fg: "#4a8a3d" }
+    };
+    const filtro = this.state.filtro || "tudo";
+    const cabe = tipo => filtro === "tudo" || filtro === tipo;
 
-    // calendário alinhado à semana, domingo primeiro
-    const DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-    const celulas = [];
-    if (ag.dias.length) {
-      const primeiro = new Date(ag.dias[0].data + "T12:00:00");
-      for (let i = 0; i < primeiro.getDay(); i++) {
-        celulas.push({ dia: "", bg: "transparent", borda: "transparent", fg: "transparent",
-          cursor: "default", title: "", temPonto: false, onPick: () => {} });
-      }
-    }
-    const teto = Math.max(1, ag.pico ? ag.pico.total : 1);
-    ag.dias.forEach(d => {
-      const intensidade = d.total / teto;
-      const sel = d.data === diaSel;
-      const partes = [];
-      if (d.entradas.length) partes.push(d.entradas.length + " entrou");
-      if (d.contatos.length) partes.push(d.contatos.length + " contato(s)");
-      if (d.reunioes.length) partes.push(d.reunioes.length + " reunião(ões)");
-      if (d.matriculas.length) partes.push(d.matriculas.length + " matrícula(s)");
-      celulas.push({
-        dia: String(parseInt(d.data.slice(8, 10), 10)),
-        bg: d.total === 0 ? (d.fimDeSemana ? "#f7f4ef" : "#fff")
-          : "rgba(42,157,143," + (0.12 + intensidade * 0.62).toFixed(2) + ")",
-        borda: sel ? "#164951" : (d.total ? "transparent" : "#eee3d6"),
-        fg: intensidade > 0.55 ? "#fff" : "#6b6155",
-        cursor: "pointer",
-        title: CRM.ddmm(d.data) + (partes.length ? " · " + partes.join(" · ") : " · sem registros"),
-        temPonto: d.matriculas.length > 0,
-        pontoCor: intensidade > 0.55 ? "#9ec970" : "#5a9e4b",
-        onPick: () => this.setState({ diaSel: d.data })
-      });
+    const linhaDe = (tipo, x) => ({
+      tag: TIPOS[tipo].tag, tagBg: TIPOS[tipo].bg, tagFg: TIPOS[tipo].fg,
+      nome: x.nome,
+      href: "ISR%20-%20Perfil.dc.html?id=" + x.id,
+      detalhe:
+        tipo === "matricula" ? "Matriculada" + (x.turma ? " · " + x.turma : "")
+      : tipo === "reuniao"   ? "Conversa de matrícula" + (x.hora ? " às " + x.hora : "")
+                               + (x.dono ? " · " + x.dono : "") + (x.feita ? " · feita" : " · marcada")
+      : tipo === "contato"   ? "Contato registrado" + (x.por ? " por " + x.por : "")
+      :                        "Entrou como lead" + (x.canal ? " · " + x.canal : "")
     });
 
-    const itensDoDia = [];
-    if (dSel) {
-      dSel.matriculas.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.matricula,
-        detalhe: "Matriculada" + (x.turma ? " · " + x.turma : ""),
-        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
-      dSel.reunioes.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.reuniao,
-        detalhe: "Conversa de matrícula" + (x.hora ? " às " + x.hora : "")
-          + (x.dono ? " · " + x.dono : "") + (x.feita ? " · feita" : " · marcada"),
-        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
-      dSel.contatos.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.contato,
-        detalhe: "Contato" + (x.por ? " por " + x.por : ""),
-        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
-      dSel.entradas.forEach(x => itensDoDia.push({ nome: x.nome, cor: CORES.entrada,
-        detalhe: "Entrou como lead" + (x.canal ? " · " + x.canal : ""),
-        href: "ISR%20-%20Perfil.dc.html?id=" + x.id }));
-    }
+    // do dia mais recente para o mais antigo, só os dias que têm algo
+    const todosOsDias = ag.dias.slice().reverse().map(d => {
+      const itens = [];
+      if (cabe("matricula")) d.matriculas.forEach(x => itens.push(linhaDe("matricula", x)));
+      if (cabe("reuniao"))   d.reunioes.forEach(x => itens.push(linhaDe("reuniao", x)));
+      if (cabe("contato"))   d.contatos.forEach(x => itens.push(linhaDe("contato", x)));
+      if (cabe("entrada"))   d.entradas.forEach(x => itens.push(linhaDe("entrada", x)));
+      return {
+        titulo: CRM.ddmm(d.data) + " · " + d.diaSemana,
+        contagem: itens.length + (itens.length === 1 ? " registro" : " registros"),
+        itens
+      };
+    }).filter(d => d.itens.length);
+
+    // um extrato longo abre curto e cresce sob demanda
+    const PASSO = 10;
+    const mostrar = this.state.extratoN || PASSO;
+    const extrato = todosOsDias.slice(0, mostrar);
+    const nLancamentos = todosOsDias.reduce((s, d) => s + d.itens.length, 0);
 
     let leitura;
     if (t.contatos === 0 && t.entradas === 0) {
@@ -674,12 +646,13 @@ class Component extends DCLogic {
     const maiorSemana = Math.max.apply(null, ag.porDiaSemana.map(x => x.n).concat([1]));
 
     return {
-      periodos: [{ d: 14, label: "14 dias" }, { d: 30, label: "30 dias" }, { d: 90, label: "90 dias" }]
+      periodos: [{ d: 7, label: "7 dias" }, { d: 14, label: "14 dias" },
+        { d: 30, label: "30 dias" }, { d: 90, label: "90 dias" }]
         .map(x => ({
           label: x.label,
           bg: this.state.dias === x.d ? "#164951" : "#fff",
           fg: this.state.dias === x.d ? "#fff" : "#164951",
-          onPick: () => this.setState({ dias: x.d, diaSel: "" })
+          onPick: () => this.setState({ dias: x.d, extratoN: 0 })
         })),
       numeros: [
         { valor: String(t.entradas), label: "leads entraram", cor: CORES.entrada },
@@ -690,19 +663,26 @@ class Component extends DCLogic {
           label: "dos que entraram fecharam", cor: "#164951" }
       ],
       leitura, alerta, temAlerta: !!alerta,
-      cabecalhoSemana: DIAS, celulas,
-      legenda: [
-        { cor: CORES.entrada, label: "lead entrou" },
-        { cor: CORES.contato, label: "contato feito" },
-        { cor: CORES.reuniao, label: "conversa de matrícula" },
-        { cor: CORES.matricula, label: "matrícula" }
-      ],
-      tituloDia: dSel ? CRM.ddmm(dSel.data) + " · " + dSel.diaSemana : "Nenhum dia selecionado",
-      subtituloDia: dSel
-        ? (dSel.total ? dSel.total + (dSel.total === 1 ? " registro" : " registros")
-                      : "Sem registros")
-        : "",
-      itensDoDia, diaVazio: itensDoDia.length === 0,
+      extrato, extratoVazio: extrato.length === 0,
+      extratoResumo: nLancamentos + (nLancamentos === 1 ? " lançamento em " : " lançamentos em ")
+        + todosOsDias.length + (todosOsDias.length === 1 ? " dia" : " dias"),
+      temMais: todosOsDias.length > extrato.length,
+      verMaisLabel: "Ver mais " + Math.min(PASSO, todosOsDias.length - extrato.length) + " dias",
+      onVerMais: () => this.setState({ extratoN: mostrar + PASSO }),
+      filtros: [
+        { id: "tudo", label: "Tudo" },
+        { id: "entrada", label: "Entraram" },
+        { id: "contato", label: "Contatos" },
+        { id: "reuniao", label: "Conversas" },
+        { id: "matricula", label: "Matrículas" }
+      ].map(x => ({
+        label: x.label,
+        bg: filtro === x.id ? "#164951" : "#fff",
+        fg: filtro === x.id ? "#fff" : "#8a7c6b",
+        borda: filtro === x.id ? "#164951" : "#e5dccf",
+        onPick: () => this.setState({ filtro: x.id, extratoN: PASSO })
+      })),
+
       pessoas: ag.porPessoa.map(x => ({
         nome: x.nome,
         resumo: x.contatos + (x.contatos === 1 ? " contato" : " contatos")
@@ -721,8 +701,8 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, temNovas: false,
-      vistas: [], vistaFunil: true, vistaAtividade: false, periodos: [], numeros: [], celulas: [],
-      legenda: [], itensDoDia: [], pessoas: [], semana: [], cabecalhoSemana: [] };
+      vistas: [], vistaFunil: true, vistaAtividade: false, periodos: [], numeros: [],
+      extrato: [], filtros: [], pessoas: [], semana: [] };
 
     const counts = CRM.tabCounts();
     const active = this.state.tab;

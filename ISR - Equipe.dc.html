@@ -122,6 +122,34 @@
       </sc-for>
     </div>
 
+    <!-- PAGAMENTO DO MÊS -->
+    <section style="margin-top: 26px; border-top: 1px solid #eee3d6; padding-top: 20px;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #164951; letter-spacing: -0.3px;">Pagamento de {{ mesLabel }}</h2>
+        <a href="ISR%20-%20Pagamentos.dc.html" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 7px 15px; border-radius: 999px;">Abrir a folha completa</a>
+      </div>
+      <p style="margin: 0 0 14px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 720px;">Calculado do que já está registrado: turmas, alunas ativas, aulas dadas, frequência e tarefas. A folha completa mostra a conta linha por linha e deixa mudar as regras.</p>
+
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
+        <sc-if value="{{ semFolha }}">
+          <div style="padding: 22px 18px; font-size: 13px; color: #9b8b7e; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
+        </sc-if>
+        <sc-for list="{{ folha }}" as="fl" hint-placeholder-count="4">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f2e9dd;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ fl.nome }}</div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fl.detalhe }}</div>
+            </div>
+            <span style="flex: none; font-size: 15px; font-weight: 700; color: #164951;">{{ fl.valor }}</span>
+          </div>
+        </sc-for>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 13px 18px; background: #164951;">
+          <span style="font-size: 12px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.6px;">Total do mês</span>
+          <span style="flex: none; font-size: 17px; font-weight: 700; color: #fff;">{{ folhaTotal }}</span>
+        </div>
+      </div>
+    </section>
+
     <!-- CARTEIRA -->
     <section style="margin-top: 26px; border-top: 1px solid #eee3d6; padding-top: 20px;">
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
@@ -314,9 +342,35 @@ class Component extends DCLogic {
       };
     });
 
+    // o cálculo do pagamento fica na tela de Pagamentos; aqui vai o resumo,
+    // porque é na Equipe que se procura quanto cada pessoa recebe.
+    const fp = CRM.folhaPagamento();
+    const com = CRM.comissaoComercial ? CRM.comissaoComercial() : null;
+    const $$ = v => CRM.fmtMoney(fp.moeda || "R$", v);
+    const linhasFolha = fp.linhas.map(l => ({
+      nome: l.nome,
+      detalhe: l.turmas.filter(x => x.alunas > 0 || x.aulas > 0).length
+        + " turma(s) · " + l.turmas.reduce((s, x) => s + x.alunas, 0) + " aluna(s)"
+        + (l.particulares.aulas ? " · " + l.particulares.aulas + " particular(es)" : ""),
+      valor: $$(l.total)
+    }));
+    if (com && com.total > 0) {
+      linhasFolha.push({ nome: com.quem || "Comercial",
+        detalhe: com.nVendas + (com.nVendas === 1 ? " venda no mês" : " vendas no mês")
+          + " · faixa " + com.situacao,
+        valor: $$(com.total) });
+    }
+    const totalFolha = fp.total + (com ? com.total : 0);
+
     const cart = window.ISRCRM.carteiraProfessoras();
     return Object.assign({
       membros, vazio: membros.length === 0,
+
+      mesLabel: (CRM.MES_NOMES ? CRM.MES_NOMES[parseInt(fp.mes.slice(5, 7), 10) - 1] : fp.mes)
+        + " de " + fp.mes.slice(0, 4),
+      folha: linhasFolha, semFolha: linhasFolha.length === 0,
+      folhaTotal: $$(totalFolha),
+
 
       carteiraNumeros: [
         { valor: String(cart.total), label: cart.total === 1 ? "aluna acompanhada" : "alunas acompanhadas", cor: "#164951" },
