@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.25-i",
-  data: "25/07/2026",
-  nota: "App da aluna interativo e renovação com parcela em aberto"
+  numero: "2026.07.26-a",
+  data: "26/07/2026",
+  nota: "App da aluna no design system, ISR Miles e inclusão no programa"
 };

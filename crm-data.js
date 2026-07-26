@@ -3392,9 +3392,16 @@
       { label: "Trouxe convidado pra apresentação", valor: 60 },
       { label: "Indicação virou matrícula", valor: 200 }] }
   ];
-  // lojinha de resgates do design original
+  // ISR Miles — o nome vem da metáfora de viagem da marca.
+  // Catálogo de resgate: cada prêmio tem categoria e custo em miles.
+  var MOEDAS_NOME = "ISR Miles";
+  var MOEDAS_CATS = {
+    aula: "Aula", material: "Material", mentoria: "Mentoria",
+    comunidade: "Comunidade", reconhecimento: "Reconhecimento",
+    carreira: "Carreira", desconto: "Desconto"
+  };
   var MOEDAS_RESGATES = [
-    { id: "rg1", nome: "Escolhe o tema da próxima aula", cat: "aula", custo: 80 },
+    { id: "rg1", nome: "Escolhe o tema de uma aula extra", cat: "aula", custo: 80 },
     { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", custo: 120 },
     { id: "rg3", nome: "30 min de bate-papo com a Gabi", cat: "mentoria", custo: 200 },
     { id: "rg4", nome: "Traz um convidado pra aula regular", cat: "comunidade", custo: 250 },
@@ -3403,7 +3410,7 @@
     { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", custo: 400 },
     { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", custo: 600 },
     { id: "rg9", nome: "Sessão de preparação pra entrevista", cat: "carreira", custo: 900 },
-    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "topo", custo: 1200, vip: true }
+    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "comunidade", custo: 1200, vip: true }
   ];
   function resgatarRecompensa(pessoaId, resgateId) {
     var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
@@ -4297,7 +4304,7 @@
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
-    estadoPresenca: estadoPresenca,
+    chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
     agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
@@ -4338,6 +4345,7 @@
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
+    MOEDAS_NOME: MOEDAS_NOME, MOEDAS_CATS: MOEDAS_CATS,
     parcelasAbertas: parcelasAbertas, pendenciaAnterior: pendenciaAnterior,
     resumoRenovacao: resumoRenovacao,
     MOEDAS_PROGRAMA: MOEDAS_PROGRAMA, moedasDoPrograma: moedasDoPrograma,
