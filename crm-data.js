@@ -53,7 +53,8 @@
     aluna:     { label: "Aluna",     color: "#5a9e4b", bg: "rgba(90,158,75,0.16)" },
     pausada:   { label: "Pausada",   color: "#d4a574", bg: "rgba(212,165,116,0.16)" },
     "ex-aluna":{ label: "Ex-aluna",  color: "#9b8b7e", bg: "rgba(155,139,126,0.16)" },
-    mvs:       { label: "MVS",       color: "#6b5b95", bg: "rgba(107,91,149,0.14)" }
+    mvs:       { label: "MVS",       color: "#6b5b95", bg: "rgba(107,91,149,0.14)" },
+    programa:  { label: "Acompanhamento", color: "#e07856", bg: "rgba(224,120,86,0.14)" }
   };
 
   // ── DATAS ─────────────────────────────────────────────────────
@@ -527,23 +528,58 @@
     try {
       if ((JSON.parse(localStorage.getItem("isr_programas_v1")) || []).length) return;
     } catch (e) {}
-    var alunas = lista.filter(function (p) { return p.status === "aluna"; }).slice(0, 5);
-    if (!alunas.length) return;
+    // O acompanhamento é vendido à parte: quase todo mundo aqui não está
+    // em turma nenhuma. O exemplo reflete isso — quatro só do programa e
+    // uma aluna de turma que também comprou.
     var d = today(); d.setDate(d.getDate() - 21); // começou há três semanas
-    var pg = { id: "pgDemo", nome: "Programa Sem Roteiro", inicio: iso(d),
-      semanas: 8, diaFeedback: 5, missoes: MISSOES_PILOTO.slice(),
-      participantes: alunas.map(function (p) { return p.id; }),
-      progresso: {}, respostas: {}, missoesEnviadas: { 1: iso(d), 2: iso(d), 3: iso(today()) },
+    var inicio = iso(d);
+    var soPrograma = [
+      { nome: "Renata Aguiar", whatsapp: "+55 11 96000-0001", email: "renata@exemplo.com" },
+      { nome: "Tatiane Melo",  whatsapp: "+55 21 96000-0002", email: "tatiane@exemplo.com" },
+      { nome: "Vanessa Coelho", whatsapp: "+55 31 96000-0003", email: "vanessa@exemplo.com" },
+      { nome: "Priscila Nunes", whatsapp: "+55 41 96000-0004", email: "priscila@exemplo.com" }
+    ];
+    var pg = { id: "pgDemo", nome: "Programa Sem Roteiro", inicio: inicio,
+      semanas: 8, diaFeedback: 5, moeda: "€", preco: "27,00",
+      missoes: MISSOES_PILOTO.slice(),
+      participantes: [], progresso: {}, respostas: {},
+      missoesEnviadas: { 1: inicio, 2: inicio, 3: iso(today()) },
       participacao: {} };
-    alunas.forEach(function (p, i) {
+
+    soPrograma.forEach(function (x, i) {
+      var id = "pp" + (i + 1);
+      lista.push({ id: id, nome: x.nome, whatsapp: x.whatsapp, email: x.email,
+        status: "programa", estagio: "matriculado", desde: inicio,
+        origem: { canal: "Instagram", detalhe: "ig · acompanhamento", entrouPor: "/acompanhamento" },
+        formatos: ["programa"], turma: "", professora: "", nivel: "",
+        contratos: [], historico: [{ data: inicio, tipo: "matricula",
+          texto: "Entrou no Programa Sem Roteiro · € 27,00 (pago)" }],
+        programa: { id: pg.id, nome: pg.nome, moeda: "€", valor: "€ 27,00",
+          desde: inicio, pago: true, por: "Gabi" } });
+      pg.participantes.push(id);
+    });
+
+    // a exceção: uma aluna de turma que também faz o acompanhamento
+    var aluna = lista.filter(function (p) { return p.status === "aluna"; })[0];
+    if (aluna) {
+      aluna.programa = { id: pg.id, nome: pg.nome, moeda: "€", valor: "€ 27,00",
+        desde: inicio, pago: true, por: "Gabi" };
+      pg.participantes.push(aluna.id);
+    }
+
+    pg.participantes.forEach(function (id, i) {
       for (var s = 1; s <= 2; s++) {
         if (i > 2 && s === 2) continue; // nem todo mundo responde tudo
-        pg.progresso[p.id + "|" + s] = { audio: iso(d), feedback: iso(d) };
-        pg.respostas[p.id + "|" + s] = { texto: "Resposta da semana " + s + ".", em: iso(d) };
+        pg.progresso[id + "|" + s] = { audio: inicio, feedback: inicio };
+        pg.respostas[id + "|" + s] = { texto: "Resposta da semana " + s + ".", em: inicio };
       }
-      pg.participacao[p.id] = i < 3 ? 2 : 1;
+      pg.participacao[id] = i < 3 ? 2 : 1;
     });
-    try { localStorage.setItem("isr_programas_v1", JSON.stringify([pg])); } catch (e) {}
+
+    try {
+      localStorage.setItem("isr_programas_v1", JSON.stringify([pg]));
+      localStorage.setItem(PESSOAS_KEY, JSON.stringify(lista));
+    } catch (e) {}
   }
 
   function semearChamadasDemo(lista) {
@@ -620,7 +656,9 @@
   function setStage(id, stageId) {
     if (stageId === "matriculado") {
       var atual = getPessoa(id);
-      if (!atual || atual.status !== "aluna") {
+      var jaVendido = atual && (atual.status === "aluna" || atual.status === "mvs"
+        || atual.status === "programa" || atual.status === "pausada");
+      if (!jaVendido) {
         if (typeof console !== "undefined" && console.warn) {
           console.warn("ISR: matrícula depende de turma e contrato — use matricular().");
         }
@@ -1521,19 +1559,37 @@
   ];
   var PROGRAMAS_KEY = "isr_programas_v1";
   function programasLista() {
+    ensureSeed(); // o exemplo do programa nasce junto com o das pessoas
     try { var l = JSON.parse(localStorage.getItem(PROGRAMAS_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
   function programasSave(l) { carimbarLista(l); try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  // O acompanhamento é um produto à parte, com preço próprio. A maioria
+  // de quem participa não está em turma nenhuma — e quem está em turma
+  // pode participar também. As duas coisas são independentes.
+  var PROGRAMA_PRECO_PADRAO = { moeda: "€", valor: "27,00" };
+
   function addPrograma(dados) {
     var l = programasLista();
     var p = { id: "pg" + Date.now(), nome: dados.nome || "Programa Sem Roteiro",
       inicio: dados.inicio || iso(today()),
       semanas: parseInt(dados.semanas, 10) || 8,
       diaFeedback: dados.diaFeedback || 5, // sexta
+      moeda: dados.moeda || PROGRAMA_PRECO_PADRAO.moeda,
+      preco: dados.preco || PROGRAMA_PRECO_PADRAO.valor,
       missoes: dados.missoes || MISSOES_PILOTO.slice(),
-      participantes: dados.participantes || [], progresso: {} };
+      participantes: dados.participantes || [], progresso: {}, respostas: {} };
     l.push(p); programasSave(l); return p;
+  }
+  function setPrecoPrograma(programaId, moeda, valor) {
+    var l = programasLista();
+    l.forEach(function (pg) {
+      if (pg.id !== programaId) return;
+      if (moeda) pg.moeda = moeda;
+      if (valor) pg.preco = valor;
+      carimbar(pg);
+    });
+    programasSave(l); return l;
   }
   function getPrograma(id) {
     var l = programasLista();
@@ -1561,6 +1617,132 @@
     });
     programasSave(l); return l;
   }
+  // ── MATRÍCULA NO ACOMPANHAMENTO (produto separado da turma) ──
+  //
+  // Quem entra aqui normalmente não é aluna de turma: comprou só o
+  // acompanhamento. Quem é aluna de turma também pode entrar — as duas
+  // matrículas convivem, cada uma com o seu contrato e o seu dinheiro.
+  function matricularNoPrograma(pessoaId, cfg) {
+    cfg = cfg || {};
+    var pg = getPrograma(cfg.programaId);
+    if (!pg) return null;
+    var pessoa = getPessoa(pessoaId);
+    if (!pessoa) return null;
+
+    var moeda = cfg.moeda || pg.moeda || PROGRAMA_PRECO_PADRAO.moeda;
+    var valorTxt = cfg.valor || pg.preco || PROGRAMA_PRECO_PADRAO.valor;
+    if (!/[R$€]/.test(String(valorTxt))) valorTxt = fmtMoney(moeda, parseMoney(valorTxt));
+    var desde = cfg.desde || iso(today());
+    var pago = !!cfg.pago;
+
+    addParticipante(pg.id, pessoaId);
+
+    mutate(pessoaId, function (p) {
+      p.programa = { id: pg.id, nome: pg.nome, moeda: moeda, valor: valorTxt,
+        desde: desde, pago: pago, por: (gestaoUser() || {}).nome || "" };
+      // Ser aluna de turma manda no status; quem só faz o acompanhamento
+      // ganha um status próprio para não sumir do sistema nem virar aluna.
+      if (p.status !== "aluna" && p.status !== "mvs" && p.status !== "pausada") {
+        p.status = "programa";
+        p.estagio = "matriculado";
+        if (!p.desde) p.desde = desde;
+      }
+      pushHist(p, "matricula", "Entrou no " + pg.nome + " · " + valorTxt
+        + (pago ? " (pago)" : " (a receber)"));
+    });
+
+    if (pago) registrarPagamentoPrograma(pessoaId, desde);
+
+    var dono = donoDaIntegracao();
+    avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
+      + ". Mande a missão da semana e adicione ao grupo.", "programa");
+    addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
+      detalhe: "Adicionar ao grupo do WhatsApp e enviar a missão da semana atual."
+        + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
+      dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
+
+    return getPessoa(pessoaId);
+  }
+
+  // O dinheiro do acompanhamento entra no Caixa na categoria própria.
+  function registrarPagamentoPrograma(pessoaId, dataIso) {
+    var p = getPessoa(pessoaId);
+    if (!p || !p.programa) return;
+    addLancamento({ data: dataIso || iso(today()), tipo: "entrada",
+      categoria: "programa",
+      descricao: p.programa.nome + " · " + p.nome,
+      moeda: p.programa.moeda, valor: p.programa.valor });
+  }
+
+  function setProgramaPago(pessoaId, pago) {
+    var antes = getPessoa(pessoaId);
+    var jaEra = !!(antes && antes.programa && antes.programa.pago);
+    mutate(pessoaId, function (p) {
+      if (!p.programa) return;
+      p.programa.pago = !!pago;
+      pushHist(p, "pagamento", "Acompanhamento " + p.programa.valor
+        + (pago ? " recebido" : " marcado como pendente"));
+    });
+    if (pago && !jaEra) registrarPagamentoPrograma(pessoaId);
+    return getPessoa(pessoaId);
+  }
+
+  function sairDoPrograma(pessoaId, motivo) {
+    var p = getPessoa(pessoaId);
+    if (!p || !p.programa) return null;
+    removeParticipante(p.programa.id, pessoaId);
+    mutate(pessoaId, function (pp) {
+      pp.programa.encerrado = iso(today());
+      pp.programa.motivo = motivo || "";
+      // Quem era só do acompanhamento sai como ex-aluna; quem é de turma
+      // continua sendo aluna de turma, só deixa o acompanhamento.
+      if (pp.status === "programa") {
+        pp.status = "ex-aluna";
+        pp.estagio = "perdido";
+        pp.saidaEm = iso(today());
+        pp.motivoPerda = motivo || "Saiu do acompanhamento";
+      }
+      pushHist(pp, "perdido", "Saiu do " + pp.programa.nome
+        + (motivo ? " · " + motivo : ""));
+    });
+    return getPessoa(pessoaId);
+  }
+
+  // Quem está no programa, com o que a equipe precisa ver de cada uma.
+  function participantesPrograma(programaId) {
+    var pg = getPrograma(programaId);
+    if (!pg) return [];
+    return (pg.participantes || []).map(function (id) {
+      var p = getPessoa(id);
+      if (!p) return null;
+      var m = p.programa || {};
+      return { id: id, nome: p.nome, status: p.status,
+        ehAlunaTambem: p.status === "aluna" || p.status === "mvs" || p.status === "pausada",
+        turma: p.turma || "", soPrograma: p.status === "programa",
+        valor: m.valor || "", moeda: m.moeda || pg.moeda, pago: !!m.pago,
+        desde: m.desde || "", semRegistro: !p.programa };
+    }).filter(Boolean);
+  }
+
+  // Quanto o programa faturou e quanto ainda há a receber.
+  function receitaPrograma(programaId) {
+    var lista = participantesPrograma(programaId);
+    var pagos = {}, aReceber = {};
+    lista.forEach(function (x) {
+      if (!x.valor) return;
+      var alvo = x.pago ? pagos : aReceber;
+      alvo[x.moeda] = (alvo[x.moeda] || 0) + parseMoney(x.valor);
+    });
+    var fmt = function (o) {
+      return Object.keys(o).map(function (k) { return fmtMoney(k, o[k]); }).join(" · ");
+    };
+    return { total: lista.length,
+      nPagos: lista.filter(function (x) { return x.pago; }).length,
+      nAReceber: lista.filter(function (x) { return !x.pago && x.valor; }).length,
+      semRegistro: lista.filter(function (x) { return x.semRegistro; }).length,
+      recebido: fmt(pagos) || "—", aReceber: fmt(aReceber) || "—" };
+  }
+
   // chave: pessoaId|semana → { missao, audio, feedback }
   function marcarEtapa(programaId, pessoaId, semana, etapa, valor) {
     var l = programasLista();
@@ -3759,6 +3941,7 @@
     { id: "grupo",      label: "Turmas em grupo",      cor: "#348a8e" },
     { id: "particular", label: "Aulas particulares",   cor: "#6b5b95" },
     { id: "mvs",        label: "MVS · autoguiado",     cor: "#2a9d8f" },
+    { id: "programa",   label: "Acompanhamento",       cor: "#e07856" },
     { id: "sinal",      label: "Sinais de matrícula",  cor: "#9ec970" },
     { id: "extra",      label: "Aulas extras",         cor: "#d4a574" },
     { id: "outra",      label: "Outras receitas",      cor: "#b8ada0" }
@@ -4345,6 +4528,10 @@
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
+    PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
+    matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
+    setProgramaPago: setProgramaPago, participantesPrograma: participantesPrograma,
+    receitaPrograma: receitaPrograma,
     MOEDAS_NOME: MOEDAS_NOME, MOEDAS_CATS: MOEDAS_CATS,
     parcelasAbertas: parcelasAbertas, pendenciaAnterior: pendenciaAnterior,
     resumoRenovacao: resumoRenovacao,
