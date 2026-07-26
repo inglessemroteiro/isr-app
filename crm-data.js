@@ -3199,8 +3199,47 @@
   }
   function updateEquipe(id, patch) {
     var l = equipeLista();
+    var antes = l.filter(function (m) { return m.id === id; })[0];
+    var nomeAntigo = antes ? antes.nome : "";
     l.forEach(function (m) { if (m.id === id) { Object.assign(m, patch); carimbar(m); } });
-    equipeSave(l); return l;
+    equipeSave(l);
+    // o nome da pessoa é a chave que liga turma, aluna, tarefa e reunião a ela.
+    // Trocar o nome sem levar isso junto quebra a folha de pagamento e a agenda.
+    if (patch && patch.nome && nomeAntigo && patch.nome !== nomeAntigo) {
+      renomearNaEquipe(nomeAntigo, patch.nome);
+    }
+    return l;
+  }
+
+  // Troca o nome de uma pessoa da equipe em tudo que aponta para ela.
+  function renomearNaEquipe(de, para) {
+    if (!de || !para || de === para) return;
+
+    var turmas = turmasLista(), mexeuTurma = false;
+    turmas.forEach(function (u) { if (u.teacher === de) { u.teacher = para; mexeuTurma = true; } });
+    if (mexeuTurma) turmasSave(turmas);
+
+    var pessoas = loadPessoas(), mexeuPessoa = false;
+    pessoas.forEach(function (p) {
+      if (p.professora === de) { p.professora = para; mexeuPessoa = true; }
+      if (p.reuniao && p.reuniao.dono === de) { p.reuniao.dono = para; mexeuPessoa = true; }
+      (p.historico || []).forEach(function (h) {
+        if (h.por === de) { h.por = para; mexeuPessoa = true; }
+      });
+    });
+    if (mexeuPessoa) savePessoas(pessoas);
+
+    var tarefas = tarefasLista(), mexeuTarefa = false;
+    tarefas.forEach(function (x) { if (x.dono === de) { x.dono = para; mexeuTarefa = true; } });
+    if (mexeuTarefa) tarefasSave(tarefas);
+
+    // a carteira é indexada pelo nome
+    var caps = capacidades();
+    if (caps[de] !== undefined) {
+      caps[para] = caps[de]; delete caps[de];
+      try { localStorage.setItem(CAPACIDADE_KEY, JSON.stringify(caps)); } catch (e) {}
+    }
+    agendarSync();
   }
   function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
   function equipeCustosMensais(key) {
@@ -5259,6 +5298,7 @@
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
+    renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
