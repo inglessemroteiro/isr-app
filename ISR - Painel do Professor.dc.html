@@ -157,7 +157,7 @@
             <div style="display: flex; align-items: stretch; background: #f7f5f1; border-bottom: 1px solid #f0ede8;">
               <div style="flex: none; width: 190px; padding: 9px 12px; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700;">Aluna</div>
               <sc-for list="{{ colunas }}" as="co" hint-placeholder-count="10">
-                <div style="flex: none; width: 44px; padding: 7px 0; text-align: center; background: {{ co.bg }};">
+                <div style="flex: none; width: 40px; padding: 7px 0; text-align: center; background: {{ co.bg }};">
                   <div style="font-size: 10px; font-weight: 700; color: {{ co.fg }};">{{ co.label }}</div>
                   <div style="font-size: 8.5px; color: {{ co.subFg }}; margin-top: 1px;">{{ co.sub }}</div>
                 </div>
@@ -174,7 +174,7 @@
                   <div style="font-size: 10.5px; color: {{ ln.estadoCor }};">{{ ln.estadoHoje }}</div>
                 </div>
                 <sc-for list="{{ ln.celulas }}" as="ce" hint-placeholder-count="10">
-                  <button onclick="{{ ce.onClick }}" title="{{ ce.title }}" style="flex: none; width: 44px; border: none; border-left: 1px solid #f4f1ec; background: {{ ce.bg }}; color: {{ ce.fg }}; font-size: 13px; font-weight: 700; cursor: {{ ce.cursor }}; font-family: inherit; padding: 9px 0;">{{ ce.letra }}</button>
+                  <button onclick="{{ ce.onClick }}" title="{{ ce.title }}" style="flex: none; width: 40px; border: none; border-left: 1px solid #f4f1ec; background: {{ ce.bg }}; color: {{ ce.fg }}; font-size: 13px; font-weight: 700; cursor: {{ ce.cursor }}; font-family: inherit; padding: 9px 0;">{{ ce.letra }}</button>
                 </sc-for>
                 <div style="flex: none; width: 64px; padding: 9px 8px; text-align: right; font-size: 12px; font-weight: 700; color: {{ ln.freqCor }};">{{ ln.freqLabel }}</div>
                 <div style="flex: none; width: 96px; padding: 7px 10px; display: flex; align-items: center; justify-content: center;">
@@ -423,13 +423,13 @@ class Component extends DCLogic {
 
     const colunas = diario.aulas.map(c => ({
       label: c.label,
-      sub: c.atual ? "hoje" : (c.salva ? "" : "—"),
-      bg: c.atual ? "#164951" : "transparent",
-      fg: c.atual ? "#fff" : "#6b6155",
+      sub: c.atual ? "hoje" : (c.futura ? "" : (c.salva ? "" : "—")),
+      bg: c.atual ? "#164951" : (c.futura ? "#fbfaf8" : "transparent"),
+      fg: c.atual ? "#fff" : (c.futura ? "#c9bfb2" : "#6b6155"),
       subFg: c.atual ? "#9ec970" : "#c9bfb2"
     }));
     // 190 do nome + 44 por aula + 64 de frequência + 96 de tarefa
-    const larguraGrade = (190 + 44 * diario.aulas.length + 160) + "px";
+    const larguraGrade = (190 + 40 * diario.aulas.length + 160) + "px";
 
     const linhasDiario = diario.linhas.map(l => {
       const hoje = l.celulas.filter(c => c.atual)[0];
@@ -449,6 +449,10 @@ class Component extends DCLogic {
           // a coluna de hoje mostra o que está sendo editado, não o que foi salvo
           const est = c.atual ? CRM.estadoPresenca(presAtual[l.id]) : c.estado;
           const vazia = !est;
+          if (c.futura) {
+            return { letra: "", bg: "#fbfaf8", fg: "#e5dfd6", cursor: "default",
+              title: "Aula ainda não dada", onClick: () => {} };
+          }
           return {
             letra: vazia ? "·" : LETRA[est],
             bg: vazia ? "#fff" : (c.atual ? (this.CORES[est] || "#348a8e") : this.FUNDO[est] || "#f7f5f1"),
