@@ -118,25 +118,26 @@
       </sc-if>
 
       <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
-        <div style="border-bottom: 1px solid #f4f1ec;">
-          <!-- uma linha por aluna: marca, nome, estado e as duas ações -->
-          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0;">
-            <button onclick="{{ al.onMarcar }}" title="{{ al.marcaTitulo }}" style="flex: none; width: 32px; height: 32px; border: 2px solid {{ al.marcaBorda }}; background: {{ al.marcaBg }}; color: #fff; border-radius: 9px; cursor: pointer; font-size: 16px; font-weight: 700; line-height: 1; padding: 0; font-family: inherit;">{{ al.marca }}</button>
-            <div onclick="{{ al.onMarcar }}" style="flex: 1; min-width: 0; cursor: pointer;">
-              <div style="font-size: 14px; font-weight: 700; color: #164951; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ al.nome }}</div>
-              <div style="font-size: 11px; color: {{ al.estadoCor }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ al.estadoLinha }}</div>
+        <div style="border-bottom: 1px solid #f4f1ec; padding: 11px 0;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px;">
+              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ al.nome }}</div>
+              <div style="font-size: 11px; color: {{ al.estadoCor }};">{{ al.estadoLinha }}</div>
             </div>
-            <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno — aqui só fica registrado se ela entregou" style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 15px; font-weight: 700; width: 34px; height: 32px; border-radius: 9px; cursor: pointer; font-family: inherit; padding: 0;">{{ al.tarefaMarca }}</button>
-            <button onclick="{{ al.onMais }}" title="Mais opções" style="flex: none; border: 1px solid {{ al.maisBorda }}; background: {{ al.maisBg }}; color: {{ al.maisFg }}; font-size: 15px; font-weight: 700; width: 34px; height: 32px; border-radius: 9px; cursor: pointer; font-family: inherit; padding: 0; line-height: 1;">···</button>
-          </div>
-          <sc-if value="{{ al.aberta }}">
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 0 0 10px 42px;">
-              <sc-for list="{{ al.ressalvas }}" as="rv" hint-placeholder-count="2">
-                <button onclick="{{ rv.onClick }}" style="border: 1px solid {{ rv.borda }}; background: {{ rv.bg }}; color: {{ rv.fg }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ rv.label }}</button>
+
+            <div style="flex: none; display: flex; gap: 4px; flex-wrap: wrap;">
+              <sc-for list="{{ al.estados }}" as="es" hint-placeholder-count="4">
+                <button onclick="{{ es.onClick }}" title="{{ es.title }}" style="border: 1px solid {{ es.border }}; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ es.label }}</button>
               </sc-for>
-              <a href="{{ al.perfilHref }}" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none; padding: 6px 8px;">Abrir o perfil</a>
             </div>
-          </sc-if>
+
+            <div style="flex: none; display: flex; gap: 4px; align-items: center; border-left: 1px solid #f0ede8; padding-left: 10px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Tarefa</span>
+              <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno. Aqui só fica registrado se ela entregou." style="border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ al.tarefaLabel }}</button>
+            </div>
+
+            <a href="{{ al.perfilHref }}" style="flex: none; font-size: 11px; font-weight: 700; color: #9b8b7e; text-decoration: none; padding: 7px 4px;">perfil</a>
+          </div>
         </div>
       </sc-for>
 
@@ -250,10 +251,10 @@ class Component extends DCLogic {
   }
 
   ESTADOS = [
-    { id: "presente", label: "Presente", title: "Presente", cor: "#348a8e" },
-    { id: "atraso", label: "Atraso", title: "Chegou atrasada", cor: "#d4a574" },
-    { id: "falta", label: "Falta", title: "Faltou (vai para linha do tempo)", cor: "#cf6b5c" },
-    { id: "justificada", label: "Justif.", title: "Ausência justificada (avisou antes)", cor: "#6b5b95" }
+    { id: "presente", label: "Presente", title: "Veio à aula", cor: "#348a8e" },
+    { id: "atraso", label: "Atrasou", title: "Veio, mas chegou depois do começo", cor: "#d4a574" },
+    { id: "falta", label: "Faltou", title: "Não veio. Entra como falta na linha do tempo dela", cor: "#cf6b5c" },
+    { id: "justificada", label: "Avisou", title: "Não veio, mas avisou antes. Não conta como falta", cor: "#6b5b95" }
   ];
 
   // eventoId preenchido = aula extra: a lista é quem confirmou mais quem a
@@ -368,8 +369,7 @@ class Component extends DCLogic {
       const fez = tarAtual[p.id] === true;
       const marcada = tarAtual[p.id] !== undefined;
       return {
-        tarefaLabel: marcada ? (fez ? "Fez a tarefa" : "Não fez a tarefa") : "Fez a tarefa?",
-        tarefaMarca: marcada ? (fez ? "✓" : "✕") : "—",
+        tarefaLabel: marcada ? (fez ? "Entregou" : "Não entregou") : "Marcar",
         tarefaBg: marcada ? (fez ? "#348a8e" : "#cf6b5c") : "#fff",
         tarefaFg: marcada ? "#fff" : "#8a7c6b",
         tarefaBorda: marcada ? (fez ? "#348a8e" : "#cf6b5c") : "#e5dccf",
@@ -509,7 +509,7 @@ class Component extends DCLogic {
           : "Nenhuma turma selecionada"),
       subtituloChamada: this.dataPorExtenso(dataSel)
         + (alunas.length ? " · " + alunas.length + (alunas.length === 1 ? " aluna" : " alunas") : ""),
-      instrucaoChamada: "Todas começam presentes. Toque em quem faltou.",
+      instrucaoChamada: "Cada aluna começa como presente. Toque no estado certo de quem não veio ou chegou depois.",
 
       // trocar de aula pelas aulas de verdade da semana
       aulasChamada: (() => {

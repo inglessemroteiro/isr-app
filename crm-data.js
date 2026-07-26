@@ -517,12 +517,62 @@
   function ensureSeed() {
     if (localStorage.getItem(SEED_FLAG)) return;
     var lista = seedPessoas();
+    completarTurmasDemo(lista);
     localStorage.setItem(PESSOAS_KEY, JSON.stringify(lista));
     localStorage.setItem(SEED_FLAG, "1");
     semearProgramaDemo(lista);
     semearChamadasDemo(lista);
     semearAulaExtraDemo(lista);
     semearContatosDemo(lista);
+  }
+
+  // As turmas da ISR têm de 3 a 5 alunas e a mensalidade é R$ 497. Com uma
+  // aluna por turma o exemplo mentia: a folha de pagamento dava mais que a
+  // receita e toda turma nascia abaixo do mínimo. Aqui as turmas do exemplo
+  // ficam do tamanho real.
+  function completarTurmasDemo(lista) {
+    var NOMES = [
+      "Beatriz Camargo", "Larissa Pinto", "Helena Rocha", "Manuela Dias",
+      "Rafaela Antunes", "Isadora Mendes", "Bruna Tavares", "Letícia Barros",
+      "Clarice Monteiro", "Sofia Queiroz", "Nina Vasques", "Alice Bento",
+      "Olívia Castro", "Laura Pimentel", "Cecília Braga", "Elisa Fontes",
+      "Antonia Rangel", "Maitê Cordeiro"
+    ];
+    var MENSALIDADE = "R$ 497,00";
+    var META = 3; // cada turma do exemplo fica com pelo menos o mínimo
+    var k = 0, n = 0;
+
+    turmasLista().forEach(function (u) {
+      var label = u.nivel + " · " + u.turma;
+      var tem = lista.filter(function (p) {
+        return p.status === "aluna" && p.turma === label;
+      }).length;
+      // uma turma fica com 3 e outra com 4, para o exemplo não ficar uniforme
+      var alvo = META + (n % 2);
+      n += 1;
+      while (tem < alvo && k < NOMES.length) {
+        var nome = NOMES[k]; k += 1; tem += 1;
+        lista.push({
+          id: "pd" + k, nome: nome,
+          whatsapp: "+55 11 97000-" + String(1000 + k).slice(-4),
+          email: nome.toLowerCase().split(" ")[0] + "@exemplo.com", moeda: "R$",
+          status: "aluna", estagio: "matriculado", badge: "",
+          origem: { canal: "Indicação", detalhe: "", veioDe: "", entrouPor: "" },
+          formatos: ["grupo"], turma: label, professora: u.teacher,
+          nivel: u.nivel, horarios: u.turma, querComecar: "",
+          entrouEm: addDays(-120 - k),
+          desde: addDays(-100 - k),
+          proximoFollowup: "",
+          contratos: [{ tipo: "Matrícula", ciclos: "Ciclo " + (u.cycle || "2.2026"),
+            moeda: "R$", valorTotal: "R$ 1.491,00", parcelaValor: MENSALIDADE,
+            parcelas: 3, vencDia: 10, fim: addDays(60),
+            meses: mkMeses(1, MENSALIDADE, 3) }],
+          documentos: [],
+          historico: [{ data: addDays(-100 - k), tipo: "matricula",
+            texto: "Matriculada · " + u.nivel }]
+        });
+      }
+    });
   }
 
   // Sem programa e sem chamada, a área da aluna abre vazia e não dá para
