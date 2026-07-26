@@ -1675,6 +1675,36 @@
     l.forEach(function (p) { if (p.id === id) { Object.assign(p, patch); carimbar(p); } });
     programasSave(l); return l;
   }
+  // Uma turma do acompanhamento termina, mas o que aconteceu nela fica.
+  function encerrarPrograma(id) {
+    var l = programasLista();
+    l.forEach(function (p) { if (p.id === id) { p.encerrada = iso(today()); carimbar(p); } });
+    programasSave(l); return l;
+  }
+  function reabrirPrograma(id) {
+    var l = programasLista();
+    l.forEach(function (p) { if (p.id === id) { delete p.encerrada; carimbar(p); } });
+    programasSave(l); return l;
+  }
+  function programasAbertos() {
+    return programasLista().filter(function (p) { return !p.encerrada; });
+  }
+  // Resumo de cada turma, para a lista de escolha.
+  function resumoProgramas() {
+    return programasLista().map(function (pg) {
+      var semana = semanaDoPrograma(pg);
+      return { id: pg.id, nome: pg.nome, semanas: pg.semanas, semana: semana,
+        participantes: (pg.participantes || []).length,
+        inicio: pg.inicio, encerrada: pg.encerrada || "",
+        moeda: pg.moeda || PROGRAMA_PRECO_PADRAO.moeda,
+        preco: pg.preco || PROGRAMA_PRECO_PADRAO.valor,
+        terminou: !!pg.encerrada || semana >= pg.semanas };
+    }).sort(function (a, b) {
+      if (!!a.encerrada !== !!b.encerrada) return a.encerrada ? 1 : -1;
+      return a.inicio < b.inicio ? 1 : -1;
+    });
+  }
+
   function removePrograma(id) {
     programasSave(programasLista().filter(function (p) { return p.id !== id; }));
   }
@@ -4968,6 +4998,8 @@
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
     enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
+    encerrarPrograma: encerrarPrograma, reabrirPrograma: reabrirPrograma,
+    programasAbertos: programasAbertos, resumoProgramas: resumoProgramas,
     agendaComercial: agendaComercial,
     comentarPulso: comentarPulso,
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,

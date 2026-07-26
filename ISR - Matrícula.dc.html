@@ -382,7 +382,13 @@ class Component extends DCLogic {
 
     // Programa de acompanhamento: por padrão entra no que estiver ativo.
     // Marcar de novo desmarca — quem não vai participar não é forçada.
-    const listaProgramas = CRM.programasLista();
+    // Só turmas abertas do acompanhamento entram como opção de venda.
+    const listaProgramas = CRM.programasAbertos ? CRM.programasAbertos() : CRM.programasLista();
+    const resumoPg = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
+    const semanaDe = id => {
+      const r = resumoPg.filter(x => x.id === id)[0];
+      return r ? " · semana " + r.semana + " de " + r.semanas : "";
+    };
     const programaSel = this.state.programaId || "";
     // ── o que ela comprou ──
     // Nada vem marcado. Vinha "turma" por padrão e clicar em
@@ -520,7 +526,8 @@ class Component extends DCLogic {
         { id: "programa", nome: "Acompanhamento",
           sub: listaProgramas.length
             ? "Desafio semanal no WhatsApp · " + ((listaProgramas[0].moeda || "€") + " " + (listaProgramas[0].preco || "27,00"))
-            : "Nenhum programa criado ainda",
+              + (listaProgramas.length > 1 ? " · " + listaProgramas.length + " turmas abertas" : "")
+            : "Nenhuma turma aberta do acompanhamento",
           on: !!escolha.programa }
       ].map(op => ({
         nome: op.nome, sub: op.sub,
@@ -548,7 +555,7 @@ class Component extends DCLogic {
         const sel = programaSel === pgm.id;
         const preco = (pgm.moeda || "€") + " " + (pgm.preco || "27,00");
         return {
-          label: (sel ? "\u2713 " : "+ ") + pgm.nome + " · " + preco,
+          label: (sel ? "\u2713 " : "+ ") + pgm.nome + semanaDe(pgm.id) + " · " + preco,
           bg: sel ? "#348a8e" : "#fff",
           fg: sel ? "#fff" : "#164951",
           borda: sel ? "#348a8e" : "#e5dccf",

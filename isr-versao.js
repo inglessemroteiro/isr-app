@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-f",
+  numero: "2026.07.26-g",
   data: "26/07/2026",
-  nota: "Matrícula: escolher o produto não some com o passo errado"
+  nota: "Turmas do acompanhamento: abrir novas e matricular em cada uma"
 };
