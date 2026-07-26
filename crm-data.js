@@ -3878,8 +3878,51 @@
     metaFrequencia: 85,    // % de presença no ciclo
     metaTarefas: 80,       // % das chamadas do mês com tarefa marcada
     tetoPct: 32,           // teto: a professora nunca custa mais que isto da receita das turmas dela
-    cambioEur: 6.20        // quantos R$ vale 1 €, para a folha em R$
+    cambioEur: 6.20,       // quantos R$ vale 1 €, para a folha em R$
+    diaPagamento: 5,       // dia em que a folha é paga
+    mesesDepois: 1         // o trabalho de um mês é pago no mês seguinte
   };
+
+  // ── QUEM JÁ FOI PAGO ──────────────────────────────────────────
+  //
+  // A folha diz quanto é devido; isto diz o que já saiu. São coisas
+  // diferentes: a professora trabalha num mês e recebe no seguinte.
+  var FOLHA_PAGA_KEY = "isr_folha_paga_v1";
+
+  function folhaPagaAll() {
+    try { return JSON.parse(localStorage.getItem(FOLHA_PAGA_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function chavePagamento(nome, mesKey) { return mesKey + "|" + nome; }
+
+  function pagamentoFeito(nome, mesKey) {
+    return folhaPagaAll()[chavePagamento(nome, mesKey || mesAtualKey())] || null;
+  }
+  function marcarPagamentoFeito(nome, mesKey, dados) {
+    var m = folhaPagaAll();
+    var k = chavePagamento(nome, mesKey || mesAtualKey());
+    m[k] = { nome: nome, mes: mesKey || mesAtualKey(),
+      valor: (dados && dados.valor) || 0,
+      em: (dados && dados.em) || iso(today()),
+      obs: (dados && dados.obs) || "" };
+    try { localStorage.setItem(FOLHA_PAGA_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return m[k];
+  }
+  function desmarcarPagamento(nome, mesKey) {
+    var m = folhaPagaAll();
+    delete m[chavePagamento(nome, mesKey || mesAtualKey())];
+    try { localStorage.setItem(FOLHA_PAGA_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+
+  // Quando a folha de um mês é paga: dia X, N meses depois do trabalho.
+  function vencimentoDaFolha(mesKey, cfgAlt) {
+    var cfg = Object.assign(configPagamento(), cfgAlt || {});
+    var ano = parseInt((mesKey || mesAtualKey()).slice(0, 4), 10);
+    var mes = parseInt((mesKey || mesAtualKey()).slice(5, 7), 10) - 1;
+    var d = new Date(ano, mes + (cfg.mesesDepois || 0), cfg.diaPagamento || 5, 12, 0, 0);
+    return iso(d);
+  }
 
   // Parte das mensalidades é em euro. Sem converter, € 125 e R$ 125 entravam
   // na mesma soma e a fatia da professora saía errada. Toda conta de
@@ -4179,7 +4222,11 @@
       .filter(function (x) { return x.total > 0 || x.turmas.length; });
     var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
     var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
+    var pagas = linhas.filter(function (x) { return !!pagamentoFeito(x.nome, mes); });
+    var totalPago = pagas.reduce(function (s, x) { return s + x.total; }, 0);
     return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      vencimento: vencimentoDaFolha(mes),
+      nPagas: pagas.length, totalPago: totalPago, totalAberto: total - totalPago,
       pctDaReceita: receita ? Math.round((total / receita) * 1000) / 10 : null,
       moeda: configPagamento().moeda };
   }
@@ -5515,6 +5562,8 @@
     vendasDoMes: vendasDoMes, comissaoComercial: comissaoComercial,
     comissaoAPagar: comissaoAPagar,
     configPagamento: configPagamento, setConfigPagamento: setConfigPagamento,
+    pagamentoFeito: pagamentoFeito, marcarPagamentoFeito: marcarPagamentoFeito,
+    desmarcarPagamento: desmarcarPagamento, vencimentoDaFolha: vencimentoDaFolha,
     emMoedaDaFolha: emMoedaDaFolha,
     pagamentoProfessora: pagamentoProfessora, folhaPagamento: folhaPagamento,
     aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
