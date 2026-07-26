@@ -8,6 +8,25 @@
 <script src="./isr-versao.js"></script>
 <script src="./isr-nav.js"></script>
 <script src="./crm-data.js"></script>
+<style>
+  /* Em tela estreita a tabela vira lista: cada pessoa num bloco, sem
+     rolagem lateral e sem campo cortado. */
+  @media (max-width: 760px) {
+    .eq-tabela { overflow-x: visible !important; }
+    .eq-cabecalho { display: none !important; }
+    .eq-linha {
+      display: block !important;
+      min-width: 0 !important;
+      padding: 14px 16px !important;
+    }
+    .eq-linha > * { margin-bottom: 6px; }
+    .eq-acoes { justify-self: start !important; margin-top: 4px; }
+    .eq-email { word-break: break-all; font-size: 11.5px !important; }
+    .eq-edit { min-width: 0 !important; padding: 16px !important; }
+    .eq-edit-campos { grid-template-columns: 1fr !important; }
+    .eq-folha-linha { flex-wrap: wrap !important; }
+  }
+</style>
 </head>
 <body>
 <x-dc>
@@ -27,7 +46,7 @@
     <sc-if value="{{ novoAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 12px;">Nova pessoa da equipe</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+        <div class="eq-edit-campos" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
           <input ref="{{ nvNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ nvEmailRef }}" placeholder="E-mail de acesso (se for entrar no sistema)" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         </div>
@@ -55,8 +74,8 @@
     </sc-if>
 
     <!-- TABELA -->
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow-x: auto;">
-      <div style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 640px;">
+    <div class="eq-tabela" style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow-x: auto;">
+      <div class="eq-cabecalho" style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 640px;">
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Nome</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Papéis</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Acesso (e-mail)</span>
@@ -67,26 +86,26 @@
         <div style="text-align: center; padding: 34px 20px; color: #9b8b7e; font-size: 13px;">Só as fundadoras por enquanto (Gabi, Érika e Carla já têm acesso fixo). Adicione professoras e prestadoras acima.</div>
       </sc-if>
       <sc-for list="{{ membros }}" as="mb" hint-placeholder-count="4">
-        <div style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd; min-width: 640px;">
+        <div class="eq-linha" style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd; min-width: 640px;">
           <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ mb.nome }}</span>
           <div style="display: flex; gap: 4px; flex-wrap: wrap;">
             <sc-for list="{{ mb.papeis }}" as="pp" hint-placeholder-count="2">
               <span style="background: {{ pp.bg }}; color: {{ pp.fg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;">{{ pp.label }}</span>
             </sc-for>
           </div>
-          <span style="font-size: 12px; color: #6b6155; word-break: break-all;">{{ mb.email }}</span>
+          <span class="eq-email" style="font-size: 12px; color: #6b6155; word-break: break-all;">{{ mb.email }}</span>
           <span style="font-size: 12px; font-weight: 700; color: {{ mb.remCor }};">{{ mb.remuneracao }}</span>
-          <div style="justify-self: end; display: flex; gap: 2px; align-items: center;">
+          <div class="eq-acoes" style="justify-self: end; display: flex; gap: 2px; align-items: center;">
             <button onclick="{{ mb.onEditar }}" style="border: none; background: transparent; color: {{ mb.editFg }}; font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; font-family: inherit;">{{ mb.editLabel }}</button>
             <button onclick="{{ mb.onRemover }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px; cursor: pointer;">remover</button>
           </div>
         </div>
 
         <sc-if value="{{ mb.editando }}">
-          <div style="background: #f6f2ea; border-top: 1px solid #f2e9dd; padding: 16px 18px; min-width: 640px;">
+          <div class="eq-edit" style="background: #f6f2ea; border-top: 1px solid #f2e9dd; padding: 16px 18px; min-width: 640px;">
             <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Editar {{ mb.nome }}</div>
             <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ mb.avisoNome }}</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <div class="eq-edit-campos" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
               <input ref="{{ mb.nomeRef }}" placeholder="Nome" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
               <input ref="{{ mb.emailRef }}" placeholder="E-mail de acesso" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             </div>
@@ -96,7 +115,17 @@
                 <button onclick="{{ ep.onToggle }}" style="border: 1px solid {{ ep.border }}; background: {{ ep.bg }}; color: {{ ep.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ep.label }}</button>
               </sc-for>
             </div>
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração</div>
+            <sc-if value="{{ mb.ehProfessora }}">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Turmas</div>
+              <p style="margin: 0 0 8px; font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ mb.turmasAviso }}</p>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                <sc-for list="{{ mb.turmasOpts }}" as="tu" hint-placeholder-count="8">
+                  <button onclick="{{ tu.onToggle }}" title="{{ tu.title }}" style="border: 1px solid {{ tu.borda }}; background: {{ tu.bg }}; color: {{ tu.fg }}; font-size: 11.5px; font-weight: 700; padding: 8px 13px; border-radius: 999px; cursor: pointer; font-family: inherit; text-align: left;">{{ tu.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração</div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
               <select ref="{{ mb.tipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
                 <sc-for list="{{ mb.tipoOpts }}" as="to" hint-placeholder-count="3">
@@ -135,7 +164,7 @@
           <div style="padding: 22px 18px; font-size: 13px; color: #9b8b7e; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
         </sc-if>
         <sc-for list="{{ folha }}" as="fl" hint-placeholder-count="4">
-          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f2e9dd;">
+          <div class="eq-folha-linha" style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f2e9dd;">
             <div style="flex: 1; min-width: 0;">
               <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ fl.nome }}</div>
               <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fl.detalhe }}</div>
@@ -209,7 +238,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { novoAberto: false, papeisSel: {}, tick: 0, editandoCap: false,
-    editId: null, edPapeis: {}, edErro: "" };
+    editId: null, edPapeis: {}, edTurmas: {}, edErro: "" };
   capRefs = {};
   edRefs = {};
   nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
@@ -242,7 +271,8 @@ class Component extends DCLogic {
       };
     });
 
-    const corDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || {}).cor || "#8a7c6b";
+    const todasTurmas = CRM.turmasLista();
+        const corDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || {}).cor || "#8a7c6b";
     const labelDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || { label: id }).label;
 
     const membros = CRM.equipeLista().map(m => {
@@ -254,6 +284,9 @@ class Component extends DCLogic {
       const r = this.edRefs[m.id];
       // enquanto edita, os papéis marcados vivem no estado; fora disso, vêm do cadastro
       const marcados = editando ? this.state.edPapeis : {};
+      // as turmas da pessoa também se editam por aqui: é onde se pensa
+      // "quem dá o quê", e não turma por turma.
+      const turmasSel = editando ? (this.state.edTurmas || {}) : {};
       // quantas turmas e alunas dependem do nome desta pessoa
       const nTurmas = CRM.turmasLista().filter(u => u.teacher === m.nome).length;
       const nAlunas = CRM.getPessoas()
@@ -299,11 +332,29 @@ class Component extends DCLogic {
           };
         }),
 
+        ehProfessora: !!marcados.professora,
+        turmasAviso: "Marque as turmas desta pessoa. Ao salvar, elas passam para o nome dela e entram na folha de pagamento.",
+        turmasOpts: todasTurmas.map(u => {
+          const on = !!turmasSel[u.id];
+          return {
+            label: u.nivel + " · " + u.turma,
+            title: u.teacher && u.teacher !== m.nome ? "Hoje é de " + u.teacher : "Sem professora",
+            bg: on ? "#6b5b95" : "#fff",
+            fg: on ? "#fff" : (u.teacher && u.teacher !== m.nome ? "#b3a693" : "#6b5b95"),
+            borda: on ? "#6b5b95" : (u.teacher && u.teacher !== m.nome ? "#e5dccf" : "#d9d2e5"),
+            onToggle: () => this.setState({
+              edTurmas: Object.assign({}, turmasSel, { [u.id]: !on }), edErro: ""
+            })
+          };
+        }),
+
         onEditar: () => {
           if (editando) { this.setState({ editId: null, edErro: "" }); return; }
           const marca = {};
           (m.papeis || []).forEach(id => { marca[id] = true; });
-          this.setState({ editId: m.id, edPapeis: marca, edErro: "", novoAberto: false });
+          const marcaT = {};
+          todasTurmas.forEach(u => { if (u.teacher === m.nome) marcaT[u.id] = true; });
+          this.setState({ editId: m.id, edPapeis: marca, edTurmas: marcaT, edErro: "", novoAberto: false });
           // os campos são preenchidos depois que a linha aparece
           setTimeout(() => {
             if (r.nome.current) r.nome.current.value = m.nome || "";
@@ -330,6 +381,14 @@ class Component extends DCLogic {
             moeda: this.val(r.moeda) || "R$",
             valor: parseFloat(this.val(r.valor)) || 0
           });
+          // as turmas marcadas passam para ela; as desmarcadas que eram dela ficam sem professora
+          if (papeis.indexOf("professora") >= 0) {
+            todasTurmas.forEach(u => {
+              const quer = !!turmasSel[u.id];
+              if (quer && u.teacher !== nome) CRM.updateTurma(u.id, { teacher: nome });
+              else if (!quer && u.teacher === m.nome) CRM.updateTurma(u.id, { teacher: "" });
+            });
+          }
           this.setState({ editId: null, edErro: "" });
           this.bump();
         },
@@ -354,13 +413,18 @@ class Component extends DCLogic {
         + (l.particulares.aulas ? " · " + l.particulares.aulas + " particular(es)" : ""),
       valor: $$(l.total)
     }));
+    (fp.fixos || []).forEach(l => linhasFolha.push({
+      nome: l.nome,
+      detalhe: "valor mensal do cadastro",
+      valor: $$(l.total)
+    }));
     if (com && com.total > 0) {
       linhasFolha.push({ nome: com.quem || "Comercial",
         detalhe: com.nVendas + (com.nVendas === 1 ? " venda no mês" : " vendas no mês")
           + " · faixa " + com.situacao,
         valor: $$(com.total) });
     }
-    const totalFolha = fp.total + (com ? com.total : 0);
+    const totalFolha = fp.totalComFixos + (com ? com.total : 0);
 
     const cart = window.ISRCRM.carteiraProfessoras();
     return Object.assign({

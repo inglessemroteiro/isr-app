@@ -4222,11 +4222,25 @@
       .filter(function (x) { return x.total > 0 || x.turmas.length; });
     var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
     var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
-    var pagas = linhas.filter(function (x) { return !!pagamentoFeito(x.nome, mes); });
+    // quem tem valor mensal no cadastro da Equipe — operação, prestadoras —
+    // também é folha do mês, mesmo sem turma nenhuma.
+    var fixos = equipeLista()
+      .filter(function (m) { return m.valorTipo === "mensal" && m.valor > 0 && vigenteNoMes(m, mes); })
+      .map(function (m) {
+        var papel = (m.papeis || []).filter(function (x) { return x !== "professora"; })[0]
+          || (m.papeis || [])[0] || "equipe";
+        return { nome: m.nome, papel: papel, moeda: m.moeda || "R$", bruto: m.valor,
+          total: emMoedaDaFolha(m.valor, m.moeda || "R$", configPagamento()) };
+      });
+    var totalFixos = fixos.reduce(function (s, x) { return s + x.total; }, 0);
+
+    var pagas = linhas.concat(fixos).filter(function (x) { return !!pagamentoFeito(x.nome, mes); });
     var totalPago = pagas.reduce(function (s, x) { return s + x.total; }, 0);
     return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      fixos: fixos, totalFixos: totalFixos, totalComFixos: total + totalFixos,
       vencimento: vencimentoDaFolha(mes),
-      nPagas: pagas.length, totalPago: totalPago, totalAberto: total - totalPago,
+      nPagas: pagas.length, nPagaveis: linhas.length + fixos.length,
+      totalPago: totalPago, totalAberto: (total + totalFixos) - totalPago,
       pctDaReceita: receita ? Math.round((total / receita) * 1000) / 10 : null,
       moeda: configPagamento().moeda };
   }
