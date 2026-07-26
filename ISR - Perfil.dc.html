@@ -58,10 +58,18 @@
               <input ref="{{ cadZapRef }}" placeholder="{{ whatsappAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
             <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">E-mail</div>
               <input ref="{{ cadEmailRef }}" placeholder="{{ emailAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+            <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
+              <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">{{ cd.label }}</div>
+                <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+            </sc-for>
             <div style="display: flex; align-items: flex-end;">
               <button onclick="{{ onSalvarCadastro }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
             </div>
           </div>
+          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">CPF, RG e endereço são dados sensíveis. Ficam guardados para o contrato e saem no arquivo da aluna em Escola · Dados.</p>
+        </sc-if>
+        <sc-if value="{{ faltaCadastro }}">
+          <div style="margin-top: 10px; background: rgba(212,165,116,0.14); border-radius: 9px; padding: 9px 12px; font-size: 11.5px; color: #9c6f56; line-height: 1.5;">{{ faltaCadastroTexto }}</div>
         </sc-if>
       </header>
 
@@ -159,6 +167,69 @@
                 </sc-if>
               </div>
             </div>
+
+          <!-- O QUE ELA CONTRATOU -->
+          <sc-if value="{{ ehCliente }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">O que ela contratou</div>
+              <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Turma, aulas particulares e acompanhamento são produtos separados. Dá para ter um, dois ou os três.</p>
+
+              <sc-for list="{{ produtos }}" as="pd" hint-placeholder-count="3">
+                <div style="border-top: 1px solid #f4f1ec; padding: 12px 0;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ pd.cor }};"></span>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ pd.nome }}</div>
+                      <div style="font-size: 11.5px; color: {{ pd.detCor }}; margin-top: 2px; line-height: 1.5;">{{ pd.detalhe }}</div>
+                    </div>
+                    <sc-if value="{{ pd.temPago }}">
+                      <button onclick="{{ pd.onPago }}" title="{{ pd.pagoTitle }}" style="flex: none; border: 1px solid {{ pd.pagoBorda }}; background: {{ pd.pagoBg }}; color: {{ pd.pagoFg }}; font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.pagoLabel }}</button>
+                    </sc-if>
+                    <button onclick="{{ pd.onAcao }}" style="flex: none; border: 1px solid #e5dccf; background: {{ pd.acaoBg }}; color: {{ pd.acaoFg }}; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.acaoLabel }}</button>
+                  </div>
+                </div>
+              </sc-for>
+
+              <!-- acrescentar aulas particulares -->
+              <sc-if value="{{ addParticular }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 13px; margin-top: 12px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #164951; margin-bottom: 9px;">Pacote de aulas particulares</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nº de aulas</div>
+                      <input ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Valor do pacote</div>
+                      <input ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div style="display: flex; align-items: flex-end;">
+                      <button onclick="{{ onSalvarParticular }}" style="width: 100%; border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Contratar</button>
+                    </div>
+                  </div>
+                  <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: #6b6155; cursor: pointer;">
+                    <input type="checkbox" ref="{{ partPagoRef }}" style="width: 15px; height: 15px; accent-color: #348a8e;" />
+                    Já pagou — lançar no Caixa agora
+                  </label>
+                </div>
+              </sc-if>
+
+              <!-- acrescentar acompanhamento -->
+              <sc-if value="{{ addPrograma }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 13px; margin-top: 12px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #164951; margin-bottom: 9px;">Acompanhamento</div>
+                  <sc-if value="{{ semProgramas }}">
+                    <p style="margin: 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">Nenhum programa criado ainda. Crie um na tela Programa.</p>
+                  </sc-if>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <sc-for list="{{ programasOpts }}" as="pgm" hint-placeholder-count="2">
+                      <button onclick="{{ pgm.onAdd }}" style="border: 1px solid #c9dede; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pgm.label }}</button>
+                    </sc-for>
+                  </div>
+                  <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: #6b6155; cursor: pointer;">
+                    <input type="checkbox" ref="{{ progPagoRef }}" onchange="{{ onProgPago }}" style="width: 15px; height: 15px; accent-color: #348a8e;" />
+                    Já pagou — lançar no Caixa agora
+                  </label>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
 
           <!-- ENCERRAR / REABRIR MATRÍCULA -->
           <sc-if value="{{ podeEncerrar }}">
@@ -383,7 +454,14 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false,
-            encerrando: false, tipoSaida: "saiu", renovando: false };
+            encerrando: false, tipoSaida: "saiu", renovando: false,
+            abrindoProduto: "", progPago: false };
+  docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
+              cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
+              complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
+              uf: React.createRef(), pais: React.createRef() };
+  partAulasRef = React.createRef(); partValorRef = React.createRef();
+  partPagoRef = React.createRef(); progPagoRef = React.createRef();
   cadNomeRef = React.createRef(); cadZapRef = React.createRef(); cadEmailRef = React.createRef();
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
   ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
@@ -442,6 +520,21 @@ class Component extends DCLogic {
     let p = CRM.getPessoa(this.pessoaId());
     if (!p) p = CRM.getPessoas()[0] || null;
     if (!p) return { ok: false, naoEncontrada: true, waDireto: "#" };
+
+    const CAMPOS_EXTRA = [
+      { id: "cpf", label: "CPF", exemplo: "000.000.000-00" },
+      { id: "rg", label: "RG", exemplo: "00.000.000-0" },
+      { id: "nascimento", label: "Nascimento", exemplo: "dd/mm/aaaa" },
+      { id: "cep", label: "CEP", exemplo: "00000-000" },
+      { id: "logradouro", label: "Rua", exemplo: "Rua, avenida…" },
+      { id: "numero", label: "Número", exemplo: "123" },
+      { id: "complemento", label: "Complemento", exemplo: "apto, bloco" },
+      { id: "bairro", label: "Bairro", exemplo: "—" },
+      { id: "cidade", label: "Cidade", exemplo: "—" },
+      { id: "uf", label: "Estado", exemplo: "SP" },
+      { id: "pais", label: "País", exemplo: "Brasil" }
+    ];
+    const falta = CRM.cadastroIncompleto ? CRM.cadastroIncompleto(p) : [];
 
     const st = CRM.STATUS_META[p.status] || CRM.STATUS_META.lead;
     const c = CRM.contratoVigente(p);
@@ -517,9 +610,19 @@ class Component extends DCLogic {
       edCadFg: this.state.editandoCadastro ? "#9c6f56" : "#164951",
       onEditarCadastro: () => this.setState(s => ({ editandoCadastro: !s.editandoCadastro })),
       cadNomeRef: this.cadNomeRef, cadZapRef: this.cadZapRef, cadEmailRef: this.cadEmailRef,
+      camposDoc: CAMPOS_EXTRA.map(cx => ({
+        label: cx.label, ref: this.docRefs[cx.id],
+        atual: p[cx.id] || cx.exemplo
+      })),
+      faltaCadastro: falta.length > 0,
+      faltaCadastroTexto: falta.length
+        ? "Para emitir contrato no nome dela falta: " + falta.join(" e ") + "."
+        : "",
       onSalvarCadastro: () => {
         const v = r => (r.current && r.current.value || "").trim();
-        CRM.atualizarCadastro(p.id, { nome: v(this.cadNomeRef), whatsapp: v(this.cadZapRef), email: v(this.cadEmailRef) });
+        const patch = { nome: v(this.cadNomeRef), whatsapp: v(this.cadZapRef), email: v(this.cadEmailRef) };
+        CAMPOS_EXTRA.forEach(cx => { patch[cx.id] = v(this.docRefs[cx.id]); });
+        CRM.atualizarCadastro(p.id, patch);
         this.setState({ editandoCadastro: false });
       },
       moeda: p.moeda || "R$", contexto: partes.join("  ·  ") || "—",
@@ -634,6 +737,78 @@ class Component extends DCLogic {
         this.setState({ renovando: false });
       };
       out.ltvValor = CRM.ltv(p);
+
+      // ── o que ela contratou: turma, particulares e acompanhamento ──
+      const CORES_PROD = { turma: "#348a8e", particular: "#6b5b95", programa: "#e07856" };
+      const abertos = this.state.abrindoProduto || "";
+      out.produtos = CRM.produtosDe(p.id).map(pd => {
+        const acoes = {
+          turma: { add: "Matricular em turma", edit: "Editar acima" },
+          particular: { add: "Contratar", edit: "Encerrar" },
+          programa: { add: "Incluir", edit: "Tirar" }
+        }[pd.id];
+        return {
+          nome: pd.nome,
+          cor: pd.contratado ? CORES_PROD[pd.id] : "#e0dcd6",
+          detalhe: pd.contratado ? pd.detalhe : "não contratado",
+          detCor: pd.contratado ? "#8a7c6b" : "#b8ada0",
+          temPago: pd.pago !== null,
+          pagoLabel: pd.pago ? "Pago" : "A receber",
+          pagoTitle: pd.pago ? "Marcar como não recebido" : "Marcar como recebido e lançar no Caixa",
+          pagoBg: pd.pago ? "rgba(90,158,75,0.16)" : "#fff",
+          pagoFg: pd.pago ? "#5a9e4b" : "#cf6b5c",
+          pagoBorda: pd.pago ? "rgba(90,158,75,0.35)" : "#e5dccf",
+          onPago: () => {
+            if (pd.id === "particular") CRM.setParticularPago(p.id, !pd.pago);
+            if (pd.id === "programa") CRM.setProgramaPago(p.id, !pd.pago);
+            this.bump();
+          },
+          acaoLabel: pd.contratado ? acoes.edit : acoes.add,
+          acaoBg: abertos === pd.id ? "#f6eee4" : "#fff",
+          acaoFg: abertos === pd.id ? "#9c6f56" : "#164951",
+          onAcao: () => {
+            if (pd.id === "turma") {
+              if (!pd.contratado) { window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id; return; }
+              this.setState({ editandoTurma: true });
+              return;
+            }
+            if (pd.contratado) {
+              if (pd.id === "particular") CRM.encerrarParticular(p.id, "Encerrado pela equipe");
+              if (pd.id === "programa") CRM.sairDoPrograma(p.id, "Tirada pela equipe");
+              this.bump();
+              return;
+            }
+            this.setState({ abrindoProduto: abertos === pd.id ? "" : pd.id });
+          }
+        };
+      });
+      out.ehCliente = ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
+      out.addParticular = abertos === "particular";
+      out.addPrograma = abertos === "programa";
+      out.partAulasRef = this.partAulasRef;
+      out.partValorRef = this.partValorRef;
+      out.partPagoRef = this.partPagoRef;
+      out.progPagoRef = this.progPagoRef;
+      out.onProgPago = e => this.setState({ progPago: !!e.target.checked });
+      out.onSalvarParticular = () => {
+        const g = r => (r.current && r.current.value || "").trim();
+        CRM.contratarParticular(p.id, {
+          aulas: g(this.partAulasRef),
+          valor: g(this.partValorRef),
+          moeda: (c && c.moeda) || p.moeda || "R$",
+          pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
+        });
+        this.setState({ abrindoProduto: "" });
+      };
+      const progsDisponiveis = CRM.programasLista();
+      out.semProgramas = progsDisponiveis.length === 0;
+      out.programasOpts = progsDisponiveis.map(pgm => ({
+        label: "+ " + pgm.nome + " · " + (pgm.moeda || "€") + " " + (pgm.preco || "27,00"),
+        onAdd: () => {
+          CRM.matricularNoPrograma(p.id, { programaId: pgm.id, pago: !!this.state.progPago });
+          this.setState({ abrindoProduto: "", progPago: false });
+        }
+      }));
       out.editandoTurma = this.state.editandoTurma;
       out.edTurLabel = this.state.editandoTurma ? "Fechar" : "Editar";
       out.edTurBg = this.state.editandoTurma ? "#f6eee4" : "#fff";

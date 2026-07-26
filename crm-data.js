@@ -520,6 +520,7 @@
     localStorage.setItem(SEED_FLAG, "1");
     semearProgramaDemo(lista);
     semearChamadasDemo(lista);
+    semearAulaExtraDemo(lista);
   }
 
   // Sem programa e sem chamada, a área da aluna abre vazia e não dá para
@@ -580,6 +581,23 @@
       localStorage.setItem("isr_programas_v1", JSON.stringify([pg]));
       localStorage.setItem(PESSOAS_KEY, JSON.stringify(lista));
     } catch (e) {}
+  }
+
+  // Sem uma aula extra marcada, o bloco de confirmar presença nunca
+  // aparece no app da aluna e não dá para ver que ele existe.
+  function semearAulaExtraDemo(lista) {
+    try {
+      if ((JSON.parse(localStorage.getItem("isr_eventos_v1")) || []).length) return;
+    } catch (e) {}
+    var d = today(); d.setDate(d.getDate() + 5);
+    var alunas = lista.filter(function (p) { return p.status === "aluna"; }).slice(0, 6);
+    var ev = { id: "evDemo", titulo: "Movie Club", data: iso(d), hora: "20:00",
+      tipo: "aula_extra", responsavel: "Gabi", professora: "Gabi",
+      duracao: 90, local: "Zoom", vagas: 12,
+      descricao: "Assistimos a um curta e conversamos sobre ele em inglês.",
+      turmaAlvo: "", rsvps: {}, manuais: alunas.map(function (p) { return p.id; }),
+      criadoEm: iso(today()) };
+    try { localStorage.setItem("isr_eventos_v1", JSON.stringify([ev])); } catch (e) {}
   }
 
   function semearChamadasDemo(lista) {
@@ -3474,8 +3492,35 @@
   }
 
   // Dados cadastrais, com registro do que mudou.
+  // Documento e endereço entram porque o contrato precisa deles. São
+  // dados sensíveis: saem no exportarPessoa e somem no apagarPessoa.
   var CAMPOS_CADASTRO = { nome: "nome", whatsapp: "WhatsApp", email: "e-mail",
-    nivel: "nível", professora: "professora" };
+    nivel: "nível", professora: "professora",
+    cpf: "CPF", rg: "RG", nascimento: "data de nascimento",
+    cep: "CEP", logradouro: "logradouro", numero: "número",
+    complemento: "complemento", bairro: "bairro",
+    cidade: "cidade", uf: "estado", pais: "país" };
+  var CAMPOS_DOCUMENTO = ["cpf", "rg", "nascimento"];
+  var CAMPOS_ENDERECO = ["cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "pais"];
+
+  // Endereço numa linha só, para contrato e etiqueta.
+  function enderecoDe(pessoaOuId) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return "";
+    var rua = [p.logradouro, p.numero].filter(Boolean).join(", ");
+    if (p.complemento) rua = rua ? rua + " · " + p.complemento : p.complemento;
+    var cidade = [p.cidade, p.uf].filter(Boolean).join("/");
+    return [rua, p.bairro, cidade, p.cep, p.pais].filter(Boolean).join(" · ");
+  }
+  // O que ainda falta para fechar um contrato no nome dela.
+  function cadastroIncompleto(pessoaOuId) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return [];
+    var falta = [];
+    if (!p.cpf) falta.push("CPF");
+    if (!p.logradouro || !p.cidade) falta.push("endereço");
+    return falta;
+  }
   // ── TAGS ──────────────────────────────────────────────────────
   // Rótulo livre por pessoa. Serve pro que a estrutura fixa não cobre:
   // "mãe de aluno", "quer certificado", "indicou 2", "prova em março".
@@ -3543,6 +3588,245 @@
     return mutate(id, function (p) {
       p.particular = Object.assign(p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 }, patch);
     });
+  }
+
+  // ── O QUE CADA PESSOA CONTRATOU ───────────────────────────────
+  //
+  // Uma aluna pode ter turma, pacote de aulas particulares e o
+  // acompanhamento ao mesmo tempo, ou só um deles. Cada coisa tem o seu
+  // preço e o seu dinheiro. Isto reúne os três num lugar só, para dar
+  // para acrescentar e tirar sem refazer a matrícula.
+
+  // Pacote de aulas particulares como produto: tem quantidade e valor.
+  function contratarParticular(id, cfg) {
+    cfg = cfg || {};
+    var pessoa = getPessoa(id);
+    if (!pessoa) return null;
+    var moeda = cfg.moeda || pessoa.moeda || "R$";
+    var valorTxt = cfg.valor || "";
+    if (valorTxt && !/[R$€]/.test(String(valorTxt))) valorTxt = fmtMoney(moeda, parseMoney(valorTxt));
+    var nAulas = parseInt(cfg.aulas, 10) || 0;
+
+    mutate(id, function (p) {
+      var antes = p.particular || {};
+      p.particular = { inicio: cfg.desde || antes.inicio || iso(today()),
+        aulas: nAulas || antes.aulas || 0,
+        feitas: antes.feitas || 0,
+        valor: valorTxt || antes.valor || "",
+        moeda: moeda, pago: cfg.pago !== undefined ? !!cfg.pago : !!antes.pago,
+        professora: cfg.professora || antes.professora || p.professora || "" };
+      pushHist(p, "matricula", "Pacote de aulas particulares · "
+        + p.particular.aulas + " aula(s)"
+        + (p.particular.valor ? " · " + p.particular.valor : "")
+        + (p.particular.pago ? " (pago)" : " (a receber)"));
+    });
+
+    if (cfg.pago && valorTxt) registrarPagamentoParticular(id);
+    return getPessoa(id);
+  }
+
+  function registrarPagamentoParticular(id) {
+    var p = getPessoa(id);
+    if (!p || !p.particular || !p.particular.valor) return;
+    addLancamento({ data: iso(today()), tipo: "entrada", categoria: "particular",
+      descricao: "Pacote de aulas particulares · " + p.nome,
+      moeda: p.particular.moeda || "R$", valor: p.particular.valor });
+  }
+
+  function setParticularPago(id, pago) {
+    var antes = getPessoa(id);
+    var jaEra = !!(antes && antes.particular && antes.particular.pago);
+    mutate(id, function (p) {
+      if (!p.particular) return;
+      p.particular.pago = !!pago;
+      pushHist(p, "pagamento", "Pacote de aulas particulares "
+        + (p.particular.valor || "") + (pago ? " recebido" : " marcado como pendente"));
+    });
+    if (pago && !jaEra) registrarPagamentoParticular(id);
+    return getPessoa(id);
+  }
+
+  function encerrarParticular(id, motivo) {
+    return mutate(id, function (p) {
+      if (!p.particular) return;
+      pushHist(p, "perdido", "Pacote de aulas particulares encerrado"
+        + (motivo ? " · " + motivo : ""));
+      delete p.particular;
+    });
+  }
+
+  // ── GRAVAÇÕES DAS AULAS ───────────────────────────────────────
+  //
+  // Duas regras de acesso, e elas não são a mesma: a gravação de aula
+  // extra é da escola inteira; a gravação de uma aula de turma é só de
+  // quem está naquela turma.
+  var GRAVACOES_KEY = "isr_gravacoes_v1";
+
+  function gravacoesLista() {
+    try { return JSON.parse(localStorage.getItem(GRAVACOES_KEY)) || []; } catch (e) { return []; }
+  }
+  function gravacoesSave(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(GRAVACOES_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  function addGravacao(dados) {
+    var l = gravacoesLista();
+    var g = { id: "gr" + Date.now(),
+      tipo: dados.tipo === "extra" ? "extra" : "turma",
+      turma: dados.turma || "",         // rótulo da turma, quando tipo=turma
+      eventoId: dados.eventoId || "",   // id do evento, quando tipo=extra
+      titulo: dados.titulo || "Aula gravada",
+      data: dados.data || iso(today()),
+      link: dados.link || "",
+      por: (gestaoUser() || {}).nome || "" };
+    l.push(g); gravacoesSave(l); return g;
+  }
+  function removeGravacao(id) {
+    gravacoesSave(gravacoesLista().filter(function (g) { return g.id !== id; }));
+  }
+  function gravacaoDaAula(turmaLabel, dataIso) {
+    return gravacoesLista().filter(function (g) {
+      return g.tipo === "turma" && g.turma === turmaLabel && g.data === dataIso;
+    })[0] || null;
+  }
+  // Salva ou atualiza a gravação de uma aula da turma numa data.
+  function setGravacaoDaAula(turmaLabel, dataIso, link, titulo) {
+    var l = gravacoesLista();
+    var achou = false;
+    l.forEach(function (g) {
+      if (g.tipo !== "turma" || g.turma !== turmaLabel || g.data !== dataIso) return;
+      achou = true;
+      g.link = link || "";
+      if (titulo) g.titulo = titulo;
+      carimbar(g);
+    });
+    if (!achou && link) {
+      gravacoesSave(l);
+      return addGravacao({ tipo: "turma", turma: turmaLabel, data: dataIso,
+        link: link, titulo: titulo || "Aula de " + ddmm(dataIso) });
+    }
+    if (achou && !link) l = l.filter(function (g) {
+      return !(g.tipo === "turma" && g.turma === turmaLabel && g.data === dataIso);
+    });
+    gravacoesSave(l);
+    return gravacaoDaAula(turmaLabel, dataIso);
+  }
+
+  // O que esta pessoa pode assistir: as extras são de todo mundo; as da
+  // turma, só se ela estiver nela.
+  function gravacoesParaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { extras: [], turma: [] };
+    var todas = gravacoesLista().filter(function (g) { return !!g.link; });
+    var extras = todas.filter(function (g) { return g.tipo === "extra"; });
+    var daTurma = p.turma
+      ? todas.filter(function (g) { return g.tipo === "turma" && g.turma === p.turma; })
+      : [];
+    var ordena = function (a, b) { return a.data < b.data ? 1 : -1; };
+    return { extras: extras.sort(ordena), turma: daTurma.sort(ordena) };
+  }
+
+  // ── TAREFA DE CASA ────────────────────────────────────────────
+  // A professora marca fez/não fez na chamada. Isto conta o resultado.
+  function tarefasDeCasa(pessoaId, desdeIso) {
+    var entregues = 0, cobradas = 0;
+    var cham = chamadasAll();
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.tarefas || !(pessoaId in ch.tarefas)) return;
+      if (desdeIso && ch.data < desdeIso) return;
+      cobradas++;
+      if (ch.tarefas[pessoaId] === true) entregues++;
+    });
+    return { entregues: entregues, cobradas: cobradas,
+      pct: cobradas ? Math.round((entregues / cobradas) * 100) : null };
+  }
+
+  // ── AULAS DO CICLO ────────────────────────────────────────────
+  //
+  // O ciclo tem um número fixo de aulas. Contar "mês 2 de 3" não diz
+  // nada para a aluna; contar "aula 6 de 10" diz — e faz falta pesar.
+  var AULAS_POR_CICLO_PADRAO = 10;
+  var AULAS_CICLO_KEY = "isr_aulas_ciclo_v1";
+
+  function aulasPorCiclo() {
+    try {
+      var n = parseInt(localStorage.getItem(AULAS_CICLO_KEY), 10);
+      if (!isNaN(n) && n > 0) return n;
+    } catch (e) {}
+    return AULAS_POR_CICLO_PADRAO;
+  }
+  function setAulasPorCiclo(n) {
+    var v = parseInt(n, 10);
+    if (isNaN(v) || v < 1) return aulasPorCiclo();
+    try { localStorage.setItem(AULAS_CICLO_KEY, String(v)); } catch (e) {}
+    agendarSync();
+    return v;
+  }
+
+  // Quantas aulas ela já fez no ciclo vigente e quantas faltam.
+  function progressoCiclo(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var total = aulasPorCiclo();
+    var c = contratoVigente(p);
+    // o ciclo começa no primeiro mês do contrato vigente; sem contrato,
+    // vale desde quando ela entrou
+    var desde = c && (c.meses || []).length ? c.meses[0].key + "-01" : (p.desde || "");
+    var feitas = 0, faltou = 0;
+    var cham = chamadasAll();
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      if (desde && ch.data < desde) return;
+      var est = estadoPresenca(ch.presencas[pessoaId]);
+      if (est === "presente" || est === "atraso") feitas++;
+      else faltou++;
+    });
+    var dadas = feitas + faltou;
+    if (dadas > total) total = dadas;
+    return { feitas: feitas, faltou: faltou, dadas: dadas, total: total,
+      restam: Math.max(0, total - dadas),
+      pct: total ? Math.round((dadas / total) * 100) : 0,
+      desde: desde };
+  }
+
+  // A lista do que a pessoa tem contratado agora, produto a produto.
+  function produtosDe(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return [];
+    var out = [];
+    var c = contratoVigente(p);
+
+    out.push({ id: "turma", nome: "Turma em grupo",
+      contratado: !!(p.turma && p.turma.indexOf("Particular") !== 0 && c),
+      detalhe: p.turma && c
+        ? p.turma + " · " + (c.parcelaValor || "—")
+          + (c.vencDia === "auto" ? " · cobrança automática" : " · vence dia " + c.vencDia)
+        : "",
+      pago: null });
+
+    var pa = p.particular;
+    out.push({ id: "particular", nome: "Aulas particulares",
+      contratado: !!pa,
+      detalhe: pa
+        ? (pa.aulas ? pa.aulas + (pa.aulas === 1 ? " aula" : " aulas") : "sem número definido")
+          + " · " + (pa.feitas || 0) + " dada(s)"
+          + (pa.valor ? " · " + pa.valor : "")
+        : "",
+      pago: pa ? !!pa.pago : null });
+
+    var pr = p.programa;
+    out.push({ id: "programa", nome: "Acompanhamento",
+      contratado: !!(pr && !pr.encerrado),
+      detalhe: pr && !pr.encerrado
+        ? pr.nome + " · " + pr.valor
+          + (pr.desde ? " · desde " + ddmm(pr.desde) : "")
+        : "",
+      pago: pr && !pr.encerrado ? !!pr.pago : null });
+
+    return out;
   }
   function alunasDaTurma(turmaLabel) {
     return loadPessoas().filter(function (p) { return p.status === "aluna" && p.turma === turmaLabel; });
@@ -4528,6 +4812,15 @@
     addParticipante: addParticipante, removeParticipante: removeParticipante,
     marcarEtapa: marcarEtapa, etapaFeita: etapaFeita,
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
+    CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
+    enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
+    gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
+    gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
+    gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
+    aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
+    progressoCiclo: progressoCiclo,
+    contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
+    setParticularPago: setParticularPago, produtosDe: produtosDe,
     PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
     setProgramaPago: setProgramaPago, participantesPrograma: participantesPrograma,
