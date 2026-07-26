@@ -28,11 +28,31 @@
         <p style="margin: 10px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Matrícula de {{ nome }}</h1>
       </header>
-      <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6;">Confira os dados, escolha a turma e defina as condições de pagamento. Ao concluir, a pessoa passa a constar em Alunas, com contrato, cobrança e integração criados.</p>
+      <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6;">Comece pelo que ela comprou. A escola vende três coisas, e uma pessoa pode levar uma, duas ou as três.</p>
+
+      <!-- PASSO 0 · O PRODUTO -->
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">1 · O que ela contratou</div>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Marque quantos quiser. Os passos seguintes mudam conforme a escolha.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
+          <sc-for list="{{ opcoesProduto }}" as="op" hint-placeholder-count="3">
+            <button onclick="{{ op.onPick }}" style="text-align: left; border: 1px solid {{ op.borda }}; background: {{ op.bg }}; padding: 13px 15px; border-radius: 10px; cursor: pointer; font-family: inherit;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="flex: none; width: 16px; height: 16px; border-radius: 5px; border: 2px solid {{ op.marcaBorda }}; background: {{ op.marcaBg }}; color: #fff; font-size: 11px; font-weight: 800; line-height: 13px; text-align: center;">{{ op.marca }}</span>
+                <span style="font-size: 13px; font-weight: 700; color: {{ op.fg }};">{{ op.nome }}</span>
+              </div>
+              <div style="font-size: 11px; color: {{ op.subCor }}; margin-top: 6px; line-height: 1.5;">{{ op.sub }}</div>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ semProduto }}">
+          <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">Escolha ao menos um produto para continuar.</p>
+        </sc-if>
+      </section>
 
       <!-- PASSO 1 · DADOS -->
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">1 · Dados da aluna</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">2 · Dados da aluna</div>
         <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Vieram do cadastro. Corrija o que estiver desatualizado.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
           <div>
@@ -52,11 +72,24 @@
             <input ref="{{ nivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
           </div>
         </div>
+        <details style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
+          <summary style="font-size: 11.5px; color: #8a7c6b; cursor: pointer;">Documento e endereço — o contrato precisa disto</summary>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
+            <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">{{ cd.label }}</div>
+                <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Ficam guardados só aqui e saem no arquivo dela em Escola · Dados.</p>
+        </details>
       </section>
 
-      <!-- PASSO 2 · TURMA -->
+      <!-- PASSO 3 · TURMA -->
+      <sc-if value="{{ querTurma }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">2 · Turma</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">3 · Turma</div>
         <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo vêm junto com a turma escolhida.</p>
         <select ref="{{ turmaRef }}" onchange="{{ onTurma }}" style="width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
           <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="6">
@@ -74,11 +107,35 @@
           </div>
         </sc-if>
       </section>
+      </sc-if>
 
-      <!-- PASSO 3 · PAGAMENTO -->
+      <!-- PASSO 4 · PACOTE DE AULAS PARTICULARES -->
+      <sc-if value="{{ querParticular }}">
+        <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">4 · Aulas particulares</div>
+          <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O pacote tem número de aulas e valor próprios. As aulas dadas são registradas no Perfil dela.</p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+            <div>
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nº de aulas</div>
+              <input ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+            </div>
+            <div>
+              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor do pacote</div>
+              <input ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+            </div>
+          </div>
+          <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: #3d3529; cursor: pointer;">
+            <input type="checkbox" ref="{{ partPagoRef }}" style="width: 16px; height: 16px; accent-color: #348a8e;" />
+            Já pagou o pacote — lançar no Caixa
+          </label>
+        </section>
+      </sc-if>
+
+      <!-- PASSO 5 · PAGAMENTO DA MENSALIDADE -->
+      <sc-if value="{{ temMensalidade }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">3 · Condições de pagamento</span>
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">5 · Condições de pagamento</span>
           <a href="ISR%20-%20Calculadora.dc.html" style="font-size: 11px; font-weight: 700; color: #2a9d8f; text-decoration: none;">Abrir a calculadora</a>
         </div>
         <sc-if value="{{ temProposta }}">
@@ -131,6 +188,8 @@
         </div>
       </section>
 
+      </sc-if>
+
       <!-- MATRÍCULA RETROATIVA -->
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -154,10 +213,10 @@
       </section>
 
       <!-- PASSO 3B · ACOMPANHAMENTO (produto à parte) -->
-      <sc-if value="{{ temProgramas }}">
+      <sc-if value="{{ querPrograma }}">
         <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Acompanhamento · produto à parte</div>
-          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Nada a ver com a turma: é o desafio semanal no WhatsApp, vendido separado. A maioria de quem participa não estuda em turma. Marque só se ela comprou também.</p>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">6 · Acompanhamento</div>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Escolha o programa em que ela entra.</p>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <sc-for list="{{ programas }}" as="pgm" hint-placeholder-count="2">
               <button onclick="{{ pgm.onPick }}" style="border: 1px solid {{ pgm.borda }}; background: {{ pgm.bg }}; color: {{ pgm.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pgm.label }}</button>
@@ -174,7 +233,7 @@
 
       <!-- PASSO 4 · O QUE ACONTECE -->
       <section style="background: #f6f2ea; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">4 · O que o sistema faz ao concluir</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">7 · O que o sistema faz ao concluir</div>
         <sc-for list="{{ efeitos }}" as="ef" hint-placeholder-count="5">
           <div style="display: flex; gap: 9px; align-items: flex-start; padding: 5px 0;">
             <span style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: {{ ef.cor }}; margin-top: 6px;"></span>
@@ -215,8 +274,14 @@ class Component extends DCLogic {
   // sinalRecebido começa nulo: enquanto não for tocado, vale o que ficou
   // combinado nas condições, senão o "recebido" se perderia no caminho
   progPagoRef = React.createRef();
+  partAulasRef = React.createRef(); partValorRef = React.createRef(); partPagoRef = React.createRef();
+  docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
+              cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
+              complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
+              uf: React.createRef(), pais: React.createRef() };
+  // null = ainda não mexeu; o padrão é turma, que é o caminho mais comum
   state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "",
-            retro: false, programaId: "", progPago: false };
+            retro: false, programaId: "", progPago: false, produtos: null };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
   nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
   tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
@@ -309,22 +374,41 @@ class Component extends DCLogic {
     // Marcar de novo desmarca — quem não vai participar não é forçada.
     const listaProgramas = CRM.programasLista();
     const programaSel = this.state.programaId || "";
+    // ── o que ela comprou ──
+    const escolha = this.state.produtos || { turma: true, particular: false, programa: false };
+    const querTurma = !!escolha.turma;
+    const querParticular = !!escolha.particular;
+    const querPrograma = !!escolha.programa && listaProgramas.length > 0;
+    const nenhumProduto = !querTurma && !querParticular && !escolha.programa;
+    const temMensalidade = querTurma || querParticular;
+    const alternar = chave => this.setState(s => {
+      const base = s.produtos || { turma: true, particular: false, programa: false };
+      const novo = Object.assign({}, base);
+      novo[chave] = !novo[chave];
+      return { produtos: novo, erro: "" };
+    });
+
     const progAtual = listaProgramas.filter(x => x.id === programaSel)[0] || null;
     const progNome = progAtual ? progAtual.nome : "";
     const progPreco = progAtual
       ? (progAtual.moeda || "€") + " " + (progAtual.preco || "27,00")
       : "";
 
-    const efeitos = [
+    const efeitos = [];
+    if (querTurma) efeitos.push.apply(efeitos, [
       { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + p.nome
         + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
       { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e na lista de chamada da turma." },
       { cor: "#d4a574", texto: "As parcelas entram na Cobrança e no Caixa, na categoria da turma." },
       { cor: "#9ec970", texto: "A integração dos primeiros 30 dias é criada e cai na fila da equipe: boas-vindas, confirmação da primeira aula, check-in da primeira semana e primeiro pagamento." },
       { cor: "#2a9d8f", texto: "Os materiais do ciclo da turma passam a aparecer na área da aluna." }
-    ];
-    if (progNome) efeitos.push({ cor: "#e07856",
-      texto: "Além da turma, ela entra no " + progNome + " · " + progPreco
+    ]);
+    if (querParticular) efeitos.push({ cor: "#6b5b95",
+      texto: "O pacote de aulas particulares fica no perfil dela, com as aulas dadas contadas uma a uma." });
+    if (!querTurma && !querParticular && querPrograma) efeitos.push({ cor: "#e07856",
+      texto: "Ela vira cliente pelo acompanhamento: entra no sistema sem turma, sem contrato de mensalidade e com o app dela aberto no desafio da semana." });
+    if (querPrograma && progNome && (querTurma || querParticular)) efeitos.push({ cor: "#e07856",
+      texto: "Além disso, ela entra no " + progNome + " · " + progPreco
         + (this.state.progPago ? ", já pago e lançado no Caixa." : ", a receber.") });
 
     return {
@@ -384,6 +468,43 @@ class Component extends DCLogic {
       })(),
 
       temErro: !!this.state.erro, erro: this.state.erro,
+      camposDoc: [
+        { id: "cpf", label: "CPF", exemplo: "000.000.000-00" },
+        { id: "rg", label: "RG", exemplo: "00.000.000-0" },
+        { id: "nascimento", label: "Nascimento", exemplo: "dd/mm/aaaa" },
+        { id: "cep", label: "CEP", exemplo: "00000-000" },
+        { id: "logradouro", label: "Rua", exemplo: "Rua, avenida…" },
+        { id: "numero", label: "Número", exemplo: "123" },
+        { id: "complemento", label: "Complemento", exemplo: "apto, bloco" },
+        { id: "bairro", label: "Bairro", exemplo: "—" },
+        { id: "cidade", label: "Cidade", exemplo: "—" },
+        { id: "uf", label: "Estado", exemplo: "SP" },
+        { id: "pais", label: "País", exemplo: "Brasil" }
+      ].map(cx => ({ label: cx.label, ref: this.docRefs[cx.id], atual: p[cx.id] || cx.exemplo })),
+
+      opcoesProduto: [
+        { id: "turma", nome: "Turma em grupo", sub: "Aulas semanais, contrato por ciclo", on: querTurma },
+        { id: "particular", nome: "Aulas particulares", sub: "Pacote de aulas individuais", on: querParticular },
+        { id: "programa", nome: "Acompanhamento",
+          sub: listaProgramas.length
+            ? "Desafio semanal no WhatsApp · " + ((listaProgramas[0].moeda || "€") + " " + (listaProgramas[0].preco || "27,00"))
+            : "Nenhum programa criado ainda",
+          on: !!escolha.programa }
+      ].map(op => ({
+        nome: op.nome, sub: op.sub,
+        marca: op.on ? "\u2713" : "",
+        marcaBorda: op.on ? "#348a8e" : "#d8cfc2",
+        marcaBg: op.on ? "#348a8e" : "transparent",
+        borda: op.on ? "#348a8e" : "#e5dccf",
+        bg: op.on ? "rgba(52,138,142,0.06)" : "#fff",
+        fg: op.on ? "#164951" : "#6b6155",
+        subCor: op.on ? "#8a7c6b" : "#b3a693",
+        onPick: () => alternar(op.id)
+      })),
+      semProduto: nenhumProduto,
+      querTurma, querParticular, querPrograma, temMensalidade,
+      partAulasRef: this.partAulasRef, partValorRef: this.partValorRef, partPagoRef: this.partPagoRef,
+
       temProgramas: listaProgramas.length > 0,
       programaEscolhido: !!programaSel,
       precoPrograma: progPreco,
@@ -402,11 +523,21 @@ class Component extends DCLogic {
       }),
 
       onConcluir: () => {
-        const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
-        if (!v) { this.setState({ erro: "Informe o valor de cada parcela antes de concluir." }); return; }
-        if (isNaN(this.paraNumero(v))) {
-          this.setState({ erro: "O valor da parcela não foi reconhecido. Use apenas números, por exemplo 497,00." });
+        if (nenhumProduto) {
+          this.setState({ erro: "Escolha ao menos um produto: turma, aulas particulares ou acompanhamento." });
           return;
+        }
+        if (escolha.programa && !listaProgramas.length) {
+          this.setState({ erro: "Não há programa de acompanhamento criado. Crie um na tela Programa antes." });
+          return;
+        }
+        const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
+        if (temMensalidade) {
+          if (!v) { this.setState({ erro: "Informe o valor de cada parcela antes de concluir." }); return; }
+          if (isNaN(this.paraNumero(v))) {
+            this.setState({ erro: "O valor da parcela não foi reconhecido. Use apenas números, por exemplo 497,00." });
+            return;
+          }
         }
         // dados de cadastro: campo em branco mantém o que já estava
         const cad = {};
@@ -414,24 +545,42 @@ class Component extends DCLogic {
         if (this.val(this.zapRef)) cad.whatsapp = this.val(this.zapRef);
         if (this.val(this.emailRef)) cad.email = this.val(this.emailRef);
         if (this.val(this.nivelRef)) cad.nivel = this.val(this.nivelRef);
+        Object.keys(this.docRefs).forEach(k => {
+          const vv = this.val(this.docRefs[k]);
+          if (vv) cad[k] = vv;
+        });
         if (Object.keys(cad).length) CRM.atualizarCadastro(p.id, cad);
 
-        CRM.matricular(p.id, {
-          turmaId: turmaSel,
-          tipo: this.val(this.tipoRef) || "Matrícula",
-          moeda: moeda,
-          valorParcela: v,
-          parcelas: nParc,
-          vencDia: parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10,
-          aulasContratadas: this.val(this.aulasRef),
-          sinalValor: this.val(this.sinalRef) || (pr ? pr.sinalValor : ""),
-          sinalRecebido: sinalRec,
-          desde: this.state.retro ? this.val(this.desdeRef) : "",
-          parcelasPagas: this.state.retro ? this.val(this.pagasRef) : ""
-        });
-        if (programaSel) CRM.matricularNoPrograma(p.id, {
-          programaId: programaSel, pago: !!this.state.progPago
-        });
+        // Só quem tem turma ou pacote vira aluna com contrato. Quem levou
+        // apenas o acompanhamento entra por matricularNoPrograma.
+        if (temMensalidade) {
+          CRM.matricular(p.id, {
+            turmaId: querTurma ? turmaSel : "particular",
+            tipo: this.val(this.tipoRef) || "Matrícula",
+            moeda: moeda,
+            valorParcela: v,
+            parcelas: nParc,
+            vencDia: parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10,
+            aulasContratadas: this.val(this.aulasRef) || this.val(this.partAulasRef),
+            sinalValor: this.val(this.sinalRef) || (pr ? pr.sinalValor : ""),
+            sinalRecebido: sinalRec,
+            desde: this.state.retro ? this.val(this.desdeRef) : "",
+            parcelasPagas: this.state.retro ? this.val(this.pagasRef) : ""
+          });
+        }
+        if (querParticular) {
+          CRM.contratarParticular(p.id, {
+            aulas: this.val(this.partAulasRef),
+            valor: this.val(this.partValorRef),
+            moeda: moeda,
+            pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
+          });
+        }
+        if (querPrograma && programaSel) {
+          CRM.matricularNoPrograma(p.id, {
+            programaId: programaSel, pago: !!this.state.progPago
+          });
+        }
         this.setState({ concluida: true, erro: "" });
       }
     };

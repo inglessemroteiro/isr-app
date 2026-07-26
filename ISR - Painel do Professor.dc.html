@@ -143,6 +143,10 @@
       <sc-if value="{{ temAlunas }}">
         <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap;">
           <button onclick="{{ onSalvarChamada }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar chamada</button>
+          <div style="flex: 1; min-width: 220px; display: flex; gap: 6px; align-items: center;">
+            <input ref="{{ gravacaoRef }}" placeholder="{{ gravacaoAtual }}" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #fff; color: #3d3529; font-size: 12px; padding: 9px 11px; border-radius: 8px; font-family: inherit;" />
+            <button onclick="{{ onSalvarGravacao }}" title="A gravação fica visível só para as alunas desta turma" style="flex: none; border: 1px solid #eee3d6; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">{{ gravacaoBtn }}</button>
+          </div>
           <span style="font-size: 12px; color: #8a7c6b;">{{ resumoChamada }}</span>
           <sc-if value="{{ salvouAgora }}">
             <span style="font-size: 12px; color: #348a8e; font-weight: 700;">Salva. Faltas foram para a linha do tempo das alunas.</span>
@@ -191,7 +195,7 @@ class Component extends DCLogic {
   state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
             escolhendoData: false, linhaAberta: null };
-  chamadaRef = React.createRef(); buscaExtraRef = React.createRef();
+  chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
@@ -563,6 +567,22 @@ class Component extends DCLogic {
               + (nJus ? ", " + nJus + " com aviso" : "") + ".")
         : "",
       salvouAgora: this.state.salvouAgora,
+      gravacaoRef: this.gravacaoRef,
+      gravacaoAtual: (() => {
+        const g = turmaSel && dataSel && CRM.gravacaoDaAula ? CRM.gravacaoDaAula(turmaSel, dataSel) : null;
+        return g && g.link ? g.link : "Link da gravação desta aula";
+      })(),
+      gravacaoBtn: (() => {
+        const g = turmaSel && dataSel && CRM.gravacaoDaAula ? CRM.gravacaoDaAula(turmaSel, dataSel) : null;
+        return g && g.link ? "Trocar" : "Salvar gravação";
+      })(),
+      onSalvarGravacao: () => {
+        const link = (this.gravacaoRef.current && this.gravacaoRef.current.value || "").trim();
+        if (!turmaSel || !dataSel) return;
+        CRM.setGravacaoDaAula(turmaSel, dataSel, link, "Aula de " + CRM.ddmm(dataSel));
+        if (this.gravacaoRef.current) this.gravacaoRef.current.value = "";
+        this.bump();
+      },
       onSalvarChamada: () => {
         CRM.salvarChamada(turmaSel, dataSel, presAtual, (user && user.nome) || "", tarAtual);
         this.setState({ salvouAgora: true, turmaChamada: turmaSel, chamadaData: dataSel, tarefas: tarAtual });

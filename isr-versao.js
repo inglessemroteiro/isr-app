@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-b",
+  numero: "2026.07.26-c",
   data: "26/07/2026",
-  nota: "Acompanhamento vira produto próprio, separado das turmas"
+  nota: "Produtos no perfil, gravações, CPF e endereço, ícones oficiais"
 };
