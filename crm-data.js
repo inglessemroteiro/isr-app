@@ -279,7 +279,11 @@
     { id: "t7", nivel: "Speaking (B1)", turma: "WED 8h BR | 13h NL", teacher: "Ricky", cycle: "2.2026",
       projeto: "The Poetry Project", notebook: "[ON-SPE][WED-8BR|13NL][Student Notebook] The_Poetry_Project_26.2" },
     { id: "t8", nivel: "Speaking (B1)", turma: "FRI 6h BR | 11h NL", teacher: "Gabi", cycle: "2.2026",
-      projeto: "My Timeline", notebook: "ON-SPE_Student_Notebook_My_Timeline_26_2" }
+      projeto: "My Timeline", notebook: "ON-SPE_Student_Notebook_My_Timeline_26_2" },
+    { id: "t9", nivel: "Essentials (A2)", turma: "THU 11h BR | 16h NL", teacher: "Carla", cycle: "2.2026",
+      projeto: "The Culture Map", notebook: "" },
+    { id: "t10", nivel: "Basics (A1)", turma: "WED 14h BR | 19h NL", teacher: "Adrielly", cycle: "2.2026",
+      projeto: "My Timeline", notebook: "" }
   ];
 
   // ── TURMAS EDITÁVEIS ──────────────────────────────────────────
@@ -536,43 +540,56 @@
       "Rafaela Antunes", "Isadora Mendes", "Bruna Tavares", "Letícia Barros",
       "Clarice Monteiro", "Sofia Queiroz", "Nina Vasques", "Alice Bento",
       "Olívia Castro", "Laura Pimentel", "Cecília Braga", "Elisa Fontes",
-      "Antonia Rangel", "Maitê Cordeiro"
+      "Antonia Rangel", "Maitê Cordeiro", "Doralice Prado", "Iara Menezes",
+      "Vitória Sampaio", "Heloísa Ferraz", "Malu Andrade", "Joana Peixoto",
+      "Aurora Lins", "Ester Vilela", "Bianca Toledo", "Sara Nogueira"
     ];
-    // parte das alunas paga em euro — é assim na escola de verdade
-    var MENSALIDADE = "R$ 497,00";
-    var MENSALIDADE_EUR = "€ 89,00";
-    var META = 3; // cada turma do exemplo fica com pelo menos o mínimo
-    var k = 0, n = 0;
+    // A escola tem turmas de 2 a 4 e mensalidades bem diferentes entre si:
+    // quem renovou por mais ciclos paga parcela maior, e parte paga em euro.
+    // O exemplo copia essa forma para os números da folha fazerem sentido.
+    var OCUPACAO = [2, 3, 2, 3, 3, 3, 4, 2, 4, 4];
+    var VALORES = [
+      { m: "R$", v: "R$ 345,00",   total: "R$ 2.760,00" },
+      { m: "R$", v: "R$ 497,00",   total: "R$ 1.491,00" },
+      { m: "€",  v: "€ 125,00",    total: "€ 375,00" },
+      { m: "R$", v: "R$ 682,33",   total: "R$ 4.386,41" },
+      { m: "€",  v: "€ 85,00",     total: "€ 255,00" },
+      { m: "R$", v: "R$ 450,00",   total: "R$ 4.050,00" },
+      { m: "€",  v: "€ 79,30",     total: "€ 555,10" },
+      { m: "R$", v: "R$ 511,43",   total: "R$ 3.068,58" },
+      { m: "R$", v: "R$ 1.128,57", total: "R$ 7.900,00" },
+      { m: "€",  v: "€ 175,00",    total: "€ 700,00" },
+      { m: "R$", v: "R$ 130,00",   total: "R$ 1.040,00" },
+      { m: "€",  v: "€ 75,00",     total: "€ 525,00" }
+    ];
+    var k = 0, iTurma = 0, iValor = 0;
 
-    turmasLista().forEach(function (u) {
+    // só as turmas do próprio exemplo. Uma turma criada depois — inclusive
+    // pelos testes — não ganha alunas fictícias.
+    UNITS.forEach(function (u) {
       var label = u.nivel + " · " + u.turma;
       var tem = lista.filter(function (p) {
         return p.status === "aluna" && p.turma === label;
       }).length;
-      // uma turma fica com 3 e outra com 4, para o exemplo não ficar uniforme
-      var alvo = META + (n % 2);
-      n += 1;
+      var alvo = OCUPACAO[iTurma % OCUPACAO.length];
+      iTurma += 1;
       while (tem < alvo && k < NOMES.length) {
         var nome = NOMES[k]; k += 1; tem += 1;
-        var euro = k % 3 === 0;                       // uma a cada três em euro
-        var moedaAl = euro ? "€" : "R$";
-        var mensal = euro ? MENSALIDADE_EUR : MENSALIDADE;
+        var val = VALORES[iValor % VALORES.length]; iValor += 1;
         lista.push({
           id: "pd" + k, nome: nome,
           whatsapp: "+55 11 97000-" + String(1000 + k).slice(-4),
-          email: nome.toLowerCase().split(" ")[0] + "@exemplo.com", moeda: moedaAl,
+          email: nome.toLowerCase().split(" ")[0] + "@exemplo.com", moeda: val.m,
           status: "aluna", estagio: "matriculado", badge: "",
           origem: { canal: "Indicação", detalhe: "", veioDe: "", entrouPor: "" },
           formatos: ["grupo"], turma: label, professora: u.teacher,
           nivel: u.nivel, horarios: u.turma, querComecar: "",
-          entrouEm: addDays(-120 - k),
-          desde: addDays(-100 - k),
+          entrouEm: addDays(-120 - k), desde: addDays(-100 - k),
           proximoFollowup: "",
           contratos: [{ tipo: "Matrícula", ciclos: "Ciclo " + (u.cycle || "2.2026"),
-            moeda: moedaAl, valorTotal: euro ? "€ 267,00" : "R$ 1.491,00",
-            parcelaValor: mensal,
+            moeda: val.m, valorTotal: val.total, parcelaValor: val.v,
             parcelas: 3, vencDia: 10, fim: addDays(60),
-            meses: mkMeses(1, mensal, 3) }],
+            meses: mkMeses(1, val.v, 3) }],
           documentos: [],
           historico: [{ data: addDays(-100 - k), tipo: "matricula",
             texto: "Matriculada · " + u.nivel }]
@@ -4481,19 +4498,26 @@
     var porData = {};
     salvas.forEach(function (c) { porData[c.data] = c; });
 
+    // o ciclo tem um número fixo de aulas. A grade mostra as dez desde o
+    // começo — as que já aconteceram com data, as que faltam só numeradas.
     var aulas = datas.map(function (d, i) {
       var c = porData[d];
       return { data: d, label: ddmm(d), n: i + 1,
-        salva: !!c, atual: d === dataAtualIso };
+        salva: !!c, atual: d === dataAtualIso, futura: false };
     });
+    for (var i = aulas.length; i < limite; i++) {
+      aulas.push({ data: "", label: (i + 1) + "ª", n: i + 1,
+        salva: false, atual: false, futura: true });
+    }
 
     var linhas = alunas.map(function (p) {
-      var celulas = datas.map(function (d) {
-        var c = porData[d];
+      var celulas = aulas.map(function (a) {
+        var c = a.data ? porData[a.data] : null;
         var estado = c ? estadoPresenca((c.presencas || {})[p.id]) : null;
         var tar = c && c.tarefas ? c.tarefas[p.id] : undefined;
-        return { data: d, estado: estado, tarefa: tar, atual: d === dataAtualIso,
-          registrada: !!c };
+        return { data: a.data, estado: estado, tarefa: tar,
+          atual: !!a.data && a.data === dataAtualIso,
+          futura: a.futura, registrada: !!c };
       });
       var contadas = celulas.filter(function (x) { return x.registrada; });
       var presentes = contadas.filter(function (x) {
