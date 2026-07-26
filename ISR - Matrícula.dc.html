@@ -153,16 +153,22 @@
         </sc-if>
       </section>
 
-      <!-- PASSO 3B · PROGRAMA DE ACOMPANHAMENTO -->
+      <!-- PASSO 3B · ACOMPANHAMENTO (produto à parte) -->
       <sc-if value="{{ temProgramas }}">
         <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Programa de acompanhamento</div>
-          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">O desafio semanal que ela recebe no WhatsApp e responde pelo app. Dá para incluir depois, na tela Programa.</p>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Acompanhamento · produto à parte</div>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Nada a ver com a turma: é o desafio semanal no WhatsApp, vendido separado. A maioria de quem participa não estuda em turma. Marque só se ela comprou também.</p>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <sc-for list="{{ programas }}" as="pgm" hint-placeholder-count="2">
               <button onclick="{{ pgm.onPick }}" style="border: 1px solid {{ pgm.borda }}; background: {{ pgm.bg }}; color: {{ pgm.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pgm.label }}</button>
             </sc-for>
           </div>
+          <sc-if value="{{ programaEscolhido }}">
+            <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12.5px; color: #3d3529; cursor: pointer;">
+              <input type="checkbox" ref="{{ progPagoRef }}" onchange="{{ onProgPago }}" style="width: 16px; height: 16px; accent-color: #348a8e;" />
+              Já pagou o acompanhamento — lançar {{ precoPrograma }} no Caixa
+            </label>
+          </sc-if>
         </section>
       </sc-if>
 
@@ -208,8 +214,9 @@
 class Component extends DCLogic {
   // sinalRecebido começa nulo: enquanto não for tocado, vale o que ficou
   // combinado nas condições, senão o "recebido" se perderia no caminho
+  progPagoRef = React.createRef();
   state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "",
-            retro: false, programaId: null };
+            retro: false, programaId: "", progPago: false };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
   nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
   tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
@@ -301,10 +308,12 @@ class Component extends DCLogic {
     // Programa de acompanhamento: por padrão entra no que estiver ativo.
     // Marcar de novo desmarca — quem não vai participar não é forçada.
     const listaProgramas = CRM.programasLista();
-    const programaSel = this.state.programaId === null
-      ? (listaProgramas[0] ? listaProgramas[0].id : "")
-      : this.state.programaId;
-    const progNome = (listaProgramas.filter(x => x.id === programaSel)[0] || {}).nome || "";
+    const programaSel = this.state.programaId || "";
+    const progAtual = listaProgramas.filter(x => x.id === programaSel)[0] || null;
+    const progNome = progAtual ? progAtual.nome : "";
+    const progPreco = progAtual
+      ? (progAtual.moeda || "€") + " " + (progAtual.preco || "27,00")
+      : "";
 
     const efeitos = [
       { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + p.nome
@@ -315,7 +324,8 @@ class Component extends DCLogic {
       { cor: "#2a9d8f", texto: "Os materiais do ciclo da turma passam a aparecer na área da aluna." }
     ];
     if (progNome) efeitos.push({ cor: "#e07856",
-      texto: "Ela entra no " + progNome + " e passa a receber o desafio da semana." });
+      texto: "Além da turma, ela entra no " + progNome + " · " + progPreco
+        + (this.state.progPago ? ", já pago e lançado no Caixa." : ", a receber.") });
 
     return {
       semPessoa: false, ok: true, concluida: false,
@@ -375,10 +385,15 @@ class Component extends DCLogic {
 
       temErro: !!this.state.erro, erro: this.state.erro,
       temProgramas: listaProgramas.length > 0,
+      programaEscolhido: !!programaSel,
+      precoPrograma: progPreco,
+      progPagoRef: this.progPagoRef,
+      onProgPago: e => this.setState({ progPago: !!e.target.checked }),
       programas: listaProgramas.map(pgm => {
         const sel = programaSel === pgm.id;
+        const preco = (pgm.moeda || "€") + " " + (pgm.preco || "27,00");
         return {
-          label: (sel ? "\u2713 " : "") + pgm.nome,
+          label: (sel ? "\u2713 " : "+ ") + pgm.nome + " · " + preco,
           bg: sel ? "#348a8e" : "#fff",
           fg: sel ? "#fff" : "#164951",
           borda: sel ? "#348a8e" : "#e5dccf",
@@ -414,7 +429,9 @@ class Component extends DCLogic {
           desde: this.state.retro ? this.val(this.desdeRef) : "",
           parcelasPagas: this.state.retro ? this.val(this.pagasRef) : ""
         });
-        if (programaSel) CRM.addParticipante(programaSel, p.id);
+        if (programaSel) CRM.matricularNoPrograma(p.id, {
+          programaId: programaSel, pago: !!this.state.progPago
+        });
         this.setState({ concluida: true, erro: "" });
       }
     };

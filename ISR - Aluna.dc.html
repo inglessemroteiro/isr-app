@@ -64,7 +64,7 @@
               <sc-if value="{{ aoVivo }}">
                 <div style="position: absolute; top: 12px; left: 14px; display: flex; align-items: center; gap: 6px; background: #fc9082; padding: 5px 10px; border-radius: 999px;">
                   <span class="isr-ao-vivo" style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></span>
-                  <span style="font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.4px;">É hoje</span>
+                  <span style="font-size: 10px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.4px;">{{ selo }}</span>
                 </div>
               </sc-if>
             </div>
@@ -73,10 +73,13 @@
               <h2 style="margin: 0 0 5px; font-size: 21px; font-weight: 700; letter-spacing: -0.4px; color: #fff; line-height: 1.2;">{{ aulaQuando }}</h2>
               <p style="margin: 0 0 16px; font-size: 12px; color: rgba(255,255,255,0.72); line-height: 1.5;">{{ aulaOnde }}</p>
               <div style="display: flex; gap: 8px;">
+                <sc-if value="{{ semHeroBotoes }}"></sc-if>
                 <sc-if value="{{ temMeet }}">
                   <a href="{{ meetLink }}" target="_blank" rel="noopener" class="isr-btn isr-btn-coral" style="flex: 1; background: #fc9082; color: #164951; padding: 12px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 4px 14px rgba(252,144,130,0.4);">Entrar na aula</a>
                 </sc-if>
-                <a href="{{ materialLink }}" target="_blank" rel="noopener" class="isr-btn" style="flex: 1; background: rgba(255,255,255,0.14); color: #fff; padding: 12px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; text-align: center; text-decoration: none;">Material da aula</a>
+                <sc-if value="{{ temMateriais }}">
+                  <a href="{{ materialLink }}" target="_blank" rel="noopener" class="isr-btn" style="flex: 1; background: rgba(255,255,255,0.14); color: #fff; padding: 12px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; text-align: center; text-decoration: none;">Material da aula</a>
+                </sc-if>
               </div>
               <sc-if value="{{ semMeet }}">
                 <p style="margin: 10px 0 0; font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5;">O link da sala ainda não foi cadastrado nesta turma.</p>
@@ -447,6 +450,16 @@
                 </div>
               </sc-for>
             </sc-if>
+            <sc-if value="{{ temPlanoPrograma }}">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 11px 0;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 700; color: #2c3e50; line-height: 1.35;">{{ planoProgramaNome }}</div>
+                  <div style="font-size: 11px; color: #9b8b7e; margin-top: 3px;">{{ planoProgramaDesde }}</div>
+                </div>
+                <span style="flex: none; font-size: 13px; font-weight: 700; color: #2c3e50;">{{ planoProgramaValor }}</span>
+                <span style="flex: none; background: {{ planoProgramaBg }}; color: {{ planoProgramaFg }}; font-size: 9px; font-weight: 800; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.3px;">{{ planoProgramaStatus }}</span>
+              </div>
+            </sc-if>
             <sc-if value="{{ semContrato }}">
               <p style="margin: 0; font-size: 12px; color: #666;">Nenhum plano ativo no momento.</p>
             </sc-if>
@@ -550,9 +563,13 @@ class Component extends DCLogic {
       disponiveis: [], bloqueados: [], numeros: [], notas: [], atividades: [] }, refs);
     if (!CRM) return nada;
 
+    const TEM_ACESSO = { aluna: 1, mvs: 1, pausada: 1, programa: 1 };
     let p = CRM.getPessoa(this.alunaId());
-    if (!p || (p.status !== "aluna" && p.status !== "mvs")) p = CRM.getPessoas().filter(x => x.status === "aluna")[0] || null;
+    if (!p || !TEM_ACESSO[p.status]) p = CRM.getPessoas().filter(x => TEM_ACESSO[x.status])[0] || null;
     if (!p) return nada;
+    // Quem comprou só o acompanhamento não tem turma, aula nem parcela.
+    // O app dela é o programa: desafio da semana, miles e o que pagou.
+    const soPrograma = p.status === "programa";
 
     const tab = this.state.tab;
     // Três destinos: o dia a dia, o que ela estuda e a conta dela.
@@ -567,11 +584,13 @@ class Component extends DCLogic {
       { id: "conta", label: "Conta",
         icone: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" }
     ];
-    const tabs = TABS.map(t => ({
-      label: t.label, icone: t.icone,
-      onClick: () => this.setState({ tab: t.id }),
-      cor: tab === t.id ? "#348a8e" : "#b3a89d"
-    }));
+    const tabs = TABS
+      .filter(t => !(soPrograma && (t.id === "aulas" || t.id === "materiais")))
+      .map(t => ({
+        label: t.label, icone: t.icone,
+        onClick: () => this.setState({ tab: t.id }),
+        cor: tab === t.id ? "#348a8e" : "#b3a89d"
+      }));
 
     const turmaRaw = CRM.turmasLista().filter(u => p.turma && p.turma.indexOf(u.nivel) >= 0 && p.turma.indexOf(u.turma) >= 0)[0] || null;
     const unit = CRM.UNITS.filter(u => p.turma && p.turma.indexOf(u.turma) >= 0)[0];
@@ -756,15 +775,25 @@ class Component extends DCLogic {
       irMiles: () => this.setState({ tab: "conta" }),
 
       // hero
-      aoVivo: ehHoje,
-      aulaTitulo: prox ? (ehHoje ? "Sua aula é HOJE" : "Sua próxima aula") : "Sem aula marcada",
-      aulaQuando: prox ? this.diaLabel(prox.data, prox.hora)
-                       : "Um bom momento para revisar o caderno.",
-      aulaOnde: [p.turma || "", turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : ""].filter(Boolean).join(" • "),
+      aoVivo: soPrograma ? !!(pg && !pg.respondeu) : ehHoje,
+      selo: soPrograma ? "Aberto" : "É hoje",
+      aulaTitulo: soPrograma
+        ? (pg ? "Desafio da semana " + pg.semana : "Seu acompanhamento")
+        : (prox ? (ehHoje ? "Sua aula é HOJE" : "Sua próxima aula") : "Sem aula marcada"),
+      aulaQuando: soPrograma
+        ? (pg ? pg.missao : "Sua primeira missão chega em breve.")
+        : (prox ? this.diaLabel(prox.data, prox.hora)
+                : "Um bom momento para revisar o caderno."),
+      aulaOnde: soPrograma
+        ? (pg ? pg.nome + " • semana " + pg.semana + " de " + pg.semanas : "")
+        : [p.turma || "", turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : ""].filter(Boolean).join(" • "),
       turmaLabel: p.turma || "—",
       meetLink: turmaRaw && turmaRaw.meet ? turmaRaw.meet : "#",
-      temMeet: !!(turmaRaw && turmaRaw.meet), semMeet: !(turmaRaw && turmaRaw.meet),
+      temMeet: !soPrograma && !!(turmaRaw && turmaRaw.meet),
+      semMeet: !soPrograma && !(turmaRaw && turmaRaw.meet),
+      semHeroBotoes: soPrograma,
       botoesGrid: turmaRaw && turmaRaw.meet ? "1fr 1fr" : "1fr",
+      temMateriais: !soPrograma,
       materialLink: caderno ? caderno.link : "#",
       materialCor: caderno ? "#2c3e50" : "#b3a89d",
 
@@ -781,12 +810,18 @@ class Component extends DCLogic {
         ? jornada.presentes + " de " + jornada.aulas + " aulas com presença (" + jornada.frequencia + "%)."
         : "",
 
-      semJornada: jornada.aulas === 0,
-      numeros: [
-        { valor: String(jornada.presentes), label: "aulas feitas", bg: "rgba(52,138,142,0.08)" },
-        { valor: jornada.aulas ? jornada.frequencia + "%" : "—", label: "presença", bg: "rgba(52,138,142,0.06)" },
-        { valor: String(pg ? pg.respostas : 0), label: "desafios", bg: "rgba(52,138,142,0.04)" }
-      ],
+      semJornada: !soPrograma && jornada.aulas === 0,
+      numeros: soPrograma
+        ? [
+            { valor: String(pg ? pg.respostas : 0), label: "desafios respondidos", bg: "rgba(52,138,142,0.08)" },
+            { valor: pg ? pg.semana + "/" + pg.semanas : "—", label: "semana", bg: "rgba(52,138,142,0.06)" },
+            { valor: pg && pg.posicao ? pg.posicao + "\u00ba" : "—", label: "no ranking", bg: "rgba(52,138,142,0.04)" }
+          ]
+        : [
+            { valor: String(jornada.presentes), label: "aulas feitas", bg: "rgba(52,138,142,0.08)" },
+            { valor: jornada.aulas ? jornada.frequencia + "%" : "—", label: "presença", bg: "rgba(52,138,142,0.06)" },
+            { valor: String(pg ? pg.respostas : 0), label: "desafios", bg: "rgba(52,138,142,0.04)" }
+          ],
 
       // próximos passos
       semanaContagem: totalSemana ? feitas + " de " + totalSemana : "",
@@ -838,7 +873,14 @@ class Component extends DCLogic {
       atividades: atividadesView, semAtividades: atividadesView.length === 0,
 
       // conta · plano
-      temContrato: !!c, semContrato: !c,
+      temContrato: !soPrograma && !!c, semContrato: !soPrograma && !c,
+      temPlanoPrograma: !!(p.programa && p.programa.valor),
+      planoProgramaNome: p.programa ? p.programa.nome : "",
+      planoProgramaValor: p.programa ? p.programa.valor : "",
+      planoProgramaDesde: p.programa && p.programa.desde ? "desde " + CRM.ddmm(p.programa.desde) : "",
+      planoProgramaStatus: p.programa && p.programa.pago ? "pago" : "em aberto",
+      planoProgramaBg: p.programa && p.programa.pago ? "#eef5ec" : "#fdf1ec",
+      planoProgramaFg: p.programa && p.programa.pago ? "#5a9a2e" : "#c8622f",
       contratoTipo: c ? c.tipo : "", contratoCiclos: c ? c.ciclos : "",
       contratoParcela: c ? (c.parcelaValor || "—") : "",
       contratoVenc: c ? (c.vencDia === "auto" ? "cobrança automática" : "vence dia " + c.vencDia) : "",

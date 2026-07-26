@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-a",
+  numero: "2026.07.26-b",
   data: "26/07/2026",
-  nota: "App da aluna no design system, ISR Miles e inclusão no programa"
+  nota: "Acompanhamento vira produto próprio, separado das turmas"
 };

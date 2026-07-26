@@ -77,34 +77,77 @@
         </sc-for>
       </div>
 
-      <!-- PARTICIPANTES -->
+      <!-- PARTICIPANTES · o acompanhamento é um produto à parte -->
       <sc-if value="{{ turmaAberta }}">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Quem está na turma</div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-            <sc-for list="{{ participantes }}" as="pt" hint-placeholder-count="4">
-              <span style="background: #f6eee4; color: #164951; font-size: 12px; font-weight: 700; padding: 7px 8px 7px 13px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">{{ pt.nome }}<button onclick="{{ pt.onRemove }}" title="Tirar da turma" style="border: none; background: transparent; color: #b3a693; font-size: 14px; cursor: pointer; padding: 0 3px;">×</button></span>
-            </sc-for>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Quem participa</span>
+            <span style="flex: none; font-size: 11.5px; color: #6b6155;">{{ resumoParticipantes }}</span>
           </div>
-          <!-- Turma inteira de uma vez: ninguém quer digitar 12 nomes. -->
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f4f1ec;">
-            <sc-for list="{{ turmasParaAdicionar }}" as="tu" hint-placeholder-count="4">
-              <button onclick="{{ tu.onAdd }}" title="{{ tu.title }}" style="border: 1px solid #c9dede; background: {{ tu.bg }}; color: {{ tu.fg }}; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ tu.label }}</button>
-            </sc-for>
-            <sc-if value="{{ semTurmasParaAdicionar }}">
-              <p style="margin: 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">Todas as turmas com aluna já estão neste programa.</p>
+          <p style="margin: 0 0 14px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O acompanhamento é vendido à parte, por {{ precoPrograma }}. Quase ninguém aqui é aluna de turma — e quem for, participa das duas coisas.</p>
+
+          <!-- preço do produto -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid #f4f1ec;">
+            <span style="font-size: 11.5px; color: #8a7c6b;">Preço</span>
+            <select ref="{{ moedaRef }}" onchange="{{ onPreco }}" style="border: 1px solid #e5dccf; border-radius: 8px; padding: 7px 9px; font-size: 12px; font-family: inherit; color: #3d3529; background: #fff;">
+              <sc-for list="{{ moedas }}" as="mo" hint-placeholder-count="2">
+                <option value="{{ mo.id }}" selected="{{ mo.sel }}">{{ mo.label }}</option>
+              </sc-for>
+            </select>
+            <input ref="{{ precoRef }}" onchange="{{ onPreco }}" placeholder="{{ precoValor }}" style="width: 90px; border: 1px solid #e5dccf; border-radius: 8px; padding: 7px 9px; font-size: 12px; font-family: inherit; color: #3d3529; background: #fff;" />
+            <span style="font-size: 11px; color: #b3a693;">por participante</span>
+          </div>
+
+          <!-- lista -->
+          <sc-if value="{{ semParticipantes }}">
+            <p style="margin: 0 0 14px; font-size: 12px; color: #b3a693; line-height: 1.6;">Ninguém no programa ainda. Busque a pessoa abaixo.</p>
+          </sc-if>
+          <sc-for list="{{ participantes }}" as="pt" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f1ec;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap;">
+                  <a href="{{ pt.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #164951; text-decoration: none;">{{ pt.nome }}</a>
+                  <sc-if value="{{ pt.ehAlunaTambem }}">
+                    <span style="background: rgba(90,158,75,0.16); color: #5a9e4b; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.3px;">Aluna de turma</span>
+                  </sc-if>
+                </div>
+                <div style="font-size: 11px; color: {{ pt.subCor }}; margin-top: 3px;">{{ pt.sub }}</div>
+              </div>
+              <button onclick="{{ pt.onPago }}" title="{{ pt.pagoTitle }}" style="flex: none; border: 1px solid {{ pt.pagoBorda }}; background: {{ pt.pagoBg }}; color: {{ pt.pagoFg }}; font-size: 10.5px; font-weight: 700; padding: 6px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pt.pagoLabel }}</button>
+              <button onclick="{{ pt.onRemove }}" title="Tirar do programa" style="flex: none; border: none; background: transparent; color: #b3a693; font-size: 15px; cursor: pointer; padding: 0 4px;">×</button>
+            </div>
+          </sc-for>
+
+          <!-- incluir -->
+          <div style="margin-top: 14px;">
+            <input ref="{{ addBuscaRef }}" oninput="{{ onBuscaAdd }}" placeholder="Incluir alguém: busque pelo nome" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+            <sc-if value="{{ temCandidatas }}">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+                <sc-for list="{{ candidatas }}" as="cd" hint-placeholder-count="6">
+                  <button onclick="{{ cd.onAdd }}" style="border: 1px solid #c9dede; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cd.label }}</button>
+                </sc-for>
+              </div>
+              <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: #6b6155; cursor: pointer;">
+                <input type="checkbox" ref="{{ pagoRef }}" onchange="{{ onPagoNovo }}" style="width: 15px; height: 15px; accent-color: #348a8e;" />
+                Já pagou os {{ precoPrograma }} — lançar no Caixa agora
+              </label>
+            </sc-if>
+            <sc-if value="{{ semCandidatas }}">
+              <p style="margin: 10px 0 0; font-size: 11.5px; color: #b3a693;">{{ msgCandidatas }}</p>
             </sc-if>
           </div>
-          <input ref="{{ addBuscaRef }}" oninput="{{ onBuscaAdd }}" placeholder="Ou buscar uma pessoa pelo nome" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
-          <sc-if value="{{ temCandidatas }}">
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
-              <sc-for list="{{ candidatas }}" as="cd" hint-placeholder-count="6">
-                <button onclick="{{ cd.onAdd }}" style="border: 1px solid #c9dede; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cd.label }}</button>
-              </sc-for>
-            </div>
-          </sc-if>
-          <sc-if value="{{ semCandidatas }}">
-            <p style="margin: 10px 0 0; font-size: 11.5px; color: #b3a693;">{{ msgCandidatas }}</p>
+
+          <!-- turma inteira: a exceção, não a regra -->
+          <sc-if value="{{ temTurmasParaAdicionar }}">
+            <details style="margin-top: 14px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
+              <summary style="font-size: 11.5px; color: #8a7c6b; cursor: pointer;">Incluir uma turma inteira</summary>
+              <p style="margin: 8px 0 10px; font-size: 11px; color: #b3a693; line-height: 1.6;">Só use se a turma toda comprou o acompanhamento. Cada pessoa entra com {{ precoPrograma }} a receber.</p>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <sc-for list="{{ turmasParaAdicionar }}" as="tu" hint-placeholder-count="4">
+                  <button onclick="{{ tu.onAdd }}" title="{{ tu.title }}" style="border: 1px solid #c9dede; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ tu.label }}</button>
+                </sc-for>
+              </div>
+            </details>
           </sc-if>
         </div>
       </sc-if>
@@ -113,7 +156,7 @@
       <sc-if value="{{ temRanking }}">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Classificação · moedas do programa</span>
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Classificação · ISR Miles do programa</span>
             <span style="font-size: 11px; color: #b3a693;">{{ regraMoedas }}</span>
           </div>
           <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="5">
@@ -148,7 +191,7 @@
       <sc-if value="{{ temAlunas }}">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 0 6px; margin-bottom: 10px;">
           <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 0 16px 10px;">
-            <span style="font-size: 11.5px; color: #6b6155;">Cada semana tem duas marcas por aluna. Toque para alternar.</span>
+            <span style="font-size: 11.5px; color: #6b6155;">Cada semana tem duas marcas por participante. Toque para alternar.</span>
             <span style="flex: 1;"></span>
             <sc-for list="{{ legenda }}" as="lg" hint-placeholder-count="2">
               <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #6b6155;">
@@ -161,7 +204,7 @@
             <div style="min-width: {{ larguraGrade }};">
               <!-- cabeçalho das semanas -->
               <div style="display: flex; align-items: flex-end; gap: 0; padding: 0 16px 6px; border-bottom: 1px solid #eee3d6;">
-                <div style="flex: none; width: 150px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Aluna</div>
+                <div style="flex: none; width: 150px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Participante</div>
                 <sc-for list="{{ colunas }}" as="col" hint-placeholder-count="8">
                   <div style="flex: none; width: 46px; text-align: center;">
                     <div style="font-size: 11px; font-weight: 700; color: {{ col.cor }};">S{{ col.n }}</div>
@@ -171,7 +214,7 @@
                 <div style="flex: none; width: 62px; text-align: right; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Total</div>
               </div>
 
-              <!-- uma linha por aluna -->
+              <!-- uma linha por participante -->
               <sc-for list="{{ alunas }}" as="a" hint-placeholder-count="8">
                 <div style="display: flex; align-items: center; gap: 0; padding: 5px 16px; border-bottom: 1px solid #f7f4ef;">
                   <div style="flex: none; width: 150px; padding-right: 8px;">
@@ -196,13 +239,13 @@
           <p style="margin: 10px 16px 6px; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Semanas cuja missão ainda não foi enviada ao grupo aparecem esmaecidas e não entram na conta de pendências.</p>
         </div>
 
-        <!-- RESPOSTAS ENVIADAS PELO APP DA ALUNA -->
+        <!-- RESPOSTAS ENVIADAS PELO APP DA PARTICIPANTE -->
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px; margin-top: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
             <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Respostas a devolver</span>
             <span style="font-size: 11.5px; color: #6b6155;">{{ aDevolverContagem }}</span>
           </div>
-          <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">O que as alunas escreveram no app delas. Depois de comentar no grupo, marque a devolutiva.</p>
+          <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">O que as participantes escreveram no app delas. Depois de comentar no grupo, marque a devolutiva.</p>
           <sc-if value="{{ semRespostas }}">
             <div style="font-size: 12px; color: #b3a693; line-height: 1.6;">Nenhuma resposta esperando devolutiva.</div>
           </sc-if>
@@ -226,16 +269,20 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { turmaAberta: false, abertoId: null, busca: "", filtro: "", buscaAdd: "", tick: 0 };
+  state = { turmaAberta: false, abertoId: null, busca: "", filtro: "", buscaAdd: "",
+            tick: 0, pagoNovo: false };
   novoNomeRef = React.createRef(); novoInicioRef = React.createRef(); novoSemanasRef = React.createRef();
   addBuscaRef = React.createRef(); buscaRef = React.createRef();
+  precoRef = React.createRef(); moedaRef = React.createRef(); pagoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
     const CRM = window.ISRCRM;
     const vazioBase = { temPrograma: false, semPrograma: true, termometro: [], participantes: [],
-      candidatas: [], turmasParaAdicionar: [], semTurmasParaAdicionar: true,
+      candidatas: [], turmasParaAdicionar: [], temTurmasParaAdicionar: false,
+      participantes: [], semParticipantes: true, moedas: [], precoPrograma: "",
+      resumoParticipantes: "",
       alunas: [], aDevolver: [], semRespostas: true, aDevolverContagem: "",
       vazio: true, vazioTexto: "", turmaAberta: false,
       contagem: "", temFiltro: false, subtitulo: "" };
@@ -266,10 +313,10 @@ class Component extends DCLogic {
     const sumindo = pend.linhas.filter(l => l.sumindo).length;
     const cards = [
       { id: "", valor: prog.participantes.length,
-        label: prog.participantes.length === 1 ? "aluna no programa" : "alunas no programa", cor: "#164951" },
+        label: prog.participantes.length === 1 ? "participante" : "participantes", cor: "#164951" },
       { id: "feedback", valor: devendo, label: "aguardando devolutiva", cor: "#e07856" },
       { id: "audio", valor: semAudio, label: "não responderam", cor: "#d4a574" },
-      { id: "sumindo", valor: sumindo, label: "duas semanas sem responder", cor: "#cf6b5c" }
+      { id: "sumindo", valor: sumindo, label: "2 semanas sem responder", cor: "#cf6b5c" }
     ];
     const termometro = cards.map(c => ({
       valor: String(c.valor), label: c.label, cor: c.cor,
@@ -295,8 +342,8 @@ class Component extends DCLogic {
       return ("0" + base.getDate()).slice(-2) + "/" + ("0" + (base.getMonth() + 1)).slice(-2);
     };
 
-    // ── grade: alunas nas linhas, semanas nas colunas ──
-    // Abrir aluna por aluna e rolar até a semana certa não sobrevive a 40
+    // ── grade: participantes nas linhas, semanas nas colunas ──
+    // Abrir uma por uma e rolar até a semana certa não sobrevive a 40
     // participantes. Na grade, a semana inteira se lê de uma vez.
     const colunas = [];
     for (let s = 1; s <= prog.semanas; s++) {
@@ -329,7 +376,7 @@ class Component extends DCLogic {
           })
         });
       }
-      const alerta = l.sumindo ? { t: "duas semanas sem responder", c: "#cf6b5c" }
+      const alerta = l.sumindo ? { t: "2 semanas sem responder", c: "#cf6b5c" }
         : (l.devendoFeedback ? { t: l.devendoFeedback + " devolutiva(s) pendente(s)", c: "#e07856" }
         : (l.semAudio ? { t: l.semAudio + " semana(s) sem responder", c: "#d4a574" }
         : { t: "em dia", c: "#5a9e4b" }));
@@ -342,7 +389,7 @@ class Component extends DCLogic {
       };
     });
 
-    // O que chegou pelo app da aluna e ainda espera comentário da professora.
+    // O que chegou pelo app da participante e espera comentário da professora.
     const aDevolver = [];
     filtradas.forEach(l => {
       for (let s = 1; s <= prog.semanas; s++) {
@@ -361,8 +408,31 @@ class Component extends DCLogic {
     aDevolver.sort((a, b) => (a.em < b.em ? 1 : -1));
 
     const jaDentro = prog.participantes;
+    const moedaPg = prog.moeda || CRM.PROGRAMA_PRECO_PADRAO.moeda;
+    const precoPg = prog.preco || CRM.PROGRAMA_PRECO_PADRAO.valor;
+    const precoLabel = moedaPg + " " + precoPg;
+    const receita = CRM.receitaPrograma(prog.id);
 
-    // Turmas com aluna ativa, e quantas delas ainda ficaram de fora.
+    const participantes = CRM.participantesPrograma(prog.id).map(x => ({
+      nome: x.nome,
+      perfilHref: "ISR%20-%20Perfil.dc.html?id=" + x.id,
+      ehAlunaTambem: x.ehAlunaTambem,
+      sub: x.semRegistro
+        ? "Sem registro de valor — entrou antes do preço existir"
+        : (x.valor + " · desde " + (x.desde ? CRM.ddmm(x.desde) : "—")
+           + (x.turma ? " · " + x.turma : "")),
+      subCor: x.semRegistro ? "#cf6b5c" : "#b3a693",
+      pagoLabel: x.pago ? "Pago" : "A receber",
+      pagoTitle: x.pago ? "Marcar como não recebido" : "Marcar como recebido e lançar no Caixa",
+      pagoBg: x.pago ? "rgba(90,158,75,0.16)" : "#fff",
+      pagoFg: x.pago ? "#5a9e4b" : "#cf6b5c",
+      pagoBorda: x.pago ? "rgba(90,158,75,0.35)" : "#e5dccf",
+      onPago: () => { CRM.setProgramaPago(x.id, !x.pago); this.bump(); },
+      onRemove: () => { CRM.sairDoPrograma(x.id, "Tirada pela equipe"); this.bump(); }
+    }));
+
+    // Turma inteira continua possível, mas é a exceção: a regra é que
+    // quem compra o acompanhamento não está em turma nenhuma.
     const turmasParaAdicionar = CRM.ocupacaoTurmas()
       .filter(u => u.ocupadas > 0)
       .map(u => {
@@ -375,10 +445,9 @@ class Component extends DCLogic {
         label: "+ " + x.u.label + " · " + x.fora.length,
         title: x.dentro
           ? x.dentro + " de " + x.total + " já estão no programa; entram as outras " + x.fora.length + "."
-          : "Inclui as " + x.fora.length + " alunas desta turma.",
-        bg: "#fff", fg: "#164951",
+          : "Inclui as " + x.fora.length + " alunas desta turma, cada uma com " + precoLabel + " a receber.",
         onAdd: () => {
-          x.fora.forEach(id => CRM.addParticipante(prog.id, id));
+          x.fora.forEach(id => CRM.matricularNoPrograma(id, { programaId: prog.id }));
           this.bump();
         }
       }));
@@ -386,15 +455,17 @@ class Component extends DCLogic {
     const bq = (this.state.buscaAdd || "").trim().toLowerCase();
     const candidatas = bq.length >= 2
       ? CRM.getPessoas()
-          .filter(pp => jaDentro.indexOf(pp.id) < 0 && pp.estagio !== "perdido"
+          .filter(pp => jaDentro.indexOf(pp.id) < 0 && pp.status !== "ex-aluna"
                      && pp.nome.toLowerCase().indexOf(bq) >= 0)
           .slice(0, 8)
           .map(pp => ({
-            id: pp.id, label: pp.nome + (pp.status === "aluna" ? " · aluna" : " · lead"),
+            id: pp.id,
+            label: pp.nome + " · " + ((CRM.STATUS_META[pp.status] || {}).label || pp.status),
             onAdd: () => {
-              CRM.addParticipante(prog.id, pp.id);
+              CRM.matricularNoPrograma(pp.id, { programaId: prog.id, pago: this.state.pagoNovo });
               if (this.addBuscaRef.current) this.addBuscaRef.current.value = "";
-              this.setState({ buscaAdd: "" });
+              if (this.pagoRef.current) this.pagoRef.current.checked = false;
+              this.setState({ buscaAdd: "", pagoNovo: false });
             }
           }))
       : [];
@@ -426,12 +497,25 @@ class Component extends DCLogic {
       turmaBg: this.state.turmaAberta ? "#164951" : "#fff",
       turmaFg: this.state.turmaAberta ? "#fff" : "#164951",
       onToggleTurma: () => this.setState(s => ({ turmaAberta: !s.turmaAberta })),
-      participantes: prog.participantes.map(pid => {
-        const p = CRM.getPessoa(pid) || { nome: "(removida)" };
-        return { nome: p.nome, onRemove: () => { CRM.removeParticipante(prog.id, pid); this.bump(); } };
-      }),
       turmasParaAdicionar,
-      semTurmasParaAdicionar: turmasParaAdicionar.length === 0,
+      temTurmasParaAdicionar: turmasParaAdicionar.length > 0,
+      participantes, semParticipantes: participantes.length === 0,
+      precoPrograma: precoLabel, precoValor: precoPg,
+      precoRef: this.precoRef, moedaRef: this.moedaRef, pagoRef: this.pagoRef,
+      moedas: ["€", "R$"].map(m => ({ id: m, label: m, sel: m === moedaPg })),
+      onPreco: () => {
+        const mo = this.moedaRef.current && this.moedaRef.current.value;
+        const vl = (this.precoRef.current && this.precoRef.current.value || "").trim();
+        CRM.setPrecoPrograma(prog.id, mo, vl);
+        if (this.precoRef.current) this.precoRef.current.value = "";
+        this.bump();
+      },
+      onPagoNovo: e => this.setState({ pagoNovo: !!e.target.checked }),
+      resumoParticipantes: receita.total
+        ? receita.total + (receita.total === 1 ? " participante · " : " participantes · ")
+          + receita.recebido + " recebido"
+          + (receita.nAReceber ? " · " + receita.aReceber + " a receber" : "")
+        : "",
       candidatas,
       temCandidatas: candidatas.length > 0,
       semCandidatas: candidatas.length === 0,
@@ -441,7 +525,7 @@ class Component extends DCLogic {
 
       temRanking: rk.length > 0,
       regraMoedas: "resposta +" + CRM.MOEDAS_PROGRAMA.resposta + " · participação no grupo +" + CRM.MOEDAS_PROGRAMA.participacao,
-      premio: "Quem terminar o programa com mais moedas ganha uma aula particular com a Gabi.",
+      premio: "Quem terminar o programa com mais miles ganha uma aula particular com a Gabi.",
       ranking: rk.map(x => ({
         posicao: String(x.posicao), nome: x.nome, moedas: String(x.moedas),
         href: "ISR%20-%20Perfil.dc.html?id=" + x.pessoaId,
