@@ -20,6 +20,28 @@
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;"><strong>Da planilha para o app, sem redigitar.</strong> Cole o Controle de Pagamento abaixo. O sistema lê, mostra o que entendeu de cada linha e só grava depois que você confere. Nada é aplicado antes disso.</p>
 
+    <!-- COMEÇAR DO ZERO -->
+    <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700;">Antes de importar</div>
+        <button onclick="{{ onZerar }}" style="border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 0; cursor: pointer; font-family: inherit;">{{ zerarLabel }}</button>
+      </div>
+      <p style="margin: 6px 0 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ dentroFrase }}</p>
+      <sc-if value="{{ zerarAberto }}">
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3d4c8;">
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Uma cópia de segurança é guardada antes, e dá para restaurá-la em Escola · Dados.</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="{{ onLimparExemplo }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Limpar alunas, turmas e financeiro</button>
+            <button onclick="{{ onLimparTudo }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Apagar tudo, inclusive equipe e regras</button>
+          </div>
+          <p style="margin: 10px 0 0; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">A primeira opção guarda o que você configurou: equipe, regras de pagamento, faixas de comissão, modelos de mensagem e metas.</p>
+        </div>
+      </sc-if>
+      <sc-if value="{{ temZerado }}">
+        <p style="margin: 10px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ zerado }}</p>
+      </sc-if>
+    </div>
+
     <!-- COMO COPIAR -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
       <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Como copiar</div>
@@ -120,7 +142,8 @@
 
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;900px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0 };
+  state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
+            zerarAberto: false, zerado: "" };
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -129,8 +152,42 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     const base = { colaRef: this.colaRef, temLeitura: false, temErro: !!this.state.erro,
       erro: this.state.erro, resumo: [], linhas: [], porMes: [], temFeito: !!this.state.feito,
-      feito: this.state.feito, anoNota: "" };
+      feito: this.state.feito, anoNota: "",
+      zerarAberto: false, zerarLabel: "", dentroFrase: "", temZerado: false, zerado: "",
+      onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {} };
     if (!CRM || !CRM.lerControlePagamento) return base;
+
+    // ── o que já está dentro ──
+    // Antes de trazer o que é real, é preciso saber o que vai sair.
+    const dentro = CRM.oQueTemDentro ? CRM.oQueTemDentro() : null;
+    const zerar = (tudo) => {
+      const pergunta = tudo
+        ? "Apagar TUDO, inclusive equipe, regras de pagamento e modelos de mensagem?"
+        : "Apagar as alunas, turmas, chamadas, moedas e o financeiro? Equipe e regras ficam.";
+      if (!window.confirm(pergunta + "\n\nUma cópia de segurança é guardada antes.")) return;
+      CRM.comecarDoZero({ tudo });
+      this.setState({ zerado: tudo
+        ? "Tudo apagado. O app está vazio e pronto para receber os dados reais."
+        : "Alunas, turmas e financeiro apagados. Equipe e regras continuam como estavam.",
+        zerarAberto: false, leitura: null });
+      this.bump();
+    };
+    Object.assign(base, {
+      dentroFrase: dentro && dentro.pessoas
+        ? "Hoje o app tem " + dentro.pessoas + " pessoas ("
+          + dentro.alunas + (dentro.alunas === 1 ? " aluna" : " alunas") + " e "
+          + dentro.leads + (dentro.leads === 1 ? " lead" : " leads") + "), "
+          + dentro.turmas + (dentro.turmas === 1 ? " turma" : " turmas") + " e "
+          + dentro.chamadas + " chamadas. Se isso é o exemplo que veio de fábrica, "
+          + "limpe antes de importar — senão o de verdade fica misturado com o de mentira."
+        : "O app está vazio. Pode colar a planilha abaixo.",
+      zerarLabel: this.state.zerarAberto ? "fechar" : "limpar antes",
+      zerarAberto: this.state.zerarAberto,
+      onZerar: () => this.setState({ zerarAberto: !this.state.zerarAberto }),
+      onLimparExemplo: () => zerar(false),
+      onLimparTudo: () => zerar(true),
+      temZerado: !!this.state.zerado, zerado: this.state.zerado
+    });
 
     const anoBase = new Date().getFullYear();
     const $ = (m, v) => CRM.fmtMoney(m, v);
@@ -149,7 +206,7 @@ class Component extends DCLogic {
 
     const L = this.state.leitura;
     if (!L) {
-      return Object.assign(base, {
+      return Object.assign({}, base, {
         anoNota: "As colunas de mês são lidas a partir de " + anoBase + ".",
         onLer: ler,
         onLimpar: () => {},
@@ -171,7 +228,7 @@ class Component extends DCLogic {
       this.bump();
     };
 
-    return Object.assign(base, {
+    return Object.assign({}, base, {
       temLeitura: true,
       anoNota: "",
       onLer: ler,

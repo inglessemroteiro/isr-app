@@ -289,7 +289,9 @@
   // ── TURMAS EDITÁVEIS ──────────────────────────────────────────
   var TURMAS_KEY = "isr_turmas_v1";
   function turmasLista() {
-    try { var st = JSON.parse(localStorage.getItem(TURMAS_KEY)); if (st && st.length) return st; } catch (e) {}
+    // Lista vazia gravada é uma escolha ("apaguei tudo"), não ausência de
+    // dado. Só volta ao exemplo quem nunca gravou nada.
+    try { var st = JSON.parse(localStorage.getItem(TURMAS_KEY)); if (st) return st; } catch (e) {}
     return UNITS.map(function (u) { return Object.assign({ capacidade: CAPACIDADE_PADRAO }, u); });
   }
   function turmasSave(list) { carimbarLista(list); try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
@@ -3309,7 +3311,7 @@
   function equipeLista() {
     try {
       var l = JSON.parse(localStorage.getItem(EQUIPE_KEY));
-      if (l && l.length) return l;
+      if (l) return l;
     } catch (e) {}
     return EQUIPE_PADRAO.map(function (m) { return Object.assign({}, m, { papeis: m.papeis.slice() }); });
   }
@@ -5774,6 +5776,79 @@
       "&dates=" + ini + "/" + fim + "&details=" + encodeURIComponent(detalhes || "Inglês sem Roteiro");
   }
 
+  // ── COMEÇAR DO ZERO ───────────────────────────────────────────
+  //
+  // O app nasce com um exemplo dentro para ninguém ver tela vazia e não
+  // entender nada. Na hora de pôr os dados reais, esse exemplo atrapalha:
+  // some misturado com o que é verdade. Aqui ele é apagado de uma vez.
+  //
+  // Duas profundidades, porque o que a escola configurou (equipe, regras
+  // de pagamento, faixas de comissão, modelos de mensagem) custou tempo e
+  // não é exemplo. Antes de qualquer coisa, uma cópia de segurança.
+  var CHAVES_CONTEUDO = [
+    PESSOAS_KEY, "isr_fila_adiados", "isr_turmas_v1", "isr_eventos_v1",
+    "isr_chamadas_v1", "isr_tarefas_v1", "isr_moedas_v1", "isr_lancamentos_v1",
+    "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1",
+    "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1"
+  ];
+  var CHAVES_CONFIG = [
+    "isr_equipe_v1", "isr_templates_v1", "isr_metas_v1", "isr_calc_v1",
+    "isr_cambio_v1", "isr_precos_v1", "isr_ticket_alvo_v1", "isr_cadencia_v1",
+    "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
+    "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
+    "isr_capacidade_v1", "isr_flin_url_v1"
+  ];
+
+  function comecarDoZero(opts) {
+    opts = opts || {};
+    criarBackup(opts.tudo ? "antes de apagar tudo" : "antes de limpar o exemplo");
+
+    CHAVES_CONTEUDO.forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+    if (opts.tudo) {
+      CHAVES_CONFIG.forEach(function (k) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
+    }
+    // A marca de semeadura fica gravada mesmo com tudo vazio: sem ela o
+    // exemplo volta sozinho no próximo carregamento da página.
+    try {
+      localStorage.setItem(SEED_FLAG, "1");
+      localStorage.setItem(PESSOAS_KEY, "[]");
+      localStorage.setItem("isr_turmas_v1", "[]");
+      // Apagar tudo não pode apagar quem entra no sistema: sem a fundadora
+      // ninguém consegue abrir o app de novo.
+      if (opts.tudo) {
+        var eu = gestaoUser() || {};
+        localStorage.setItem("isr_equipe_v1", JSON.stringify([
+          { id: "eqGabi", nome: eu.nome || "Gabi",
+            email: eu.email || "gabisouza.prof@gmail.com",
+            papeis: ["gestora", "professora"], fundadora: true,
+            valorTipo: "", valor: 0, moeda: "R$" }
+        ]));
+      }
+    } catch (e) {}
+    agendarSync();
+    return { ok: true, tudo: !!opts.tudo };
+  }
+
+  // Quanto tem de exemplo dentro hoje. Serve para a tela dizer o que vai
+  // sumir antes de a pessoa clicar.
+  function oQueTemDentro() {
+    var pessoas = loadPessoas();
+    return {
+      pessoas: pessoas.length,
+      alunas: pessoas.filter(function (p) { return p.status === "aluna"; }).length,
+      leads: pessoas.filter(function (p) { return p.status === "lead"; }).length,
+      turmas: turmasLista().length,
+      equipe: equipeLista().length,
+      custos: custosLista().length,
+      chamadas: Object.keys(chamadasAll()).length,
+      tarefas: tarefasLista().length
+    };
+  }
+
   function resetDemo() {
     localStorage.removeItem(SEED_FLAG);
     localStorage.removeItem(PESSOAS_KEY);
@@ -6895,6 +6970,7 @@
     lerControlePagamento: lerControlePagamento,
     aplicarControlePagamento: aplicarControlePagamento,
     previsaoRecebimento: previsaoRecebimento, pessoaPorNome: pessoaPorNome,
+    comecarDoZero: comecarDoZero, oQueTemDentro: oQueTemDentro,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
