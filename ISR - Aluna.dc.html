@@ -390,6 +390,98 @@
       <!-- ══════════ CONTA ══════════ -->
       <sc-if value="{{ tabConta }}">
 
+        <!-- CERTIFICADO -->
+        <sc-if value="{{ temHoras }}">
+          <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+            <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Certificado</h3>
+            <p style="margin: 0 0 14px; font-size: 12px; color: #7d6d63; line-height: 1.55;">{{ certFrase }}</p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+              <div style="flex: 1; background: #f7f5f1; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 19px; font-weight: 700; color: #164951;">{{ horasTotais }}</div>
+                <div style="font-size: 9.5px; color: #9b8b7e; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">já cursadas</div>
+              </div>
+              <div style="flex: 1; background: #164951; border-radius: 12px; padding: 12px;">
+                <div style="font-size: 19px; font-weight: 700; color: #fff;">{{ certHoras }}</div>
+                <div style="font-size: 9.5px; color: rgba(255,255,255,0.6); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px;">no certificado</div>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b6155; padding: 6px 0; border-top: 1px solid #f0ede8;">
+              <span>Aulas da turma</span><span style="font-weight: 600; color: #164951;">{{ horasTurma }}</span>
+            </div>
+            <sc-if value="{{ temExtrasHoras }}">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b6155; padding: 6px 0; border-top: 1px solid #f0ede8;">
+                <span>Aulas extras</span><span style="font-weight: 600; color: #164951;">{{ horasExtras }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ temParticularHoras }}">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b6155; padding: 6px 0; border-top: 1px solid #f0ede8;">
+                <span>Aulas particulares</span><span style="font-weight: 600; color: #164951;">{{ horasParticulares }}</span>
+              </div>
+            </sc-if>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b6155; padding: 6px 0; border-top: 1px solid #f0ede8;">
+              <span>Nível</span><span style="font-weight: 600; color: #164951;">{{ certNivel }}</span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Contam as aulas em que você esteve presente. {{ duracaoAula }}.</p>
+          </div>
+        </sc-if>
+
+        <!-- SEU PLANO -->
+        <section style="margin: 0 0 16px;">
+          <div style="background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0;">
+            <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Plano</h3>
+            <sc-if value="{{ temContrato }}">
+              <div style="font-size: 15px; font-weight: 600; color: #2c3e50; line-height: 1.35;">{{ contratoTipo }}</div>
+              <div style="font-size: 12px; color: #7d6d63; margin-top: 3px;">{{ contratoCiclos }}</div>
+              <div style="font-size: 13px; color: #348a8e; margin: 8px 0 16px; font-weight: 600;">{{ contratoParcela }} · {{ contratoVenc }}</div>
+              <sc-if value="{{ temSinal }}">
+                <div style="background: #faf9f7; border: 1px solid #f0ede8; padding: 11px 13px; font-size: 12px; color: {{ sinalCor }}; margin-bottom: 16px; line-height: 1.5; border-radius: 10px;">{{ sinalInfo }}</div>
+              </sc-if>
+              <sc-for list="{{ parcelas }}" as="pc" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #f0ede8;">
+                  <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ pc.cor }};"></span>
+                  <span style="flex: 1; min-width: 0; font-size: 13px; color: #2c3e50;">{{ pc.label }}</span>
+                  <span style="flex: none; font-size: 13px; font-weight: 600; color: #2c3e50;">{{ pc.valor }}</span>
+                  <span style="flex: none; background: {{ pc.stBg }}; color: {{ pc.stFg }}; font-size: 8px; font-weight: 600; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.2px;">{{ pc.status }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ temPlanoPrograma }}">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 11px 0;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 700; color: #2c3e50; line-height: 1.35;">{{ planoProgramaNome }}</div>
+                  <div style="font-size: 11px; color: #9b8b7e; margin-top: 3px;">{{ planoProgramaDesde }}</div>
+                </div>
+                <span style="flex: none; font-size: 13px; font-weight: 700; color: #2c3e50;">{{ planoProgramaValor }}</span>
+                <span style="flex: none; background: {{ planoProgramaBg }}; color: {{ planoProgramaFg }}; font-size: 9px; font-weight: 800; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.3px;">{{ planoProgramaStatus }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ semContrato }}">
+              <p style="margin: 0; font-size: 12px; color: #666;">Nenhum plano ativo no momento.</p>
+            </sc-if>
+          </div>
+        </section>
+
+        <a href="{{ waEscola }}" target="_blank" rel="noopener" style="display: block; text-align: center; background: #fff; border: 1px solid #e8e5e0; color: #2c3e50; font-size: 11px; font-weight: 600; padding: 13px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px;">Falar com a escola sobre pagamento</a>
+
+        <!-- DOCUMENTOS -->
+        <section style="margin: 0 0 16px;">
+          <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Documentos</h3>
+            <sc-if value="{{ semDocs }}">
+              <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.6;">Contratos, relatórios e certificados aparecem aqui.</p>
+            </sc-if>
+            <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="2">
+              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 13px 0; border-bottom: 1px solid #f0ede8;">
+                <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: #348a8e;"></span>
+                <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">{{ doc.nome }}</span>
+                <span style="flex: none; font-size: 9px; color: #348a8e; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;">Abrir</span>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+
         <!-- ISR MILES -->
         <section style="margin: 12px 0 16px;">
           <div style="background: #164951; padding: 24px 16px; text-align: center; border-radius: 16px 16px 0 0; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
@@ -473,61 +565,6 @@
                 <p style="margin: 0; padding-top: 12px; border-top: 1px solid #f0ede8; font-size: 11px; color: #9b8b7e; line-height: 1.6;">Creditados automaticamente: parcela paga em dia +{{ regraParcela }} · integração concluída +{{ regraOnboarding }} · presença em aula +{{ regraPresenca }} · desafio da semana respondido +{{ regraMissao }}.</p>
               </div>
             </sc-if>
-          </div>
-        </section>
-
-        <!-- SEU PLANO -->
-        <section style="margin: 0 0 16px;">
-          <div style="background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0;">
-            <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Plano</h3>
-            <sc-if value="{{ temContrato }}">
-              <div style="font-size: 15px; font-weight: 600; color: #2c3e50; line-height: 1.35;">{{ contratoTipo }}</div>
-              <div style="font-size: 12px; color: #7d6d63; margin-top: 3px;">{{ contratoCiclos }}</div>
-              <div style="font-size: 13px; color: #348a8e; margin: 8px 0 16px; font-weight: 600;">{{ contratoParcela }} · {{ contratoVenc }}</div>
-              <sc-if value="{{ temSinal }}">
-                <div style="background: #faf9f7; border: 1px solid #f0ede8; padding: 11px 13px; font-size: 12px; color: {{ sinalCor }}; margin-bottom: 16px; line-height: 1.5; border-radius: 10px;">{{ sinalInfo }}</div>
-              </sc-if>
-              <sc-for list="{{ parcelas }}" as="pc" hint-placeholder-count="4">
-                <div style="display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #f0ede8;">
-                  <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ pc.cor }};"></span>
-                  <span style="flex: 1; min-width: 0; font-size: 13px; color: #2c3e50;">{{ pc.label }}</span>
-                  <span style="flex: none; font-size: 13px; font-weight: 600; color: #2c3e50;">{{ pc.valor }}</span>
-                  <span style="flex: none; background: {{ pc.stBg }}; color: {{ pc.stFg }}; font-size: 8px; font-weight: 600; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.2px;">{{ pc.status }}</span>
-                </div>
-              </sc-for>
-            </sc-if>
-            <sc-if value="{{ temPlanoPrograma }}">
-              <div style="display: flex; align-items: center; gap: 10px; padding: 11px 0;">
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 14px; font-weight: 700; color: #2c3e50; line-height: 1.35;">{{ planoProgramaNome }}</div>
-                  <div style="font-size: 11px; color: #9b8b7e; margin-top: 3px;">{{ planoProgramaDesde }}</div>
-                </div>
-                <span style="flex: none; font-size: 13px; font-weight: 700; color: #2c3e50;">{{ planoProgramaValor }}</span>
-                <span style="flex: none; background: {{ planoProgramaBg }}; color: {{ planoProgramaFg }}; font-size: 9px; font-weight: 800; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.3px;">{{ planoProgramaStatus }}</span>
-              </div>
-            </sc-if>
-            <sc-if value="{{ semContrato }}">
-              <p style="margin: 0; font-size: 12px; color: #666;">Nenhum plano ativo no momento.</p>
-            </sc-if>
-          </div>
-        </section>
-
-        <a href="{{ waEscola }}" target="_blank" rel="noopener" style="display: block; text-align: center; background: #fff; border: 1px solid #e8e5e0; color: #2c3e50; font-size: 11px; font-weight: 600; padding: 13px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px;">Falar com a escola sobre pagamento</a>
-
-        <!-- DOCUMENTOS -->
-        <section style="margin: 0 0 16px;">
-          <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-            <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Documentos</h3>
-            <sc-if value="{{ semDocs }}">
-              <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.6;">Contratos, relatórios e certificados aparecem aqui.</p>
-            </sc-if>
-            <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="2">
-              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 13px 0; border-bottom: 1px solid #f0ede8;">
-                <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: #348a8e;"></span>
-                <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">{{ doc.nome }}</span>
-                <span style="flex: none; font-size: 9px; color: #348a8e; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;">Abrir</span>
-              </a>
-            </sc-for>
           </div>
         </section>
 
@@ -757,6 +794,7 @@ class Component extends DCLogic {
     const pc = CRM.progressoCiclo ? CRM.progressoCiclo(p.id) : null;
     const tdc = CRM.tarefasDeCasa ? CRM.tarefasDeCasa(p.id, pc ? pc.desde : "") : { entregues: 0, cobradas: 0 };
     const grav = CRM.gravacoesParaAluna ? CRM.gravacoesParaAluna(p.id) : { extras: [], turma: [] };
+    const horas = CRM.horasDaAluna ? CRM.horasDaAluna(p.id) : null;
     let cicloPct = 0, cicloLabel = "Ciclo em andamento";
     if (soPrograma && pg) {
       cicloPct = Math.round((pg.semana / pg.semanas) * 100);
@@ -811,13 +849,17 @@ class Component extends DCLogic {
         ? "Faltam " + faltamSemanas + (faltamSemanas === 1 ? " semana" : " semanas") + " para concluir o programa."
         : "Última semana do programa.";
     } else if (pc && pc.restam > 0) {
+      // o certificado é contado em horas: dizer só "aulas" esconde o que ela leva
       incentivo = "Faltam " + pc.restam + (pc.restam === 1 ? " aula" : " aulas")
-        + " para concluir o ciclo e emitir o certificado."
+        + " para concluir o ciclo."
+        + (horas ? " Você já tem " + horas.horasTotais + " h; o certificado sai com "
+            + horas.certificado.horas + " h." : "")
         + (pc.faltou ? " Faltas até aqui: " + pc.faltou + (pc.faltou === 1 ? " aula." : " aulas.") : "");
     } else if (pc) {
-      incentivo = pc.faltou
+      incentivo = (pc.faltou
         ? "Ciclo completo. Faltas: " + pc.faltou + (pc.faltou === 1 ? " falta." : " faltas.")
-        : "Ciclo completo. Nenhuma falta.";
+        : "Ciclo completo. Nenhuma falta.")
+        + (horas ? " Certificado com " + horas.certificado.horas + " h." : "");
     } else {
       incentivo = "O ciclo começa quando a primeira aula for registrada.";
     }
@@ -915,6 +957,28 @@ class Component extends DCLogic {
             { valor: tdc.cobradas ? tdc.entregues + "/" + tdc.cobradas : "—",
               label: "tarefas entregues", bg: "rgba(52,138,142,0.04)" }
           ],
+
+      // ── horas e certificado ──
+      // O certificado é contado em horas. Sem isto, a aluna só descobre
+      // quantas tem quando o certificado chega.
+      temHoras: !!horas && !soPrograma,
+      horasTotais: horas ? horas.horasTotais + " h" : "—",
+      horasTurma: horas ? horas.horasTurma + " h" : "—",
+      horasExtras: horas ? horas.horasExtras + " h" : "—",
+      horasParticulares: horas ? horas.horasParticulares + " h" : "—",
+      temExtrasHoras: !!horas && horas.horasExtras > 0,
+      temParticularHoras: !!horas && horas.horasParticulares > 0,
+      certHoras: horas ? horas.certificado.horas + " h" : "—",
+      certNivel: horas && horas.certificado.nivel ? horas.certificado.nivel : "—",
+      certPronto: !!horas && horas.certificado.pronto,
+      certFrase: horas
+        ? (horas.certificado.pronto
+            ? "O ciclo está completo. O certificado sai com " + horas.certificado.horas
+              + " horas de aula em " + (horas.certificado.nivel || "seu nível") + "."
+            : "Faltam " + horas.faltamHoras + " horas para fechar o ciclo. No fim, o certificado sai com "
+              + horas.certificado.horas + " horas.")
+        : "",
+      duracaoAula: horas ? horas.minutosAula + " min por aula" : "",
 
       // próximos passos
       semanaContagem: totalSemana ? feitas + " de " + totalSemana : "",
