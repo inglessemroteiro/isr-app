@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-f",
+  numero: "2026.07.27-g",
   data: "27/07/2026",
-  nota: "Importar o Controle de Pagamento e ver o que entra nos próximos 12 meses"
+  nota: "Limpar os dados de exemplo antes de importar os dados reais"
 };
