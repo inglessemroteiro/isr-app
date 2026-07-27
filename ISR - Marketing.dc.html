@@ -49,6 +49,62 @@
       </div>
     </sc-if>
 
+    <!-- METAS DO MÊS -->
+    <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; font-weight: 700;">Metas de {{ mesLabel }}</div>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+          <sc-for list="{{ mesesMeta }}" as="mm" hint-placeholder-count="4">
+            <button onclick="{{ mm.onPick }}" style="border: 1px solid #e5dccf; background: {{ mm.bg }}; color: {{ mm.fg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ mm.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <p style="margin: 0 0 14px; font-size: 12px; color: #8a7c6b; line-height: 1.55;">Cada mês tem o alvo dele. O sistema conta sozinho matrículas, vendas do acompanhamento, particulares e receita; para o resto, você mantém o contador.</p>
+
+      <sc-if value="{{ semMetas }}">
+        <p style="margin: 0 0 14px; font-size: 12.5px; color: #b3a693; line-height: 1.6;">Nenhuma meta para este mês. Cadastre abaixo.</p>
+      </sc-if>
+
+      <sc-for list="{{ metasMes }}" as="mt" hint-placeholder-count="4">
+        <div style="padding: 12px 0; border-top: 1px solid #f4f1ec;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 160px;">
+              <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ mt.titulo }}</div>
+              <div style="font-size: 11px; color: #b3a693; margin-top: 2px;">{{ mt.sub }}</div>
+            </div>
+            <span style="flex: none; font-size: 14px; font-weight: 700; color: {{ mt.cor }};">{{ mt.numero }}</span>
+            <sc-if value="{{ mt.manual }}">
+              <div style="flex: none; display: flex; gap: 4px;">
+                <button onclick="{{ mt.onMenos }}" style="border: 1px solid #e5dccf; background: #fff; color: #8a7c6b; font-size: 13px; font-weight: 700; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-family: inherit; padding: 0;">−</button>
+                <button onclick="{{ mt.onMais }}" style="border: 1px solid #e5dccf; background: #fff; color: #348a8e; font-size: 13px; font-weight: 700; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-family: inherit; padding: 0;">+</button>
+              </div>
+            </sc-if>
+            <button onclick="{{ mt.onRemover }}" style="flex: none; border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 600; padding: 6px; cursor: pointer; font-family: inherit;">remover</button>
+          </div>
+          <div style="height: 7px; border-radius: 999px; background: #f0ede8; overflow: hidden; margin-top: 8px;">
+            <div style="height: 7px; border-radius: 999px; background: {{ mt.cor }}; width: {{ mt.largura }};"></div>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="border-top: 1px solid #f4f1ec; margin-top: 8px; padding-top: 14px;">
+        <div style="display: grid; grid-template-columns: 2fr 0.7fr 1.4fr auto; gap: 8px;">
+          <input ref="{{ nmTituloRef }}" placeholder="O que é a meta (ex. matricular 5 na turma de Den Haag)" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nmAlvoRef }}" type="number" placeholder="Alvo" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ nmTipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ tiposMeta }}" as="tp" hint-placeholder-count="5">
+              <option value="{{ tp.id }}">{{ tp.label }}</option>
+            </sc-for>
+          </select>
+          <button onclick="{{ onAddMeta }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit;">Adicionar</button>
+        </div>
+        <sc-if value="{{ metaErro }}">
+          <p style="margin: 8px 0 0; font-size: 11.5px; color: #cf6b5c;">{{ metaErro }}</p>
+        </sc-if>
+      </div>
+    </section>
+
+
     <!-- META DO CICLO -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 18px; margin-bottom: 14px;">
       <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Meta do ciclo {{ ciclo }}</div>
@@ -154,10 +210,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { metasAberto: false, tick: 0 };
+  state = { metasAberto: false, tick: 0, mesMeta: "", metaErro: "" };
   mMatRef = React.createRef(); mRenRef = React.createRef();
   mFatBrlRef = React.createRef(); mFatEurRef = React.createRef();
   mCicloRef = React.createRef(); mInicioRef = React.createRef();
+  nmTituloRef = React.createRef(); nmAlvoRef = React.createRef(); nmTipoRef = React.createRef();
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
   renderVals() {
     const CRM = window.ISRCRM;
@@ -197,6 +255,62 @@ class Component extends DCLogic {
       mtBg: this.state.metasAberto ? "#164951" : "#fff",
       mtFg: this.state.metasAberto ? "#fff" : "#164951",
       onToggleMetas: () => this.setState({ metasAberto: !this.state.metasAberto }),
+
+      // ── metas do mês ──
+      ...(function () {
+        const hoje = CRM.mesAtualKey();
+        const mes = this.state.mesMeta || hoje;
+        const $$ = v => CRM.fmtMoney("R$", v);
+        const opcoes = [];
+        for (let i = -1; i < 3; i++) {
+          const d = new Date();
+          d.setDate(1); d.setMonth(d.getMonth() + i);
+          const k = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+          opcoes.push({ k, label: CRM.MES_NOMES[d.getMonth()].slice(0, 3) + " " + d.getFullYear() });
+        }
+        const lista = CRM.metasDoPeriodo(mes);
+        return {
+          mesLabel: CRM.MES_NOMES[parseInt(mes.slice(5, 7), 10) - 1] + " de " + mes.slice(0, 4),
+          mesesMeta: opcoes.map(o => ({
+            label: o.label,
+            bg: mes === o.k ? "#164951" : "#fff",
+            fg: mes === o.k ? "#fff" : "#164951",
+            onPick: () => this.setState({ mesMeta: o.k, metaErro: "" })
+          })),
+          metasMes: lista.map(m => ({
+            titulo: m.titulo,
+            sub: m.tipoLabel + (m.automatica ? " · contado pelo sistema" : " · contador manual"),
+            numero: m.dinheiro
+              ? $$(m.feito) + " de " + $$(m.alvo)
+              : m.feito + " de " + m.alvo,
+            cor: m.batida ? "#5a9e4b" : (m.pct >= 50 ? "#348a8e" : "#d4a574"),
+            largura: m.pct + "%",
+            manual: !m.automatica,
+            onMais: () => { CRM.updateMetaPeriodo(m.id, { feito: (m.feito || 0) + 1 }); this.bump(); },
+            onMenos: () => { CRM.updateMetaPeriodo(m.id, { feito: Math.max(0, (m.feito || 0) - 1) }); this.bump(); },
+            onRemover: () => {
+              if (window.confirm("Remover a meta \"" + m.titulo + "\"?")) {
+                CRM.removeMetaPeriodo(m.id); this.bump();
+              }
+            }
+          })),
+          semMetas: lista.length === 0,
+          tiposMeta: Object.keys(CRM.TIPOS_META).map(k => ({ id: k, label: CRM.TIPOS_META[k].label })),
+          nmTituloRef: this.nmTituloRef, nmAlvoRef: this.nmAlvoRef, nmTipoRef: this.nmTipoRef,
+          metaErro: this.state.metaErro,
+          onAddMeta: () => {
+            const titulo = this.val(this.nmTituloRef);
+            const alvo = parseFloat(this.val(this.nmAlvoRef));
+            if (!titulo) { this.setState({ metaErro: "Escreva o que é a meta." }); return; }
+            if (!alvo || alvo <= 0) { this.setState({ metaErro: "Ponha o alvo em número." }); return; }
+            CRM.addMetaPeriodo({ titulo, alvo, tipo: this.val(this.nmTipoRef) || "livre", periodo: mes });
+            if (this.nmTituloRef.current) this.nmTituloRef.current.value = "";
+            if (this.nmAlvoRef.current) this.nmAlvoRef.current.value = "";
+            this.setState({ metaErro: "" });
+            this.bump();
+          }
+        };
+      }).call(this),
       mMatRef: this.mMatRef, mRenRef: this.mRenRef, mCicloRef: this.mCicloRef, mInicioRef: this.mInicioRef,
       mFatBrlRef: this.mFatBrlRef, mFatEurRef: this.mFatEurRef,
       metaMatAtual: String(M.matriculas), metaRenAtual: String(M.renovacoes), cicloAtual: M.cicloLabel,

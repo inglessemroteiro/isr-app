@@ -3582,6 +3582,95 @@
     });
     return n;
   }
+  // ── METAS DE PERÍODO ──────────────────────────────────────────
+  //
+  // A meta do ciclo não dá conta: o ciclo 2026.3 se distribui em dois
+  // meses, e cada mês tem um alvo próprio — agosto é matricular 5 na turma
+  // nova de Den Haag, setembro é vender 20 acompanhamentos. Aqui cada meta
+  // tem título, alvo, período e um tipo que diz o que o sistema conta.
+  var METAS_PERIODO_KEY = "isr_metas_periodo_v1";
+  var TIPOS_META = {
+    matricula: { label: "Matrículas em turma", conta: true },
+    programa:  { label: "Vendas do acompanhamento", conta: true },
+    particular:{ label: "Aulas particulares contratadas", conta: true },
+    receita:   { label: "Receita fechada", conta: true, dinheiro: true },
+    livre:     { label: "Outra coisa (conto eu)", conta: false }
+  };
+
+  function metasPeriodoAll() {
+    try { return JSON.parse(localStorage.getItem(METAS_PERIODO_KEY)) || []; } catch (e) { return []; }
+  }
+  function metasPeriodoSave(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(METAS_PERIODO_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  function addMetaPeriodo(dados) {
+    var l = metasPeriodoAll();
+    l.push({ id: "mp" + Date.now(), titulo: (dados.titulo || "").trim(),
+      alvo: parseFloat(dados.alvo) || 0, tipo: dados.tipo || "livre",
+      periodo: dados.periodo || mesAtualKey(),
+      escopo: dados.escopo || "mes",           // "mes" ou "ciclo"
+      feito: parseFloat(dados.feito) || 0, criadaEm: iso(today()) });
+    metasPeriodoSave(l); return l;
+  }
+  function updateMetaPeriodo(id, patch) {
+    var l = metasPeriodoAll();
+    l.forEach(function (m) { if (m.id === id) Object.assign(m, patch); });
+    metasPeriodoSave(l); return l;
+  }
+  function removeMetaPeriodo(id) {
+    var l = metasPeriodoAll().filter(function (m) { return m.id !== id; });
+    metasPeriodoSave(l); return l;
+  }
+
+  // Quanto já foi feito de uma meta. O que o sistema sabe contar, ele conta;
+  // o resto fica no contador manual.
+  function progressoMeta(meta) {
+    if (!meta) return 0;
+    var tipo = TIPOS_META[meta.tipo] || TIPOS_META.livre;
+    if (!tipo.conta) return meta.feito || 0;
+
+    var noPeriodo = function (isoStr) {
+      if (!isoStr) return false;
+      if (meta.escopo === "ciclo") return true;   // o ciclo é acompanhado pelo conjunto
+      return mesDe(isoStr) === meta.periodo;
+    };
+
+    var n = 0;
+    loadPessoas().forEach(function (p) {
+      if (meta.tipo === "matricula") {
+        if ((p.status === "aluna" || p.status === "mvs") && p.turma && noPeriodo(p.desde)) n++;
+      } else if (meta.tipo === "programa") {
+        if (p.programa && noPeriodo(p.programa.desde)) n++;
+      } else if (meta.tipo === "particular") {
+        if (p.particular && noPeriodo(p.particular.inicio)) n++;
+      } else if (meta.tipo === "receita") {
+        if (!noPeriodo(p.desde)) return;
+        var c = contratoVigente(p);
+        if (c) n += emMoedaDaFolha(parseMoney(c.valorTotal), c.moeda || "R$", configPagamento());
+      }
+    });
+    return n;
+  }
+
+  function metasDoPeriodo(periodoKey) {
+    var chave = periodoKey || mesAtualKey();
+    return metasPeriodoAll()
+      .filter(function (m) { return m.periodo === chave; })
+      .map(function (m) {
+        var feito = progressoMeta(m);
+        var tipo = TIPOS_META[m.tipo] || TIPOS_META.livre;
+        return Object.assign({}, m, {
+          feito: feito, tipoLabel: tipo.label, automatica: tipo.conta,
+          dinheiro: !!tipo.dinheiro,
+          pct: m.alvo > 0 ? Math.min(100, Math.round((feito / m.alvo) * 100)) : 0,
+          batida: m.alvo > 0 && feito >= m.alvo,
+          falta: Math.max(0, m.alvo - feito)
+        });
+      });
+  }
+
   // ── RENEGOCIAÇÃO ──────────────────────────────────────────────
   //
   // Quando alguém atrasa e volta a negociar, a conta é sempre a mesma:
@@ -5665,6 +5754,9 @@
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
     agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
+    TIPOS_META: TIPOS_META, metasDoPeriodo: metasDoPeriodo, metasPeriodoAll: metasPeriodoAll,
+    addMetaPeriodo: addMetaPeriodo, updateMetaPeriodo: updateMetaPeriodo,
+    removeMetaPeriodo: removeMetaPeriodo, progressoMeta: progressoMeta,
     setTurmaDaPessoa: setTurmaDaPessoa,
     renegociarContrato: renegociarContrato, setSinalRecebido: setSinalRecebido,
     faixasComissao: faixasComissao, setFaixasComissao: setFaixasComissao,
