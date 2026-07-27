@@ -85,6 +85,27 @@
       </sc-if>
     </section>
 
+    <!-- AJUSTES NO CADASTRO — furos que travam dinheiro ou deixam aluna sem dono -->
+    <sc-if value="{{ temFuros }}">
+      <section style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c8622f;">Ajustes no cadastro</div>
+          <span style="font-size: 11px; color: #9b8b7e;">{{ furosResumo }}</span>
+        </div>
+        <p style="margin: 0 0 8px; font-size: 12px; color: #6b6155; line-height: 1.55;">Nada disso aparece sozinho em outra tela. São coisas que travam pagamento ou deixam aluna sem quem acompanhe.</p>
+        <sc-for list="{{ furos }}" as="fu" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid #f3d4c8;">
+            <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ fu.cor }};"></span>
+            <div style="flex: 1; min-width: 160px;">
+              <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ fu.titulo }}</div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fu.detalhe }}</div>
+            </div>
+            <a href="{{ fu.href }}" style="flex: none; text-decoration: none; border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px;">{{ fu.ondeLabel }}</a>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- AVISOS: o que a equipe concluiu para você -->
     <sc-if value="{{ temAvisos }}">
       <section style="background: #f2ebe3; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
@@ -388,6 +409,27 @@ class Component extends DCLogic {
         onLido: () => { CRM.marcarAvisoLido(a.id); this.bump(); }
       })),
       temAvisos: avisosMeus.length > 0,
+
+      // ── ajustes no cadastro ──
+      // Só a gestora resolve isto (mexe em equipe, turma e contrato), e
+      // ninguém vai procurar por conta própria. Por isso mora aqui, junto
+      // do que ela já abre todo dia.
+      ...(function () {
+        const furos = perfilAtivo === "gestora" && CRM.furosDeCadastro
+          ? CRM.furosDeCadastro() : [];
+        return {
+          temFuros: furos.length > 0,
+          furosResumo: furos.length === 1 ? "1 pendência de cadastro"
+            : furos.length + " pendências de cadastro",
+          furos: furos.slice(0, 8).map(fu => ({
+            titulo: fu.titulo, detalhe: fu.detalhe,
+            cor: fu.urg === 1 ? "#cf6b5c" : "#d4a574",
+            ondeLabel: fu.ondeLabel,
+            href: encodeURI(fu.onde) + (fu.pessoaId ? "?id=" + fu.pessoaId : "")
+          }))
+        };
+      })(),
+
       podeAtribuir: perfilAtivo === "gestora",
       tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,
       onAddTarefa: addTarefa,
