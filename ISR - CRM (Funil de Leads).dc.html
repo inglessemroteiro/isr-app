@@ -27,7 +27,7 @@
         <button onclick="{{ onNovoLead }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">Funil de leads do primeiro contato à matrícula: origem, estágio, conversas de matrícula agendadas e motivos de perda. A vista Atividade mostra os mesmos registros por data.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">Funil de leads do primeiro contato à matrícula. Condições combinadas é quando valor e parcelas estão acertados; Matriculada é quando a matrícula foi feita e a pessoa virou aluna — escolher esse estágio abre a tela de matrícula. A vista Atividade mostra os mesmos registros por data.</p>
 
     <!-- REUNIÕES: quantas estão marcadas, quantas viraram matrícula -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
@@ -170,6 +170,30 @@
           <!-- PAINEL EXPANDIDO -->
           <sc-if value="{{ lead.open }}">
             <div style="border-top: 1px solid #f2e9dd; background: #fbf6ef; padding: 20px 18px;">
+
+              <!-- AGENDAR A CONVERSA DE MATRÍCULA -->
+              <sc-if value="{{ lead.agendandoReuniao }}">
+                <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
+                  <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ lead.donoReuniao }}, vira pendência na Central e libera o convite com o link para mandar à lead.</p>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
+                      <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
+                      <input ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <button onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
+                    <button onclick="{{ lead.onAgendarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                  </div>
+                  <sc-if value="{{ lead.erroReuniao }}">
+                    <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">{{ lead.erroReuniao }}</p>
+                  </sc-if>
+                </div>
+              </sc-if>
+
 
               <!-- 2 COLUNAS: CONTATO | PRÓXIMO PASSO -->
               <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 26px; margin-bottom: 20px;">
@@ -315,29 +339,6 @@
                     </sc-for>
                     <button onclick="{{ lead.onPerderCancela }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 11px; font-weight: 600; padding: 7px 8px; cursor: pointer;">cancelar</button>
                   </div>
-                </div>
-              </sc-if>
-
-              <!-- AGENDAR A CONVERSA DE MATRÍCULA -->
-              <sc-if value="{{ lead.agendandoReuniao }}">
-                <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
-                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
-                  <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ lead.donoReuniao }}, vira pendência na Central e libera o convite com o link para mandar à lead.</p>
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
-                    <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
-                      <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-                    </div>
-                    <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
-                      <input ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-                    </div>
-                    <button onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
-                    <button onclick="{{ lead.onAgendarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
-                  </div>
-                  <sc-if value="{{ lead.erroReuniao }}">
-                    <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">{{ lead.erroReuniao }}</p>
-                  </sc-if>
                 </div>
               </sc-if>
 
