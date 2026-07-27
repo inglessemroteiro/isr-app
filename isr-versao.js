@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-x",
-  data: "26/07/2026",
-  nota: "Turmas do acompanhamento: abrir novas e matricular em cada uma"
+  numero: "2026.07.27-a",
+  data: "27/07/2026",
+  nota: "ISR Miles: catálogo em três níveis, validade de 12 meses e limites de resgate"
 };

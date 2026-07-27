@@ -536,7 +536,10 @@
             </sc-if>
           </div>
           <div style="background: #fff; border: 1px solid #e8e5e0; border-top: none; border-radius: 0 0 14px 14px; padding: 12px 14px;">
-            <p style="margin: 0; font-size: 11px; color: #7d6d63; line-height: 1.6;">Miles acumulam com presença, tarefa em dia, desafios respondidos e indicações. Podem ser trocados por prêmios da escola.</p>
+            <p style="margin: 0; font-size: 11px; color: #7d6d63; line-height: 1.6;">{{ milesRegraFrase }}</p>
+            <sc-if value="{{ temAviso }}">
+              <p style="margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #f0ede8; font-size: 11px; font-weight: 600; color: #c8622f; line-height: 1.5;">{{ avisoExpira }}</p>
+            </sc-if>
           </div>
         </section>
 
@@ -544,38 +547,41 @@
           <div style="background: #fff; border: 1px solid #e8e5e0; border-left: 3px solid #348a8e; padding: 13px 14px; margin-bottom: 16px; border-radius: 12px; font-size: 12px; color: #2c3e50; line-height: 1.6;">{{ resgateMsg }}</div>
         </sc-if>
 
-        <sc-if value="{{ temDisponiveis }}">
-          <section style="margin: 0 0 16px;">
-            <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #5a9a2e; text-transform: uppercase; letter-spacing: 0.8px;">Disponíveis para resgate</h3>
-            <sc-for list="{{ disponiveis }}" as="rg" hint-placeholder-count="2">
-              <div style="display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #e8e5e0; border-left: 3px solid #9ec970; padding: 13px 14px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">{{ rg.cat }}</div>
-                  <div style="font-size: 13px; font-weight: 600; color: #2c3e50; line-height: 1.4;">{{ rg.nome }}</div>
-                  <div style="font-size: 9px; font-weight: 600; color: #5a9a2e; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.3px;">{{ rg.custo }} miles</div>
+        <!-- CATÁLOGO EM TRÊS NÍVEIS -->
+        <sc-for list="{{ catalogo }}" as="ni" hint-placeholder-count="3">
+          <section style="margin: 0 0 18px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ ni.cor }};"></span>
+              <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">{{ ni.label }}</h3>
+              <span style="font-size: 10px; color: #9b8b7e;">{{ ni.resumo }}</span>
+            </div>
+            <sc-for list="{{ ni.itens }}" as="rg" hint-placeholder-count="4">
+              <div style="background: #fff; border: 1px solid #e8e5e0; border-left: 3px solid {{ rg.barra }}; padding: 13px 14px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 9px; color: #9b8b7e; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">{{ rg.cat }}</div>
+                    <div style="font-size: 13px; font-weight: 600; color: {{ rg.titCor }}; line-height: 1.4;">{{ rg.nome }}</div>
+                    <sc-if value="{{ rg.detalhe }}">
+                      <div style="font-size: 11px; color: #7d6d63; line-height: 1.5; margin-top: 4px;">{{ rg.detalhe }}</div>
+                    </sc-if>
+                    <div style="font-size: 9px; font-weight: 600; color: {{ rg.custoCor }}; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.3px;">{{ rg.custoLabel }}</div>
+                  </div>
+                  <sc-if value="{{ rg.pode }}">
+                    <button onclick="{{ rg.onResgatar }}" style="flex: none; background: #348a8e; border: none; color: #fff; padding: 9px 13px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px; border-radius: 10px; cursor: pointer; font-family: inherit;">Resgatar</button>
+                  </sc-if>
                 </div>
-                <button onclick="{{ rg.onResgatar }}" style="flex: none; background: #348a8e; border: none; color: #fff; padding: 9px 13px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px; border-radius: 10px; cursor: pointer; font-family: inherit;">Resgatar</button>
+                <sc-if value="{{ rg.temBarra }}">
+                  <div style="background: #f0ede8; height: 5px; overflow: hidden; border-radius: 3px; margin-top: 10px;">
+                    <div style="background: #9ec970; height: 100%; width: {{ rg.pct }};"></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ rg.nota }}">
+                  <div style="font-size: 10px; color: {{ rg.notaCor }}; margin-top: 7px; line-height: 1.5;">{{ rg.nota }}</div>
+                </sc-if>
               </div>
             </sc-for>
           </section>
-        </sc-if>
-
-        <section style="margin: 0 0 16px;">
-          <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">{{ tituloBloqueados }}</h3>
-          <sc-for list="{{ bloqueados }}" as="rg" hint-placeholder-count="4">
-            <div style="background: {{ rg.bg }}; border: 1px solid #e8e5e0; padding: 13px 14px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="font-size: 9px; color: {{ rg.custoCor }}; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;">{{ rg.cat }}</div>
-              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
-                <span style="font-size: 13px; font-weight: 600; color: {{ rg.titCor }}; line-height: 1.4;">{{ rg.nome }}</span>
-                <span style="flex: none; font-size: 9px; font-weight: 600; color: {{ rg.custoCor }}; text-transform: uppercase; letter-spacing: 0.2px;">{{ rg.custo }}</span>
-              </div>
-              <div style="background: {{ rg.trilha }}; height: 5px; overflow: hidden; margin-top: 10px;">
-                <div style="background: #9ec970; height: 100%; width: {{ rg.pct }};"></div>
-              </div>
-              <div style="font-size: 10px; color: {{ rg.custoCor }}; margin-top: 7px;">{{ rg.faltamLabel }}</div>
-            </div>
-          </sc-for>
-        </section>
+        </sc-for>
 
         <section style="margin: 0 0 16px;">
           <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -598,7 +604,7 @@
                     </sc-for>
                   </div>
                 </sc-for>
-                <p style="margin: 0; padding-top: 12px; border-top: 1px solid #f0ede8; font-size: 11px; color: #9b8b7e; line-height: 1.6;">Creditados automaticamente: parcela paga em dia +{{ regraParcela }} · integração concluída +{{ regraOnboarding }} · presença em aula +{{ regraPresenca }} · desafio da semana respondido +{{ regraMissao }}.</p>
+                <p style="margin: 0; padding-top: 12px; border-top: 1px solid #f0ede8; font-size: 11px; color: #9b8b7e; line-height: 1.6;">Creditados automaticamente: presença em aula +{{ regraPresenca }} · parcela paga em dia +{{ regraParcela }} · desafio da semana respondido +{{ regraMissao }} · avaliação da aula +{{ regraAvaliou }} · integração concluída +{{ regraOnboarding }} · renovação de ciclo +{{ regraRenovou }}.</p>
               </div>
             </sc-if>
           </div>
@@ -791,6 +797,7 @@ class Component extends DCLogic {
     const pg = CRM.programaDaAluna(p.id);
     const jornada = CRM.jornadaDaAluna(p.id);
     const rec = CRM.recompensasDaAluna(p.id);
+    const cat = CRM.catalogoDaAluna(p.id);
     const aval = CRM.aulaAAvaliar(p.id);
     const temMissao = !!(pg && pg.missao);
     const missaoRespondida = !!(pg && pg.respondeu);
@@ -1010,10 +1017,12 @@ class Component extends DCLogic {
         return {
           flinAtivo: fl.ativo && fl.temLink,
           flinUrl: fl.url || "#",
-          flinSub: fl.diasRestantes === 0
-            ? "último dia de acesso"
-            : fl.diasRestantes + (fl.diasRestantes === 1 ? " dia de acesso" : " dias de acesso")
-              + " · até " + CRM.ddmm(fl.ate)
+          flinSub: fl.permanente
+            ? "acesso liberado · não conta hora de aula"
+            : fl.diasRestantes === 0
+              ? "último dia de acesso"
+              : fl.diasRestantes + (fl.diasRestantes === 1 ? " dia de acesso" : " dias de acesso")
+                + " · até " + CRM.ddmm(fl.ate)
         };
       })(),
       temTrajetoria: trajetoria.length > 0,
@@ -1158,6 +1167,14 @@ class Component extends DCLogic {
 
       // conta · ISR Miles
       milesTotal: miles.total,
+      milesRegraFrase: "Miles acumulam com presença, parcela paga em dia, desafio respondido, "
+        + "avaliação da aula e renovação de ciclo. Valem por "
+        + Math.round(miles.validadeDias / 30) + " meses.",
+      temAviso: miles.aExpirar > 0,
+      avisoExpira: miles.aExpirar > 0
+        ? miles.aExpirar + (miles.aExpirar === 1 ? " mile expira" : " miles expiram")
+          + (miles.expiramEm ? " a partir de " + CRM.ddmm(miles.expiramEm) : " em breve") + "."
+        : "",
       milesExtrato: miles.extrato.map(e => ({
         label: e.label, em: e.em ? CRM.ddmm(e.em) : "",
         valorLabel: (e.valor > 0 ? "+" : "") + e.valor,
@@ -1167,6 +1184,7 @@ class Component extends DCLogic {
       regraPresenca: CRM.MOEDAS_REGRAS.presenca, regraAtraso: CRM.MOEDAS_REGRAS.atraso,
       regraParcela: CRM.MOEDAS_REGRAS.parcelaPaga, regraOnboarding: CRM.MOEDAS_REGRAS.onboardingCompleto,
       regraMissao: CRM.MOEDAS_PROGRAMA ? CRM.MOEDAS_PROGRAMA.resposta : 20,
+      regraAvaliou: CRM.MOEDAS_REGRAS.avaliouAula, regraRenovou: CRM.MOEDAS_REGRAS.renovouCiclo,
       verGanhar: this.state.verGanhar,
       verGanharLabel: this.state.verGanhar ? "Fechar" : "Ver a lista",
       onVerGanhar: () => this.setState({ verGanhar: !this.state.verGanhar }),
@@ -1181,33 +1199,55 @@ class Component extends DCLogic {
         ? "Faltam " + rec.faltam + (rec.faltam === 1 ? " mile" : " miles")
         : "",
 
-      temDisponiveis: rec.disponiveis.length > 0,
-      disponiveis: rec.disponiveis.slice().reverse().map(r => ({
-        nome: r.nome, custo: String(r.custo), cat: CATS[r.cat] || "",
-        onResgatar: () => {
-          const res = CRM.resgatarRecompensa(p.id, r.id);
-          this.setState({ resgateMsg: res.ok
-            ? "Resgate solicitado: " + r.nome + ". A escola recebeu o pedido e entra em contato."
-            : "Não foi possível concluir. Tente novamente." });
-          this.bump();
-        }
-      })),
-      tituloBloqueados: rec.disponiveis.length ? "As próximas" : "Prêmios",
-      bloqueados: rec.bloqueados.map((r, i) => {
-        const vip = !!r.vip;
-        const faltam = r.custo - miles.total;
-        return {
-          nome: r.nome, custo: r.custo + " miles",
-          cat: (CATS[r.cat] || "") + (vip ? " · VIP" : ""),
-          bg: vip ? "#164951" : "#fff",
-          titCor: vip ? "#fff" : "#2c3e50",
-          custoCor: vip ? "rgba(255,255,255,0.7)" : "#7d6d63",
-          trilha: vip ? "rgba(255,255,255,0.15)" : "#f0ede8",
-          pct: Math.round(Math.min(100, (miles.total / r.custo) * 100)) + "%",
-          faltamLabel: "Faltam " + faltam + (faltam === 1 ? " mile" : " miles")
-            + (i === 0 ? " · próximo resgate" : "")
-        };
-      })
+      // ── catálogo em três níveis ──
+      // Um prêmio pode estar fora de alcance por saldo (barra de progresso)
+      // ou por regra (tempo de casa, vagas do mês, um por ciclo). São
+      // mensagens diferentes: a primeira ela resolve, a segunda não.
+      catalogo: cat.niveis.map(ni => ({
+        label: ni.label, cor: ni.cor,
+        resumo: ni.itens.filter(x => x.pode).length
+          ? ni.itens.filter(x => x.pode).length + " para resgatar agora"
+          : "de " + Math.min(...ni.itens.map(x => x.custo)) + " a "
+            + Math.max(...ni.itens.map(x => x.custo)) + " miles",
+        itens: ni.itens.map(r => {
+          const bloq = r.bloqueio;
+          const vagasTxt = r.vagas && !bloq
+            ? " · " + r.vagas.restam + (r.vagas.restam === 1 ? " vaga" : " vagas") + " este mês"
+            : "";
+          let nota = "", notaCor = "#9b8b7e";
+          if (bloq) { nota = bloq.texto; notaCor = "#7d6d63"; }
+          else if (r.faltam) {
+            nota = "Faltam " + r.faltam + (r.faltam === 1 ? " mile" : " miles");
+            notaCor = "#7d6d63";
+          } else if (r.vagas && r.vagas.minimo && !r.vagas.atingiuMinimo) {
+            nota = "Acontece com no mínimo " + r.vagas.minimo
+              + " inscritas. Hoje são " + r.vagas.usadas + ". Se não fechar, os miles voltam.";
+            notaCor = "#9b8b7e";
+          }
+          return {
+            nome: r.nome, detalhe: r.detalhe, cat: r.cat,
+            custoLabel: r.custo + " miles" + vagasTxt,
+            pode: r.pode,
+            barra: r.pode ? "#9ec970" : (bloq ? "#e8e5e0" : "#d9d3ca"),
+            titCor: bloq ? "#7d6d63" : "#2c3e50",
+            custoCor: r.pode ? "#5a9a2e" : "#7d6d63",
+            temBarra: !bloq && r.faltam > 0,
+            pct: r.pct + "%",
+            nota, notaCor,
+            onResgatar: () => {
+              const res = CRM.resgatarRecompensa(p.id, r.id);
+              this.setState({ resgateMsg: res.ok
+                ? (res.flin
+                    ? "FLIN desbloqueado. O acesso está na tela inicial e é para sempre."
+                    : res.passe
+                      ? "Passe livre ativo. Uma falta deste ciclo deixa de contar."
+                      : "Resgate confirmado: " + r.nome + ". A escola entra em contato para combinar.")
+                : (res.bloqueio ? res.bloqueio.texto : "Não foi possível concluir. Tente novamente.") });
+              this.bump();
+            }
+          };
+        })
+      }))
     }, refs);
   }
 }
