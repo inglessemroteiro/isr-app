@@ -57,7 +57,8 @@
         { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
         { label: "Painel do Professor", desc: "Aulas da semana e registro de frequência", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
-        { label: "App da aluna", desc: "Visualização da interface da aluna", href: "ISR - Aluna.dc.html", perfis: null }
+        { label: "App da aluna", desc: "Visualização da interface da aluna", href: "ISR - Aluna.dc.html", perfis: null },
+        { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] }
       ]
     },
     {

@@ -4725,6 +4725,77 @@
   }
 
   // Quantas aulas ela já fez no ciclo vigente e quantas faltam.
+  // ── TRAJETÓRIA DE NÍVEIS ──────────────────────────────────────
+  //
+  // Quem estuda há dois anos vê o ciclo corrente e mais nada. O caminho
+  // A1 → A2 → B1 é o que dá a sensação de ter avançado.
+  function historicoDeNiveis(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return [];
+    var out = [];
+    (p.historico || []).forEach(function (h) {
+      var m = /n[íi]vel[^A-Za-zÀ-ú]*(?:de\s+)?(.+?)\s+para\s+(.+?)\.?$/i.exec(h.texto || "");
+      if (m) out.push({ data: h.data, de: m[1].trim(), para: m[2].trim() });
+    });
+    var etapas = [];
+    if (out.length) {
+      etapas.push({ nivel: out[0].de, desde: p.desde || "", ate: out[0].data, atual: false });
+      out.forEach(function (x, i) {
+        etapas.push({ nivel: x.para, desde: x.data,
+          ate: out[i + 1] ? out[i + 1].data : "", atual: !out[i + 1] });
+      });
+    } else if (p.nivel) {
+      etapas.push({ nivel: p.nivel, desde: p.desde || "", ate: "", atual: true });
+    }
+    return etapas;
+  }
+
+  // ── ACESSO DAS ALUNAS AO APP ──────────────────────────────────
+  //
+  // Antes de mexer em tela, medir: se ninguém abre o app, o problema não é
+  // o card de avaliação. Guarda só a data do último acesso e a contagem.
+  var ACESSOS_KEY = "isr_acessos_v1";
+  function acessosAll() {
+    try { return JSON.parse(localStorage.getItem(ACESSOS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function registrarAcessoAluna(pessoaId) {
+    if (!pessoaId) return null;
+    var m = acessosAll();
+    var hoje = iso(today());
+    var r = m[pessoaId] || { n: 0, primeiro: hoje, ultimo: "" , dias: [] };
+    if (r.ultimo !== hoje) {
+      r.n += 1;
+      r.dias = (r.dias || []).concat([hoje]).slice(-90);
+    }
+    r.ultimo = hoje;
+    m[pessoaId] = r;
+    try { localStorage.setItem(ACESSOS_KEY, JSON.stringify(m)); } catch (e) {}
+    return r;
+  }
+  function acessoDaAluna(pessoaId) {
+    var r = acessosAll()[pessoaId];
+    if (!r) return { nunca: true, n: 0, ultimo: "", diasSemAbrir: null };
+    var d = parseISO(r.ultimo);
+    return { nunca: false, n: r.n, ultimo: r.ultimo, primeiro: r.primeiro,
+      diasSemAbrir: d ? daysBetween(d, today()) : null };
+  }
+  function usoDoApp(nDias) {
+    var janela = nDias || 30;
+    var corte = addDays(-janela);
+    var m = acessosAll();
+    var alunas = loadPessoas().filter(function (p) {
+      return p.status === "aluna" || p.status === "mvs" || p.status === "programa";
+    });
+    var abriram = alunas.filter(function (p) {
+      var r = m[p.id];
+      return r && r.ultimo >= corte;
+    });
+    var nunca = alunas.filter(function (p) { return !m[p.id]; });
+    return { dias: janela, total: alunas.length, abriram: abriram.length,
+      nunca: nunca.length, pct: alunas.length ? Math.round((abriram.length / alunas.length) * 100) : 0,
+      nomesNunca: nunca.map(function (p) { return p.nome; }).slice(0, 20) };
+  }
+
   // ── HORAS PARA O CERTIFICADO ──────────────────────────────────
   //
   // O certificado diz horas, não aulas. A aluna precisa saber quantas já
@@ -5928,6 +5999,8 @@
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
+    historicoDeNiveis: historicoDeNiveis,
+    registrarAcessoAluna: registrarAcessoAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
     diarioDaTurma: diarioDaTurma,

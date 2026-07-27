@@ -38,6 +38,17 @@
       </sc-if>
     </div>
 
+    <!-- USO DO APP -->
+    <div style="background: {{ usoBg }}; border: 1px solid {{ usoBorda }}; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7c6b;">Uso do app · 30 dias</div>
+          <div style="font-size: 20px; font-weight: 700; color: {{ usoCor }}; margin-top: 3px;">{{ usoNumero }}</div>
+        </div>
+        <p style="flex: 1; min-width: 200px; margin: 0; font-size: 12px; color: #6b6155; line-height: 1.55;">{{ usoFrase }}</p>
+      </div>
+    </div>
+
     <!-- NÚMEROS DA SEMANA -->
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
       <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Como está a semana</span>
@@ -419,6 +430,22 @@ class Component extends DCLogic {
       pulsoEscolaNota: comPulso.length
         ? (comPulso.length + " de " + toda.length + (comPulso.length === 1 ? " respondeu" : " responderam"))
         : "Nenhuma avaliação registrada",
+      // Antes de mexer em tela: se ninguém abre o app, o problema não é o card
+      ...(function () {
+        const u = CRM.usoDoApp ? CRM.usoDoApp(30) : null;
+        if (!u) return { usoNumero: "—", usoFrase: "", usoCor: "#164951", usoBg: "#fdfbf8", usoBorda: "#eee3d6" };
+        const ruim = u.pct < 40;
+        return {
+          usoNumero: u.abriram + " de " + u.total + " abriram",
+          usoCor: ruim ? "#cf6b5c" : "#348a8e",
+          usoBg: ruim ? "#fdf0ee" : "#fdfbf8",
+          usoBorda: ruim ? "#ecc9c2" : "#eee3d6",
+          usoFrase: u.nunca
+            ? u.nunca + (u.nunca === 1 ? " aluna nunca abriu o app" : " alunas nunca abriram o app")
+              + ". Sem uso do app não há avaliação de aula, e sem avaliação a satisfação fica cega."
+            : "Todas já abriram o app pelo menos uma vez."
+        };
+      }).call(this),
       filtros, fila, filaVazia: fila.length === 0,
 
       // ── a tela abre dizendo o que fazer, não com números ──

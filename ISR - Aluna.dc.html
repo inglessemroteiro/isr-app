@@ -427,6 +427,26 @@
           </div>
         </sc-if>
 
+        <!-- TRAJETÓRIA -->
+        <sc-if value="{{ temTrajetoria }}">
+          <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; margin-bottom: 12px;">
+            <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Sua trajetória</h3>
+            <p style="margin: 0 0 12px; font-size: 12px; color: #7d6d63; line-height: 1.55;">Os níveis por onde você passou na escola.</p>
+            <sc-for list="{{ trajetoria }}" as="tj" hint-placeholder-count="4">
+              <div style="display: flex; align-items: flex-start; gap: 11px; padding: 9px 0; border-top: 1px solid #f0ede8;">
+                <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ tj.cor }}; margin-top: 5px;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ tj.nivel }}</div>
+                  <div style="font-size: 11px; color: #9b8b7e; margin-top: 1px;">{{ tj.quando }}</div>
+                </div>
+                <sc-if value="{{ tj.atual }}">
+                  <span style="flex: none; background: #eef5ec; color: #5a9a2e; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 9px; border-radius: 999px;">agora</span>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
         <!-- SEU PLANO -->
         <section style="margin: 0 0 16px;">
           <div style="background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0;">
@@ -794,7 +814,13 @@ class Component extends DCLogic {
     const pc = CRM.progressoCiclo ? CRM.progressoCiclo(p.id) : null;
     const tdc = CRM.tarefasDeCasa ? CRM.tarefasDeCasa(p.id, pc ? pc.desde : "") : { entregues: 0, cobradas: 0 };
     const grav = CRM.gravacoesParaAluna ? CRM.gravacoesParaAluna(p.id) : { extras: [], turma: [] };
+    // marca que ela abriu o app hoje — é como a escola sabe se o app é usado
+    if (CRM.registrarAcessoAluna && !this._acessoMarcado) {
+      this._acessoMarcado = true;
+      try { CRM.registrarAcessoAluna(p.id); } catch (e) {}
+    }
     const horas = CRM.horasDaAluna ? CRM.horasDaAluna(p.id) : null;
+    const trajetoria = CRM.historicoDeNiveis ? CRM.historicoDeNiveis(p.id) : [];
     let cicloPct = 0, cicloLabel = "Ciclo em andamento";
     if (soPrograma && pg) {
       cicloPct = Math.round((pg.semana / pg.semanas) * 100);
@@ -961,6 +987,15 @@ class Component extends DCLogic {
       // ── horas e certificado ──
       // O certificado é contado em horas. Sem isto, a aluna só descobre
       // quantas tem quando o certificado chega.
+      temTrajetoria: trajetoria.length > 0,
+      trajetoria: trajetoria.map(x => ({
+        nivel: x.nivel,
+        cor: x.atual ? "#348a8e" : "#c9bfb2",
+        atual: x.atual,
+        quando: x.atual
+          ? (x.desde ? "desde " + CRM.ddmm(x.desde) : "nível atual")
+          : ((x.desde ? CRM.ddmm(x.desde) : "início") + " a " + (x.ate ? CRM.ddmm(x.ate) : "—"))
+      })),
       temHoras: !!horas && !soPrograma,
       horasTotais: horas ? horas.horasTotais + " h" : "—",
       horasTurma: horas ? horas.horasTurma + " h" : "—",
