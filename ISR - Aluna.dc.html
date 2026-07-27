@@ -130,6 +130,22 @@
           </div>
         </section>
 
+        <!-- FLIN · prática com IA, resgatada com miles -->
+        <sc-if value="{{ flinAtivo }}">
+          <a href="{{ flinUrl }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-decoration: none; background: #164951; border-radius: 14px; padding: 16px; margin: 0 0 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="flex: none; width: 38px; height: 38px; border-radius: 12px; background: rgba(158,201,112,0.18); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ec970" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4v1a4 4 0 0 1-4 4 4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+              </span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 700; color: #fff;">FLIN · praticar com IA</div>
+                <div style="font-size: 11.5px; color: rgba(255,255,255,0.7); margin-top: 2px;">{{ flinSub }}</div>
+              </div>
+              <span style="flex: none; font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.4px;">Abrir</span>
+            </div>
+          </a>
+        </sc-if>
+
         <!-- 3. SEUS PRÓXIMOS PASSOS -->
         <section style="margin: 0 0 24px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px;">
@@ -987,6 +1003,19 @@ class Component extends DCLogic {
       // ── horas e certificado ──
       // O certificado é contado em horas. Sem isto, a aluna só descobre
       // quantas tem quando o certificado chega.
+      // FLIN: acesso por tempo, resgatado com miles. Não conta hora de aula.
+      ...(function () {
+        const fl = CRM.flinDaAluna ? CRM.flinDaAluna(p.id) : null;
+        if (!fl) return { flinAtivo: false, flinUrl: "#", flinSub: "" };
+        return {
+          flinAtivo: fl.ativo && fl.temLink,
+          flinUrl: fl.url || "#",
+          flinSub: fl.diasRestantes === 0
+            ? "último dia de acesso"
+            : fl.diasRestantes + (fl.diasRestantes === 1 ? " dia de acesso" : " dias de acesso")
+              + " · até " + CRM.ddmm(fl.ate)
+        };
+      })(),
       temTrajetoria: trajetoria.length > 0,
       trajetoria: trajetoria.map(x => ({
         nivel: x.nivel,
