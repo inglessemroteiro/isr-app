@@ -4224,6 +4224,29 @@
     return { aulas: n, alunas: alunas };
   }
 
+  // O que as alunas particulares dessa professora pagam no mês. Existe
+  // por um motivo de conta: o pagamento por aula particular entra no total
+  // da professora, mas a mensalidade dela nunca entrava na receita. A
+  // porcentagem "folha sobre receita" saía inflada, porque numerador e
+  // denominador vinham de bases diferentes.
+  function receitaParticularesNoMes(professora, mesKey) {
+    var cfg = configPagamento();
+    var total = 0, alunas = 0;
+    loadPessoas().forEach(function (p) {
+      if (p.status !== "aluna") return;
+      var prof = (p.particular && p.particular.professora) || p.professora;
+      if (professora && prof !== professora) return;
+      if (!p.particular && !/particular/i.test(p.turma || "")) return;
+      var c = contratoVigente(p);
+      if (!c) return;
+      var m = (c.meses || []).filter(function (x) { return x.key === mesKey; })[0];
+      if (!m || !m.valor) return;
+      alunas++;
+      total += emMoedaDaFolha(parseMoney(m.valor), c.moeda || p.moeda || "R$", cfg);
+    });
+    return { valor: total, alunas: alunas };
+  }
+
   // Aulas extras dadas por uma professora no mês.
   function extrasNoMes(professora, mesKey) {
     var lista = eventosLista().filter(function (e) {
@@ -4296,6 +4319,10 @@
     var fixo = comMovimento.length ? cfg.fixo : 0;
 
     var receitaTotal = turmas.reduce(function (s, x) { return s + x.receita; }, 0);
+    // O teto continua sobre a receita de turma — particular e extra são
+    // serviço à parte. Mas a porcentagem exibida compara o total pago com
+    // toda a receita que essa professora gerou, senão não é comparação.
+    var receitaPart = receitaParticularesNoMes(nome, mes);
 
     // TETO: o piso protege a professora, o teto protege a escola. Sem ele, quem
     // tem uma turma só levava o fixo inteiro em cima de pouca receita — 35% de
@@ -4315,15 +4342,19 @@
       fixo: fixo, turmas: turmas, somaTurmas: somaTurmas,
       turmasComMovimento: comMovimento.length,
       turmasParadas: turmas.length - comMovimento.length,
-      particulares: { aulas: part.aulas, alunas: part.alunas, valor: vPart },
+      particulares: { aulas: part.aulas, alunas: part.alunas, valor: vPart,
+        receita: receitaPart.valor, nAlunas: receitaPart.alunas },
       extras: { dadas: extras.dadas, incluidas: cfg.extrasIncluidas,
         excedente: excedente, valor: vExtras, titulos: extras.titulos },
       total: total,
-      receitaTurmas: receitaTotal, inadimplentes: inadimplentes,
+      receitaTurmas: receitaTotal, receitaParticulares: receitaPart.valor,
+      receitaGerada: receitaTotal + receitaPart.valor,
+      inadimplentes: inadimplentes,
       tetoAplicado: tetoAplicado, teto: teto, cortePeloTeto: cortePeloTeto,
       parteTurma: parteTurma,
       turmasAbaixoDoMinimo: turmas.filter(function (x) { return x.abaixoDoMinimo; }).length,
-      pctDaReceita: receitaTotal ? Math.round((total / receitaTotal) * 1000) / 10 : null,
+      pctDaReceita: (receitaTotal + receitaPart.valor)
+        ? Math.round((total / (receitaTotal + receitaPart.valor)) * 1000) / 10 : null,
       fmt: function (v) { return fmtMoney(moeda, v); }
     };
   }
@@ -4518,13 +4549,23 @@
     });
     // quem não tem nada a receber não é linha da folha. Turma parada no
     // cadastro não põe ninguém aqui.
+    // Folha é de gente da equipe. Nome escrito numa turma não é cadastro:
+    // não tem e-mail, acesso, carteira nem remuneração combinada. O cálculo
+    // dessa pessoa continua sendo feito — o trabalho existiu e o valor não
+    // pode se perder — mas fica retido fora da folha até alguém cadastrar.
     var cadastradas = {};
     equipeLista().forEach(function (m) { cadastradas[m.nome] = true; });
-    var linhas = nomes.map(function (n) { return pagamentoProfessora(n, mes); })
+    var todas = nomes.map(function (n) { return pagamentoProfessora(n, mes); })
       .filter(function (x) { return x.total > 0; })
       .map(function (x) { x.cadastrada = !!cadastradas[x.nome]; return x; });
+    var linhas = todas.filter(function (x) { return x.cadastrada; });
+    var retidas = todas.filter(function (x) { return !x.cadastrada; });
     var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
+    // Duas receitas, com nomes diferentes de propósito: a das turmas é a
+    // base do rateio; a gerada é tudo que a professora traz, e é contra ela
+    // que se compara o que ela recebe.
     var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
+    var receitaGerada = linhas.reduce(function (s, x) { return s + x.receitaGerada; }, 0);
     // quem tem valor mensal no cadastro da Equipe — operação, prestadoras —
     // também é folha do mês, mesmo sem turma nenhuma.
     var fixos = equipeLista()
@@ -4539,14 +4580,22 @@
 
     var pagas = linhas.concat(fixos).filter(function (x) { return !!pagamentoFeito(x.nome, mes); });
     var totalPago = pagas.reduce(function (s, x) { return s + x.total; }, 0);
-    var semCadastro = professorasSemCadastro();
+    var porNome = {};
+    retidas.forEach(function (x) { porNome[x.nome] = x.total; });
+    var semCadastro = professorasSemCadastro().map(function (s) {
+      s.aPagar = porNome[s.nome] || 0;
+      return s;
+    });
+    var totalRetido = retidas.reduce(function (s, x) { return s + x.total; }, 0);
     return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      receitaGerada: receitaGerada,
       semCadastro: semCadastro, nSemCadastro: semCadastro.length,
+      retidas: retidas, totalRetido: totalRetido,
       fixos: fixos, totalFixos: totalFixos, totalComFixos: total + totalFixos,
       vencimento: vencimentoDaFolha(mes),
       nPagas: pagas.length, nPagaveis: linhas.length + fixos.length,
       totalPago: totalPago, totalAberto: (total + totalFixos) - totalPago,
-      pctDaReceita: receita ? Math.round((total / receita) * 1000) / 10 : null,
+      pctDaReceita: receitaGerada ? Math.round((total / receitaGerada) * 1000) / 10 : null,
       moeda: configPagamento().moeda };
   }
 
@@ -6225,6 +6274,7 @@
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
+    receitaParticularesNoMes: receitaParticularesNoMes,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

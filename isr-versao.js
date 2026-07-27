@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-b",
+  numero: "2026.07.27-c",
   data: "27/07/2026",
-  nota: "Folha e Equipe cruzadas: quem dá aula sem cadastro é sinalizado e cadastrado em um clique"
+  nota: "Folha só de quem é da equipe, funções em dropdown múltiplo e menu reorganizado"
 };

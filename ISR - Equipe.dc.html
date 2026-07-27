@@ -40,7 +40,7 @@
       </div>
       <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Integrantes, papéis, permissões de acesso e remuneração. Os papéis são cumulativos: a mesma pessoa pode ser comercial e professora. Prestadoras com valor mensal entram sozinhas nos custos do Caixa; prestadora sem papel de acesso não entra no sistema. Trocar o nome de alguém leva junto as turmas, alunas, tarefas e reuniões no nome dela.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;">Integrantes, funções, permissões de acesso e remuneração. As funções são cumulativas: a mesma pessoa pode ser comercial e professora. Prestadoras com valor mensal entram sozinhas nos custos do Caixa; prestadora sem função de acesso não entra no sistema. Trocar o nome de alguém leva junto as turmas, alunas, tarefas e reuniões no nome dela.</p>
 
     <!-- FORM NOVA PESSOA -->
     <sc-if value="{{ novoAberto }}">
@@ -50,11 +50,23 @@
           <input ref="{{ nvNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ nvEmailRef }}" placeholder="E-mail de acesso (se for entrar no sistema)" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         </div>
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Papéis (pode marcar mais de um)</div>
-        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-          <sc-for list="{{ papeisOpts }}" as="pp" hint-placeholder-count="5">
-            <button onclick="{{ pp.onToggle }}" style="border: 1px solid {{ pp.border }}; background: {{ pp.bg }}; color: {{ pp.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer;">{{ pp.label }}</button>
-          </sc-for>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Funções na escola</div>
+        <div style="position: relative; margin-bottom: 12px; max-width: 380px;">
+          <button onclick="{{ onAbrirPapeis }}" title="Funções na escola" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #e5dccf; background: #fff; color: {{ papeisCor }}; font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; text-align: left;">
+            <span>{{ papeisResumo }}</span>
+            <span style="flex: none; color: #9b8b7e; font-size: 11px;">{{ papeisSeta }}</span>
+          </button>
+          <sc-if value="{{ papeisAberto }}">
+            <div style="border: 1px solid #e5dccf; border-top: none; border-radius: 0 0 8px 8px; background: #fff; overflow: hidden;">
+              <sc-for list="{{ papeisOpts }}" as="pp" hint-placeholder-count="5">
+                <button onclick="{{ pp.onToggle }}" style="display: flex; width: 100%; align-items: center; gap: 10px; border: none; border-top: 1px solid #f2ece3; background: {{ pp.bg }}; color: #3d3529; font-size: 13px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left;">
+                  <span style="flex: none; width: 16px; height: 16px; border: 1.5px solid {{ pp.caixaBorda }}; background: {{ pp.caixaBg }}; border-radius: 4px; color: #fff; font-size: 11px; font-weight: 700; line-height: 14px; text-align: center;">{{ pp.marca }}</span>
+                  <span style="flex: 1;">{{ pp.label }}</span>
+                  <span style="flex: none; font-size: 11px; color: #9b8b7e;">{{ pp.desc }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
         </div>
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Remuneração</div>
         <p style="margin: 0 0 8px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Só para quem recebe valor fixo. Professora não precisa: o pagamento dela é calculado das turmas, na folha do mês.</p>
@@ -78,7 +90,7 @@
     <div class="eq-tabela" style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow-x: auto;">
       <div class="eq-cabecalho" style="display: grid; grid-template-columns: 1.1fr 1.3fr 1.3fr 0.9fr 0.6fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 640px;">
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Nome</span>
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Papéis</span>
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Funções</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Acesso (e-mail)</span>
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Remuneração</span>
         <span></span>
@@ -110,11 +122,23 @@
               <input ref="{{ mb.nomeRef }}" placeholder="Nome" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
               <input ref="{{ mb.emailRef }}" placeholder="E-mail de acesso" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             </div>
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Papéis</div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-              <sc-for list="{{ mb.papeisOpts }}" as="ep" hint-placeholder-count="5">
-                <button onclick="{{ ep.onToggle }}" style="border: 1px solid {{ ep.border }}; background: {{ ep.bg }}; color: {{ ep.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ep.label }}</button>
-              </sc-for>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Funções na escola</div>
+            <div style="margin-bottom: 12px; max-width: 380px;">
+              <button onclick="{{ mb.onAbrirPapeis }}" title="Funções na escola" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #e5dccf; background: #fff; color: {{ mb.papeisCor }}; font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; text-align: left;">
+                <span>{{ mb.papeisResumo }}</span>
+                <span style="flex: none; color: #9b8b7e; font-size: 11px;">{{ mb.papeisSeta }}</span>
+              </button>
+              <sc-if value="{{ mb.papeisAberto }}">
+                <div style="border: 1px solid #e5dccf; border-top: none; border-radius: 0 0 8px 8px; background: #fff; overflow: hidden;">
+                  <sc-for list="{{ mb.papeisOpts }}" as="ep" hint-placeholder-count="5">
+                    <button onclick="{{ ep.onToggle }}" style="display: flex; width: 100%; align-items: center; gap: 10px; border: none; border-top: 1px solid #f2ece3; background: {{ ep.bg }}; color: #3d3529; font-size: 13px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left;">
+                      <span style="flex: none; width: 16px; height: 16px; border: 1.5px solid {{ ep.caixaBorda }}; background: {{ ep.caixaBg }}; border-radius: 4px; color: #fff; font-size: 11px; font-weight: 700; line-height: 14px; text-align: center;">{{ ep.marca }}</span>
+                      <span style="flex: 1;">{{ ep.label }}</span>
+                      <span style="flex: none; font-size: 11px; color: #9b8b7e;">{{ ep.desc }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
             </div>
             <sc-if value="{{ mb.ehProfessora }}">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Turmas</div>
@@ -269,8 +293,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { novoAberto: false, papeisSel: {}, tick: 0, editandoCap: false,
-    editId: null, edPapeis: {}, edTurmas: {}, edErro: "" };
+  state = { novoAberto: false, papeisSel: {}, papeisAberto: false, tick: 0, editandoCap: false,
+    editId: null, edPapeis: {}, edPapeisAberto: false, edTurmas: {}, edErro: "" };
   capRefs = {};
   edRefs = {};
   nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
@@ -279,13 +303,38 @@ class Component extends DCLogic {
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
 
+  // Uma pessoa pode ter mais de uma função — a Carla vende e dá aula, a
+  // Gabi gere e dá aula. A descrição diz o que a função abre no sistema,
+  // porque é isso que muda ao marcar.
   PAPEIS = [
-    { id: "professora", label: "Professora", cor: "#6b5b95" },
-    { id: "comercial", label: "Comercial", cor: "#e07856" },
-    { id: "operacao", label: "Operação", cor: "#2a9d8f" },
-    { id: "prestadora", label: "Prestadora de serviço", cor: "#9c6f56" },
-    { id: "gestora", label: "Gestora", cor: "#164951" }
+    { id: "professora", label: "Professora", cor: "#6b5b95", desc: "turmas e folha" },
+    { id: "comercial", label: "Comercial", cor: "#e07856", desc: "CRM e comissão" },
+    { id: "operacao", label: "Operação", cor: "#2a9d8f", desc: "cobrança e matrícula" },
+    { id: "prestadora", label: "Prestadora de serviço", cor: "#9c6f56", desc: "só custo fixo" },
+    { id: "gestora", label: "Gestora", cor: "#164951", desc: "vê tudo" }
   ];
+
+  // O rótulo do dropdown fechado: quem já tem função vê quais, quem não
+  // tem vê o que fazer.
+  resumoPapeis(marcados) {
+    const nomes = this.PAPEIS.filter(p => marcados[p.id]).map(p => p.label);
+    if (!nomes.length) return "Escolher funções";
+    if (nomes.length <= 2) return nomes.join(" e ");
+    return nomes.slice(0, 2).join(", ") + " e mais " + (nomes.length - 2);
+  }
+  opcoesPapeis(marcados, onMarcar) {
+    return this.PAPEIS.map(pp => {
+      const on = !!marcados[pp.id];
+      return {
+        label: pp.label, desc: pp.desc,
+        bg: on ? "rgba(52,138,142,0.06)" : "#fff",
+        caixaBg: on ? pp.cor : "#fff",
+        caixaBorda: on ? pp.cor : "#d9cfc0",
+        marca: on ? "\u2713" : "",
+        onToggle: () => onMarcar(Object.assign({}, marcados, { [pp.id]: !on }))
+      };
+    });
+  }
 
   renderVals() {
     const CRM = window.ISRCRM;
@@ -294,14 +343,7 @@ class Component extends DCLogic {
     if (!CRM) return Object.assign({ membros: [], papeisOpts: [], vazio: true, novoAberto: false, novoLabel: "+ Nova pessoa", novoBg: "#164951", novoFg: "#fff" }, refs);
 
     const sel = this.state.papeisSel;
-    const papeisOpts = this.PAPEIS.map(pp => {
-      const on = !!sel[pp.id];
-      return {
-        label: pp.label,
-        bg: on ? pp.cor : "#fff", fg: on ? "#fff" : pp.cor, border: pp.cor,
-        onToggle: () => this.setState({ papeisSel: Object.assign({}, sel, { [pp.id]: !on }) })
-      };
-    });
+    const papeisOpts = this.opcoesPapeis(sel, m => this.setState({ papeisSel: m }));
 
     const todasTurmas = CRM.turmasLista();
         const corDe = id => (this.PAPEIS.filter(p => p.id === id)[0] || {}).cor || "#8a7c6b";
@@ -356,16 +398,13 @@ class Component extends DCLogic {
         moedaOpts: [{ id: "R$", label: "R$" }, { id: "€", label: "€" }]
           .map(o => Object.assign({ sel: (m.moeda || "R$") === o.id }, o)),
 
-        papeisOpts: this.PAPEIS.map(pp => {
-          const on = !!marcados[pp.id];
-          return {
-            label: pp.label,
-            bg: on ? pp.cor : "#fff", fg: on ? "#fff" : pp.cor, border: pp.cor,
-            onToggle: () => this.setState({
-              edPapeis: Object.assign({}, marcados, { [pp.id]: !on }), edErro: ""
-            })
-          };
-        }),
+        papeisOpts: this.opcoesPapeis(marcados,
+          m => this.setState({ edPapeis: m, edErro: "" })),
+        papeisResumo: this.resumoPapeis(marcados),
+        papeisCor: this.PAPEIS.some(p => marcados[p.id]) ? "#164951" : "#9b8b7e",
+        papeisAberto: this.state.edPapeisAberto,
+        papeisSeta: this.state.edPapeisAberto ? "\u25b2" : "\u25bc",
+        onAbrirPapeis: () => this.setState({ edPapeisAberto: !this.state.edPapeisAberto }),
 
         ehProfessora: !!marcados.professora,
         turmasAviso: "Marque as turmas desta pessoa. Ao salvar, elas passam para o nome dela e entram na folha de pagamento.",
@@ -389,7 +428,7 @@ class Component extends DCLogic {
           (m.papeis || []).forEach(id => { marca[id] = true; });
           const marcaT = {};
           todasTurmas.forEach(u => { if (u.teacher === m.nome) marcaT[u.id] = true; });
-          this.setState({ editId: m.id, edPapeis: marca, edTurmas: marcaT, edErro: "", novoAberto: false });
+          this.setState({ editId: m.id, edPapeis: marca, edPapeisAberto: false, edTurmas: marcaT, edErro: "", novoAberto: false });
           // os campos são preenchidos depois que a linha aparece
           setTimeout(() => {
             if (r.nome.current) r.nome.current.value = m.nome || "";
@@ -482,15 +521,18 @@ class Component extends DCLogic {
       // trabalhou, tem a receber — mas sem e-mail, acesso, carteira nem
       // remuneração combinada. O aviso fica aqui até alguém resolver.
       temSemCadastro: (fp.semCadastro || []).length > 0,
-      semCadastroFrase: (fp.semCadastro || []).length === 1
-        ? "Uma pessoa dá aula sem estar no cadastro da equipe. Ela entra na folha, mas fica sem e-mail, sem acesso ao painel e sem remuneração combinada."
-        : (fp.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. Elas entram na folha, mas ficam sem e-mail, sem acesso ao painel e sem remuneração combinada.",
+      semCadastroFrase: ((fp.semCadastro || []).length === 1
+        ? "Uma pessoa dá aula sem estar no cadastro da equipe. "
+        : (fp.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. ")
+        + "A folha é de quem é da equipe, então o valor delas fica retido até o cadastro"
+        + (fp.totalRetido ? " — " + $$(fp.totalRetido) + " parados." : "."),
       semCadastro: (fp.semCadastro || []).map(s => ({
         nome: s.nome,
         detalhe: (s.turmas.length
             ? s.turmas.length + (s.turmas.length === 1 ? " turma" : " turmas")
             : "sem turma atribuída")
-          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : ""),
+          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : "")
+          + (s.aPagar ? " · " + $$(s.aPagar) + " retidos" : ""),
         onCadastrar: () => { CRM.cadastrarProfessora(s.nome); this.bump(); }
       })),
 
@@ -536,11 +578,16 @@ class Component extends DCLogic {
         ? " aluna sem professora atribuída" : " alunas sem professora atribuída"),
       semProfessoraNomes: cart.semProfessora.map(x => x.nome + " · " + x.turma).join(" | "),
       papeisOpts,
+      papeisResumo: this.resumoPapeis(sel),
+      papeisCor: this.PAPEIS.some(p => sel[p.id]) ? "#164951" : "#9b8b7e",
+      papeisAberto: this.state.papeisAberto,
+      papeisSeta: this.state.papeisAberto ? "\u25b2" : "\u25bc",
+      onAbrirPapeis: () => this.setState({ papeisAberto: !this.state.papeisAberto }),
       novoAberto: this.state.novoAberto,
       novoLabel: this.state.novoAberto ? "fechar" : "+ Nova pessoa",
       novoBg: this.state.novoAberto ? "#e5dccf" : "#164951",
       novoFg: this.state.novoAberto ? "#6b6155" : "#fff",
-      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, papeisSel: {} }),
+      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, papeisSel: {}, papeisAberto: false }),
       onCriar: () => {
         const nome = this.val(this.nvNomeRef);
         const papeis = Object.keys(sel).filter(k => sel[k]);
@@ -556,7 +603,7 @@ class Component extends DCLogic {
           moeda: this.val(this.nvMoedaRef) || "R$"
         });
         [this.nvNomeRef, this.nvEmailRef, this.nvValorRef].forEach(r => { if (r.current) r.current.value = ""; });
-        this.setState({ novoAberto: false, papeisSel: {} });
+        this.setState({ novoAberto: false, papeisSel: {}, papeisAberto: false });
       }
     }, refs);
   }

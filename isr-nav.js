@@ -43,29 +43,38 @@
       ]
     },
     {
+      // O que acontece com as alunas: quem são, como estão e o que recebem.
+      id: "alunas", label: "Alunas", cor: "#fc9082",
+      itens: [
+        { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
+        { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] },
+        { label: "App da aluna", desc: "A tela que a aluna vê, para conferir", href: "ISR - Aluna.dc.html", perfis: null }
+      ]
+    },
+    {
+      // O que acontece na aula: onde ela é dada, por quem e com que material.
+      id: "ensino", label: "Ensino", cor: "#348a8e",
+      itens: [
+        { label: "Painel do Professor", desc: "Aulas da semana e diário de classe", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
+        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
+        { label: "Programa no WhatsApp", desc: "Controle semanal do programa assíncrono", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] }
+      ]
+    },
+    {
+      // Todo o dinheiro num lugar só: o que entra, o resumo e o que sai.
       id: "financeiro", label: "Financeiro", cor: "#d4a574",
       itens: [
         { label: "Cobrança", desc: "Recebíveis por situação e ações de cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+        { label: "Pagamentos", desc: "Folha do mês da equipe e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
         { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] }
       ]
     },
     {
-      id: "pedagogico", label: "Pedagógico", cor: "#348a8e",
-      itens: [
-        { label: "Acompanhamento", desc: "Priorização e registro de contatos", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
-        { label: "Programa no WhatsApp", desc: "Controle semanal do programa assíncrono", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] },
-        { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
-        { label: "Painel do Professor", desc: "Aulas da semana e registro de frequência", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
-        { label: "App da aluna", desc: "Visualização da interface da aluna", href: "ISR - Aluna.dc.html", perfis: null },
-        { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] }
-      ]
-    },
-    {
+      // As pessoas que fazem a escola e a configuração do sistema.
       id: "escola", label: "Escola", cor: "#9c6f56",
       itens: [
-        { label: "Pagamentos", desc: "Fechamento do mês da equipe", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
-        { label: "Equipe", desc: "Integrantes, papéis, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
+        { label: "Equipe", desc: "Integrantes, funções, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
         { label: "Conexão", desc: "Configuração da base de dados central", href: "gestao.html?config", perfis: ["gestora"] },
         { label: "Dados", desc: "Cópias de segurança, exportação e retenção", href: "ISR - Dados.dc.html", perfis: ["gestora"] }
       ]
