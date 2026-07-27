@@ -476,6 +476,19 @@
             </div>
           </div>
 
+          <!-- CERTIFICADO E APP -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Certificado</div>
+              <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ certResumo }}</p>
+              <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+                <a href="{{ certificadoHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir certificado</a>
+                <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #e5dccf; color: #8a7c6b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Ver o app dela</a>
+              </div>
+              <p style="margin: 9px 0 0; font-size: 10.5px; color: {{ acessoCor }};">{{ acessoTexto }}</p>
+            </div>
+          </sc-if>
+
           <!-- AÇÕES RÁPIDAS -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
@@ -1061,6 +1074,26 @@ class Component extends DCLogic {
     const mk = (label, bg, tpl, detalhe) => ({
       label, bg, href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + p.id + "&tpl=" + tpl
     });
+    // certificado, app e uso: a gestão precisa ver se ela abre o app
+    (function () {
+      const h = CRM.horasDaAluna ? CRM.horasDaAluna(p.id) : null;
+      const ac = CRM.acessoDaAluna ? CRM.acessoDaAluna(p.id) : null;
+      out.certificadoHref = "ISR%20-%20Certificado.dc.html?id=" + p.id;
+      out.appHref = "ISR%20-%20Aluna.dc.html?id=" + p.id;
+      out.certResumo = h
+        ? h.horasTotais + " h cursadas · " + (h.certificado.pronto
+            ? "ciclo completo, certificado pronto"
+            : "no fim do ciclo, " + h.certificado.horas + " h")
+        : "Sem aula registrada ainda.";
+      out.acessoTexto = !ac || ac.nunca
+        ? "Nunca abriu o app."
+        : (ac.diasSemAbrir === 0 ? "Abriu o app hoje."
+          : "Última vez no app há " + ac.diasSemAbrir + (ac.diasSemAbrir === 1 ? " dia" : " dias")
+            + " · " + ac.n + (ac.n === 1 ? " acesso" : " acessos"));
+      out.acessoCor = !ac || ac.nunca || (ac.diasSemAbrir !== null && ac.diasSemAbrir > 21)
+        ? "#cf6b5c" : "#b3a693";
+    })();
+
     out.acoes = out.ehLead ? [
       mk("Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
       mk("Confirmar conversa", "#6b5b95", "lead_reuniao", "confirmação de conversa"),
