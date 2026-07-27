@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.26-s",
+  numero: "2026.07.26-t",
   data: "26/07/2026",
   nota: "Turmas do acompanhamento: abrir novas e matricular em cada uma"
 };

@@ -27,7 +27,7 @@
     { id: "a_contatar", label: "A contatar", short: "A contatar", color: "#e07856", bg: "rgba(224,120,86,0.14)" },
     { id: "em_conversa", label: "Em conversa", short: "Em conversa", color: "#2a9d8f", bg: "rgba(42,157,143,0.14)" },
     { id: "reuniao", label: "Reunião marcada", short: "Reunião", color: "#6b5b95", bg: "rgba(107,91,149,0.14)" },
-    { id: "contrato", label: "Contrato / matrícula", short: "Contrato", color: "#348a8e", bg: "rgba(52,138,142,0.14)" },
+    { id: "contrato", label: "Condições combinadas", short: "Contrato", color: "#348a8e", bg: "rgba(52,138,142,0.14)" },
     { id: "matriculado", label: "Matriculada", short: "Matriculados", color: "#5a9e4b", bg: "rgba(90,158,75,0.16)" },
     { id: "perdido", label: "Perdido", short: "Perdidos", color: "#9b8b7e", bg: "rgba(155,139,126,0.16)" }
   ];
