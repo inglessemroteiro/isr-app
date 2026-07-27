@@ -4999,7 +4999,15 @@
 
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
   var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
-  var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30 };
+  var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30,
+    avaliouAula: 5, renovouCiclo: 100 };
+  var MOEDAS_VALIDADE_DIAS = 365;
+  function somaDias(isoStr, n) {
+    var d = parseISO(isoStr);
+    if (!d) return "";
+    var x = new Date(d); x.setDate(x.getDate() + n);
+    return iso(x);
+  }
   // grupos de bônus do design original (Moedas ISR) — a equipe aplica pelo Perfil
   var MOEDAS_BONUS = [
     { grupo: "Aulas", cor: "#2a9d8f", itens: [
@@ -5023,30 +5031,108 @@
   var MOEDAS_CATS = {
     aula: "Aula", material: "Material", mentoria: "Mentoria",
     comunidade: "Comunidade", reconhecimento: "Reconhecimento",
-    carreira: "Carreira", desconto: "Desconto"
+    carreira: "Carreira", desconto: "Desconto", flin: "FLIN", programa: "Acompanhamento"
+  };
+  // Catálogo em três níveis. Cada prêmio pode ter três limites além do
+  // preço: vagas por mês (o que é escasso não se precifica para fora),
+  // limite por ciclo e tempo mínimo de casa.
+  var MOEDAS_NIVEIS = {
+    facil:  { label: "Fácil",  ordem: 1, cor: "#5a9e4b" },
+    medio:  { label: "Médio",  ordem: 2, cor: "#348a8e" },
+    dificil:{ label: "Difícil", ordem: 3, cor: "#6b5b95" }
   };
   var MOEDAS_RESGATES = [
-    { id: "rg1", nome: "Escolhe o tema de uma aula extra", cat: "aula", custo: 80 },
-    { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", custo: 120 },
-    { id: "rg3", nome: "30 min de bate-papo com a Gabi", cat: "mentoria", custo: 200 },
-    { id: "rg4", nome: "Traz um convidado pra aula regular", cat: "comunidade", custo: 250 },
-    { id: "rg5", nome: "Nomeia um colega (+20 bônus)", cat: "comunidade", custo: 300 },
-    { id: "rg6", nome: "Featured no Instagram da escola", cat: "reconhecimento", custo: 350 },
-    { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", custo: 400 },
-    { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", custo: 600 },
-    { id: "rg9", nome: "Sessão de preparação pra entrevista", cat: "carreira", custo: 900 },
-    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "comunidade", custo: 1200, vip: true },
-    // FLIN é prática de conversação com IA. Vale acesso por tempo, não por
-    // sessão — e não conta hora de aula: o certificado é de aula com
-    // professora.
-    { id: "flin7",  nome: "FLIN · 7 dias de prática com IA",  cat: "flin", custo: 150, flin: 7 },
-    { id: "flin30", nome: "FLIN · 30 dias de prática com IA", cat: "flin", custo: 500, flin: 30 }
+    // ── fácil: primeiras semanas ──
+    { id: "flin", nome: "Desbloquear a prática com IA", cat: "flin", nivel: "facil",
+      custo: 20, flin: "sempre", umaVez: true,
+      detalhe: "Libera a prática com IA para sempre. Não conta hora de aula." },
+    { id: "rg1", nome: "Escolhe o tema de uma aula extra", cat: "aula", nivel: "facil", custo: 80 },
+    { id: "rg11", nome: "Passe livre · 1 falta não conta", cat: "aula", nivel: "facil",
+      custo: 120, porCiclo: 1,
+      detalhe: "Uma ausência do ciclo deixa de contar na sua frequência." },
+
+    // ── médio: dentro do ciclo ──
+    { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", nivel: "medio", custo: 180 },
+    { id: "rg12", nome: "Feedback em vídeo da professora", cat: "mentoria", nivel: "medio",
+      custo: 250, vagasMes: 4,
+      detalhe: "Um vídeo com o retrato do seu progresso e o que treinar a seguir." },
+    { id: "rg13", nome: "Workshop exclusivo do mês", cat: "comunidade", nivel: "medio",
+      custo: 300, vagasMes: 12, minimoMes: 4,
+      detalhe: "Encontro ao vivo só para quem resgatou. Acontece com no mínimo 4 inscritas." },
+
+    // ── difícil: quem já tem estrada na escola ──
+    { id: "rg14", nome: "Um ciclo do acompanhamento no WhatsApp", cat: "programa", nivel: "dificil",
+      custo: 450, minCiclos: 2,
+      detalhe: "O programa de desafios semanais, de graça, a partir do segundo ciclo." },
+    { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", nivel: "dificil",
+      custo: 500, minCiclos: 3,
+      detalhe: "A partir do terceiro ciclo, quando a renovação já é hábito." },
+    { id: "rg3", nome: "30 min de conversa 1:1 com a Gabi", cat: "mentoria", nivel: "dificil",
+      custo: 500, vagasMes: 4 },
+    { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", nivel: "dificil",
+      custo: 600, minCiclos: 2,
+      detalhe: "A partir do segundo ciclo, quando a escola já conhece o seu trabalho." }
   ];
+
+  // ── LIMITES DE RESGATE ────────────────────────────────────────
+  var RESGATES_KEY = "isr_resgates_v1";
+  function resgatesAll() {
+    try { return JSON.parse(localStorage.getItem(RESGATES_KEY)) || []; } catch (e) { return []; }
+  }
+  function resgatesSave(l) {
+    try { localStorage.setItem(RESGATES_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  function ciclosDe(pessoaOuId) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return 0;
+    return (p.contratos || []).length || (p.status === "aluna" ? 1 : 0);
+  }
+  // O que impede este resgate agora. Null quer dizer que pode.
+  function bloqueioDoResgate(pessoaId, r) {
+    var hoje = iso(today());
+    var mes = hoje.slice(0, 7);
+    var todos = resgatesAll();
+    if (r.umaVez && todos.some(function (x) { return x.pessoaId === pessoaId && x.resgateId === r.id; }))
+      return { motivo: "ja", texto: "Você já tem este." };
+    if (r.minCiclos && ciclosDe(pessoaId) < r.minCiclos)
+      return { motivo: "ciclos", texto: "A partir do " + r.minCiclos + "º ciclo na escola." };
+    if (r.porCiclo) {
+      var pc = progressoCiclo(pessoaId) || { desde: "" };
+      var noCiclo = todos.filter(function (x) {
+        return x.pessoaId === pessoaId && x.resgateId === r.id && (!pc.desde || x.em >= pc.desde);
+      }).length;
+      if (noCiclo >= r.porCiclo)
+        return { motivo: "ciclo", texto: "Um por ciclo. Volta no ciclo que vem." };
+    }
+    if (r.vagasMes) {
+      var noMes = todos.filter(function (x) {
+        return x.resgateId === r.id && (x.em || "").slice(0, 7) === mes;
+      }).length;
+      if (noMes >= r.vagasMes)
+        return { motivo: "vagas", texto: "Vagas do mês esgotadas. Volta no dia 1." };
+    }
+    return null;
+  }
+  function vagasDoMes(resgateId) {
+    var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
+    if (!r || !r.vagasMes) return null;
+    var mes = iso(today()).slice(0, 7);
+    var usadas = resgatesAll().filter(function (x) {
+      return x.resgateId === resgateId && (x.em || "").slice(0, 7) === mes;
+    }).length;
+    return { usadas: usadas, total: r.vagasMes, restam: Math.max(0, r.vagasMes - usadas),
+      minimo: r.minimoMes || 0, atingiuMinimo: !r.minimoMes || usadas >= r.minimoMes };
+  }
 
   // ── FLIN ──────────────────────────────────────────────────────
   //
-  // O acesso é por período e sai dos ISR Miles. O link fica em um lugar só;
-  // se a ferramenta mudar de endereço, muda aqui.
+  // O FLIN é a prática com IA. Ele já está nos custos fixos da escola,
+  // então não faz sentido cobrar caro nem por período: o desbloqueio é
+  // permanente e barato, só para dar um motivo de estrear a conta de
+  // miles. Não conta hora de aula — o certificado é de aula com
+  // professora. O link mora em um lugar só; se a ferramenta mudar de
+  // endereço, muda aqui.
   var FLIN_KEY = "isr_flin_url_v1";
   var FLIN_URL_PADRAO = "";
 
@@ -5059,11 +5145,19 @@
     return flinUrl();
   }
 
+  // dias pode ser um número (acesso por período) ou "sempre" (permanente).
   function liberarFlin(pessoaId, dias) {
-    var n = parseInt(dias, 10) || 7;
+    var permanente = dias === "sempre" || dias === true;
+    var n = permanente ? 0 : (parseInt(dias, 10) || 7);
     return mutate(pessoaId, function (p) {
-      // renovar antes de vencer soma no que resta, não recomeça
       var hoje = today();
+      if (permanente) {
+        p.flin = { desde: (p.flin && p.flin.desde) || iso(hoje), ate: "", sempre: true };
+        pushHist(p, "moedas", "FLIN desbloqueado · acesso permanente");
+        return;
+      }
+      if (p.flin && p.flin.sempre) return; // já é permanente, não regride
+      // renovar antes de vencer soma no que resta, não recomeça
       var fim = p.flin && p.flin.ate ? parseISO(p.flin.ate) : null;
       var base = fim && fim > hoje ? fim : hoje;
       var novo = new Date(base); novo.setDate(novo.getDate() + n);
@@ -5075,25 +5169,49 @@
   function flinDaAluna(pessoaId) {
     var p = getPessoa(pessoaId);
     var url = flinUrl();
-    if (!p || !p.flin || !p.flin.ate) {
-      return { ativo: false, temLink: !!url, url: url, diasRestantes: 0, ate: "" };
+    if (!p || !p.flin) {
+      return { ativo: false, permanente: false, temLink: !!url, url: url, diasRestantes: 0, ate: "" };
+    }
+    if (p.flin.sempre) {
+      return { ativo: true, permanente: true, temLink: !!url, url: url,
+        diasRestantes: null, ate: "", desde: p.flin.desde };
+    }
+    if (!p.flin.ate) {
+      return { ativo: false, permanente: false, temLink: !!url, url: url, diasRestantes: 0, ate: "" };
     }
     var fim = parseISO(p.flin.ate);
     var dias = fim ? daysBetween(today(), fim) : -1;
-    return { ativo: dias >= 0, temLink: !!url, url: url,
+    return { ativo: dias >= 0, permanente: false, temLink: !!url, url: url,
       diasRestantes: Math.max(0, dias), ate: p.flin.ate, desde: p.flin.desde };
   }
+
   function resgatarRecompensa(pessoaId, resgateId) {
     var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
     var p = getPessoa(pessoaId);
     if (!r || !p) return { ok: false };
     var saldo = moedasDe(pessoaId).total;
     if (saldo < r.custo) return { ok: false, faltam: r.custo - saldo };
+    var bloqueio = bloqueioDoResgate(pessoaId, r);
+    if (bloqueio) return { ok: false, bloqueio: bloqueio };
+
     addMoedas(pessoaId, -r.custo, "Resgate: " + r.nome);
+    var reg = resgatesAll();
+    reg.push({ id: "rs" + Date.now(), pessoaId: pessoaId, nome: p.nome,
+      resgateId: r.id, premio: r.nome, custo: r.custo, em: iso(today()) });
+    resgatesSave(reg);
+
     // o FLIN é liberado na hora: não precisa de ninguém entregar nada
     if (r.flin) {
       liberarFlin(pessoaId, r.flin);
       return { ok: true, flin: flinDaAluna(pessoaId) };
+    }
+    // o passe livre é aplicado pelo sistema, não entregue à mão
+    if (r.id === "rg11") {
+      mutate(pessoaId, function (x) {
+        x.passesLivres = (x.passesLivres || 0) + 1;
+        pushHist(x, "moedas", "Passe livre resgatado · uma falta do ciclo deixa de contar");
+      });
+      return { ok: true, passe: true };
     }
     addTarefa({ titulo: "Entregar resgate · " + r.nome + " · " + p.nome,
       dono: "Gabi", prazo: iso(today()), por: p.nome });
@@ -5133,6 +5251,23 @@
       });
       if (p.onboarding && p.onboarding.length && p.onboarding.every(function (c) { return c.feito; }))
         extrato.push({ em: "", label: "Onboarding completo", valor: MOEDAS_REGRAS.onboardingCompleto });
+      // Avaliar a aula é o dado que mais falta na escola: hoje nenhuma
+      // aluna avalia. Só conta a avaliação que a própria aluna registrou
+      // (a professora também pode lançar pulso, e isso não é dela).
+      pulsosDe(pessoaId).forEach(function (pl) {
+        if (pl.por !== p.nome) return;
+        extrato.push({ em: pl.data, label: "Avaliou a aula", valor: MOEDAS_REGRAS.avaliouAula });
+      });
+      // Renovar o ciclo é o comportamento mais valioso para a escola e
+      // era o único que não valia nada.
+      (p.contratos || []).forEach(function (c) {
+        if ((c.tipo || "") !== "Renovação") return;
+        var h = (p.historico || []).filter(function (x) {
+          return x.tipo === "renovacao" && /^Renovou/.test(x.texto || "");
+        })[0] || {};
+        extrato.push({ em: h.data || "", label: "Renovou o ciclo" + (c.ciclos ? " · " + c.ciclos : ""),
+          valor: MOEDAS_REGRAS.renovouCiclo });
+      });
     }
     programasLista().forEach(function (pg) {
       if ((pg.participantes || []).indexOf(pessoaId) < 0) return;
@@ -5150,8 +5285,30 @@
       extrato.push({ em: a.em, label: a.motivo || (a.valor > 0 ? "Bônus da escola" : "Resgate"), valor: a.valor });
     });
     extrato.sort(function (a, b) { return (b.em || "0000") < (a.em || "0000") ? -1 : 1; });
-    var total = extrato.reduce(function (acc, e) { return acc + e.valor; }, 0);
-    return { total: total, extrato: extrato };
+
+    // ── validade de 12 meses ──────────────────────────────────
+    // Sem validade o saldo cresce para sempre e vira passivo. Expiram os
+    // mais antigos primeiro; o que não tem data nunca expira, porque não
+    // dá para saber quando foi ganho.
+    var corte = addDays(-MOEDAS_VALIDADE_DIAS);
+    var avisoDe = addDays(-MOEDAS_VALIDADE_DIAS + 30);
+    var expirados = 0, aExpirar = 0, proximaData = "";
+    extrato.forEach(function (e) {
+      if (e.valor <= 0 || !e.em) return;
+      if (e.em < corte) { expirados += e.valor; e.expirado = true; }
+      else if (e.em < avisoDe) {
+        aExpirar += e.valor;
+        var venceEm = somaDias(e.em, MOEDAS_VALIDADE_DIAS);
+        if (!proximaData || venceEm < proximaData) proximaData = venceEm;
+      }
+    });
+    var bruto = extrato.reduce(function (acc, e) { return acc + e.valor; }, 0);
+    var total = bruto - expirados;
+    return { total: total, bruto: bruto, expirados: expirados,
+      aExpirar: aExpirar, expiramEm: proximaData,
+      validadeDias: MOEDAS_VALIDADE_DIAS,
+      extrato: extrato.filter(function (e) { return !e.expirado; }),
+      extratoCompleto: extrato };
   }
 
   // ── RSVP DE AULAS EXTRAS (aluna confirma presença) ────────────
@@ -5302,7 +5459,12 @@
   // O que ela já pode resgatar e quanto falta para a próxima recompensa.
   function recompensasDaAluna(pessoaId) {
     var saldo = moedasDe(pessoaId).total;
-    var ordenados = MOEDAS_RESGATES.slice().sort(function (a, b) { return a.custo - b.custo; });
+    // Prêmio fechado por regra (tempo de casa, vagas, um por ciclo) sai da
+    // conta: não adianta dizer "faltam 315 miles" para algo que miles
+    // nenhum destrava hoje.
+    var ordenados = MOEDAS_RESGATES.slice()
+      .filter(function (r) { return !bloqueioDoResgate(pessoaId, r); })
+      .sort(function (a, b) { return a.custo - b.custo; });
     var disponiveis = ordenados.filter(function (r) { return saldo >= r.custo; });
     var bloqueados = ordenados.filter(function (r) { return saldo < r.custo; });
     var prox = bloqueados[0] || null;
@@ -5314,6 +5476,39 @@
     }
     return { saldo: saldo, disponiveis: disponiveis, bloqueados: bloqueados,
       proxima: prox, faltam: prox ? prox.custo - saldo : 0, pct: prox ? pct : 100 };
+  }
+
+  // O catálogo como a aluna o vê: em três níveis, com o motivo de cada
+  // prêmio estar fora de alcance. Saldo curto e regra fechada são coisas
+  // diferentes — "faltam 80 miles" e "a partir do 2º ciclo" não podem
+  // aparecer com a mesma cara.
+  function catalogoDaAluna(pessoaId) {
+    var m = moedasDe(pessoaId);
+    var saldo = m.total;
+    var niveis = Object.keys(MOEDAS_NIVEIS).map(function (k) {
+      var n = MOEDAS_NIVEIS[k];
+      return { id: k, label: n.label, ordem: n.ordem, cor: n.cor, itens: [] };
+    }).sort(function (a, b) { return a.ordem - b.ordem; });
+    var porId = {};
+    niveis.forEach(function (n) { porId[n.id] = n; });
+
+    MOEDAS_RESGATES.slice().sort(function (a, b) { return a.custo - b.custo; })
+      .forEach(function (r) {
+        var grupo = porId[r.nivel] || porId.facil;
+        var bloqueio = bloqueioDoResgate(pessoaId, r);
+        var vagas = vagasDoMes(r.id);
+        var faltam = Math.max(0, r.custo - saldo);
+        grupo.itens.push({
+          id: r.id, nome: r.nome, custo: r.custo, cat: MOEDAS_CATS[r.cat] || "",
+          detalhe: r.detalhe || "", nivel: grupo.id,
+          pode: !bloqueio && faltam === 0,
+          faltam: faltam,
+          pct: r.custo ? Math.round(Math.min(100, (saldo / r.custo) * 100)) : 100,
+          bloqueio: bloqueio, vagas: vagas
+        });
+      });
+    return { saldo: saldo, niveis: niveis.filter(function (n) { return n.itens.length; }),
+      aExpirar: m.aExpirar, expiramEm: m.expiramEm, validadeDias: m.validadeDias };
   }
 
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
@@ -5975,8 +6170,10 @@
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
     responderMissao: responderMissao, programaDaAluna: programaDaAluna,
     aulaAAvaliar: aulaAAvaliar, jornadaDaAluna: jornadaDaAluna,
-    recompensasDaAluna: recompensasDaAluna,
+    recompensasDaAluna: recompensasDaAluna, catalogoDaAluna: catalogoDaAluna,
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
+    MOEDAS_NIVEIS: MOEDAS_NIVEIS, bloqueioDoResgate: bloqueioDoResgate,
+    vagasDoMes: vagasDoMes, resgatesAll: resgatesAll,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
     renomearNaEquipe: renomearNaEquipe,
