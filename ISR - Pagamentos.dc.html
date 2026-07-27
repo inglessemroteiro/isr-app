@@ -376,7 +376,7 @@ class Component extends DCLogic {
         titulo: "Teto de " + cfg.tetoPct + "% da receita",
         metricas: [
           { label: "Fixo + fatia", valor: $(p.fixo + p.somaTurmas), cor: "#164951" },
-          { label: "Receita das turmas", valor: $(p.receitaTurmas), cor: "#164951" },
+          { label: "Receita gerada", valor: $(p.receitaGerada), cor: "#164951" },
           { label: "Limite", valor: $(p.teto), cor: "#164951" }
         ],
         alertas: [], valor: "− " + $(p.cortePeloTeto)
@@ -394,7 +394,7 @@ class Component extends DCLogic {
             + " · " + nAl + (nAl === 1 ? " aluna" : " alunas");
         })(),
         total: $(p.total),
-        pctLabel: p.pctDaReceita === null ? "" : p.pctDaReceita + "% da receita das turmas",
+        pctLabel: p.pctDaReceita === null ? "" : p.pctDaReceita + "% da receita que ela gera",
 
         estadoLabel: pago ? "Pago em " + CRM.ddmm(pago.em) : "A pagar em " + CRM.ddmm(folha.vencimento),
         estadoBg: pago ? "rgba(90,158,75,0.14)" : "#f2ece3",
@@ -422,8 +422,8 @@ class Component extends DCLogic {
         resumo: (PAPEL[x.papel] || x.papel) + " · valor mensal do cadastro"
           + (x.moeda !== cfg.moeda ? " · " + CRM.fmtMoney(x.moeda, x.bruto) : ""),
         total: $(x.total),
-        pctLabel: folha.receitaTurmas
-          ? Math.round((x.total / folha.receitaTurmas) * 1000) / 10 + "% da receita das turmas" : "",
+        pctLabel: folha.receitaGerada
+          ? Math.round((x.total / folha.receitaGerada) * 1000) / 10 + "% da receita da escola" : "",
         estadoLabel: pg ? "Pago em " + CRM.ddmm(pg.em) : "A pagar em " + CRM.ddmm(folha.vencimento),
         estadoBg: pg ? "rgba(90,158,75,0.14)" : "#f2ece3",
         estadoFg: pg ? "#4a8a3d" : "#8a7c6b",
@@ -471,7 +471,7 @@ class Component extends DCLogic {
     const resumo = [
       { label: "Professoras", valor: String(folha.linhas.length), cor: "#fff" },
       { label: "Valor fixo", valor: folha.fixos.length + " · " + $(folha.totalFixos), cor: "#fff" },
-      { label: "Mensalidades", valor: $(folha.receitaTurmas), cor: "#fff" },
+      { label: "Mensalidades", valor: $(folha.receitaGerada), cor: "#fff" },
       { label: "Pagamento", valor: CRM.ddmm(folha.vencimento), cor: "#fff" },
       { label: "Já pago", valor: folha.nPagas + " de " + folha.nPagaveis,
         cor: folha.nPagas === folha.nPagaveis && folha.nPagaveis ? "#9ec970" : "#fff" },
@@ -505,10 +505,10 @@ class Component extends DCLogic {
       })),
 
       totalFolha: $(folha.totalComFixos),
-      pctFolha: folha.receitaTurmas
-        ? (Math.round((folha.totalComFixos / folha.receitaTurmas) * 1000) / 10) + "%" : "—",
-      pctCor: !folha.receitaTurmas ? "#b3a693"
-        : ((folha.totalComFixos / folha.receitaTurmas) * 100 > 55 ? "#fc9082" : "#9ec970"),
+      pctFolha: folha.receitaGerada
+        ? (Math.round((folha.totalComFixos / folha.receitaGerada) * 1000) / 10) + "%" : "—",
+      pctCor: !folha.receitaGerada ? "#b3a693"
+        : ((folha.totalComFixos / folha.receitaGerada) * 100 > 55 ? "#fc9082" : "#9ec970"),
       resumo, fixos,
 
       linhas, semLinhas: linhas.length === 0,
@@ -517,15 +517,19 @@ class Component extends DCLogic {
       // entra na folha — trabalhou — mas fica sem e-mail, sem acesso ao
       // painel, sem carteira e sem remuneração combinada.
       temSemCadastro: (folha.semCadastro || []).length > 0,
-      semCadastroFrase: (folha.semCadastro || []).length === 1
-        ? "Uma pessoa dá aula sem estar no cadastro da equipe. Ela aparece na folha porque trabalhou, mas fica sem e-mail, sem acesso ao painel do professor e sem remuneração combinada."
-        : (folha.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. Elas aparecem na folha porque trabalharam, mas ficam sem e-mail, sem acesso ao painel do professor e sem remuneração combinada.",
+      semCadastroFrase: ((folha.semCadastro || []).length === 1
+        ? "Uma pessoa dá aula sem estar no cadastro da equipe. "
+        : (folha.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. ")
+        + "A folha é de quem é da equipe, então elas não entram no total do mês. "
+        + "O cálculo do que fizeram está feito e fica retido até o cadastro"
+        + (folha.totalRetido ? ": " + $(folha.totalRetido) + " parados." : "."),
       semCadastro: (folha.semCadastro || []).map(s => ({
         nome: s.nome,
         detalhe: (s.turmas.length
             ? s.turmas.join(" · ")
             : "sem turma atribuída")
-          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : ""),
+          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : "")
+          + (s.aPagar ? " · " + $(s.aPagar) + " retidos" : ""),
         onCadastrar: () => { CRM.cadastrarProfessora(s.nome); this.bump(); }
       })),
 
