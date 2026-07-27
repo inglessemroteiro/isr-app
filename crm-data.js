@@ -4725,6 +4725,81 @@
   }
 
   // Quantas aulas ela já fez no ciclo vigente e quantas faltam.
+  // ── HORAS PARA O CERTIFICADO ──────────────────────────────────
+  //
+  // O certificado diz horas, não aulas. A aluna precisa saber quantas já
+  // tem e quantas terá no fim do ciclo — senão o certificado é uma surpresa
+  // no fim. Conta aula de turma, aula extra com presença e aula particular.
+  var MINUTOS_AULA_KEY = "isr_minutos_aula_v1";
+  var MINUTOS_AULA_PADRAO = 60;
+
+  function minutosDaAula() {
+    try {
+      var n = parseInt(localStorage.getItem(MINUTOS_AULA_KEY), 10);
+      if (!isNaN(n) && n > 0) return n;
+    } catch (e) {}
+    return MINUTOS_AULA_PADRAO;
+  }
+  function setMinutosDaAula(n) {
+    var v = parseInt(n, 10);
+    if (isNaN(v) || v < 1) return minutosDaAula();
+    try { localStorage.setItem(MINUTOS_AULA_KEY, String(v)); } catch (e) {}
+    agendarSync();
+    return v;
+  }
+
+  function horasDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var minAula = minutosDaAula();
+    var arred = function (min) { return Math.round((min / 60) * 10) / 10; };
+
+    // aulas de turma com presença (atraso conta: ela esteve na aula)
+    var min = 0, minCiclo = 0;
+    var pc = progressoCiclo(pessoaId) || { desde: "" };
+    var cham = chamadasAll();
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      var est = estadoPresenca(ch.presencas[pessoaId]);
+      if (est !== "presente" && est !== "atraso") return;
+      min += minAula;
+      if (!pc.desde || ch.data >= pc.desde) minCiclo += minAula;
+    });
+
+    // aulas extras: a duração é a do evento
+    var minExtra = 0;
+    (eventosLista ? eventosLista() : []).forEach(function (e) {
+      var lista = (e.chamada && e.chamada.presencas) || null;
+      if (!lista || !(pessoaId in lista)) return;
+      var est = estadoPresenca(lista[pessoaId]);
+      if (est !== "presente" && est !== "atraso") return;
+      minExtra += parseInt(e.duracao, 10) || 60;
+    });
+
+    // aulas particulares dadas
+    var minPart = 0;
+    if (p.particular) minPart = (parseInt(p.particular.feitas, 10) || 0) * minAula;
+
+    var totalMin = min + minExtra + minPart;
+    var faltamCiclo = Math.max(0, (pc.total || 0) - (pc.feitas || 0));
+    return {
+      minutosAula: minAula,
+      horasTurma: arred(min), horasExtras: arred(minExtra), horasParticulares: arred(minPart),
+      horasTotais: arred(totalMin),
+      horasNoCiclo: arred(minCiclo),
+      horasDoCicloCompleto: arred((pc.total || 0) * minAula),
+      faltamHoras: arred(faltamCiclo * minAula),
+      nivel: p.nivel || "", turma: p.turma || "",
+      desde: p.desde || "",
+      // o que sai no certificado quando o ciclo fechar
+      certificado: {
+        horas: arred(totalMin + faltamCiclo * minAula),
+        nivel: p.nivel || "", pronto: faltamCiclo === 0
+      }
+    };
+  }
+
   function progressoCiclo(pessoaId) {
     var p = getPessoa(pessoaId);
     if (!p) return null;
@@ -5853,6 +5928,7 @@
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
+    horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
     diarioDaTurma: diarioDaTurma,
     MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
