@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-c",
+  numero: "2026.07.27-d",
   data: "27/07/2026",
-  nota: "Folha só de quem é da equipe, funções em dropdown múltiplo e menu reorganizado"
+  nota: "Ajustes no cadastro na Central e correção do valor fixo que sumia da folha"
 };

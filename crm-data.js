@@ -4537,6 +4537,75 @@
     return equipeLista().filter(function (m) { return m.nome === n; })[0];
   }
 
+  // ── FUROS DE CADASTRO ─────────────────────────────────────────
+  //
+  // Coisas que ninguém vai procurar mas que travam dinheiro ou deixam
+  // aluna sem dono. Cada uma é um afazer da gestora: tem o que fazer e
+  // onde fazer, não é só um número numa tela de relatório.
+  function furosDeCadastro() {
+    var out = [];
+
+    // aluna sem professora: ninguém acompanha, ninguém dá chamada por ela
+    carteiraProfessoras().semProfessora.forEach(function (a) {
+      out.push({ tipo: "aluna_sem_professora", urg: 1,
+        titulo: a.nome + " está sem professora",
+        detalhe: (a.turma && a.turma !== "\u2014")
+          ? "Turma " + a.turma + " sem professora atribuída"
+          : "Sem turma e sem professora",
+        onde: "ISR - Turma.dc.html", ondeLabel: "Abrir a turma",
+        pessoaId: a.id });
+    });
+
+    // quem dá aula sem cadastro: o pagamento fica retido
+    var folha = folhaPagamento();
+    (folha.semCadastro || []).forEach(function (s) {
+      out.push({ tipo: "professora_sem_cadastro", urg: 1,
+        titulo: s.nome + " dá aula e não está na equipe",
+        detalhe: s.aPagar
+          ? fmtMoney(configPagamento().moeda, s.aPagar) + " retidos até o cadastro"
+          : "Sem cadastro, sem acesso e sem remuneração combinada",
+        onde: "ISR - Equipe.dc.html", ondeLabel: "Cadastrar",
+        nome: s.nome });
+    });
+
+    // valor combinado sem forma de pagamento: o número está lá e não paga
+    // ninguém. Acontecia por um bug do formulário, e o dado ficou.
+    equipeLista().forEach(function (m) {
+      if (!(m.valor > 0) || m.valorTipo) return;
+      out.push({ tipo: "remuneracao_incompleta", urg: 1,
+        titulo: m.nome + " tem " + fmtMoney(m.moeda || "R$", m.valor) + " no cadastro sem forma de pagamento",
+        detalhe: "Sem escolher \u201ccomo recebe\u201d, o valor não entra na folha",
+        onde: "ISR - Equipe.dc.html", ondeLabel: "Corrigir",
+        nome: m.nome });
+    });
+
+    // turma que não fecha o mínimo: decisão de juntar ou encerrar
+    turmasAbaixoDoMinimo().forEach(function (u) {
+      out.push({ tipo: "turma_abaixo_minimo", urg: 2,
+        titulo: u.label + " com " + u.alunas
+          + (u.alunas === 1 ? " aluna" : " alunas"),
+        detalhe: "Faltam " + u.faltam + " para o mínimo de " + MINIMO_TURMA,
+        onde: "ISR - Turmas e Projetos.dc.html", ondeLabel: "Ver turmas" });
+    });
+
+    // contrato vencendo sem renovação aberta
+    loadPessoas().forEach(function (p) {
+      if (p.status !== "aluna") return;
+      var c = contratoVigente(p);
+      if (!c || !c.fim) return;
+      var dias = daysBetween(today(), parseISO(c.fim));
+      if (dias < 0 || dias > 45) return;
+      if (p.renovacao && p.renovacao !== "a_abordar") return;
+      out.push({ tipo: "renovacao_parada", urg: 2,
+        titulo: p.nome + " termina o ciclo em " + dias + " dias",
+        detalhe: "Conversa de renovação ainda não começou",
+        onde: "ISR - Alunas.dc.html", ondeLabel: "Abrir",
+        pessoaId: p.id });
+    });
+
+    return out.sort(function (a, b) { return a.urg - b.urg; });
+  }
+
   // Todas as professoras do mês, com o total da folha.
   function folhaPagamento(mesKey) {
     var mes = mesKey || mesAtualKey();
@@ -6275,6 +6344,7 @@
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     receitaParticularesNoMes: receitaParticularesNoMes,
+    furosDeCadastro: furosDeCadastro,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
