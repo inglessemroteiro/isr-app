@@ -5035,8 +5035,54 @@
     { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", custo: 400 },
     { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", custo: 600 },
     { id: "rg9", nome: "Sessão de preparação pra entrevista", cat: "carreira", custo: 900 },
-    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "comunidade", custo: 1200, vip: true }
+    { id: "rg10", nome: "1 mês no grupo VIP de conversação", cat: "comunidade", custo: 1200, vip: true },
+    // FLIN é prática de conversação com IA. Vale acesso por tempo, não por
+    // sessão — e não conta hora de aula: o certificado é de aula com
+    // professora.
+    { id: "flin7",  nome: "FLIN · 7 dias de prática com IA",  cat: "flin", custo: 150, flin: 7 },
+    { id: "flin30", nome: "FLIN · 30 dias de prática com IA", cat: "flin", custo: 500, flin: 30 }
   ];
+
+  // ── FLIN ──────────────────────────────────────────────────────
+  //
+  // O acesso é por período e sai dos ISR Miles. O link fica em um lugar só;
+  // se a ferramenta mudar de endereço, muda aqui.
+  var FLIN_KEY = "isr_flin_url_v1";
+  var FLIN_URL_PADRAO = "";
+
+  function flinUrl() {
+    try { return localStorage.getItem(FLIN_KEY) || FLIN_URL_PADRAO; } catch (e) { return FLIN_URL_PADRAO; }
+  }
+  function setFlinUrl(url) {
+    try { localStorage.setItem(FLIN_KEY, (url || "").trim()); } catch (e) {}
+    agendarSync();
+    return flinUrl();
+  }
+
+  function liberarFlin(pessoaId, dias) {
+    var n = parseInt(dias, 10) || 7;
+    return mutate(pessoaId, function (p) {
+      // renovar antes de vencer soma no que resta, não recomeça
+      var hoje = today();
+      var fim = p.flin && p.flin.ate ? parseISO(p.flin.ate) : null;
+      var base = fim && fim > hoje ? fim : hoje;
+      var novo = new Date(base); novo.setDate(novo.getDate() + n);
+      p.flin = { desde: (p.flin && p.flin.desde) || iso(hoje), ate: iso(novo) };
+      pushHist(p, "moedas", "FLIN liberado por " + n + " dias · até " + ddmm(iso(novo)));
+    });
+  }
+
+  function flinDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    var url = flinUrl();
+    if (!p || !p.flin || !p.flin.ate) {
+      return { ativo: false, temLink: !!url, url: url, diasRestantes: 0, ate: "" };
+    }
+    var fim = parseISO(p.flin.ate);
+    var dias = fim ? daysBetween(today(), fim) : -1;
+    return { ativo: dias >= 0, temLink: !!url, url: url,
+      diasRestantes: Math.max(0, dias), ate: p.flin.ate, desde: p.flin.desde };
+  }
   function resgatarRecompensa(pessoaId, resgateId) {
     var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
     var p = getPessoa(pessoaId);
@@ -5044,6 +5090,11 @@
     var saldo = moedasDe(pessoaId).total;
     if (saldo < r.custo) return { ok: false, faltam: r.custo - saldo };
     addMoedas(pessoaId, -r.custo, "Resgate: " + r.nome);
+    // o FLIN é liberado na hora: não precisa de ninguém entregar nada
+    if (r.flin) {
+      liberarFlin(pessoaId, r.flin);
+      return { ok: true, flin: flinDaAluna(pessoaId) };
+    }
     addTarefa({ titulo: "Entregar resgate · " + r.nome + " · " + p.nome,
       dono: "Gabi", prazo: iso(today()), por: p.nome });
     return { ok: true };
@@ -5999,6 +6050,7 @@
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
+    flinUrl: flinUrl, setFlinUrl: setFlinUrl, flinDaAluna: flinDaAluna, liberarFlin: liberarFlin,
     historicoDeNiveis: historicoDeNiveis,
     registrarAcessoAluna: registrarAcessoAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
