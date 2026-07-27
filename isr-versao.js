@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-d",
+  numero: "2026.07.27-e",
   data: "27/07/2026",
-  nota: "Ajustes no cadastro na Central e correção do valor fixo que sumia da folha"
+  nota: "A folha entra no Caixa, saldo consolidado e conferência das contas"
 };
