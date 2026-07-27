@@ -51,9 +51,15 @@
     <!-- PERÍODO -->
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
       <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; font-weight: 700;">Período</span>
-      <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="5">
+      <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="6">
         <button onclick="{{ pd.onPick }}" style="border: 1px solid #e5dccf; background: {{ pd.bg }}; color: {{ pd.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.label }}</button>
       </sc-for>
+      <sc-if value="{{ periodoLivre }}">
+        <span style="font-size: 11px; color: #9b8b7e;">de</span>
+        <input ref="{{ deRef }}" type="date" oninput="{{ onDatas }}" style="padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <span style="font-size: 11px; color: #9b8b7e;">até</span>
+        <input ref="{{ ateRef }}" type="date" oninput="{{ onDatas }}" style="padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+      </sc-if>
       <span style="font-size: 11.5px; color: #b3a693;">{{ periodoAviso }}</span>
     </div>
 
@@ -180,7 +186,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0, periodo: "tudo" };
+  state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0,
+            periodo: "tudo", de: "", ate: "" };
+  deRef = React.createRef(); ateRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
 
@@ -227,20 +235,35 @@ class Component extends DCLogic {
     }]);
 
     // ── período: fica com quem tem parcela no mês escolhido ──
+    // ── período: chips rápidos ou um intervalo de datas escolhido ──
+    // O mês de uma parcela vira o dia do vencimento, para o intervalo poder
+    // ser qualquer um — inclusive um dia só.
     const per = this.state.periodo || "tudo";
-    const mesesJanela = (function () {
+    const diaDaParcela = (c, m) => {
+      const dia = c.vencDia === "auto" || !c.vencDia ? 10 : parseInt(c.vencDia, 10) || 10;
+      return m.key + "-" + ("0" + Math.min(28, dia)).slice(-2);
+    };
+    const janela = (function () {
       if (per === "tudo") return null;
-      const out = [];
-      const n = per === "mes" ? 1 : (per === "3" ? 3 : 6);
-      const d = new Date(); d.setDate(1);
-      for (let i = 0; i < n; i++) {
-        out.push(d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2));
-        d.setMonth(d.getMonth() + 1);
+      if (per === "livre") {
+        const de = this.state.de || "";
+        const ate = this.state.ate || "";
+        if (!de && !ate) return null;
+        return { de: de || "0000-00-00", ate: ate || "9999-12-31" };
       }
-      return out;
-    })();
-    const noPeriodo = c => !mesesJanela
-      || (c.meses || []).some(m => mesesJanela.indexOf(m.key) >= 0);
+      const n = per === "mes" ? 1 : (per === "3" ? 3 : (per === "6" ? 6 : -6));
+      const d = new Date(); d.setDate(1);
+      if (n < 0) d.setMonth(d.getMonth() + n);   // "últimos 6 meses" olha para trás
+      const ini = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-01";
+      const f2 = new Date(d); f2.setMonth(f2.getMonth() + Math.abs(n));
+      const fim = f2.getFullYear() + "-" + ("0" + (f2.getMonth() + 1)).slice(-2) + "-01";
+      return { de: ini, ate: fim };
+    }).call(this);
+    const noPeriodo = c => !janela
+      || (c.meses || []).some(m => {
+        const d = diaDaParcela(c, m);
+        return d >= janela.de && d <= janela.ate;
+      });
 
     const ftest = (FILTROS.filter(f => f.id === active)[0] || FILTROS[0]).test;
     const visiveis = all.filter(c => ftest(CRM.cobrancaStatus(c))).filter(noPeriodo);
@@ -311,20 +334,30 @@ class Component extends DCLogic {
     });
 
     return {
+      periodoLivre: per === "livre",
+      deRef: this.deRef, ateRef: this.ateRef,
+      onDatas: () => this.setState({
+        de: (this.deRef.current && this.deRef.current.value) || "",
+        ate: (this.ateRef.current && this.ateRef.current.value) || "",
+        openId: null
+      }),
       periodos: [
         { id: "tudo", label: "Tudo" },
         { id: "mes", label: "Este mês" },
-        { id: "3", label: "3 meses" },
-        { id: "6", label: "6 meses" }
+        { id: "3", label: "Próx. 3 meses" },
+        { id: "6", label: "Próx. 6 meses" },
+        { id: "passado", label: "Últimos 6 meses" },
+        { id: "livre", label: "Escolher datas" }
       ].map(x => ({
         label: x.label,
         bg: per === x.id ? "#164951" : "#fff",
         fg: per === x.id ? "#fff" : "#164951",
         onPick: () => this.setState({ periodo: x.id, openId: null })
       })),
-      periodoAviso: per === "tudo"
+      periodoAviso: (per === "tudo" || !janela)
         ? "Todas as cobranças."
-        : visiveis.length + (visiveis.length === 1 ? " cobrança com parcela no período" : " cobranças com parcela no período"),
+        : visiveis.length + (visiveis.length === 1 ? " cobrança com parcela entre " : " cobranças com parcela entre ")
+          + CRM.ddmm(janela.de) + " e " + CRM.ddmm(janela.ate),
       abasTabs, items, renovs, mesLabel,
       abaParcelas: abaParcelas, abaRenov: !abaParcelas,
       vazio: items.length === 0, renovVazia: renovs.length === 0,

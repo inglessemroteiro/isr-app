@@ -27,8 +27,8 @@
     { id: "a_contatar", label: "A contatar", short: "A contatar", color: "#e07856", bg: "rgba(224,120,86,0.14)" },
     { id: "em_conversa", label: "Em conversa", short: "Em conversa", color: "#2a9d8f", bg: "rgba(42,157,143,0.14)" },
     { id: "reuniao", label: "Reunião marcada", short: "Reunião", color: "#6b5b95", bg: "rgba(107,91,149,0.14)" },
-    { id: "contrato", label: "Condições combinadas", short: "Contrato", color: "#348a8e", bg: "rgba(52,138,142,0.14)" },
-    { id: "matriculado", label: "Matriculada", short: "Matriculados", color: "#5a9e4b", bg: "rgba(90,158,75,0.16)" },
+    { id: "contrato", label: "Proposta enviada", short: "Proposta", color: "#348a8e", bg: "rgba(52,138,142,0.14)" },
+    { id: "matriculado", label: "Fechado · matriculada", short: "Fechados", color: "#5a9e4b", bg: "rgba(90,158,75,0.16)" },
     { id: "perdido", label: "Perdido", short: "Perdidos", color: "#9b8b7e", bg: "rgba(155,139,126,0.16)" }
   ];
 
@@ -37,9 +37,9 @@
     { id: "a_contatar", label: "A contatar", stage: "a_contatar" },
     { id: "em_conversa", label: "Em conversa", stage: "em_conversa" },
     { id: "reuniao", label: "Reunião", stage: "reuniao" },
-    { id: "contrato", label: "Contrato", stage: "contrato" },
+    { id: "contrato", label: "Proposta", stage: "contrato" },
     { id: "incompletas", label: "Incompletas", stage: "incompleta" },
-    { id: "matriculados", label: "Matriculados", stage: "matriculado" },
+    { id: "matriculados", label: "Fechados", stage: "matriculado" },
     { id: "perdidos", label: "Perdidos", stage: "perdido" }
   ];
 
@@ -1661,6 +1661,42 @@
     });
     return m;
   })();
+  // ── SATISFAÇÃO E DESENVOLVIMENTO ──────────────────────────────
+  //
+  // São as duas coisas que a escola acompanha. Satisfação vem da nota que a
+  // aluna dá à aula; desenvolvimento vem de estar presente, entregar tarefa
+  // e andar no ciclo. Com 100 alunas não dá para ler tudo: a fila usa estes
+  // dois eixos para dizer quem precisa de atenção primeiro.
+  function satisfacaoDe(pessoaId) {
+    var ps = pulsosDe(pessoaId).slice().sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    if (!ps.length) return { media: null, n: 0, ultima: null, tendencia: 0, nivel: "sem" };
+    var recentes = ps.slice(0, 3);
+    var media = recentes.reduce(function (s, x) { return s + x.nota; }, 0) / recentes.length;
+    var antes = ps.slice(3, 6);
+    var mediaAntes = antes.length
+      ? antes.reduce(function (s, x) { return s + x.nota; }, 0) / antes.length : null;
+    var tend = mediaAntes === null ? 0 : (media > mediaAntes + 0.3 ? 1 : (media < mediaAntes - 0.3 ? -1 : 0));
+    var nivel = media >= 4 ? "alta" : (media >= 3 ? "media" : "baixa");
+    return { media: Math.round(media * 10) / 10, n: ps.length, ultima: ps[0],
+      tendencia: tend, nivel: nivel };
+  }
+
+  function desenvolvimentoDe(pessoaId) {
+    var j = jornadaDaAluna(pessoaId);
+    var tc = tarefasDeCasa(pessoaId);
+    var pc = progressoCiclo(pessoaId);
+    var freq = j.frequencia === null ? null : j.frequencia;
+    var tar = tc.cobradas ? tc.pct : null;
+    // o índice é a média do que existe; o que não foi medido não pesa
+    var partes = [freq, tar].filter(function (x) { return x !== null; });
+    var indice = partes.length
+      ? Math.round(partes.reduce(function (s, x) { return s + x; }, 0) / partes.length) : null;
+    var nivel = indice === null ? "sem" : (indice >= 85 ? "alto" : (indice >= 70 ? "medio" : "baixo"));
+    return { frequencia: freq, tarefas: tar, aulas: j.aulas, faltas: j.faltas,
+      cicloFeitas: pc.feitas, cicloTotal: pc.total, cicloPct: pc.pct,
+      indice: indice, nivel: nivel };
+  }
+
   function filaAcompanhamento() {
     return loadPessoas()
       .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
@@ -1679,6 +1715,7 @@
           diasSemToque: s.diasSemToque, ultimoToque: ultimoToque(p.id),
           pulso: s.pulso, tendencia: s.tendencia, faltas: s.faltas, atrasadas: s.atrasadasN,
           diasDeCasa: s.diasDeCasa, diasPraRenovar: s.diasPraRenovar,
+          satisfacao: satisfacaoDe(p.id), desenvolvimento: desenvolvimentoDe(p.id),
           tipoSugerido: visiveis.length ? visiveis[0].tipo : "checkin"
         };
       })
@@ -5835,6 +5872,7 @@
     TAGS_SUGERIDAS: TAGS_SUGERIDAS, addTag: addTag, removeTag: removeTag, todasAsTags: todasAsTags,
     semanaAtualPrograma: semanaAtualPrograma, pendenciasPrograma: pendenciasPrograma,
     // acompanhamento
+    satisfacaoDe: satisfacaoDe, desenvolvimentoDe: desenvolvimentoDe,
     TOQUE_TIPOS: TOQUE_TIPOS, PULSO_META: PULSO_META, MOTIVOS_TOQUE: MOTIVOS_TOQUE,
     registrarToque: registrarToque, toquesDe: toquesDe, ultimoToque: ultimoToque,
     toquesLista: toquesLista, diasSemToque: diasSemToque,

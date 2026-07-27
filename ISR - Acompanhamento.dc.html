@@ -123,7 +123,7 @@
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
       <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Alunas a contatar</span>
       <span style="flex: 1;"></span>
-      <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="3">
+      <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="6">
         <button onclick="{{ ft.onClick }}" style="border: 1px solid {{ ft.borda }}; background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ft.label }}</button>
       </sc-for>
     </div>
@@ -145,6 +145,18 @@
                 <span style="background: rgba(0,0,0,0.04); color: {{ mt.cor }}; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">{{ mt.label }}</span>
               </sc-for>
             </div>
+          </div>
+
+          <div style="flex: none; min-width: 108px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Satisfação</div>
+            <div style="font-size: 15px; font-weight: 700; color: {{ f.satisfacaoCor }}; margin-top: 2px;">{{ f.satisfacaoValor }}</div>
+            <div style="font-size: 10.5px; color: #b3a693; margin-top: 1px;">{{ f.satisfacaoSub }}</div>
+          </div>
+
+          <div style="flex: none; min-width: 130px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700;">Desenvolvimento</div>
+            <div style="font-size: 15px; font-weight: 700; color: {{ f.desenvCor }}; margin-top: 2px;">{{ f.desenvValor }}</div>
+            <div style="font-size: 10.5px; color: #b3a693; margin-top: 1px;">{{ f.desenvSub }}</div>
           </div>
 
           <div style="flex: none; min-width: 96px;">
@@ -264,20 +276,32 @@ class Component extends DCLogic {
     const mediaMeta = media ? CRM.pulsoMeta(Math.round(media)) : null;
 
     // ── filtros ──
+    // A escola acompanha duas coisas: satisfação e desenvolvimento. Com 100
+    // alunas não dá para ler a lista inteira, então cada filtro é uma fila
+    // curta, com a contagem no próprio botão.
+    const testes = {
+      pendentes: f => !f.tocadaEstaSemana,
+      insatisfeita: f => f.satisfacao.nivel === "baixa"
+        || (f.satisfacao.nivel === "media" && f.satisfacao.tendencia < 0),
+      parada: f => f.desenvolvimento.nivel === "baixo",
+      semNota: f => f.satisfacao.nivel === "sem",
+      risco: f => f.peso >= 35,
+      todas: () => true
+    };
     const opcoes = [
       { id: "pendentes", label: "Sem contato esta semana" },
+      { id: "insatisfeita", label: "Satisfação em queda" },
+      { id: "parada", label: "Desenvolvimento baixo" },
+      { id: "semNota", label: "Sem avaliação" },
       { id: "risco", label: "Prioridade alta" },
       { id: "todas", label: "Todas" }
     ];
     const filtros = opcoes.map(o => Object.assign(
-      { label: o.label, onClick: () => this.setState({ filtro: o.id }) },
+      { label: o.label + " · " + toda.filter(testes[o.id]).length,
+        onClick: () => this.setState({ filtro: o.id }) },
       this.pill(this.state.filtro === o.id, "#164951")));
 
-    const filtrada = toda.filter(f => {
-      if (this.state.filtro === "pendentes") return !f.tocadaEstaSemana;
-      if (this.state.filtro === "risco") return f.peso >= 35;
-      return true;
-    });
+    const filtrada = toda.filter(testes[this.state.filtro] || testes.todas);
 
     // ── cada aluna ──
     const fila = filtrada.map(f => {
@@ -315,6 +339,23 @@ class Component extends DCLogic {
         corBorda: f.motivos.length ? CRM.MOTIVOS_TOQUE[f.motivos[0]].cor : "#9ec970",
         motivos: f.motivos.map(m => ({ label: CRM.MOTIVOS_TOQUE[m].label, cor: CRM.MOTIVOS_TOQUE[m].cor })),
 
+        satisfacaoValor: f.satisfacao.media === null ? "—" : f.satisfacao.media + " de 5",
+        satisfacaoCor: f.satisfacao.nivel === "alta" ? "#5a9e4b"
+          : (f.satisfacao.nivel === "media" ? "#d4a574"
+          : (f.satisfacao.nivel === "baixa" ? "#cf6b5c" : "#b3a693")),
+        satisfacaoSub: f.satisfacao.n
+          ? f.satisfacao.n + (f.satisfacao.n === 1 ? " nota" : " notas")
+            + (f.satisfacao.tendencia > 0 ? " · subindo" : (f.satisfacao.tendencia < 0 ? " · caindo" : ""))
+          : "ainda não avaliou",
+        desenvValor: f.desenvolvimento.indice === null ? "—" : f.desenvolvimento.indice + "%",
+        desenvCor: f.desenvolvimento.nivel === "alto" ? "#5a9e4b"
+          : (f.desenvolvimento.nivel === "medio" ? "#d4a574"
+          : (f.desenvolvimento.nivel === "baixo" ? "#cf6b5c" : "#b3a693")),
+        desenvSub: [
+          f.desenvolvimento.frequencia === null ? "" : "presença " + f.desenvolvimento.frequencia + "%",
+          f.desenvolvimento.tarefas === null ? "" : "tarefa " + f.desenvolvimento.tarefas + "%",
+          f.desenvolvimento.cicloTotal ? "aula " + f.desenvolvimento.cicloFeitas + " de " + f.desenvolvimento.cicloTotal : ""
+        ].filter(Boolean).join(" · ") || "sem chamada ainda",
         pulsoLabel: f.pulso ? (CRM.pulsoMeta(f.pulso.nota).label + (tend > 0 ? " ↑" : (tend < 0 ? " ↓" : ""))) : "Sem avaliação",
         pulsoCor: f.pulso ? CRM.pulsoMeta(f.pulso.nota).cor : "#b8ada0",
         pulsoQuando: f.pulso ? CRM.ddmm(f.pulso.data) : "—",
