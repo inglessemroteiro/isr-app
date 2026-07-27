@@ -170,6 +170,22 @@
       </div>
       <p style="margin: 0 0 14px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 720px;">Calculado do que já está registrado: turmas, alunas ativas, aulas dadas, frequência e tarefas. A folha completa mostra a conta linha por linha e deixa mudar as regras.</p>
 
+      <sc-if value="{{ temSemCadastro }}">
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700; margin-bottom: 4px;">Fora do cadastro</div>
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ semCadastroFrase }}</p>
+          <sc-for list="{{ semCadastro }}" as="sc" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid #f3d4c8;">
+              <div style="flex: 1; min-width: 160px;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ sc.nome }}</div>
+                <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ sc.detalhe }}</div>
+              </div>
+              <button onclick="{{ sc.onCadastrar }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cadastrar na equipe</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
         <sc-if value="{{ semFolha }}">
           <div style="padding: 22px 18px; font-size: 13px; color: #9b8b7e; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
@@ -177,7 +193,12 @@
         <sc-for list="{{ folha }}" as="fl" hint-placeholder-count="4">
           <div class="eq-folha-linha" style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #f2e9dd;">
             <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ fl.nome }}</div>
+              <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ fl.nome }}</span>
+                <sc-if value="{{ fl.foraDoCadastro }}">
+                  <span style="flex: none; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #c8622f; background: #fdf1ec; border: 1px solid #f3d4c8; padding: 2px 8px; border-radius: 999px;">Sem cadastro</span>
+                </sc-if>
+              </div>
               <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fl.detalhe }}</div>
             </div>
             <span style="flex: none; font-size: 15px; font-weight: 700; color: #164951;">{{ fl.valor }}</span>
@@ -420,16 +441,24 @@ class Component extends DCLogic {
     const fp = CRM.folhaPagamento();
     const com = CRM.comissaoComercial ? CRM.comissaoComercial() : null;
     const $$ = v => CRM.fmtMoney(fp.moeda || "R$", v);
-    const linhasFolha = fp.linhas.map(l => ({
+    // turma e aluna têm que ser contadas na mesma base, senão a linha diz
+    // "3 turmas · 3 alunas" somando alunas de turma que nem entrou na conta
+    const linhasFolha = fp.linhas.map(l => {
+      const ativas = l.turmas.filter(x => x.alunas > 0 || x.aulas > 0);
+      const nAlunas = ativas.reduce((s, x) => s + x.alunas, 0);
+      return {
       nome: l.nome,
-      detalhe: l.turmas.filter(x => x.alunas > 0 || x.aulas > 0).length
-        + " turma(s) · " + l.turmas.reduce((s, x) => s + x.alunas, 0) + " aluna(s)"
+      detalhe: ativas.length + (ativas.length === 1 ? " turma · " : " turmas · ")
+        + nAlunas + (nAlunas === 1 ? " aluna" : " alunas")
         + (l.particulares.aulas ? " · " + l.particulares.aulas + " particular(es)" : ""),
+      foraDoCadastro: l.cadastrada === false,
       valor: $$(l.total)
-    }));
+      };
+    });
     (fp.fixos || []).forEach(l => linhasFolha.push({
       nome: l.nome,
       detalhe: "valor mensal do cadastro",
+      foraDoCadastro: false,
       valor: $$(l.total)
     }));
     if (com && com.total > 0) {
@@ -448,6 +477,22 @@ class Component extends DCLogic {
         + " de " + fp.mes.slice(0, 4),
       folha: linhasFolha, semFolha: linhasFolha.length === 0,
       folhaTotal: $$(totalFolha),
+
+      // Quem dá aula e não está no cadastro entra na folha do mesmo jeito —
+      // trabalhou, tem a receber — mas sem e-mail, acesso, carteira nem
+      // remuneração combinada. O aviso fica aqui até alguém resolver.
+      temSemCadastro: (fp.semCadastro || []).length > 0,
+      semCadastroFrase: (fp.semCadastro || []).length === 1
+        ? "Uma pessoa dá aula sem estar no cadastro da equipe. Ela entra na folha, mas fica sem e-mail, sem acesso ao painel e sem remuneração combinada."
+        : (fp.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. Elas entram na folha, mas ficam sem e-mail, sem acesso ao painel e sem remuneração combinada.",
+      semCadastro: (fp.semCadastro || []).map(s => ({
+        nome: s.nome,
+        detalhe: (s.turmas.length
+            ? s.turmas.length + (s.turmas.length === 1 ? " turma" : " turmas")
+            : "sem turma atribuída")
+          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : ""),
+        onCadastrar: () => { CRM.cadastrarProfessora(s.nome); this.bump(); }
+      })),
 
 
       carteiraNumeros: [

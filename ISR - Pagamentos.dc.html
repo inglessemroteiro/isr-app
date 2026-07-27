@@ -48,6 +48,23 @@
       </div>
     </div>
 
+    <!-- QUEM DÁ AULA E NÃO ESTÁ NO CADASTRO -->
+    <sc-if value="{{ temSemCadastro }}">
+      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700; margin-bottom: 5px;">Fora do cadastro da equipe</div>
+        <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 720px;">{{ semCadastroFrase }}</p>
+        <sc-for list="{{ semCadastro }}" as="sc" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid #f3d4c8;">
+            <div style="flex: 1; min-width: 160px;">
+              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ sc.nome }}</div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ sc.detalhe }}</div>
+            </div>
+            <button onclick="{{ sc.onCadastrar }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cadastrar na equipe</button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
     <!-- PROFESSORAS -->
     <sc-if value="{{ semLinhas }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 20px; margin-bottom: 16px; font-size: 13px; color: #8a7c6b; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
@@ -57,7 +74,12 @@
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;">
           <div>
-            <div style="font-size: 17px; font-weight: 700; color: #164951;">{{ ln.nome }}</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 17px; font-weight: 700; color: #164951;">{{ ln.nome }}</span>
+              <sc-if value="{{ ln.foraDoCadastro }}">
+                <span style="flex: none; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #c8622f; background: #fdf1ec; border: 1px solid #f3d4c8; padding: 3px 9px; border-radius: 999px;">Sem cadastro</span>
+              </sc-if>
+            </div>
             <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px;">{{ ln.resumo }}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
@@ -364,6 +386,7 @@ class Component extends DCLogic {
       const pago = CRM.pagamentoFeito(p.nome, mes);
       return {
         nome: p.nome,
+        foraDoCadastro: p.cadastrada === false,
         resumo: (function () {
           if (!ativas.length) return "sem turma com movimento neste mês";
           const nAl = ativas.reduce((s, t) => s + t.alunas, 0);
@@ -489,6 +512,22 @@ class Component extends DCLogic {
       resumo, fixos,
 
       linhas, semLinhas: linhas.length === 0,
+
+      // Nome escrito na turma não cria pessoa. Quem dá aula sem cadastro
+      // entra na folha — trabalhou — mas fica sem e-mail, sem acesso ao
+      // painel, sem carteira e sem remuneração combinada.
+      temSemCadastro: (folha.semCadastro || []).length > 0,
+      semCadastroFrase: (folha.semCadastro || []).length === 1
+        ? "Uma pessoa dá aula sem estar no cadastro da equipe. Ela aparece na folha porque trabalhou, mas fica sem e-mail, sem acesso ao painel do professor e sem remuneração combinada."
+        : (folha.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. Elas aparecem na folha porque trabalharam, mas ficam sem e-mail, sem acesso ao painel do professor e sem remuneração combinada.",
+      semCadastro: (folha.semCadastro || []).map(s => ({
+        nome: s.nome,
+        detalhe: (s.turmas.length
+            ? s.turmas.join(" · ")
+            : "sem turma atribuída")
+          + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : ""),
+        onCadastrar: () => { CRM.cadastrarProfessora(s.nome); this.bump(); }
+      })),
 
       comercialResumo: com.nVendas
         ? com.nVendas + (com.nVendas === 1 ? " venda · " : " vendas · ")

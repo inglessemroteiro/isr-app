@@ -3290,7 +3290,11 @@
     { id: "eqCarla", nome: "Carla", email: "comercial.inglessemroteiro@gmail.com",
       papeis: ["comercial", "professora"], valorTipo: "", valor: 0, moeda: "R$" },
     { id: "eqErika", nome: "Érika", email: "erikainglessemroteiro@gmail.com",
-      papeis: ["operacao"], valorTipo: "", valor: 0, moeda: "R$" }
+      papeis: ["operacao"], valorTipo: "", valor: 0, moeda: "R$" },
+    { id: "eqAdrielly", nome: "Adrielly", email: "",
+      papeis: ["professora"], valorTipo: "", valor: 0, moeda: "R$" },
+    { id: "eqRicky", nome: "Ricky", email: "",
+      papeis: ["professora"], valorTipo: "", valor: 0, moeda: "R$" }
   ];
   function equipeLista() {
     try {
@@ -4463,6 +4467,45 @@
       totalAguardando: aguardando.reduce(function (s, x) { return s + x.valor; }, 0) };
   }
 
+  // ── QUEM DÁ AULA SEM ESTAR NA EQUIPE ──────────────────────────
+  //
+  // A Equipe é o cadastro das pessoas. A turma guarda só o nome de quem
+  // dá a aula. Quando alguém é escrito na turma sem passar pelo cadastro,
+  // aparece na folha de pagamento e em lugar nenhum mais: não tem e-mail,
+  // não tem acesso, não tem carteira, não tem remuneração combinada.
+  // A folha não pode esconder essa pessoa — ela deu aula e tem a receber —
+  // mas também não pode fingir que está tudo certo.
+  function professorasSemCadastro() {
+    var cadastradas = {};
+    equipeLista().forEach(function (m) { cadastradas[m.nome] = true; });
+    var achadas = {};
+    turmasLista().forEach(function (u) {
+      if (!u.teacher || cadastradas[u.teacher]) return;
+      achadas[u.teacher] = achadas[u.teacher] || { nome: u.teacher, turmas: [], alunas: 0 };
+      achadas[u.teacher].turmas.push(u.nivel + " · " + u.turma);
+    });
+    loadPessoas().forEach(function (p) {
+      if (!p.professora || cadastradas[p.professora]) return;
+      achadas[p.professora] = achadas[p.professora] || { nome: p.professora, turmas: [], alunas: 0 };
+      if (p.status === "aluna") achadas[p.professora].alunas++;
+    });
+    return Object.keys(achadas).map(function (k) { return achadas[k]; })
+      .sort(function (a, b) { return a.nome < b.nome ? -1 : 1; });
+  }
+
+  // Cadastra na Equipe alguém que já dá aula. É o atalho para resolver o
+  // aviso sem ter que redigitar o nome e correr o risco de errar — o nome
+  // é a chave que liga turma, aluna e folha.
+  function cadastrarProfessora(nome, extra) {
+    var n = (nome || "").trim();
+    if (!n) return null;
+    var ja = equipeLista().filter(function (m) { return m.nome === n; })[0];
+    if (ja) return ja;
+    addEquipe(Object.assign({ nome: n, email: "", papeis: ["professora"],
+      valorTipo: "", valor: 0, moeda: configPagamento().moeda }, extra || {}));
+    return equipeLista().filter(function (m) { return m.nome === n; })[0];
+  }
+
   // Todas as professoras do mês, com o total da folha.
   function folhaPagamento(mesKey) {
     var mes = mesKey || mesAtualKey();
@@ -4475,8 +4518,11 @@
     });
     // quem não tem nada a receber não é linha da folha. Turma parada no
     // cadastro não põe ninguém aqui.
+    var cadastradas = {};
+    equipeLista().forEach(function (m) { cadastradas[m.nome] = true; });
     var linhas = nomes.map(function (n) { return pagamentoProfessora(n, mes); })
-      .filter(function (x) { return x.total > 0; });
+      .filter(function (x) { return x.total > 0; })
+      .map(function (x) { x.cadastrada = !!cadastradas[x.nome]; return x; });
     var total = linhas.reduce(function (s, x) { return s + x.total; }, 0);
     var receita = linhas.reduce(function (s, x) { return s + x.receitaTurmas; }, 0);
     // quem tem valor mensal no cadastro da Equipe — operação, prestadoras —
@@ -4493,7 +4539,9 @@
 
     var pagas = linhas.concat(fixos).filter(function (x) { return !!pagamentoFeito(x.nome, mes); });
     var totalPago = pagas.reduce(function (s, x) { return s + x.total; }, 0);
+    var semCadastro = professorasSemCadastro();
     return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      semCadastro: semCadastro, nSemCadastro: semCadastro.length,
       fixos: fixos, totalFixos: totalFixos, totalComFixos: total + totalFixos,
       vencimento: vencimentoDaFolha(mes),
       nPagas: pagas.length, nPagaveis: linhas.length + fixos.length,
@@ -6176,6 +6224,7 @@
     vagasDoMes: vagasDoMes, resgatesAll: resgatesAll,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
+    professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
