@@ -199,6 +199,33 @@
             <button onclick="{{ onSalvarRegras }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Salvar regras</button>
           </div>
         </div>
+
+        <!-- FAIXAS DA COMISSÃO -->
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f2e9dd;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Faixas da comissão</div>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">A porcentagem sobe conforme o valor fechado em contrato no mês. Cada degrau vale a partir do valor indicado até o próximo. Deixe a porcentagem em branco para apagar o degrau.</p>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.7fr 0.9fr 1.2fr; gap: 8px; margin-bottom: 6px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">A partir de</div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Comissão %</div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Bônus</div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Nome da faixa</div>
+          </div>
+
+          <sc-for list="{{ faixas }}" as="fa" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.7fr 0.9fr 1.2fr; gap: 8px; margin-bottom: 6px;">
+              <input ref="{{ fa.deRef }}" placeholder="{{ fa.de }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid {{ fa.borda }}; border-radius: 8px; background: {{ fa.bg }};" />
+              <input ref="{{ fa.pctRef }}" placeholder="{{ fa.pct }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid {{ fa.borda }}; border-radius: 8px; background: {{ fa.bg }};" />
+              <input ref="{{ fa.bonusRef }}" placeholder="{{ fa.bonus }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid {{ fa.borda }}; border-radius: 8px; background: {{ fa.bg }};" />
+              <input ref="{{ fa.nomeRef }}" placeholder="{{ fa.situacao }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid {{ fa.borda }}; border-radius: 8px; background: {{ fa.bg }};" />
+            </div>
+          </sc-for>
+
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+            <button onclick="{{ onSalvarFaixas }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: inherit;">Salvar faixas</button>
+            <span style="font-size: 11.5px; color: #b3a693;">{{ faixaAtualLabel }}</span>
+          </div>
+        </div>
       </sc-if>
     </div>
 
@@ -209,6 +236,7 @@
 class Component extends DCLogic {
   state = { mes: "", verRegras: false, tick: 0 };
   campoRefs = {};
+  faixaRefs = {};
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -393,14 +421,19 @@ class Component extends DCLogic {
       { cor: "#2a9d8f", titulo: "Comissão das vendas do mês",
         metricas: [
           { label: "Vendas", valor: String(com.nVendas), cor: "#164951" },
-          { label: "Faixa", valor: com.situacao, cor: "#164951" },
+          { label: "Contratos fechados", valor: $(com.faturamento), cor: "#164951" },
+          { label: "Faixa", valor: "a partir de " + $(com.faixaDe), cor: "#164951" },
           { label: "Percentual", valor: com.pct + "%", cor: "#164951" },
-          { label: "Contratos fechados", valor: $(com.faturamento), cor: "#164951" }
+          { label: "Próxima faixa",
+            valor: com.proximaFaixa
+              ? com.proximaFaixa.pct + "% · faltam " + $(com.faltaProxima)
+              : "última",
+            cor: com.proximaFaixa ? "#d4a574" : "#5a9e4b" }
         ],
         valor: $(com.comissao) }
     ];
     if (com.bonus) comercialItens.push({ cor: "#e07856", titulo: "Bônus por volume",
-      metricas: [{ label: "A partir de", valor: "8 vendas no mês", cor: "#164951" }],
+      metricas: [{ label: "Faixa", valor: "a partir de " + $(com.faixaDe), cor: "#164951" }],
       valor: $(com.bonus) });
 
     // o comercial também recebe depois do trabalho
@@ -455,7 +488,8 @@ class Component extends DCLogic {
       linhas, semLinhas: linhas.length === 0,
 
       comercialResumo: com.nVendas
-        ? com.nVendas + (com.nVendas === 1 ? " venda no mês · " : " vendas no mês · ") + com.situacao
+        ? com.nVendas + (com.nVendas === 1 ? " venda · " : " vendas · ")
+          + $(com.faturamento) + " em contrato · " + com.situacao
         : "sem venda registrada neste mês",
       comercialTotal: $(com.total),
       comercialCac: com.cac === null ? "" : "CAC " + com.cac + "%",
@@ -487,6 +521,61 @@ class Component extends DCLogic {
           + " de " + l.parcelas + " · " + l.pct + "%",
         valor: $(l.valor)
       })),
+
+      // ── faixas da comissão, editáveis ──
+      // Sete linhas: as que existem mais uma em branco para acrescentar.
+      faixas: (function () {
+        const atuais = CRM.faixasComissao();
+        const linhas = atuais.concat([{ de: "", pct: "", bonus: "", situacao: "" }]);
+        return linhas.map((f, i) => {
+          if (!this.faixaRefs[i]) {
+            this.faixaRefs[i] = { de: React.createRef(), pct: React.createRef(),
+              bonus: React.createRef(), nome: React.createRef() };
+          }
+          const r = this.faixaRefs[i];
+          const nova = i >= atuais.length;
+          const naFaixa = !nova && com.faixaDe === f.de;
+          return {
+            de: f.de === "" ? "novo degrau" : $(f.de),
+            pct: f.pct === "" ? "%" : f.pct + "%",
+            bonus: f.bonus === "" ? "bônus" : $(f.bonus || 0),
+            situacao: f.situacao || (nova ? "nome" : "—"),
+            bg: naFaixa ? "rgba(52,138,142,0.08)" : "#fff",
+            borda: naFaixa ? "#348a8e" : "#e5dccf",
+            deRef: r.de, pctRef: r.pct, bonusRef: r.bonus, nomeRef: r.nome
+          };
+        });
+      }).call(this),
+      faixaAtualLabel: com.faturamento
+        ? "Neste mês: " + $(com.faturamento) + " fechados · faixa de " + com.pct + "%"
+          + (com.proximaFaixa
+              ? " · faltam " + $(com.faltaProxima) + " para " + com.proximaFaixa.pct + "%"
+              : " · última faixa")
+        : "Nenhuma venda neste mês.",
+      onSalvarFaixas: () => {
+        const vv = r => ((r && r.current && r.current.value) || "").trim();
+        const atuais = CRM.faixasComissao();
+        const linhas = [];
+        Object.keys(this.faixaRefs).forEach(k => {
+          const i = parseInt(k, 10);
+          const r = this.faixaRefs[i];
+          const antiga = atuais[i] || { de: "", pct: "", bonus: "", situacao: "" };
+          const pct = vv(r.pct) || (antiga.pct === "" ? "" : String(antiga.pct));
+          if (!pct) return;                       // sem porcentagem, o degrau some
+          linhas.push({
+            de: vv(r.de) || String(antiga.de || 0),
+            pct: pct.replace("%", "").replace(",", "."),
+            bonus: vv(r.bonus) || String(antiga.bonus || 0),
+            situacao: vv(r.nome) || antiga.situacao || ""
+          });
+        });
+        CRM.setFaixasComissao(linhas);
+        Object.keys(this.faixaRefs).forEach(k => {
+          const r = this.faixaRefs[k];
+          ["de", "pct", "bonus", "nome"].forEach(c => { if (r[c].current) r[c].current.value = ""; });
+        });
+        this.bump();
+      },
 
       verRegras: this.state.verRegras,
       verRegrasLabel: this.state.verRegras ? "Fechar" : "Ver e mudar",

@@ -3750,6 +3750,22 @@
   }
 
   // Troca de turma: atualiza professora e registra na linha do tempo.
+  // Põe ou tira a pessoa de uma turma pelo rótulo. É o que a página da
+  // Turma usa: lá se pensa "quem está nesta turma", não "qual é a turma
+  // desta pessoa".
+  function setTurmaDaPessoa(id, turmaLabel, professora) {
+    return mutate(id, function (p) {
+      var antes = p.turma || "—";
+      p.turma = turmaLabel || "";
+      p.professora = turmaLabel ? (professora || p.professora || "") : "";
+      if (p.turma !== antes) {
+        pushHist(p, "estagio", turmaLabel
+          ? "Turma alterada · de " + antes + " para " + p.turma
+          : "Saiu da turma " + antes);
+      }
+    });
+  }
+
   function mudarTurma(id, turmaId) {
     return mutate(id, function (p) {
       var antes = p.turma || "—";
@@ -4189,25 +4205,54 @@
   //   lançada nos meses em que as parcelas correm.
   // A % depende de quantas vendas a pessoa fechou no mês, e a partir
   // de 8 vendas entra bônus.
-  var COMISSAO_FAIXAS = [
-    { vendas: 1,  pct: 1,   situacao: "Fora da meta" },
-    { vendas: 2,  pct: 1,   situacao: "Muito abaixo" },
-    { vendas: 3,  pct: 2,   situacao: "Abaixo" },
-    { vendas: 4,  pct: 2,   situacao: "Média" },
-    { vendas: 5,  pct: 2.5, situacao: "Desejado" },
-    { vendas: 6,  pct: 3,   situacao: "Over" },
-    { vendas: 7,  pct: 3,   situacao: "Over" },
-    { vendas: 8,  pct: 4,   situacao: "Over", bonus: 200 },
-    { vendas: 9,  pct: 5,   situacao: "Over", bonus: 300 },
-    { vendas: 10, pct: 5,   situacao: "Over", bonus: 500 }
+  // A faixa de comissão sobe conforme o valor fechado em contrato no mês.
+  // Os degraus abaixo são um ponto de partida — a Gabi ajusta na tela, e a
+  // lista editada manda. Cada degrau vale a partir de "de" até o próximo.
+  var COMISSAO_FAIXAS_KEY = "isr_comissao_faixas_v1";
+  var COMISSAO_FAIXAS_PADRAO = [
+    { de: 0,     pct: 1,   bonus: 0,   situacao: "Fora da meta" },
+    { de: 5000,  pct: 2,   bonus: 0,   situacao: "Abaixo" },
+    { de: 10000, pct: 2.5, bonus: 0,   situacao: "Desejado" },
+    { de: 15000, pct: 3,   bonus: 0,   situacao: "Over" },
+    { de: 20000, pct: 4,   bonus: 200, situacao: "Over" },
+    { de: 30000, pct: 5,   bonus: 500, situacao: "Over" }
   ];
   var COMERCIAL_FIXO = 1200;
   var META_POR_VENDA = 3500;
 
-  function faixaComissao(nVendas) {
-    if (nVendas <= 0) return { vendas: 0, pct: 0, situacao: "Sem venda", bonus: 0 };
-    var f = COMISSAO_FAIXAS[Math.min(nVendas, COMISSAO_FAIXAS.length) - 1];
-    return { vendas: nVendas, pct: f.pct, situacao: f.situacao, bonus: f.bonus || 0 };
+  function faixasComissao() {
+    try {
+      var l = JSON.parse(localStorage.getItem(COMISSAO_FAIXAS_KEY));
+      if (l && l.length) return l.slice().sort(function (a, b) { return a.de - b.de; });
+    } catch (e) {}
+    return COMISSAO_FAIXAS_PADRAO.map(function (f) { return Object.assign({}, f); });
+  }
+  function setFaixasComissao(lista) {
+    var limpa = (lista || [])
+      .map(function (f) {
+        return { de: parseMoney(f.de) || 0, pct: parseFloat(f.pct) || 0,
+          bonus: parseMoney(f.bonus) || 0, situacao: (f.situacao || "").trim() };
+      })
+      .filter(function (f) { return f.pct > 0 || f.de > 0; })
+      .sort(function (a, b) { return a.de - b.de; });
+    try { localStorage.setItem(COMISSAO_FAIXAS_KEY, JSON.stringify(limpa)); } catch (e) {}
+    agendarSync();
+    return limpa;
+  }
+
+  // A faixa vem do valor fechado no mês, não do número de vendas.
+  function faixaComissao(valorContratos) {
+    var v = parseMoney(valorContratos) || 0;
+    if (v <= 0) return { de: 0, pct: 0, situacao: "Sem venda", bonus: 0, valor: 0 };
+    var faixas = faixasComissao();
+    var escolhida = faixas[0];
+    faixas.forEach(function (f) { if (v >= f.de) escolhida = f; });
+    var idx = faixas.indexOf(escolhida);
+    var prox = faixas[idx + 1] || null;
+    return { de: escolhida.de, pct: escolhida.pct,
+      situacao: escolhida.situacao || "", bonus: escolhida.bonus || 0,
+      valor: v, proxima: prox,
+      faltaProxima: prox ? Math.max(0, prox.de - v) : null };
   }
 
   // As vendas de um mês: quem virou cliente naquele mês.
@@ -4234,17 +4279,22 @@
   function comissaoComercial(mesKey, porQuem) {
     var mes = mesKey || mesAtualKey();
     var vendas = vendasDoMes(mes, porQuem);
-    var faixa = faixaComissao(vendas.length);
     var meta = META_POR_VENDA * Math.max(1, vendas.length);
 
-    // cada venda gera uma comissão que se espalha nas parcelas dela.
-    // Contrato em euro vira a moeda da folha antes de virar comissão.
+    // Contrato em euro vira a moeda da folha antes de qualquer conta.
+    // A faixa depende do total fechado no mês, então vem depois da soma.
     var cfgP = configPagamento();
-    var detalhe = vendas.map(function (v) {
-      var contrato = emMoedaDaFolha(v.contrato, v.moeda, cfgP);
-      var comissao = contrato * faixa.pct / 100;
-      return Object.assign({}, v, { contratoOriginal: v.contrato, contrato: contrato,
-        pct: faixa.pct, comissao: comissao,
+    var convertidas = vendas.map(function (v) {
+      return Object.assign({}, v, { contratoOriginal: v.contrato,
+        contrato: emMoedaDaFolha(v.contrato, v.moeda, cfgP) });
+    });
+    var faturado = convertidas.reduce(function (s, x) { return s + x.contrato; }, 0);
+    var faixa = faixaComissao(faturado);
+
+    // cada venda gera uma comissão que se espalha nas parcelas dela
+    var detalhe = convertidas.map(function (v) {
+      var comissao = v.contrato * faixa.pct / 100;
+      return Object.assign({}, v, { pct: faixa.pct, comissao: comissao,
         porParcela: v.parcelas ? comissao / v.parcelas : comissao });
     });
     var comissaoTotal = detalhe.reduce(function (s, x) { return s + x.comissao; }, 0);
@@ -4253,13 +4303,9 @@
       situacao: faixa.situacao, pct: faixa.pct, bonus: faixa.bonus,
       fixo: COMERCIAL_FIXO, comissao: comissaoTotal,
       total: COMERCIAL_FIXO + comissaoTotal + faixa.bonus,
-      faturamento: detalhe.reduce(function (s, x) { return s + x.contrato; }, 0),
-      metaFaturamento: meta,
-      cac: (function () {
-        var fat = detalhe.reduce(function (s, x) { return s + x.contrato; }, 0);
-        if (!fat) return null;
-        return Math.round(((COMERCIAL_FIXO + comissaoTotal + faixa.bonus) / fat) * 1000) / 10;
-      })() };
+      faturamento: faturado, metaFaturamento: meta,
+      faixaDe: faixa.de, proximaFaixa: faixa.proxima, faltaProxima: faixa.faltaProxima,
+      cac: faturado ? Math.round(((COMERCIAL_FIXO + comissaoTotal + faixa.bonus) / faturado) * 1000) / 10 : null };
   }
 
   // O que sai de comissão num mês, contando as vendas de meses anteriores
@@ -5619,7 +5665,9 @@
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
     agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
+    setTurmaDaPessoa: setTurmaDaPessoa,
     renegociarContrato: renegociarContrato, setSinalRecebido: setSinalRecebido,
+    faixasComissao: faixasComissao, setFaixasComissao: setFaixasComissao,
     simularRenegociacao: simularRenegociacao, aplicarRenegociacao: aplicarRenegociacao,
     maxParcelasDoCiclo: maxParcelasDoCiclo,
     caixaDetalheMes: caixaDetalheMes, processarCadastrosPendentes: processarCadastrosPendentes,
@@ -5659,7 +5707,7 @@
     marcarMissaoSemana: marcarMissaoSemana, missaoEnviada: missaoEnviada,
     CAMPOS_DOCUMENTO: CAMPOS_DOCUMENTO, CAMPOS_ENDERECO: CAMPOS_ENDERECO,
     enderecoDe: enderecoDe, cadastroIncompleto: cadastroIncompleto,
-    COMISSAO_FAIXAS: COMISSAO_FAIXAS, faixaComissao: faixaComissao,
+    faixaComissao: faixaComissao,
     vendasDoMes: vendasDoMes, comissaoComercial: comissaoComercial,
     comissaoAPagar: comissaoAPagar,
     configPagamento: configPagamento, setConfigPagamento: setConfigPagamento,

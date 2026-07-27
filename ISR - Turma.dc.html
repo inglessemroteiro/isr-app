@@ -38,8 +38,17 @@
       <!-- EDITAR TURMA / MATERIAIS -->
       <sc-if value="{{ editando }}">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 10px;">Editar turma e materiais · deixe em branco o que não muda</div>
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Editar turma</div>
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Deixe em branco o que não muda. A professora vem do cadastro da Equipe; trocar aqui move a turma para a folha de pagamento dela.</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+            <input ref="{{ edNivelRef }}" placeholder="Nível: {{ nivel }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edHorarioRef }}" placeholder="Dia e horário: {{ horario }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <select ref="{{ edTeacherRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+              <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="6">
+                <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+              </sc-for>
+            </select>
+            <input ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ capacidade }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ projeto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             <input ref="{{ edMeetRef }}" placeholder="Link da aula (Meet)" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             <input ref="{{ edGuideRef }}" placeholder="Link do Teacher's Guide" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -73,8 +82,25 @@
                   <span style="flex: none; font-size: 10px; color: #b3a693;">{{ al.faltasInfo }}</span>
                 </sc-if>
                 <span style="flex: none; background: {{ al.pagBg }}; color: {{ al.pagFg }}; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px;">{{ al.pagLabel }}</span>
+                <button onclick="{{ al.onTirar }}" title="Tira da turma. A matrícula e o contrato continuam." style="flex: none; border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 4px 6px; cursor: pointer; font-family: inherit;">tirar</button>
               </div>
             </sc-for>
+
+            <div style="border-top: 1px solid #f7f2ea; padding: 12px 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Pôr aluna nesta turma</div>
+              <input ref="{{ buscaRef }}" oninput="{{ onBuscar }}" placeholder="{{ buscaPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <sc-if value="{{ semVaga }}">
+                <p style="margin: 8px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">A turma está lotada. Aumente a capacidade em "editar turma" antes de incluir.</p>
+              </sc-if>
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+                <sc-for list="{{ candidatas }}" as="ca" hint-placeholder-count="6">
+                  <button onclick="{{ ca.onPor }}" title="{{ ca.title }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ca.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ semCandidatas }}">
+                <p style="margin: 8px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">{{ semCandidatasTexto }}</p>
+              </sc-if>
+            </div>
           </div>
 
           <!-- CHAMADAS RECENTES -->
@@ -165,8 +191,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editando: false, pedidoEnviado: false, tick: 0 };
+  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
+  edNivelRef = React.createRef(); edHorarioRef = React.createRef();
+  edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
   edCadernoRef = React.createRef(); edSlidesRef = React.createRef(); edSyllabusRef = React.createRef();
   edCalRef = React.createRef(); tcTextoRef = React.createRef();
   pgTipoRef = React.createRef(); pgDetalheRef = React.createRef();
@@ -192,6 +220,12 @@ class Component extends DCLogic {
     const raw = CRM.turmasLista().filter(t => t.id === u.id)[0] || {};
 
     const alunas = CRM.alunasDaTurma(u.label).map(p => {
+      const tirar = () => {
+        if (!window.confirm("Tirar " + p.nome + " desta turma? A matrícula e o contrato continuam."))
+          return;
+        CRM.setTurmaDaPessoa(p.id, "", "");
+        this.bump();
+      };
       const faltas = CRM.faltasDe(p.id);
       const st = CRM.cobrancaStatus ? null : null;
       const c = CRM.contratoVigente(p);
@@ -200,6 +234,7 @@ class Component extends DCLogic {
       const emDia = !mes || mes.pago;
       return {
         nome: p.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+        onTirar: tirar,
         faltasInfo: faltas > 0 ? faltas + (faltas === 1 ? " falta" : " faltas") : "",
         pagLabel: emDia ? "em dia" : "parcela aberta",
         pagBg: emDia ? "rgba(90,158,75,0.14)" : "rgba(224,120,86,0.14)",
@@ -246,6 +281,41 @@ class Component extends DCLogic {
       ocupLabel: u.ocupadas + "/" + u.capacidade,
       chamadaHref: "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(u.label),
       alunas, semAlunas: alunas.length === 0,
+
+      // ── a turma é uma coisa só: horário, alunas e professora ──
+      profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
+        .concat(CRM.equipeLista()
+          .filter(m => (m.papeis || []).indexOf("professora") >= 0)
+          .map(m => ({ id: m.nome, label: m.nome, sel: m.nome === u.teacher }))),
+      edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
+      edTeacherRef: this.edTeacherRef, edCapRef: this.edCapRef,
+      nivel: u.nivel, horario: u.turma, capacidade: String(u.capacidade),
+
+      buscaRef: this.buscaRef,
+      buscaPlaceholder: "Buscar aluna pelo nome",
+      onBuscar: () => this.setState({ busca: (this.buscaRef.current && this.buscaRef.current.value) || "" }),
+      semVaga: u.vagas <= 0,
+      candidatas: (function () {
+        const termo = (this.state.busca || "").trim().toLowerCase();
+        const fora = CRM.getPessoas().filter(p =>
+          (p.status === "aluna" || p.status === "mvs") && p.turma !== u.label);
+        const lista = termo
+          ? fora.filter(p => p.nome.toLowerCase().indexOf(termo) >= 0)
+          : fora.filter(p => !p.turma).slice(0, 8);
+        return lista.slice(0, 12).map(p => ({
+          label: p.nome,
+          title: p.turma ? "Hoje está em " + p.turma : "Sem turma",
+          onPor: () => {
+            if (u.vagas <= 0) return;
+            CRM.setTurmaDaPessoa(p.id, u.label, u.teacher);
+            this.setState({ busca: "" });
+            if (this.buscaRef.current) this.buscaRef.current.value = "";
+            this.bump();
+          }
+        }));
+      }).call(this),
+      semCandidatas: false,
+      semCandidatasTexto: "",
       chamadas, semChamadas: chamadas.length === 0,
       materiais,
       temTarefaCasa: !!tc, tarefaCasaTexto: tc ? tc.texto : "", tarefaCasaEm: tc ? CRM.ddmm(tc.em) : "",
@@ -264,11 +334,22 @@ class Component extends DCLogic {
       onSalvarEdicao: () => {
         const patch = {};
         const set = (ref, k) => { const v = this.val(ref); if (v) patch[k] = v; };
+        set(this.edNivelRef, "nivel"); set(this.edHorarioRef, "turma");
+        set(this.edTeacherRef, "teacher");
+        const cap = parseInt(this.val(this.edCapRef), 10);
+        if (cap > 0) patch.capacidade = cap;
         set(this.edProjetoRef, "projeto"); set(this.edMeetRef, "meet"); set(this.edGuideRef, "guide");
         set(this.edCadernoRef, "notebook"); set(this.edSlidesRef, "slides");
         set(this.edSyllabusRef, "syllabus"); set(this.edCalRef, "calendario");
+        // mudar nível ou horário muda o rótulo: as alunas vão junto
+        if (patch.nivel || patch.turma) {
+          const novoLabel = (patch.nivel || u.nivel) + " · " + (patch.turma || u.turma);
+          CRM.alunasDaTurma(u.label).forEach(p => CRM.setTurmaDaPessoa(p.id, novoLabel,
+            patch.teacher || u.teacher));
+        }
         if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
         this.setState({ editando: false });
+        this.bump();
       },
       pedidoEnviado: this.state.pedidoEnviado,
       onPedirGabi: () => {
