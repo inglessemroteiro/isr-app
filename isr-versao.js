@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-a",
+  numero: "2026.07.27-b",
   data: "27/07/2026",
-  nota: "ISR Miles: catálogo em três níveis, validade de 12 meses e limites de resgate"
+  nota: "Folha e Equipe cruzadas: quem dá aula sem cadastro é sinalizado e cadastrado em um clique"
 };
