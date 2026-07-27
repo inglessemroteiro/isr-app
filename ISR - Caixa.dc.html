@@ -40,6 +40,32 @@
       </sc-if>
     </div>
 
+    <!-- CONFERÊNCIA — a conta refeita por outro caminho -->
+    <div style="background: {{ confBg }}; border: 1px solid {{ confBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+      <button onclick="{{ onConf }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; text-align: left;">
+        <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+          <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ confCor }};"></span>
+          <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ confTitulo }}</span>
+          <span style="font-size: 11.5px; color: #8a7c6b;">{{ confResumo }}</span>
+        </span>
+        <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ confLabel }}</span>
+      </button>
+      <sc-if value="{{ confAberta }}">
+        <div style="margin-top: 12px;">
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada linha refaz uma conta por um caminho diferente e compara com o que a tela mostra. Se as duas não baterem, o número está errado — e aparece aqui.</p>
+          <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
+              <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ cf.titulo }}</div>
+                <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ cf.linha }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- OS CINCO NÚMEROS -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 8px;">
       <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="5">
@@ -365,7 +391,7 @@
 class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
-            catsAberto: false, erroCat: "" };
+            catsAberto: false, erroCat: "", confAberta: false };
   custoRefs = {};
   extratoRef = React.createRef();
   novaCatRef = React.createRef();
@@ -409,12 +435,18 @@ class Component extends DCLogic {
         nota: f.atrasado["R$"] + f.atrasado["€"] > 0 ? "Vencidos e não liquidados" : "Sem vencimentos em aberto" },
       { label: "Despesas", cor: "#9c6f56", brl: CRM.fmtMoney("R$", f.saiu["R$"]), eur: CRM.fmtMoney("€", f.saiu["€"]),
         nota: "Custos fixos e lançamentos do período" },
-      { label: "Saldo", cor: (f.resultado["R$"] >= 0 && f.resultado["€"] >= 0) ? "#348a8e" : "#cf6b5c",
-        corBrl: f.resultado["R$"] >= 0 ? "#348a8e" : "#cf6b5c",
-        corEur: f.resultado["€"] >= 0 ? "#348a8e" : "#cf6b5c",
-        brl: (f.resultado["R$"] < 0 ? "− " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"])),
-        eur: (f.resultado["€"] < 0 ? "− " : "") + CRM.fmtMoney("€", Math.abs(f.resultado["€"])),
-        nota: "Receitas recebidas menos despesas" }
+      // O saldo é o único número que não pode ser lido por moeda. A receita
+      // vem em euro e real; a despesa é quase toda em real. Separado, dá
+      // "prejuízo em R$ e lucro em €" — as duas metades de um resultado só.
+      { label: "Saldo do mês", cor: f.totalReais.resultado >= 0 ? "#348a8e" : "#cf6b5c",
+        corBrl: f.totalReais.resultado >= 0 ? "#348a8e" : "#cf6b5c",
+        corEur: "#a2957f",
+        brl: (f.totalReais.resultado < 0 ? "− " : "")
+          + CRM.fmtMoney("R$", Math.abs(f.totalReais.resultado)),
+        eur: (f.resultado["R$"] < 0 ? "− " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"]))
+          + "  ·  " + (f.resultado["€"] < 0 ? "− " : "") + CRM.fmtMoney("€", Math.abs(f.resultado["€"])),
+        nota: "Tudo somado, euro a " + CRM.fmtMoney("R$", (CRM.configPagamento().cambioEur || 0))
+          + ". Abaixo, cada moeda em separado." }
     ].map(n => Object.assign({ corBrl: n.cor, corEur: n.cor }, n)); // cada moeda pinta o próprio sinal
 
     // ── meta por moeda ──
@@ -551,6 +583,12 @@ class Component extends DCLogic {
     });
     const ct = CRM.custosTotais(mes.key);
 
+    // ── conferência ──
+    // O número na tela só vale se der para ver de onde veio. Isto refaz
+    // cada conta por outro caminho e compara.
+    const conf = CRM.conferenciaFinanceira ? CRM.conferenciaFinanceira(mes.key)
+      : { checks: [], ok: true, passaram: 0, total: 0, falhas: [] };
+
     // ── conciliação ──
     const analise = this.state.analise;
     // "certeira" = valor bate exato E o primeiro nome aparece na descrição do banco.
@@ -609,6 +647,28 @@ class Component extends DCLogic {
       onHoje: () => this.setState({ offset: 0, analise: null }),
 
       numeros, metas, serie, camadas,
+
+      // ── conferência ──
+      confTitulo: conf.ok ? "As contas fecham" : "As contas não fecham",
+      confResumo: conf.ok
+        ? conf.total + " verificações, todas conferem"
+        : conf.falhas.length + (conf.falhas.length === 1 ? " divergência" : " divergências")
+          + " de " + conf.total + " verificações",
+      confCor: conf.ok ? "#5a9e4b" : "#cf6b5c",
+      confBg: conf.ok ? "#fdfbf8" : "#fdf1ec",
+      confBorda: conf.ok ? "#eee3d6" : "#f3d4c8",
+      confAberta: this.state.confAberta,
+      confLabel: this.state.confAberta ? "fechar" : "ver a conta",
+      onConf: () => this.setState({ confAberta: !this.state.confAberta }),
+      conferencia: conf.checks.map(c => ({
+        titulo: c.titulo,
+        cor: c.ok ? "#9ec970" : "#cf6b5c",
+        linha: c.ok
+          ? (c.detalhe || ("confere: " + c.obtido))
+          : ("esperado " + c.esperado + " · encontrado " + c.obtido
+             + (c.detalhe ? " · " + c.detalhe : ""))
+      })),
+
       catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
       catsSaida: barras(f.porCatSaida, CRM.catsSaida()),
       entradas, saidas, custos, opcoesCatSaida,

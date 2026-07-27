@@ -2665,7 +2665,6 @@
   // ══════════════════════════════════════════════════════════════
   var BASE_CUSTOS = [
     { nome: "Agência de tráfego", moeda: "R$", valor: 2800, categoria: "marketing" },
-    { nome: "Professoras (estimativa mensal)", moeda: "R$", valor: 3200, categoria: "equipe" },
     { nome: "Circle (comunidade · US$ 99)", moeda: "R$", valor: 610, categoria: "ferramentas" },
     { nome: "BeConfident (IA de idiomas)", moeda: "R$", valor: 398, categoria: "ferramentas" },
     { nome: "Impostos (DAS)", moeda: "R$", valor: 81, categoria: "impostos" },
@@ -2709,10 +2708,16 @@
     list.splice(idx, 1);
     custosSave(list);
   }
+  // Tudo que sai no mês: os custos digitados mais a folha calculada.
+  // Antes só somava os digitados, e a folha — o maior custo da escola —
+  // ficava de fora de qualquer projeção.
   function custosTotais(key) {
     var k = key || mesAtualKey();
     var t = { "R$": 0, "€": 0 };
-    custosDoMes(k).concat(equipeCustosMensais(k)).forEach(function (c) { t[c.moeda] += c.valor; });
+    custosDoMes(k).concat(folhaNoCaixa(k)).forEach(function (c) {
+      if (t[c.moeda] === undefined) t[c.moeda] = 0;
+      t[c.moeda] += c.valor;
+    });
     return t;
   }
 
@@ -2723,15 +2728,20 @@
     var entradas = [];
     loadPessoas().forEach(function (p) {
       (p.contratos || []).forEach(function (c) {
+        // a moeda é do contrato: uma aluna pode ter fechado em euro e ter
+        // o cadastro em real. Somar pelo cadastro põe dinheiro no balde errado.
+        var moeda = c.moeda || p.moeda || "R$";
         (c.meses || []).forEach(function (m) {
           if (m.key === key && m.valor)
-            entradas.push({ pessoaId: p.id, nome: p.nome, moeda: p.moeda || "R$",
+            entradas.push({ pessoaId: p.id, nome: p.nome, moeda: moeda,
               valor: m.valor, valorNum: parseMoney(m.valor), pago: !!m.pago });
         });
       });
     });
     entradas.sort(function (a, b) { return (a.pago === b.pago) ? (b.valorNum - a.valorNum) : (a.pago ? -1 : 1); });
-    var saidas = custosLista().concat(equipeCustosMensais()).map(function (c) {
+    // custosDoMes, não custosLista: custo com início e fim não vale em
+    // todo mês. E a folha calculada entra aqui como saída.
+    var saidas = custosDoMes(key).concat(folhaNoCaixa(key)).map(function (c) {
       return { nome: c.nome, moeda: c.moeda, valor: c.valor };
     });
     var tot = function (list, moeda, f) {
@@ -5974,9 +5984,7 @@
 
     var saidas = custosDoMes(key).map(function (c) {
       return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
-    }).concat(equipeCustosMensais(key).map(function (c) {
-      return { nome: c.nome, categoria: "equipe", moeda: c.moeda, valor: c.valor, fixo: true };
-    })).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
+    }).concat(folhaNoCaixa(key)).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
         valor: l.valor, fixo: false, data: l.data, lancId: l.id };
     }));
@@ -6026,6 +6034,211 @@
         atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
         resultado: emReais(recebido) - emReais(saiu) }
     };
+  }
+
+  // ── A FOLHA COMO SAÍDA DO CAIXA ───────────────────────────────
+  //
+  // O maior custo da escola é o pagamento de quem dá aula, e ele é
+  // calculado — não é um número que alguém digita. Enquanto o Caixa só
+  // somava custos digitados à mão, o resultado do mês era o resultado de
+  // um chute. Aqui a folha entra como saída automática, linha por linha,
+  // na moeda da folha.
+  //
+  // Cuidado com dupla contagem: folhaPagamento().fixos já traz quem tem
+  // valor mensal no cadastro da Equipe, que é exatamente o que
+  // equipeCustosMensais() devolvia. Quem chama esta função não deve somar
+  // as duas coisas.
+  function folhaNoCaixa(key) {
+    var k = key || mesAtualKey();
+    var cfg = configPagamento();
+    var moeda = cfg.moeda || "R$";
+    var f = folhaPagamento(k);
+    var out = [];
+
+    f.linhas.forEach(function (l) {
+      out.push({ nome: l.nome + " · aulas do mês", categoria: "equipe",
+        moeda: moeda, valor: Math.round(l.total * 100) / 100,
+        fixo: true, calculado: true, origem: "folha" });
+    });
+    (f.fixos || []).forEach(function (x) {
+      out.push({ nome: x.nome + " · valor mensal", categoria: "equipe",
+        moeda: moeda, valor: Math.round(x.total * 100) / 100,
+        fixo: true, calculado: true, origem: "folha_fixo" });
+    });
+
+    // Comissão segue a parcela: só sai o que a aluna já pagou.
+    var com = comissaoAPagar(k);
+    if (com && com.total > 0) {
+      out.push({ nome: (comercialDaEquipe() || "Comercial") + " · comissão",
+        categoria: "equipe", moeda: moeda,
+        valor: Math.round(com.total * 100) / 100,
+        fixo: true, calculado: true, origem: "comissao" });
+    }
+    return out;
+  }
+
+  function comercialDaEquipe() {
+    var c = equipeLista().filter(function (m) {
+      return (m.papeis || []).indexOf("comercial") >= 0;
+    })[0];
+    return c ? c.nome : "";
+  }
+
+  // ── CONFERÊNCIA FINANCEIRA ────────────────────────────────────
+  //
+  // Um número na tela não vale nada se ninguém sabe de onde ele veio.
+  // Isto refaz as contas por caminhos diferentes e compara. Se duas
+  // contas do mesmo dinheiro não batem, aparece aqui — em vez de a
+  // pessoa descobrir meses depois, ou nunca.
+  //
+  // Cada verificação diz o que comparou, não só "ok". Confiança se
+  // constrói mostrando a conta, não afirmando que está certa.
+  function conferenciaFinanceira(key) {
+    var k = key || mesAtualKey();
+    var cfg = configPagamento();
+    var moeda = cfg.moeda || "R$";
+    var fin = financeiroMes(k);
+    var folha = folhaPagamento(k);
+    var checks = [];
+    var cent = function (v) { return Math.round(v * 100); };
+    var add = function (id, titulo, ok, esperado, obtido, detalhe) {
+      checks.push({ id: id, titulo: titulo, ok: ok,
+        esperado: esperado, obtido: obtido, detalhe: detalhe || "" });
+    };
+
+    // 1. Toda parcela tem mês e valor. Sem os dois ela não é cobrável
+    //    nem entra no Caixa — some sem avisar.
+    var semDado = [];
+    loadPessoas().forEach(function (p) {
+      (p.contratos || []).forEach(function (c) {
+        (c.meses || []).forEach(function (m) {
+          if (!m.key || !m.valor) semDado.push(p.nome);
+        });
+      });
+    });
+    add("parcelas_completas", "Toda parcela tem mês e valor",
+      semDado.length === 0, "0 incompletas", semDado.length + " incompletas",
+      semDado.length ? "Sem mês ou sem valor: " + unicos(semDado).join(", ") : "");
+
+    // 2. O que o Caixa diz que entra no mês é a soma das parcelas do mês.
+    var somaEntradas = { "R$": 0, "€": 0 };
+    fin.entradas.forEach(function (e) {
+      if (somaEntradas[e.moeda] === undefined) somaEntradas[e.moeda] = 0;
+      somaEntradas[e.moeda] += e.valor;
+    });
+    var declarado = { "R$": fin.recebido["R$"] + fin.aReceber["R$"] + fin.atrasado["R$"],
+                      "€": fin.recebido["€"] + fin.aReceber["€"] + fin.atrasado["€"] };
+    var entradaBate = cent(somaEntradas["R$"]) === cent(declarado["R$"])
+      && cent(somaEntradas["€"]) === cent(declarado["€"]);
+    add("entradas_fecham", "Recebido + a receber + atrasado = todas as entradas",
+      entradaBate,
+      fmtMoney("R$", somaEntradas["R$"]) + " e " + fmtMoney("€", somaEntradas["€"]),
+      fmtMoney("R$", declarado["R$"]) + " e " + fmtMoney("€", declarado["€"]));
+
+    // 3. Nada de moedas somadas entre si. Cada entrada tem uma moeda só e
+    //    ela é a do contrato.
+    var moedaErrada = [];
+    loadPessoas().forEach(function (p) {
+      (p.contratos || []).forEach(function (c) {
+        if (c.moeda && p.moeda && c.moeda !== p.moeda) moedaErrada.push(p.nome);
+      });
+    });
+    add("moeda_coerente", "Contrato e cadastro na mesma moeda",
+      moedaErrada.length === 0, "0 divergências",
+      moedaErrada.length + " divergências",
+      moedaErrada.length
+        ? "Vale a moeda do contrato: " + unicos(moedaErrada).join(", ")
+        : "Euro convertido a " + fmtMoney("R$", cfg.cambioEur) + " só na hora de somar tudo");
+
+    // 4. O total da folha é a soma das linhas dela.
+    var somaLinhas = folha.linhas.reduce(function (s, x) { return s + x.total; }, 0)
+      + (folha.fixos || []).reduce(function (s, x) { return s + x.total; }, 0);
+    add("folha_fecha", "O total da folha é a soma das linhas",
+      cent(somaLinhas) === cent(folha.totalComFixos),
+      fmtMoney(moeda, somaLinhas), fmtMoney(moeda, folha.totalComFixos));
+
+    // 5. A folha do mês aparece no Caixa como saída, pelo mesmo valor.
+    var naSaida = fin.saidas.filter(function (s) { return s.origem === "folha" || s.origem === "folha_fixo"; })
+      .reduce(function (s, x) { return s + x.valor; }, 0);
+    add("folha_no_caixa", "A folha entra no Caixa como despesa",
+      cent(naSaida) === cent(folha.totalComFixos),
+      fmtMoney(moeda, folha.totalComFixos), fmtMoney(moeda, naSaida),
+      "O maior custo da escola é calculado, não digitado");
+
+    // 6. A comissão também.
+    var com = comissaoAPagar(k);
+    var comNoCaixa = fin.saidas.filter(function (s) { return s.origem === "comissao"; })
+      .reduce(function (s, x) { return s + x.valor; }, 0);
+    add("comissao_no_caixa", "A comissão liberada entra no Caixa",
+      cent(comNoCaixa) === cent(com.total),
+      fmtMoney(moeda, com.total), fmtMoney(moeda, comNoCaixa),
+      com.totalAguardando
+        ? fmtMoney(moeda, com.totalAguardando) + " ainda aguardam a aluna pagar"
+        : "");
+
+    // 7. Custo digitado à mão que repete a folha é dinheiro contado duas
+    //    vezes. Acontece com quem lançava "Professoras" como custo fixo.
+    var duplicados = custosDoMes(k).filter(function (c) {
+      return (c.categoria === "equipe") || /profess|equipe|folha/i.test(c.nome || "");
+    });
+    add("sem_duplicidade", "Nenhum custo digitado repete a folha",
+      duplicados.length === 0, "0 suspeitos", duplicados.length + " suspeitos",
+      duplicados.length
+        ? "A folha já é calculada. Remova em Caixa: "
+          + duplicados.map(function (c) { return c.nome; }).join(", ")
+        : "");
+
+    // 8. Aluna ativa sem contrato é receita que ninguém vai cobrar.
+    var semContrato = loadPessoas().filter(function (p) {
+      return p.status === "aluna" && !contratoVigente(p);
+    });
+    add("alunas_com_contrato", "Toda aluna ativa tem contrato vigente",
+      semContrato.length === 0, "0 sem contrato",
+      semContrato.length + " sem contrato",
+      semContrato.length
+        ? unicos(semContrato.map(function (p) { return p.nome; })).join(", ")
+        : "");
+
+    // 9. O que a Cobrança mostra em aberto é o que o Caixa espera receber.
+    var abertoCobranca = { "R$": 0, "€": 0 };
+    loadPessoas().forEach(function (p) {
+      var c = contratoVigente(p);
+      if (!c) return;
+      var m = c.moeda || p.moeda || "R$";
+      (c.meses || []).forEach(function (x) {
+        if (x.key === k && !x.pago && x.valor) {
+          if (abertoCobranca[m] === undefined) abertoCobranca[m] = 0;
+          abertoCobranca[m] += parseMoney(x.valor);
+        }
+      });
+    });
+    var abertoCaixa = { "R$": fin.aReceber["R$"] + fin.atrasado["R$"],
+                        "€": fin.aReceber["€"] + fin.atrasado["€"] };
+    add("cobranca_bate_caixa", "O que está em aberto é o mesmo nas duas telas",
+      cent(abertoCobranca["R$"]) === cent(abertoCaixa["R$"])
+        && cent(abertoCobranca["€"]) === cent(abertoCaixa["€"]),
+      fmtMoney("R$", abertoCobranca["R$"]) + " e " + fmtMoney("€", abertoCobranca["€"]),
+      fmtMoney("R$", abertoCaixa["R$"]) + " e " + fmtMoney("€", abertoCaixa["€"]));
+
+    // 10. O resultado é entrada menos saída, sem atalho.
+    var res = { "R$": fin.recebido["R$"] - fin.saiu["R$"],
+                "€": fin.recebido["€"] - fin.saiu["€"] };
+    add("resultado_fecha", "Resultado = o que entrou menos o que saiu",
+      cent(res["R$"]) === cent(fin.resultado["R$"])
+        && cent(res["€"]) === cent(fin.resultado["€"]),
+      fmtMoney("R$", res["R$"]) + " e " + fmtMoney("€", res["€"]),
+      fmtMoney("R$", fin.resultado["R$"]) + " e " + fmtMoney("€", fin.resultado["€"]));
+
+    var falhas = checks.filter(function (c) { return !c.ok; });
+    return { mes: k, checks: checks, total: checks.length,
+      passaram: checks.length - falhas.length, falhas: falhas,
+      ok: falhas.length === 0 };
+  }
+
+  function unicos(l) {
+    var vis = {}, out = [];
+    l.forEach(function (x) { if (!vis[x]) { vis[x] = 1; out.push(x); } });
+    return out;
   }
 
   // ── EXPECTATIVA, EM CAMADAS DE CONFIANÇA ──────────────────────
@@ -6345,6 +6558,8 @@
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     receitaParticularesNoMes: receitaParticularesNoMes,
     furosDeCadastro: furosDeCadastro,
+    folhaNoCaixa: folhaNoCaixa, comercialDaEquipe: comercialDaEquipe,
+    conferenciaFinanceira: conferenciaFinanceira,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
