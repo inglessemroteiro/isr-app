@@ -23,6 +23,13 @@
       </div>
       <!-- seletor de perfil (Gestora vê tudo; equipe entra direto no seu) -->
       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <sc-if value="{{ mostraEscopo }}">
+          <div style="display: flex; gap: 3px; background: #f2ece3; border-radius: 999px; padding: 3px;">
+            <sc-for list="{{ escopos }}" as="es" hint-placeholder-count="2">
+              <button onclick="{{ es.onClick }}" style="border: none; cursor: pointer; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; font-family: inherit;">{{ es.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
         <sc-if value="{{ mostraSeletor }}">
           <div style="display: flex; flex-wrap: wrap; gap: 6px; background: #fff; border: 1px solid #e5dccf; border-radius: 999px; padding: 4px;">
             <sc-for list="{{ perfis }}" as="pf" hint-placeholder-count="3">
@@ -189,7 +196,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { perfil: "gestora", verTodos: false, tick: 0 };
+  state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false };
   tfTituloRef = React.createRef();
   tfDonoRef = React.createRef();
   tfPrazoRef = React.createRef();
@@ -212,7 +219,15 @@ class Component extends DCLogic {
         bg: on ? "#164951" : "transparent", fg: on ? "#fff" : "#8a7c6b" };
     });
 
-    const filaAll = CRM.filaParaHoje(perfilAtivo, user && user.nome);
+    // A gestora abre com o que é dela. A fila de todo mundo continua a um
+    // toque — mas não é o que ela vê ao entrar, senão a fila dela some no meio.
+    const meuNome = (user && user.nome) || "";
+    const filaBruta = CRM.filaParaHoje(perfilAtivo, meuNome);
+    const soMinhas = perfilAtivo === "gestora" && !this.state.deTodas && meuNome;
+    const filaAll = soMinhas
+      ? filaBruta.filter(x => !x.dono || x.dono === meuNome)
+      : filaBruta;
+    const nDeTodas = filaBruta.length;
     const LIMIT = 15;
     const visiveis = this.state.verTodos ? filaAll : filaAll.slice(0, LIMIT);
 
@@ -309,6 +324,16 @@ class Component extends DCLogic {
     return {
       saudacao: nomes[perfilAtivo], perfis,
       mostraSeletor: ehGestora,
+      mostraEscopo: ehGestora && perfilAtivo === "gestora" && !!meuNome,
+      escopos: [
+        { id: false, label: "Minhas" },
+        { id: true, label: "De todas · " + nDeTodas }
+      ].map(e => ({
+        label: e.label,
+        bg: this.state.deTodas === e.id ? "#164951" : "transparent",
+        fg: this.state.deTodas === e.id ? "#fff" : "#8a7c6b",
+        onClick: () => this.setState({ deTodas: e.id, verTodos: false })
+      })),
       fila, filaVazia: filaAll.length === 0,
       filaCount: filaAll.length + (filaAll.length === 1 ? " item" : " itens"),
       filaBadgeBg: filaAll.length ? "rgba(224,120,86,0.14)" : "rgba(90,158,75,0.16)",

@@ -66,7 +66,7 @@
         { label: "Pagamentos", desc: "Fechamento do mês da equipe", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
         { label: "Equipe", desc: "Integrantes, papéis, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
         { label: "Conexão", desc: "Configuração da base de dados central", href: "gestao.html?config", perfis: ["gestora"] },
-        { label: "Dados", desc: "Cópias de segurança, exportação e retenção", href: "ISR%20-%20Dados.dc.html", perfis: ["gestora"] }
+        { label: "Dados", desc: "Cópias de segurança, exportação e retenção", href: "ISR - Dados.dc.html", perfis: ["gestora"] }
       ]
     }
   ];

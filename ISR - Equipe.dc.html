@@ -56,18 +56,19 @@
             <button onclick="{{ pp.onToggle }}" style="border: 1px solid {{ pp.border }}; background: {{ pp.bg }}; color: {{ pp.fg }}; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer;">{{ pp.label }}</button>
           </sc-for>
         </div>
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração (entra nos custos do Caixa)</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Remuneração</div>
+        <p style="margin: 0 0 8px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Só para quem recebe valor fixo. Professora não precisa: o pagamento dela é calculado das turmas, na folha do mês.</p>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
           <select ref="{{ nvTipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <option value="">Sem valor fixo</option>
-            <option value="mensal">Mensal (fixo)</option>
-            <option value="por_aula">Por aula (variável)</option>
+            <option value="">Não recebe valor fixo</option>
+            <option value="mensal">Valor fixo por mês</option>
+            <option value="por_aula">Por aula dada</option>
           </select>
           <select ref="{{ nvMoedaRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
             <option value="R$">R$</option>
             <option value="€">€</option>
           </select>
-          <input ref="{{ nvValorRef }}" type="number" placeholder="Valor (ex. 1200)" style="width: 130px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nvValorRef }}" type="number" placeholder="Valor (ex. 2500)" style="width: 130px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         </div>
         <button onclick="{{ onCriar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Adicionar</button>
       </div>
@@ -125,19 +126,29 @@
               </div>
             </sc-if>
 
-                        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Remuneração</div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-              <select ref="{{ mb.tipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                <sc-for list="{{ mb.tipoOpts }}" as="to" hint-placeholder-count="3">
-                  <option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option>
-                </sc-for>
-              </select>
-              <select ref="{{ mb.moedaRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                <sc-for list="{{ mb.moedaOpts }}" as="mo" hint-placeholder-count="2">
-                  <option value="{{ mo.id }}" selected="{{ mo.sel }}">{{ mo.label }}</option>
-                </sc-for>
-              </select>
-              <input ref="{{ mb.valorRef }}" type="number" placeholder="{{ mb.valorPlaceholder }}" style="width: 130px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Remuneração</div>
+            <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ mb.remExplica }}</p>
+            <div style="display: grid; grid-template-columns: 1.6fr 0.6fr 1fr; gap: 8px; margin-bottom: 14px;">
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Como recebe</div>
+                <select ref="{{ mb.tipoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ mb.tipoOpts }}" as="to" hint-placeholder-count="3">
+                    <option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
+                <select ref="{{ mb.moedaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ mb.moedaOpts }}" as="mo" hint-placeholder-count="2">
+                    <option value="{{ mo.id }}" selected="{{ mo.sel }}">{{ mo.label }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor</div>
+                <input ref="{{ mb.valorRef }}" type="number" placeholder="{{ mb.valorPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              </div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <button onclick="{{ mb.onSalvar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
@@ -312,11 +323,14 @@ class Component extends DCLogic {
 
         nomeRef: r.nome, emailRef: r.email,
         tipoRef: r.tipo, moedaRef: r.moeda, valorRef: r.valor,
-        valorPlaceholder: m.valor > 0 ? String(m.valor) : "Valor (ex. 1200)",
+        valorPlaceholder: m.valor > 0 ? String(m.valor) : "ex. 2500",
+        remExplica: (m.papeis || []).indexOf("professora") >= 0
+          ? "Professora não precisa de valor aqui: o pagamento dela sai da folha, calculado das turmas. Use este campo só se ela também receber um valor fixo por fora."
+          : "Valor mensal entra na folha do mês e nos custos do Caixa, sem precisar lançar de novo.",
         tipoOpts: [
-          { id: "", label: "Sem valor fixo" },
-          { id: "mensal", label: "Mensal (fixo)" },
-          { id: "por_aula", label: "Por aula (variável)" }
+          { id: "", label: "Não recebe valor fixo" },
+          { id: "mensal", label: "Valor fixo por mês" },
+          { id: "por_aula", label: "Por aula dada" }
         ].map(o => Object.assign({ sel: (m.valorTipo || "") === o.id }, o)),
         moedaOpts: [{ id: "R$", label: "R$" }, { id: "€", label: "€" }]
           .map(o => Object.assign({ sel: (m.moeda || "R$") === o.id }, o)),
