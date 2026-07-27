@@ -67,7 +67,8 @@
       itens: [
         { label: "Cobrança", desc: "Recebíveis por situação e ações de cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
         { label: "Pagamentos", desc: "Folha do mês da equipe e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
-        { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] }
+        { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
+        { label: "Importar", desc: "Trazer o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
       ]
     },
     {

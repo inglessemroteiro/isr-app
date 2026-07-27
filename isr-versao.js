@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-e",
+  numero: "2026.07.27-f",
   data: "27/07/2026",
-  nota: "A folha entra no Caixa, saldo consolidado e conferência das contas"
+  nota: "Importar o Controle de Pagamento e ver o que entra nos próximos 12 meses"
 };

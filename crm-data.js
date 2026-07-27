@@ -6084,6 +6084,338 @@
     return c ? c.nome : "";
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  IMPORTAR O CONTROLE DE PAGAMENTO
+  //
+  //  A planilha é a fonte da verdade hoje. Redigitar 36 contratos é
+  //  trabalho e é erro. Aqui a planilha é colada, lida e MOSTRADA antes
+  //  de virar dado — quem confere é a Gabi, não o parser. Nada é
+  //  aplicado sem ela ver o que o sistema entendeu.
+  //
+  //  Formato esperado (o que sai ao copiar do Google Sheets):
+  //    Nome · Tipo · Quantos ciclos · Valor Total - Real ·
+  //    Valor Total - Euro · Quantidade de parcelas · Data de Vencimento ·
+  //    Valor da parcela · 1° Pag / Julho · 2° Agosto · 3° Setembro · ...
+  // ══════════════════════════════════════════════════════════════
+
+  var MES_POR_NOME = {
+    janeiro: 0, fevereiro: 1, marco: 2, abril: 3, maio: 4, junho: 5,
+    julho: 6, agosto: 7, setembro: 8, outubro: 9, novembro: 10, dezembro: 11
+  };
+
+  function semAcento(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  }
+
+  // Uma célula pode ser um valor, uma data, "quitou", ou as três coisas
+  // juntas ("€ 292,33 10/07/2026"). Devolve o que der para aproveitar.
+  function lerCelula(txt) {
+    var s = String(txt == null ? "" : txt).trim();
+    if (!s) return { vazia: true };
+    var out = { bruto: s };
+    if (/quit/i.test(s)) out.quitou = true;
+    var data = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (data) out.data = data[3] + "-" + data[2] + "-" + data[1];
+    // A data sai da frente antes de procurar dinheiro. Sem isto,
+    // "02/07/2026" virava um pagamento de R$ 2 e "08/07/2026 pelo Assas"
+    // virava R$ 8 — erro silencioso e do tipo que ninguém confere.
+    var semData = s.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, " ")
+                   .replace(/\bdia\b/gi, " ");
+    // valor: pega o primeiro número com cara de dinheiro
+    var v = semData.match(/(?:R\$|€)?\s*(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2}|\d+[.,]?\d*)/);
+    if (v) {
+      var n = parseMoney(v[1]);
+      if (n > 0) out.valor = n;
+    }
+    if (/€/.test(s)) out.moeda = "€";
+    else if (/R\$/.test(s)) out.moeda = "R$";
+    return out;
+  }
+
+  function separarLinha(linha) {
+    if (linha.indexOf("\t") >= 0) return linha.split("\t");
+    if (linha.indexOf(";") >= 0) return linha.split(";");
+    return linha.split(",");
+  }
+
+  // Descobre a que mês/ano cada coluna de pagamento se refere. O cabeçalho
+  // traz o nome do mês ("2° Agosto"); o ano vem do mês de referência e vira
+  // o seguinte quando a sequência dá a volta (Dezembro → Janeiro).
+  function mesesDasColunas(cabecalho, anoBase) {
+    var cols = [];
+    var ano = anoBase, ultimo = -1;
+    cabecalho.forEach(function (h, i) {
+      var s = semAcento(h);
+      if (!/\d+\s*[°ºo]/.test(s) && !/pagamento/.test(s)) return;
+      var mes = -1;
+      Object.keys(MES_POR_NOME).forEach(function (nome) {
+        if (s.indexOf(nome) >= 0) mes = MES_POR_NOME[nome];
+      });
+      if (mes < 0) {
+        // "8° Pagamento" sem nome de mês: segue o anterior
+        if (ultimo < 0) return;
+        mes = (ultimo + 1) % 12;
+        if (mes === 0) ano++;
+      } else if (ultimo >= 0 && mes < ultimo) {
+        ano++;
+      }
+      ultimo = mes;
+      cols.push({ idx: i, mes: mes, ano: ano,
+        key: ano + "-" + (mes + 1 < 10 ? "0" : "") + (mes + 1),
+        label: MES_NOMES[mes] });
+    });
+    return cols;
+  }
+
+  function acharColuna(cabecalho, termos) {
+    for (var i = 0; i < cabecalho.length; i++) {
+      var s = semAcento(cabecalho[i]);
+      for (var j = 0; j < termos.length; j++) {
+        if (s.indexOf(termos[j]) >= 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  // Lê o texto colado e devolve o que ENTENDEU, sem gravar nada.
+  function lerControlePagamento(texto, opts) {
+    opts = opts || {};
+    var linhas = String(texto || "").split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!linhas.length) return { ok: false, erro: "Nada foi colado.", linhas: [] };
+
+    // acha o cabeçalho: a primeira linha que fala de nome e de parcela
+    var iCab = -1;
+    for (var i = 0; i < Math.min(linhas.length, 8); i++) {
+      var s = semAcento(linhas[i]);
+      if (s.indexOf("nome") >= 0 && (s.indexOf("parcela") >= 0 || s.indexOf("tipo") >= 0)) { iCab = i; break; }
+    }
+    if (iCab < 0) return { ok: false, linhas: [],
+      erro: "Não encontrei a linha de títulos. Copie a planilha inteira, incluindo a linha com Nome, Tipo e Valor da parcela." };
+
+    var cab = separarLinha(linhas[iCab]);
+    var col = {
+      nome: acharColuna(cab, ["nome"]),
+      tipo: acharColuna(cab, ["tipo"]),
+      ciclos: acharColuna(cab, ["quantos ciclos", "ciclos"]),
+      totalReal: acharColuna(cab, ["valor total - real", "total - real", "total real"]),
+      totalEuro: acharColuna(cab, ["valor total - euro", "total - euro", "total euro"]),
+      nParcelas: acharColuna(cab, ["quantidade de parcelas", "qtd parcelas", "parcelas"]),
+      venc: acharColuna(cab, ["data de vencimento", "vencimento"]),
+      parcela: acharColuna(cab, ["valor da parcela", "valor parcela"])
+    };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+
+    var anoBase = opts.ano || today().getFullYear();
+    var colsMes = mesesDasColunas(cab, anoBase);
+
+    var out = [], ignoradas = 0;
+    linhas.slice(iCab + 1).forEach(function (linha) {
+      var c = separarLinha(linha);
+      var nome = (c[col.nome] || "").trim();
+      if (!nome) { ignoradas++; return; }
+
+      // Aviso é o que impede de aplicar: sem isso o contrato fica errado.
+      // Nota é observação — a planilha diz uma coisa e o cálculo dá outra,
+      // mas dá para importar. Misturar os dois faz metade das linhas
+      // parecer problema e a pessoa desiste de conferir.
+      var avisos = [], notas = [];
+      var tipo = col.tipo >= 0 ? (c[col.tipo] || "").trim() : "";
+      var totalReal = col.totalReal >= 0 ? lerCelula(c[col.totalReal]) : { vazia: true };
+      var totalEuro = col.totalEuro >= 0 ? lerCelula(c[col.totalEuro]) : { vazia: true };
+      var parcela = col.parcela >= 0 ? lerCelula(c[col.parcela]) : { vazia: true };
+
+      // a moeda vem de qual coluna de total está preenchida, e a célula
+      // da parcela confirma
+      var moeda = totalEuro.valor ? "€" : (totalReal.valor ? "R$" : (parcela.moeda || "R$"));
+      var total = totalEuro.valor || totalReal.valor || 0;
+
+      var vencCel = col.venc >= 0 ? String(c[col.venc] || "").trim() : "";
+      var vencDia = parseInt((vencCel.match(/^\s*(\d{1,2})\s*$/) || [])[1], 10);
+      var autoMatricula = /auto\s*matricula/i.test(vencCel);
+      if (isNaN(vencDia)) vencDia = 0;
+
+      var nParcelas = col.nParcelas >= 0 ? parseInt(c[col.nParcelas], 10) : 0;
+      if (isNaN(nParcelas)) nParcelas = 0;
+
+      // as colunas de mês
+      var meses = [], quitouEm = -1;
+      colsMes.forEach(function (cm, ordem) {
+        var cel = lerCelula(c[cm.idx]);
+        if (cel.quitou) { if (quitouEm < 0) quitouEm = ordem; return; }
+        if (cel.vazia) return;
+        meses.push({ key: cm.key, label: cm.label,
+          valor: fmtMoney(moeda, cel.valor || parcela.valor || 0),
+          bruto: cel.valor || parcela.valor || 0,
+          pago: !!cel.data,          // data na célula = pagamento feito
+          pagoEm: cel.data || "",
+          origem: cel.bruto });
+        if (!cel.valor && !parcela.valor) avisos.push("Sem valor em " + cm.label);
+        if (cel.valor && parcela.valor && cel.valor !== parcela.valor)
+          notas.push(cm.label + " tem " + fmtMoney(moeda, cel.valor)
+            + ", diferente da parcela de " + fmtMoney(moeda, parcela.valor));
+      });
+
+      if (!meses.length) avisos.push("Nenhuma parcela reconhecida");
+      if (!total && !parcela.valor) avisos.push("Sem valor total nem valor de parcela");
+      // O "quitou" ocupa uma coluna: quem tem 7 parcelas e quitou na 8ª
+      // bate com uma planilha que declara 8. Isso não é divergência.
+      var colunasUsadas = meses.length + (quitouEm >= 0 ? 1 : 0);
+      if (nParcelas && meses.length && nParcelas !== colunasUsadas) {
+        notas.push("A planilha diz " + nParcelas + " parcelas e eu li " + meses.length
+          + (quitouEm >= 0 ? ", com quitação antes do fim" : ""));
+      }
+
+      out.push({
+        nome: nome, tipo: tipo || "Matrícula",
+        ciclos: col.ciclos >= 0 ? (c[col.ciclos] || "").trim() : "",
+        moeda: moeda,
+        valorTotal: total ? fmtMoney(moeda, total) : "",
+        parcelaValor: parcela.valor ? fmtMoney(moeda, parcela.valor) : "",
+        parcelas: meses.length || nParcelas,
+        vencDia: vencDia, autoMatricula: autoMatricula,
+        quitou: quitouEm >= 0,
+        meses: meses,
+        aReceber: meses.filter(function (m) { return !m.pago; })
+          .reduce(function (s, m) { return s + m.bruto; }, 0),
+        recebido: meses.filter(function (m) { return m.pago; })
+          .reduce(function (s, m) { return s + m.bruto; }, 0),
+        avisos: avisos, notas: notas,
+        existe: !!pessoaPorNome(nome)
+      });
+    });
+
+    // o que a escola vai receber, por mês e por moeda
+    var porMes = {};
+    out.forEach(function (l) {
+      l.meses.forEach(function (m) {
+        porMes[m.key] = porMes[m.key] || { key: m.key, label: m.label, "R$": 0, "€": 0, n: 0 };
+        if (!m.pago) { porMes[m.key][l.moeda] += m.bruto; porMes[m.key].n++; }
+      });
+    });
+    var meses = Object.keys(porMes).sort().map(function (k) { return porMes[k]; });
+
+    return { ok: true, linhas: out, ignoradas: ignoradas,
+      colunasMes: colsMes.map(function (c) { return c.label + "/" + c.ano; }),
+      comAviso: out.filter(function (l) { return l.avisos.length; }).length,
+      novas: out.filter(function (l) { return !l.existe; }).length,
+      porMes: meses,
+      totalAReceber: { "R$": out.filter(function (l) { return l.moeda === "R$"; })
+          .reduce(function (s, l) { return s + l.aReceber; }, 0),
+        "€": out.filter(function (l) { return l.moeda === "€"; })
+          .reduce(function (s, l) { return s + l.aReceber; }, 0) } };
+  }
+
+  function pessoaPorNome(nome) {
+    var alvo = semAcento(nome);
+    return loadPessoas().filter(function (p) { return semAcento(p.nome) === alvo; })[0] || null;
+  }
+
+  // Só depois de a Gabi olhar o preview. Cria quem não existe e substitui
+  // o contrato vigente de quem existe — a planilha é a fonte da verdade.
+  function aplicarControlePagamento(leitura, opts) {
+    opts = opts || {};
+    if (!leitura || !leitura.ok) return { ok: false };
+    var criadas = 0, atualizadas = 0, puladas = 0;
+
+    leitura.linhas.forEach(function (l) {
+      if (opts.somenteSemAviso && l.avisos.length) { puladas++; return; }
+      if (!l.meses.length) { puladas++; return; }
+
+      var contrato = {
+        tipo: l.tipo, ciclos: l.ciclos, moeda: l.moeda,
+        valorTotal: l.valorTotal, parcelaValor: l.parcelaValor,
+        parcelas: l.meses.length, vencDia: l.vencDia || 10,
+        fim: l.meses[l.meses.length - 1].key + "-28",
+        meses: l.meses.map(function (m) {
+          return { key: m.key, label: m.label, valor: m.valor, pago: m.pago };
+        })
+      };
+
+      var p = pessoaPorNome(l.nome);
+      if (!p) {
+        p = novaPessoa({ nome: l.nome, moeda: l.moeda, status: "aluna",
+          estagio: "matriculado", origem: { canal: "Importação" } });
+        criadas++;
+      } else {
+        atualizadas++;
+      }
+      mutate(p.id, function (x) {
+        x.status = "aluna";
+        x.estagio = "matriculado";
+        x.moeda = l.moeda;
+        x.contratos = x.contratos || [];
+        // substitui o contrato vigente em vez de empilhar mais um
+        var iVig = -1;
+        x.contratos.forEach(function (c, i) { if (contratoAtivo(c)) iVig = i; });
+        if (iVig >= 0) x.contratos[iVig] = contrato;
+        else x.contratos.push(contrato);
+        pushHist(x, "pagamento", "Contrato importado do Controle de Pagamento · "
+          + contrato.parcelas + "x de " + contrato.parcelaValor);
+      });
+    });
+
+    return { ok: true, criadas: criadas, atualizadas: atualizadas, puladas: puladas };
+  }
+
+  function contratoAtivo(c) {
+    if (!c) return false;
+    if (!c.fim) return true;
+    return c.fim >= iso(today());
+  }
+
+  // ── O QUE A ESCOLA VAI RECEBER ────────────────────────────────
+  //
+  // A pergunta é simples e não tinha resposta em lugar nenhum: quanto
+  // entra em cada um dos próximos meses, e de quem.
+  function previsaoRecebimento(nMeses) {
+    var n = nMeses || 12;
+    var chave = mesAtualKey();
+    var ordem = [];
+    for (var i = 0; i < n; i++) { ordem.push(chave); chave = mesSeguinte(chave).key; }
+    var dentro = {};
+    ordem.forEach(function (k) { dentro[k] = true; });
+
+    var porMes = {};
+    ordem.forEach(function (k) {
+      porMes[k] = { key: k, label: MES_NOMES[parseInt(k.slice(5, 7), 10) - 1],
+        ano: k.slice(0, 4), pessoas: [],
+        recebido: { "R$": 0, "€": 0 }, aReceber: { "R$": 0, "€": 0 },
+        atrasado: { "R$": 0, "€": 0 } };
+    });
+
+    var hoje = iso(today());
+    loadPessoas().forEach(function (p) {
+      (p.contratos || []).forEach(function (c) {
+        var moeda = c.moeda || p.moeda || "R$";
+        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+        (c.meses || []).forEach(function (m) {
+          if (!dentro[m.key] || !m.valor) return;
+          var v = parseMoney(m.valor);
+          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+          var estado = m.pago ? "recebido" : (venc < hoje ? "atrasado" : "aReceber");
+          porMes[m.key][estado][moeda] += v;
+          porMes[m.key].pessoas.push({ id: p.id, nome: p.nome, moeda: moeda,
+            valor: v, valorLabel: m.valor, estado: estado, venc: venc });
+        });
+      });
+    });
+
+    var lista = ordem.map(function (k) {
+      var m = porMes[k];
+      m.pessoas.sort(function (a, b) { return b.valor - a.valor; });
+      m.totalReais = emReais(m.recebido) + emReais(m.aReceber) + emReais(m.atrasado);
+      m.previstoReais = emReais(m.aReceber) + emReais(m.atrasado);
+      m.n = m.pessoas.length;
+      return m;
+    });
+    var acumulado = 0;
+    lista.forEach(function (m) { acumulado += m.previstoReais; m.acumuladoReais = acumulado; });
+
+    return { meses: lista,
+      totalPrevistoReais: acumulado,
+      totalReais: lista.reduce(function (s, m) { return s + m.totalReais; }, 0) };
+  }
+
   // ── CONFERÊNCIA FINANCEIRA ────────────────────────────────────
   //
   // Um número na tela não vale nada se ninguém sabe de onde ele veio.
@@ -6560,6 +6892,9 @@
     furosDeCadastro: furosDeCadastro,
     folhaNoCaixa: folhaNoCaixa, comercialDaEquipe: comercialDaEquipe,
     conferenciaFinanceira: conferenciaFinanceira,
+    lerControlePagamento: lerControlePagamento,
+    aplicarControlePagamento: aplicarControlePagamento,
+    previsaoRecebimento: previsaoRecebimento, pessoaPorNome: pessoaPorNome,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Financeiro · Importar o Controle de Pagamento</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #3d3529;">
+  <div style="max-width: 900px; margin: 0 auto; padding: 22px 16px 60px;">
+
+    <header style="margin-bottom: 6px;">
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #d4a574;">Inglês sem Roteiro · Financeiro</p>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Importar o Controle de Pagamento</h1>
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;"><strong>Da planilha para o app, sem redigitar.</strong> Cole o Controle de Pagamento abaixo. O sistema lê, mostra o que entendeu de cada linha e só grava depois que você confere. Nada é aplicado antes disso.</p>
+
+    <!-- COMO COPIAR -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Como copiar</div>
+      <p style="margin: 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">No Google Sheets, abra a aba <strong>Controle de Pagamento</strong>, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula.</p>
+    </div>
+
+    <!-- COLAR -->
+    <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+      <textarea ref="{{ colaRef }}" placeholder="Cole aqui a planilha inteira, com a linha de títulos" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px; font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fdfbf8; resize: vertical;"></textarea>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
+        <button onclick="{{ onLer }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ler a planilha</button>
+        <sc-if value="{{ temLeitura }}">
+          <button onclick="{{ onLimpar }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Recomeçar</button>
+        </sc-if>
+        <span style="font-size: 11.5px; color: #b3a693;">{{ anoNota }}</span>
+      </div>
+      <sc-if value="{{ temErro }}">
+        <p style="margin: 10px 0 0; font-size: 12.5px; color: #cf6b5c; font-weight: 600; line-height: 1.5;">{{ erro }}</p>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ temLeitura }}">
+      <div>
+        <!-- RESUMO DA LEITURA -->
+        <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
+            <sc-for list="{{ resumo }}" as="rs" hint-placeholder-count="4">
+              <div>
+                <div style="font-size: 18px; font-weight: 700; color: {{ rs.cor }};">{{ rs.valor }}</div>
+                <div style="font-size: 10.5px; color: rgba(255,255,255,0.6); line-height: 1.4;">{{ rs.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 11.5px; color: rgba(255,255,255,0.7); line-height: 1.5;">{{ colunasNota }}</p>
+        </div>
+
+        <!-- O QUE VOU RECEBER, PELA PLANILHA -->
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">O que entra, mês a mês</div>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Só o que ainda não foi pago. Quem já quitou não aparece aqui.</p>
+          <sc-for list="{{ porMes }}" as="pm" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid #f4f1ec;">
+              <span style="flex: none; width: 92px; font-size: 12.5px; font-weight: 700; color: #164951;">{{ pm.label }}</span>
+              <span style="flex: 1; min-width: 0; font-size: 11.5px; color: #8a7c6b;">{{ pm.n }}</span>
+              <span style="flex: none; font-size: 13px; font-weight: 700; color: #348a8e;">{{ pm.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- LINHA POR LINHA -->
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Linha por linha</div>
+            <button onclick="{{ onSoAviso }}" style="border: 1px solid #e5dccf; background: {{ soAvisoBg }}; color: {{ soAvisoFg }}; font-size: 11px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ soAvisoLabel }}</button>
+          </div>
+          <p style="margin: 0 0 10px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Confira antes de aplicar. O que eu não consegui ler está marcado em vermelho.</p>
+          <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="6">
+            <div style="border-top: 1px solid #f4f1ec; padding: 11px 0;">
+              <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ ln.nome }}</span>
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: {{ ln.selo }}; background: {{ ln.seloBg }}; padding: 2px 8px; border-radius: 999px;">{{ ln.seloLabel }}</span>
+                <span style="flex: 1;"></span>
+                <span style="font-size: 13px; font-weight: 700; color: #348a8e;">{{ ln.aReceber }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px; line-height: 1.5;">{{ ln.detalhe }}</div>
+              <div style="font-size: 11px; color: #a2957f; margin-top: 3px; line-height: 1.5;">{{ ln.calendario }}</div>
+              <sc-if value="{{ ln.temAviso }}">
+                <div style="font-size: 11.5px; color: #cf6b5c; font-weight: 600; margin-top: 4px; line-height: 1.5;">{{ ln.avisos }}</div>
+              </sc-if>
+              <sc-if value="{{ ln.temNota }}">
+                <div style="font-size: 11.5px; color: #9c6f56; margin-top: 4px; line-height: 1.5;">{{ ln.notas }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- APLICAR -->
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 16px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700; margin-bottom: 6px;">Aplicar no sistema</div>
+          <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ aplicarNota }}</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="{{ onAplicarLimpas }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ aplicarLimpasLabel }}</button>
+            <sc-if value="{{ temAviso }}">
+              <button onclick="{{ onAplicarTudo }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Aplicar tudo, inclusive com aviso</button>
+            </sc-if>
+          </div>
+          <sc-if value="{{ temFeito }}">
+            <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ feito }}</p>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;900px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0 };
+  colaRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const base = { colaRef: this.colaRef, temLeitura: false, temErro: !!this.state.erro,
+      erro: this.state.erro, resumo: [], linhas: [], porMes: [], temFeito: !!this.state.feito,
+      feito: this.state.feito, anoNota: "" };
+    if (!CRM || !CRM.lerControlePagamento) return base;
+
+    const anoBase = new Date().getFullYear();
+    const $ = (m, v) => CRM.fmtMoney(m, v);
+
+    const ler = () => {
+      const txt = (this.colaRef.current && this.colaRef.current.value) || "";
+      if (!txt.trim()) { this.setState({ erro: "Cole a planilha antes de ler.", leitura: null }); return; }
+      const r = CRM.lerControlePagamento(txt, { ano: anoBase });
+      if (!r.ok) { this.setState({ erro: r.erro, leitura: null }); return; }
+      if (!r.linhas.length) {
+        this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leitura: null });
+        return;
+      }
+      this.setState({ leitura: r, erro: "", feito: "" });
+    };
+
+    const L = this.state.leitura;
+    if (!L) {
+      return Object.assign(base, {
+        anoNota: "As colunas de mês são lidas a partir de " + anoBase + ".",
+        onLer: ler,
+        onLimpar: () => {},
+        onSoAviso: () => {}, onAplicarLimpas: () => {}, onAplicarTudo: () => {}
+      });
+    }
+
+    const limpas = L.linhas.filter(l => !l.avisos.length);
+    const mostrar = this.state.soAviso ? L.linhas.filter(l => l.avisos.length) : L.linhas;
+
+    const aplicar = (somenteSemAviso) => {
+      const quantas = somenteSemAviso ? limpas.length : L.linhas.length;
+      if (!window.confirm("Aplicar " + quantas + " contratos? "
+        + "Quem já está cadastrada tem o contrato vigente substituído pelo da planilha.")) return;
+      const r = CRM.aplicarControlePagamento(L, { somenteSemAviso });
+      this.setState({ feito: r.criadas + " alunas criadas · " + r.atualizadas + " atualizadas"
+        + (r.puladas ? " · " + r.puladas + " puladas" : "")
+        + ". Confira em Cobrança e no Caixa." });
+      this.bump();
+    };
+
+    return Object.assign(base, {
+      temLeitura: true,
+      anoNota: "",
+      onLer: ler,
+      onLimpar: () => {
+        if (this.colaRef.current) this.colaRef.current.value = "";
+        this.setState({ leitura: null, erro: "", feito: "", soAviso: false });
+      },
+
+      resumo: [
+        { valor: String(L.linhas.length), label: L.linhas.length === 1 ? "linha lida" : "linhas lidas", cor: "#fff" },
+        { valor: String(L.novas), label: "ainda não cadastradas", cor: "#9ec970" },
+        { valor: String(L.comAviso), label: L.comAviso === 1 ? "com algo a conferir" : "com algo a conferir",
+          cor: L.comAviso ? "#fc9082" : "#9ec970" },
+        { valor: $("R$", L.totalAReceber["R$"]), label: "a receber em real", cor: "#fff" },
+        { valor: $("€", L.totalAReceber["€"]), label: "a receber em euro", cor: "#fff" }
+      ],
+      colunasNota: "Colunas de pagamento reconhecidas: " + L.colunasMes.join(" · ")
+        + (L.ignoradas ? " · " + L.ignoradas + " linhas sem nome foram ignoradas" : ""),
+
+      porMes: L.porMes.map(m => ({
+        label: m.label,
+        n: m.n + (m.n === 1 ? " parcela" : " parcelas"),
+        valor: [m["R$"] ? $("R$", m["R$"]) : "", m["€"] ? $("€", m["€"]) : ""]
+          .filter(Boolean).join("  ·  ") || "—"
+      })),
+
+      soAviso: this.state.soAviso,
+      soAvisoLabel: this.state.soAviso ? "Ver todas" : "Ver só o que precisa conferir",
+      soAvisoBg: this.state.soAviso ? "#164951" : "#fff",
+      soAvisoFg: this.state.soAviso ? "#fff" : "#8a7c6b",
+      onSoAviso: () => this.setState({ soAviso: !this.state.soAviso }),
+
+      linhas: mostrar.map(l => ({
+        nome: l.nome,
+        seloLabel: l.avisos.length ? "conferir" : (l.existe ? "atualiza" : "nova"),
+        selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),
+        seloBg: l.avisos.length ? "#fdf1ec" : (l.existe ? "#f2ece3" : "#eef5ec"),
+        aReceber: l.aReceber ? $(l.moeda, l.aReceber) : "quitado",
+        detalhe: [l.tipo, l.ciclos ? l.ciclos + " ciclo(s)" : "",
+          l.meses.length + "x de " + (l.parcelaValor || "—"),
+          l.vencDia ? "vence dia " + l.vencDia : (l.autoMatricula ? "auto matrícula" : ""),
+          l.recebido ? "já recebeu " + $(l.moeda, l.recebido) : ""
+        ].filter(Boolean).join(" · "),
+        calendario: l.meses.map(m => m.label.slice(0, 3) + (m.pago ? " ✓" : "")).join("  "),
+        temAviso: l.avisos.length > 0,
+        avisos: l.avisos.join(" · "),
+        temNota: l.notas.length > 0,
+        notas: l.notas.join(" · ")
+      })),
+
+      aplicarNota: limpas.length === L.linhas.length
+        ? "Todas as linhas foram lidas sem pendência. Aplicar cria quem falta e substitui o contrato vigente de quem já está cadastrada."
+        : limpas.length + " linhas estão limpas e " + (L.linhas.length - limpas.length)
+          + " têm algo a conferir. Você pode aplicar só as limpas agora e resolver o resto na planilha.",
+      aplicarLimpasLabel: limpas.length === L.linhas.length
+        ? "Aplicar as " + limpas.length + " linhas"
+        : "Aplicar só as " + limpas.length + " sem aviso",
+      temAviso: limpas.length !== L.linhas.length,
+      onAplicarLimpas: () => aplicar(true),
+      onAplicarTudo: () => aplicar(false),
+
+      temFeito: !!this.state.feito, feito: this.state.feito
+    });
+  }
+}
+</script>
+</body>
+</html>
