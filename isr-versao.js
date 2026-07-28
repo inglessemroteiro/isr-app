@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.28-b",
+  numero: "2026.07.28-c",
   data: "28/07/2026",
-  nota: "Extrato de banco de verdade: coluna de saldo, formatos de data e dúvida marcada"
+  nota: "Extrato do Asaas: leitura por coluna, ponto decimal e conciliação pelo nome"
 };
