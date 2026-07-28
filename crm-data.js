@@ -2828,20 +2828,66 @@
   // "dd/mm/aaaa ; descrição ; valor" — valor negativo = saída.
   // Aceita 1.234,56 e 1234.56.
   function parseExtrato(texto) {
-    var out = [];
+    var linhas = [];
     (texto || "").split("\n").forEach(function (linha) {
       var l = linha.trim();
       if (!l) return;
-      var data = (l.match(/(\d{2}\/\d{2}\/\d{4})/) || [])[1] || "";
-      var moneyTokens = l.match(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+\.\d{2}|-?\d+,\d{2}/g);
-      if (!moneyTokens || !moneyTokens.length) return;
-      var raw = moneyTokens[moneyTokens.length - 1];
-      var v = parseMoney(raw);
-      if (raw.indexOf("-") === 0) v = -Math.abs(v);
-      var desc = l.replace(data, "").replace(raw, "").replace(/^[;|,\s]+|[;|,\s]+$/g, "").trim();
-      out.push({ data: data, descricao: desc || "(sem descrição)", valor: v });
+      // dd/mm/aaaa, dd/mm/aa e aaaa-mm-dd — cada banco exporta de um jeito
+      var m = l.match(/(\d{2})\/(\d{2})\/(\d{4})/)
+           || l.match(/(\d{2})\/(\d{2})\/(\d{2})(?!\d)/)
+           || l.match(/(\d{4})-(\d{2})-(\d{2})/);
+      var data = "";
+      if (m) {
+        if (m[0].indexOf("-") >= 0) data = m[3] + "/" + m[2] + "/" + m[1];
+        else data = m[1] + "/" + m[2] + "/" + (m[3].length === 2 ? "20" + m[3] : m[3]);
+      }
+      var tokens = l.match(/-?\(?\d{1,3}(?:\.\d{3})*,\d{2}\)?|-?\(?\d+\.\d{2}\)?|-?\(?\d+,\d{2}\)?/g);
+      if (!tokens || !tokens.length) return;
+      linhas.push({ l: l, data: data, dataBruta: m ? m[0] : "", tokens: tokens });
     });
-    return out;
+    if (!linhas.length) return [];
+
+    // ── qual coluna é o valor ─────────────────────────────────
+    // Muitos extratos trazem o saldo na última coluna. Pegar o último
+    // número da linha faria o app registrar o saldo como se fosse a
+    // transação — errado e silencioso. Se o último número se comporta
+    // como saldo (varia de uma linha para a outra exatamente pelo valor
+    // do número anterior), é saldo, e o valor é o penúltimo.
+    var usaPenultimo = false, decidiu = false;
+    var comDois = linhas.filter(function (x) { return x.tokens.length >= 2; });
+    if (comDois.length >= 2) {
+      var acertos = 0, testes = 0;
+      for (var i = 1; i < comDois.length; i++) {
+        var antes = parseMoney(comDois[i - 1].tokens[comDois[i - 1].tokens.length - 1]);
+        var agora = parseMoney(comDois[i].tokens[comDois[i].tokens.length - 1]);
+        var mov = parseMoney(comDois[i].tokens[comDois[i].tokens.length - 2]);
+        if (!mov) continue;
+        testes++;
+        if (Math.abs(Math.abs(agora - antes) - Math.abs(mov)) < 0.02) acertos++;
+      }
+      usaPenultimo = testes >= 2 && acertos >= Math.ceil(testes * 0.7);
+      decidiu = testes >= 2;
+    }
+
+    return linhas.map(function (x) {
+      var idx = (usaPenultimo && x.tokens.length >= 2) ? x.tokens.length - 2 : x.tokens.length - 1;
+      var raw = x.tokens[idx];
+      var v = parseMoney(raw);
+      // saída pode vir com sinal, entre parênteses, ou marcada com D
+      var negativo = raw.indexOf("-") === 0 || raw.indexOf("(") === 0
+        || /\bD\b\s*$/.test(x.l) || /d[ée]bito|pagamento para|pago para|saque|tarifa/i.test(x.l);
+      v = negativo ? -Math.abs(v) : Math.abs(v);
+      var desc = x.l.replace(x.dataBruta, "");
+      x.tokens.forEach(function (tk) { desc = desc.replace(tk, ""); });
+      desc = desc.replace(/^[;|,\s]+|[;|,\s]+$/g, "").replace(/\s{2,}/g, " ").trim();
+      // Com poucas linhas não dá para saber se o último número é saldo ou
+      // transação. Em vez de escolher em silêncio, a linha vai marcada e a
+      // tela pede conferência.
+      var ambiguo = x.tokens.length >= 2 && !decidiu;
+      return { data: x.data, descricao: desc || "(sem descrição)", valor: v,
+        colunaSaldo: usaPenultimo, ambiguo: ambiguo,
+        outrosValores: ambiguo ? x.tokens.map(function (tk) { return parseMoney(tk); }) : null };
+    });
   }
 
   // Conciliação: para cada CRÉDITO do extrato, procura parcela em aberto
