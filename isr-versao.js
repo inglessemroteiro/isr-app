@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.28-a",
+  numero: "2026.07.28-b",
   data: "28/07/2026",
-  nota: "App vazio de fábrica, turma ou particular na importação e link de pagamento na cobrança"
+  nota: "Extrato de banco de verdade: coluna de saldo, formatos de data e dúvida marcada"
 };

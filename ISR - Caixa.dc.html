@@ -782,7 +782,17 @@ class Component extends DCLogic {
       extratoRef: this.extratoRef, temAnalise: !!analise, sugestoes, semMatch,
       resumoAnalise: analise
         ? (analise.sugestoes.length + (analise.sugestoes.length === 1 ? " crédito associado" : " créditos associados")
-           + " · " + analise.semMatch.length + " sem correspondência. Nenhum registro é alterado até a confirmação.")
+           + " · " + analise.semMatch.length + " sem correspondência. Nenhum registro é alterado até a confirmação."
+           // extrato com coluna de saldo: o último número da linha não é a
+           // transação, e registrar o saldo como transação seria um erro
+           // grande e silencioso
+           + (analise.colunaSaldo
+               ? " A última coluna do seu extrato é o saldo — usei a coluna anterior como valor da transação."
+               : "")
+           + (analise.ambiguas
+               ? " " + analise.ambiguas + (analise.ambiguas === 1 ? " linha tem" : " linhas têm")
+                 + " mais de um número e são poucas para eu saber qual é o valor: confira antes de confirmar."
+               : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),
       onConciliarCerteiras: () => {
@@ -797,7 +807,10 @@ class Component extends DCLogic {
       onAnalisar: () => {
         const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
         const trans = CRM.parseExtrato(txt);
-        this.setState({ analise: CRM.sugerirConciliacao(trans, this.state.moedaExtrato), conciliadas: {}, lancadas: {} });
+        const a = CRM.sugerirConciliacao(trans, this.state.moedaExtrato);
+        a.colunaSaldo = trans.some(x => x.colunaSaldo);
+        a.ambiguas = trans.filter(x => x.ambiguo).length;
+        this.setState({ analise: a, conciliadas: {}, lancadas: {} });
       }
     };
   }
