@@ -520,8 +520,38 @@
   }
 
   // ── STORE ─────────────────────────────────────────────────────
+  // O exemplo existia para ninguém abrir uma tela vazia sem entender nada.
+  // A escola já está com os dados reais dentro: a partir daqui o app nasce
+  // vazio, e o exemplo só entra se alguém pedir. Quem já tem dado não é
+  // afetado — a marca de semeadura continua onde está.
+  var EXEMPLO_KEY = "isr_exemplo_v1";
+  function exemploLigado() {
+    try { return localStorage.getItem(EXEMPLO_KEY) === "1"; } catch (e) { return false; }
+  }
+  function carregarExemplo() {
+    try {
+      criarBackup("antes de carregar o exemplo");
+      localStorage.setItem(EXEMPLO_KEY, "1");
+      localStorage.removeItem(SEED_FLAG);
+      localStorage.removeItem(PESSOAS_KEY);
+      localStorage.removeItem(TURMAS_KEY);
+    } catch (e) {}
+    ensureSeed();
+    agendarSync();
+    return { ok: true };
+  }
+
   function ensureSeed() {
     if (localStorage.getItem(SEED_FLAG)) return;
+    if (!exemploLigado()) {
+      // nasce vazio, mas marcado: sem isto o exemplo voltaria a cada visita
+      try {
+        localStorage.setItem(SEED_FLAG, "1");
+        localStorage.setItem(PESSOAS_KEY, "[]");
+        localStorage.setItem(TURMAS_KEY, "[]");
+      } catch (e) {}
+      return;
+    }
     var lista = seedPessoas();
     completarTurmasDemo(lista);
     localStorage.setItem(PESSOAS_KEY, JSON.stringify(lista));
@@ -2878,13 +2908,74 @@
   }
 
   // ── DESTINATÁRIOS (tela Mensagens) ────────────────────────────
+  // ── LINK DE PAGAMENTO ─────────────────────────────────────────
+  //
+  // Cobrar sem o link é mandar a pessoa procurar como pagar. O link mora
+  // em dois lugares: um padrão da escola (o do Asaas, do GoCardless, do
+  // que for) e o de cada aluna, quando ela tem uma assinatura própria. O
+  // da aluna sempre ganha.
+  //
+  // O padrão aceita marcas que são trocadas na hora de montar a mensagem:
+  //   {nome}  {valor}  {mes}
+  // Isso serve para gerador de cobrança que aceita parâmetros na URL.
+  var LINK_PAG_KEY = "isr_link_pagamento_v1";
+
+  function linkPagamentoPadrao() {
+    try { return localStorage.getItem(LINK_PAG_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setLinkPagamentoPadrao(url) {
+    try { localStorage.setItem(LINK_PAG_KEY, (url || "").trim()); } catch (e) {}
+    agendarSync();
+    return linkPagamentoPadrao();
+  }
+  function setLinkPagamento(pessoaId, url) {
+    return mutate(pessoaId, function (p) {
+      var antes = p.linkPagamento || "";
+      p.linkPagamento = (url || "").trim();
+      if (p.linkPagamento !== antes) {
+        pushHist(p, "pagamento", p.linkPagamento
+          ? "Link de pagamento cadastrado" : "Link de pagamento removido");
+      }
+    });
+  }
+
+  function linkDePagamento(pessoaOuId, opts) {
+    var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
+    if (!p) return "";
+    opts = opts || {};
+    var url = (p.linkPagamento || "").trim();
+    var proprio = !!url;
+    if (!url) url = linkPagamentoPadrao();
+    if (!url) return "";
+    var c = contratoVigente(p);
+    var valor = opts.valor || (c ? c.parcelaValor : "") || "";
+    var mes = opts.mes || mesAtualKey();
+    url = url
+      .replace(/\{nome\}/g, encodeURIComponent(p.nome || ""))
+      .replace(/\{valor\}/g, encodeURIComponent(String(parseMoney(valor) || "")))
+      .replace(/\{mes\}/g, encodeURIComponent(mes));
+    void proprio;
+    return url;
+  }
+
+  // Quem ainda não tem como pagar. Cobrar essas pessoas manda elas
+  // procurarem o caminho sozinhas.
+  function alunasSemLinkDePagamento() {
+    if (linkPagamentoPadrao()) return [];
+    return loadPessoas().filter(function (p) {
+      return p.status === "aluna" && !(p.linkPagamento || "").trim()
+        && parcelasAbertas(p.id).length > 0;
+    }).map(function (p) { return { id: p.id, nome: p.nome }; });
+  }
+
   function recipients() {
     return loadPessoas().map(function (p) {
       var c = contratoVigente(p);
       var venc = c && c.vencDia !== undefined && c.vencDia !== "auto" ? "dia " + c.vencDia : (c && c.vencDia === "auto" ? "auto" : "");
       return { id: p.id, nome: p.nome, telefone: p.whatsapp, tipo: p.status === "lead" ? "lead" : (STATUS_META[p.status] ? STATUS_META[p.status].label.toLowerCase() : p.status),
         turma: p.turma || "", nivel: p.nivel || "", horarios: p.horarios || "",
-        valor: c ? c.parcelaValor : "", vencimento: venc, link: p.linkPagamento || "" };
+        valor: c ? c.parcelaValor : "", vencimento: venc,
+        link: linkDePagamento(p) };
     });
   }
 
@@ -6340,8 +6431,22 @@
           + (quitouEm >= 0 ? ", com quitação antes do fim" : ""));
       }
 
+      // A planilha não diz se é turma ou particular. O sistema chuta pelo
+      // que dá para ver e a pessoa corrige na tela — chutar em silêncio é
+      // pior do que perguntar.
+      var jaExiste = pessoaPorNome(nome);
+      var formato = "grupo";
+      if (jaExiste) {
+        formato = (jaExiste.particular || /particular/i.test(jaExiste.turma || ""))
+          ? "particular" : "grupo";
+      } else if (/particular/i.test(linha)) {
+        formato = "particular";
+      }
+
       out.push({
         nome: nome, tipo: tipo || "Matrícula",
+        formato: formato, formatoChutado: !jaExiste,
+        turma: jaExiste ? (jaExiste.turma || "") : "",
         ciclos: col.ciclos >= 0 ? (c[col.ciclos] || "").trim() : "",
         moeda: moeda,
         valorTotal: total ? fmtMoney(moeda, total) : "",
@@ -6355,7 +6460,7 @@
         recebido: meses.filter(function (m) { return m.pago; })
           .reduce(function (s, m) { return s + m.bruto; }, 0),
         avisos: avisos, notas: notas,
-        existe: !!pessoaPorNome(nome)
+        existe: !!jaExiste
       });
     });
 
@@ -6406,6 +6511,7 @@
         })
       };
 
+      var particular = l.formato === "particular";
       var p = pessoaPorNome(l.nome);
       if (!p) {
         p = novaPessoa({ nome: l.nome, moeda: l.moeda, status: "aluna",
@@ -6418,6 +6524,16 @@
         x.status = "aluna";
         x.estagio = "matriculado";
         x.moeda = l.moeda;
+        // Turma ou particular muda quem acompanha, como a professora é paga
+        // e onde a aluna aparece. Não é detalhe de cadastro.
+        x.formatos = [particular ? "particular" : "grupo"];
+        if (particular) {
+          x.particular = x.particular || { inicio: iso(today()), aulas: 0, feitas: 0 };
+          if (!/particular/i.test(x.turma || "")) x.turma = "Particular";
+        } else {
+          delete x.particular;
+          if (/^particular/i.test(x.turma || "")) x.turma = "";
+        }
         x.contratos = x.contratos || [];
         // substitui o contrato vigente em vez de empilhar mais um
         var iVig = -1;
@@ -6971,6 +7087,10 @@
     aplicarControlePagamento: aplicarControlePagamento,
     previsaoRecebimento: previsaoRecebimento, pessoaPorNome: pessoaPorNome,
     comecarDoZero: comecarDoZero, oQueTemDentro: oQueTemDentro,
+    carregarExemplo: carregarExemplo, exemploLigado: exemploLigado,
+    linkDePagamento: linkDePagamento, setLinkPagamento: setLinkPagamento,
+    linkPagamentoPadrao: linkPagamentoPadrao, setLinkPagamentoPadrao: setLinkPagamentoPadrao,
+    alunasSemLinkDePagamento: alunasSemLinkDePagamento,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

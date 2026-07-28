@@ -52,7 +52,7 @@
       </button>
       <sc-if value="{{ confAberta }}">
         <div style="margin-top: 12px;">
-          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada linha refaz uma conta por um caminho diferente e compara com o que a tela mostra. Se as duas não baterem, o número está errado — e aparece aqui.</p>
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada linha refaz uma conta por um caminho diferente e compara com o que a tela mostra. Se as duas não baterem, o número está errado — e aparece aqui. Isto diz se os números são confiáveis, não se o mês foi bom: um mês no vermelho pode ter todas as verificações verdes.</p>
           <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
             <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
               <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
@@ -649,11 +649,14 @@ class Component extends DCLogic {
       numeros, metas, serie, camadas,
 
       // ── conferência ──
-      confTitulo: conf.ok ? "As contas fecham" : "As contas não fecham",
+      // "As contas fecham" foi um erro de palavra: em português isso soa
+      // como "o mês fechou no azul". Aqui não se julga resultado nenhum —
+      // só se os mesmos números batem entre as telas.
+      confTitulo: conf.ok ? "Os números batem entre si" : "Os números não batem",
       confResumo: conf.ok
-        ? conf.total + " verificações, todas conferem"
+        ? conf.total + " verificações de consistência · não julga o resultado do mês"
         : conf.falhas.length + (conf.falhas.length === 1 ? " divergência" : " divergências")
-          + " de " + conf.total + " verificações",
+          + " de " + conf.total + " verificações de consistência",
       confCor: conf.ok ? "#5a9e4b" : "#cf6b5c",
       confBg: conf.ok ? "#fdfbf8" : "#fdf1ec",
       confBorda: conf.ok ? "#eee3d6" : "#f3d4c8",

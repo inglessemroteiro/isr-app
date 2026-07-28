@@ -35,6 +35,7 @@
             <button onclick="{{ onLimparTudo }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Apagar tudo, inclusive equipe e regras</button>
           </div>
           <p style="margin: 10px 0 0; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">A primeira opção guarda o que você configurou: equipe, regras de pagamento, faixas de comissão, modelos de mensagem e metas.</p>
+          <p style="margin: 8px 0 0; font-size: 11.5px; color: #b3a693; line-height: 1.6;">O app não vem mais com dados de exemplo. <button onclick="{{ onExemplo }}" style="border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 0; cursor: pointer; font-family: inherit;">Carregar o exemplo</button> se quiser testar alguma coisa antes de pôr o que é real.</p>
         </div>
       </sc-if>
       <sc-if value="{{ temZerado }}">
@@ -98,7 +99,13 @@
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Linha por linha</div>
             <button onclick="{{ onSoAviso }}" style="border: 1px solid #e5dccf; background: {{ soAvisoBg }}; color: {{ soAvisoFg }}; font-size: 11px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ soAvisoLabel }}</button>
           </div>
-          <p style="margin: 0 0 10px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Confira antes de aplicar. O que eu não consegui ler está marcado em vermelho.</p>
+          <p style="margin: 0 0 10px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Confira antes de aplicar. A planilha não diz se a aula é em turma ou particular — o chute está marcado e você corrige aqui. A moeda também.</p>
+          <sc-if value="{{ temChute }}">
+            <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 8px; padding: 9px 12px; margin-bottom: 10px;">
+              <span style="font-size: 12px; color: #c8622f; font-weight: 600;">{{ chuteFrase }}</span>
+              <button onclick="{{ onTodasGrupo }}" style="border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 0 0 0 8px; cursor: pointer; font-family: inherit;">marcar todas como turma</button>
+            </div>
+          </sc-if>
           <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="6">
             <div style="border-top: 1px solid #f4f1ec; padding: 11px 0;">
               <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
@@ -109,6 +116,20 @@
               </div>
               <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 3px; line-height: 1.5;">{{ ln.detalhe }}</div>
               <div style="font-size: 11px; color: #a2957f; margin-top: 3px; line-height: 1.5;">{{ ln.calendario }}</div>
+              <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 7px;">
+                <span style="display: flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Aula</span>
+                  <sc-for list="{{ ln.formatos }}" as="ft" hint-placeholder-count="2">
+                    <button onclick="{{ ft.onPick }}" style="border: 1px solid {{ ft.borda }}; background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ft.label }}</button>
+                  </sc-for>
+                </span>
+                <span style="display: flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">Moeda</span>
+                  <sc-for list="{{ ln.moedas }}" as="md" hint-placeholder-count="2">
+                    <button onclick="{{ md.onPick }}" style="border: 1px solid {{ md.borda }}; background: {{ md.bg }}; color: {{ md.fg }}; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ md.label }}</button>
+                  </sc-for>
+                </span>
+              </div>
               <sc-if value="{{ ln.temAviso }}">
                 <div style="font-size: 11.5px; color: #cf6b5c; font-weight: 600; margin-top: 4px; line-height: 1.5;">{{ ln.avisos }}</div>
               </sc-if>
@@ -154,7 +175,8 @@ class Component extends DCLogic {
       erro: this.state.erro, resumo: [], linhas: [], porMes: [], temFeito: !!this.state.feito,
       feito: this.state.feito, anoNota: "",
       zerarAberto: false, zerarLabel: "", dentroFrase: "", temZerado: false, zerado: "",
-      onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {} };
+      onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {},
+      onExemplo: () => {}, temChute: false, chuteFrase: "", onTodasGrupo: () => {} };
     if (!CRM || !CRM.lerControlePagamento) return base;
 
     // ── o que já está dentro ──
@@ -186,6 +208,14 @@ class Component extends DCLogic {
       onZerar: () => this.setState({ zerarAberto: !this.state.zerarAberto }),
       onLimparExemplo: () => zerar(false),
       onLimparTudo: () => zerar(true),
+      onExemplo: () => {
+        if (!window.confirm("Carregar os dados de exemplo por cima do que está aqui?"
+          + "\n\nUma cópia de segurança é guardada antes.")) return;
+        CRM.carregarExemplo();
+        this.setState({ zerado: "Exemplo carregado. Para voltar ao vazio, use \u201climpar\u201d aqui em cima.",
+          zerarAberto: false, leitura: null });
+        this.bump();
+      },
       temZerado: !!this.state.zerado, zerado: this.state.zerado
     });
 
@@ -261,18 +291,58 @@ class Component extends DCLogic {
       soAvisoFg: this.state.soAviso ? "#fff" : "#8a7c6b",
       onSoAviso: () => this.setState({ soAviso: !this.state.soAviso }),
 
+      // ── correções antes de aplicar ──
+      // A escolha é gravada na própria leitura, então o que a Gabi marcar
+      // é exatamente o que vai ser aplicado.
+      temChute: L.linhas.some(l => l.formatoChutado),
+      chuteFrase: L.linhas.filter(l => l.formatoChutado).length
+        + " linhas novas entraram como turma por padrão. Marque as particulares.",
+      onTodasGrupo: () => {
+        L.linhas.forEach(l => { l.formato = "grupo"; l.formatoChutado = false; });
+        this.setState({ leitura: L }); this.bump();
+      },
+
       linhas: mostrar.map(l => ({
         nome: l.nome,
         seloLabel: l.avisos.length ? "conferir" : (l.existe ? "atualiza" : "nova"),
         selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),
         seloBg: l.avisos.length ? "#fdf1ec" : (l.existe ? "#f2ece3" : "#eef5ec"),
         aReceber: l.aReceber ? $(l.moeda, l.aReceber) : "quitado",
-        detalhe: [l.tipo, l.ciclos ? l.ciclos + " ciclo(s)" : "",
+        detalhe: [l.tipo,
+          l.formato === "particular" ? "particular" : "turma",
+          l.ciclos ? l.ciclos + " ciclo(s)" : "",
           l.meses.length + "x de " + (l.parcelaValor || "—"),
           l.vencDia ? "vence dia " + l.vencDia : (l.autoMatricula ? "auto matrícula" : ""),
           l.recebido ? "já recebeu " + $(l.moeda, l.recebido) : ""
         ].filter(Boolean).join(" · "),
         calendario: l.meses.map(m => m.label.slice(0, 3) + (m.pago ? " ✓" : "")).join("  "),
+        formatos: [{ id: "grupo", label: "Turma" }, { id: "particular", label: "Particular" }]
+          .map(o => ({
+            label: o.label,
+            bg: l.formato === o.id ? "#164951" : "#fff",
+            fg: l.formato === o.id ? "#fff" : "#8a7c6b",
+            borda: l.formato === o.id ? "#164951" : "#e5dccf",
+            onPick: () => {
+              l.formato = o.id; l.formatoChutado = false;
+              this.setState({ leitura: L }); this.bump();
+            }
+          })),
+        moedas: ["R$", "€"].map(m => ({
+          label: m,
+          bg: l.moeda === m ? "#164951" : "#fff",
+          fg: l.moeda === m ? "#fff" : "#8a7c6b",
+          borda: l.moeda === m ? "#164951" : "#e5dccf",
+          onPick: () => {
+            if (l.moeda === m) return;
+            // trocar a moeda troca o símbolo de tudo que veio da linha,
+            // sem converter valor: o número na planilha é o número certo
+            l.moeda = m;
+            l.valorTotal = l.valorTotal ? CRM.fmtMoney(m, CRM.parseMoney(l.valorTotal)) : "";
+            l.parcelaValor = l.parcelaValor ? CRM.fmtMoney(m, CRM.parseMoney(l.parcelaValor)) : "";
+            l.meses.forEach(x => { x.valor = CRM.fmtMoney(m, x.bruto); });
+            this.setState({ leitura: L }); this.bump();
+          }
+        })),
         temAviso: l.avisos.length > 0,
         avisos: l.avisos.join(" · "),
         temNota: l.notas.length > 0,

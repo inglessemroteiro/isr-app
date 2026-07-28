@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.27-g",
-  data: "27/07/2026",
-  nota: "Limpar os dados de exemplo antes de importar os dados reais"
+  numero: "2026.07.28-a",
+  data: "28/07/2026",
+  nota: "App vazio de fábrica, turma ou particular na importação e link de pagamento na cobrança"
 };
