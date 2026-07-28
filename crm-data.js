@@ -2827,12 +2827,98 @@
   // Parser de extrato (v1: uma transação por linha, colada do banco):
   // "dd/mm/aaaa ; descrição ; valor" — valor negativo = saída.
   // Aceita 1.234,56 e 1234.56.
+  // Um extrato exportado é uma TABELA, não uma frase. Quando há linha de
+  // títulos, ler por coluna é certo; caçar números na linha é chute. O do
+  // Asaas, por exemplo, tem id da transação (1925765296), valor (864.32) e
+  // saldo (1628.98) na mesma linha — e usa ponto decimal.
+  function colunaPorTitulo(cels, termos) {
+    for (var i = 0; i < cels.length; i++) {
+      var s = semAcento(cels[i]);
+      for (var j = 0; j < termos.length; j++) {
+        if (s === termos[j] || s.indexOf(termos[j]) === 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  // "864.32" é oitocentos e sessenta e quatro no Asaas e oitocentos e
+  // sessenta e quatro mil na planilha brasileira. Quem decide é o arquivo
+  // inteiro, não a célula.
+  function detectarDecimal(valores) {
+    var comVirgula = 0, comPonto = 0;
+    valores.forEach(function (v) {
+      var s = String(v).trim();
+      if (/,\d{1,2}$/.test(s)) comVirgula++;
+      else if (/\.\d{1,2}$/.test(s)) comPonto++;
+    });
+    return comVirgula >= comPonto ? "," : ".";
+  }
+  function parseNumero(str, decimal) {
+    if (str === undefined || str === null) return NaN;
+    var s = String(str).trim().replace(/\s/g, "");
+    if (!s) return NaN;
+    var neg = s.indexOf("-") >= 0 || /^\(.*\)$/.test(s);
+    s = s.replace(/[^\d,\.]/g, "");
+    if (!s) return NaN;
+    if (decimal === ",") s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+    var v = parseFloat(s);
+    if (isNaN(v)) return NaN;
+    return neg ? -Math.abs(v) : v;
+  }
+
   function parseExtrato(texto) {
-    var linhas = [];
-    (texto || "").split("\n").forEach(function (linha) {
+    var cru = String(texto || "").split("\n");
+
+    // ── caminho 1: tabela com linha de títulos ────────────────
+    var iCab = -1, cab = null;
+    for (var i = 0; i < Math.min(cru.length, 15); i++) {
+      var cels = cru[i].split("\t");
+      if (cels.length < 3) continue;
+      var s = semAcento(cru[i]);
+      if (s.indexOf("data") >= 0 && s.indexOf("valor") >= 0) { iCab = i; cab = cels; break; }
+    }
+
+    if (iCab >= 0) {
+      var col = {
+        data: colunaPorTitulo(cab, ["data"]),
+        desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição"]),
+        valor: colunaPorTitulo(cab, ["valor"]),
+        tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c"])
+      };
+      if (col.valor >= 0) {
+        var linhas = [];
+        cru.slice(iCab + 1).forEach(function (ln) {
+          var c = ln.split("\t");
+          var bruto = (c[col.valor] || "").trim();
+          var dt = (c[col.data] || "").trim();
+          // "Saldo Inicial" e "Saldo Final" não são transações
+          if (!dt || !bruto) return;
+          if (!/\d{2}[\/-]\d{2}/.test(dt)) return;
+          linhas.push({ dt: dt, bruto: bruto,
+            desc: col.desc >= 0 ? (c[col.desc] || "").trim() : "",
+            tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "" });
+        });
+        var dec = detectarDecimal(linhas.map(function (x) { return x.bruto; }));
+        return linhas.map(function (x) {
+          var v = parseNumero(x.bruto, dec);
+          if (isNaN(v)) v = 0;
+          // a coluna Crédito/Débito manda no sinal quando existe
+          if (x.tipo.indexOf("debito") >= 0) v = -Math.abs(v);
+          else if (x.tipo.indexOf("credito") >= 0) v = Math.abs(v);
+          var d = x.dt.match(/(\d{2})[\/-](\d{2})[\/-](\d{2,4})/);
+          var data = d ? (d[1] + "/" + d[2] + "/" + (d[3].length === 2 ? "20" + d[3] : d[3])) : x.dt;
+          return { data: data, descricao: x.desc || "(sem descrição)", valor: v,
+            colunaSaldo: false, ambiguo: false, deTabela: true };
+        });
+      }
+    }
+
+    // ── caminho 2: texto solto, um lançamento por linha ───────
+    var soltas = [];
+    cru.forEach(function (linha) {
       var l = linha.trim();
       if (!l) return;
-      // dd/mm/aaaa, dd/mm/aa e aaaa-mm-dd — cada banco exporta de um jeito
       var m = l.match(/(\d{2})\/(\d{2})\/(\d{4})/)
            || l.match(/(\d{2})\/(\d{2})\/(\d{2})(?!\d)/)
            || l.match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -2843,24 +2929,22 @@
       }
       var tokens = l.match(/-?\(?\d{1,3}(?:\.\d{3})*,\d{2}\)?|-?\(?\d+\.\d{2}\)?|-?\(?\d+,\d{2}\)?/g);
       if (!tokens || !tokens.length) return;
-      linhas.push({ l: l, data: data, dataBruta: m ? m[0] : "", tokens: tokens });
+      soltas.push({ l: l, data: data, dataBruta: m ? m[0] : "", tokens: tokens });
     });
-    if (!linhas.length) return [];
+    if (!soltas.length) return [];
 
-    // ── qual coluna é o valor ─────────────────────────────────
     // Muitos extratos trazem o saldo na última coluna. Pegar o último
-    // número da linha faria o app registrar o saldo como se fosse a
-    // transação — errado e silencioso. Se o último número se comporta
-    // como saldo (varia de uma linha para a outra exatamente pelo valor
-    // do número anterior), é saldo, e o valor é o penúltimo.
+    // número faria o app registrar o saldo como se fosse a transação. Se
+    // o último número varia de uma linha para a outra exatamente pelo
+    // valor do anterior, é saldo — e o valor é o penúltimo.
     var usaPenultimo = false, decidiu = false;
-    var comDois = linhas.filter(function (x) { return x.tokens.length >= 2; });
+    var comDois = soltas.filter(function (x) { return x.tokens.length >= 2; });
     if (comDois.length >= 2) {
       var acertos = 0, testes = 0;
-      for (var i = 1; i < comDois.length; i++) {
-        var antes = parseMoney(comDois[i - 1].tokens[comDois[i - 1].tokens.length - 1]);
-        var agora = parseMoney(comDois[i].tokens[comDois[i].tokens.length - 1]);
-        var mov = parseMoney(comDois[i].tokens[comDois[i].tokens.length - 2]);
+      for (var k = 1; k < comDois.length; k++) {
+        var antes = parseMoney(comDois[k - 1].tokens[comDois[k - 1].tokens.length - 1]);
+        var agora = parseMoney(comDois[k].tokens[comDois[k].tokens.length - 1]);
+        var mov = parseMoney(comDois[k].tokens[comDois[k].tokens.length - 2]);
         if (!mov) continue;
         testes++;
         if (Math.abs(Math.abs(agora - antes) - Math.abs(mov)) < 0.02) acertos++;
@@ -2869,11 +2953,10 @@
       decidiu = testes >= 2;
     }
 
-    return linhas.map(function (x) {
+    return soltas.map(function (x) {
       var idx = (usaPenultimo && x.tokens.length >= 2) ? x.tokens.length - 2 : x.tokens.length - 1;
       var raw = x.tokens[idx];
       var v = parseMoney(raw);
-      // saída pode vir com sinal, entre parênteses, ou marcada com D
       var negativo = raw.indexOf("-") === 0 || raw.indexOf("(") === 0
         || /\bD\b\s*$/.test(x.l) || /d[ée]bito|pagamento para|pago para|saque|tarifa/i.test(x.l);
       v = negativo ? -Math.abs(v) : Math.abs(v);
@@ -2881,11 +2964,10 @@
       x.tokens.forEach(function (tk) { desc = desc.replace(tk, ""); });
       desc = desc.replace(/^[;|,\s]+|[;|,\s]+$/g, "").replace(/\s{2,}/g, " ").trim();
       // Com poucas linhas não dá para saber se o último número é saldo ou
-      // transação. Em vez de escolher em silêncio, a linha vai marcada e a
-      // tela pede conferência.
+      // transação. Em vez de escolher em silêncio, a linha vai marcada.
       var ambiguo = x.tokens.length >= 2 && !decidiu;
       return { data: x.data, descricao: desc || "(sem descrição)", valor: v,
-        colunaSaldo: usaPenultimo, ambiguo: ambiguo,
+        colunaSaldo: usaPenultimo, ambiguo: ambiguo, deTabela: false,
         outrosValores: ambiguo ? x.tokens.map(function (tk) { return parseMoney(tk); }) : null };
     });
   }
@@ -2897,17 +2979,21 @@
     getCobranca().forEach(function (c) {
       if (c.moeda !== moeda) return;
       (c.meses || []).forEach(function (m) {
-        if (!m.pago) abertas.push({ pessoaId: c.id, nome: c.nome, mesKey: m.key, mesLabel: m.label, valor: parseMoney(m.valor || c.parcelaValor) });
+        if (!m.pago) abertas.push({ pessoaId: c.id, nome: c.nome, mesKey: m.key,
+          mesLabel: m.label, valor: parseMoney(m.valor || c.parcelaValor) });
       });
     });
+    var equipe = equipeLista().map(function (x) { return x.nome; });
     var usadas = {};
-    var sugestoes = [], semMatch = [];
+    var sugestoes = [], semMatch = [], pendentes = [];
+
+    // ── 1ª passada: valor bate ────────────────────────────────
     transacoes.forEach(function (t) {
       if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
       var cands = abertas.filter(function (a) {
         return !usadas[a.pessoaId + a.mesKey] && Math.abs(a.valor - t.valor) <= 0.6;
       });
-      if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
+      if (!cands.length) { pendentes.push(t); return; }
       var desc = (t.descricao || "").toLowerCase();
       cands.sort(function (a, b) {
         var an = desc.indexOf(firstName(a.nome).toLowerCase()) >= 0 ? 0 : 1;
@@ -2917,10 +3003,53 @@
       });
       var alvo = cands[0];
       usadas[alvo.pessoaId + alvo.mesKey] = true;
-      sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome, mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor });
+      sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
+        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0 });
     });
-    return { sugestoes: sugestoes, semMatch: semMatch };
+
+    // ── 2ª passada: o nome bate, o valor não ──────────────────
+    // Gateway desconta taxa, aluna paga a mais ou a menos, banco arredonda.
+    // Achar pelo nome e MOSTRAR a diferença é melhor do que dizer "sem
+    // correspondência" e deixar a pessoa procurar na mão.
+    pendentes.forEach(function (t) {
+      var desc = semAcento(t.descricao || "");
+      var cands = abertas.filter(function (a) {
+        if (usadas[a.pessoaId + a.mesKey]) return false;
+        var partes = semAcento(a.nome).split(/\s+/).filter(function (x) { return x.length >= 4; });
+        if (!partes.length) return false;
+        // pelo menos duas partes do nome, ou o primeiro nome se for único
+        var achou = partes.filter(function (x) { return desc.indexOf(x) >= 0; }).length;
+        return achou >= Math.min(2, partes.length);
+      });
+      if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
+      cands.sort(function (a, b) {
+        return Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
+      });
+      var alvo = cands[0];
+      usadas[alvo.pessoaId + alvo.mesKey] = true;
+      sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
+        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
+        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true });
+    });
+
+    // ── saídas: quem é da equipe já sai categorizada ──────────
+    semMatch.forEach(function (x) {
+      if (x.tipo !== "saida") return;
+      var desc = semAcento(x.trans.descricao || "");
+      var quem = equipe.filter(function (n) {
+        var partes = semAcento(n).split(/\s+/).filter(function (p) { return p.length >= 4; });
+        return partes.length && partes.filter(function (p) { return desc.indexOf(p) >= 0; }).length
+          >= Math.min(2, partes.length);
+      })[0];
+      if (quem) { x.categoria = "equipe"; x.pessoaEquipe = quem; }
+      else if (/taxa|tarifa|mensageria|notificacao|boleto|pix/.test(desc)) x.categoria = "impostos";
+      else x.categoria = "outros";
+    });
+
+    return { sugestoes: sugestoes, semMatch: semMatch,
+      porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
   }
+
   function conciliar(pessoaId, mesKey, descricao) {
     setParcelaPaga(pessoaId, mesKey, true);
     addHistory(pessoaId, "pagamento", "Pagamento conciliado com o extrato" + (descricao ? " · " + descricao.slice(0, 60) : ""));

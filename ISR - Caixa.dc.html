@@ -330,7 +330,7 @@
           <option value="€" selected="{{ moedaEUR }}">Conta em € (Wise EUR)</option>
           <option value="R$" selected="{{ moedaBRL }}">Conta em R$ (Sicredi / Wise BRL)</option>
         </select>
-        <textarea ref="{{ extratoRef }}" placeholder="28/05/2026 ; Recebeu dinheiro de Ana Beatriz Luz INV-2026-048 ; 125,00&#10;31/05/2026 ; Pago para GOCARDLESS ; -35,70" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
+        <textarea ref="{{ extratoRef }}" placeholder="Cole aqui o extrato exportado do banco ou do Asaas, com a linha de títulos. Também aceita uma linha por lançamento: 28/05/2026 ; Recebeu de Ana Beatriz ; 125,00" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
         <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
       </div>
 
@@ -594,7 +594,7 @@ class Component extends DCLogic {
     // "certeira" = valor bate exato E o primeiro nome aparece na descrição do banco.
     // Só essas podem ir em lote; o resto exige olho humano — marcar a parcela
     // da pessoa errada como paga é um estrago difícil de achar depois.
-    const certeira = s => Math.abs(s.valor - s.trans.valor) < 0.01 &&
+    const certeira = s => !s.porNome && Math.abs(s.valor - s.trans.valor) < 0.01 &&
       (s.trans.descricao || "").toLowerCase().indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0;
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
       const feita = !!this.state.conciliadas[i];
@@ -603,8 +603,14 @@ class Component extends DCLogic {
         transDesc: s.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor),
         nome: s.nome, mesLabel: s.mesLabel,
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + s.pessoaId,
-        confLabel: cert ? "Nome e valor conferem" : "Requer verificação",
-        confCor: cert ? "#5a9e4b" : "#c98a3a",
+        // Gateway desconta taxa: achar pelo nome e mostrar a diferença é
+        // melhor do que dizer "sem correspondência".
+        confLabel: s.porNome
+          ? (s.diferenca < 0
+              ? "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
+              : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
+          : (cert ? "Nome e valor conferem" : "Requer verificação"),
+        confCor: s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a"),
         pendente: !feita, feita: feita,
         onConciliar: () => {
           CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao);
@@ -621,11 +627,16 @@ class Component extends DCLogic {
       return {
         transDesc: x.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, x.trans.valor),
         icon: saida ? "#cf6b5c" : "#d4a574",
-        motivo: saida ? "Débito bancário · lançar como despesa do mês" : "Sem parcela em aberto correspondente a este valor",
+        motivo: saida
+          ? (x.pessoaEquipe
+              ? "Pagamento para " + x.pessoaEquipe + " · lançar como despesa de equipe"
+              : "Débito bancário · lançar como despesa do mês")
+          : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição",
         lancavel: saida && !lancada, lancada: lancada,
         onLancar: () => {
           const d = (x.trans.data || "").split("/");
-          CRM.addLancamento({ tipo: "saida", categoria: "outros", descricao: x.trans.descricao.slice(0, 60),
+          CRM.addLancamento({ tipo: "saida", categoria: x.categoria || "outros",
+            descricao: x.trans.descricao.slice(0, 60),
             moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
             data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
           this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, { [i]: true }) }));
@@ -789,6 +800,10 @@ class Component extends DCLogic {
            + (analise.colunaSaldo
                ? " A última coluna do seu extrato é o saldo — usei a coluna anterior como valor da transação."
                : "")
+           + (analise.porNome
+               ? " " + analise.porNome + (analise.porNome === 1 ? " foi achado" : " foram achados")
+                 + " pelo nome, com valor diferente do combinado (taxa do gateway, pagamento parcial): confira a diferença antes de confirmar."
+               : "")
            + (analise.ambiguas
                ? " " + analise.ambiguas + (analise.ambiguas === 1 ? " linha tem" : " linhas têm")
                  + " mais de um número e são poucas para eu saber qual é o valor: confira antes de confirmar."
@@ -810,6 +825,7 @@ class Component extends DCLogic {
         const a = CRM.sugerirConciliacao(trans, this.state.moedaExtrato);
         a.colunaSaldo = trans.some(x => x.colunaSaldo);
         a.ambiguas = trans.filter(x => x.ambiguo).length;
+        a.deTabela = trans.length > 0 && trans.every(x => x.deTabela);
         this.setState({ analise: a, conciliadas: {}, lancadas: {} });
       }
     };
