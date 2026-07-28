@@ -2884,7 +2884,10 @@
         data: colunaPorTitulo(cab, ["data"]),
         desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição"]),
         valor: colunaPorTitulo(cab, ["valor"]),
-        tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c"])
+        tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c"]),
+        // o id que o gateway dá à transação é a identidade dela: é o que
+        // permite importar o mesmo extrato duas vezes sem duplicar nada
+        id: colunaPorTitulo(cab, ["transacao"])
       };
       if (col.valor >= 0) {
         var linhas = [];
@@ -2897,7 +2900,8 @@
           if (!/\d{2}[\/-]\d{2}/.test(dt)) return;
           linhas.push({ dt: dt, bruto: bruto,
             desc: col.desc >= 0 ? (c[col.desc] || "").trim() : "",
-            tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "" });
+            tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "",
+            idExterno: col.id >= 0 ? (c[col.id] || "").trim() : "" });
         });
         var dec = detectarDecimal(linhas.map(function (x) { return x.bruto; }));
         return linhas.map(function (x) {
@@ -2909,7 +2913,8 @@
           var d = x.dt.match(/(\d{2})[\/-](\d{2})[\/-](\d{2,4})/);
           var data = d ? (d[1] + "/" + d[2] + "/" + (d[3].length === 2 ? "20" + d[3] : d[3])) : x.dt;
           return { data: data, descricao: x.desc || "(sem descrição)", valor: v,
-            colunaSaldo: false, ambiguo: false, deTabela: true };
+            colunaSaldo: false, ambiguo: false, deTabela: true,
+            idExterno: x.idExterno || "" };
         });
       }
     }
@@ -2974,7 +2979,41 @@
 
   // Conciliação: para cada CRÉDITO do extrato, procura parcela em aberto
   // com o mesmo valor (±0,60) na mesma moeda; nome na descrição desempata.
+  // ── REGISTRO DO EXTRATO ───────────────────────────────────────
+  //
+  // Num sistema financeiro, importar é idempotente: cada transação externa
+  // tem uma identidade, e processá-la duas vezes não cria nada duas vezes.
+  // Sem isto, colar o mesmo extrato de novo sugeria conciliar tudo de novo
+  // e deixava lançar a mesma despesa duas vezes — o jeito mais fácil de
+  // perder a confiança nos números.
+  var EXTRATO_REG_KEY = "isr_extrato_reg_v1";
+  function extratoRegAll() {
+    try { return JSON.parse(localStorage.getItem(EXTRATO_REG_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function chaveTransacao(t) {
+    // o id do gateway quando existe; senão, data + valor + começo da descrição
+    if (t.idExterno) return "id:" + t.idExterno;
+    return (t.data || "?") + "|" + (t.valor === undefined ? "?" : t.valor.toFixed(2))
+      + "|" + semAcento(t.descricao || "").slice(0, 40);
+  }
+  function transacaoRegistrada(t) {
+    return extratoRegAll()[chaveTransacao(t)] || null;
+  }
+  function registrarTransacao(t, uso) {
+    var reg = extratoRegAll();
+    reg[chaveTransacao(t)] = { em: iso(today()), uso: uso || "" };
+    try { localStorage.setItem(EXTRATO_REG_KEY, JSON.stringify(reg)); } catch (e) {}
+    agendarSync();
+  }
+
   function sugerirConciliacao(transacoes, moeda) {
+    // o que já foi processado numa análise anterior sai da fila
+    var jaRegistradas = [];
+    transacoes = transacoes.filter(function (t) {
+      var reg = transacaoRegistrada(t);
+      if (reg) { jaRegistradas.push({ trans: t, uso: reg.uso, em: reg.em }); return false; }
+      return true;
+    });
     var abertas = [];
     getCobranca().forEach(function (c) {
       if (c.moeda !== moeda) return;
@@ -3047,11 +3086,29 @@
     });
 
     return { sugestoes: sugestoes, semMatch: semMatch,
+      jaRegistradas: jaRegistradas,
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
   }
 
-  function conciliar(pessoaId, mesKey, descricao) {
+  function conciliar(pessoaId, mesKey, descricao, trans) {
     setParcelaPaga(pessoaId, mesKey, true);
+    // A parcela guarda o que de fato aconteceu no banco: quando caiu e
+    // quanto caiu. O valor de face segue sendo o combinado; a diferença é
+    // taxa do gateway e vive nas linhas de débito do próprio extrato.
+    if (trans) {
+      mutate(pessoaId, function (p) {
+        (p.contratos || []).forEach(function (c) {
+          (c.meses || []).forEach(function (m) {
+            if (m.key === mesKey && m.pago) {
+              if (trans.data) m.pagoEm = trans.data.split("/").reverse().join("-");
+              if (trans.valor) m.valorRecebido = trans.valor;
+              if (trans.idExterno) m.idExterno = trans.idExterno;
+            }
+          });
+        });
+      });
+      registrarTransacao(trans, "parcela de " + mesKey);
+    }
     addHistory(pessoaId, "pagamento", "Pagamento conciliado com o extrato" + (descricao ? " · " + descricao.slice(0, 60) : ""));
   }
 
@@ -3260,7 +3317,9 @@
     "isr_eventos_v1", "isr_chamadas_v1", "isr_tarefas_v1", "isr_feriados_v1", "isr_metas_v1",
     "isr_moedas_v1", "isr_equipe_v1", "isr_calc_v1", "isr_lancamentos_v1", "isr_cambio_v1",
     "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
-    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1"];
+    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1",
+    "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
+    "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6055,7 +6114,8 @@
     PESSOAS_KEY, "isr_fila_adiados", "isr_turmas_v1", "isr_eventos_v1",
     "isr_chamadas_v1", "isr_tarefas_v1", "isr_moedas_v1", "isr_lancamentos_v1",
     "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1",
-    "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1"
+    "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1",
+    "isr_extrato_reg_v1"
   ];
   var CHAVES_CONFIG = [
     "isr_equipe_v1", "isr_templates_v1", "isr_metas_v1", "isr_calc_v1",
@@ -6879,11 +6939,25 @@
     var duplicados = custosDoMes(k).filter(function (c) {
       return (c.categoria === "equipe") || /profess|equipe|folha/i.test(c.nome || "");
     });
+    // lançamento avulso com nome de gente da folha é a mesma dupla contagem
+    // por outra porta (um Pix do extrato lançado como despesa, por exemplo)
+    var nomesFolha = folha.linhas.map(function (l) { return semAcento(l.nome); })
+      .concat((folha.fixos || []).map(function (x) { return semAcento(x.nome); }));
+    var lancDuplicados = lancamentosDoMes(k).filter(function (l) {
+      if (l.tipo !== "saida") return false;
+      var d = semAcento(l.descricao || "");
+      return l.categoria === "equipe" || nomesFolha.some(function (n) {
+        var partes = n.split(/\s+/).filter(function (p) { return p.length >= 4; });
+        return partes.length && partes.filter(function (p) { return d.indexOf(p) >= 0; }).length
+          >= Math.min(2, partes.length);
+      });
+    });
+    var todosDuplicados = duplicados.map(function (c) { return c.nome; })
+      .concat(lancDuplicados.map(function (l) { return l.descricao; }));
     add("sem_duplicidade", "Nenhum custo digitado repete a folha",
-      duplicados.length === 0, "0 suspeitos", duplicados.length + " suspeitos",
-      duplicados.length
-        ? "A folha já é calculada. Remova em Caixa: "
-          + duplicados.map(function (c) { return c.nome; }).join(", ")
+      todosDuplicados.length === 0, "0 suspeitos", todosDuplicados.length + " suspeitos",
+      todosDuplicados.length
+        ? "A folha já é calculada. Remova em Caixa: " + todosDuplicados.join(", ")
         : "");
 
     // 8. Aluna ativa sem contrato é receita que ninguém vai cobrar.
@@ -7266,6 +7340,7 @@
     linkDePagamento: linkDePagamento, setLinkPagamento: setLinkPagamento,
     linkPagamentoPadrao: linkPagamentoPadrao, setLinkPagamentoPadrao: setLinkPagamentoPadrao,
     alunasSemLinkDePagamento: alunasSemLinkDePagamento,
+    registrarTransacao: registrarTransacao, transacaoRegistrada: transacaoRegistrada,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

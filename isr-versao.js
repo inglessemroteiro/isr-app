@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.28-c",
+  numero: "2026.07.28-d",
   data: "28/07/2026",
-  nota: "Extrato do Asaas: leitura por coluna, ponto decimal e conciliação pelo nome"
+  nota: "Financeiro fechado como ledger: importação idempotente e Pix de folha quita a folha"
 };
