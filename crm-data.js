@@ -3317,7 +3317,7 @@
     "isr_eventos_v1", "isr_chamadas_v1", "isr_tarefas_v1", "isr_feriados_v1", "isr_metas_v1",
     "isr_moedas_v1", "isr_equipe_v1", "isr_calc_v1", "isr_lancamentos_v1", "isr_cambio_v1",
     "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
-    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1",
+    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1"];
 
@@ -4715,7 +4715,10 @@
     { de: 20000, pct: 4,   bonus: 200, situacao: "Over" },
     { de: 30000, pct: 5,   bonus: 500, situacao: "Over" }
   ];
-  var COMERCIAL_FIXO = 1200;
+  // O fixo do comercial vem do cadastro da Equipe (valor mensal), como o
+  // de todo mundo — constante escondida aqui pagava R$ 1.200 em dobro com
+  // o cadastro e aparecia até num mês sem venda nenhuma.
+  var COMERCIAL_FIXO = 0;
   var META_POR_VENDA = 3500;
 
   function faixasComissao() {
@@ -4797,13 +4800,15 @@
     });
     var comissaoTotal = detalhe.reduce(function (s, x) { return s + x.comissao; }, 0);
 
+    // sem venda no mês, não há comissão nem bônus de faixa a pagar
+    var bonus = vendas.length ? faixa.bonus : 0;
     return { mes: mes, quem: porQuem || "", vendas: detalhe, nVendas: vendas.length,
-      situacao: faixa.situacao, pct: faixa.pct, bonus: faixa.bonus,
+      situacao: vendas.length ? faixa.situacao : "Sem venda", pct: faixa.pct, bonus: bonus,
       fixo: COMERCIAL_FIXO, comissao: comissaoTotal,
-      total: COMERCIAL_FIXO + comissaoTotal + faixa.bonus,
+      total: COMERCIAL_FIXO + comissaoTotal + bonus,
       faturamento: faturado, metaFaturamento: meta,
       faixaDe: faixa.de, proximaFaixa: faixa.proxima, faltaProxima: faixa.faltaProxima,
-      cac: faturado ? Math.round(((COMERCIAL_FIXO + comissaoTotal + faixa.bonus) / faturado) * 1000) / 10 : null };
+      cac: faturado ? Math.round(((COMERCIAL_FIXO + comissaoTotal + bonus) / faturado) * 1000) / 10 : null };
   }
 
   // O que sai de comissão num mês, contando as vendas de meses anteriores
@@ -6115,7 +6120,7 @@
     "isr_chamadas_v1", "isr_tarefas_v1", "isr_moedas_v1", "isr_lancamentos_v1",
     "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1",
     "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1",
-    "isr_extrato_reg_v1"
+    "isr_extrato_reg_v1", "isr_orcamento_v1"
   ];
   var CHAVES_CONFIG = [
     "isr_equipe_v1", "isr_templates_v1", "isr_metas_v1", "isr_calc_v1",
@@ -6789,6 +6794,121 @@
     return c.fim >= iso(today());
   }
 
+  // ── IMPORTAR ALUNAS E TURMAS ──────────────────────────────────
+  //
+  // Mesma regra do Controle de Pagamento: colar, ler, MOSTRAR, e só gravar
+  // depois que a pessoa confere. As colunas são achadas pelo título, na
+  // ordem que estiverem: Nome (obrigatória), Turma, Nível, Professora,
+  // Horário, WhatsApp/Telefone, E-mail.
+  function lerAlunasTurmas(texto) {
+    var linhas = String(texto || "").split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!linhas.length) return { ok: false, erro: "Nada foi colado.", linhas: [] };
+
+    var iCab = -1, cab = null;
+    for (var i = 0; i < Math.min(linhas.length, 8); i++) {
+      var s = semAcento(linhas[i]);
+      if (s.indexOf("nome") >= 0) { iCab = i; cab = separarLinha(linhas[i]); break; }
+    }
+    if (iCab < 0) return { ok: false, linhas: [],
+      erro: "Não encontrei a linha de títulos. Ela precisa ter pelo menos a coluna Nome." };
+
+    var col = {
+      nome: acharColuna(cab, ["nome"]),
+      turma: acharColuna(cab, ["turma", "grupo"]),
+      nivel: acharColuna(cab, ["nivel", "nível"]),
+      professora: acharColuna(cab, ["professora", "professor", "teacher"]),
+      horario: acharColuna(cab, ["horario", "horário", "dia e hora"]),
+      whatsapp: acharColuna(cab, ["whatsapp", "telefone", "celular", "fone"]),
+      email: acharColuna(cab, ["email", "e-mail"])
+    };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+
+    var pega = function (c, idx) { return idx >= 0 ? (c[idx] || "").trim() : ""; };
+    var equipe = {};
+    equipeLista().forEach(function (m) { equipe[semAcento(m.nome)] = m.nome; });
+
+    var out = [], turmasNovas = {}, ignoradas = 0;
+    linhas.slice(iCab + 1).forEach(function (linha) {
+      var c = separarLinha(linha);
+      var nome = pega(c, col.nome);
+      if (!nome) { ignoradas++; return; }
+      var avisos = [];
+      var turma = pega(c, col.turma);
+      var nivel = pega(c, col.nivel);
+      var professora = pega(c, col.professora);
+      var horario = pega(c, col.horario);
+
+      // o rótulo de turma do sistema é "Nível · Horário"; se a planilha já
+      // traz o rótulo completo na coluna Turma, ele vale como está
+      var label = turma;
+      if (!label && nivel && horario) label = nivel + " · " + horario;
+      else if (label && label.indexOf("·") < 0 && horario) label = label + " · " + horario;
+
+      var profOficial = professora ? (equipe[semAcento(professora)] || "") : "";
+      if (professora && !profOficial)
+        avisos.push(professora + " não está no cadastro da equipe");
+
+      var existe = pessoaPorNome(nome);
+      if (label) {
+        var jaTem = turmasLista().some(function (u) {
+          return (u.nivel + " · " + u.turma) === label;
+        });
+        if (!jaTem && !turmasNovas[label])
+          turmasNovas[label] = { label: label, nivel: nivel || label.split(" · ")[0],
+            horario: horario || label.split(" · ")[1] || "",
+            professora: profOficial || professora || "", alunas: 0 };
+        if (turmasNovas[label]) turmasNovas[label].alunas++;
+      } else {
+        avisos.push("Sem turma — fica cadastrada, mas fora de qualquer turma");
+      }
+
+      out.push({ nome: nome, turma: label, nivel: nivel,
+        professora: profOficial || professora,
+        whatsapp: pega(c, col.whatsapp), email: pega(c, col.email),
+        existe: !!existe, avisos: avisos });
+    });
+
+    return { ok: true, linhas: out, ignoradas: ignoradas,
+      novas: out.filter(function (l) { return !l.existe; }).length,
+      comAviso: out.filter(function (l) { return l.avisos.length; }).length,
+      turmasNovas: Object.keys(turmasNovas).map(function (k) { return turmasNovas[k]; }) };
+  }
+
+  function aplicarAlunasTurmas(leitura) {
+    if (!leitura || !leitura.ok) return { ok: false };
+    var criadas = 0, atualizadas = 0, turmasCriadas = 0;
+
+    // primeiro as turmas, para as alunas terem onde entrar
+    leitura.turmasNovas.forEach(function (tn) {
+      addTurma({ nivel: tn.nivel, turma: tn.horario, teacher: tn.professora || "",
+        capacidade: 5 });
+      turmasCriadas++;
+    });
+
+    leitura.linhas.forEach(function (l) {
+      var p = pessoaPorNome(l.nome);
+      if (!p) {
+        p = novaPessoa({ nome: l.nome, whatsapp: l.whatsapp, email: l.email,
+          moeda: "R$", status: "aluna", estagio: "matriculado",
+          origem: { canal: "Importação" } });
+        criadas++;
+      } else {
+        atualizadas++;
+      }
+      mutate(p.id, function (x) {
+        x.status = "aluna";
+        x.estagio = "matriculado";
+        if (l.whatsapp) x.whatsapp = l.whatsapp;
+        if (l.email) x.email = l.email;
+        if (l.nivel) x.nivel = l.nivel;
+      });
+      if (l.turma) setTurmaDaPessoa(p.id, l.turma, l.professora || "");
+    });
+
+    return { ok: true, criadas: criadas, atualizadas: atualizadas,
+      turmasCriadas: turmasCriadas };
+  }
+
   // ── O QUE A ESCOLA VAI RECEBER ────────────────────────────────
   //
   // A pergunta é simples e não tinha resposta em lugar nenhum: quanto
@@ -6840,6 +6960,97 @@
     return { meses: lista,
       totalPrevistoReais: acumulado,
       totalReais: lista.reduce(function (s, m) { return s + m.totalReais; }, 0) };
+  }
+
+  // ── ORÇAMENTO: PREVISTO × REALIZADO ───────────────────────────
+  //
+  // A pergunta de quem gere: quanto eu ESPERO receber e gastar neste mês,
+  // e quanto de fato aconteceu. O previsto nasce calculado (contratos para
+  // a receita, custos fixos + folha para a despesa) e pode ser ajustado à
+  // mão, linha a linha — o ajuste vale só para aquele mês. O realizado vem
+  // do que os extratos confirmaram: parcelas conciliadas, folha quitada e
+  // despesas lançadas. Tudo consolidado em reais, porque comparar previsto
+  // com realizado em duas moedas separadas não compara nada.
+  var ORCAMENTO_KEY = "isr_orcamento_v1";
+  function orcamentoAll() {
+    try { return JSON.parse(localStorage.getItem(ORCAMENTO_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function setOrcamento(mesKey, id, valor) {
+    var o = orcamentoAll();
+    var k = mesKey || mesAtualKey();
+    o[k] = o[k] || {};
+    var v = parseFloat(valor);
+    if (valor === null || valor === "" || isNaN(v)) delete o[k][id];
+    else o[k][id] = v;
+    try { localStorage.setItem(ORCAMENTO_KEY, JSON.stringify(o)); } catch (e) {}
+    agendarSync();
+    return o[k];
+  }
+
+  function orcamentoDoMes(key) {
+    var k = key || mesAtualKey();
+    var fin = financeiroMes(k);
+    var ov = orcamentoAll()[k] || {};
+    var cambio = configPagamento().cambioEur || 0;
+    var umReal = function (valor, moeda) { return moeda === "€" ? valor * cambio : valor; };
+
+    // ── receita ──
+    var recPrevCalc = emReais(fin.previsto);
+    var recReal = emReais(fin.recebido);
+
+    // ── despesa prevista por categoria: custos fixos + folha ──
+    var prev = {};
+    custosDoMes(k).forEach(function (c) {
+      var cat = c.categoria || "outros";
+      prev[cat] = (prev[cat] || 0) + umReal(c.valor, c.moeda);
+    });
+    folhaNoCaixa(k).forEach(function (c) {
+      prev.equipe = (prev.equipe || 0) + umReal(c.valor, c.moeda);
+    });
+
+    // ── despesa realizada: o que os extratos confirmaram ──
+    // lançamentos (cada um nasceu de uma linha de extrato ou de digitação
+    // consciente) + folha quitada com o valor que de fato saiu
+    var real = {};
+    lancamentosDoMes(k).filter(function (l) { return l.tipo === "saida"; })
+      .forEach(function (l) {
+        var cat = l.categoria || "outros";
+        real[cat] = (real[cat] || 0) + umReal(l.valor, l.moeda);
+      });
+    var fp = folhaPagaAll();
+    Object.keys(fp).forEach(function (ch) {
+      var pg = fp[ch];
+      if (pg.mes === k && pg.valor > 0) real.equipe = (real.equipe || 0) + pg.valor;
+    });
+
+    var linhas = [{
+      id: "receita", label: "Receitas", entrada: true,
+      previsto: ov.receita !== undefined ? ov.receita : recPrevCalc,
+      calculado: recPrevCalc, definido: ov.receita !== undefined,
+      realizado: recReal
+    }];
+    catsSaida().forEach(function (cat) {
+      var ovId = "cat_" + cat.id;
+      var pCalc = prev[cat.id] || 0;
+      var r = real[cat.id] || 0;
+      var p = ov[ovId] !== undefined ? ov[ovId] : pCalc;
+      if (!p && !r && ov[ovId] === undefined) return; // categoria sem nada não é linha
+      linhas.push({ id: ovId, label: cat.label, cor: cat.cor, entrada: false,
+        previsto: p, calculado: pCalc, definido: ov[ovId] !== undefined,
+        realizado: r });
+    });
+
+    var prevDespesa = linhas.filter(function (l) { return !l.entrada; })
+      .reduce(function (s, l) { return s + l.previsto; }, 0);
+    var realDespesa = linhas.filter(function (l) { return !l.entrada; })
+      .reduce(function (s, l) { return s + l.realizado; }, 0);
+    var prevReceita = linhas[0].previsto;
+
+    return { mes: k, linhas: linhas, cambio: cambio,
+      prevReceita: prevReceita, realReceita: recReal,
+      prevDespesa: prevDespesa, realDespesa: realDespesa,
+      resultadoPrevisto: prevReceita - prevDespesa,
+      resultadoRealizado: recReal - realDespesa };
   }
 
   // ── CONFERÊNCIA FINANCEIRA ────────────────────────────────────
@@ -7341,6 +7552,8 @@
     linkPagamentoPadrao: linkPagamentoPadrao, setLinkPagamentoPadrao: setLinkPagamentoPadrao,
     alunasSemLinkDePagamento: alunasSemLinkDePagamento,
     registrarTransacao: registrarTransacao, transacaoRegistrada: transacaoRegistrada,
+    orcamentoDoMes: orcamentoDoMes, setOrcamento: setOrcamento,
+    lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

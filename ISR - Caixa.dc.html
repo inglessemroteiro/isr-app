@@ -79,6 +79,53 @@
     </div>
     <p style="margin: 0 0 20px; font-size: 11px; color: #b3a693;">Saldo = receitas efetivamente recebidas menos despesas do mês. Não considera valores a receber.</p>
 
+    <!-- PREVISTO × REALIZADO -->
+    <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Previsto × Realizado</span>
+        <button onclick="{{ onOrcEditar }}" style="border: 1px solid #e5dccf; background: {{ orcBtnBg }}; color: {{ orcBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ orcBtnLabel }}</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto nasce calculado — contratos na receita, custos fixos e folha na despesa — e você pode ajustar linha a linha para este mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
+
+      <div style="overflow-x: auto;"><div style="min-width: 540px;">
+      <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #eee3d6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693;">
+        <span style="flex: 1;"></span>
+        <span style="flex: none; width: 104px; text-align: right;">Previsto</span>
+        <span style="flex: none; width: 104px; text-align: right;">Realizado</span>
+        <span style="flex: none; width: 92px; text-align: right;">Diferença</span>
+      </div>
+      <sc-for list="{{ orcLinhas }}" as="ol" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid #f4f1ec;">
+          <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ ol.cor }};"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ ol.label }}</div>
+            <div style="font-size: 10px; color: #b3a693;">{{ ol.nota }}</div>
+          </div>
+          <sc-if value="{{ ol.editando }}">
+            <input ref="{{ ol.ref }}" placeholder="{{ ol.previstoNum }}" inputmode="decimal" style="flex: none; width: 104px; text-align: right; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 7px; background: #fdfbf8;" />
+          </sc-if>
+          <sc-if value="{{ ol.mostrando }}">
+            <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 600; color: #6b6155;">{{ ol.previsto }}</span>
+          </sc-if>
+          <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: #164951;">{{ ol.realizado }}</span>
+          <span style="flex: none; width: 92px; text-align: right; font-size: 11.5px; font-weight: 700; color: {{ ol.difCor }};">{{ ol.dif }}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 11px 0 2px;">
+        <span style="flex: 1; font-size: 12.5px; font-weight: 700; color: #164951;">Resultado do mês</span>
+        <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: {{ orcResPrevCor }};">{{ orcResPrev }}</span>
+        <span style="flex: none; width: 104px; text-align: right; font-size: 13px; font-weight: 700; color: {{ orcResRealCor }};">{{ orcResReal }}</span>
+        <span style="flex: none; width: 92px;"></span>
+      </div>
+      </div></div>
+      <sc-if value="{{ orcEditando }}">
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button onclick="{{ onOrcSalvar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar previstos</button>
+          <span style="font-size: 11px; color: #b3a693; align-self: center;">Deixar em branco volta ao valor calculado.</span>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- META E PONTO DE EQUILÍBRIO -->
     <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -394,7 +441,8 @@
 class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
-            catsAberto: false, erroCat: "", confAberta: false };
+            catsAberto: false, erroCat: "", confAberta: false, orcEditando: false };
+  orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
   novaCatRef = React.createRef();
@@ -680,6 +728,56 @@ class Component extends DCLogic {
       onHoje: () => this.setState({ offset: 0, analise: null }),
 
       numeros, metas, serie, camadas,
+
+      // ── previsto × realizado ──
+      ...(function () {
+        const orc = CRM.orcamentoDoMes ? CRM.orcamentoDoMes(mes.key)
+          : { linhas: [], resultadoPrevisto: 0, resultadoRealizado: 0, cambio: 0 };
+        const $$ = v => CRM.fmtMoney("R$", v);
+        const editando = this.state.orcEditando;
+        return {
+          orcCambioNota: orc.cambio ? "Tudo em reais, euro a " + $$(orc.cambio) + "." : "",
+          orcEditando: editando,
+          orcBtnLabel: editando ? "Cancelar" : "Ajustar previstos",
+          orcBtnBg: editando ? "#164951" : "#fff",
+          orcBtnFg: editando ? "#fff" : "#6b6155",
+          onOrcEditar: () => this.setState({ orcEditando: !editando }),
+          orcLinhas: orc.linhas.map(l => {
+            if (!this.orcRefs[l.id]) this.orcRefs[l.id] = React.createRef();
+            // para receita, realizar MENOS que o previsto é ruim; para
+            // despesa, realizar MAIS que o previsto é ruim
+            const dif = l.realizado - l.previsto;
+            const ruim = l.entrada ? dif < -0.5 : dif > 0.5;
+            const neutro = Math.abs(dif) <= 0.5 || (!l.entrada && l.realizado === 0);
+            return {
+              label: l.label,
+              cor: l.entrada ? "#348a8e" : (l.cor || "#9c6f56"),
+              nota: l.definido ? "previsto definido por você" : "previsto calculado",
+              editando: editando, mostrando: !editando,
+              ref: this.orcRefs[l.id],
+              previstoNum: l.previsto ? l.previsto.toFixed(2).replace(".", ",") : "0",
+              previsto: $$(l.previsto),
+              realizado: l.realizado ? $$(l.realizado) : "—",
+              dif: neutro ? "" : (dif > 0 ? "+ " : "− ") + $$(Math.abs(dif)),
+              difCor: neutro ? "#b3a693" : (ruim ? "#cf6b5c" : "#5a9e4b")
+            };
+          }),
+          orcResPrev: (orc.resultadoPrevisto < 0 ? "− " : "") + $$(Math.abs(orc.resultadoPrevisto)),
+          orcResPrevCor: orc.resultadoPrevisto >= 0 ? "#6b6155" : "#cf6b5c",
+          orcResReal: (orc.resultadoRealizado < 0 ? "− " : "") + $$(Math.abs(orc.resultadoRealizado)),
+          orcResRealCor: orc.resultadoRealizado >= 0 ? "#348a8e" : "#cf6b5c",
+          onOrcSalvar: () => {
+            orc.linhas.forEach(l => {
+              const r = this.orcRefs[l.id];
+              const raw = ((r && r.current && r.current.value) || "").trim();
+              CRM.setOrcamento(mes.key, l.id === "receita" ? "receita" : l.id,
+                raw === "" ? null : CRM.parseMoney(raw));
+            });
+            this.setState({ orcEditando: false });
+            this.bump();
+          }
+        };
+      }).call(this),
 
       // ── conferência ──
       // "As contas fecham" foi um erro de palavra: em português isso soa

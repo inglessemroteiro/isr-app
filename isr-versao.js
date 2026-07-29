@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.28-d",
-  data: "28/07/2026",
-  nota: "Financeiro fechado como ledger: importação idempotente e Pix de folha quita a folha"
+  numero: "2026.07.29-a",
+  data: "29/07/2026",
+  nota: "Previsto × Realizado no Caixa, importação de alunas e turmas, e correções de folha"
 };

@@ -43,10 +43,16 @@
       </sc-if>
     </div>
 
+    <!-- O QUE IMPORTAR -->
+    <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+      <button onclick="{{ onAbaPagamentos }}" style="border: 1px solid {{ abaPagBorda }}; background: {{ abaPagBg }}; color: {{ abaPagFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Controle de Pagamento</button>
+      <button onclick="{{ onAbaAlunas }}" style="border: 1px solid {{ abaAluBorda }}; background: {{ abaAluBg }}; color: {{ abaAluFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Alunas e turmas</button>
+    </div>
+
     <!-- COMO COPIAR -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
       <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Como copiar</div>
-      <p style="margin: 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">No Google Sheets, abra a aba <strong>Controle de Pagamento</strong>, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula.</p>
+      <p style="margin: 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ comoCopiar }}</p>
     </div>
 
     <!-- COLAR -->
@@ -63,6 +69,58 @@
         <p style="margin: 10px 0 0; font-size: 12.5px; color: #cf6b5c; font-weight: 600; line-height: 1.5;">{{ erro }}</p>
       </sc-if>
     </div>
+
+    <sc-if value="{{ temLeituraAlunas }}">
+      <div>
+        <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
+            <sc-for list="{{ alResumo }}" as="rs" hint-placeholder-count="4">
+              <div>
+                <div style="font-size: 18px; font-weight: 700; color: {{ rs.cor }};">{{ rs.valor }}</div>
+                <div style="font-size: 10.5px; color: rgba(255,255,255,0.6); line-height: 1.4;">{{ rs.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ temTurmasNovas }}">
+          <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Turmas que vão ser criadas</div>
+            <sc-for list="{{ turmasNovas }}" as="tn" hint-placeholder-count="4">
+              <div style="display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-top: 1px solid #f4f1ec;">
+                <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: #164951;">{{ tn.label }}</span>
+                <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">{{ tn.detalhe }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Aluna por aluna</div>
+          <sc-for list="{{ alLinhas }}" as="al" hint-placeholder-count="8">
+            <div style="border-top: 1px solid #f4f1ec; padding: 9px 0;">
+              <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ al.nome }}</span>
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: {{ al.selo }}; background: {{ al.seloBg }}; padding: 2px 8px; border-radius: 999px;">{{ al.seloLabel }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ al.detalhe }}</div>
+              <sc-if value="{{ al.temAviso }}">
+                <div style="font-size: 11.5px; color: #cf6b5c; font-weight: 600; margin-top: 3px; line-height: 1.5;">{{ al.avisos }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 16px;">
+          <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ alAplicarNota }}</p>
+          <button onclick="{{ onAplicarAlunas }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ alAplicarLabel }}</button>
+          <sc-if value="{{ temAlFeito }}">
+            <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ alFeito }}</p>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
 
     <sc-if value="{{ temLeitura }}">
       <div>
@@ -164,7 +222,8 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;900px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
-            zerarAberto: false, zerado: "" };
+            zerarAberto: false, zerado: "", aba: "pagamentos",
+            leituraAlunas: null, alFeito: "" };
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -176,7 +235,13 @@ class Component extends DCLogic {
       feito: this.state.feito, anoNota: "",
       zerarAberto: false, zerarLabel: "", dentroFrase: "", temZerado: false, zerado: "",
       onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {},
-      onExemplo: () => {}, temChute: false, chuteFrase: "", onTodasGrupo: () => {} };
+      onExemplo: () => {}, temChute: false, chuteFrase: "", onTodasGrupo: () => {},
+      temLeituraAlunas: false, alResumo: [], alLinhas: [], turmasNovas: [],
+      temTurmasNovas: false, alAplicarNota: "", alAplicarLabel: "",
+      onAplicarAlunas: () => {}, temAlFeito: false, alFeito: "", comoCopiar: "",
+      abaPagBg: "#164951", abaPagFg: "#fff", abaPagBorda: "#164951",
+      abaAluBg: "#fff", abaAluFg: "#8a7c6b", abaAluBorda: "#e5dccf",
+      onAbaPagamentos: () => {}, onAbaAlunas: () => {} };
     if (!CRM || !CRM.lerControlePagamento) return base;
 
     // ── o que já está dentro ──
@@ -222,22 +287,88 @@ class Component extends DCLogic {
     const anoBase = new Date().getFullYear();
     const $ = (m, v) => CRM.fmtMoney(m, v);
 
+    const abaAlunas = this.state.aba === "alunas";
     const ler = () => {
       const txt = (this.colaRef.current && this.colaRef.current.value) || "";
-      if (!txt.trim()) { this.setState({ erro: "Cole a planilha antes de ler.", leitura: null }); return; }
+      if (!txt.trim()) {
+        this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null });
+        return;
+      }
+      if (abaAlunas) {
+        const r = CRM.lerAlunasTurmas(txt);
+        if (!r.ok) { this.setState({ erro: r.erro, leituraAlunas: null }); return; }
+        if (!r.linhas.length) {
+          this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leituraAlunas: null });
+          return;
+        }
+        this.setState({ leituraAlunas: r, leitura: null, erro: "", alFeito: "" });
+        return;
+      }
       const r = CRM.lerControlePagamento(txt, { ano: anoBase });
       if (!r.ok) { this.setState({ erro: r.erro, leitura: null }); return; }
       if (!r.linhas.length) {
         this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leitura: null });
         return;
       }
-      this.setState({ leitura: r, erro: "", feito: "" });
+      this.setState({ leitura: r, leituraAlunas: null, erro: "", feito: "" });
     };
+
+    // ── abas e leitura de alunas ──
+    const AL = this.state.leituraAlunas;
+    Object.assign(base, {
+      comoCopiar: abaAlunas
+        ? "Cole a lista de alunas com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), Turma, Nível, Professora, Horário, WhatsApp e E-mail — na ordem que estiverem."
+        : "No Google Sheets, abra a aba Controle de Pagamento, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula.",
+      abaPagBg: abaAlunas ? "#fff" : "#164951", abaPagFg: abaAlunas ? "#8a7c6b" : "#fff",
+      abaPagBorda: abaAlunas ? "#e5dccf" : "#164951",
+      abaAluBg: abaAlunas ? "#164951" : "#fff", abaAluFg: abaAlunas ? "#fff" : "#8a7c6b",
+      abaAluBorda: abaAlunas ? "#164951" : "#e5dccf",
+      onAbaPagamentos: () => this.setState({ aba: "pagamentos", erro: "" }),
+      onAbaAlunas: () => this.setState({ aba: "alunas", erro: "" }),
+      onLer: ler,
+
+      temLeituraAlunas: !!AL,
+      ...(AL ? {
+        alResumo: [
+          { valor: String(AL.linhas.length), label: AL.linhas.length === 1 ? "aluna lida" : "alunas lidas", cor: "#fff" },
+          { valor: String(AL.novas), label: "ainda não cadastradas", cor: "#9ec970" },
+          { valor: String(AL.turmasNovas.length), label: "turmas novas", cor: "#fff" },
+          { valor: String(AL.comAviso), label: "com algo a conferir", cor: AL.comAviso ? "#fc9082" : "#9ec970" }
+        ],
+        temTurmasNovas: AL.turmasNovas.length > 0,
+        turmasNovas: AL.turmasNovas.map(tn => ({
+          label: tn.label,
+          detalhe: (tn.professora ? tn.professora + " · " : "sem professora · ")
+            + tn.alunas + (tn.alunas === 1 ? " aluna" : " alunas")
+        })),
+        alLinhas: AL.linhas.map(l => ({
+          nome: l.nome,
+          seloLabel: l.avisos.length ? "conferir" : (l.existe ? "atualiza" : "nova"),
+          selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),
+          seloBg: l.avisos.length ? "#fdf1ec" : (l.existe ? "#f2ece3" : "#eef5ec"),
+          detalhe: [l.turma || "sem turma", l.professora, l.whatsapp, l.email]
+            .filter(Boolean).join(" · "),
+          temAviso: l.avisos.length > 0, avisos: l.avisos.join(" · ")
+        })),
+        alAplicarNota: "Quem já existe é atualizada (turma, nível e contatos); quem não existe é criada como aluna matriculada. Turma que não existe é criada com a professora indicada.",
+        alAplicarLabel: "Aplicar as " + AL.linhas.length + " alunas",
+        onAplicarAlunas: () => {
+          if (!window.confirm("Aplicar " + AL.linhas.length + " alunas"
+            + (AL.turmasNovas.length ? " e criar " + AL.turmasNovas.length + " turmas" : "") + "?")) return;
+          const r = CRM.aplicarAlunasTurmas(AL);
+          this.setState({ alFeito: r.criadas + " criadas · " + r.atualizadas + " atualizadas"
+            + (r.turmasCriadas ? " · " + r.turmasCriadas + " turmas novas" : "")
+            + ". Confira em Alunas e em Turmas." });
+          this.bump();
+        },
+        temAlFeito: !!this.state.alFeito, alFeito: this.state.alFeito
+      } : {})
+    });
 
     const L = this.state.leitura;
     if (!L) {
       return Object.assign({}, base, {
-        anoNota: "As colunas de mês são lidas a partir de " + anoBase + ".",
+        anoNota: abaAlunas ? "" : "As colunas de mês são lidas a partir de " + anoBase + ".",
         onLer: ler,
         onLimpar: () => {},
         onSoAviso: () => {}, onAplicarLimpas: () => {}, onAplicarTudo: () => {}
