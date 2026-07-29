@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-f",
+  numero: "2026.07.29-g",
   data: "29/07/2026",
-  nota: "Conciliação enxerga contratos encerrados (pagamento retroativo do Asaas) e o trocar ganhou a opção outro — recebimento avulso"
+  nota: "O pagamento do acompanhamento (programa no WhatsApp) entra pelo extrato: quem está pendente aparece no seletor de conciliação"
 };
