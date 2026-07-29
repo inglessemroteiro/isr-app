@@ -6416,6 +6416,26 @@
   function removeLancamento(id) {
     lancamentosSave(lancamentosLista().filter(function (x) { return x.id !== id; }));
   }
+  // Editar um lançamento sem apagar e redigitar: categoria errada e valor
+  // errado são os dois jeitos mais comuns de um número contar dobrado.
+  function updateLancamento(id, patch) {
+    var l = lancamentosLista();
+    for (var i = 0; i < l.length; i++) {
+      if (l[i].id !== id) continue;
+      if (patch.descricao !== undefined && patch.descricao !== "") l[i].descricao = patch.descricao;
+      if (patch.categoria !== undefined && patch.categoria !== "") l[i].categoria = patch.categoria;
+      if (patch.data !== undefined && patch.data !== "") l[i].data = patch.data;
+      if (patch.moeda !== undefined && patch.moeda !== "") l[i].moeda = patch.moeda;
+      if (patch.valor !== undefined && patch.valor !== "") {
+        var v = typeof patch.valor === "number" ? patch.valor : parseMoney(patch.valor);
+        if (v) l[i].valor = v;
+      }
+      carimbar(l[i]);
+      break;
+    }
+    lancamentosSave(l);
+    return l;
+  }
   function lancamentosDoMes(key) {
     return lancamentosLista().filter(function (l) { return (l.data || "").slice(0, 7) === key; });
   }
@@ -7805,7 +7825,8 @@
     financeiroMes: financeiroMes, financeiroSerie: financeiroSerie, previsaoMes: previsaoMes,
     mesesFinanceiro: mesesFinanceiro, mesOffset: mesOffset,
     lancamentosLista: lancamentosLista, addLancamento: addLancamento,
-    removeLancamento: removeLancamento, lancamentosDoMes: lancamentosDoMes,
+    removeLancamento: removeLancamento, updateLancamento: updateLancamento,
+    lancamentosDoMes: lancamentosDoMes,
     metaDoMes: metaDoMes, setMetaMes: setMetaMes, setMetaPadrao: setMetaPadrao,
     taxaCambio: taxaCambio, setTaxaCambio: setTaxaCambio, emReais: emReais,
     ticketMedio: ticketMedio, taxaConversao: taxaConversao,

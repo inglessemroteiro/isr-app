@@ -241,15 +241,34 @@
 
         <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Detalhamento por item</div>
         <sc-for list="{{ saidas }}" as="s" hint-placeholder-count="6">
-          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ s.cor }}; flex: none;"></span>
-            <div style="flex: 1; min-width: 0;">
-              <span style="color: #3d3529; font-weight: 600;">{{ s.nome }}</span>
-              <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
+          <div style="border-bottom: 1px solid #f2e9dd;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 12px;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ s.cor }}; flex: none;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <span style="color: #3d3529; font-weight: 600;">{{ s.nome }}</span>
+                <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
+              </div>
+              <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
+              <sc-if value="{{ s.editavel }}">
+                <button onclick="{{ s.onEditar }}" title="Editar este lançamento: valor, categoria, moeda e data" style="border: none; background: transparent; color: #b3a693; font-size: 10.5px; font-weight: 700; cursor: pointer; padding: 2px 4px; font-family: inherit;">editar</button>
+              </sc-if>
+              <sc-if value="{{ s.removivel }}">
+                <button onclick="{{ s.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+              </sc-if>
             </div>
-            <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
-            <sc-if value="{{ s.removivel }}">
-              <button onclick="{{ s.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+            <sc-if value="{{ s.editando }}">
+              <div style="background: #faf8f3; border-radius: 9px; padding: 10px; margin: 0 0 9px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <input ref="{{ s.leDescRef }}" placeholder="{{ s.edDescAtual }}" style="flex: 2; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ s.leValorRef }}" inputmode="decimal" placeholder="{{ s.edValorAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <select ref="{{ s.leMoedaRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ s.edMoedaOpts }}" as="mo" hint-placeholder-count="3"><option value="{{ mo.id }}">{{ mo.label }}</option></sc-for>
+                </select>
+                <select ref="{{ s.leCatRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ s.edCatOpts }}" as="co" hint-placeholder-count="6"><option value="{{ co.id }}">{{ co.label }}</option></sc-for>
+                </select>
+                <input ref="{{ s.leDataRef }}" placeholder="{{ s.edDataAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <button onclick="{{ s.onSalvarLanc }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+              </div>
             </sc-if>
           </div>
         </sc-for>
@@ -462,11 +481,13 @@ class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
-            trocas: {} };
+            trocas: {}, edLanc: null };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
   arquivoRef = React.createRef();
+  leDescRef = React.createRef(); leValorRef = React.createRef();
+  leCatRef = React.createRef(); leMoedaRef = React.createRef(); leDataRef = React.createRef();
   novaCatRef = React.createRef();
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
@@ -613,14 +634,47 @@ class Component extends DCLogic {
         onRemove: () => { CRM.removeLancamento(e.lancId); this.bump(); } };
     });
 
-    const saidas = f.saidas.map(s => ({
-      nome: s.nome, valor: CRM.fmtMoney(s.moeda, s.valor),
-      cor: CRM.catMeta(CRM.catsSaida(), s.categoria).cor,
-      detalhe: s.fixo ? "Custo fixo · " + CRM.catMeta(CRM.catsSaida(), s.categoria).label
-                      : "Lançamento de " + CRM.ddmm(s.data) + " · " + CRM.catMeta(CRM.catsSaida(), s.categoria).label,
-      removivel: !!s.lancId,
-      onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); }
-    }));
+    const saidas = f.saidas.map(s => {
+      const catLabel = CRM.catMeta(CRM.catsSaida(), s.categoria).label;
+      // um lançamento digitado na categoria equipe é o jeito mais comum de
+      // contar a folha duas vezes — a linha avisa em vez de esperar a
+      // conferência acusar
+      const dobra = !!s.lancId && s.categoria === "equipe";
+      return {
+        nome: s.nome, valor: CRM.fmtMoney(s.moeda, s.valor),
+        cor: CRM.catMeta(CRM.catsSaida(), s.categoria).cor,
+        detalhe: (s.calculado
+          ? "Folha calculada · para mudar, ajuste em Equipe"
+          : (s.fixo ? "Custo fixo · " + catLabel
+                    : "Lançamento de " + CRM.ddmm(s.data) + " · " + catLabel))
+          + (dobra ? " · atenção: a folha da equipe já entra calculada — confira se não está dobrando" : ""),
+        removivel: !!s.lancId,
+        onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); },
+        editavel: !!s.lancId,
+        editando: !!s.lancId && this.state.edLanc === s.lancId,
+        onEditar: () => this.setState(st => ({ edLanc: st.edLanc === s.lancId ? null : s.lancId })),
+        edDescAtual: s.nome, edValorAtual: CRM.fmtMoney(s.moeda, s.valor),
+        edCatOpts: [{ id: "", label: "Categoria: " + catLabel + " (manter)" }]
+          .concat(CRM.catsSaida().map(c => ({ id: c.id, label: c.label }))),
+        edMoedaOpts: [{ id: "", label: "Moeda: " + s.moeda + " (manter)" },
+          { id: "R$", label: "R$" }, { id: "€", label: "€" }],
+        edDataAtual: CRM.ddmm(s.data) || "dd/mm/aaaa",
+        leDescRef: this.leDescRef, leValorRef: this.leValorRef,
+        leCatRef: this.leCatRef, leMoedaRef: this.leMoedaRef, leDataRef: this.leDataRef,
+        onSalvarLanc: () => {
+          const v = r => ((r.current && r.current.value) || "").trim();
+          const dt = v(this.leDataRef);
+          const dp = dt.split("/");
+          CRM.updateLancamento(s.lancId, {
+            descricao: v(this.leDescRef), valor: v(this.leValorRef),
+            categoria: v(this.leCatRef), moeda: v(this.leMoedaRef),
+            data: dp.length === 3 ? (dp[2] + "-" + dp[1] + "-" + dp[0]) : ""
+          });
+          this.setState({ edLanc: null });
+          this.bump();
+        }
+      };
+    });
 
     // ── expectativa em camadas ──
     const camadas = [

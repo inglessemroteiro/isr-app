@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-g",
+  numero: "2026.07.29-h",
   data: "29/07/2026",
-  nota: "O pagamento do acompanhamento (programa no WhatsApp) entra pelo extrato: quem está pendente aparece no seletor de conciliação"
+  nota: "Cada lançamento do Caixa edita e apaga na própria linha; a folha calculada se identifica; e lançamento digitado como equipe avisa quando pode estar dobrando"
 };
