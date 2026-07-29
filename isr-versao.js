@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-c",
+  numero: "2026.07.29-d",
   data: "29/07/2026",
-  nota: "Alunas entram de verdade nas turmas na importação, ids duplicados consertados ao abrir, particular não vira turma, e a troca de turma mora na edição do cadastro"
+  nota: "O extrato do Wise é lido no formato dele: moeda do arquivo, valores da coluna certa, e conversão de moeda não vira despesa"
 };

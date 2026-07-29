@@ -2880,25 +2880,31 @@
     var cru = String(texto || "").split("\n");
 
     // ── caminho 1: tabela com linha de títulos ────────────────
+    // O Asaas fala português (Data/Valor); o Wise fala inglês
+    // (Date/Amount/Currency). Os dois são a mesma coisa: colunas com
+    // título. O que muda é o dicionário.
     var iCab = -1, cab = null;
     for (var i = 0; i < Math.min(cru.length, 15); i++) {
       var cels = cru[i].split("\t");
       if (cels.length < 3) continue;
       var s = semAcento(cru[i]);
-      if (s.indexOf("data") >= 0 && s.indexOf("valor") >= 0) { iCab = i; cab = cels; break; }
+      if ((s.indexOf("data") >= 0 && s.indexOf("valor") >= 0)
+        || (s.indexOf("date") >= 0 && s.indexOf("amount") >= 0)) { iCab = i; cab = cels; break; }
     }
 
     if (iCab >= 0) {
       var col = {
-        data: colunaPorTitulo(cab, ["data"]),
-        desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição"]),
-        valor: colunaPorTitulo(cab, ["valor"]),
-        tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c"]),
+        data: colunaPorTitulo(cab, ["data", "date"]),
+        desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição", "description"]),
+        valor: colunaPorTitulo(cab, ["valor", "amount"]),
+        tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c", "transaction type"]),
+        moeda: colunaPorTitulo(cab, ["moeda", "currency"]),
         // o id que o gateway dá à transação é a identidade dela: é o que
         // permite importar o mesmo extrato duas vezes sem duplicar nada
-        id: colunaPorTitulo(cab, ["transacao"])
+        id: colunaPorTitulo(cab, ["transacao", "id"])
       };
       if (col.valor >= 0) {
+        var MOEDA_COD = { brl: "R$", eur: "€", "r$": "R$", "€": "€" };
         var linhas = [];
         cru.slice(iCab + 1).forEach(function (ln) {
           var c = ln.split("\t");
@@ -2910,6 +2916,7 @@
           linhas.push({ dt: dt, bruto: bruto,
             desc: col.desc >= 0 ? (c[col.desc] || "").trim() : "",
             tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "",
+            moeda: col.moeda >= 0 ? semAcento(c[col.moeda] || "") : "",
             idExterno: col.id >= 0 ? (c[col.id] || "").trim() : "" });
         });
         var dec = detectarDecimal(linhas.map(function (x) { return x.bruto; }));
@@ -2917,12 +2924,17 @@
           var v = parseNumero(x.bruto, dec);
           if (isNaN(v)) v = 0;
           // a coluna Crédito/Débito manda no sinal quando existe
-          if (x.tipo.indexOf("debito") >= 0) v = -Math.abs(v);
-          else if (x.tipo.indexOf("credito") >= 0) v = Math.abs(v);
+          // ("debit"/"credit" cobre débito/crédito e DEBIT/CREDIT)
+          if (x.tipo.indexOf("debit") >= 0) v = -Math.abs(v);
+          else if (x.tipo.indexOf("credit") >= 0) v = Math.abs(v);
           var d = x.dt.match(/(\d{2})[\/-](\d{2})[\/-](\d{2,4})/);
           var data = d ? (d[1] + "/" + d[2] + "/" + (d[3].length === 2 ? "20" + d[3] : d[3])) : x.dt;
+          // Converter real em euro dentro da própria conta não é receita
+          // nem despesa: o dinheiro continua da escola, só trocou de moeda.
+          var interna = /^(converted|convers[aã]o)\b/i.test(x.desc);
           return { data: data, descricao: x.desc || "(sem descrição)", valor: v,
             colunaSaldo: false, ambiguo: false, deTabela: true,
+            moeda: MOEDA_COD[x.moeda] || "", interna: interna,
             idExterno: x.idExterno || "" };
         });
       }
@@ -3023,6 +3035,13 @@
       if (reg) { jaRegistradas.push({ trans: t, uso: reg.uso, em: reg.em }); return false; }
       return true;
     });
+    // troca de moeda dentro da própria conta não é receita nem despesa —
+    // sai da fila antes de qualquer sugestão
+    var internas = [];
+    transacoes = transacoes.filter(function (t) {
+      if (t.interna) { internas.push(t); return false; }
+      return true;
+    });
     var abertas = [];
     getCobranca().forEach(function (c) {
       if (c.moeda !== moeda) return;
@@ -3095,7 +3114,7 @@
     });
 
     return { sugestoes: sugestoes, semMatch: semMatch,
-      jaRegistradas: jaRegistradas,
+      jaRegistradas: jaRegistradas, internas: internas,
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
   }
 
