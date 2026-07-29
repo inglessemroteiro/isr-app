@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-b",
+  numero: "2026.07.29-c",
   data: "29/07/2026",
-  nota: "A importação lê as anotações da planilha (particular e nível), e a aba de alunas reconhece o Controle de Pagamento"
+  nota: "Alunas entram de verdade nas turmas na importação, ids duplicados consertados ao abrir, particular não vira turma, e a troca de turma mora na edição do cadastro"
 };

@@ -295,9 +295,14 @@
     return UNITS.map(function (u) { return Object.assign({ capacidade: CAPACIDADE_PADRAO }, u); });
   }
   function turmasSave(list) { carimbarLista(list); try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  // O id era só Date.now(): duas turmas criadas no mesmo milissegundo (a
+  // importação cria várias de uma vez) ficavam com o MESMO id, e editar
+  // uma mexia na outra. O contador desempata.
+  var turmaSeq = 0;
+  function novoTurmaId() { return "t" + Date.now() + "-" + (turmaSeq++); }
   function addTurma(dados) {
     var list = turmasLista();
-    list.push({ id: "t" + Date.now(), nivel: dados.nivel || "", turma: dados.turma || "",
+    list.push({ id: novoTurmaId(), nivel: dados.nivel || "", turma: dados.turma || "",
       teacher: dados.teacher || "", cycle: dados.cycle || metasAtuais().cicloLabel,
       projeto: dados.projeto || "", notebook: dados.notebook || "",
       capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
@@ -837,10 +842,14 @@
     return list;
   }
   // Novo lead manual (spec 1.1: o registro nasce no primeiro contato)
+  // Date.now() sozinho repetia o id quando a importação criava várias
+  // pessoas no mesmo milissegundo — e aí editar uma mexia na outra.
+  var pessoaSeq = 0;
+  function novaPessoaId() { return "p" + Date.now() + "-" + (pessoaSeq++); }
   function novaPessoa(dados) {
     var list = loadPessoas();
     var p = {
-      id: "p" + Date.now(),
+      id: novaPessoaId(),
       nome: (dados.nome || "").trim(),
       whatsapp: (dados.whatsapp || "").trim(),
       email: (dados.email || "").trim(),
@@ -6857,18 +6866,33 @@
       var professora = pega(c, col.professora);
       var horario = pega(c, col.horario);
 
-      // o rótulo de turma do sistema é "Nível · Horário"; se a planilha já
-      // traz o rótulo completo na coluna Turma, ele vale como está
+      // O rótulo de turma do sistema é "Nível · Horário". Um código curto
+      // na coluna Turma (BAS-SEG-12NL) é apelido interno da planilha, não
+      // rótulo: se o nível e o horário existem, o rótulo sai deles — senão
+      // a aluna e a turma nasceriam com nomes diferentes e nunca se
+      // encontrariam.
+      var codigo = "";
       var label = turma;
-      if (!label && nivel && horario) label = nivel + " · " + horario;
-      else if (label && label.indexOf("·") < 0 && horario) label = label + " · " + horario;
+      if (label && label.indexOf("·") < 0) {
+        codigo = label;
+        if (nivel && horario) label = nivel + " · " + horario;
+        else if (horario) label = codigo + " · " + horario;
+      } else if (!label && nivel && horario) {
+        label = nivel + " · " + horario;
+      }
+
+      // Particular não é turma: é aula individual, com outra rotina e
+      // outro pagamento. Vira aluna particular, não turma de grupo.
+      var ehParticular = /particular/i.test(nivel) || /^part(\b|-)/i.test(codigo);
 
       var profOficial = professora ? (equipe[semAcento(professora)] || "") : "";
       if (professora && !profOficial)
         avisos.push(professora + " não está no cadastro da equipe");
 
       var existe = pessoaPorNome(nome);
-      if (label) {
+      if (ehParticular) {
+        label = "";
+      } else if (label) {
         var jaTem = turmasLista().some(function (u) {
           return (u.nivel + " · " + u.turma) === label;
         });
@@ -6881,7 +6905,8 @@
         avisos.push("Sem turma — fica cadastrada, mas fora de qualquer turma");
       }
 
-      out.push({ nome: nome, turma: label, nivel: nivel,
+      out.push({ nome: nome, turma: label, nivel: ehParticular ? "" : nivel,
+        codigo: codigo, particular: ehParticular, horario: horario,
         professora: profOficial || professora,
         whatsapp: pega(c, col.whatsapp), email: pega(c, col.email),
         existe: !!existe, avisos: avisos });
@@ -6890,6 +6915,7 @@
     return { ok: true, linhas: out, ignoradas: ignoradas,
       novas: out.filter(function (l) { return !l.existe; }).length,
       comAviso: out.filter(function (l) { return l.avisos.length; }).length,
+      particulares: out.filter(function (l) { return l.particular; }).length,
       turmasNovas: Object.keys(turmasNovas).map(function (k) { return turmasNovas[k]; }) };
   }
 
@@ -6899,6 +6925,10 @@
 
     // primeiro as turmas, para as alunas terem onde entrar
     leitura.turmasNovas.forEach(function (tn) {
+      var ja = turmasLista().some(function (u) {
+        return (u.nivel + " · " + u.turma) === tn.label;
+      });
+      if (ja) return;
       addTurma({ nivel: tn.nivel, turma: tn.horario, teacher: tn.professora || "",
         capacidade: 5 });
       turmasCriadas++;
@@ -6920,12 +6950,43 @@
         if (l.whatsapp) x.whatsapp = l.whatsapp;
         if (l.email) x.email = l.email;
         if (l.nivel) x.nivel = l.nivel;
+        if (l.particular) {
+          // quem também está numa turma de grupo não sai dela: a aula
+          // particular é um pacote a mais, não uma troca
+          if (!x.turma) x.turma = "Particular";
+          if (l.professora) x.professora = l.professora;
+          if ((x.formatos || []).indexOf("particular") < 0)
+            x.formatos = (x.formatos || []).concat(["particular"]);
+          if (!x.particular) x.particular = { inicio: iso(today()), aulas: 0, feitas: 0 };
+          if (l.horario) x.particular.horario = l.horario;
+        }
       });
-      if (l.turma) setTurmaDaPessoa(p.id, l.turma, l.professora || "");
+      if (!l.particular && l.turma) setTurmaDaPessoa(p.id, l.turma, l.professora || "");
     });
 
+    // Arruma o que importações com defeito deixaram para trás: turmas com
+    // o mesmo id (editar uma mexia na outra) e rótulos duplicados. As que
+    // sobrarem vazias são listadas para a pessoa decidir — apagar turma
+    // não é coisa que se faça sozinho.
+    var lista = turmasLista(), vistos = {}, ids = {}, limpa = [], mudou = false;
+    lista.forEach(function (u) {
+      var lb = u.nivel + " · " + u.turma;
+      if (vistos[lb]) { mudou = true; return; }
+      vistos[lb] = true;
+      if (ids[u.id]) { u.id = novoTurmaId(); mudou = true; }
+      ids[u.id] = true;
+      limpa.push(u);
+    });
+    if (mudou) turmasSave(limpa);
+
+    var vazias = turmasLista().filter(function (u) {
+      return alunasDaTurma(u.nivel + " · " + u.turma).length === 0;
+    }).map(function (u) { return { id: u.id, label: u.nivel + " · " + u.turma }; });
+
     return { ok: true, criadas: criadas, atualizadas: atualizadas,
-      turmasCriadas: turmasCriadas };
+      turmasCriadas: turmasCriadas,
+      particulares: leitura.linhas.filter(function (l) { return l.particular; }).length,
+      turmasVazias: vazias };
   }
 
   // ── O QUE A ESCOLA VAI RECEBER ────────────────────────────────
@@ -7498,6 +7559,33 @@
       excedeParcelas: n > maxP
     };
   }
+
+  // ── CONSERTO DE IDS DUPLICADOS ────────────────────────────────
+  //
+  // Antes do contador, pessoas e turmas criadas no mesmo milissegundo
+  // (como numa importação) nasciam com o MESMO id — e editar uma mexia
+  // na outra: era o "cliquei no Sergio e mudou a Stefane". Quem já tem
+  // dados com esse defeito é consertado aqui, uma vez, ao abrir o app.
+  function consertarIdsDuplicados() {
+    try {
+      var pessoas = JSON.parse(localStorage.getItem(PESSOAS_KEY)) || [];
+      var vistos = {}, mudou = false;
+      pessoas.forEach(function (p) {
+        if (p && p.id && vistos[p.id]) { p.id = novaPessoaId(); mudou = true; }
+        if (p && p.id) vistos[p.id] = true;
+      });
+      if (mudou) savePessoas(pessoas);
+
+      var turmas = JSON.parse(localStorage.getItem(TURMAS_KEY)) || [];
+      var vistosT = {}, mudouT = false;
+      turmas.forEach(function (u) {
+        if (u && u.id && vistosT[u.id]) { u.id = novoTurmaId(); mudouT = true; }
+        if (u && u.id) vistosT[u.id] = true;
+      });
+      if (mudouT) turmasSave(turmas);
+    } catch (e) {}
+  }
+  consertarIdsDuplicados();
 
   // ── API PÚBLICA ───────────────────────────────────────────────
   window.ISRCRM = {
