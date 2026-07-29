@@ -3079,6 +3079,28 @@
     agendarSync();
   }
 
+  // Toda parcela não paga, de qualquer pessoa e qualquer contrato — não só
+  // o vigente. O Asaas paga retroativo: dinheiro de aluna que já encerrou
+  // chega depois do contrato acabar, e a parcela dela ainda existe.
+  function parcelasAbertasTodas(moeda) {
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      var vigente = contratoVigente(p);
+      var ativa = (p.status === "aluna" || p.status === "mvs");
+      (p.contratos || []).forEach(function (c, ci) {
+        if ((c.moeda || p.moeda || "R$") !== moeda) return;
+        (c.meses || []).forEach(function (m) {
+          if (m.pago) return;
+          var v = parseMoney(m.valor || c.parcelaValor);
+          if (!v) return;
+          out.push({ pessoaId: p.id, nome: p.nome, mesKey: m.key, mesLabel: m.label,
+            valor: v, contratoIdx: ci, encerrada: !(ativa && c === vigente) });
+        });
+      });
+    });
+    return out;
+  }
+
   function sugerirConciliacao(transacoes, moeda) {
     // o que já foi processado numa análise anterior sai da fila
     var jaRegistradas = [];
@@ -3095,23 +3117,19 @@
       if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
       return true;
     });
-    var abertas = [];
-    getCobranca().forEach(function (c) {
-      if (c.moeda !== moeda) return;
-      (c.meses || []).forEach(function (m) {
-        if (!m.pago) abertas.push({ pessoaId: c.id, nome: c.nome, mesKey: m.key,
-          mesLabel: m.label, valor: parseMoney(m.valor || c.parcelaValor) });
-      });
-    });
+    // todas as parcelas em aberto — inclusive de contrato encerrado, que é
+    // como chega o pagamento retroativo do Asaas
+    var abertas = parcelasAbertasTodas(moeda);
     var equipe = equipeLista().map(function (x) { return x.nome; });
     var usadas = {};
+    var chaveAberta = function (a) { return a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx; };
     var sugestoes = [], semMatch = [], pendentes = [];
 
     // ── 1ª passada: valor bate ────────────────────────────────
     transacoes.forEach(function (t) {
       if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
       var cands = abertas.filter(function (a) {
-        return !usadas[a.pessoaId + a.mesKey] && Math.abs(a.valor - t.valor) <= 0.6;
+        return !usadas[chaveAberta(a)] && Math.abs(a.valor - t.valor) <= 0.6;
       });
       if (!cands.length) { pendentes.push(t); return; }
       var desc = (t.descricao || "").toLowerCase();
@@ -3119,12 +3137,15 @@
         var an = desc.indexOf(firstName(a.nome).toLowerCase()) >= 0 ? 0 : 1;
         var bn = desc.indexOf(firstName(b.nome).toLowerCase()) >= 0 ? 0 : 1;
         if (an !== bn) return an - bn;
+        // contrato vigente ganha do encerrado quando os dois cabem
+        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
         return a.mesKey < b.mesKey ? -1 : 1;
       });
       var alvo = cands[0];
-      usadas[alvo.pessoaId + alvo.mesKey] = true;
+      usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
-        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0 });
+        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0,
+        contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
 
     // ── 2ª passada: o nome bate, o valor não ──────────────────
@@ -3134,7 +3155,7 @@
     pendentes.forEach(function (t) {
       var desc = semAcento(t.descricao || "");
       var cands = abertas.filter(function (a) {
-        if (usadas[a.pessoaId + a.mesKey]) return false;
+        if (usadas[chaveAberta(a)]) return false;
         var partes = semAcento(a.nome).split(/\s+/).filter(function (x) { return x.length >= 4; });
         if (!partes.length) return false;
         // pelo menos duas partes do nome, ou o primeiro nome se for único
@@ -3143,13 +3164,16 @@
       });
       if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
       cands.sort(function (a, b) {
-        return Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
+        var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
+        if (dv) return dv;
+        return a.encerrada === b.encerrada ? 0 : (a.encerrada ? 1 : -1);
       });
       var alvo = cands[0];
-      usadas[alvo.pessoaId + alvo.mesKey] = true;
+      usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
-        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true });
+        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true,
+        contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
 
     // ── saídas: quem é da equipe já sai categorizada ──────────
@@ -3171,14 +3195,15 @@
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
   }
 
-  function conciliar(pessoaId, mesKey, descricao, trans) {
-    setParcelaPaga(pessoaId, mesKey, true);
+  function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx) {
+    setParcelaPaga(pessoaId, mesKey, true, contratoIdx);
     // A parcela guarda o que de fato aconteceu no banco: quando caiu e
     // quanto caiu. O valor de face segue sendo o combinado; a diferença é
     // taxa do gateway e vive nas linhas de débito do próprio extrato.
     if (trans) {
       mutate(pessoaId, function (p) {
-        (p.contratos || []).forEach(function (c) {
+        (p.contratos || []).forEach(function (c, ci) {
+          if (contratoIdx !== undefined && contratoIdx !== null && ci !== parseInt(contratoIdx, 10)) return;
           (c.meses || []).forEach(function (m) {
             if (m.key === mesKey && m.pago) {
               if (trans.data) m.pagoEm = trans.data.split("/").reverse().join("-");
@@ -7855,6 +7880,7 @@
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
+    parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil
     ltv: ltv, contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
     // util
