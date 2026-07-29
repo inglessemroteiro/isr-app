@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-d",
+  numero: "2026.07.29-e",
   data: "29/07/2026",
-  nota: "O extrato do Wise é lido no formato dele: moeda do arquivo, valores da coluna certa, e conversão de moeda não vira despesa"
+  nota: "Extrato: envio do arquivo .csv, trocar a parcela quando a sugestão errar, ignorar linha, e transferência para a própria empresa marcada uma vez e reconhecida sempre"
 };
