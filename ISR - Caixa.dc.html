@@ -933,6 +933,14 @@ class Component extends DCLogic {
                ? " " + analise.jaRegistradas.length
                  + (analise.jaRegistradas.length === 1 ? " transação já estava registrada" : " transações já estavam registradas")
                  + " de uma análise anterior e não " + (analise.jaRegistradas.length === 1 ? "entra" : "entram") + " de novo."
+               : "")
+           + (analise.moedaDoArquivo
+               ? " O extrato diz a própria moeda (" + analise.moedaDoArquivo + ") e ela foi usada na análise."
+               : "")
+           + ((analise.internas || []).length
+               ? " " + analise.internas.length
+                 + (analise.internas.length === 1 ? " linha é troca de moeda" : " linhas são trocas de moeda")
+                 + " dentro da sua própria conta (ex.: real → euro) e não " + (analise.internas.length === 1 ? "vira" : "viram") + " receita nem despesa."
                : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),
@@ -976,11 +984,20 @@ class Component extends DCLogic {
       onAnalisar: () => {
         const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
         const trans = CRM.parseExtrato(txt);
-        const a = CRM.sugerirConciliacao(trans, this.state.moedaExtrato);
+        // extrato que declara a própria moeda (Wise tem coluna Currency)
+        // manda mais que o seletor da tela — senão um arquivo em real é
+        // lido como euro só porque o seletor estava em euro
+        const moedas = [...new Set(trans.map(x => x.moeda).filter(Boolean))];
+        let moeda = this.state.moedaExtrato, doArquivo = "";
+        if (moedas.length === 1 && (moedas[0] === "R$" || moedas[0] === "€")) {
+          moeda = moedas[0]; doArquivo = moedas[0];
+        }
+        const a = CRM.sugerirConciliacao(trans, moeda);
         a.colunaSaldo = trans.some(x => x.colunaSaldo);
         a.ambiguas = trans.filter(x => x.ambiguo).length;
         a.deTabela = trans.length > 0 && trans.every(x => x.deTabela);
-        this.setState({ analise: a, conciliadas: {}, lancadas: {} });
+        a.moedaDoArquivo = doArquivo;
+        this.setState({ analise: a, conciliadas: {}, lancadas: {}, moedaExtrato: moeda });
       }
     };
   }
