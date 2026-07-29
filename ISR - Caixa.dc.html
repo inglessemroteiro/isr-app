@@ -378,7 +378,11 @@
           <option value="R$" selected="{{ moedaBRL }}">Conta em R$ (Sicredi / Wise BRL)</option>
         </select>
         <textarea ref="{{ extratoRef }}" placeholder="Cole aqui o extrato exportado do banco ou do Asaas, com a linha de títulos. Também aceita uma linha por lançamento: 28/05/2026 ; Recebeu de Ana Beatriz ; 125,00" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
-        <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
+          <input type="file" ref="{{ arquivoRef }}" accept=".csv,.tsv,.txt" onchange="{{ onArquivo }}" style="display: none;" />
+          <button onclick="{{ onEscolherArquivo }}" title="Exporte o extrato do Wise ou do Asaas como CSV e envie o arquivo direto, sem copiar e colar" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">…ou enviar o arquivo</button>
+        </div>
       </div>
 
       <sc-if value="{{ temAnalise }}">
@@ -401,10 +405,14 @@
                 <span style="color: {{ s.confCor }}; font-weight: 700;"> · {{ s.confLabel }}</span>
               </div>
               <sc-if value="{{ s.pendente }}">
+                <select onchange="{{ s.onTroca }}" title="Se a sugestão apontou a pessoa errada, escolha aqui a parcela certa antes de conciliar" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
+                  <sc-for list="{{ s.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                </select>
                 <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
+                <button onclick="{{ s.onIgnorar }}" title="Não é parcela de aluna. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
               </sc-if>
               <sc-if value="{{ s.feita }}">
-                <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">Conciliada</span>
+                <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">{{ s.feitaLabel }}</span>
               </sc-if>
             </div>
           </sc-for>
@@ -412,11 +420,23 @@
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
               <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ x.icon }}; flex: none;"></span>
               <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
+              <sc-if value="{{ x.conciliavel }}">
+                <select onchange="{{ x.onTroca }}" title="Se esse dinheiro é de uma aluna, escolha a parcela e concilie" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
+                  <sc-for list="{{ x.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                </select>
+                <button onclick="{{ x.onConciliarManual }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
+              </sc-if>
               <sc-if value="{{ x.lancavel }}">
                 <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.lancarLabel }}</button>
               </sc-if>
+              <sc-if value="{{ x.temMinhaConta }}">
+                <button onclick="{{ x.onMinhaConta }}" title="Dinheiro indo para a sua própria empresa ou para você. Não vira despesa, e nas próximas importações o app reconhece sozinho." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Entre minhas contas</button>
+              </sc-if>
+              <sc-if value="{{ x.ignoravel }}">
+                <button onclick="{{ x.onIgnorar }}" title="Não é da escola. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
+              </sc-if>
               <sc-if value="{{ x.lancada }}">
-                <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">Lançada</span>
+                <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">{{ x.feitoLabel }}</span>
               </sc-if>
             </div>
           </sc-for>
@@ -441,10 +461,12 @@
 class Component extends DCLogic {
   state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
-            catsAberto: false, erroCat: "", confAberta: false, orcEditando: false };
+            catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
+            trocas: {} };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
+  arquivoRef = React.createRef();
   novaCatRef = React.createRef();
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
@@ -455,6 +477,26 @@ class Component extends DCLogic {
   cambioRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  analisar() {
+    const CRM = window.ISRCRM;
+    const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
+    const trans = CRM.parseExtrato(txt);
+    // extrato que declara a própria moeda (Wise tem coluna Currency)
+    // manda mais que o seletor da tela — senão um arquivo em real é
+    // lido como euro só porque o seletor estava em euro
+    const moedas = [...new Set(trans.map(x => x.moeda).filter(Boolean))];
+    let moeda = this.state.moedaExtrato, doArquivo = "";
+    if (moedas.length === 1 && (moedas[0] === "R$" || moedas[0] === "€")) {
+      moeda = moedas[0]; doArquivo = moedas[0];
+    }
+    const a = CRM.sugerirConciliacao(trans, moeda);
+    a.colunaSaldo = trans.some(x => x.colunaSaldo);
+    a.ambiguas = trans.filter(x => x.ambiguo).length;
+    a.deTabela = trans.length > 0 && trans.every(x => x.deTabela);
+    a.moedaDoArquivo = doArquivo;
+    this.setState({ analise: a, conciliadas: {}, lancadas: {}, trocas: {}, moedaExtrato: moeda });
+  }
 
   renderVals() {
     const CRM = window.ISRCRM;
@@ -647,9 +689,23 @@ class Component extends DCLogic {
     // da pessoa errada como paga é um estrago difícil de achar depois.
     const certeira = s => !s.porNome && Math.abs(s.valor - s.trans.valor) < 0.01 &&
       (s.trans.descricao || "").toLowerCase().indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0;
+    // toda parcela em aberto na moeda do extrato: é o cardápio do "trocar"
+    // quando a sugestão automática apontou a pessoa errada
+    const abertasOpts = analise ? (() => {
+      const l = [{ v: "", label: "trocar para…" }];
+      CRM.getCobranca().forEach(c => {
+        if (c.moeda !== this.state.moedaExtrato) return;
+        (c.meses || []).forEach(m => {
+          if (!m.pago) l.push({ v: c.id + "|" + m.key,
+            label: c.nome + " · " + m.label + " · " + (m.valor || c.parcelaValor || "") });
+        });
+      });
+      return l;
+    })() : [];
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
-      const feita = !!this.state.conciliadas[i];
+      const feita = this.state.conciliadas[i];
       const cert = certeira(s);
+      const troca = this.state.trocas["s" + i];
       return {
         transDesc: s.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor),
         nome: s.nome, mesLabel: s.mesLabel,
@@ -662,10 +718,24 @@ class Component extends DCLogic {
               : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
           : (cert ? "Nome e valor conferem" : "Requer verificação"),
         confCor: s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a"),
-        pendente: !feita, feita: feita,
+        pendente: !feita, feita: !!feita,
+        feitaLabel: feita === "ign" ? "Ignorada" : "Conciliada",
+        trocaOpts: abertasOpts,
+        onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["s" + i]: e.target.value }) })),
         onConciliar: () => {
-          CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans);
+          // se a pessoa escolheu outra parcela no "trocar", vale a escolha
+          // dela, não a sugestão
+          if (troca) {
+            const [pid, mk] = troca.split("|");
+            CRM.conciliar(pid, mk, s.trans.descricao, s.trans);
+          } else {
+            CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans);
+          }
           this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: true }) }));
+        },
+        onIgnorar: () => {
+          CRM.registrarTransacao(s.trans, "ignorada");
+          this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: "ign" }) }));
         }
       };
     }) : [];
@@ -674,7 +744,7 @@ class Component extends DCLogic {
       : [];
     const semMatch = analise ? analise.semMatch.map((x, i) => {
       const saida = x.tipo === "saida";
-      const lancada = !!this.state.lancadas[i];
+      const lancada = this.state.lancadas[i];
       // Pix para gente da equipe NÃO vira despesa nova: a folha dela já
       // entra no Caixa calculada, e lançar de novo contaria duas vezes.
       // Esse débito quita a folha do mês — é isso que o botão faz.
@@ -684,6 +754,14 @@ class Component extends DCLogic {
         return d.length === 3 ? (d[2] + "-" + d[1]) : CRM.mesAtualKey();
       })();
       const folhaJaPaga = ehFolha && !!CRM.pagamentoFeito(x.pessoaEquipe, mesTrans);
+      // "Sent money to 53.132.120 GABRIELA…" → o nome de quem recebeu, para
+      // guardar como conta própria
+      const contraparte = (x.trans.descricao || "")
+        .replace(/^sent money to |^received money from |^pix (para|de) /i, "")
+        .replace(/ with reference.*$/i, "")
+        .replace(/^[\d.\/-]+\s+/, "").trim().slice(0, 50);
+      const marcar = (rotulo) =>
+        this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, { [i]: rotulo }) }));
       return {
         transDesc: x.trans.descricao.slice(0, 70), transValor: CRM.fmtMoney(this.state.moedaExtrato, x.trans.valor),
         icon: saida ? (ehFolha ? "#8a7465" : "#cf6b5c") : "#d4a574",
@@ -694,8 +772,33 @@ class Component extends DCLogic {
                   : "Pagamento para " + x.pessoaEquipe + " · a folha dela já é despesa calculada. Este débito quita a folha do mês, não vira despesa nova.")
               : "Débito bancário · lançar como despesa do mês")
           : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição",
-        lancavel: saida && !lancada && !folhaJaPaga, lancada: lancada || folhaJaPaga,
+        lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
+        feitoLabel: lancada === "int" ? "Entre suas contas"
+          : (lancada === "ign" ? "Ignorada"
+          : (lancada === "conc" ? "Conciliada" : "Lançada")),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
+        // dinheiro indo para a própria empresa (GF Education) ou para a
+        // própria pessoa não é despesa — e marcado uma vez, o extrato
+        // reconhece sozinho nas próximas importações
+        temMinhaConta: saida && !ehFolha && !lancada && !!contraparte,
+        onMinhaConta: () => {
+          CRM.addContaPropria(contraparte);
+          CRM.registrarTransacao(x.trans, "conta própria");
+          marcar("int");
+        },
+        // crédito que a análise não achou: a pessoa escolhe a parcela
+        conciliavel: !saida && !lancada,
+        trocaOpts: abertasOpts,
+        onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["x" + i]: e.target.value }) })),
+        onConciliarManual: () => {
+          const t = this.state.trocas["x" + i];
+          if (!t) return;
+          const [pid, mk] = t.split("|");
+          CRM.conciliar(pid, mk, x.trans.descricao, x.trans);
+          marcar("conc");
+        },
+        ignoravel: !lancada && !folhaJaPaga,
+        onIgnorar: () => { CRM.registrarTransacao(x.trans, "ignorada"); marcar("ign"); },
         onLancar: () => {
           if (ehFolha) {
             CRM.marcarPagamentoFeito(x.pessoaEquipe, mesTrans,
@@ -709,7 +812,7 @@ class Component extends DCLogic {
               data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
             CRM.registrarTransacao(x.trans, "despesa");
           }
-          this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, { [i]: true }) }));
+          marcar(true);
         }
       };
     }) : [];
@@ -939,8 +1042,9 @@ class Component extends DCLogic {
                : "")
            + ((analise.internas || []).length
                ? " " + analise.internas.length
-                 + (analise.internas.length === 1 ? " linha é troca de moeda" : " linhas são trocas de moeda")
-                 + " dentro da sua própria conta (ex.: real → euro) e não " + (analise.internas.length === 1 ? "vira" : "viram") + " receita nem despesa."
+                 + (analise.internas.length === 1 ? " linha é movimentação" : " linhas são movimentação")
+                 + " entre as suas próprias contas (troca de moeda, transferência para a sua empresa) e não "
+                 + (analise.internas.length === 1 ? "vira" : "viram") + " receita nem despesa."
                : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),
@@ -981,23 +1085,19 @@ class Component extends DCLogic {
         });
         this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, feitas) }));
       },
-      onAnalisar: () => {
-        const txt = (this.extratoRef.current && this.extratoRef.current.value) || "";
-        const trans = CRM.parseExtrato(txt);
-        // extrato que declara a própria moeda (Wise tem coluna Currency)
-        // manda mais que o seletor da tela — senão um arquivo em real é
-        // lido como euro só porque o seletor estava em euro
-        const moedas = [...new Set(trans.map(x => x.moeda).filter(Boolean))];
-        let moeda = this.state.moedaExtrato, doArquivo = "";
-        if (moedas.length === 1 && (moedas[0] === "R$" || moedas[0] === "€")) {
-          moeda = moedas[0]; doArquivo = moedas[0];
-        }
-        const a = CRM.sugerirConciliacao(trans, moeda);
-        a.colunaSaldo = trans.some(x => x.colunaSaldo);
-        a.ambiguas = trans.filter(x => x.ambiguo).length;
-        a.deTabela = trans.length > 0 && trans.every(x => x.deTabela);
-        a.moedaDoArquivo = doArquivo;
-        this.setState({ analise: a, conciliadas: {}, lancadas: {}, moedaExtrato: moeda });
+      onAnalisar: () => this.analisar(),
+      onEscolherArquivo: () => { if (this.arquivoRef.current) this.arquivoRef.current.click(); },
+      arquivoRef: this.arquivoRef,
+      onArquivo: (e) => {
+        const f = e.target && e.target.files && e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          if (this.extratoRef.current) this.extratoRef.current.value = String(r.result || "");
+          this.analisar();
+        };
+        r.readAsText(f);
+        e.target.value = "";
       }
     };
   }

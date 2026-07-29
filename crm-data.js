@@ -2876,20 +2876,40 @@
     return neg ? -Math.abs(v) : v;
   }
 
+  // Divide uma linha de arquivo exportado respeitando aspas: no CSV do
+  // Wise, "Sent money to X, Y" é UMA célula, não duas.
+  function separarExtratoLinha(l, delim) {
+    if (delim === "\t") return l.split("\t");
+    var out = [], cur = "", dentro = false;
+    for (var i = 0; i < l.length; i++) {
+      var ch = l[i];
+      if (ch === '"') {
+        if (dentro && l[i + 1] === '"') { cur += '"'; i++; }
+        else dentro = !dentro;
+      } else if (ch === delim && !dentro) { out.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
   function parseExtrato(texto) {
     var cru = String(texto || "").split("\n");
 
     // ── caminho 1: tabela com linha de títulos ────────────────
     // O Asaas fala português (Data/Valor); o Wise fala inglês
-    // (Date/Amount/Currency). Os dois são a mesma coisa: colunas com
-    // título. O que muda é o dicionário.
-    var iCab = -1, cab = null;
-    for (var i = 0; i < Math.min(cru.length, 15); i++) {
-      var cels = cru[i].split("\t");
-      if (cels.length < 3) continue;
+    // (Date/Amount/Currency). Colado é tab; arquivo .csv é vírgula ou
+    // ponto e vírgula. Tudo é a mesma coisa: colunas com título.
+    var iCab = -1, cab = null, delim = "\t";
+    var DELIMS = ["\t", ";", ","];
+    for (var i = 0; i < Math.min(cru.length, 15) && iCab < 0; i++) {
       var s = semAcento(cru[i]);
-      if ((s.indexOf("data") >= 0 && s.indexOf("valor") >= 0)
-        || (s.indexOf("date") >= 0 && s.indexOf("amount") >= 0)) { iCab = i; cab = cels; break; }
+      if (!((s.indexOf("data") >= 0 && s.indexOf("valor") >= 0)
+        || (s.indexOf("date") >= 0 && s.indexOf("amount") >= 0))) continue;
+      for (var di = 0; di < DELIMS.length; di++) {
+        var cels = separarExtratoLinha(cru[i], DELIMS[di]);
+        if (cels.length >= 3) { iCab = i; cab = cels; delim = DELIMS[di]; break; }
+      }
     }
 
     if (iCab >= 0) {
@@ -2907,7 +2927,7 @@
         var MOEDA_COD = { brl: "R$", eur: "€", "r$": "R$", "€": "€" };
         var linhas = [];
         cru.slice(iCab + 1).forEach(function (ln) {
-          var c = ln.split("\t");
+          var c = separarExtratoLinha(ln, delim);
           var bruto = (c[col.valor] || "").trim();
           var dt = (c[col.data] || "").trim();
           // "Saldo Inicial" e "Saldo Final" não são transações
@@ -3007,6 +3027,38 @@
   // Sem isto, colar o mesmo extrato de novo sugeria conciliar tudo de novo
   // e deixava lançar a mesma despesa duas vezes — o jeito mais fácil de
   // perder a confiança nos números.
+  // ── CONTAS PRÓPRIAS ───────────────────────────────────────────
+  //
+  // "GF Education" é a empresa dela na Holanda; mandar dinheiro para lá
+  // não é despesa — é o mesmo dinheiro trocando de bolso. A escola marca
+  // uma vez quem é "conta própria" e o extrato passa a reconhecer sozinho.
+  var CONTAS_PROPRIAS_KEY = "isr_contas_proprias_v1";
+  function contasProprias() {
+    try { return JSON.parse(localStorage.getItem(CONTAS_PROPRIAS_KEY)) || []; } catch (e) { return []; }
+  }
+  function addContaPropria(nome) {
+    var s = semAcento(nome || "").trim();
+    if (!s || s.length < 3) return contasProprias();
+    var l = contasProprias();
+    if (l.indexOf(s) < 0) {
+      l.push(s);
+      try { localStorage.setItem(CONTAS_PROPRIAS_KEY, JSON.stringify(l)); } catch (e) {}
+      agendarSync();
+    }
+    return l;
+  }
+  function removerContaPropria(nome) {
+    var s = semAcento(nome || "").trim();
+    var l = contasProprias().filter(function (n) { return n !== s; });
+    try { localStorage.setItem(CONTAS_PROPRIAS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return l;
+  }
+  function ehContaPropria(descricao) {
+    var d = semAcento(descricao || "");
+    return contasProprias().some(function (n) { return n.length >= 3 && d.indexOf(n) >= 0; });
+  }
+
   var EXTRATO_REG_KEY = "isr_extrato_reg_v1";
   function extratoRegAll() {
     try { return JSON.parse(localStorage.getItem(EXTRATO_REG_KEY)) || {}; } catch (e) { return {}; }
@@ -3035,11 +3087,12 @@
       if (reg) { jaRegistradas.push({ trans: t, uso: reg.uso, em: reg.em }); return false; }
       return true;
     });
-    // troca de moeda dentro da própria conta não é receita nem despesa —
-    // sai da fila antes de qualquer sugestão
+    // troca de moeda e transferência para conta própria (a empresa dela,
+    // ela mesma) não são receita nem despesa — saem da fila antes de
+    // qualquer sugestão
     var internas = [];
     transacoes = transacoes.filter(function (t) {
-      if (t.interna) { internas.push(t); return false; }
+      if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
       return true;
     });
     var abertas = [];
@@ -3347,7 +3400,8 @@
     "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
     "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
-    "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1"];
+    "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
+    "isr_contas_proprias_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6155,7 +6209,7 @@
     "isr_cambio_v1", "isr_precos_v1", "isr_ticket_alvo_v1", "isr_cadencia_v1",
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
-    "isr_capacidade_v1", "isr_flin_url_v1"
+    "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7678,6 +7732,8 @@
     linkPagamentoPadrao: linkPagamentoPadrao, setLinkPagamentoPadrao: setLinkPagamentoPadrao,
     alunasSemLinkDePagamento: alunasSemLinkDePagamento,
     registrarTransacao: registrarTransacao, transacaoRegistrada: transacaoRegistrada,
+    contasProprias: contasProprias, addContaPropria: addContaPropria,
+    removerContaPropria: removerContaPropria, ehContaPropria: ehContaPropria,
     orcamentoDoMes: orcamentoDoMes, setOrcamento: setOrcamento,
     lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
     renomearNaEquipe: renomearNaEquipe,
