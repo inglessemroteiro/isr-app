@@ -1932,7 +1932,7 @@
       moeda: p.programa.moeda, valor: p.programa.valor });
   }
 
-  function setProgramaPago(pessoaId, pago) {
+  function setProgramaPago(pessoaId, pago, dataIso) {
     var antes = getPessoa(pessoaId);
     var jaEra = !!(antes && antes.programa && antes.programa.pago);
     mutate(pessoaId, function (p) {
@@ -1941,8 +1941,23 @@
       pushHist(p, "pagamento", "Acompanhamento " + p.programa.valor
         + (pago ? " recebido" : " marcado como pendente"));
     });
-    if (pago && !jaEra) registrarPagamentoPrograma(pessoaId);
+    // dataIso: quando o pagamento veio do extrato, a receita entra no mês
+    // em que o dinheiro de fato caiu
+    if (pago && !jaEra) registrarPagamentoPrograma(pessoaId, dataIso);
     return getPessoa(pessoaId);
+  }
+
+  // Quem está no acompanhamento (o programa no WhatsApp) com pagamento
+  // pendente — para o extrato oferecer como destino da conciliação.
+  function pagamentosPendentesPrograma(moeda) {
+    return loadPessoas().filter(function (p) {
+      return p.programa && !p.programa.pago && !p.programa.encerrado
+        && (p.programa.moeda || "R$") === moeda;
+    }).map(function (p) {
+      return { pessoaId: p.id, nome: p.nome,
+        programaNome: p.programa.nome || "Acompanhamento",
+        valor: parseMoney(p.programa.valor), moeda: p.programa.moeda || "R$" };
+    });
   }
 
   function sairDoPrograma(pessoaId, motivo) {
@@ -7845,6 +7860,7 @@
     PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
     setProgramaPago: setProgramaPago, participantesPrograma: participantesPrograma,
+    pagamentosPendentesPrograma: pagamentosPendentesPrograma,
     receitaPrograma: receitaPrograma,
     MOEDAS_NOME: MOEDAS_NOME, MOEDAS_CATS: MOEDAS_CATS,
     parcelasAbertas: parcelasAbertas, pendenciaAnterior: pendenciaAnterior,

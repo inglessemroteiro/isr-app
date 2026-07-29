@@ -701,19 +701,34 @@ class Component extends DCLogic {
           label: a.nome + " · " + a.mesLabel + " · " + CRM.fmtMoney(this.state.moedaExtrato, a.valor)
             + (a.encerrada ? " · encerrada" : "") });
       });
+      // pagamento do acompanhamento (o programa no WhatsApp) pendente
+      (CRM.pagamentosPendentesPrograma ? CRM.pagamentosPendentesPrograma(this.state.moedaExtrato) : [])
+        .forEach(pr => {
+          l.push({ v: "__prog|" + pr.pessoaId,
+            label: pr.nome + " · " + pr.programaNome + " · "
+              + CRM.fmtMoney(this.state.moedaExtrato, pr.valor) + " · acompanhamento" });
+        });
       l.push({ v: "__avulso", label: "outro — lançar como recebimento avulso" });
       return l;
     })() : [];
     // conciliação escolhida no "trocar": parcela (pid|mês|contrato) ou avulso
     const aplicarTroca = (troca, trans) => {
-      if (troca === "__avulso") {
+      const dataIso = (() => {
         const d = (trans.data || "").split("/");
+        return d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined;
+      })();
+      if (troca === "__avulso") {
         CRM.addLancamento({ tipo: "entrada", categoria: "outros",
           descricao: trans.descricao.slice(0, 60),
           moeda: this.state.moedaExtrato, valor: Math.abs(trans.valor),
-          data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          data: dataIso });
         CRM.registrarTransacao(trans, "recebimento avulso");
         return "avu";
+      }
+      if (troca.indexOf("__prog|") === 0) {
+        CRM.setProgramaPago(troca.slice(7), true, dataIso);
+        CRM.registrarTransacao(trans, "acompanhamento");
+        return "prog";
       }
       const [pid, mk, cidx] = troca.split("|");
       CRM.conciliar(pid, mk, trans.descricao, trans, cidx === undefined ? undefined : parseInt(cidx, 10));
@@ -738,7 +753,8 @@ class Component extends DCLogic {
         confCor: s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a"),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
-          : (feita === "avu" ? "Recebimento avulso" : "Conciliada"),
+          : (feita === "avu" ? "Recebimento avulso"
+          : (feita === "prog" ? "Acompanhamento pago" : "Conciliada")),
         trocaOpts: abertasOpts,
         onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["s" + i]: e.target.value }) })),
         onConciliar: () => {
@@ -792,7 +808,8 @@ class Component extends DCLogic {
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
-          : (lancada === "avu" ? "Recebimento avulso" : "Lançada"))),
+          : (lancada === "avu" ? "Recebimento avulso"
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // dinheiro indo para a própria empresa (GF Education) ou para a
         // própria pessoa não é despesa — e marcado uma vez, o extrato
@@ -811,7 +828,7 @@ class Component extends DCLogic {
           const t = this.state.trocas["x" + i];
           if (!t) return;
           const feito = aplicarTroca(t, x.trans);
-          marcar(feito === "avu" ? "avu" : "conc");
+          marcar(feito === true ? "conc" : feito);
         },
         ignoravel: !lancada && !folhaJaPaga,
         onIgnorar: () => { CRM.registrarTransacao(x.trans, "ignorada"); marcar("ign"); },
