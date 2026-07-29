@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-e",
+  numero: "2026.07.29-f",
   data: "29/07/2026",
-  nota: "Extrato: envio do arquivo .csv, trocar a parcela quando a sugestão errar, ignorar linha, e transferência para a própria empresa marcada uma vez e reconhecida sempre"
+  nota: "Conciliação enxerga contratos encerrados (pagamento retroativo do Asaas) e o trocar ganhou a opção outro — recebimento avulso"
 };

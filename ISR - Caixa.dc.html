@@ -689,19 +689,36 @@ class Component extends DCLogic {
     // da pessoa errada como paga é um estrago difícil de achar depois.
     const certeira = s => !s.porNome && Math.abs(s.valor - s.trans.valor) < 0.01 &&
       (s.trans.descricao || "").toLowerCase().indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0;
-    // toda parcela em aberto na moeda do extrato: é o cardápio do "trocar"
-    // quando a sugestão automática apontou a pessoa errada
+    // toda parcela em aberto na moeda do extrato — inclusive de contrato
+    // encerrado, porque o Asaas paga retroativo — mais a saída "outro",
+    // para dinheiro que não é parcela de ninguém
     const abertasOpts = analise ? (() => {
       const l = [{ v: "", label: "trocar para…" }];
-      CRM.getCobranca().forEach(c => {
-        if (c.moeda !== this.state.moedaExtrato) return;
-        (c.meses || []).forEach(m => {
-          if (!m.pago) l.push({ v: c.id + "|" + m.key,
-            label: c.nome + " · " + m.label + " · " + (m.valor || c.parcelaValor || "") });
-        });
+      const todas = CRM.parcelasAbertasTodas(this.state.moedaExtrato)
+        .sort((a, b) => (a.encerrada === b.encerrada ? (a.nome < b.nome ? -1 : 1) : (a.encerrada ? 1 : -1)));
+      todas.forEach(a => {
+        l.push({ v: a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx,
+          label: a.nome + " · " + a.mesLabel + " · " + CRM.fmtMoney(this.state.moedaExtrato, a.valor)
+            + (a.encerrada ? " · encerrada" : "") });
       });
+      l.push({ v: "__avulso", label: "outro — lançar como recebimento avulso" });
       return l;
     })() : [];
+    // conciliação escolhida no "trocar": parcela (pid|mês|contrato) ou avulso
+    const aplicarTroca = (troca, trans) => {
+      if (troca === "__avulso") {
+        const d = (trans.data || "").split("/");
+        CRM.addLancamento({ tipo: "entrada", categoria: "outros",
+          descricao: trans.descricao.slice(0, 60),
+          moeda: this.state.moedaExtrato, valor: Math.abs(trans.valor),
+          data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+        CRM.registrarTransacao(trans, "recebimento avulso");
+        return "avu";
+      }
+      const [pid, mk, cidx] = troca.split("|");
+      CRM.conciliar(pid, mk, trans.descricao, trans, cidx === undefined ? undefined : parseInt(cidx, 10));
+      return true;
+    };
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
       const feita = this.state.conciliadas[i];
       const cert = certeira(s);
@@ -712,26 +729,25 @@ class Component extends DCLogic {
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + s.pessoaId,
         // Gateway desconta taxa: achar pelo nome e mostrar a diferença é
         // melhor do que dizer "sem correspondência".
-        confLabel: s.porNome
+        confLabel: (s.porNome
           ? (s.diferenca < 0
               ? "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
               : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
-          : (cert ? "Nome e valor conferem" : "Requer verificação"),
+          : (cert ? "Nome e valor conferem" : "Requer verificação"))
+          + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : ""),
         confCor: s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a"),
         pendente: !feita, feita: !!feita,
-        feitaLabel: feita === "ign" ? "Ignorada" : "Conciliada",
+        feitaLabel: feita === "ign" ? "Ignorada"
+          : (feita === "avu" ? "Recebimento avulso" : "Conciliada"),
         trocaOpts: abertasOpts,
         onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["s" + i]: e.target.value }) })),
         onConciliar: () => {
           // se a pessoa escolheu outra parcela no "trocar", vale a escolha
           // dela, não a sugestão
-          if (troca) {
-            const [pid, mk] = troca.split("|");
-            CRM.conciliar(pid, mk, s.trans.descricao, s.trans);
-          } else {
-            CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans);
-          }
-          this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: true }) }));
+          const feito = troca
+            ? aplicarTroca(troca, s.trans)
+            : (CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans, s.contratoIdx), true);
+          this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: feito }) }));
         },
         onIgnorar: () => {
           CRM.registrarTransacao(s.trans, "ignorada");
@@ -775,7 +791,8 @@ class Component extends DCLogic {
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "ign" ? "Ignorada"
-          : (lancada === "conc" ? "Conciliada" : "Lançada")),
+          : (lancada === "conc" ? "Conciliada"
+          : (lancada === "avu" ? "Recebimento avulso" : "Lançada"))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // dinheiro indo para a própria empresa (GF Education) ou para a
         // própria pessoa não é despesa — e marcado uma vez, o extrato
@@ -793,9 +810,8 @@ class Component extends DCLogic {
         onConciliarManual: () => {
           const t = this.state.trocas["x" + i];
           if (!t) return;
-          const [pid, mk] = t.split("|");
-          CRM.conciliar(pid, mk, x.trans.descricao, x.trans);
-          marcar("conc");
+          const feito = aplicarTroca(t, x.trans);
+          marcar(feito === "avu" ? "avu" : "conc");
         },
         ignoravel: !lancada && !folhaJaPaga,
         onIgnorar: () => { CRM.registrarTransacao(x.trans, "ignorada"); marcar("ign"); },
