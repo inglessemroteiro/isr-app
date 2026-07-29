@@ -118,6 +118,10 @@
           <sc-if value="{{ temAlFeito }}">
             <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ alFeito }}</p>
           </sc-if>
+          <sc-if value="{{ temTurmasVazias }}">
+            <p style="margin: 10px 0 8px; font-size: 12px; color: #6b6155; line-height: 1.6;">{{ vaziasFrase }}</p>
+            <button onclick="{{ onApagarVazias }}" style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ vaziasBotao }}</button>
+          </sc-if>
         </div>
       </div>
     </sc-if>
@@ -223,7 +227,7 @@
 class Component extends DCLogic {
   state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
             zerarAberto: false, zerado: "", aba: "pagamentos",
-            leituraAlunas: null, alFeito: "" };
+            leituraAlunas: null, alFeito: "", turmasVazias: [] };
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -239,6 +243,7 @@ class Component extends DCLogic {
       temLeituraAlunas: false, alResumo: [], alLinhas: [], turmasNovas: [],
       temTurmasNovas: false, alAplicarNota: "", alAplicarLabel: "",
       onAplicarAlunas: () => {}, temAlFeito: false, alFeito: "", comoCopiar: "",
+      temTurmasVazias: false, vaziasFrase: "", vaziasBotao: "", onApagarVazias: () => {},
       abaPagBg: "#164951", abaPagFg: "#fff", abaPagBorda: "#164951",
       abaAluBg: "#fff", abaAluFg: "#8a7c6b", abaAluBorda: "#e5dccf",
       onAbaPagamentos: () => {}, onAbaAlunas: () => {} };
@@ -346,11 +351,13 @@ class Component extends DCLogic {
           seloLabel: l.avisos.length ? "conferir" : (l.existe ? "atualiza" : "nova"),
           selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),
           seloBg: l.avisos.length ? "#fdf1ec" : (l.existe ? "#f2ece3" : "#eef5ec"),
-          detalhe: [l.turma || "sem turma", l.professora, l.whatsapp, l.email]
+          detalhe: [
+            l.particular ? "particular" + (l.horario ? " · " + l.horario : "") : (l.turma || "sem turma"),
+            l.codigo, l.professora, l.whatsapp, l.email]
             .filter(Boolean).join(" · "),
           temAviso: l.avisos.length > 0, avisos: l.avisos.join(" · ")
         })),
-        alAplicarNota: "Quem já existe é atualizada (turma, nível e contatos); quem não existe é criada como aluna matriculada. Turma que não existe é criada com a professora indicada.",
+        alAplicarNota: "Quem já existe é atualizada (turma, nível e contatos); quem não existe é criada como aluna matriculada. Turma que não existe é criada com a professora indicada. Linha de particular vira aluna particular, sem turma de grupo.",
         alAplicarLabel: "Aplicar as " + AL.linhas.length + " alunas",
         onAplicarAlunas: () => {
           if (!window.confirm("Aplicar " + AL.linhas.length + " alunas"
@@ -358,10 +365,24 @@ class Component extends DCLogic {
           const r = CRM.aplicarAlunasTurmas(AL);
           this.setState({ alFeito: r.criadas + " criadas · " + r.atualizadas + " atualizadas"
             + (r.turmasCriadas ? " · " + r.turmasCriadas + " turmas novas" : "")
-            + ". Confira em Alunas e em Turmas." });
+            + (r.particulares ? " · " + r.particulares + " particulares" : "")
+            + ". Confira em Alunas e em Turmas.",
+            turmasVazias: r.turmasVazias || [] });
           this.bump();
         },
-        temAlFeito: !!this.state.alFeito, alFeito: this.state.alFeito
+        temAlFeito: !!this.state.alFeito, alFeito: this.state.alFeito,
+        temTurmasVazias: (this.state.turmasVazias || []).length > 0,
+        vaziasFrase: (this.state.turmasVazias || []).length
+          + ((this.state.turmasVazias || []).length === 1
+            ? " turma ficou sem nenhuma aluna: " : " turmas ficaram sem nenhuma aluna: ")
+          + (this.state.turmasVazias || []).map(t => t.label).join(" · "),
+        vaziasBotao: "Apagar " + ((this.state.turmasVazias || []).length === 1
+          ? "essa turma vazia" : "essas " + (this.state.turmasVazias || []).length + " turmas vazias"),
+        onApagarVazias: () => {
+          (this.state.turmasVazias || []).forEach(t => CRM.removeTurma(t.id));
+          this.setState({ turmasVazias: [] });
+          this.bump();
+        }
       } : {})
     });
 

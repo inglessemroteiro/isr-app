@@ -62,6 +62,10 @@
               <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">{{ cd.label }}</div>
                 <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
             </sc-for>
+            <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Turma</div>
+              <select ref="{{ cadTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ cadTurmaOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.id }}">{{ to.label }}</option></sc-for>
+              </select></div>
             <div style="display: flex; align-items: flex-end;">
               <button onclick="{{ onSalvarCadastro }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
             </div>
@@ -520,6 +524,7 @@ class Component extends DCLogic {
   partAulasRef = React.createRef(); partValorRef = React.createRef();
   partPagoRef = React.createRef(); progPagoRef = React.createRef();
   cadNomeRef = React.createRef(); cadZapRef = React.createRef(); cadEmailRef = React.createRef();
+  cadTurmaRef = React.createRef();
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
   ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
   turSelRef = React.createRef(); turNivelRef = React.createRef();
@@ -668,6 +673,14 @@ class Component extends DCLogic {
       edCadFg: this.state.editandoCadastro ? "#9c6f56" : "#164951",
       onEditarCadastro: () => this.setState(s => ({ editandoCadastro: !s.editandoCadastro })),
       cadNomeRef: this.cadNomeRef, cadZapRef: this.cadZapRef, cadEmailRef: this.cadEmailRef,
+      cadTurmaRef: this.cadTurmaRef,
+      // a primeira opção descreve o estado atual e não muda nada — assim o
+      // select não precisa de pré-seleção, que o React ignora em <option>
+      cadTurmaOpts: [{ id: "", label: "Turma: " + (p.turma || "sem turma") + " (manter)" }]
+        .concat(CRM.turmasLista().map(u => ({
+          id: u.id, label: u.nivel + " · " + u.turma + " · " + (u.teacher || "sem professora") })))
+        .concat([{ id: "particular", label: "Particular" },
+                 { id: "__sem", label: "Tirar da turma" }]),
       camposDoc: CAMPOS_EXTRA.map(cx => ({
         label: cx.label, ref: this.docRefs[cx.id],
         atual: p[cx.id] || cx.exemplo
@@ -681,6 +694,9 @@ class Component extends DCLogic {
         const patch = { nome: v(this.cadNomeRef), whatsapp: v(this.cadZapRef), email: v(this.cadEmailRef) };
         CAMPOS_EXTRA.forEach(cx => { patch[cx.id] = v(this.docRefs[cx.id]); });
         CRM.atualizarCadastro(p.id, patch);
+        const tid = this.cadTurmaRef.current && this.cadTurmaRef.current.value;
+        if (tid === "__sem") CRM.setTurmaDaPessoa(p.id, "", "");
+        else if (tid) CRM.mudarTurma(p.id, tid);
         this.setState({ editandoCadastro: false });
       },
       moeda: p.moeda || "R$", contexto: partes.join("  ·  ") || "—",
