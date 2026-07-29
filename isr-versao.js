@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-a",
+  numero: "2026.07.29-b",
   data: "29/07/2026",
-  nota: "Previsto × Realizado no Caixa, importação de alunas e turmas, e correções de folha"
+  nota: "A importação lê as anotações da planilha (particular e nível), e a aba de alunas reconhece o Controle de Pagamento"
 };

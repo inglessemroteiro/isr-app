@@ -6671,21 +6671,30 @@
           + (quitouEm >= 0 ? ", com quitação antes do fim" : ""));
       }
 
-      // A planilha não diz se é turma ou particular. O sistema chuta pelo
-      // que dá para ver e a pessoa corrige na tela — chutar em silêncio é
-      // pior do que perguntar.
+      // A planilha da Gabi tem uma coluna sem título depois do nome, com
+      // anotações soltas: "particular" e o nível ("a2"). Célula com
+      // exatamente isso é informação, não ruído — e vale mais que chute.
+      var formatoExplicito = false, nivelAnotado = "";
+      c.forEach(function (cel) {
+        var s = semAcento(cel);
+        if (s === "particular") formatoExplicito = true;
+        else if (/^(a[0-2]|b[12]|c[12])$/.test(s)) nivelAnotado = cel.trim().toUpperCase();
+        else if (/^(first steps|basics|essentials|speaking|advanced)/.test(s)) nivelAnotado = cel.trim();
+      });
+
       var jaExiste = pessoaPorNome(nome);
       var formato = "grupo";
-      if (jaExiste) {
+      if (formatoExplicito) {
+        formato = "particular";
+      } else if (jaExiste) {
         formato = (jaExiste.particular || /particular/i.test(jaExiste.turma || ""))
           ? "particular" : "grupo";
-      } else if (/particular/i.test(linha)) {
-        formato = "particular";
       }
 
       out.push({
         nome: nome, tipo: tipo || "Matrícula",
-        formato: formato, formatoChutado: !jaExiste,
+        formato: formato, formatoChutado: !jaExiste && !formatoExplicito,
+        nivel: nivelAnotado,
         turma: jaExiste ? (jaExiste.turma || "") : "",
         ciclos: col.ciclos >= 0 ? (c[col.ciclos] || "").trim() : "",
         moeda: moeda,
@@ -6764,6 +6773,7 @@
         x.status = "aluna";
         x.estagio = "matriculado";
         x.moeda = l.moeda;
+        if (l.nivel) x.nivel = l.nivel;
         // Turma ou particular muda quem acompanha, como a professora é paga
         // e onde a aluna aparece. Não é detalhe de cadastro.
         x.formatos = [particular ? "particular" : "grupo"];
@@ -6811,6 +6821,15 @@
     }
     if (iCab < 0) return { ok: false, linhas: [],
       erro: "Não encontrei a linha de títulos. Ela precisa ter pelo menos a coluna Nome." };
+
+    // colar o Controle de Pagamento aqui não é erro da pessoa — é o mesmo
+    // arquivo. A resposta certa é apontar a aba, não reclamar de coluna.
+    var sCab = semAcento(cab.join(" "));
+    if (sCab.indexOf("valor da parcela") >= 0 || sCab.indexOf("quantos ciclos") >= 0
+        || sCab.indexOf("data de vencimento") >= 0) {
+      return { ok: false, linhas: [], controleDePagamento: true,
+        erro: "Essa é a planilha do Controle de Pagamento — importe pela aba ao lado. Ela já cria as alunas, e as anotações de \u201cparticular\u201d e de nível entram junto." };
+    }
 
     var col = {
       nome: acharColuna(cab, ["nome"]),
