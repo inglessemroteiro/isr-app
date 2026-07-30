@@ -134,6 +134,9 @@
 
   function render() {
     if (document.getElementById("isr-nav")) return;
+    // Dentro de um iframe (a página embutida no portal da aluna), o menu
+    // da gestão não faz sentido e briga com o menu do portal: some.
+    try { if (window.self !== window.top) return; } catch (e) { return; }
 
     var bar = document.createElement("nav");
     bar.id = "isr-nav";
