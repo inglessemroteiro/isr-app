@@ -3441,7 +3441,7 @@
     "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
-    "isr_contas_proprias_v1"];
+    "isr_contas_proprias_v1", "isr_jotform_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6249,7 +6249,8 @@
     "isr_cambio_v1", "isr_precos_v1", "isr_ticket_alvo_v1", "isr_cadencia_v1",
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
-    "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1"
+    "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
+    "isr_jotform_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7263,6 +7264,66 @@
       comAviso: out.filter(function (l) { return l.avisos.length; }).length };
   }
 
+  // ── JOTFORM ───────────────────────────────────────────────────
+  //
+  // Os funis de inscrição moram no Jotform. Com a chave de API da escola,
+  // o app busca as inscrições direto — sem exportar, sem colar. A resposta
+  // do Jotform vira as mesmas linhas do importador de leads: mesmo preview,
+  // mesmas regras, mesma proteção de quem já é aluna.
+  var JOTFORM_KEY = "isr_jotform_v1";
+  function jotformKey() {
+    try { return localStorage.getItem(JOTFORM_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setJotformKey(k) {
+    try { localStorage.setItem(JOTFORM_KEY, (k || "").trim()); } catch (e) {}
+    agendarSync();
+    return jotformKey();
+  }
+
+  // Recebe o array `content` de /form/{id}/submissions e devolve a mesma
+  // leitura do lerLeads — montando as linhas e reaproveitando toda a
+  // inteligência de lá (estágio, telefone × e-mail, quem já é aluna).
+  function lerLeadsDoJotform(submissions, canalOuTitulo) {
+    var linhas = ["Nome\tWhatsApp\tE-mail\tCanal\tEstágio\tNível\tObservação\tData"];
+    (submissions || []).forEach(function (s) {
+      var nome = "", email = "", fone = "", nivel = "", nota = [];
+      var ans = s.answers || {};
+      Object.keys(ans).forEach(function (k) {
+        var a = ans[k] || {};
+        var rotulo = semAcento(a.text || a.name || "");
+        var v = a.answer;
+        if (v === undefined || v === null || v === "") return;
+        // nome completo e telefone chegam como objeto {first,last}/{area,phone}
+        if (typeof v === "object") {
+          v = Object.keys(v).map(function (x) { return v[x]; })
+            .filter(function (x) { return x && typeof x === "string"; }).join(" ");
+        }
+        v = String(v).replace(/[\t\r\n]+/g, " ").trim();
+        if (!v) return;
+        if (a.type === "control_fullname" || (rotulo.indexOf("nome") >= 0 && !nome)) {
+          if (!nome) nome = v;
+        } else if (a.type === "control_email" || rotulo.indexOf("mail") >= 0
+          || (/@/.test(v) && v.indexOf(" ") < 0)) {
+          if (!email) email = v;
+        } else if (a.type === "control_phone" || rotulo.indexOf("telefone") >= 0
+          || rotulo.indexOf("whatsapp") >= 0 || rotulo.indexOf("celular") >= 0) {
+          if (!fone) fone = v;
+        } else if (rotulo.indexOf("nivel") >= 0) {
+          nivel = v;
+        } else if (v.length > 12) {
+          // as respostas longas são a história da pessoa
+          nota.push(v);
+        }
+      });
+      if (!nome) return;
+      linhas.push([nome, fone, email, canalOuTitulo || "Aplicação", "", nivel,
+        nota.join(" · ").slice(0, 400), (s.created_at || "").slice(0, 10)].join("\t"));
+    });
+    if (linhas.length === 1) return { ok: false, linhas: [],
+      erro: "O Jotform respondeu, mas nenhuma inscrição tinha nome. Confira se o formulário certo foi escolhido." };
+    return lerLeads(linhas.join("\n"));
+  }
+
   function aplicarLeads(leitura) {
     if (!leitura || !leitura.ok) return { ok: false };
     var criados = 0, atualizados = 0, pulados = 0;
@@ -7967,6 +8028,8 @@
     orcamentoDoMes: orcamentoDoMes, setOrcamento: setOrcamento,
     lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
     lerLeads: lerLeads, aplicarLeads: aplicarLeads,
+    jotformKey: jotformKey, setJotformKey: setJotformKey,
+    lerLeadsDoJotform: lerLeadsDoJotform,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
