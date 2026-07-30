@@ -56,6 +56,7 @@
             <input ref="{{ edSlidesRef }}" placeholder="Link dos Slides" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             <input ref="{{ edSyllabusRef }}" placeholder="Link do Syllabus" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
             <input ref="{{ edCalRef }}" placeholder="Link do Calendário" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ edGravadasRef }}" placeholder="Link das aulas gravadas da turma" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           </div>
           <button onclick="{{ onSalvarEdicao }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Salvar</button>
         </div>
@@ -193,7 +194,7 @@
 class Component extends DCLogic {
   state = { editando: false, pedidoEnviado: false, tick: 0, busca: "" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
-  edNivelRef = React.createRef(); edHorarioRef = React.createRef();
+  edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
   edCadernoRef = React.createRef(); edSlidesRef = React.createRef(); edSyllabusRef = React.createRef();
   edCalRef = React.createRef(); tcTextoRef = React.createRef();
@@ -257,6 +258,7 @@ class Component extends DCLogic {
       { key: "slides", label: "Slides", cor: "#e07856" },
       { key: "syllabus", label: "Syllabus", cor: "#d4a574" },
       { key: "calendario", label: "Calendário", cor: "#9ec970" },
+      { key: "gravadas", label: "Aulas gravadas da turma", cor: "#c98a3a" },
       { key: "meet", label: "Link da aula (Meet)", cor: "#164951" }
     ];
     const linkDe = k => {
@@ -289,6 +291,7 @@ class Component extends DCLogic {
           .map(m => ({ id: m.nome, label: m.nome, sel: m.nome === u.teacher }))),
       edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
       edTeacherRef: this.edTeacherRef, edCapRef: this.edCapRef,
+      edGravadasRef: this.edGravadasRef,
       nivel: u.nivel, horario: u.turma, capacidade: String(u.capacidade),
 
       buscaRef: this.buscaRef,
@@ -341,6 +344,7 @@ class Component extends DCLogic {
         set(this.edProjetoRef, "projeto"); set(this.edMeetRef, "meet"); set(this.edGuideRef, "guide");
         set(this.edCadernoRef, "notebook"); set(this.edSlidesRef, "slides");
         set(this.edSyllabusRef, "syllabus"); set(this.edCalRef, "calendario");
+        set(this.edGravadasRef, "gravadas");
         // mudar nível ou horário muda o rótulo: as alunas vão junto
         if (patch.nivel || patch.turma) {
           const novoLabel = (patch.nivel || u.nivel) + " · " + (patch.turma || u.turma);

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.30-d",
+  numero: "2026.07.30-e",
   data: "30/07/2026",
-  nota: "Escola → Dados ganhou o botão Copiar código do portal: o embed da área da aluna sai pronto para colar, com a conexão dentro"
+  nota: "A data respeita o relógio da aluna (fim do Próxima aula: Ontem na Holanda), aulas gravadas por turma e gerais no app da aluna, certificados e relatórios no Materiais, e miles sem promessa de comunidade"
 };
