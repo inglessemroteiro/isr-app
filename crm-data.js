@@ -7156,25 +7156,33 @@
       nome: acharColuna(cab, ["nome"]),
       whatsapp: acharColuna(cab, ["whatsapp", "telefone", "celular", "fone"]),
       email: acharColuna(cab, ["email", "e-mail"]),
-      canal: acharColuna(cab, ["canal", "origem", "fonte", "veio"]),
+      // na planilha da escola a coluna de origem se chama Funil
+      canal: acharColuna(cab, ["canal", "origem", "fonte", "veio", "funil"]),
       estagio: acharColuna(cab, ["estagio", "estágio", "etapa", "status", "situacao", "situação"]),
       nivel: acharColuna(cab, ["nivel", "nível"]),
+      objetivo: acharColuna(cab, ["objetivo"]),
+      objecao: acharColuna(cab, ["objecao principal", "objeção principal", "objecao"]),
       nota: acharColuna(cab, ["nota", "observacao", "observação", "obs", "comentario", "comentário"]),
-      desde: acharColuna(cab, ["desde", "data", "quando", "entrou"])
+      desde: acharColuna(cab, ["desde", "data de entrada", "data", "quando", "entrou"])
     };
     if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
 
     var pega = function (c, idx) { return idx >= 0 ? (c[idx] || "").trim() : ""; };
+    // o vocabulário do funil da escola: Acompanhar, Ganho, Contato
+    // Realizado, Call/Reunião Agendada, Em negociação, Lead, Perdido
     var mapEstagio = function (s) {
       s = semAcento(s);
       if (!s) return "";
       if (s.indexOf("incomplet") >= 0) return "incompleta";
-      if (s.indexOf("conversa") >= 0 || s.indexOf("negocia") >= 0) return "em_conversa";
+      if (s.indexOf("negocia") >= 0 || s.indexOf("proposta") >= 0 || s.indexOf("contrato") >= 0) return "contrato";
+      if (s.indexOf("conversa") >= 0 || s.indexOf("acompanhar") >= 0
+        || s.indexOf("contato realizado") >= 0 || s === "contato") return "em_conversa";
       if (s.indexOf("reuniao") >= 0 || s.indexOf("call") >= 0 || s.indexOf("agendad") >= 0) return "reuniao";
-      if (s.indexOf("proposta") >= 0 || s.indexOf("contrato") >= 0) return "contrato";
-      if (s.indexOf("matricul") >= 0 || s.indexOf("fechad") >= 0 || s.indexOf("fechou") >= 0) return "matriculado";
+      if (s.indexOf("matricul") >= 0 || s.indexOf("fechad") >= 0 || s.indexOf("fechou") >= 0
+        || s.indexOf("ganho") >= 0 || s.indexOf("ganha") >= 0) return "matriculado";
       if (s.indexOf("perdid") >= 0 || s.indexOf("desist") >= 0 || s.indexOf("sumiu") >= 0) return "perdido";
-      if (s.indexOf("contatar") >= 0 || s.indexOf("novo") >= 0 || s.indexOf("nova") >= 0) return "a_contatar";
+      if (s.indexOf("contatar") >= 0 || s.indexOf("novo") >= 0 || s.indexOf("nova") >= 0
+        || s === "lead") return "a_contatar";
       return "";
     };
     var canalOficial = function (s) {
@@ -7197,6 +7205,20 @@
       var existe = pessoaPorNome(nome);
       var jaAluna = !!existe && existe.status !== "lead";
       var whatsapp = pega(c, col.whatsapp), email = pega(c, col.email);
+
+      // Na planilha real o telefone às vezes está na coluna do e-mail e
+      // vice-versa. O conteúdo diz o que a célula é, não o título dela.
+      var pareceEmail = function (s) { return /@/.test(s || ""); };
+      var pareceFone = function (s) {
+        return !!s && !/@/.test(s) && (s.replace(/\D/g, "").length >= 8);
+      };
+      if (pareceEmail(whatsapp) && !pareceEmail(email)) {
+        var guardado = email; email = whatsapp;
+        whatsapp = pareceFone(guardado) ? guardado : "";
+      } else if (pareceFone(email) && !whatsapp) {
+        whatsapp = email; email = "";
+      }
+
       var estagio = mapEstagio(pega(c, col.estagio));
       var estagioBruto = pega(c, col.estagio);
 
@@ -7204,21 +7226,34 @@
         + ((STATUS_META[existe.status] || {}).label || existe.status)
         + " — não volta a ser lead");
       else if (estagio === "matriculado")
-        avisos.push("Diz que fechou — matrícula não entra por aqui; use o Controle de Pagamento ou a lista de alunas");
+        avisos.push("Diz que fechou (Ganho) — matrícula não entra por aqui; use o Controle de Pagamento ou a lista de alunas");
       if (estagioBruto && !estagio && !jaAluna)
         notas.push("Não entendi o estágio “" + estagioBruto + "” — entra como A contatar");
       if (!whatsapp && !email && !jaAluna)
         notas.push("Sem WhatsApp nem e-mail — entra, mas não dá para contatar");
 
+      // "05/02" sem ano é deste ano; o formulário exporta "2026-04-27 18:55"
       var desde = "";
-      var d = pega(c, col.desde).match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
-      if (d) desde = (d[3].length === 2 ? "20" + d[3] : d[3]) + "-" + d[2] + "-" + d[1];
+      var bruto = pega(c, col.desde);
+      var d = bruto.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (d) desde = d[1] + "-" + d[2] + "-" + d[3];
+      else {
+        d = bruto.match(/(\d{2})\/(\d{2})(?:\/(\d{2,4}))?/);
+        if (d) desde = (d[3] ? (d[3].length === 2 ? "20" + d[3] : d[3]) : String(new Date().getFullYear()))
+          + "-" + d[2] + "-" + d[1];
+      }
+
+      // objetivo, objeção e observações são história da pessoa: tudo vira
+      // linha do tempo, nada se perde
+      var pedacosNota = [pega(c, col.objetivo),
+        pega(c, col.objecao) ? "Objeção: " + pega(c, col.objecao) : "",
+        pega(c, col.nota)].filter(Boolean);
 
       out.push({ nome: nome, whatsapp: whatsapp, email: email,
         canal: canalOficial(pega(c, col.canal)),
         estagio: (estagio && estagio !== "matriculado") ? estagio : "a_contatar",
         estagioLabel: estagioLabel((estagio && estagio !== "matriculado") ? estagio : "a_contatar"),
-        nivel: pega(c, col.nivel), nota: pega(c, col.nota), desde: desde,
+        nivel: pega(c, col.nivel), nota: pedacosNota.join(" · "), desde: desde,
         existe: !!existe, jaAluna: jaAluna, avisos: avisos, notas: notas });
     });
 
