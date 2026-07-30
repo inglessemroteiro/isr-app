@@ -28,13 +28,41 @@
   <p class="nota">Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.</p>
 </div>
 <script>
-  // já logada → direto pra área
+  // ?con=<url do Apps Script>: o link embutido no portal já traz a conexão
+  // com a base da escola. No primeiro acesso o navegador da aluna baixa os
+  // dados sozinho — sem isso, um aparelho novo não teria como saber quem
+  // ela é.
+  var puxando = false;
   try {
-    if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
-      window.location.replace("ISR%20-%20Aluna.dc.html");
+    var con = new URLSearchParams(window.location.search).get("con");
+    if (con && window.ISRCRM) {
+      if (window.ISRCRM.backendUrl() !== con) window.ISRCRM.setBackendUrl(con);
+      puxando = true;
+      var nota = document.querySelector(".nota");
+      if (nota) nota.textContent = "Conectando com a escola…";
+      window.ISRCRM.carregarDoBackend(function () {
+        puxando = false;
+        if (nota) nota.textContent = "";
+        depoisDeConectar();
+      });
+      // se a rede falhar, não prende a pessoa aqui para sempre
+      setTimeout(function () { if (puxando) { puxando = false; depoisDeConectar(); } }, 8000);
     }
-  } catch (e) {}
+  } catch (e) { puxando = false; }
+
+  function depoisDeConectar() {
+    try {
+      if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
+        window.location.replace("ISR%20-%20Aluna.dc.html");
+      }
+    } catch (e) {}
+  }
+  // já logada e sem conexão para atualizar → direto pra área
+  if (!puxando) depoisDeConectar();
+
   function entrar() {
+    // a primeira carga dos dados pode ainda estar chegando
+    if (puxando) { setTimeout(entrar, 600); return; }
     var email = (document.getElementById("email").value || "").trim().toLowerCase();
     var erro = document.getElementById("erro");
     erro.style.display = "none";

@@ -547,7 +547,16 @@
   }
 
   function ensureSeed() {
-    if (localStorage.getItem(SEED_FLAG)) return;
+    // navegador que nega storage (iframe muito restrito) não pode derrubar
+    // a página inteira — sem storage, simplesmente não há o que semear
+    try {
+      if (localStorage.getItem(SEED_FLAG)) return;
+      // Num aparelho novo, o sync pode ter baixado os dados ANTES do
+      // primeiro getPessoas. Semear "[]" aqui apagaria o que acabou de
+      // chegar — se já há dados, só se carimba que não é para semear.
+      var ja = localStorage.getItem(PESSOAS_KEY);
+      if (ja && ja.length > 2) { localStorage.setItem(SEED_FLAG, "1"); return; }
+    } catch (e) { return; }
     if (!exemploLigado()) {
       // nasce vazio, mas marcado: sem isto o exemplo voltaria a cada visita
       try {
