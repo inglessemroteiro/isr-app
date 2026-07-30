@@ -56,6 +56,38 @@
       <p style="margin: 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ comoCopiar }}</p>
     </div>
 
+    <!-- DIRETO DO JOTFORM -->
+    <sc-if value="{{ ehAbaLeads }}">
+      <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Direto do Jotform</div>
+        <sc-if value="{{ jfSemChave }}">
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Sem exportar nem colar: com a chave de API do Jotform, o app busca as inscrições dos seus funis direto. Pegue a chave em jotform.com → Settings → API → Create New Key (permissão de leitura basta). Ela fica guardada no seu app, junto das outras configurações.</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input ref="{{ jfChaveRef }}" placeholder="Chave de API do Jotform" style="flex: 1; min-width: 200px; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <button onclick="{{ onJfSalvarChave }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar a chave</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ jfTemChave }}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button onclick="{{ onJfBuscarForms }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ jfBuscarLabel }}</button>
+            <button onclick="{{ onJfTrocarChave }}" style="border: none; background: transparent; color: #b3a693; font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px; font-family: inherit;">trocar a chave</button>
+          </div>
+          <sc-for list="{{ jfForms }}" as="jf" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f4f1ec; margin-top: 8px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; font-weight: 600; color: #164951;">{{ jf.title }}</div>
+                <div style="font-size: 11px; color: #a2957f;">{{ jf.detalhe }}</div>
+              </div>
+              <button onclick="{{ jf.onBuscar }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Buscar inscrições</button>
+            </div>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ temJfErro }}">
+          <p style="margin: 10px 0 0; font-size: 12px; color: #cf6b5c; font-weight: 600; line-height: 1.5;">{{ jfErro }}</p>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <!-- COLAR -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
       <textarea ref="{{ colaRef }}" placeholder="Cole aqui a planilha inteira, com a linha de títulos" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px; font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fdfbf8; resize: vertical;"></textarea>
@@ -269,7 +301,9 @@ class Component extends DCLogic {
   state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
             zerarAberto: false, zerado: "", aba: "pagamentos",
             leituraAlunas: null, alFeito: "", turmasVazias: [],
-            leituraLeads: null, ldFeito: "" };
+            leituraLeads: null, ldFeito: "",
+            jfForms: null, jfErro: "", jfBuscando: false };
+  jfChaveRef = React.createRef();
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -291,7 +325,10 @@ class Component extends DCLogic {
       abaLedBg: "#fff", abaLedFg: "#8a7c6b", abaLedBorda: "#e5dccf",
       onAbaPagamentos: () => {}, onAbaAlunas: () => {}, onAbaLeads: () => {},
       temLeituraLeads: false, ldResumo: [], ldLinhas: [],
-      ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "" };
+      ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "",
+      ehAbaLeads: false, jfSemChave: false, jfTemChave: false, jfChaveRef: this.jfChaveRef,
+      onJfSalvarChave: () => {}, onJfTrocarChave: () => {}, onJfBuscarForms: () => {},
+      jfBuscarLabel: "", temJfForms: false, jfForms: [], temJfErro: false, jfErro: "" };
     if (!CRM || !CRM.lerControlePagamento) return base;
 
     // ── o que já está dentro ──
@@ -393,6 +430,58 @@ class Component extends DCLogic {
       onAbaAlunas: () => this.setState({ aba: "alunas", erro: "" }),
       onAbaLeads: () => this.setState({ aba: "leads", erro: "" }),
       onLer: ler,
+
+      // ── direto do Jotform ──
+      ehAbaLeads: abaLeads,
+      jfSemChave: abaLeads && !CRM.jotformKey(),
+      jfTemChave: abaLeads && !!CRM.jotformKey(),
+      jfChaveRef: this.jfChaveRef,
+      onJfSalvarChave: () => {
+        const k = ((this.jfChaveRef.current && this.jfChaveRef.current.value) || "").trim();
+        if (!k) { this.setState({ jfErro: "Cole a chave antes de salvar." }); return; }
+        CRM.setJotformKey(k);
+        this.setState({ jfErro: "" });
+        this.bump();
+      },
+      onJfTrocarChave: () => { CRM.setJotformKey(""); this.setState({ jfForms: null, jfErro: "" }); this.bump(); },
+      jfBuscarLabel: this.state.jfBuscando ? "Buscando…" : "Buscar os formulários",
+      onJfBuscarForms: () => {
+        const k = CRM.jotformKey(); if (!k || this.state.jfBuscando) return;
+        this.setState({ jfBuscando: true, jfErro: "" });
+        fetch("https://api.jotform.com/user/forms?apiKey=" + encodeURIComponent(k)
+          + "&limit=50&filter=" + encodeURIComponent('{"status":"ENABLED"}'))
+          .then(r => r.json())
+          .then(d => {
+            if (!d || d.responseCode !== 200) throw new Error((d && d.message) || "resposta inesperada");
+            this.setState({ jfBuscando: false,
+              jfForms: (d.content || []).map(f => ({ id: f.id, title: f.title,
+                count: parseInt(f.count, 10) || 0 })) });
+          })
+          .catch(e => this.setState({ jfBuscando: false, jfForms: null,
+            jfErro: "Não consegui falar com o Jotform (" + String(e.message || e).slice(0, 80) + "). Confira a chave." }));
+      },
+      temJfForms: !!(this.state.jfForms && this.state.jfForms.length),
+      jfForms: (this.state.jfForms || []).map(f => ({
+        title: f.title,
+        detalhe: f.count + (f.count === 1 ? " inscrição" : " inscrições"),
+        onBuscar: () => {
+          if (this.state.jfBuscando) return;
+          this.setState({ jfBuscando: true, jfErro: "" });
+          fetch("https://api.jotform.com/form/" + f.id + "/submissions?apiKey="
+            + encodeURIComponent(CRM.jotformKey()) + "&limit=200&orderby=created_at")
+            .then(r => r.json())
+            .then(d => {
+              if (!d || d.responseCode !== 200) throw new Error((d && d.message) || "resposta inesperada");
+              const r2 = CRM.lerLeadsDoJotform(d.content || [], f.title);
+              if (!r2.ok) { this.setState({ jfBuscando: false, jfErro: r2.erro }); return; }
+              this.setState({ jfBuscando: false, leituraLeads: r2,
+                leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
+            })
+            .catch(e => this.setState({ jfBuscando: false,
+              jfErro: "Não consegui buscar as inscrições (" + String(e.message || e).slice(0, 80) + ")." }));
+        }
+      })),
+      temJfErro: !!this.state.jfErro, jfErro: this.state.jfErro,
 
       temLeituraLeads: !!LD,
       ...(LD ? {

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.30-a",
+  numero: "2026.07.30-b",
   data: "30/07/2026",
-  nota: "A importação de leads entende a planilha real da escola: coluna Funil, estágios Acompanhar/Ganho/Contato Realizado/Em negociação, telefone trocado com e-mail, data sem ano, e objetivo + objeção na linha do tempo"
+  nota: "Leads direto do Jotform: com a chave de API, o app lista os formulários e busca as inscrições para o mesmo preview de importação"
 };
