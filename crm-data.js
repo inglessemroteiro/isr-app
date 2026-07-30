@@ -7122,6 +7122,141 @@
       turmasVazias: vazias };
   }
 
+  // ── IMPORTAR LEADS ────────────────────────────────────────────
+  //
+  // O funil não começa no app: começa em planilha, formulário, caderno.
+  // Importar leads é a mesma regra dos outros: ler, mostrar, e só gravar
+  // depois que a pessoa confere. Quem já é aluna nunca vira lead de novo.
+  function lerLeads(texto) {
+    var linhas = String(texto || "").split("\n")
+      .map(function (l) { return l.replace(/\r/g, ""); })
+      .filter(function (l) { return l.trim(); });
+    if (!linhas.length) return { ok: false, linhas: [], erro: "Cole a lista antes de ler." };
+
+    var iCab = -1, cab = null;
+    for (var i = 0; i < Math.min(linhas.length, 5); i++) {
+      var s = semAcento(linhas[i]);
+      if (s.indexOf("nome") >= 0) { iCab = i; cab = separarLinha(linhas[i]); break; }
+    }
+    if (iCab < 0) return { ok: false, linhas: [],
+      erro: "Não encontrei a linha de títulos. Ela precisa ter pelo menos a coluna Nome." };
+
+    var sCab = semAcento(cab.join(" "));
+    if (sCab.indexOf("valor da parcela") >= 0 || sCab.indexOf("quantos ciclos") >= 0
+        || sCab.indexOf("data de vencimento") >= 0) {
+      return { ok: false, linhas: [], controleDePagamento: true,
+        erro: "Essa é a planilha do Controle de Pagamento — importe pela aba dela. Ela já cria as alunas com contrato e tudo." };
+    }
+    if (sCab.indexOf("professora") >= 0 && sCab.indexOf("turma") >= 0) {
+      return { ok: false, linhas: [], listaDeAlunas: true,
+        erro: "Essa parece a lista de alunas e turmas — importe pela aba Alunas e turmas. Lead é quem ainda não fechou." };
+    }
+
+    var col = {
+      nome: acharColuna(cab, ["nome"]),
+      whatsapp: acharColuna(cab, ["whatsapp", "telefone", "celular", "fone"]),
+      email: acharColuna(cab, ["email", "e-mail"]),
+      canal: acharColuna(cab, ["canal", "origem", "fonte", "veio"]),
+      estagio: acharColuna(cab, ["estagio", "estágio", "etapa", "status", "situacao", "situação"]),
+      nivel: acharColuna(cab, ["nivel", "nível"]),
+      nota: acharColuna(cab, ["nota", "observacao", "observação", "obs", "comentario", "comentário"]),
+      desde: acharColuna(cab, ["desde", "data", "quando", "entrou"])
+    };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+
+    var pega = function (c, idx) { return idx >= 0 ? (c[idx] || "").trim() : ""; };
+    var mapEstagio = function (s) {
+      s = semAcento(s);
+      if (!s) return "";
+      if (s.indexOf("incomplet") >= 0) return "incompleta";
+      if (s.indexOf("conversa") >= 0 || s.indexOf("negocia") >= 0) return "em_conversa";
+      if (s.indexOf("reuniao") >= 0 || s.indexOf("call") >= 0 || s.indexOf("agendad") >= 0) return "reuniao";
+      if (s.indexOf("proposta") >= 0 || s.indexOf("contrato") >= 0) return "contrato";
+      if (s.indexOf("matricul") >= 0 || s.indexOf("fechad") >= 0 || s.indexOf("fechou") >= 0) return "matriculado";
+      if (s.indexOf("perdid") >= 0 || s.indexOf("desist") >= 0 || s.indexOf("sumiu") >= 0) return "perdido";
+      if (s.indexOf("contatar") >= 0 || s.indexOf("novo") >= 0 || s.indexOf("nova") >= 0) return "a_contatar";
+      return "";
+    };
+    var canalOficial = function (s) {
+      if (!s) return "";
+      var alvo = semAcento(s);
+      var oficial = CANAIS.filter(function (c) { return semAcento(c) === alvo; })[0];
+      return oficial || s;
+    };
+    var estagioLabel = function (id) {
+      var st = STAGES.filter(function (x) { return x.id === id; })[0];
+      return st ? st.label : "";
+    };
+
+    var out = [], ignoradas = 0;
+    linhas.slice(iCab + 1).forEach(function (linha) {
+      var c = separarLinha(linha);
+      var nome = pega(c, col.nome);
+      if (!nome) { ignoradas++; return; }
+      var avisos = [], notas = [];
+      var existe = pessoaPorNome(nome);
+      var jaAluna = !!existe && existe.status !== "lead";
+      var whatsapp = pega(c, col.whatsapp), email = pega(c, col.email);
+      var estagio = mapEstagio(pega(c, col.estagio));
+      var estagioBruto = pega(c, col.estagio);
+
+      if (jaAluna) avisos.push("Já está no sistema como "
+        + ((STATUS_META[existe.status] || {}).label || existe.status)
+        + " — não volta a ser lead");
+      else if (estagio === "matriculado")
+        avisos.push("Diz que fechou — matrícula não entra por aqui; use o Controle de Pagamento ou a lista de alunas");
+      if (estagioBruto && !estagio && !jaAluna)
+        notas.push("Não entendi o estágio “" + estagioBruto + "” — entra como A contatar");
+      if (!whatsapp && !email && !jaAluna)
+        notas.push("Sem WhatsApp nem e-mail — entra, mas não dá para contatar");
+
+      var desde = "";
+      var d = pega(c, col.desde).match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
+      if (d) desde = (d[3].length === 2 ? "20" + d[3] : d[3]) + "-" + d[2] + "-" + d[1];
+
+      out.push({ nome: nome, whatsapp: whatsapp, email: email,
+        canal: canalOficial(pega(c, col.canal)),
+        estagio: (estagio && estagio !== "matriculado") ? estagio : "a_contatar",
+        estagioLabel: estagioLabel((estagio && estagio !== "matriculado") ? estagio : "a_contatar"),
+        nivel: pega(c, col.nivel), nota: pega(c, col.nota), desde: desde,
+        existe: !!existe, jaAluna: jaAluna, avisos: avisos, notas: notas });
+    });
+
+    return { ok: true, linhas: out, ignoradas: ignoradas,
+      novas: out.filter(function (l) { return !l.existe; }).length,
+      jaAlunas: out.filter(function (l) { return l.jaAluna; }).length,
+      comAviso: out.filter(function (l) { return l.avisos.length; }).length };
+  }
+
+  function aplicarLeads(leitura) {
+    if (!leitura || !leitura.ok) return { ok: false };
+    var criados = 0, atualizados = 0, pulados = 0;
+    leitura.linhas.forEach(function (l) {
+      if (l.avisos.length) { pulados++; return; }
+      var p = pessoaPorNome(l.nome);
+      if (!p) {
+        p = novaPessoa({ nome: l.nome, whatsapp: l.whatsapp, email: l.email,
+          canal: l.canal || "Importação" });
+        criados++;
+      } else {
+        atualizados++;
+      }
+      mutate(p.id, function (x) {
+        // só preenche o que está vazio: importar não apaga o que a escola
+        // já sabe sobre a pessoa
+        if (l.whatsapp && !x.whatsapp) x.whatsapp = l.whatsapp;
+        if (l.email && !x.email) x.email = l.email;
+        if (l.nivel && !x.nivel) x.nivel = l.nivel;
+        if (l.canal && (!x.origem || !x.origem.canal || x.origem.canal === "WhatsApp"))
+          x.origem = Object.assign({}, x.origem, { canal: l.canal, detalhe: "importação de leads" });
+        if (l.desde && !x.desde) x.desde = l.desde;
+        if (l.estagio && l.estagio !== "a_contatar") x.estagio = l.estagio;
+        if (l.nota) pushHist(x, "contato", "Da planilha importada: " + l.nota.slice(0, 140));
+      });
+    });
+    return { ok: true, criados: criados, atualizados: atualizados, pulados: pulados };
+  }
+
   // ── O QUE A ESCOLA VAI RECEBER ────────────────────────────────
   //
   // A pergunta é simples e não tinha resposta em lugar nenhum: quanto
@@ -7796,6 +7931,7 @@
     removerContaPropria: removerContaPropria, ehContaPropria: ehContaPropria,
     orcamentoDoMes: orcamentoDoMes, setOrcamento: setOrcamento,
     lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
+    lerLeads: lerLeads, aplicarLeads: aplicarLeads,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,

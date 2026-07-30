@@ -47,6 +47,7 @@
     <div style="display: flex; gap: 6px; margin-bottom: 14px;">
       <button onclick="{{ onAbaPagamentos }}" style="border: 1px solid {{ abaPagBorda }}; background: {{ abaPagBg }}; color: {{ abaPagFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Controle de Pagamento</button>
       <button onclick="{{ onAbaAlunas }}" style="border: 1px solid {{ abaAluBorda }}; background: {{ abaAluBg }}; color: {{ abaAluFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Alunas e turmas</button>
+      <button onclick="{{ onAbaLeads }}" style="border: 1px solid {{ abaLedBorda }}; background: {{ abaLedBg }}; color: {{ abaLedFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Leads</button>
     </div>
 
     <!-- COMO COPIAR -->
@@ -121,6 +122,46 @@
           <sc-if value="{{ temTurmasVazias }}">
             <p style="margin: 10px 0 8px; font-size: 12px; color: #6b6155; line-height: 1.6;">{{ vaziasFrase }}</p>
             <button onclick="{{ onApagarVazias }}" style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ vaziasBotao }}</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ temLeituraLeads }}">
+      <div>
+        <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
+            <sc-for list="{{ ldResumo }}" as="rs" hint-placeholder-count="4">
+              <div>
+                <div style="font-size: 18px; font-weight: 700; color: {{ rs.cor }};">{{ rs.valor }}</div>
+                <div style="font-size: 10.5px; color: rgba(255,255,255,0.6); line-height: 1.4;">{{ rs.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Lead por lead</div>
+          <sc-for list="{{ ldLinhas }}" as="ld" hint-placeholder-count="8">
+            <div style="border-top: 1px solid #f4f1ec; padding: 9px 0;">
+              <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ ld.nome }}</span>
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: {{ ld.selo }}; background: {{ ld.seloBg }}; padding: 2px 8px; border-radius: 999px;">{{ ld.seloLabel }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5; margin-top: 2px;">{{ ld.detalhe }}</div>
+              <sc-if value="{{ ld.temAviso }}">
+                <div style="font-size: 11px; color: #c8622f; font-weight: 600; line-height: 1.5; margin-top: 2px;">{{ ld.avisos }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 16px;">
+          <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Lead novo entra na coluna A contatar do CRM (ou no estágio que a planilha disser). Quem já existe como lead é atualizado sem apagar nada; quem já é aluna não entra. A observação da planilha vai para a linha do tempo da pessoa.</p>
+          <button onclick="{{ onAplicarLeads }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ldAplicarLabel }}</button>
+          <sc-if value="{{ temLdFeito }}">
+            <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ ldFeito }}</p>
           </sc-if>
         </div>
       </div>
@@ -227,7 +268,8 @@
 class Component extends DCLogic {
   state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
             zerarAberto: false, zerado: "", aba: "pagamentos",
-            leituraAlunas: null, alFeito: "", turmasVazias: [] };
+            leituraAlunas: null, alFeito: "", turmasVazias: [],
+            leituraLeads: null, ldFeito: "" };
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -246,7 +288,10 @@ class Component extends DCLogic {
       temTurmasVazias: false, vaziasFrase: "", vaziasBotao: "", onApagarVazias: () => {},
       abaPagBg: "#164951", abaPagFg: "#fff", abaPagBorda: "#164951",
       abaAluBg: "#fff", abaAluFg: "#8a7c6b", abaAluBorda: "#e5dccf",
-      onAbaPagamentos: () => {}, onAbaAlunas: () => {} };
+      abaLedBg: "#fff", abaLedFg: "#8a7c6b", abaLedBorda: "#e5dccf",
+      onAbaPagamentos: () => {}, onAbaAlunas: () => {}, onAbaLeads: () => {},
+      temLeituraLeads: false, ldResumo: [], ldLinhas: [],
+      ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "" };
     if (!CRM || !CRM.lerControlePagamento) return base;
 
     // ── o que já está dentro ──
@@ -293,10 +338,21 @@ class Component extends DCLogic {
     const $ = (m, v) => CRM.fmtMoney(m, v);
 
     const abaAlunas = this.state.aba === "alunas";
+    const abaLeads = this.state.aba === "leads";
     const ler = () => {
       const txt = (this.colaRef.current && this.colaRef.current.value) || "";
       if (!txt.trim()) {
-        this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null });
+        this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null, leituraLeads: null });
+        return;
+      }
+      if (abaLeads) {
+        const r = CRM.lerLeads(txt);
+        if (!r.ok) { this.setState({ erro: r.erro, leituraLeads: null }); return; }
+        if (!r.linhas.length) {
+          this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leituraLeads: null });
+          return;
+        }
+        this.setState({ leituraLeads: r, leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
         return;
       }
       if (abaAlunas) {
@@ -306,7 +362,7 @@ class Component extends DCLogic {
           this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leituraAlunas: null });
           return;
         }
-        this.setState({ leituraAlunas: r, leitura: null, erro: "", alFeito: "" });
+        this.setState({ leituraAlunas: r, leitura: null, leituraLeads: null, erro: "", alFeito: "" });
         return;
       }
       const r = CRM.lerControlePagamento(txt, { ano: anoBase });
@@ -315,22 +371,60 @@ class Component extends DCLogic {
         this.setState({ erro: "Li a planilha mas não encontrei nenhuma linha com nome.", leitura: null });
         return;
       }
-      this.setState({ leitura: r, leituraAlunas: null, erro: "", feito: "" });
+      this.setState({ leitura: r, leituraAlunas: null, leituraLeads: null, erro: "", feito: "" });
     };
 
     // ── abas e leitura de alunas ──
     const AL = this.state.leituraAlunas;
+    const LD = this.state.leituraLeads;
     Object.assign(base, {
-      comoCopiar: abaAlunas
-        ? "Cole a lista de alunas com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), Turma, Nível, Professora, Horário, WhatsApp e E-mail — na ordem que estiverem."
-        : "No Google Sheets, abra a aba Controle de Pagamento, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula.",
-      abaPagBg: abaAlunas ? "#fff" : "#164951", abaPagFg: abaAlunas ? "#8a7c6b" : "#fff",
-      abaPagBorda: abaAlunas ? "#e5dccf" : "#164951",
+      comoCopiar: abaLeads
+        ? "Cole a lista de leads com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), WhatsApp, E-mail, Canal (Instagram, indicação…), Estágio (a contatar, em conversa, reunião, proposta, perdido), Nível, Observação e Data. Quem já é aluna não volta a ser lead."
+        : (abaAlunas
+          ? "Cole a lista de alunas com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), Turma, Nível, Professora, Horário, WhatsApp e E-mail — na ordem que estiverem."
+          : "No Google Sheets, abra a aba Controle de Pagamento, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula."),
+      abaPagBg: (abaAlunas || abaLeads) ? "#fff" : "#164951", abaPagFg: (abaAlunas || abaLeads) ? "#8a7c6b" : "#fff",
+      abaPagBorda: (abaAlunas || abaLeads) ? "#e5dccf" : "#164951",
       abaAluBg: abaAlunas ? "#164951" : "#fff", abaAluFg: abaAlunas ? "#fff" : "#8a7c6b",
       abaAluBorda: abaAlunas ? "#164951" : "#e5dccf",
+      abaLedBg: abaLeads ? "#164951" : "#fff", abaLedFg: abaLeads ? "#fff" : "#8a7c6b",
+      abaLedBorda: abaLeads ? "#164951" : "#e5dccf",
       onAbaPagamentos: () => this.setState({ aba: "pagamentos", erro: "" }),
       onAbaAlunas: () => this.setState({ aba: "alunas", erro: "" }),
+      onAbaLeads: () => this.setState({ aba: "leads", erro: "" }),
       onLer: ler,
+
+      temLeituraLeads: !!LD,
+      ...(LD ? {
+        ldResumo: [
+          { valor: String(LD.linhas.length), label: LD.linhas.length === 1 ? "lead lido" : "leads lidos", cor: "#fff" },
+          { valor: String(LD.novas), label: "ainda não cadastrados", cor: "#9ec970" },
+          { valor: String(LD.jaAlunas), label: "já são alunas (não entram)", cor: LD.jaAlunas ? "#fc9082" : "#9ec970" },
+          { valor: String(LD.comAviso), label: "com algo a conferir", cor: LD.comAviso ? "#fc9082" : "#9ec970" }
+        ],
+        ldLinhas: LD.linhas.map(l => ({
+          nome: l.nome,
+          seloLabel: l.avisos.length ? "não entra" : (l.existe ? "atualiza" : "novo"),
+          selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),
+          seloBg: l.avisos.length ? "#fdf1ec" : (l.existe ? "#f2ece3" : "#eef5ec"),
+          detalhe: [l.canal, l.estagioLabel, l.whatsapp, l.email, l.nivel,
+            l.nota ? "“" + l.nota.slice(0, 50) + "”" : ""]
+            .filter(Boolean).join(" · "),
+          temAviso: l.avisos.length > 0 || l.notas.length > 0,
+          avisos: l.avisos.concat(l.notas).join(" · ")
+        })),
+        ldAplicarLabel: "Aplicar os " + (LD.linhas.length - LD.comAviso) + " leads",
+        onAplicarLeads: () => {
+          const n = LD.linhas.length - LD.comAviso;
+          if (!window.confirm("Aplicar " + n + " leads no funil?")) return;
+          const r = CRM.aplicarLeads(LD);
+          this.setState({ ldFeito: r.criados + " criados · " + r.atualizados + " atualizados"
+            + (r.pulados ? " · " + r.pulados + " não entraram (já alunas ou fechadas)" : "")
+            + ". Confira no CRM, na coluna A contatar." });
+          this.bump();
+        },
+        temLdFeito: !!this.state.ldFeito, ldFeito: this.state.ldFeito
+      } : {}),
 
       temLeituraAlunas: !!AL,
       ...(AL ? {
@@ -389,7 +483,7 @@ class Component extends DCLogic {
     const L = this.state.leitura;
     if (!L) {
       return Object.assign({}, base, {
-        anoNota: abaAlunas ? "" : "As colunas de mês são lidas a partir de " + anoBase + ".",
+        anoNota: (abaAlunas || abaLeads) ? "" : "As colunas de mês são lidas a partir de " + anoBase + ".",
         onLer: ler,
         onLimpar: () => {},
         onSoAviso: () => {}, onAplicarLimpas: () => {}, onAplicarTudo: () => {}
@@ -416,7 +510,8 @@ class Component extends DCLogic {
       onLer: ler,
       onLimpar: () => {
         if (this.colaRef.current) this.colaRef.current.value = "";
-        this.setState({ leitura: null, erro: "", feito: "", soAviso: false });
+        this.setState({ leitura: null, leituraAlunas: null, leituraLeads: null,
+          erro: "", feito: "", alFeito: "", ldFeito: "", soAviso: false });
       },
 
       resumo: [
