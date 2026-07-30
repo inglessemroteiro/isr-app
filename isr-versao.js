@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-h",
+  numero: "2026.07.29-i",
   data: "29/07/2026",
-  nota: "Cada lançamento do Caixa edita e apaga na própria linha; a folha calculada se identifica; e lançamento digitado como equipe avisa quando pode estar dobrando"
+  nota: "Importar ganhou a aba de Leads: canal, estágio e observação entram no funil, e quem já é aluna nunca volta a ser lead"
 };
