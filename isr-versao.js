@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.29-i",
-  data: "29/07/2026",
-  nota: "Importar ganhou a aba de Leads: canal, estágio e observação entram no funil, e quem já é aluna nunca volta a ser lead"
+  numero: "2026.07.30-a",
+  data: "30/07/2026",
+  nota: "A importação de leads entende a planilha real da escola: coluna Funil, estágios Acompanhar/Ganho/Contato Realizado/Em negociação, telefone trocado com e-mail, data sem ano, e objetivo + objeção na linha do tempo"
 };
