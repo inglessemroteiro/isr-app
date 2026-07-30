@@ -157,7 +157,7 @@
           <sc-if value="{{ temMissao }}">
             <div style="background: #fff; padding: 14px 16px; margin-bottom: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #fc9082;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
-                <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">Desafio da comunidade</h4>
+                <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">Desafio da semana</h4>
                 <span style="flex: none; background: {{ missaoBadgeBg }}; color: {{ missaoBadgeFg }}; padding: 3px 6px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ missaoBadge }}</span>
               </div>
               <p style="margin: 0 0 10px; font-size: 12px; color: #666; line-height: 1.6;">Semana {{ missaoSemana }}: {{ missaoTexto }}</p>
@@ -396,6 +396,17 @@
             </sc-for>
           </div>
         </section>
+        <sc-if value="{{ temDocs }}">
+          <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h3 style="margin: 0 0 10px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Seus certificados e relatórios</h3>
+            <sc-for list="{{ docs }}" as="dc" hint-placeholder-count="3">
+              <a href="{{ dc.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid #f0ede8; text-decoration: none;">
+                <span style="font-size: 12.5px; font-weight: 600; color: #2c3e50;">{{ dc.nome }}</span>
+                <span style="flex: none; font-size: 9px; color: #348a8e; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;">Abrir</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
           <h3 style="margin: 0 0 6px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Projeto do ciclo</h3>
           <div style="font-size: 15px; font-weight: 600; color: #2c3e50; line-height: 1.35;">{{ projetoCiclo }}</div>
@@ -780,14 +791,22 @@ class Component extends DCLogic {
       { key: "notebook", label: "Caderno de tarefas", cor: "#348a8e" },
       { key: "slides", label: "Slides das aulas", cor: "#6b5b95" },
       { key: "syllabus", label: "Syllabus do ciclo", cor: "#164951" },
-      { key: "calendario", label: "Calendário", cor: "#fc9082" }
+      { key: "calendario", label: "Calendário", cor: "#fc9082" },
+      { key: "gravadas", label: "Aulas gravadas da turma", cor: "#c98a3a" }
     ];
     const materiais = MATS.map(m => {
       let link = turmaRaw ? (turmaRaw[m.key] || "") : "";
       if (m.key === "notebook" && link && !/^https?:/.test(link)) link = "";
       return { label: m.label, cor: m.cor, link, temLink: !!link, semLink: !link };
     });
+    // as aulas extras gravadas valem para todas — vêm da configuração da escola
+    const gravadasGeral = CRM.gravadasUrl ? CRM.gravadasUrl() : "";
+    if (gravadasGeral) materiais.push({ label: "Aulas extras gravadas (todas)",
+      cor: "#e07856", link: gravadasGeral, temLink: true, semLink: false });
     const caderno = materiais.filter(m => m.temLink)[0] || null;
+
+    // certificados e relatórios que a escola anexou no perfil dela
+    const docs = (p.documentos || []).map(d => ({ nome: d.nome, link: d.link }));
 
     const miles = CRM.moedasDe(p.id);
     const tc = turmaRaw && turmaRaw.tarefaCasa ? turmaRaw.tarefaCasa : null;
@@ -988,6 +1007,7 @@ class Component extends DCLogic {
         ? "As gravações da turma ficam só para quem está nela. As aulas extras são abertas a todas as alunas."
         : "As aulas extras são abertas a todas as alunas.",
       proximas, semProximas: proximas.length === 0,
+      docs, temDocs: docs.length > 0,
       passadas, semPassadas: passadas.length === 0,
       resumoPresenca: jornada.aulas
         ? jornada.presentes + " de " + jornada.aulas + " aulas com presença (" + jornada.frequencia + "%)."

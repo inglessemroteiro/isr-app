@@ -59,7 +59,14 @@
 
   // ── DATAS ─────────────────────────────────────────────────────
   function today() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
-  function iso(d) { return d.toISOString().slice(0, 10); }
+  // A data é a do RELÓGIO DA PESSOA, não a de Greenwich. toISOString()
+  // converte para UTC: meia-noite na Holanda (UTC+2) ainda é "ontem" em
+  // UTC, e todas as datas nasciam um dia atrás por lá — era o app da
+  // aluna dizendo "Próxima aula: Ontem".
+  function iso(d) {
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
   function parseISO(s) { if (!s) return null; var p = s.slice(0, 10).split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
   function addDays(n) { var d = new Date(today()); d.setDate(d.getDate() + n); return iso(d); }
@@ -3450,7 +3457,7 @@
     "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
-    "isr_contas_proprias_v1", "isr_jotform_v1"];
+    "isr_contas_proprias_v1", "isr_jotform_v1", "isr_gravadas_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -5654,10 +5661,11 @@
       { label: "Tarefa entregue no prazo", valor: 8 },
       { label: "Presença em aula extra", valor: 15 },
       { label: "Book club semanal", valor: 20 }] },
-    { grupo: "Comunidade", cor: "#e07856", itens: [
+    // sem "Comunidade" no nome nem ação que dependa de um espaço que a
+    // escola ainda não tem: o desafio vive dentro do próprio app
+    { grupo: "Desafios e divulgação", cor: "#e07856", itens: [
       { label: "Completou o desafio da semana", valor: 10 },
       { label: "Melhor resposta do desafio", valor: 10 },
-      { label: "Respondeu um colega", valor: 5 },
       { label: "Compartilhou post da ISR", valor: 5 }] },
     { grupo: "Indicações", cor: "#9c6f56", itens: [
       { label: "Indicou um amigo", valor: 20 },
@@ -6259,7 +6267,7 @@
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
-    "isr_jotform_v1"
+    "isr_jotform_v1", "isr_gravadas_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7279,6 +7287,18 @@
   // o app busca as inscrições direto — sem exportar, sem colar. A resposta
   // do Jotform vira as mesmas linhas do importador de leads: mesmo preview,
   // mesmas regras, mesma proteção de quem já é aluna.
+  // Aulas extras gravadas, acesso de todas as alunas (a pasta geral).
+  // As gravações POR TURMA vivem na própria turma (campo gravadas).
+  var GRAVADAS_KEY = "isr_gravadas_v1";
+  function gravadasUrl() {
+    try { return localStorage.getItem(GRAVADAS_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setGravadasUrl(u) {
+    try { localStorage.setItem(GRAVADAS_KEY, (u || "").trim()); } catch (e) {}
+    agendarSync();
+    return gravadasUrl();
+  }
+
   var JOTFORM_KEY = "isr_jotform_v1";
   function jotformKey() {
     try { return localStorage.getItem(JOTFORM_KEY) || ""; } catch (e) { return ""; }
@@ -8038,6 +8058,8 @@
     lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
     lerLeads: lerLeads, aplicarLeads: aplicarLeads,
     jotformKey: jotformKey, setJotformKey: setJotformKey,
+    gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
+    dataIso: iso, hojeIso: function () { return iso(new Date()); },
     lerLeadsDoJotform: lerLeadsDoJotform,
     renomearNaEquipe: renomearNaEquipe,
     equipeCustosMensais: equipeCustosMensais,
