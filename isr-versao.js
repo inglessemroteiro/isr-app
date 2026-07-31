@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-i",
+  numero: "2026.07.31-j",
   data: "31/07/2026",
-  nota: "Importar inscrições (Jotform, systeme ou planilha) completa o e-mail e o WhatsApp de quem já é aluna quando o campo está vazio — sem transformar ninguém em lead. Buscar o histórico do Jotform preenche a lista de e-mails sozinho"
+  nota: "A importação reconhece variações de nome: 'Debora Staidel' no sistema e 'Débora Staidel Silva' no formulário são a mesma pessoa (só casa quando há uma única candidata — ambiguidade não entra). Com isso, o histórico do Jotform completa os e-mails das alunas de verdade"
 };
