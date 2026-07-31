@@ -7057,6 +7057,23 @@
     var d = String(s || "").replace(/\D/g, "");
     return d.length >= 8 ? d.slice(-8) : "";
   }
+  // "Debora Staidel" no sistema e "Débora Staidel Silva" no formulário
+  // são a mesma pessoa. Casa quando as palavras do nome mais curto estão
+  // todas no mais comprido — e SÓ quando existe uma única candidata;
+  // qualquer ambiguidade e ninguém é casado.
+  function pessoaPorNomeParecido(nome) {
+    var alvo = semAcento(nome).split(/\s+/).filter(Boolean);
+    if (alvo.length < 2) return null;
+    var cand = loadPessoas().filter(function (p) {
+      var w = semAcento(p.nome).split(/\s+/).filter(Boolean);
+      if (w.length < 2) return false;
+      var curto = alvo.length <= w.length ? alvo : w;
+      var comprido = alvo.length <= w.length ? w : alvo;
+      return curto.every(function (x) { return comprido.indexOf(x) >= 0; });
+    });
+    return cand.length === 1 ? cand[0] : null;
+  }
+
   function pessoaPorContato(email, whatsapp) {
     var e = String(email || "").trim().toLowerCase();
     var f = chaveFone(whatsapp);
@@ -7406,7 +7423,8 @@
       // O nome pode vir escrito diferente em cada fonte (Jotform,
       // systeme.io, planilha). E-mail e WhatsApp são a identidade real:
       // se batem com alguém, é a mesma pessoa — atualiza, não duplica.
-      var existe = pessoaPorNome(nome) || pessoaPorContato(email, whatsapp);
+      var existe = pessoaPorNome(nome) || pessoaPorContato(email, whatsapp)
+        || pessoaPorNomeParecido(nome);
       var jaAluna = !!existe && existe.status !== "lead";
       if (existe && semAcento(existe.nome) !== semAcento(nome) && !jaAluna)
         notas.push("Mesmo contato de “" + existe.nome + "” — atualiza essa pessoa, não cria outra");
@@ -7625,7 +7643,8 @@
       // na inscrição completam o cadastro dela quando o campo está vazio.
       // É o que deixa a lista de e-mails inteira sem digitação manual.
       if (l.jaAluna) {
-        var alvo = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp);
+        var alvo = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp)
+          || pessoaPorNomeParecido(l.nome);
         if (alvo && ((l.email && !alvo.email) || (l.whatsapp && !alvo.whatsapp))) {
           mutate(alvo.id, function (x) {
             if (l.email && !x.email) x.email = l.email;
@@ -7637,7 +7656,8 @@
         return;
       }
       if (l.avisos.length) { pulados++; return; }
-      var p = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp);
+      var p = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp)
+        || pessoaPorNomeParecido(l.nome);
       if (!p) {
         p = novaPessoa({ nome: l.nome, whatsapp: l.whatsapp, email: l.email,
           canal: l.canal || "Importação" });
