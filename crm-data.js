@@ -3525,7 +3525,8 @@
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
-    "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1", "isr_bookclub_v1"];
+    "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1", "isr_bookclub_v1",
+    "isr_bookclub_aula_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -3734,25 +3735,20 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (d && d.ok && d.data) {
-            if (d.data.pessoas && d.data.pessoas.length) savePessoasLocal(d.data.pessoas);
-            if (d.data.custos && d.data.custos.length) custosSaveLocal(d.data.custos);
-            if (d.data.templates) tplSaveLocal(d.data.templates);
-            if (d.data.turmas && d.data.turmas.length) { try { localStorage.setItem(TURMAS_KEY, JSON.stringify(d.data.turmas)); } catch (e) {} }
-            if (d.data.eventos) { try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(d.data.eventos)); } catch (e) {} }
-            if (d.data.chamadas) { try { localStorage.setItem(CHAMADAS_KEY, JSON.stringify(d.data.chamadas)); } catch (e) {} }
-            if (d.data.tarefas) { try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(d.data.tarefas)); } catch (e) {} }
-            if (d.data.feriados) { try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(d.data.feriados)); } catch (e) {} }
-            if (d.data.metas) { try { localStorage.setItem(METAS_KEY, JSON.stringify(d.data.metas)); } catch (e) {} }
-            if (d.data.moedas) { try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(d.data.moedas)); } catch (e) {} }
-            if (d.data.equipe) { try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(d.data.equipe)); } catch (e) {} }
-            if (d.data.calc) { try { localStorage.setItem(CALC_KEY, JSON.stringify(d.data.calc)); } catch (e) {} }
-            if (d.data.lancamentos) { try { localStorage.setItem(LANC_KEY, JSON.stringify(d.data.lancamentos)); } catch (e) {} }
-            if (d.data.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.data.cambio)); } catch (e) {} }
-            if (d.data.toques) { try { localStorage.setItem(TOQUES_KEY, JSON.stringify(d.data.toques)); } catch (e) {} }
-            if (d.data.pulsos) { try { localStorage.setItem(PULSOS_KEY, JSON.stringify(d.data.pulsos)); } catch (e) {} }
-            if (d.data.precos) { try { localStorage.setItem(PRECOS_KEY, JSON.stringify(d.data.precos)); } catch (e) {} }
-            if (d.data.programas) { try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(d.data.programas)); } catch (e) {} }
-            if (d.data.avisos) { try { localStorage.setItem(AVISOS_KEY, JSON.stringify(d.data.avisos)); } catch (e) {} }
+            // PUXAR NUNCA SUBSTITUI: mescla registro a registro, igual ao
+            // envio. Substituir apagava edição local feita segundos antes
+            // — os links digitados nas turmas sumiam ao trocar de tela,
+            // porque a tela nova puxava o servidor (ainda sem os links)
+            // por cima do que acabara de ser salvo aqui.
+            var m = mesclarComRemoto(d.data);
+            var resultado = m.data;
+            // Campos sem id (custos, modelos, metas, calculadora, câmbio)
+            // não têm carimbo por registro: no puxe, vale o servidor —
+            // é o que garante que um aparelho novo receba tudo.
+            ["custos", "templates", "metas", "calc", "cambio"].forEach(function (k) {
+              if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
+            });
+            aplicarRemoto(resultado);
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
             if (cb) cb(true);
           } else if (cb) cb(false);
@@ -3974,7 +3970,7 @@
     var ev = { id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
       responsavel: dados.responsavel || "", tipo: "aula_extra",
       duracao: parseInt(dados.duracao, 10) || 60,
-      local: dados.local || "", descricao: dados.descricao || "",
+      local: dados.local || "", link: dados.link || "", descricao: dados.descricao || "",
       vagas: parseInt(dados.vagas, 10) || 0,
       turmaAlvo: dados.turmaAlvo || "",
       rsvps: {}, manuais: [] };
@@ -5911,6 +5907,27 @@
     return bookclubUrl();
   }
 
+  // O Book Club tem uma aula fixa semanal. Os campos são editáveis na
+  // Agenda; o app da aluna mostra o encontro com o link de entrar.
+  var BOOKCLUB_AULA_KEY = "isr_bookclub_aula_v1";
+  var BOOKCLUB_AULA_PADRAO = { dia: "Quinta-feira", horaBR: "07:00", horaNL: "12:00",
+    titulo: "Book Club", link: "", descricao: "" };
+  function bookclubAula() {
+    try {
+      var v = JSON.parse(localStorage.getItem(BOOKCLUB_AULA_KEY));
+      return v ? Object.assign({}, BOOKCLUB_AULA_PADRAO, v) : Object.assign({}, BOOKCLUB_AULA_PADRAO);
+    } catch (e) { return Object.assign({}, BOOKCLUB_AULA_PADRAO); }
+  }
+  function setBookclubAula(patch) {
+    var atual = bookclubAula();
+    Object.keys(patch || {}).forEach(function (k) {
+      if (patch[k] !== undefined) atual[k] = patch[k];
+    });
+    try { localStorage.setItem(BOOKCLUB_AULA_KEY, JSON.stringify(atual)); } catch (e) {}
+    agendarSync();
+    return atual;
+  }
+
   var FLIN_KEY = "isr_flin_url_v1";
   var FLIN_URL_PADRAO = "";
 
@@ -6399,7 +6416,7 @@
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
     "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1",
-    "isr_furos_ok_v1", "isr_bookclub_v1"
+    "isr_furos_ok_v1", "isr_bookclub_v1", "isr_bookclub_aula_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7569,15 +7586,21 @@
           if (!fone) fone = v;
         } else if (rotulo.indexOf("nivel") >= 0) {
           nivel = v;
-        } else if (a.type === "control_textarea" || v.length > 12) {
-          // as respostas longas são a história da pessoa
-          nota.push(v);
         } else {
-          // resposta curta (objetivo, horário, faixa de investimento…)
-          // entra com a pergunta junto — sem a pergunta, "Sim" e "Noite"
-          // não dizem nada. Tudo que a pessoa preencheu fica na ficha.
+          // Consentimento e termos não são história da pessoa — poluíam a
+          // ficha ("Estou ciente que o contato será via e-mail…").
           var pergunta = String(a.text || a.name || "").replace(/[\t\r\n]+/g, " ").trim();
-          nota.push(pergunta ? pergunta + ": " + v : v);
+          var BOILER = /estou ciente|li e aceito|concordo|termos|pol[ií]tica de privacidade|autorizo/i;
+          if (BOILER.test(v) || BOILER.test(pergunta)) return;
+          if (a.type === "control_textarea") {
+            // o texto livre é a história da pessoa — vale por si
+            nota.push(v);
+          } else {
+            // todo o resto (objetivo, horário, faixa de investimento…)
+            // entra com a pergunta junto — sem a pergunta, "Sim" e
+            // "€ 51 a 90 mensais" não dizem nada
+            nota.push(pergunta ? pergunta + ": " + v : v);
+          }
         }
       });
       if (!nome) return;
@@ -7614,7 +7637,17 @@
         // "Entrou" do CRM (entrouEm), não a data de matrícula (desde)
         if (l.desde) x.entrouEm = l.desde;
         if (l.estagio && l.estagio !== "a_contatar") x.estagio = l.estagio;
-        if (l.nota) pushHist(x, "contato", "Da inscrição: " + l.nota.slice(0, 600));
+        // A ficha vira um bloco estruturado no perfil (pergunta a
+        // pergunta), não um muro de texto na linha do tempo. Reimportar a
+        // mesma ficha não repete o registro.
+        if (l.nota) {
+          var pecas = l.nota.split(" · ").map(function (t) { return t.trim(); }).filter(Boolean);
+          if (pecas.join("\u0001") !== (x.inscricao || []).join("\u0001")) {
+            x.inscricao = pecas;
+            pushHist(x, "contato", "Ficha da inscrição importada · " + pecas.length
+              + (pecas.length === 1 ? " resposta" : " respostas"));
+          }
+        }
       });
     });
     return { ok: true, criados: criados, atualizados: atualizados, pulados: pulados };
@@ -8299,6 +8332,7 @@
     jotformBase: jotformBase, setJotformBase: setJotformBase, jotformOutraBase: jotformOutraBase,
     gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
+    bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,
     bookingUrl: bookingUrl, setBookingUrl: setBookingUrl,
     systemeKey: systemeKey, setSystemeKey: setSystemeKey,
     lerLeadsDoSysteme: lerLeadsDoSysteme,

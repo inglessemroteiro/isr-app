@@ -20,6 +20,7 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Agenda da escola</h1>
       </div>
       <div style="display: flex; gap: 8px;">
+        <button onclick="{{ onToggleBookclub }}" style="border: 1px solid #e5dccf; background: {{ bcBg }}; color: {{ bcFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Book Club</button>
         <button onclick="{{ onToggleFeriados }}" style="border: 1px solid #e5dccf; background: {{ ferBg }}; color: {{ ferFg }}; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Feriados</button>
         <button onclick="{{ onToggleNovo }}" style="border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
       </div>
@@ -45,6 +46,26 @@
         </div>
         <input ref="{{ evDescRef }}" placeholder="Descrição enviada às alunas (opcional)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 10px;" />
         <button onclick="{{ onCriarEvento }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Criar aula extra</button>
+      </div>
+    </sc-if>
+
+    <!-- AULA FIXA DO BOOK CLUB -->
+    <sc-if value="{{ bookclubAberto }}">
+      <div style="background: #fdfbf8; border: 1px solid #d9e6d0; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5a9e4b; margin-bottom: 4px;">Aula fixa · Book Club</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Encontro semanal, aberto a todas. Aparece na área da aluna com o horário nos dois fusos e o botão de entrar.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ bcTituloRef }}" placeholder="Título" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ bcDiaRef }}" placeholder="Dia da semana (ex. Quinta-feira)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ bcHoraBRRef }}" placeholder="Hora no Brasil (ex. 07:00)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ bcHoraNLRef }}" placeholder="Hora na Holanda (ex. 12:00)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ bcLinkRef }}" placeholder="Link da sala" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        </div>
+        <input ref="{{ bcDescRef }}" placeholder="Descrição (ex. livro do mês)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 10px;" />
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button onclick="{{ onSalvarBookclub }}" style="border: none; background: #5a9e4b; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Salvar aula do Book Club</button>
+          <span style="font-size: 11.5px; color: #8a7c6b;">{{ bcResumo }}</span>
+        </div>
       </div>
     </sc-if>
 
@@ -224,7 +245,10 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1120px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { visao: "lista", tipo: "todos", resp: "Todos", dias: 14, semanaOffset: 0,
-    novoAberto: false, feriadosAberto: false, tick: 0, copiadoEv: "" };
+    novoAberto: false, feriadosAberto: false, bookclubAberto: false, tick: 0, copiadoEv: "" };
+  bcTituloRef = React.createRef(); bcDiaRef = React.createRef();
+  bcHoraBRRef = React.createRef(); bcHoraNLRef = React.createRef();
+  bcLinkRef = React.createRef(); bcDescRef = React.createRef();
   evTituloRef = React.createRef(); evDataRef = React.createRef();
   evHoraRef = React.createRef(); evRespRef = React.createRef();
   evDuracaoRef = React.createRef(); evLocalRef = React.createRef();
@@ -275,7 +299,7 @@ class Component extends DCLogic {
       evRespRef: this.evRespRef, evDuracaoRef: this.evDuracaoRef, evLocalRef: this.evLocalRef,
       evVagasRef: this.evVagasRef, evTurmaRef: this.evTurmaRef, evDescRef: this.evDescRef,
       ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
-    if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
+    if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", bcBg: "#fff", bcFg: "#164951", bookclubAberto: false, listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#6b6155", semanaLabel: "", foraDaSemanaAtual: false }, refs);
 
     const ehSemana = this.state.visao === "semana";
     const iso = d => d.toISOString().slice(0, 10);
@@ -438,7 +462,36 @@ class Component extends DCLogic {
       novoLabel: this.state.novoAberto ? "fechar" : "+ Aula extra",
       novoBg: this.state.novoAberto ? "#e5dccf" : "#164951",
       novoFg: this.state.novoAberto ? "#6b6155" : "#fff",
-      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, feriadosAberto: false }),
+      onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, feriadosAberto: false, bookclubAberto: false }),
+
+      // aula fixa do Book Club: campo em branco mantém o valor atual
+      bookclubAberto: this.state.bookclubAberto,
+      bcBg: this.state.bookclubAberto ? "#5a9e4b" : "#fff",
+      bcFg: this.state.bookclubAberto ? "#fff" : "#164951",
+      onToggleBookclub: () => this.setState({ bookclubAberto: !this.state.bookclubAberto, novoAberto: false, feriadosAberto: false }),
+      bcTituloRef: this.bcTituloRef, bcDiaRef: this.bcDiaRef,
+      bcHoraBRRef: this.bcHoraBRRef, bcHoraNLRef: this.bcHoraNLRef,
+      bcLinkRef: this.bcLinkRef, bcDescRef: this.bcDescRef,
+      bcResumo: (() => {
+        const a = window.ISRCRM.bookclubAula ? window.ISRCRM.bookclubAula() : null;
+        if (!a) return "";
+        return "Hoje: " + a.titulo + " · " + a.dia + " · " + a.horaBR + " BR | " + a.horaNL + " NL"
+          + (a.link ? " · com link" : " · sem link ainda");
+      })(),
+      onSalvarBookclub: () => {
+        const v = (r) => this.val(r);
+        const patch = {};
+        if (v(this.bcTituloRef)) patch.titulo = v(this.bcTituloRef);
+        if (v(this.bcDiaRef)) patch.dia = v(this.bcDiaRef);
+        if (v(this.bcHoraBRRef)) patch.horaBR = v(this.bcHoraBRRef);
+        if (v(this.bcHoraNLRef)) patch.horaNL = v(this.bcHoraNLRef);
+        if (v(this.bcLinkRef)) patch.link = v(this.bcLinkRef);
+        if (v(this.bcDescRef)) patch.descricao = v(this.bcDescRef);
+        window.ISRCRM.setBookclubAula(patch);
+        [this.bcTituloRef, this.bcDiaRef, this.bcHoraBRRef, this.bcHoraNLRef, this.bcLinkRef, this.bcDescRef]
+          .forEach(r => { if (r.current) r.current.value = ""; });
+        this.bump();
+      },
       onCriarEvento: () => {
         const titulo = this.val(this.evTituloRef), data = this.val(this.evDataRef);
         if (!titulo || !data) { window.alert("Informe pelo menos o título e a data."); return; }

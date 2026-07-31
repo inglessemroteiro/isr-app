@@ -525,6 +525,21 @@
             </div>
           </sc-if>
 
+          <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
+          <sc-if value="{{ temInscricao }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Ficha da inscrição</div>
+              <sc-for list="{{ inscricao }}" as="q" hint-placeholder-count="3">
+                <div style="padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
+                  <sc-if value="{{ q.rotulo }}">
+                    <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; color: #b3a693; margin-bottom: 3px;">{{ q.rotulo }}</div>
+                  </sc-if>
+                  <div style="font-size: 12.5px; color: #3d3529; line-height: 1.55;">{{ q.valor }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
           <!-- DOCUMENTOS -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Documentos</div>
@@ -1195,6 +1210,16 @@ class Component extends DCLogic {
       out.veioDe = (p.origem && p.origem.veioDe) || "—";
       out.entrouPor = (p.origem && p.origem.entrouPor) || "—";
     }
+
+    // ficha da inscrição: pergunta a pergunta, legível — não um muro de
+    // texto na linha do tempo
+    out.temInscricao = !!(p.inscricao && p.inscricao.length);
+    out.inscricao = (p.inscricao || []).map(t => {
+      const i = t.indexOf(": ");
+      return (i > 2 && i < 90)
+        ? { rotulo: t.slice(0, i), valor: t.slice(i + 2) }
+        : { rotulo: "", valor: t };
+    });
 
     // ações rápidas (spec 5): registram contato na timeline
     const mk = (label, bg, tpl, detalhe) => ({

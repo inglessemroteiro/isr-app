@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-e",
+  numero: "2026.07.31-f",
   data: "31/07/2026",
-  nota: "Área da aluna redesenhada para o computador: Início em coluna principal (aula e pendências da semana) e coluna de apoio (progresso, aulas extras, atividades); demais abas em coluna única centrada; no celular, as pendências da semana sobem para logo depois do card da aula"
+  nota: "CONSERTO IMPORTANTE: puxar do banco central não apaga mais edição local (os links das turmas sumiam); o editor da turma abre com os links salvos preenchidos. Aula extra com botão de entrar, aula fixa do Book Club (Agenda → Book Club), aba Conta em dois grupos (Sua conta | ISR Miles) e ficha da inscrição legível no perfil da lead"
 };
