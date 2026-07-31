@@ -2907,6 +2907,29 @@
     return neg ? -Math.abs(v) : v;
   }
 
+  // As planilhas da escola têm células com TEXTO LONGO e quebras de linha
+  // dentro (a história da pessoa, a frase real). Copiado, isso vira aspas
+  // com \n no meio — e um leitor ingênuo transforma cada pedaço numa
+  // "linha" da planilha. Era assim que "€ 90 a 130 mensais…" virava lead.
+  // Aqui, quebra de linha dentro de aspas vira espaço; o resto fica.
+  function normalizarPlanilha(texto) {
+    var s = String(texto || "").replace(/\r/g, "");
+    var out = "", dentro = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (ch === '"') {
+        if (dentro && s[i + 1] === '"') { out += '"'; i++; continue; }
+        dentro = !dentro; continue;
+      }
+      if (ch === "\n" && dentro) { out += " "; continue; }
+      out += ch;
+    }
+    // aspa desbalanceada não pode engolir a planilha inteira numa linha só:
+    // nesse caso, melhor ler como sempre foi
+    if (dentro) return s;
+    return out;
+  }
+
   // Divide uma linha de arquivo exportado respeitando aspas: no CSV do
   // Wise, "Sent money to X, Y" é UMA célula, não duas.
   function separarExtratoLinha(l, delim) {
@@ -6746,7 +6769,7 @@
   // Lê o texto colado e devolve o que ENTENDEU, sem gravar nada.
   function lerControlePagamento(texto, opts) {
     opts = opts || {};
-    var linhas = String(texto || "").split(/\r?\n/).filter(function (l) { return l.trim(); });
+    var linhas = normalizarPlanilha(texto).split("\n").filter(function (l) { return l.trim(); });
     if (!linhas.length) return { ok: false, erro: "Nada foi colado.", linhas: [] };
 
     // acha o cabeçalho: a primeira linha que fala de nome e de parcela
@@ -6971,7 +6994,7 @@
   // ordem que estiverem: Nome (obrigatória), Turma, Nível, Professora,
   // Horário, WhatsApp/Telefone, E-mail.
   function lerAlunasTurmas(texto) {
-    var linhas = String(texto || "").split(/\r?\n/).filter(function (l) { return l.trim(); });
+    var linhas = normalizarPlanilha(texto).split("\n").filter(function (l) { return l.trim(); });
     if (!linhas.length) return { ok: false, erro: "Nada foi colado.", linhas: [] };
 
     var iCab = -1, cab = null;
@@ -7146,8 +7169,7 @@
   // Importar leads é a mesma regra dos outros: ler, mostrar, e só gravar
   // depois que a pessoa confere. Quem já é aluna nunca vira lead de novo.
   function lerLeads(texto) {
-    var linhas = String(texto || "").split("\n")
-      .map(function (l) { return l.replace(/\r/g, ""); })
+    var linhas = normalizarPlanilha(texto).split("\n")
       .filter(function (l) { return l.trim(); });
     if (!linhas.length) return { ok: false, linhas: [], erro: "Cole a lista antes de ler." };
 
@@ -7239,6 +7261,11 @@
 
       var estagio = mapEstagio(pega(c, col.estagio));
       var estagioBruto = pega(c, col.estagio);
+
+      // "€ 90 a 130 mensais…" e "#ERROR!" não são pessoas. Linha cujo
+      // nome não parece nome veio quebrada da planilha — fica de fora.
+      if (/^[#€$\d(+]|^R\$/.test(nome) || nome.length > 60)
+        avisos.push("Isso não parece um nome — a linha veio quebrada da planilha e não entra");
 
       if (jaAluna) avisos.push("Já está no sistema como "
         + ((STATUS_META[existe.status] || {}).label || existe.status)
@@ -7374,7 +7401,9 @@
         if (l.nivel && !x.nivel) x.nivel = l.nivel;
         if (l.canal && (!x.origem || !x.origem.canal || x.origem.canal === "WhatsApp"))
           x.origem = Object.assign({}, x.origem, { canal: l.canal, detalhe: "importação de leads" });
-        if (l.desde && !x.desde) x.desde = l.desde;
+        // a data da planilha/inscrição é QUANDO O LEAD ENTROU — é o
+        // "Entrou" do CRM (entrouEm), não a data de matrícula (desde)
+        if (l.desde) x.entrouEm = l.desde;
         if (l.estagio && l.estagio !== "a_contatar") x.estagio = l.estagio;
         if (l.nota) pushHist(x, "contato", "Da planilha importada: " + l.nota.slice(0, 140));
       });
