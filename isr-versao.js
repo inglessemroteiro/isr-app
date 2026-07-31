@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-d",
+  numero: "2026.07.31-e",
   data: "31/07/2026",
-  nota: "Entrada da aluna leva ao app novo (não mais às telas da primeira geração); pendências com Ciente e Redirecionar para um membro da equipe; aparelho conectado envia os dados ao banco central sozinho; Book Club nos materiais da aluna; Jotform traz a faixa de investimento com a pergunta junto"
+  nota: "Área da aluna redesenhada para o computador: Início em coluna principal (aula e pendências da semana) e coluna de apoio (progresso, aulas extras, atividades); demais abas em coluna única centrada; no celular, as pendências da semana sobem para logo depois do card da aula"
 };

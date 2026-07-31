@@ -12,7 +12,7 @@
 <body>
 <x-dc>
 <main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; color: #164951;">
-  <div style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
+  <div class="pf-pagina" style="max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px;">
 
     <!-- TOPO -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -77,8 +77,29 @@
         </sc-if>
       </header>
 
+      <style>
+        /* Em tela larga, a pilha de cartões da direita abre em duas
+           colunas: a página fica com metade da rolagem. A leitura é a de
+           uma pilha de fichas — primeiro a coluna da esquerda, depois a
+           da direita. Em tela estreita nada muda. */
+        @media (min-width: 1080px) {
+          .pf-pagina { max-width: 1280px !important; }
+          .pf-grid { grid-template-columns: 0.85fr 2fr !important; }
+          .pf-dir {
+            display: block !important;
+            column-count: 2;
+            column-gap: 14px;
+          }
+          .pf-dir > * {
+            break-inside: avoid;
+            -webkit-column-break-inside: avoid;
+            margin-bottom: 12px;
+          }
+        }
+      </style>
+
       <!-- 2 COLUNAS -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+      <div class="pf-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
 
         <!-- ═══ COLUNA ESQUERDA · A RELAÇÃO ═══ -->
         <div>
@@ -98,7 +119,7 @@
         </div>
 
         <!-- ═══ COLUNA DIREITA · NÚMEROS E DOCUMENTOS ═══ -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="pf-dir" style="display: flex; flex-direction: column; gap: 12px;">
 
           <!-- ALUNA: CONTRATO VIGENTE -->
           <sc-if value="{{ temContrato }}">
