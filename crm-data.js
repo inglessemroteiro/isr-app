@@ -3480,7 +3480,8 @@
     "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
-    "isr_contas_proprias_v1", "isr_jotform_v1", "isr_gravadas_v1"];
+    "isr_contas_proprias_v1", "isr_jotform_v1", "isr_gravadas_v1",
+    "isr_booking_v1", "isr_systeme_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6290,7 +6291,7 @@
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
-    "isr_jotform_v1", "isr_gravadas_v1"
+    "isr_jotform_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7326,6 +7327,52 @@
     return gravadasUrl();
   }
 
+  // Página de horários (booking page do Google Agenda) de quem faz as
+  // conversas de matrícula. O sistema não consegue LER os horários vagos
+  // dela — o Google não abre isso por API — mas consegue levar a pessoa
+  // direto para a página, que mostra os horários e agenda sozinha.
+  var BOOKING_KEY = "isr_booking_v1";
+  function bookingUrl() {
+    try { return localStorage.getItem(BOOKING_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setBookingUrl(u) {
+    try { localStorage.setItem(BOOKING_KEY, (u || "").trim()); } catch (e) {}
+    agendarSync();
+    return bookingUrl();
+  }
+
+  // systeme.io: o navegador não pode falar direto com a API (CORS); a
+  // Conexão (Apps Script) busca os contatos e devolve. A chave fica no
+  // app, e vai junto de cada chamada.
+  var SYSTEME_KEY = "isr_systeme_v1";
+  function systemeKey() {
+    try { return localStorage.getItem(SYSTEME_KEY) || ""; } catch (e) { return ""; }
+  }
+  function setSystemeKey(k) {
+    try { localStorage.setItem(SYSTEME_KEY, (k || "").trim()); } catch (e) {}
+    agendarSync();
+    return systemeKey();
+  }
+
+  // Contatos do systeme viram as mesmas linhas do importador de leads.
+  function lerLeadsDoSysteme(items) {
+    var linhas = ["Nome\tWhatsApp\tE-mail\tCanal\tEstágio\tNível\tObservação\tData"];
+    (items || []).forEach(function (c) {
+      var campos = {};
+      (c.fields || []).forEach(function (f) { campos[f.slug] = (f.value || "").toString().trim(); });
+      var nome = [campos.first_name, campos.surname].filter(Boolean).join(" ").trim();
+      if (!nome && c.email) nome = c.email.split("@")[0];
+      if (!nome) return;
+      var tags = (c.tags || []).map(function (tg) { return tg.name; }).filter(Boolean).join(", ");
+      linhas.push([nome, campos.phone_number || "", c.email || "", "systeme.io", "",
+        "", (tags ? "tags do systeme: " + tags : "").replace(/[\t\r\n]+/g, " "),
+        (c.registered_at || "").slice(0, 10)].join("\t"));
+    });
+    if (linhas.length === 1) return { ok: false, linhas: [],
+      erro: "O systeme respondeu, mas nenhum contato tinha nome nem e-mail." };
+    return lerLeads(linhas.join("\n"));
+  }
+
   var JOTFORM_KEY = "isr_jotform_v1";
   function jotformKey() {
     try { return localStorage.getItem(JOTFORM_KEY) || ""; } catch (e) { return ""; }
@@ -8088,6 +8135,9 @@
     lerLeads: lerLeads, aplicarLeads: aplicarLeads,
     jotformKey: jotformKey, setJotformKey: setJotformKey,
     gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
+    bookingUrl: bookingUrl, setBookingUrl: setBookingUrl,
+    systemeKey: systemeKey, setSystemeKey: setSystemeKey,
+    lerLeadsDoSysteme: lerLeadsDoSysteme,
     dataIso: iso, hojeIso: function () { return iso(new Date()); },
     lerLeadsDoJotform: lerLeadsDoJotform,
     renomearNaEquipe: renomearNaEquipe,

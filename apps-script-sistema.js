@@ -29,7 +29,8 @@ function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || "";
   if (action === "sistemaLoad") return json_(sistemaLoad_());
   if (action === "cadastrosPendentes") return json_(cadastrosPendentes_());
-  return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
+  if (action === "systemeContacts") return json_(systemeContacts_(e.parameter.key, e.parameter.limit));
+  return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "systemeContacts", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
 }
 
 function doPost(e) {
@@ -248,4 +249,24 @@ function sistemaLoad_() {
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── SYSTEME.IO (leads dos funis → CRM) ───────────────────────────
+// O navegador não consegue falar direto com a API do systeme (CORS);
+// este script busca os contatos e devolve para o app. A chave de API
+// vem do app a cada chamada e NÃO fica gravada aqui.
+function systemeContacts_(key, limit) {
+  if (!key) return { ok: false, error: "sem chave de API" };
+  try {
+    var n = parseInt(limit, 10) || 100;
+    var r = UrlFetchApp.fetch("https://api.systeme.io/api/contacts?limit=" + n,
+      { headers: { "X-API-Key": key }, muteHttpExceptions: true });
+    if (r.getResponseCode() === 401) return { ok: false, error: "chave de API inválida" };
+    if (r.getResponseCode() !== 200)
+      return { ok: false, error: "o systeme respondeu " + r.getResponseCode() };
+    var d = JSON.parse(r.getContentText());
+    return { ok: true, items: d.items || [] };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
 }

@@ -191,6 +191,20 @@
                   <sc-if value="{{ lead.erroReuniao }}">
                     <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">{{ lead.erroReuniao }}</p>
                   </sc-if>
+                  <sc-if value="{{ lead.temBooking }}">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eadfce;">
+                      <a href="{{ lead.bookingUrl }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Ver horários disponíveis de {{ lead.donoReuniao }}</a>
+                      <a href="{{ lead.waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Mandar os horários pra lead escolher</a>
+                    </div>
+                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A página de horários agenda direto no calendário. Depois que a lead escolher, registre o dia e a hora aqui em cima — é o que põe a conversa na Central e no funil.</p>
+                  </sc-if>
+                  <sc-if value="{{ lead.semBooking }}">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eadfce;">
+                      <input ref="{{ lead.bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 220px; padding: 9px 11px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <button onclick="{{ lead.onSalvarBooking }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
+                    </div>
+                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Com a página de horários guardada, dá para mandar a lead escolher o horário sozinha — e o Google agenda direto no calendário de quem atende.</p>
+                  </sc-if>
                 </div>
               </sc-if>
 
@@ -502,6 +516,7 @@ class Component extends DCLogic {
     sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "",
     vista: "funil", dias: 30, filtro: "tudo", extratoN: 0 };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
+  bookingRef = React.createRef();
   matSinalRef = React.createRef();
   formRef = React.createRef();
   pTurmaRef = React.createRef(); pMoedaRef = React.createRef(); pValorRef = React.createRef();
@@ -808,6 +823,23 @@ class Component extends DCLogic {
         out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null, erroReuniao: "" });
         out.erroReuniao = this.state.erroReuniao || "";
         out.donoReuniao = CRM.donoComercial ? CRM.donoComercial() : "quem cuida do comercial";
+        // A página de horários (booking do Google Agenda) mostra os
+        // horários vagos e agenda direto no calendário de quem atende.
+        // O sistema não lê os horários dela — o Google não abre isso por
+        // API — mas leva a pessoa (ou a lead) direto para lá.
+        out.bookingUrl = CRM.bookingUrl ? CRM.bookingUrl() : "";
+        out.temBooking = !!out.bookingUrl;
+        out.semBooking = !out.bookingUrl;
+        out.bookingRef = this.bookingRef;
+        out.onSalvarBooking = () => {
+          const v = ((this.bookingRef.current && this.bookingRef.current.value) || "").trim();
+          if (v) { CRM.setBookingUrl(v); this.bump(); }
+        };
+        out.waEscolherHorario = out.temBooking
+          ? CRM.waLink(l.whatsapp, "Oi, " + CRM.firstName(l.nome)
+            + "! Vamos marcar nossa conversa? Escolhe o melhor horário para você aqui: "
+            + out.bookingUrl + " — qualquer um deles já entra direto na agenda. Até já!")
+          : "#";
         out.onAgendarConfirma = () => {
           const data = (this.reuDataRef.current && this.reuDataRef.current.value) || "";
           if (!data) { this.setState({ erroReuniao: "Escolha o dia da conversa." }); return; }

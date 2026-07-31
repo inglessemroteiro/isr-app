@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.30-f",
+  numero: "2026.07.30-g",
   data: "30/07/2026",
-  nota: "Célula com quebra de linha não vira lead (fim do #ERROR! e das faixas de preço como nome), e a data da planilha/inscrição vira o Entrou do CRM"
+  nota: "Leads do systeme.io pela Conexão, página de horários (booking) da Carla no fluxo de conversa do CRM, e os consertos da importação de leads"
 };
