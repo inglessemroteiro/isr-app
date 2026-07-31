@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-g",
+  numero: "2026.07.31-h",
   data: "31/07/2026",
-  nota: "Buscar inscrições do Jotform traz o histórico inteiro por páginas (até 1000, sem o teto de 200); com o dedupe por e-mail e WhatsApp, reimportar nunca duplica"
+  nota: "Botão Copiar e-mails na tela Alunas: copia os endereços da lista filtrada, separados por vírgula, prontos para a caixa Cco — filtrar por turma copia só os daquela turma"
 };
