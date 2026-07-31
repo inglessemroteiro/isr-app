@@ -40,6 +40,24 @@
       </div>
     </header>
 
+    <!-- CRM EM DESTAQUE — a ferramenta principal do perfil comercial -->
+    <sc-if value="{{ crmDestaque }}">
+      <a href="ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" style="display: block; text-decoration: none; background: #164951; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 4px;">CRM · Funil de leads</div>
+            <div style="font-size: 15px; font-weight: 700; color: #fff;">{{ crmResumo }}</div>
+          </div>
+          <div style="display: flex; gap: 22px; flex-wrap: wrap;">
+            <div><div style="font-size: 20px; font-weight: 700; color: #fc9082;">{{ crmNovas }}</div><div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.65);">novas hoje</div></div>
+            <div><div style="font-size: 20px; font-weight: 700; color: #fff;">{{ crmContatar }}</div><div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.65);">a contatar</div></div>
+            <div><div style="font-size: 20px; font-weight: 700; color: #b8a8d9;">{{ crmReunioes }}</div><div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.65);">conversas marcadas</div></div>
+          </div>
+          <span style="flex: none; background: #fc9082; color: #164951; font-size: 12px; font-weight: 700; padding: 11px 22px; border-radius: 999px;">Abrir o CRM</span>
+        </div>
+      </a>
+    </sc-if>
+
     <!-- FILA "PARA HOJE" — o elemento principal (spec 3.1) -->
     <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden; margin-bottom: 18px;">
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ede8;">
@@ -466,7 +484,21 @@ class Component extends DCLogic {
       renovacoesMeta: metas.renovacoes + "/" + metas.metaRenovacoes,
       pMatriculas: Math.min(100, Math.round(100 * metas.matriculas / metas.metaMatriculas)) + "%",
       pRenovacoes: Math.min(100, Math.round(100 * metas.renovacoes / metas.metaRenovacoes)) + "%",
-      areas: areasPorPerfil[perfilAtivo] || areas
+      areas: areasPorPerfil[perfilAtivo] || areas,
+
+      // CRM em destaque no topo para quem vive do funil
+      ...((() => {
+        if (perfilAtivo !== "comercial") return { crmDestaque: false };
+        const leadsAll = CRM.getLeads();
+        const ativos = leadsAll.filter(l => l.estagio !== "matriculado" && l.estagio !== "perdido");
+        return {
+          crmDestaque: true,
+          crmResumo: ativos.length + (ativos.length === 1 ? " lead no funil" : " leads no funil"),
+          crmNovas: String(leadsAll.filter(l => CRM.relativeDays(l.entrouEm) === "Hoje").length),
+          crmContatar: String(leadsAll.filter(l => l.estagio === "a_contatar" || l.estagio === "incompleta").length),
+          crmReunioes: String(leadsAll.filter(l => l.reuniao && !l.reuniao.feita).length)
+        };
+      })())
     };
   }
 }
