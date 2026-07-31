@@ -3480,7 +3480,7 @@
     "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
-    "isr_contas_proprias_v1", "isr_jotform_v1", "isr_gravadas_v1",
+    "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
     "isr_booking_v1", "isr_systeme_v1"];
 
   function snapshotDados() {
@@ -6291,7 +6291,7 @@
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
-    "isr_jotform_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1"
+    "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7409,6 +7409,28 @@
     return jotformKey();
   }
 
+  // O Jotform tem dois endereços de API: o comum e o europeu. Conta
+  // guardada nos servidores da Europa só responde no europeu — no comum a
+  // chave volta como inválida. A tela tenta um endereço e, se a resposta
+  // vier com erro, tenta o outro; o que funcionou fica guardado aqui para
+  // as próximas buscas.
+  var JOTFORM_BASE_KEY = "isr_jotform_base_v1";
+  var JOTFORM_BASES = ["https://api.jotform.com", "https://eu-api.jotform.com"];
+  function jotformBase() {
+    try {
+      var b = localStorage.getItem(JOTFORM_BASE_KEY) || "";
+      return JOTFORM_BASES.indexOf(b) >= 0 ? b : JOTFORM_BASES[0];
+    } catch (e) { return JOTFORM_BASES[0]; }
+  }
+  function setJotformBase(b) {
+    try { localStorage.setItem(JOTFORM_BASE_KEY, b || ""); } catch (e) {}
+    agendarSync();
+    return jotformBase();
+  }
+  function jotformOutraBase(b) {
+    return b === JOTFORM_BASES[0] ? JOTFORM_BASES[1] : JOTFORM_BASES[0];
+  }
+
   // Recebe o array `content` de /form/{id}/submissions e devolve a mesma
   // leitura do lerLeads — montando as linhas e reaproveitando toda a
   // inteligência de lá (estágio, telefone × e-mail, quem já é aluna).
@@ -8160,6 +8182,7 @@
     lerAlunasTurmas: lerAlunasTurmas, aplicarAlunasTurmas: aplicarAlunasTurmas,
     lerLeads: lerLeads, aplicarLeads: aplicarLeads,
     jotformKey: jotformKey, setJotformKey: setJotformKey,
+    jotformBase: jotformBase, setJotformBase: setJotformBase, jotformOutraBase: jotformOutraBase,
     gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
     bookingUrl: bookingUrl, setBookingUrl: setBookingUrl,
     systemeKey: systemeKey, setSystemeKey: setSystemeKey,

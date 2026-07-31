@@ -8,5 +8,5 @@
 window.ISR_VERSAO = {
   numero: "2026.07.31-a",
   data: "31/07/2026",
-  nota: "Marcar reunião direto do Perfil, seleção de vários leads de uma vez no CRM, contatos do systeme/Jotform sem duplicar (por e-mail e WhatsApp) e área da aluna adaptada ao computador"
+  nota: "Reunião com dia e hora direto do Perfil; seleção de vários leads no CRM para apagar ou mudar estágio de uma vez; importação reconhece contato repetido por e-mail e WhatsApp; Jotform funciona também para conta no servidor europeu; área da aluna em duas colunas no computador"
 };
