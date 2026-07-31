@@ -88,9 +88,12 @@
 
     <!-- NOTIFICAÇÃO NOVAS INSCRIÇÕES -->
     <sc-if value="{{ temNovas }}">
-      <div style="display: flex; align-items: center; gap: 10px; background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 8px; padding: 11px 14px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 8px; padding: 11px 14px; margin-bottom: 14px;">
         <span style="width: 9px; height: 9px; border-radius: 50%; background: #e07856; flex: none;"></span>
-        <span style="font-size: 13px; color: #3d3529;"><strong>{{ novasCount }}</strong> {{ novasLabel }} — abrir o funil.</span>
+        <span style="font-size: 13px; color: #3d3529;"><strong>{{ novasCount }}</strong> {{ novasLabel }}:</span>
+        <sc-for list="{{ novasLeads }}" as="nv" hint-placeholder-count="2">
+          <button onclick="{{ nv.onAbrir }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ nv.nome }}</button>
+        </sc-for>
       </div>
     </sc-if>
 
@@ -197,7 +200,7 @@
                       <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
                     </div>
                     <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora · Brasília</div>
                       <input ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
                     </div>
                     <button onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
@@ -530,6 +533,9 @@ class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0,
     sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "",
     vista: "funil", dias: 30, filtro: "tudo", extratoN: 0, selecao: {} };
+  // inscrição nova que chega pelo cadastro online (puxada a cada 5 min
+  // pela camada de dados) redesenha o funil sem precisar recarregar
+  _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   bookingRef = React.createRef();
   matSinalRef = React.createRef();
@@ -840,7 +846,9 @@ class Component extends DCLogic {
         out.agendandoReuniao = this.state.agendandoReuniaoId === l.id;
         out.semReuniao = !(l.reuniao && !l.reuniao.feita) && this.state.agendandoReuniaoId !== l.id;
         out.temReuniao = !!(l.reuniao && !l.reuniao.feita);
-        out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " · " + l.reuniao.hora : "")) : "";
+        // com hora, mostra nos dois fusos — evita o "era 14h de onde?"
+        out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data)
+          + (l.reuniao.hora ? " · " + (CRM.horaBRNL ? CRM.horaBRNL(l.reuniao.data, l.reuniao.hora) : l.reuniao.hora) : "")) : "";
         out.reuDataRef = this.reuDataRef; out.reuHoraRef = this.reuHoraRef;
         out.onAgendar = () => this.setState({ agendandoReuniaoId: l.id, matriculandoId: null, perdendoId: null });
         out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null, erroReuniao: "" });
@@ -876,7 +884,8 @@ class Component extends DCLogic {
         // convite pronto para mandar à lead, com dia, hora e o link do Meet
         out.waReuniao = (function () {
           if (!l.reuniao) return "#";
-          const quando = CRM.ddmm(l.reuniao.data) + (l.reuniao.hora ? " às " + l.reuniao.hora : "");
+          const quando = CRM.ddmm(l.reuniao.data)
+            + (l.reuniao.hora ? " às " + (CRM.horaBRNL ? CRM.horaBRNL(l.reuniao.data, l.reuniao.hora) : l.reuniao.hora) : "");
           return CRM.waLink(l.whatsapp,
             "Oi, " + CRM.firstName(l.nome) + "! Nossa conversa está marcada para " + quando
             + ". Vou te mandar o link por aqui um pouco antes. Até lá!");
@@ -965,7 +974,17 @@ class Component extends DCLogic {
       return out;
     });
 
-    const novas = CRM.getLeads().filter(l => l.status === "lead" && CRM.relativeDays(l.entrouEm) === "Hoje").length;
+    // O aviso mostra QUEM entrou e leva direto ao card: "2 novas — abrir o
+    // funil" mandava procurar numa aba onde elas podiam nem estar.
+    const stageTab = { a_contatar: "a_contatar", em_conversa: "em_conversa", reuniao: "reuniao",
+      contrato: "contrato", incompleta: "incompletas", matriculado: "matriculados", perdido: "perdidos" };
+    const novasLeadsRaw = CRM.getLeads().filter(l => l.status === "lead" && CRM.relativeDays(l.entrouEm) === "Hoje");
+    const novasLeads = novasLeadsRaw.map(l => ({
+      nome: l.nome,
+      onAbrir: () => this.setState({ tab: stageTab[l.estagio] || "a_contatar", openId: l.id,
+        perdendoId: null, matriculandoId: null, agendandoReuniaoId: null })
+    }));
+    const novas = novasLeadsRaw.length;
 
     const reativacao = CRM.REATIVACAO.map(ex => ({
       nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
@@ -1056,7 +1075,7 @@ class Component extends DCLogic {
       matriculadaTexto: this.state.matriculada
         ? this.state.matriculada + " foi matriculada. Já consta em Alunas, na turma escolhida, com o contrato e o onboarding criados."
         : "",
-      novasCount: novas,
+      novasCount: novas, novasLeads,
       novasLabel: novas === 1 ? "nova inscrição hoje" : "novas inscrições hoje",
       resetDemo: () => { CRM.resetDemo(); this.setState({ openId: null, tab: "para_hoje" }); },
       linkCadastroLabel: this.state.linkCopiado ? "Link copiado" : "Link de cadastro",

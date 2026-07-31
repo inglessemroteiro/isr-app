@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-b",
+  numero: "2026.07.31-c",
   data: "31/07/2026",
-  nota: "Pendências de cadastro da Central abrem o lugar certo: aluna sem professora leva à turma dela, turma abaixo do mínimo abre a própria turma e renovação parada abre o perfil da pessoa"
+  nota: "Professora da turma vale para a aluna (fim do falso 'sem professora'); pendências com Ciente e Mandar pra Érika; aviso de novas inscrições mostra quem entrou e abre o card; hora da reunião nos dois fusos (Brasil e Holanda) e no Google Agenda; Jotform traz todas as respostas; cadastro online entra sozinho a cada 5 minutos; Importar leads na área Comercial"
 };
