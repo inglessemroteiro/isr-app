@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-a",
+  numero: "2026.07.31-b",
   data: "31/07/2026",
-  nota: "Reunião com dia e hora direto do Perfil; seleção de vários leads no CRM para apagar ou mudar estágio de uma vez; importação reconhece contato repetido por e-mail e WhatsApp; Jotform funciona também para conta no servidor europeu; área da aluna em duas colunas no computador"
+  nota: "Pendências de cadastro da Central abrem o lugar certo: aluna sem professora leva à turma dela, turma abaixo do mínimo abre a própria turma e renovação parada abre o perfil da pessoa"
 };

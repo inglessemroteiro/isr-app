@@ -216,7 +216,10 @@ class Component extends DCLogic {
 
     const ocup = CRM.ocupacaoTurmas();
     let u = ocup.filter(t => t.id === this.turmaId())[0];
-    if (!u) u = ocup[0];
+    // Sem id na URL, mostrar a primeira turma é um padrão razoável. Com um
+    // id que não existe, mostrar outra turma no lugar é enganar — melhor
+    // dizer que não achou.
+    if (!u && !this.turmaId()) u = ocup[0];
     if (!u) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [] }, refs);
     const raw = CRM.turmasLista().filter(t => t.id === u.id)[0] || {};
 

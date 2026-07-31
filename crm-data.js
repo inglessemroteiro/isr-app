@@ -5050,13 +5050,22 @@
     var out = [];
 
     // aluna sem professora: ninguém acompanha, ninguém dá chamada por ela
+    // O botão precisa levar à TURMA dela (é lá que se atribui professora) —
+    // por isso resolve o id da turma pelo nome; id de pessoa na página da
+    // turma abria a turma errada. Sem turma, o caminho é o perfil.
     carteiraProfessoras().semProfessora.forEach(function (a) {
+      var temTurma = a.turma && a.turma !== "—";
+      var t = temTurma
+        ? ocupacaoTurmas().filter(function (x) { return x.label === a.turma; })[0]
+        : null;
       out.push({ tipo: "aluna_sem_professora", urg: 1,
         titulo: a.nome + " está sem professora",
-        detalhe: (a.turma && a.turma !== "\u2014")
+        detalhe: temTurma
           ? "Turma " + a.turma + " sem professora atribuída"
           : "Sem turma e sem professora",
-        onde: "ISR - Turma.dc.html", ondeLabel: "Abrir a turma",
+        onde: t ? "ISR - Turma.dc.html" : "ISR - Perfil.dc.html",
+        ondeLabel: t ? "Abrir a turma" : "Abrir o perfil",
+        turmaId: t ? t.id : "",
         pessoaId: a.id });
     });
 
@@ -5083,13 +5092,15 @@
         nome: m.nome });
     });
 
-    // turma que não fecha o mínimo: decisão de juntar ou encerrar
+    // turma que não fecha o mínimo: decisão de juntar ou encerrar.
+    // Abre a página da própria turma, com as alunas e os dados à vista.
     turmasAbaixoDoMinimo().forEach(function (u) {
       out.push({ tipo: "turma_abaixo_minimo", urg: 2,
         titulo: u.label + " com " + u.alunas
           + (u.alunas === 1 ? " aluna" : " alunas"),
         detalhe: "Faltam " + u.faltam + " para o mínimo de " + MINIMO_TURMA,
-        onde: "ISR - Turmas e Projetos.dc.html", ondeLabel: "Ver turmas" });
+        onde: "ISR - Turma.dc.html", ondeLabel: "Abrir a turma",
+        turmaId: u.id });
     });
 
     // contrato vencendo sem renovação aberta
@@ -5100,10 +5111,11 @@
       var dias = daysBetween(today(), parseISO(c.fim));
       if (dias < 0 || dias > 45) return;
       if (p.renovacao && p.renovacao !== "a_abordar") return;
+      // direto no perfil da pessoa, onde a renovação é conduzida
       out.push({ tipo: "renovacao_parada", urg: 2,
         titulo: p.nome + " termina o ciclo em " + dias + " dias",
         detalhe: "Conversa de renovação ainda não começou",
-        onde: "ISR - Alunas.dc.html", ondeLabel: "Abrir",
+        onde: "ISR - Perfil.dc.html", ondeLabel: "Abrir",
         pessoaId: p.id });
     });
 
@@ -5374,7 +5386,7 @@
     return turmasLista().map(function (u) {
       var label = u.nivel + " · " + u.turma;
       var n = alunasDaTurma(label).length;
-      return { label: label, nivel: u.nivel, horario: u.turma,
+      return { id: u.id, label: label, nivel: u.nivel, horario: u.turma,
         professora: u.teacher, alunas: n, faltam: Math.max(0, MINIMO_TURMA - n) };
     }).filter(function (x) { return x.alunas < MINIMO_TURMA; });
   }
