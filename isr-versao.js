@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.30-g",
-  data: "30/07/2026",
-  nota: "Leads do systeme.io pela Conexão, página de horários (booking) da Carla no fluxo de conversa do CRM, e os consertos da importação de leads"
+  numero: "2026.07.31-a",
+  data: "31/07/2026",
+  nota: "Reunião com dia e hora direto do Perfil; seleção de vários leads no CRM para apagar ou mudar estágio de uma vez; importação reconhece contato repetido por e-mail e WhatsApp; Jotform funciona também para conta no servidor europeu; área da aluna em duas colunas no computador"
 };
