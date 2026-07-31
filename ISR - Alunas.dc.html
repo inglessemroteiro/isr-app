@@ -21,6 +21,7 @@
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Alunas</h1>
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="{{ onCopiarEmails }}" title="Copia os e-mails da lista filtrada, prontos para colar em Cco" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiarEmails }}</button>
         <button onclick="{{ onCopiarLista }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiar }}</button>
         <a href="ISR%20-%20Turmas%20e%20Projetos.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Turmas</a>
       </div>
@@ -161,7 +162,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { termometro: [], turmaOpts: [], profOpts: [], alunas: [], vazio: true,
-      contagem: "", temFiltro: false, labelCopiar: "Copiar lista",
+      contagem: "", temFiltro: false, labelCopiar: "Copiar lista", labelCopiarEmails: "Copiar e-mails",
       retNumeros: [], motivos: [], semMotivos: true, exAlunas: [], semEx: true,
       temMaisEx: false, periodoLabel: "" };
 
@@ -297,6 +298,30 @@ class Component extends DCLogic {
       onLimpar: () => {
         if (this.buscaRef.current) this.buscaRef.current.value = "";
         this.setState({ busca: "", turma: "", professora: "", risco: "", tag: "" });
+      },
+      // e-mails da lista filtrada, separados por vírgula — prontos para a
+      // caixa Cco de um e-mail ou uma campanha. Filtro ativo vale: filtrar
+      // por turma copia só os e-mails daquela turma.
+      labelCopiarEmails: this.state.copiadoEmails
+        ? this.state.copiadoEmails
+        : "Copiar e-mails",
+      onCopiarEmails: () => {
+        const emails = [];
+        let semEmail = 0;
+        filtradas.forEach(a => {
+          const pes = CRM.getPessoa(a.id);
+          const e = ((pes && pes.email) || "").trim();
+          if (e) { if (emails.indexOf(e) < 0) emails.push(e); } else semEmail++;
+        });
+        const feito = () => {
+          this.setState({ copiadoEmails: emails.length + " copiados"
+            + (semEmail ? " · " + semEmail + " sem e-mail" : "") });
+          setTimeout(() => this.setState({ copiadoEmails: "" }), 3200);
+        };
+        const txt = emails.join(", ");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(feito).catch(() => { window.prompt("Copie os e-mails:", txt); feito(); });
+        } else { window.prompt("Copie os e-mails:", txt); feito(); }
       },
       labelCopiar: this.state.copiado ? "Lista copiada" : "Copiar lista",
       onCopiarLista: () => {
