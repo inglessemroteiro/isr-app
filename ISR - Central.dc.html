@@ -101,9 +101,11 @@
               <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fu.detalhe }}</div>
             </div>
             <a href="{{ fu.href }}" style="flex: none; text-decoration: none; border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px;">{{ fu.ondeLabel }}</a>
-            <sc-if value="{{ fu.temDelegar }}">
-              <button onclick="{{ fu.onDelegar }}" title="Cria a tarefa na fila dela e tira desta lista" style="flex: none; border: 1px solid #e0c3b6; background: #fff; color: #9c6f56; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ fu.delegarLabel }}</button>
-            </sc-if>
+            <select onchange="{{ fu.onRedirecionar }}" title="Cria a tarefa na fila do membro escolhido" style="flex: none; appearance: auto; border: 1px solid #e0c3b6; background: #fff; color: #9c6f56; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">
+              <sc-for list="{{ fu.redirOpts }}" as="ro" hint-placeholder-count="3">
+                <option value="{{ ro.id }}">{{ ro.label }}</option>
+              </sc-for>
+            </select>
             <button onclick="{{ fu.onCiente }}" title="Não mostrar de novo" style="flex: none; border: none; background: transparent; color: #b8a394; font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; font-family: inherit;">Ciente</button>
           </div>
         </sc-for>
@@ -423,6 +425,8 @@ class Component extends DCLogic {
       ...((() => {
         const furos = perfilAtivo === "gestora" && CRM.furosDeCadastro
           ? CRM.furosDeCadastro() : [];
+        const equipeNomes = (CRM.equipeLista ? CRM.equipeLista() : [])
+          .map(m => m.nome).filter(Boolean);
         return {
           temFuros: furos.length > 0,
           furosResumo: furos.length === 1 ? "1 pendência de cadastro"
@@ -433,14 +437,16 @@ class Component extends DCLogic {
             ondeLabel: fu.ondeLabel,
             href: encodeURI(fu.onde) + (fu.turmaId ? "?id=" + fu.turmaId
               : (fu.pessoaId ? "?id=" + fu.pessoaId : "")),
-            // "Ciente" tira da lista de vez; delegar cria a tarefa na fila
-            // de quem cuida do assunto e também tira daqui.
+            // "Ciente" tira da lista de vez; "Redirecionar" cria a tarefa
+            // na fila do membro escolhido e também tira daqui.
             onCiente: () => { CRM.marcarFuroCiente(fu.chave); this.bump(); },
-            temDelegar: !!fu.delegarPara,
-            delegarLabel: "Mandar pra " + (fu.delegarPara || ""),
-            onDelegar: () => {
-              CRM.addTarefa({ titulo: fu.titulo + " — " + fu.detalhe,
-                dono: fu.delegarPara, por: (user && user.nome) || "" });
+            redirOpts: [{ id: "", label: "Redirecionar…" }]
+              .concat(equipeNomes.map(n => ({ id: n, label: n }))),
+            onRedirecionar: (e) => {
+              const dono = e.target.value;
+              if (!dono) return;
+              CRM.addTarefa({ titulo: fu.titulo, detalhe: fu.detalhe,
+                dono, por: (user && user.nome) || "" });
               CRM.marcarFuroCiente(fu.chave);
               this.bump();
             }

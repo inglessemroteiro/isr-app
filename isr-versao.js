@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-c",
+  numero: "2026.07.31-d",
   data: "31/07/2026",
-  nota: "Professora da turma vale para a aluna (fim do falso 'sem professora'); pendências com Ciente e Mandar pra Érika; aviso de novas inscrições mostra quem entrou e abre o card; hora da reunião nos dois fusos (Brasil e Holanda) e no Google Agenda; Jotform traz todas as respostas; cadastro online entra sozinho a cada 5 minutos; Importar leads na área Comercial"
+  nota: "Entrada da aluna leva ao app novo (não mais às telas da primeira geração); pendências com Ciente e Redirecionar para um membro da equipe; aparelho conectado envia os dados ao banco central sozinho; Book Club nos materiais da aluna; Jotform traz a faixa de investimento com a pergunta junto"
 };

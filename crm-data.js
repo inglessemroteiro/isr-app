@@ -3525,7 +3525,7 @@
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
-    "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1"];
+    "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1", "isr_bookclub_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -3812,6 +3812,11 @@
   }
   try { setTimeout(puxarNovidades, 50); } catch (e) {}
   try { setInterval(puxarNovidades, 5 * 60 * 1000); } catch (e) {}
+  // O aparelho que TEM os dados precisa subi-los ao menos uma vez — antes,
+  // só uma edição disparava o envio, e um celular recém-conectado que
+  // ninguém editava nunca alimentava o banco central. O envio mescla com
+  // o remoto antes de gravar, então rodar sempre é seguro.
+  try { setTimeout(function () { if (backendUrl()) agendarSync(); }, 4000); } catch (e) {}
 
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
@@ -5186,7 +5191,7 @@
       if (dias < 0 || dias > 45) return;
       if (p.renovacao && p.renovacao !== "a_abordar") return;
       // direto no perfil da pessoa, onde a renovação é conduzida
-      out.push({ tipo: "renovacao_parada", urg: 2, chave: "renovacao_parada|" + p.id, delegarPara: "Érika",
+      out.push({ tipo: "renovacao_parada", urg: 2, chave: "renovacao_parada|" + p.id,
         titulo: p.nome + " termina o ciclo em " + dias + " dias",
         detalhe: "Conversa de renovação ainda não começou",
         onde: "ISR - Perfil.dc.html", ondeLabel: "Abrir",
@@ -5892,6 +5897,20 @@
   // miles. Não conta hora de aula — o certificado é de aula com
   // professora. O link mora em um lugar só; se a ferramenta mudar de
   // endereço, muda aqui.
+  // O Book Club tem app próprio (hoje no Netlify da escola). O endereço
+  // fica configurável, com o atual como padrão — a aluna ganha o atalho
+  // nos materiais sem ninguém precisar configurar nada.
+  var BOOKCLUB_KEY = "isr_bookclub_v1";
+  function bookclubUrl() {
+    try { return localStorage.getItem(BOOKCLUB_KEY) || "https://app.inglessemroteiro.com.br"; }
+    catch (e) { return "https://app.inglessemroteiro.com.br"; }
+  }
+  function setBookclubUrl(url) {
+    try { localStorage.setItem(BOOKCLUB_KEY, (url || "").trim()); } catch (e) {}
+    agendarSync();
+    return bookclubUrl();
+  }
+
   var FLIN_KEY = "isr_flin_url_v1";
   var FLIN_URL_PADRAO = "";
 
@@ -6380,7 +6399,7 @@
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
     "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1",
-    "isr_furos_ok_v1"
+    "isr_furos_ok_v1", "isr_bookclub_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -8279,6 +8298,7 @@
     jotformKey: jotformKey, setJotformKey: setJotformKey,
     jotformBase: jotformBase, setJotformBase: setJotformBase, jotformOutraBase: jotformOutraBase,
     gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
+    bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookingUrl: bookingUrl, setBookingUrl: setBookingUrl,
     systemeKey: systemeKey, setSystemeKey: setSystemeKey,
     lerLeadsDoSysteme: lerLeadsDoSysteme,
