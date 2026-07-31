@@ -3816,7 +3816,7 @@
   // só uma edição disparava o envio, e um celular recém-conectado que
   // ninguém editava nunca alimentava o banco central. O envio mescla com
   // o remoto antes de gravar, então rodar sempre é seguro.
-  try { setTimeout(function () { if (backendUrl()) agendarSync(); }, 4000); } catch (e) {}
+  try { setTimeout(function () { if (backendUrl()) agendarSync(); }, 1000); } catch (e) {}
 
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
