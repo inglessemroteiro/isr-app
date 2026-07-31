@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-h",
+  numero: "2026.07.31-i",
   data: "31/07/2026",
-  nota: "Botão Copiar e-mails na tela Alunas: copia os endereços da lista filtrada, separados por vírgula, prontos para a caixa Cco — filtrar por turma copia só os daquela turma"
+  nota: "Importar inscrições (Jotform, systeme ou planilha) completa o e-mail e o WhatsApp de quem já é aluna quando o campo está vazio — sem transformar ninguém em lead. Buscar o histórico do Jotform preenche a lista de e-mails sozinho"
 };
