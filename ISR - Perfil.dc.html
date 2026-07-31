@@ -451,6 +451,46 @@
                 </sc-for>
               </div>
               <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ avisoFunil }}</p>
+              <sc-if value="{{ marcandoReuniao }}">
+                <div style="background: #f6f2ea; border-radius: 10px; padding: 13px 14px; margin-top: 12px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
+                  <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ donoReuniao }}, vira pendência na Central e libera o convite para mandar à lead.</p>
+                  <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
+                      <input ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
+                      <input ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <button onclick="{{ onMarcarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
+                    <button onclick="{{ onMarcarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                  </div>
+                  <sc-if value="{{ erroReuniao }}">
+                    <p style="margin: 9px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroReuniao }}</p>
+                  </sc-if>
+                  <sc-if value="{{ temBooking }}">
+                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
+                      <a href="{{ bookingUrl }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Ver horários disponíveis de {{ donoReuniao }}</a>
+                      <a href="{{ waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Mandar os horários pra lead escolher</a>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ semBooking }}">
+                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
+                      <input ref="{{ bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 200px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <button onclick="{{ onSalvarBooking }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ temReuniao }}">
+                <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; background: rgba(107,91,149,0.07); border: 1px solid rgba(107,91,149,0.22); border-radius: 10px; padding: 10px 12px; margin-top: 12px;">
+                  <span style="font-size: 11.5px; color: #164951; font-weight: 700;">Conversa marcada: {{ reuniaoInfo }}</span>
+                  <a href="{{ waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Mandar convite</a>
+                  <a href="{{ gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Google Agenda</a>
+                </div>
+              </sc-if>
               <div style="font-size: 10px; color: #9b8b7e; margin: 12px 0 6px;">Turma de interesse <span style="color: #b8ada0;">(vira sugestão na matrícula)</span></div>
               <select onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
                 <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
@@ -516,7 +556,8 @@ class Component extends DCLogic {
   state = { tick: 0, editandoCadastro: false, editandoContrato: false, editandoTurma: false,
             encerrando: false, tipoSaida: "saiu", renovando: false,
             abrindoProduto: "", progPago: false,
-            renegAberto: false, renegMeses: 3, renegParcelas: 0, renegTick: 0, renegErro: "" };
+            renegAberto: false, renegMeses: 3, renegParcelas: 0, renegTick: 0, renegErro: "",
+            marcandoReuniao: false, erroReuniao: "" };
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
@@ -540,6 +581,8 @@ class Component extends DCLogic {
   renegNovoRef = React.createRef(); renegDescRef = React.createRef();
   moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
   moedasBonusRef = React.createRef();
+  reuDataRef = React.createRef(); reuHoraRef = React.createRef();
+  bookingRef = React.createRef();
 
   emDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -1060,11 +1103,54 @@ class Component extends DCLogic {
               window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id;
               return;
             }
+            // Reunião não é só um estágio: sem dia e hora ela não entra na
+            // agenda nem na Central. A pílula abre o formulário de marcar.
+            if (s.id === "reuniao") {
+              this.setState({ marcandoReuniao: true, erroReuniao: "" });
+              return;
+            }
             CRM.setStage(p.id, s.id); this.bump();
           },
           bg: sel ? s.color : "#fff", fg: sel ? "#fff" : s.color, border: s.color };
       });
       out.avisoFunil = "Matriculados abre a tela de matrícula, onde entram turma e condições de pagamento.";
+      // marcar a conversa direto do perfil, igual ao formulário do CRM
+      out.marcandoReuniao = this.state.marcandoReuniao;
+      out.reuDataRef = this.reuDataRef; out.reuHoraRef = this.reuHoraRef;
+      out.erroReuniao = this.state.erroReuniao || "";
+      out.donoReuniao = CRM.donoComercial ? CRM.donoComercial() : "quem cuida do comercial";
+      out.onMarcarCancela = () => this.setState({ marcandoReuniao: false, erroReuniao: "" });
+      out.onMarcarConfirma = () => {
+        const data = (this.reuDataRef.current && this.reuDataRef.current.value) || "";
+        if (!data) { this.setState({ erroReuniao: "Escolha o dia da conversa." }); return; }
+        const hora = (this.reuHoraRef.current && this.reuHoraRef.current.value) || "";
+        CRM.setStage(p.id, "reuniao");
+        CRM.agendarReuniao(p.id, data, hora);
+        this.setState({ marcandoReuniao: false, erroReuniao: "" });
+      };
+      out.bookingUrl = CRM.bookingUrl ? CRM.bookingUrl() : "";
+      out.temBooking = !!out.bookingUrl;
+      out.semBooking = !out.bookingUrl;
+      out.bookingRef = this.bookingRef;
+      out.onSalvarBooking = () => {
+        const v = ((this.bookingRef.current && this.bookingRef.current.value) || "").trim();
+        if (v) { CRM.setBookingUrl(v); this.bump(); }
+      };
+      out.waEscolherHorario = out.temBooking
+        ? CRM.waLink(p.whatsapp, "Oi, " + CRM.firstName(p.nome)
+          + "! Vamos marcar nossa conversa? Escolhe o melhor horário para você aqui: "
+          + out.bookingUrl + " — qualquer um deles já entra direto na agenda. Até já!")
+        : "#";
+      out.temReuniao = !!(p.reuniao && !p.reuniao.feita);
+      out.reuniaoInfo = p.reuniao ? (CRM.ddmm(p.reuniao.data) + (p.reuniao.hora ? " · " + p.reuniao.hora : "")) : "";
+      out.gcalReuniao = CRM.gcalReuniao ? CRM.gcalReuniao(p.id) : "#";
+      out.waReuniao = (function () {
+        if (!p.reuniao) return "#";
+        const quando = CRM.ddmm(p.reuniao.data) + (p.reuniao.hora ? " às " + p.reuniao.hora : "");
+        return CRM.waLink(p.whatsapp,
+          "Oi, " + CRM.firstName(p.nome) + "! Nossa conversa está marcada para " + quando
+          + ". Vou te mandar o link por aqui um pouco antes. Até lá!");
+      })();
       out.followupAtual = p.proximoFollowup ? (CRM.ddmm(p.proximoFollowup) + " (" + this.emQuando(p.proximoFollowup) + ")") : "não agendado";
       out.followups = CRM.followupPresets().map(f => ({
         label: f.label, onClick: () => { CRM.setFollowup(p.id, f.iso, f.label); this.bump(); }

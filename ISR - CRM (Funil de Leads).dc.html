@@ -120,12 +120,26 @@
         </sc-for>
       </div>
 
+      <!-- BARRA DE SELEÇÃO EM MASSA -->
+      <sc-if value="{{ temSelecao }}">
+        <div style="display: flex; gap: 9px; flex-wrap: wrap; align-items: center; background: #164951; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+          <span style="font-size: 12px; font-weight: 700; color: #fff;">{{ selResumo }}</span>
+          <select onchange="{{ onSelStage }}" style="appearance: auto; border: 1px solid rgba(255,255,255,0.35); background: #1d5a63; color: #fff; font-size: 11.5px; font-weight: 600; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-family: inherit;">
+            <sc-for list="{{ selStageOpts }}" as="ss" hint-placeholder-count="4">
+              <option value="{{ ss.id }}">{{ ss.label }}</option>
+            </sc-for>
+          </select>
+          <button onclick="{{ onSelApagar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ selApagarLabel }}</button>
+          <button onclick="{{ onSelLimpar }}" style="border: 1px solid rgba(255,255,255,0.35); background: transparent; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Desmarcar</button>
+        </div>
+      </sc-if>
+
       <!-- TABELA -->
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow-x: auto;">
 
         <!-- CABEÇALHO DE COLUNAS -->
         <div style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 700px;">
-          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Lead <span style="opacity:.5;">⌄</span></span>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;"><input type="checkbox" checked="{{ todosMarcados }}" onchange="{{ onSelTodos }}" title="Marcar todos desta visão" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0;" /> Lead <span style="opacity:.5;">⌄</span></span>
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Entrou <span style="opacity:.5;">⌄</span></span>
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Turma <span style="opacity:.5;">⌄</span></span>
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Origem <span style="opacity:.5;">⌄</span></span>
@@ -144,6 +158,7 @@
           <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; cursor: pointer; background: {{ lead.rowBg }}; min-width: 700px;">
             <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 7px;">
+                <input type="checkbox" checked="{{ lead.marcado }}" onclick="{{ lead.onSelClick }}" onchange="{{ lead.onMarcar }}" title="Marcar para agir em vários de uma vez" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0; flex: none;" />
                 <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14.5px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ lead.nome }}</a>
                 <span style="color: #b9ab99; font-size: 11px;">{{ lead.caret }}</span>
               </div>
@@ -514,7 +529,7 @@
 class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0,
     sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "",
-    vista: "funil", dias: 30, filtro: "tudo", extratoN: 0 };
+    vista: "funil", dias: 30, filtro: "tudo", extratoN: 0, selecao: {} };
   reuDataRef = React.createRef(); reuHoraRef = React.createRef(); matAulasRef = React.createRef();
   bookingRef = React.createRef();
   matSinalRef = React.createRef();
@@ -759,6 +774,14 @@ class Component extends DCLogic {
         turmaLabel: l.turma || "—",
         open: open,
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + l.id,
+        marcado: !!this.state.selecao[l.id],
+        // o clique no quadradinho não pode abrir/fechar o card da linha
+        onMarcar: (e) => {
+          e.stopPropagation();
+          const sel = Object.assign({}, this.state.selecao);
+          if (sel[l.id]) delete sel[l.id]; else sel[l.id] = true;
+          this.setState({ selecao: sel });
+        },
         onNomeClick: (e) => e.stopPropagation(),
         onSelClick: (e) => e.stopPropagation(),
         onToggle: () => this.setState({ openId: open ? null : l.id, perdendoId: null, matriculandoId: null, negociandoId: null }),
@@ -976,7 +999,44 @@ class Component extends DCLogic {
     // mesma informação do funil, olhada por data em vez de por estágio.
     const ativ = this.vistaDeAtividade(CRM);
 
+    // ── SELEÇÃO EM MASSA ──────────────────────────────────────────
+    //
+    // Limpar leads que entraram errado era um por um. O quadradinho marca
+    // vários; a barra apaga ou muda o estágio de todos de uma vez.
+    const selIds = rawLeads.filter(l => this.state.selecao[l.id]).map(l => l.id);
+    const selCount = selIds.length;
+    const todosMarcados = rawLeads.length > 0 && selCount === rawLeads.length;
+    const onSelTodos = () => {
+      const sel = {};
+      if (!todosMarcados) rawLeads.forEach(l => { sel[l.id] = true; });
+      this.setState({ selecao: sel });
+    };
+    const onSelLimpar = () => this.setState({ selecao: {} });
+    const onSelApagar = () => {
+      if (!selCount) return;
+      const q = selCount === 1 ? "Apagar 1 lead? Não dá para desfazer."
+        : "Apagar " + selCount + " leads? Não dá para desfazer.";
+      if (!confirm(q)) return;
+      selIds.forEach(id => CRM.deleteLead(id));
+      this.setState({ selecao: {}, openId: null });
+    };
+    // reunião, contrato, matrícula e perda pedem formulário (dia e hora,
+    // turma, motivo) — não dá para aplicar em bloco sem essa informação
+    const abreForm = { reuniao: 1, contrato: 1, matriculado: 1, perdido: 1 };
+    const selStageOpts = [{ id: "", label: "Mudar estágio de todos…" }]
+      .concat(CRM.STAGES.filter(s => !abreForm[s.id]).map(s => ({ id: s.id, label: s.label })));
+    const onSelStage = (e) => {
+      const v = e.target.value;
+      if (!v || !selCount) return;
+      selIds.forEach(id => CRM.setStage(id, v));
+      this.setState({ selecao: {} });
+    };
+
     return {
+      selCount, temSelecao: selCount > 0, todosMarcados,
+      selResumo: selCount + (selCount === 1 ? " lead selecionado" : " leads selecionados"),
+      selApagarLabel: selCount === 1 ? "Apagar este lead" : "Apagar estes " + selCount + " leads",
+      onSelTodos, onSelLimpar, onSelApagar, selStageOpts, onSelStage,
       ...ativ,
       vistas: [
         { id: "funil", label: "Funil" }, { id: "atividade", label: "Atividade" }

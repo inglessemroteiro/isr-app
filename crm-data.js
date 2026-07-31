@@ -6923,6 +6923,26 @@
     return loadPessoas().filter(function (p) { return semAcento(p.nome) === alvo; })[0] || null;
   }
 
+  // O systeme.io junta os contatos do Jotform — a mesma pessoa chega duas
+  // vezes, às vezes com o nome escrito diferente em cada fonte. O e-mail e
+  // o WhatsApp não mudam: são eles que dizem se a pessoa já está aqui.
+  // Telefone compara pelos últimos 8 dígitos, porque o mesmo número
+  // aparece com e sem +55, com e sem o 9 na frente.
+  function chaveFone(s) {
+    var d = String(s || "").replace(/\D/g, "");
+    return d.length >= 8 ? d.slice(-8) : "";
+  }
+  function pessoaPorContato(email, whatsapp) {
+    var e = String(email || "").trim().toLowerCase();
+    var f = chaveFone(whatsapp);
+    if (!e && !f) return null;
+    return loadPessoas().filter(function (p) {
+      if (e && String(p.email || "").trim().toLowerCase() === e) return true;
+      if (f && chaveFone(p.whatsapp) === f) return true;
+      return false;
+    })[0] || null;
+  }
+
   // Só depois de a Gabi olhar o preview. Cria quem não existe e substitui
   // o contrato vigente de quem existe — a planilha é a fonte da verdade.
   function aplicarControlePagamento(leitura, opts) {
@@ -7243,8 +7263,6 @@
       var nome = pega(c, col.nome);
       if (!nome) { ignoradas++; return; }
       var avisos = [], notas = [];
-      var existe = pessoaPorNome(nome);
-      var jaAluna = !!existe && existe.status !== "lead";
       var whatsapp = pega(c, col.whatsapp), email = pega(c, col.email);
 
       // Na planilha real o telefone às vezes está na coluna do e-mail e
@@ -7259,6 +7277,14 @@
       } else if (pareceFone(email) && !whatsapp) {
         whatsapp = email; email = "";
       }
+
+      // O nome pode vir escrito diferente em cada fonte (Jotform,
+      // systeme.io, planilha). E-mail e WhatsApp são a identidade real:
+      // se batem com alguém, é a mesma pessoa — atualiza, não duplica.
+      var existe = pessoaPorNome(nome) || pessoaPorContato(email, whatsapp);
+      var jaAluna = !!existe && existe.status !== "lead";
+      if (existe && semAcento(existe.nome) !== semAcento(nome) && !jaAluna)
+        notas.push("Mesmo contato de “" + existe.nome + "” — atualiza essa pessoa, não cria outra");
 
       var estagio = mapEstagio(pega(c, col.estagio));
       var estagioBruto = pega(c, col.estagio);
@@ -7432,7 +7458,7 @@
     var criados = 0, atualizados = 0, pulados = 0;
     leitura.linhas.forEach(function (l) {
       if (l.avisos.length) { pulados++; return; }
-      var p = pessoaPorNome(l.nome);
+      var p = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp);
       if (!p) {
         p = novaPessoa({ nome: l.nome, whatsapp: l.whatsapp, email: l.email,
           canal: l.canal || "Importação" });
