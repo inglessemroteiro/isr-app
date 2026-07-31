@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.30-e",
+  numero: "2026.07.30-g",
   data: "30/07/2026",
-  nota: "A data respeita o relógio da aluna (fim do Próxima aula: Ontem na Holanda), aulas gravadas por turma e gerais no app da aluna, certificados e relatórios no Materiais, e miles sem promessa de comunidade"
+  nota: "Leads do systeme.io pela Conexão, página de horários (booking) da Carla no fluxo de conversa do CRM, e os consertos da importação de leads"
 };

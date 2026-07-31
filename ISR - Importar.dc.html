@@ -88,6 +88,29 @@
       </div>
     </sc-if>
 
+    <!-- DIRETO DO SYSTEME.IO -->
+    <sc-if value="{{ ehAbaLeads }}">
+      <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Direto do systeme.io</div>
+        <sc-if value="{{ sySemChave }}">
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Os contatos dos seus funis do systeme entram aqui pela Conexão da escola. Pegue a chave em systeme.io → Configurações → Chave de API pública, cole e salve. Ela fica guardada no seu app.</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input ref="{{ syChaveRef }}" placeholder="Chave de API do systeme.io" style="flex: 1; min-width: 200px; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <button onclick="{{ onSySalvarChave }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar a chave</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ syTemChave }}">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button onclick="{{ onSyBuscar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ syBuscarLabel }}</button>
+            <button onclick="{{ onSyTrocarChave }}" style="border: none; background: transparent; color: #b3a693; font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px; font-family: inherit;">trocar a chave</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ temSyErro }}">
+          <p style="margin: 10px 0 0; font-size: 12px; color: #cf6b5c; font-weight: 600; line-height: 1.5;">{{ syErro }}</p>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <!-- COLAR -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
       <textarea ref="{{ colaRef }}" placeholder="Cole aqui a planilha inteira, com a linha de títulos" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px; font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fdfbf8; resize: vertical;"></textarea>
@@ -302,8 +325,10 @@ class Component extends DCLogic {
             zerarAberto: false, zerado: "", aba: "pagamentos",
             leituraAlunas: null, alFeito: "", turmasVazias: [],
             leituraLeads: null, ldFeito: "",
-            jfForms: null, jfErro: "", jfBuscando: false };
+            jfForms: null, jfErro: "", jfBuscando: false,
+            syErro: "", syBuscando: false };
   jfChaveRef = React.createRef();
+  syChaveRef = React.createRef();
   colaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -328,7 +353,10 @@ class Component extends DCLogic {
       ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "",
       ehAbaLeads: false, jfSemChave: false, jfTemChave: false, jfChaveRef: this.jfChaveRef,
       onJfSalvarChave: () => {}, onJfTrocarChave: () => {}, onJfBuscarForms: () => {},
-      jfBuscarLabel: "", temJfForms: false, jfForms: [], temJfErro: false, jfErro: "" };
+      jfBuscarLabel: "", temJfForms: false, jfForms: [], temJfErro: false, jfErro: "",
+      sySemChave: false, syTemChave: false, syChaveRef: this.syChaveRef,
+      onSySalvarChave: () => {}, onSyTrocarChave: () => {}, onSyBuscar: () => {},
+      syBuscarLabel: "", temSyErro: false, syErro: "" };
     if (!CRM || !CRM.lerControlePagamento) return base;
 
     // ── o que já está dentro ──
@@ -482,6 +510,46 @@ class Component extends DCLogic {
         }
       })),
       temJfErro: !!this.state.jfErro, jfErro: this.state.jfErro,
+
+      // ── direto do systeme.io (via Conexão, por causa do CORS) ──
+      sySemChave: abaLeads && !CRM.systemeKey(),
+      syTemChave: abaLeads && !!CRM.systemeKey(),
+      syChaveRef: this.syChaveRef,
+      onSySalvarChave: () => {
+        const k = ((this.syChaveRef.current && this.syChaveRef.current.value) || "").trim();
+        if (!k) { this.setState({ syErro: "Cole a chave antes de salvar." }); return; }
+        CRM.setSystemeKey(k);
+        this.setState({ syErro: "" });
+        this.bump();
+      },
+      onSyTrocarChave: () => { CRM.setSystemeKey(""); this.setState({ syErro: "" }); this.bump(); },
+      syBuscarLabel: this.state.syBuscando ? "Buscando…" : "Buscar contatos do systeme",
+      onSyBuscar: () => {
+        if (this.state.syBuscando) return;
+        const con = CRM.backendUrl();
+        if (!con) { this.setState({ syErro: "Antes, configure a Conexão (Escola → Conexão): é ela que fala com o systeme." }); return; }
+        this.setState({ syBuscando: true, syErro: "" });
+        fetch(con + (con.indexOf("?") >= 0 ? "&" : "?") + "action=systemeContacts&key="
+          + encodeURIComponent(CRM.systemeKey()) + "&limit=200")
+          .then(r => r.json())
+          .then(d => {
+            if (d && d.ok && d.items) {
+              const r2 = CRM.lerLeadsDoSysteme(d.items);
+              if (!r2.ok) { this.setState({ syBuscando: false, syErro: r2.erro }); return; }
+              this.setState({ syBuscando: false, leituraLeads: r2,
+                leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
+            } else if (d && d.ok && !d.items) {
+              this.setState({ syBuscando: false,
+                syErro: "A Conexão ainda não conhece o systeme. Atualize o Apps Script (arquivo apps-script-sistema.js) quando estiver no computador — 2 minutos." });
+            } else {
+              this.setState({ syBuscando: false,
+                syErro: "O systeme não respondeu: " + ((d && d.error) || "erro desconhecido") });
+            }
+          })
+          .catch(e => this.setState({ syBuscando: false,
+            syErro: "Não consegui falar com a Conexão (" + String(e.message || e).slice(0, 80) + ")." }));
+      },
+      temSyErro: !!this.state.syErro, syErro: this.state.syErro,
 
       temLeituraLeads: !!LD,
       ...(LD ? {
