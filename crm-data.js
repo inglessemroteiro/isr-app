@@ -7419,9 +7419,13 @@
       if (/^[#€$\d(+]|^R\$/.test(nome) || nome.length > 60)
         avisos.push("Isso não parece um nome — a linha veio quebrada da planilha e não entra");
 
-      if (jaAluna) avisos.push("Já está no sistema como "
-        + ((STATUS_META[existe.status] || {}).label || existe.status)
-        + " — não volta a ser lead");
+      if (jaAluna) {
+        avisos.push("Já está no sistema como "
+          + ((STATUS_META[existe.status] || {}).label || existe.status)
+          + " — não volta a ser lead");
+        if ((email && !existe.email) || (whatsapp && !existe.whatsapp))
+          notas.push("O contato que veio aqui completa o cadastro dela");
+      }
       else if (estagio === "matriculado")
         avisos.push("Diz que fechou (Ganho) — matrícula não entra por aqui; use o Controle de Pagamento ou a lista de alunas");
       if (estagioBruto && !estagio && !jaAluna)
@@ -7615,7 +7619,23 @@
   function aplicarLeads(leitura) {
     if (!leitura || !leitura.ok) return { ok: false };
     var criados = 0, atualizados = 0, pulados = 0;
+    var contatosCompletados = 0;
     leitura.linhas.forEach(function (l) {
+      // Aluna não volta a ser lead — mas o e-mail e o WhatsApp que vieram
+      // na inscrição completam o cadastro dela quando o campo está vazio.
+      // É o que deixa a lista de e-mails inteira sem digitação manual.
+      if (l.jaAluna) {
+        var alvo = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp);
+        if (alvo && ((l.email && !alvo.email) || (l.whatsapp && !alvo.whatsapp))) {
+          mutate(alvo.id, function (x) {
+            if (l.email && !x.email) x.email = l.email;
+            if (l.whatsapp && !x.whatsapp) x.whatsapp = l.whatsapp;
+          });
+          contatosCompletados++;
+        }
+        pulados++;
+        return;
+      }
       if (l.avisos.length) { pulados++; return; }
       var p = pessoaPorNome(l.nome) || pessoaPorContato(l.email, l.whatsapp);
       if (!p) {
@@ -7650,7 +7670,8 @@
         }
       });
     });
-    return { ok: true, criados: criados, atualizados: atualizados, pulados: pulados };
+    return { ok: true, criados: criados, atualizados: atualizados, pulados: pulados,
+      contatosCompletados: contatosCompletados };
   }
 
   // ── O QUE A ESCOLA VAI RECEBER ────────────────────────────────
