@@ -521,10 +521,22 @@ class Component extends DCLogic {
         onBuscar: () => {
           if (this.state.jfBuscando) return;
           this.setState({ jfBuscando: true, jfErro: "" });
-          this.jfApi("/form/" + f.id + "/submissions?apiKey="
-            + encodeURIComponent(CRM.jotformKey()) + "&limit=200&orderby=created_at")
-            .then(d => {
-              const r2 = CRM.lerLeadsDoJotform(d.content || [], f.title);
+          // Busca por páginas de 200 até acabar (teto de 1000): o
+          // histórico inteiro de inscrições entra de uma vez — o dedupe
+          // por e-mail/WhatsApp garante que repetir não duplica.
+          const buscarTudo = (offset, acc) =>
+            this.jfApi("/form/" + f.id + "/submissions?apiKey="
+              + encodeURIComponent(CRM.jotformKey())
+              + "&limit=200&orderby=created_at&offset=" + offset)
+              .then(d => {
+                const lote = d.content || [];
+                const todas = acc.concat(lote);
+                if (lote.length === 200 && todas.length < 1000) return buscarTudo(offset + 200, todas);
+                return todas;
+              });
+          buscarTudo(0, [])
+            .then(todas => {
+              const r2 = CRM.lerLeadsDoJotform(todas, f.title);
               if (!r2.ok) { this.setState({ jfBuscando: false, jfErro: r2.erro }); return; }
               this.setState({ jfBuscando: false, leituraLeads: r2,
                 leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
