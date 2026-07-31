@@ -101,6 +101,10 @@
               <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ fu.detalhe }}</div>
             </div>
             <a href="{{ fu.href }}" style="flex: none; text-decoration: none; border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px;">{{ fu.ondeLabel }}</a>
+            <sc-if value="{{ fu.temDelegar }}">
+              <button onclick="{{ fu.onDelegar }}" title="Cria a tarefa na fila dela e tira desta lista" style="flex: none; border: 1px solid #e0c3b6; background: #fff; color: #9c6f56; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ fu.delegarLabel }}</button>
+            </sc-if>
+            <button onclick="{{ fu.onCiente }}" title="Não mostrar de novo" style="flex: none; border: none; background: transparent; color: #b8a394; font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; font-family: inherit;">Ciente</button>
           </div>
         </sc-for>
       </section>
@@ -225,6 +229,8 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false, janela: "abertas" };
+  // cadastro novo puxado em segundo plano redesenha a Central na hora
+  _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
   tfTituloRef = React.createRef();
   tfDonoRef = React.createRef();
   tfPrazoRef = React.createRef();
@@ -414,7 +420,7 @@ class Component extends DCLogic {
       // Só a gestora resolve isto (mexe em equipe, turma e contrato), e
       // ninguém vai procurar por conta própria. Por isso mora aqui, junto
       // do que ela já abre todo dia.
-      ...(function () {
+      ...((() => {
         const furos = perfilAtivo === "gestora" && CRM.furosDeCadastro
           ? CRM.furosDeCadastro() : [];
         return {
@@ -426,10 +432,21 @@ class Component extends DCLogic {
             cor: fu.urg === 1 ? "#cf6b5c" : "#d4a574",
             ondeLabel: fu.ondeLabel,
             href: encodeURI(fu.onde) + (fu.turmaId ? "?id=" + fu.turmaId
-              : (fu.pessoaId ? "?id=" + fu.pessoaId : ""))
+              : (fu.pessoaId ? "?id=" + fu.pessoaId : "")),
+            // "Ciente" tira da lista de vez; delegar cria a tarefa na fila
+            // de quem cuida do assunto e também tira daqui.
+            onCiente: () => { CRM.marcarFuroCiente(fu.chave); this.bump(); },
+            temDelegar: !!fu.delegarPara,
+            delegarLabel: "Mandar pra " + (fu.delegarPara || ""),
+            onDelegar: () => {
+              CRM.addTarefa({ titulo: fu.titulo + " — " + fu.detalhe,
+                dono: fu.delegarPara, por: (user && user.nome) || "" });
+              CRM.marcarFuroCiente(fu.chave);
+              this.bump();
+            }
           }))
         };
-      })(),
+      })()),
 
       podeAtribuir: perfilAtivo === "gestora",
       tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,

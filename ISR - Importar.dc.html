@@ -321,8 +321,16 @@
 
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;900px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
+  // ?aba=leads abre direto na aba de leads — é o atalho que a navegação
+  // do Comercial usa; sem o parâmetro, abre no Controle de Pagamento
   state = { leitura: null, erro: "", feito: "", soAviso: false, tick: 0,
-            zerarAberto: false, zerado: "", aba: "pagamentos",
+            zerarAberto: false, zerado: "",
+            aba: (function () {
+              try {
+                var a = new URLSearchParams(window.location.search).get("aba");
+                return { leads: "leads", alunas: "alunas" }[a] || "pagamentos";
+              } catch (e) { return "pagamentos"; }
+            })(),
             leituraAlunas: null, alFeito: "", turmasVazias: [],
             leituraLeads: null, ldFeito: "",
             jfForms: null, jfErro: "", jfBuscando: false,

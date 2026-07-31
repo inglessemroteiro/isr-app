@@ -461,7 +461,7 @@
                       <input ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
                     </div>
                     <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora</div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora · Brasília</div>
                       <input ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
                     </div>
                     <button onclick="{{ onMarcarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
@@ -1142,11 +1142,14 @@ class Component extends DCLogic {
           + out.bookingUrl + " — qualquer um deles já entra direto na agenda. Até já!")
         : "#";
       out.temReuniao = !!(p.reuniao && !p.reuniao.feita);
-      out.reuniaoInfo = p.reuniao ? (CRM.ddmm(p.reuniao.data) + (p.reuniao.hora ? " · " + p.reuniao.hora : "")) : "";
+      // hora nos dois fusos: Carla e leads no Brasil, Gabi na Holanda
+      out.reuniaoInfo = p.reuniao ? (CRM.ddmm(p.reuniao.data)
+        + (p.reuniao.hora ? " · " + (CRM.horaBRNL ? CRM.horaBRNL(p.reuniao.data, p.reuniao.hora) : p.reuniao.hora) : "")) : "";
       out.gcalReuniao = CRM.gcalReuniao ? CRM.gcalReuniao(p.id) : "#";
       out.waReuniao = (function () {
         if (!p.reuniao) return "#";
-        const quando = CRM.ddmm(p.reuniao.data) + (p.reuniao.hora ? " às " + p.reuniao.hora : "");
+        const quando = CRM.ddmm(p.reuniao.data)
+          + (p.reuniao.hora ? " às " + (CRM.horaBRNL ? CRM.horaBRNL(p.reuniao.data, p.reuniao.hora) : p.reuniao.hora) : "");
         return CRM.waLink(p.whatsapp,
           "Oi, " + CRM.firstName(p.nome) + "! Nossa conversa está marcada para " + quando
           + ". Vou te mandar o link por aqui um pouco antes. Até lá!");

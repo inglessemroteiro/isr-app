@@ -2356,6 +2356,19 @@
     agendarSync();
     return m;
   }
+  // A professora de uma aluna pode estar no cadastro dela ou só na turma
+  // (importações antigas deixavam o campo da pessoa vazio). Quem tem
+  // turma com professora TEM professora — senão a Central acusava "sem
+  // professora" para aluna cuja turma é da Carla.
+  function professoraEfetiva(p) {
+    if (p.professora) return p.professora;
+    if (!p.turma || p.turma === "Particular") return "";
+    var u = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === p.turma;
+    })[0];
+    return (u && u.teacher) || "";
+  }
+
   function carteiraProfessoras() {
     var caps = capacidades();
     var ativas = loadPessoas().filter(function (p) { return p.status === "aluna" || p.status === "mvs"; });
@@ -2367,12 +2380,12 @@
       porProf[m.nome] = [];
     });
     ativas.forEach(function (p) {
-      var n = p.professora || "";
+      var n = professoraEfetiva(p);
       if (!n) return;
       if (!porProf[n]) { porProf[n] = []; nomes.push(n); }
       porProf[n].push(p);
     });
-    var semProfessora = ativas.filter(function (p) { return !p.professora; });
+    var semProfessora = ativas.filter(function (p) { return !professoraEfetiva(p); });
     var linhas = nomes.map(function (n) {
       var alunas = porProf[n] || [];
       var cap = caps[n] || CARTEIRA_PADRAO;
@@ -2571,6 +2584,33 @@
     }
     return loadPessoas();
   }
+  // A escola vive em dois fusos: Carla e a maioria das leads no Brasil,
+  // Gabi na Holanda. A hora da conversa é marcada no horário de Brasília;
+  // aqui a mesma hora sai nos dois fusos, calculada pelo relógio real de
+  // cada lugar (horário de verão incluído).
+  function fusoOffsetMin(tz, date) {
+    var f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false,
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    var parts = {};
+    f.formatToParts(date).forEach(function (x) { parts[x.type] = x.value; });
+    var asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24, parts.minute);
+    return (asUTC - date.getTime()) / 60000;
+  }
+  function horaBRNL(dataIso, horaBR) {
+    if (!dataIso || !horaBR) return "";
+    try {
+      var m = /^(\d{1,2}):?(\d{2})?/.exec(horaBR);
+      if (!m) return horaBR;
+      var pd = dataIso.split("-").map(Number);
+      var base = Date.UTC(pd[0], pd[1] - 1, pd[2], parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0);
+      var t = base;
+      for (var i = 0; i < 2; i++) t = base - fusoOffsetMin("America/Sao_Paulo", new Date(t)) * 60000;
+      var fmt = function (tz) { return new Intl.DateTimeFormat("pt-BR", { timeZone: tz,
+        hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(t)); };
+      return fmt("America/Sao_Paulo") + " no Brasil (" + fmt("Europe/Amsterdam") + " na Holanda)";
+    } catch (e) { return horaBR; }
+  }
+
   function donoComercial() {
     var c = equipeLista().filter(function (m) { return (m.papeis || []).indexOf("comercial") >= 0; })[0];
     return c ? c.nome : "Carla";
@@ -2582,14 +2622,17 @@
     if (!p || !p.reuniao) return "";
     var r = p.reuniao;
     var d = (r.data || "").replace(/-/g, "");
-    var h = parseInt((r.hora || "").replace(/\D/g, ""), 10);
+    // "14:30" precisa virar T143000 — o parse antigo grudava hora e
+    // minuto num número só e o link saía inválido para horas quebradas
+    var hm = /^(\d{1,2}):?(\d{2})?/.exec(r.hora || "");
     var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
     var ini, fim;
-    if (!isNaN(h)) {
+    if (hm) {
+      var hh = parseInt(hm[1], 10), mn = hm[2] ? parseInt(hm[2], 10) : 0;
       var dur = parseInt(r.duracao, 10) || 45;
-      var totalMin = h * 60 + dur;
-      ini = d + "T" + p2(h) + "0000";
-      fim = d + "T" + p2(Math.floor(totalMin / 60)) + p2(totalMin % 60) + "00";
+      var fimMin = hh * 60 + mn + dur;
+      ini = d + "T" + p2(hh) + p2(mn) + "00";
+      fim = d + "T" + p2(Math.floor(fimMin / 60) % 24) + p2(fimMin % 60) + "00";
     } else { ini = d; fim = d; }
     var det = ["Conversa de matrícula · Inglês sem Roteiro",
       p.whatsapp ? "WhatsApp: " + p.whatsapp : "",
@@ -2598,6 +2641,7 @@
     return "https://calendar.google.com/calendar/render?action=TEMPLATE"
       + "&text=" + encodeURIComponent("Conversa de matrícula · " + p.nome)
       + "&dates=" + ini + "/" + fim
+      + "&ctz=America/Sao_Paulo"
       + "&details=" + encodeURIComponent(det)
       + (p.email ? "&add=" + encodeURIComponent(p.email) : "");
   }
@@ -3481,7 +3525,7 @@
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
-    "isr_booking_v1", "isr_systeme_v1"];
+    "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -3752,8 +3796,22 @@
     } catch (e) { if (cb) cb(0); }
   }
 
-  // ao abrir qualquer tela: puxa a base compartilhada + cadastros novos (silencioso)
-  try { setTimeout(function () { carregarDoBackend(function () { processarCadastrosPendentes(); }); }, 50); } catch (e) {}
+  // ao abrir qualquer tela: puxa a base compartilhada + cadastros novos
+  // (silencioso). E enquanto a tela fica aberta, repete a cada 5 minutos —
+  // inscrição que chega pelo link de cadastro entra sozinha no funil.
+  // Quando algo novo chega, o evento "isr-dados-novos" avisa a tela
+  // aberta para se redesenhar.
+  function puxarNovidades() {
+    carregarDoBackend(function () {
+      processarCadastrosPendentes(function (novos) {
+        if (novos > 0) {
+          try { window.dispatchEvent(new CustomEvent("isr-dados-novos", { detail: { novos: novos } })); } catch (e) {}
+        }
+      });
+    });
+  }
+  try { setTimeout(puxarNovidades, 50); } catch (e) {}
+  try { setInterval(puxarNovidades, 5 * 60 * 1000); } catch (e) {}
 
   // ── ACESSO À GESTÃO (v1 — fechadura por e-mail) ───────────────
   // O acesso definitivo virá do magic link com papel validado no
@@ -5046,6 +5104,22 @@
   // Coisas que ninguém vai procurar mas que travam dinheiro ou deixam
   // aluna sem dono. Cada uma é um afazer da gestora: tem o que fazer e
   // onde fazer, não é só um número numa tela de relatório.
+  // "Ciente" esconde a pendência de vez: nem toda pendência tem solução
+  // imediata (uma turma com 2 alunas pode ser decisão consciente de
+  // mantê-la). A escolha vale em todos os aparelhos — entra no backup e
+  // na sincronização como os demais dados.
+  var FUROS_OK_KEY = "isr_furos_ok_v1";
+  function furosCientes() {
+    try { return JSON.parse(localStorage.getItem(FUROS_OK_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function marcarFuroCiente(chave) {
+    if (!chave) return;
+    var m = furosCientes();
+    m[chave] = iso(today());
+    try { localStorage.setItem(FUROS_OK_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+
   function furosDeCadastro() {
     var out = [];
 
@@ -5058,7 +5132,7 @@
       var t = temTurma
         ? ocupacaoTurmas().filter(function (x) { return x.label === a.turma; })[0]
         : null;
-      out.push({ tipo: "aluna_sem_professora", urg: 1,
+      out.push({ tipo: "aluna_sem_professora", urg: 1, chave: "aluna_sem_professora|" + a.id,
         titulo: a.nome + " está sem professora",
         detalhe: temTurma
           ? "Turma " + a.turma + " sem professora atribuída"
@@ -5072,7 +5146,7 @@
     // quem dá aula sem cadastro: o pagamento fica retido
     var folha = folhaPagamento();
     (folha.semCadastro || []).forEach(function (s) {
-      out.push({ tipo: "professora_sem_cadastro", urg: 1,
+      out.push({ tipo: "professora_sem_cadastro", urg: 1, chave: "professora_sem_cadastro|" + s.nome,
         titulo: s.nome + " dá aula e não está na equipe",
         detalhe: s.aPagar
           ? fmtMoney(configPagamento().moeda, s.aPagar) + " retidos até o cadastro"
@@ -5085,7 +5159,7 @@
     // ninguém. Acontecia por um bug do formulário, e o dado ficou.
     equipeLista().forEach(function (m) {
       if (!(m.valor > 0) || m.valorTipo) return;
-      out.push({ tipo: "remuneracao_incompleta", urg: 1,
+      out.push({ tipo: "remuneracao_incompleta", urg: 1, chave: "remuneracao_incompleta|" + m.nome,
         titulo: m.nome + " tem " + fmtMoney(m.moeda || "R$", m.valor) + " no cadastro sem forma de pagamento",
         detalhe: "Sem escolher \u201ccomo recebe\u201d, o valor não entra na folha",
         onde: "ISR - Equipe.dc.html", ondeLabel: "Corrigir",
@@ -5095,7 +5169,7 @@
     // turma que não fecha o mínimo: decisão de juntar ou encerrar.
     // Abre a página da própria turma, com as alunas e os dados à vista.
     turmasAbaixoDoMinimo().forEach(function (u) {
-      out.push({ tipo: "turma_abaixo_minimo", urg: 2,
+      out.push({ tipo: "turma_abaixo_minimo", urg: 2, chave: "turma_abaixo_minimo|" + u.id,
         titulo: u.label + " com " + u.alunas
           + (u.alunas === 1 ? " aluna" : " alunas"),
         detalhe: "Faltam " + u.faltam + " para o mínimo de " + MINIMO_TURMA,
@@ -5112,14 +5186,16 @@
       if (dias < 0 || dias > 45) return;
       if (p.renovacao && p.renovacao !== "a_abordar") return;
       // direto no perfil da pessoa, onde a renovação é conduzida
-      out.push({ tipo: "renovacao_parada", urg: 2,
+      out.push({ tipo: "renovacao_parada", urg: 2, chave: "renovacao_parada|" + p.id, delegarPara: "Érika",
         titulo: p.nome + " termina o ciclo em " + dias + " dias",
         detalhe: "Conversa de renovação ainda não começou",
         onde: "ISR - Perfil.dc.html", ondeLabel: "Abrir",
         pessoaId: p.id });
     });
 
-    return out.sort(function (a, b) { return a.urg - b.urg; });
+    var cientes = furosCientes();
+    return out.filter(function (f) { return !cientes[f.chave]; })
+      .sort(function (a, b) { return a.urg - b.urg; });
   }
 
   // Todas as professoras do mês, com o total da folha.
@@ -6303,7 +6379,8 @@
     "isr_categorias_saida_v1", "isr_feriados_v1", "isr_comissao_faixas_v1",
     "isr_metas_periodo_v1", "isr_minutos_aula_v1", "isr_pagamento_v1",
     "isr_capacidade_v1", "isr_flin_url_v1", "isr_contas_proprias_v1",
-    "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1"
+    "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1", "isr_booking_v1", "isr_systeme_v1",
+    "isr_furos_ok_v1"
   ];
 
   function comecarDoZero(opts) {
@@ -7473,14 +7550,20 @@
           if (!fone) fone = v;
         } else if (rotulo.indexOf("nivel") >= 0) {
           nivel = v;
-        } else if (v.length > 12) {
+        } else if (a.type === "control_textarea" || v.length > 12) {
           // as respostas longas são a história da pessoa
           nota.push(v);
+        } else {
+          // resposta curta (objetivo, horário, faixa de investimento…)
+          // entra com a pergunta junto — sem a pergunta, "Sim" e "Noite"
+          // não dizem nada. Tudo que a pessoa preencheu fica na ficha.
+          var pergunta = String(a.text || a.name || "").replace(/[\t\r\n]+/g, " ").trim();
+          nota.push(pergunta ? pergunta + ": " + v : v);
         }
       });
       if (!nome) return;
       linhas.push([nome, fone, email, canalOuTitulo || "Aplicação", "", nivel,
-        nota.join(" · ").slice(0, 400), (s.created_at || "").slice(0, 10)].join("\t"));
+        nota.join(" · ").slice(0, 800), (s.created_at || "").slice(0, 10)].join("\t"));
     });
     if (linhas.length === 1) return { ok: false, linhas: [],
       erro: "O Jotform respondeu, mas nenhuma inscrição tinha nome. Confira se o formulário certo foi escolhido." };
@@ -7512,7 +7595,7 @@
         // "Entrou" do CRM (entrouEm), não a data de matrícula (desde)
         if (l.desde) x.entrouEm = l.desde;
         if (l.estagio && l.estagio !== "a_contatar") x.estagio = l.estagio;
-        if (l.nota) pushHist(x, "contato", "Da planilha importada: " + l.nota.slice(0, 140));
+        if (l.nota) pushHist(x, "contato", "Da inscrição: " + l.nota.slice(0, 600));
       });
     });
     return { ok: true, criados: criados, atualizados: atualizados, pulados: pulados };
@@ -8176,7 +8259,7 @@
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     receitaParticularesNoMes: receitaParticularesNoMes,
-    furosDeCadastro: furosDeCadastro,
+    furosDeCadastro: furosDeCadastro, marcarFuroCiente: marcarFuroCiente,
     folhaNoCaixa: folhaNoCaixa, comercialDaEquipe: comercialDaEquipe,
     conferenciaFinanceira: conferenciaFinanceira,
     lerControlePagamento: lerControlePagamento,
@@ -8208,7 +8291,7 @@
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
-    agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
+    agendarReuniao: agendarReuniao, gcalReuniao: gcalReuniao, horaBRNL: horaBRNL, donoComercial: donoComercial, marcarReuniaoFeita: marcarReuniaoFeita,
     registrarAulaParticular: registrarAulaParticular, updateParticular: updateParticular,
     TIPOS_META: TIPOS_META, metasDoPeriodo: metasDoPeriodo, metasPeriodoAll: metasPeriodoAll,
     addMetaPeriodo: addMetaPeriodo, updateMetaPeriodo: updateMetaPeriodo,
