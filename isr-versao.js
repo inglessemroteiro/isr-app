@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-m",
+  numero: "2026.07.31-n",
   data: "31/07/2026",
-  nota: "Página desafio.html: o registro semanal do desafio de 8 semanas, no site da escola — envia direto para o banco central (com confirmação de verdade) e para o Zapier (planilha e e-mail); a resposta cai sozinha na semana certa do programa"
+  nota: "O registro do desafio tem link curto: desafio.html, sem parâmetros — os endereços de envio ficam embutidos na página e o link não quebra no WhatsApp"
 };
