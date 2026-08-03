@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-n",
-  data: "31/07/2026",
-  nota: "O registro do desafio tem link curto: desafio.html, sem parâmetros — os endereços de envio ficam embutidos na página e o link não quebra no WhatsApp"
+  numero: "2026.08.03-a",
+  data: "03/08/2026",
+  nota: "A página do desafio traz o material completo da Semana 1 criado pela escola — enunciado, critérios, vídeos, etapas, kit de frases — com o registro embutido; o rascunho fica salvo no aparelho da aluna"
 };
