@@ -297,6 +297,10 @@ class Component extends DCLogic {
   precoRef = React.createRef(); moedaRef = React.createRef(); pagoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  // quando o puxe do banco traz atividade nova (resposta do desafio),
+  // o quadro se redesenha sozinho — sem isto, a resposta processada só
+  // aparecia numa segunda recarga da tela
+  _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
 
   renderVals() {
     const CRM = window.ISRCRM;

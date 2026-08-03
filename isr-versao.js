@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-a",
+  numero: "2026.08.03-b",
   data: "03/08/2026",
-  nota: "A página do desafio traz o material completo da Semana 1 criado pela escola — enunciado, critérios, vídeos, etapas, kit de frases — com o registro embutido; o rascunho fica salvo no aparelho da aluna"
+  nota: "Programa, Acompanhamento e Perfil se redesenham sozinhos quando o puxe do banco traz resposta do desafio ou cadastro novo — antes a atividade processada só aparecia numa segunda recarga da tela"
 };
