@@ -636,6 +636,8 @@ class Component extends DCLogic {
     try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
   }
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  // atividade ou cadastro novo puxado do banco atualiza a ficha aberta
+  _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
 
   histDot(tipo) {
     const map = { criado: "#9ec970", estagio: "#2a9d8f", reuniao: "#6b5b95", contato: "#348a8e",
