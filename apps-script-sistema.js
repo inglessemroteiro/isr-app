@@ -30,19 +30,85 @@ function doGet(e) {
   if (action === "sistemaLoad") return json_(sistemaLoad_());
   if (action === "cadastrosPendentes") return json_(cadastrosPendentes_());
   if (action === "systemeContacts") return json_(systemeContacts_(e.parameter.key, e.parameter.limit));
+  if (action === "atividadesPendentes") return json_(atividadesPendentes_());
   return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "systemeContacts", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
 }
 
 function doPost(e) {
   try {
-    var body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    if (body.action === "sistemaSave") return json_(sistemaSave_(body.data || {}));
-    if (body.action === "novoCadastro") return json_(novoCadastro_(body.data || {}));
-    if (body.action === "cadastroProcessado") return json_(cadastroProcessado_(body.id));
+    var body = {};
+    try { body = JSON.parse((e && e.postData && e.postData.contents) || "{}"); } catch (err2) {}
+    // O Zapier envia formulário (form-encoded), não JSON: os campos chegam
+    // em e.parameter. A ação vale dos dois jeitos.
+    var action = body.action || (e && e.parameter && e.parameter.action) || "";
+    if (action === "sistemaSave") return json_(sistemaSave_(body.data || {}));
+    if (action === "novoCadastro") return json_(novoCadastro_(body.data || {}));
+    if (action === "cadastroProcessado") return json_(cadastroProcessado_(body.id));
+    if (action === "novaAtividade")
+      return json_(novaAtividade_(body.action ? body : (e.parameter || {})));
+    if (action === "atividadeProcessada")
+      return json_(atividadeProcessada_(body.id || (e.parameter && e.parameter.id)));
     return json_({ ok: false, error: "ação desconhecida" });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+// ── ATIVIDADES DAS ALUNAS (Zapier → sistema) ─────────────────────
+// O Zapier faz um POST por resposta do desafio; a linha fica guardada
+// aqui e o sistema puxa, casa com a aluna e registra no programa.
+var ATIV_SHEET = "Atividades recebidas";
+var ATIV_HEAD = ["ID", "Recebido em", "Semana", "Nome", "Campos (JSON)", "Processado"];
+
+function ativSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(ATIV_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ATIV_SHEET);
+    sh.getRange(1, 1, 1, ATIV_HEAD.length).setValues([ATIV_HEAD]).setFontWeight("bold");
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function novaAtividade_(p) {
+  p = p || {};
+  var campos = {};
+  Object.keys(p).forEach(function (k) { if (k !== "action") campos[k] = p[k]; });
+  if (!campos.nome && !campos.semana) return { ok: false, error: "sem nome e sem semana" };
+  var id = "atv" + new Date().getTime() + Math.floor(Math.random() * 1000);
+  ativSheet_().appendRow([id, new Date().toISOString(),
+    String(campos.semana || ""), String(campos.nome || ""), JSON.stringify(campos), ""]);
+  return { ok: true, id: id };
+}
+
+function atividadesPendentes_() {
+  var sh = ativSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return { ok: true, itens: [] };
+  var rows = sh.getRange(2, 1, last - 1, ATIV_HEAD.length).getValues();
+  var itens = [];
+  rows.forEach(function (r) {
+    if (r[5]) return; // já processada
+    var campos = {};
+    try { campos = JSON.parse(r[4] || "{}"); } catch (e2) {}
+    itens.push({ id: r[0], recebidoEm: r[1], semana: String(r[2] || ""),
+      nome: String(r[3] || ""), campos: campos });
+  });
+  return { ok: true, itens: itens.slice(0, 50) };
+}
+
+function atividadeProcessada_(id) {
+  if (!id) return { ok: false, error: "sem id" };
+  var sh = ativSheet_();
+  var last = sh.getLastRow();
+  for (var i = 2; i <= last; i++) {
+    if (String(sh.getRange(i, 1).getValue()) === String(id)) {
+      sh.getRange(i, 6).setValue(new Date().toISOString());
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: "não achei a atividade" };
 }
 
 // ── CADASTRO ONLINE (link público → CRM) ─────────────────────────

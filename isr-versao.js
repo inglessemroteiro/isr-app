@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-j",
+  numero: "2026.07.31-k",
   data: "31/07/2026",
-  nota: "A importação reconhece variações de nome: 'Debora Staidel' no sistema e 'Débora Staidel Silva' no formulário são a mesma pessoa (só casa quando há uma única candidata — ambiguidade não entra). Com isso, o histórico do Jotform completa os e-mails das alunas de verdade"
+  nota: "Atividades do desafio de 8 semanas entram sozinhas no sistema: o Zapier grava no banco central e o programa registra a resposta na semana certa, com a aluna casada pelo nome. Exige atualizar o Apps Script (nova versão da implantação)"
 };

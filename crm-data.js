@@ -3792,6 +3792,71 @@
     } catch (e) { if (cb) cb(0); }
   }
 
+  // ── ATIVIDADES DO DESAFIO (Zapier → banco central → programa) ──
+  //
+  // O Zapier grava cada resposta do desafio na aba "Atividades
+  // recebidas" do banco. Aqui o sistema puxa, encontra a aluna pelo
+  // nome (com variações), garante que ela participa do programa ativo
+  // e registra a resposta na semana certa. Nome que não casa vira
+  // pendência para resolver à mão — nada se perde em silêncio.
+  function resumoAtividade(c) {
+    c = c || {};
+    var pecas = [];
+    if (c.mais_dificil) pecas.push("Mais difícil: " + c.mais_dificil);
+    var RUB = [["rubrica_1_fala_continua", "fala contínua"], ["rubrica_2_estrutura", "estrutura"],
+      ["rubrica_3_preparacao", "preparação"], ["rubrica_4_dirigida", "dirigida"]];
+    var rub = RUB.map(function (r) { return c[r[0]] ? r[1] + " " + c[r[0]] : ""; })
+      .filter(Boolean).join(", ");
+    if (rub) pecas.push("Rubricas: " + rub);
+    if (c.video_escolhido) pecas.push("Vídeo: " + c.video_escolhido);
+    if (c.categorias) pecas.push("Categorias: " + c.categorias);
+    if (c.frases_coletadas) pecas.push("Frases coletadas: " + c.frases_coletadas);
+    if (c.frases_adaptadas) pecas.push("Frases adaptadas: " + c.frases_adaptadas);
+    if (c.testes_feitos) pecas.push("Testes: " + c.testes_feitos);
+    if (c.para_o_grupo) pecas.push("Para o grupo: " + c.para_o_grupo);
+    return (pecas.join(" · ") || "Atividade recebida").slice(0, 900);
+  }
+  function processarAtividadesPendentes(cb) {
+    var url = backendUrl();
+    if (!url) { if (cb) cb(0); return; }
+    try {
+      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=atividadesPendentes")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
+          var novos = 0;
+          d.itens.forEach(function (a) {
+            var pes = pessoaPorNome(a.nome) || pessoaPorNomeParecido(a.nome);
+            if (pes) {
+              var ativos = programasLista().filter(function (x) { return !x.encerrado; });
+              var pg = ativos.filter(function (x) {
+                return (x.participantes || []).indexOf(pes.id) >= 0; })[0] || ativos[0];
+              var semana = parseInt(a.semana, 10) || 1;
+              if (pg) {
+                if ((pg.participantes || []).indexOf(pes.id) < 0) addParticipante(pg.id, pes.id);
+                responderMissao(pg.id, pes.id, semana, resumoAtividade(a.campos));
+              } else {
+                mutate(pes.id, function (x) {
+                  pushHist(x, "contato", "Atividade da semana " + semana + " recebida: "
+                    + resumoAtividade(a.campos).slice(0, 300));
+                });
+              }
+              novos++;
+            } else {
+              addTarefa({ titulo: "Atividade recebida de \"" + a.nome + "\" — pessoa não encontrada",
+                detalhe: "Semana " + (a.semana || "?") + " · confira o nome e registre no programa",
+                dono: "Gabi", por: "sistema" });
+            }
+            try {
+              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "atividadeProcessada", id: a.id }) }).catch(function () {});
+            } catch (e) {}
+          });
+          if (cb) cb(novos);
+        }).catch(function () { if (cb) cb(0); });
+    } catch (e) { if (cb) cb(0); }
+  }
+
   // ao abrir qualquer tela: puxa a base compartilhada + cadastros novos
   // (silencioso). E enquanto a tela fica aberta, repete a cada 5 minutos —
   // inscrição que chega pelo link de cadastro entra sozinha no funil.
@@ -3799,10 +3864,13 @@
   // aberta para se redesenhar.
   function puxarNovidades() {
     carregarDoBackend(function () {
-      processarCadastrosPendentes(function (novos) {
-        if (novos > 0) {
-          try { window.dispatchEvent(new CustomEvent("isr-dados-novos", { detail: { novos: novos } })); } catch (e) {}
-        }
+      processarCadastrosPendentes(function (n1) {
+        processarAtividadesPendentes(function (n2) {
+          var novos = (n1 || 0) + (n2 || 0);
+          if (novos > 0) {
+            try { window.dispatchEvent(new CustomEvent("isr-dados-novos", { detail: { novos: novos } })); } catch (e) {}
+          }
+        });
       });
     });
   }
@@ -8353,6 +8421,7 @@
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     receitaParticularesNoMes: receitaParticularesNoMes,
     furosDeCadastro: furosDeCadastro, marcarFuroCiente: marcarFuroCiente,
+    processarAtividadesPendentes: processarAtividadesPendentes,
     folhaNoCaixa: folhaNoCaixa, comercialDaEquipe: comercialDaEquipe,
     conferenciaFinanceira: conferenciaFinanceira,
     lerControlePagamento: lerControlePagamento,
