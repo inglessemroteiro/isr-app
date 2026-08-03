@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.07.31-k",
+  numero: "2026.07.31-l",
   data: "31/07/2026",
-  nota: "Atividades do desafio de 8 semanas entram sozinhas no sistema: o Zapier grava no banco central e o programa registra a resposta na semana certa, com a aluna casada pelo nome. Exige atualizar o Apps Script (nova versão da implantação)"
+  nota: "As atividades do desafio casam com a aluna primeiro pelo e-mail (único e exato) e só depois pelo nome — o formulário deve pedir o e-mail cadastrado na matrícula"
 };

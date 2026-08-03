@@ -3826,7 +3826,10 @@
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var novos = 0;
           d.itens.forEach(function (a) {
-            var pes = pessoaPorNome(a.nome) || pessoaPorNomeParecido(a.nome);
+            // e-mail primeiro (é único e exato); nome é a reserva
+            var c = a.campos || {};
+            var pes = pessoaPorContato(c.email, c.whatsapp)
+              || pessoaPorNome(a.nome) || pessoaPorNomeParecido(a.nome);
             if (pes) {
               var ativos = programasLista().filter(function (x) { return !x.encerrado; });
               var pg = ativos.filter(function (x) {
