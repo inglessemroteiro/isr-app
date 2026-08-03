@@ -3,10 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inglês sem Roteiro — Desafio de 8 semanas</title>
+<title>Semana 1 — Me apresentar · Desafio de 8 semanas · Inglês sem Roteiro</title>
 <!--
-  Registro semanal do desafio. A aluna abre pelo link, preenche e envia.
-  O envio vai para DOIS lugares:
+  Material da semana do desafio, com o registro embutido. O conteúdo é o
+  material completo criado pela escola (o mesmo do artifact "Material do
+  aluno"), portado para o site porque só aqui o envio funciona — em
+  artifact o navegador bloqueia requisições externas.
+
+  O que a aluna escreve fica guardado no aparelho dela (localStorage) e o
+  botão do rodapé envia tudo para DOIS lugares:
     1. o banco central do sistema (?b= endereço do Web App /exec) —
        action novaAtividade; o sistema puxa e registra no programa, na
        semana certa, casando a aluna pelo e-mail;
@@ -14,98 +19,305 @@
        planilha de conferência e o e-mail da gestora.
   O 1 tem resposta legível (confirmação de verdade). O 2 é enviado em
   modo no-cors: o navegador entrega mas não deixa ler a resposta — por
-  isso o sucesso mostrado à aluna vem do banco central.
+  isso a confirmação mostrada à aluna vem do banco central.
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 28px 0; }
-  .card { background: #fdfbf8; border-radius: 16px; padding: 32px 28px; max-width: 520px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 6px; }
-  h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
-  p.desc { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
-  label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; margin: 14px 0 5px; }
-  input, select, textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; }
-  textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
-  .grupo { background: #f6f2ea; border-radius: 12px; padding: 4px 15px 15px; margin-top: 18px; }
-  .grupo .titulo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9c6f56; margin: 12px 0 2px; }
-  .grupo .ajuda { font-size: 11.5px; color: #8a7c6b; line-height: 1.5; margin: 0 0 4px; }
-  .rubricas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
-  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 14px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px; cursor: pointer; margin-top: 20px; }
-  button:disabled { opacity: 0.6; cursor: wait; }
-  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; text-align: center; }
-  .ok { display: none; text-align: center; padding: 30px 10px; }
-  .ok h2 { font-size: 20px; color: #164951; margin: 0 0 8px; }
-  .ok p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0; }
-  .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 14px 0 0; text-align: center; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#f5f5f0;font-family:'Inter',system-ui,sans-serif;color:#164951}
+a{color:#229090}a:hover{color:#164951}
+.app{max-width:520px;margin:0 auto;background:#fffdf8;min-height:100vh;padding-bottom:130px}
+.hero{background:#164951;padding:22px 20px 24px;color:#f2ebe3}
+.kicker{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#9ec970}
+.hero h1{font-size:26px;font-weight:800;line-height:1.1;color:#fffdf8;margin-top:6px;letter-spacing:-.02em}
+.hero .tag{display:inline-block;background:#fc9082;color:#164951;font-size:11.5px;font-weight:800;padding:6px 13px;border-radius:99px;margin-top:14px}
+.step{padding:24px 20px;border-top:1px solid #eee4d6}
+.stephead{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px}
+.stephead .n{width:34px;height:34px;border-radius:11px;background:#348a8e;color:#fffdf8;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.stephead h2{font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.stephead .sub{font-size:10.5px;font-weight:700;color:#8a7465;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:2px}
+p.b{font-size:14px;line-height:1.55;color:#3a514f;text-wrap:pretty}
+p.b+p.b{margin-top:11px}
+p.b b{color:#164951}
+p.b em{color:#229090;font-style:italic}
+.lbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#229090;margin:18px 0 8px;display:block}
+.rows{display:flex;flex-direction:column;gap:1px;background:#e7ddcf;border-radius:12px;overflow:hidden;margin-top:12px}
+.row{background:#fbf6ee;padding:11px 14px;display:flex;gap:12px;align-items:baseline}
+.row .rk{font-size:12px;font-weight:800;color:#164951;flex:0 0 96px}
+.row .rv{font-size:12.5px;line-height:1.4;color:#3a514f}
+.row .rv i{display:block;font-size:11px;color:#8a7465;font-style:normal;font-weight:700;margin-top:2px}
+.audio{background:#164951;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:13px;margin-top:14px;text-decoration:none}
+.audio .ic{font-size:22px}
+.audio .ac{display:flex;flex-direction:column;gap:2px;flex:1}
+.audio .an{font-size:12.5px;font-weight:800;color:#fffdf8}
+.audio .ad{font-size:11.5px;color:#9ec970;line-height:1.35;font-style:italic}
+.audio .go{background:#fc9082;color:#164951;font-size:12px;font-weight:800;padding:9px 14px;border-radius:99px}
+.vlink{display:block;padding:14px 16px;border:1.5px solid #d9cbbb;border-radius:14px;margin-top:10px;text-decoration:none}
+.vlink .vn{font-size:14.5px;font-weight:800;color:#164951;display:flex;justify-content:space-between;gap:10px}
+.vlink .vm{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#8a7465;display:block;margin-bottom:4px}
+.vlink .vd{font-size:12px;color:#3a514f;line-height:1.45;display:block;margin-top:5px}
+.crit{border:1.5px solid #d9cbbb;border-radius:14px;overflow:hidden;margin-top:12px}
+.crit .ch{background:#164951;color:#fffdf8;font-size:13px;font-weight:800;padding:10px 14px;line-height:1.3}
+.crit .cl{display:flex;gap:10px;padding:10px 14px;border-top:1px solid #eee4d6;font-size:12px;line-height:1.4;color:#3a514f}
+.crit .cl .lv{flex:0 0 74px;font-size:11px;font-weight:800;color:#164951}
+.crit .cl.est{background:#eef6e2}
+.crit .cl.str{background:#fdece9}
+.fin{width:100%;min-height:52px;border:1.5px solid #d9cbbb;border-radius:12px;background:#fff;font-family:inherit;font-size:15px;color:#164951;padding:14px;outline:none}
+.fin:focus{border-color:#348a8e;box-shadow:0 0 0 3px rgba(52,138,142,.14)}
+textarea.fin{min-height:96px;line-height:1.5;resize:vertical}
+.chk{display:flex;align-items:center;gap:12px;min-height:52px;padding:9px 14px;border:1.5px solid #d9cbbb;border-radius:12px;margin-bottom:8px;font-size:13.5px;font-weight:600;color:#164951;cursor:pointer;background:#fff}
+.chk input{width:22px;height:22px;accent-color:#348a8e;flex:0 0 auto}
+.chk .ex{display:block;font-size:11.5px;font-weight:500;color:#8a7465;font-style:italic;margin-top:2px}
+.chk:has(input:checked){border-color:#348a8e;background:#f1f7f4}
+.q{margin-top:18px}
+.q .qt{font-size:14px;font-weight:800;color:#164951;line-height:1.35;margin-bottom:9px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:flex-start;gap:11px;min-height:48px;padding:11px 13px;border:1.5px solid #d9cbbb;border-radius:12px;font-size:12.5px;line-height:1.35;color:#3a514f;cursor:pointer;background:#fff}
+.opt input{width:20px;height:20px;accent-color:#348a8e;flex:0 0 auto;margin-top:1px}
+.opt .em{font-weight:800;color:#164951}
+.opt:has(input:checked){border-color:#348a8e;background:#f1f7f4}
+.note{background:#eef6e2;border-left:4px solid #9ec970;border-radius:0 10px 10px 0;padding:12px 15px;font-size:12.5px;line-height:1.5;color:#2e4a3a;margin-top:12px}
+.note b{color:#164951}
+.note.coral{background:#fdece9;border-left-color:#fc9082}
+.steps{display:flex;flex-direction:column;gap:11px;margin-top:12px}
+.st1{display:flex;gap:11px;align-items:flex-start}
+.st1 .sn{flex:0 0 24px;height:24px;border-radius:8px;background:#348a8e;color:#fffdf8;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.st1 p{font-size:13.5px;line-height:1.5;color:#3a514f}
+.st1 p b{color:#164951}
+.ex1{border-left:3px solid #fc9082;padding-left:12px;font-size:13.5px;line-height:1.8;color:#164951;margin-top:10px}
+.ex1 s{color:#b09a89}
+.ex1 b{background:#eef6e2;padding:1px 5px;border-radius:4px}
+.kit{border:1.5px solid #d9cbbb;border-radius:14px;padding:13px 16px;margin-top:10px}
+.kit .km{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#8a7465}
+.kit .kl{font-size:13.5px;line-height:1.75;color:#164951;margin-top:5px}
+.quote{border-left:3px solid #9ec970;padding-left:12px;font-size:12.5px;line-height:1.5;color:#8a7465;font-style:italic;margin-top:8px}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fffdf8;border-top:1px solid #e7ddcf;padding:12px 16px 16px;display:flex;justify-content:center}
+.bar .inner{width:100%;max-width:488px;display:flex;flex-direction:column;gap:7px}
+.send{width:100%;min-height:56px;border:none;border-radius:14px;background:#fc9082;color:#164951;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;transition:background .18s cubic-bezier(.4,0,.2,1)}
+.send:hover{background:#9ec970}
+.send:disabled{opacity:.6;cursor:wait}
+.st{font-size:12px;font-weight:600;color:#8a7465;text-align:center;min-height:16px;line-height:1.4}
+.foot{padding:22px 20px 8px;text-align:center;font-size:11px;color:#8a7465;font-weight:600;line-height:1.6}
+.foot b{color:#229090}
 </style>
 </head>
 <body>
-<div class="card">
-  <div id="form">
-    <p class="eyebrow">Inglês sem Roteiro</p>
-    <h1>Desafio de 8 semanas</h1>
-    <p class="desc">Registro da sua semana. Preencha depois de concluir a prática — a professora usa estas respostas para preparar a devolutiva de sexta.</p>
-
-    <label>Semana *</label>
-    <select id="semana">
-      <option value="">Escolha a semana</option>
-      <option>1</option><option>2</option><option>3</option><option>4</option>
-      <option>5</option><option>6</option><option>7</option><option>8</option>
-    </select>
-    <label>Nome completo *</label>
-    <input id="nome" placeholder="Seu nome" />
-    <label>E-mail cadastrado na escola *</label>
-    <input id="email" type="email" placeholder="o e-mail que você usa com a escola" />
-
-    <div class="grupo">
-      <div class="titulo">A prática da semana</div>
-      <label>Vídeo escolhido</label>
-      <input id="video_escolhido" placeholder="Título ou link do vídeo" />
-      <label>Categorias</label>
-      <input id="categorias" placeholder="ex. viagem, trabalho" />
-      <label>Frases coletadas</label>
-      <textarea id="frases_coletadas" placeholder="As frases que você coletou do vídeo"></textarea>
-      <label>Frases adaptadas</label>
-      <textarea id="frases_adaptadas" placeholder="As frases adaptadas para a sua realidade"></textarea>
-      <label>Testes feitos</label>
-      <input id="testes_feitos" placeholder="ex. 3" />
-    </div>
-
-    <div class="grupo">
-      <div class="titulo">Auto-avaliação · 1 a 5</div>
-      <p class="ajuda">1 = muito difícil ainda · 5 = consegui com naturalidade</p>
-      <div class="rubricas">
-        <div>
-          <label>Fala contínua</label>
-          <select id="rubrica_1_fala_continua"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-        </div>
-        <div>
-          <label>Estrutura</label>
-          <select id="rubrica_2_estrutura"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-        </div>
-        <div>
-          <label>Preparação</label>
-          <select id="rubrica_3_preparacao"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-        </div>
-        <div>
-          <label>Fala dirigida</label>
-          <select id="rubrica_4_dirigida"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-        </div>
-      </div>
-    </div>
-
-    <label>O que foi mais difícil nesta semana? *</label>
-    <textarea id="mais_dificil" placeholder="Conte com suas palavras — é o que orienta a devolutiva"></textarea>
-    <label>Algo para compartilhar com o grupo?</label>
-    <textarea id="para_o_grupo" placeholder="Opcional"></textarea>
-
-    <button id="enviar" onclick="enviar()">Enviar registro da semana</button>
-    <p class="erro" id="erro"></p>
-    <p class="nota">As respostas vão direto para a professora e para o seu registro no programa.</p>
-  </div>
-  <div class="ok" id="sucesso">
-    <h2>Registro recebido</h2>
-    <p>Sua semana <strong id="okSemana"></strong> está registrada.<br>A devolutiva vem no encontro de sexta.</p>
-  </div>
+<div class="app">
+<div class="hero">
+<span class="kicker">Desafio de 8 semanas · Inglês sem Roteiro</span>
+<h1>Semana 1 — Me apresentar</h1>
+<span class="tag">Material da aluna</span>
+</div>
+<div class="step">
+<span class="lbl" style="margin-top:0">Seu nome</span>
+<input class="fin" type="text" data-f="nome" placeholder="para eu saber de quem são as respostas">
+<span class="lbl">Seu e-mail cadastrado na escola</span>
+<input class="fin" type="email" data-f="email" placeholder="o mesmo e-mail da matrícula — é ele que liga as respostas ao seu registro">
+<span class="lbl">Como funciona a semana</span>
+<div class="rows">
+<div class="row"><span class="rk">Segunda</span><span class="rv">Você recebe este material e os áudios.</span></div>
+<div class="row"><span class="rk">Na semana</span><span class="rv">Você faz as etapas no seu ritmo e usa o grupo para praticar.</span></div>
+<div class="row"><span class="rk">Até quinta</span><span class="rv">Me manda o áudio no privado, com a rubrica preenchida.</span></div>
+<div class="row"><span class="rk">Sexta</span><span class="rv">Eu te respondo no privado, por áudio.</span></div>
+</div>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">1</span><div><span class="sub">Enunciado</span><h2>O desafio desta semana</h2></div></div>
+<p class="b">Até quinta-feira, você vai gravar um áudio de <b>30 a 40 segundos</b> se apresentando em inglês, do começo ao fim, <b>sem interromper a fala e sem ler</b>.</p>
+<p class="b">O critério não é a quantidade de informação que você dá, porque uma apresentação cumpre sua função quando a pessoa que ouve fica sabendo quem você é e tem por onde continuar a conversa.</p>
+<a class="audio" href="https://drive.google.com/file/d/16etp3yaqMy-WKIMSgDzipG67PpVO_ePf/view" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO A — apresentação corrida · 30s</span><span class="ad">Ouça antes de seguir, porque ele é o modelo do que você vai produzir.</span></span><span class="go">ouvir</span></a>
+<p class="b" style="margin-top:14px">Ao ouvir, observe que a apresentação é composta de poucas frases, e que nenhuma delas usa estrutura complicada. O que faz o áudio funcionar não é a complexidade das frases, mas o fato de elas saírem uma depois da outra, sem interrupção no meio.</p>
+<p class="b"><b>O trabalho desta semana está organizado em quatro etapas</b>, e cada uma produz o material que a etapa seguinte vai usar:</p>
+<div class="rows">
+<div class="row"><span class="rk">🔍 Observar</span><span class="rv">Seleciona frases de quem já fala inglês.<i>produz 3 frases emprestadas</i></span></div>
+<div class="row"><span class="rk">✏️ Adaptar</span><span class="rv">Substitui os dados da pessoa pelos seus.<i>produz 3 frases verdadeiras sobre você</i></span></div>
+<div class="row"><span class="rk">🎧 Testar</span><span class="rv">Repete até dispensar o papel.<i>produz 3 frases na memória</i></span></div>
+<div class="row"><span class="rk">🎙️ Aplicar</span><span class="rv">Grava sem interromper.<i>produz o áudio de quinta</i></span></div>
+</div>
+<p class="b" style="margin-top:12px">Como cada etapa depende do que veio antes, você não precisa saber falar inglês para começar — precisa saber <b>onde procurar as frases</b>.</p>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">2</span><div><span class="sub">Critérios de avaliação</span><h2>O que eu vou ouvir no seu áudio</h2></div></div>
+<p class="b">Estes são os quatro critérios do áudio de quinta. Leia agora, <b>antes de começar</b>, porque eles definem o que você está construindo ao longo da semana. Você vai voltar a eles antes de me enviar o áudio, para conferir seu próprio trabalho.</p>
+<p class="b"><b>A escala tem quatro pontos.</b> <br>✅ Established é o padrão do desafio: chegar ali significa que a tarefa está cumprida. <br><br>⭐ Strength está acima do que o desafio pede, e existe para quem já tem mais inglês na bagagem.</p>
+<div class="crit">
+<div class="ch">A fala se sustenta sem interrupção</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>Frases isoladas, uma por vez, com parada entre elas.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Trechos contínuos, quebrados por paradas para recuperar o que vem.</span></div>
+<div class="cl est"><span class="lv" style="font-size: 10px">✅ Established</span><span>A fala vai do início ao fim sem parar. Há hesitação e erro dentro dela, mas nada interrompe.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>As frases se encadeiam com conectivo e ritmo próprio.</span></div>
+</div>
+<div class="crit">
+<div class="ch">O autorretrato tem estrutura</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>Uma informação só, ou informações soltas sem ordem perceptível.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Várias informações, na ordem em que foram lembradas.</span></div>
+<div class="cl est"><span class="lv" style="font-size: 10px">✅ Established</span><span>Abertura, corpo e encerramento identificáveis.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>A ordem foi escolhida em função de quem ouve.</span></div>
+</div>
+<div class="crit">
+<div class="ch">A preparação aparece no resultado</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>O áudio reproduz a fala do vídeo sem alteração.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>A informação é verdadeira, mas encaixada na frase alheia sem ajuste.</span></div>
+<div class="cl est"><span class="lv" style="font-size: 10px">✅ Established</span><span>As três frases trazem informação verdadeira e específica, com a estrutura ajustada para acomodá-la.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>Aparece informação buscada por conta própria, além das três frases coletadas.</span></div>
+</div>
+<div class="crit">
+<div class="ch">A apresentação é dirigida a alguém</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>Começa e termina abruptamente. É uma lista dita em voz alta.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Tem abertura ou fechamento, um dos dois.</span></div>
+<div class="cl est"><span class="lv" style="font-size: 10px">✅ Established</span><span>Tem abertura e fechamento, e soa endereçado a uma pessoa.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>Devolve a conversa: termina com pergunta ou abertura que dá ao outro por onde continuar.</span></div>
+</div>
+<a class="audio" style="background:#348a8e" href="https://drive.google.com/file/d/1WwYd8s6U0FsaL5oGITaN84T1nDH5OVu-/view" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO A+ — o que é o ⭐ · 10s</span><span class="ad">Mesma apresentação do Áudio A, terminando com uma devolução. Ouça se você quiser mirar no Strength.</span></span><span class="go">ouvir</span></a>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">3</span><div><span class="sub">Fonte do material</span><h2>Onde você vai buscar as frases</h2></div></div>
+<p class="b">Todos os quatro vídeos contêm as frases de que você precisa. A diferença entre eles é o tempo que a fala te dá para pausar e repetir. Escolha considerando <b>a sua disposição de hoje</b> e não o seu nível de inglês, porque a tarefa é a mesma nos quatro: <b>reunir 3 frases</b>.</p>
+<a class="vlink" href="https://www.youtube.com/watch?v=wGagW7ueYVI" target="_blank" rel="noopener"><span class="vm">Diálogo encenado · mais fácil de pausar</span><span class="vn">Tom e Lisa<span>→</span></span><span class="vd">Duas pessoas se conhecendo, em cena encenada. Falam devagar, uma frase por vez, com pausa entre as falas. É o vídeo em que é mais fácil pausar sem perder o fio da conversa.</span></a>
+<a class="vlink" href="https://www.youtube.com/watch?v=I_tRSrPru94" target="_blank" rel="noopener"><span class="vm">Quatro pessoas · ritmo de conversa real</span><span class="vn">Easy English Conversations<span>→</span></span><span class="vd">Quatro pessoas se conhecendo. Também é encenado, mas em ritmo de conversa real, com falas sobrepostas, frases cortadas no meio e riso. Como são quatro pessoas na mesma situação, você observa a mesma informação sendo dada de quatro formas diferentes e escolhe a que te serve.</span></a>
+<a class="vlink" href="https://www.youtube.com/watch?v=s4D0IuP2bbc" target="_blank" rel="noopener"><span class="vm">Uma pessoa · fala longa e contínua</span><span class="vn">Bob the Canadian<span>→</span></span><span class="vd">Uma pessoa falando sozinha para a câmera. A fala é longa e contínua, sem as pausas que um diálogo oferece. Ele explica em inglês e exemplifica em inglês, então você precisa distinguir o que é explicação do que é frase para registrar.</span></a>
+<a class="vlink" href="https://www.youtube.com/watch?v=TwBYlBjbokU&amp;list=PLA5UIoabheFM281dIr4ojw9xOVoo9dOtw&amp;index=5" target="_blank" rel="noopener"><span class="vm">Sem roteiro · sotaques variados</span><span class="vn">Easy English na rua<span>→</span></span><span class="vd">Entrevista de rua, sem roteiro. Cada pessoa se apresenta nos primeiros segundos da própria fala e depois o assunto muda, então é nesses trechos iniciais que estão as frases. Tem sotaques variados e nenhuma edição de ritmo, o que faz dele o vídeo com as frases mais próximas do que você vai ouvir na rua de verdade.</span></a>
+<div class="note">Você pode <b>trocar de vídeo no meio do processo</b> e pode reunir frases de mais de um.</div>
+<span class="lbl">Qual eu escolhi</span>
+<input class="fin" type="text" data-f="video" placeholder="o vídeo (ou os vídeos) de onde tirei as frases">
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🔍</span><div><span class="sub">Etapa 1 de 4 · produz 3 frases emprestadas</span><h2>Observar</h2></div></div>
+<p class="b">Esta etapa produz a matéria-prima do seu áudio: as 3 frases que você registrar aqui são <b>as mesmas 3</b> que você vai dizer na quinta. Por isso o critério de seleção não é a beleza da frase, e sim a utilidade dela para você — você está escolhendo o que vai querer dizer sobre si mesma.</p>
+<p class="b">Compreender o vídeo inteiro <b>não é o objetivo</b> desta etapa. Você vai assistir com a atenção dirigida a formas específicas, e é normal que trechos inteiros passem sem que você entenda, porque eles não fazem parte do que você está procurando.</p>
+<p class="b" style="margin-top:14px"><b>Antes de dar play, defina o que você quer contar sobre você.</b> Quem se apresenta seleciona algumas informações para dar, e estas são as mais frequentes. Marque 3, considerando a sua vida: se você não tem filhos, a quinta não te serve.</p>
+<span class="lbl">Marque 3 categorias</span>
+<label class="chk"><input type="checkbox" data-f="cat1"><span>De onde vem<span class="ex">I'm from… / I'm originally from…</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat2"><span>Há quanto tempo está aqui<span class="ex">I've been here for… / I moved here in…</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat3"><span>Onde mora<span class="ex">I live in… / I'm just around the corner</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat4"><span>O que faz<span class="ex">I work as… / I'm a… / I'm studying…</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat5"><span>Com quem mora<span class="ex">I live with… / I have two kids</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat6"><span>O que gosta de fazer<span class="ex">I like… / In my free time I…</span></span></label>
+<label class="chk"><input type="checkbox" data-f="cat7"><span>Como devolve a conversa<span class="ex">And you? / How long have you been here?</span></span></label>
+<div class="note"><b>Sobre a última categoria:</b> ela é o que separa o ✅ do ⭐ no quarto critério da rubrica. Se você quer mirar no Strength, marque-a como uma das suas três.</div>
+<p class="b" style="margin-top:12px">Com as 3 categorias definidas, sua escuta deixa de ser geral e passa a ter alvo, porque agora você sabe exatamente quais informações está procurando.</p>
+<p class="b" style="margin-top:14px"><b>Assista com a legenda ligada.</b> Sempre que a pessoa der uma das 3 informações que você marcou:</p>
+<div class="steps">
+<div class="st1"><span class="sn">1</span><p><b>Pause.</b></p></div>
+<div class="st1"><span class="sn">2</span><p><b>Repita em voz alta</b>, junto com ela, até a frase sair natural. Este passo é o que transforma a frase anotada em frase que você consegue falar, porque sem repetir você termina a etapa com texto no papel e não com fala na boca.</p></div>
+<div class="st1"><span class="sn">3</span><p><b>Registre a frase exata</b>, em inglês.</p></div>
+</div>
+<span class="lbl">Frase 1 · exata, em inglês</span>
+<input class="fin" type="text" data-f="col1">
+<span class="lbl">Frase 2</span>
+<input class="fin" type="text" data-f="col2">
+<span class="lbl">Frase 3</span>
+<input class="fin" type="text" data-f="col3">
+<div class="note"><b>Se encontrar uma frase útil de uma categoria que você não marcou</b>, registre mesmo assim, porque a lista existe para orientar a sua escuta e não para limitar o que você pode aproveitar.</div>
+<div class="note"><b>Se chegar ao fim do vídeo com menos de 3 frases</b>, assista de novo indo direto aos trechos em que alguém fala sobre si.</div>
+<div class="note"><b>Se não conseguir registrar nenhuma</b>, use o kit de frases no fim deste material como ponto de partida.</div>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">✏️</span><div><span class="sub">Etapa 2 de 4 · produz 3 frases verdadeiras sobre você</span><h2>Adaptar</h2></div></div>
+<p class="b">Esta etapa recebe as 3 frases emprestadas e devolve <b>3 frases verdadeiras sobre você</b>. É o passo que impede que o seu áudio de quinta seja a fala de outra pessoa com o seu nome no lugar.</p>
+<p class="b">Toda frase que você registrou tem duas partes: a <b>estrutura</b>, que organiza a informação, e o <b>dado</b>, que é a informação específica da pessoa do vídeo. Você substitui apenas o dado.</p>
+<div class="steps">
+<div class="st1"><span class="sn">1</span><p><b>Identifique o dado dentro da frase.</b></p></div>
+</div>
+<div class="ex1"><span>I've been living here for <s>about three years</s>.</span><br><span>I work as <s>a nurse</s>, at <s>the hospital downtown</s>.</span><br><span>In my free time I like <s>going to the gym</s>.</span></div>
+<div class="steps" style="margin-top:14px">
+<div class="st1"><span class="sn">2</span><p><b>Substitua pelo seu.</b></p></div>
+</div>
+<div class="ex1"><span>I've been living here for <b>eight months</b>.</span><br><span>I work as <b>a teacher</b>, at <b>a school here in the neighbourhood</b>.</span><br><span>In my free time I like <b>doing embroidery</b>.</span></div>
+<div class="steps" style="margin-top:14px">
+<div class="st1"><span class="sn">3</span><p><b>Preserve a estrutura.</b> As partes <em>I've been / I work as / In my free time I like</em> permanecem exatamente como estavam, porque foi delas que veio a naturalidade da frase. Se você não souber a palavra em inglês para o seu dado, procure <b>apenas essa palavra</b>, sem traduzir a frase inteira.</p></div>
+<div class="st1"><span class="sn">4</span><p><b>Verifique cada frase.</b> Passe cada frase adaptada pela metodologia do tradutor. Se o resultado corresponder ao que você quis dizer, a frase está correta. Se ficar estranho, o problema costuma estar no dado que você substituiu e não na estrutura que você preservou. <a href="https://www.inglessemroteiro.com.br/school/course/desafio-8-semanas/lecture/10350164">Assista à aula aqui.</a></p></div>
+</div>
+<span class="lbl">Frase adaptada 1</span>
+<input class="fin" type="text" data-f="ad1">
+<span class="lbl">Frase adaptada 2</span>
+<input class="fin" type="text" data-f="ad2">
+<span class="lbl">Frase adaptada 3</span>
+<input class="fin" type="text" data-f="ad3">
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🎧</span><div><span class="sub">Etapa 3 de 4 · produz 3 frases na memória</span><h2>Testar</h2></div></div>
+<p class="b">Esta etapa recebe as 3 frases adaptadas e devolve <b>as 3 frases na memória</b>. Nenhum conteúdo novo é introduzido aqui: o trabalho é de repetição, até que a fala dispense a consulta ao papel.</p>
+<span class="lbl">Teste 1 — a frase sai inteira?</span>
+<p class="b">Leia cada frase em voz alta, <b>três vezes</b>. Se travar em alguma palavra, volte ao vídeo, localize o trecho e repita junto com a pessoa até a palavra sair.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t1"><span>Fiz o teste 1</span></label>
+<span class="lbl">Teste 2 — a frase sai sem o papel?</span>
+<p class="b">Leia uma frase, <b>vire o papel</b> e diga de memória. Faça uma por vez e depois as três seguidas. Se esquecer alguma, olhe novamente, vire o papel e repita. Continue até as três saírem.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t2"><span>Fiz o teste 2</span></label>
+<span class="lbl">Teste 3 — a frase sai quando alguém pergunta?</span>
+<a class="audio" href="https://drive.google.com/file/d/1kJyYUCiWAVwEHBRVhoI4HtYcJhF0EyOq/view" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO C — diálogo com pausas · 40s</span><span class="ad">Eu faço as perguntas e deixo o silêncio para você responder em voz alta, sem o papel, dentro do tempo da pausa.</span></span><span class="go">ouvir</span></a>
+<p class="b" style="margin-top:12px">Se não der tempo, rode o áudio novamente. A pausa é curta de propósito, porque numa conversa real ela é ainda mais curta.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t3"><span>Fiz o teste 3</span></label>
+<a class="audio" style="background:#8a7465" href="https://drive.google.com/file/d/1Qjw5JKLmaOQ1d0T6Odpbo-DbMd4oSmdT/view" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO B — diálogo · 40s · opcional</span><span class="ad">Mostra onde a apresentação entra quando duas pessoas se conhecem.</span></span><span class="go">ouvir</span></a>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🎙️</span><div><span class="sub">Etapa 4 de 4 · produz o áudio de quinta</span><h2>Aplicar</h2></div></div>
+<p class="b">Grave a sua apresentação do começo ao fim, <b>sem interromper a fala</b>, usando as 3 frases que você adaptou.</p>
+<p class="b">Se travar no meio, apague e comece de novo, quantas vezes forem necessárias. O que você me envia é <b>um áudio, inteiro</b>.</p>
+<p class="b">Antes de enviar, ouça o seu áudio com a rubrica ao lado e marque onde ele está em cada um dos quatro critérios. Se quiser subir em alguma linha, grave outra vez. Envie quando o áudio estiver onde você quer que ele esteja.</p>
+<span class="lbl">Antes de enviar — ouça seu áudio e marque</span>
+<div class="q"><div class="qt">1 · Eu falei do começo ao fim, sem interromper?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="🌱 Building"><span><span class="em">🌱</span> Falei uma frase de cada vez, parando entre elas.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="♻️ Growing"><span><span class="em">♻️</span> Falei alguns trechos seguidos, mas parei no meio para lembrar o que vinha.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="✅ Established"><span><span class="em">✅</span> Fui do começo ao fim sem parar. Gaguejei e errei, mas não interrompi.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="⭐ Strength"><span><span class="em">⭐</span> Fui do começo ao fim e as frases se conectaram de forma natural.</span></label>
+</div></div>
+<div class="q"><div class="qt">2 · Meu áudio é completo, com começo, meio e fim?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="🌱 Building"><span><span class="em">🌱</span> Falei uma informação só, ou as informações saíram fora de ordem.</span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="♻️ Growing"><span><span class="em">♻️</span> Tem mais de uma informação, mas elas vieram na ordem em que eu lembrei.</span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="✅ Established"><span><span class="em">✅</span> Tem começo, meio e fim: eu abro, conto o que quero contar e encerro.</span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="⭐ Strength"><span><span class="em">⭐</span> Escolhi a ordem das informações pensando em quem vai me ouvir.</span></label>
+</div></div>
+<div class="q"><div class="qt">3 · O que eu disse é sobre mim de verdade?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="🌱 Building"><span><span class="em">🌱</span> Repeti o que a pessoa do vídeo disse e não fiz alteração nenhuma.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="♻️ Growing"><span><span class="em">♻️</span> Coloquei a minha informação, mas dentro da frase da pessoa do vídeo, sem ajustar.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="✅ Established"><span><span class="em">✅</span> As três frases têm informação minha e específica, e eu ajustei a frase para caber.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="⭐ Strength"><span><span class="em">⭐</span> Além das três, inseri mais alguma coisa que fui procurar sozinha.</span></label>
+</div></div>
+<div class="q"><div class="qt">4 · Meu áudio é para alguém?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="🌱 Building"><span><span class="em">🌱</span> Começa e termina de repente, sem cumprimento nem despedida.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="♻️ Growing"><span><span class="em">♻️</span> Inicia com um cumprimento, mas não tem despedida — ou vice-versa.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="✅ Established"><span><span class="em">✅</span> Tem cumprimento e despedida, e soa como se eu estivesse falando com uma pessoa.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="⭐ Strength"><span><span class="em">⭐</span> Termino devolvendo a conversa, com uma pergunta ou uma abertura.</span></label>
+</div></div>
+<span class="lbl">O que foi mais difícil?</span>
+<textarea class="fin" data-f="dificuldade"></textarea>
+<div class="note coral"><b>📤 Até quinta:</b> me mande o áudio no privado, no WhatsApp. Estas respostas e a rubrica você me envia por aqui, no botão abaixo.</div>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">💬</span><div><span class="sub">Prática coletiva</span><h2>O grupo</h2></div></div>
+<p class="b">O grupo <b>não é onde a sua apresentação vai</b>, porque ela vem para mim no privado. O grupo é onde a turma compara o que observou e treina junto, e eu estou lá todos os dias.</p>
+<span class="lbl">Poste durante a semana</span>
+<p class="b">Uma frase que você coletou, explicando por que ela serve para o seu caso.</p>
+<div class="quote">Registrei "I've been living here for about three years", porque eu nunca sei como dizer há quanto tempo estou aqui.</div>
+<p class="b" style="margin-top:12px">Uma coisa que você observou no vídeo e não esperava.</p>
+<div class="quote">Ninguém disse o sobrenome. Eu achava que precisava dizer.</div>
+<p class="b" style="margin-top:12px">Uma dúvida sobre algo que você ouviu e não entendeu.</p>
+<div class="note">Leia o que as outras postaram, porque <b>se a frase de alguém servir para você, você pode usá-la</b>. É para isso que ela está lá.</div>
+<span class="lbl">O que eu quero levar para o grupo</span>
+<textarea class="fin" data-f="grupo"></textarea>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🗂️</span><div><span class="sub">Material de apoio</span><h2>Kit de frases</h2></div></div>
+<p class="b">Se você não conseguiu registrar nenhuma frase, comece daqui e passe pelas mesmas etapas: substitua o dado, preserve a estrutura, repita até sair sem o papel.</p>
+<div class="kit"><span class="km">Quem eu sou</span><div class="kl">Hi, I'm ___.<br>I'm from Brazil.<br>I live here, on ___ Street.</div></div>
+<div class="kit"><span class="km">Minha vida</span><div class="kl">I moved here ___ (last year / three months ago).<br>I work as a ___. / I'm studying ___.<br>I live here with ___.</div></div>
+<div class="kit"><span class="km">Devolvo a conversa</span><div class="kl">And you? / What about you?<br>How long have you been here?<br>Do you live around here?</div></div>
+<div class="kit"><span class="km">Quando não sai como ensaiei</span><div class="kl">Sorry, could you say that again?<br>Sorry, my English is a bit rusty.<br>I didn't catch that.</div></div>
+</div>
+<div class="foot">Semana 1 · Me apresentar<br><b>Inglês sem Roteiro</b></div>
+</div>
+<div class="bar">
+<div class="inner">
+<button class="send" id="enviar" onclick="enviar()">Enviar minhas respostas</button>
+<div class="st" id="status">O que você escreve fica salvo neste aparelho — pode fechar e continuar depois.</div>
+</div>
 </div>
 <script>
   // Endereços padrão embutidos: o link das alunas fica curto
@@ -120,32 +332,76 @@
   var BACKEND = params.get("b") || BACKEND_PADRAO;
   var ZAPIER = params.get("z") || ZAPIER_PADRAO;
 
-  function val(id) { return (document.getElementById(id).value || "").trim(); }
-  function falhar(msg) {
-    var e = document.getElementById("erro");
-    e.textContent = msg; e.style.display = "block";
-    document.getElementById("enviar").disabled = false;
+  var SEMANA = "1";
+  var CHAVE = "isr_desafio_semana" + SEMANA + "_v1";
+  var CAMPOS = [];
+
+  // O que a aluna escreve fica salvo no aparelho dela: pode fechar a
+  // página no meio da semana e continuar de onde parou.
+  function ligarCampos() {
+    CAMPOS = Array.prototype.slice.call(document.querySelectorAll("[data-f]"));
+    var salvo = {};
+    try { salvo = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (e) {}
+    CAMPOS.forEach(function (el) {
+      var k = el.dataset.f;
+      if (salvo[k] === undefined) return;
+      if (el.type === "checkbox") el.checked = !!salvo[k];
+      else if (el.type === "radio") el.checked = el.value === salvo[k];
+      else el.value = salvo[k];
+    });
+    var salvar = function () {
+      try { localStorage.setItem(CHAVE, JSON.stringify(coletar())); } catch (e) {}
+    };
+    CAMPOS.forEach(function (el) {
+      el.addEventListener("input", salvar);
+      el.addEventListener("change", salvar);
+    });
   }
 
-  function enviar() {
-    var campos = {
-      semana: val("semana"), nome: val("nome"), email: val("email"),
-      video_escolhido: val("video_escolhido"), categorias: val("categorias"),
-      frases_coletadas: val("frases_coletadas"), frases_adaptadas: val("frases_adaptadas"),
-      testes_feitos: val("testes_feitos"),
-      rubrica_1_fala_continua: val("rubrica_1_fala_continua"),
-      rubrica_2_estrutura: val("rubrica_2_estrutura"),
-      rubrica_3_preparacao: val("rubrica_3_preparacao"),
-      rubrica_4_dirigida: val("rubrica_4_dirigida"),
-      mais_dificil: val("mais_dificil"), para_o_grupo: val("para_o_grupo"),
+  function coletar() {
+    var out = {};
+    CAMPOS.forEach(function (el) {
+      var k = el.dataset.f;
+      if (el.type === "checkbox") out[k] = el.checked;
+      else if (el.type === "radio") { if (el.checked) out[k] = el.value; else if (out[k] === undefined) out[k] = ""; }
+      else out[k] = el.value;
+    });
+    return out;
+  }
+
+  function montarEnvio() {
+    var d = coletar();
+    var cats = ["De onde vem", "Há quanto tempo está aqui", "Onde mora", "O que faz",
+      "Com quem mora", "O que gosta de fazer", "Como devolve a conversa"];
+    return {
+      semana: SEMANA,
+      semana_titulo: "Semana 1 — Me apresentar",
+      nome: (d.nome || "").trim(),
+      email: (d.email || "").trim(),
+      video_escolhido: d.video || "",
+      categorias: cats.filter(function (c, i) { return d["cat" + (i + 1)]; }).join(", "),
+      frases_coletadas: [d.col1, d.col2, d.col3].filter(Boolean).join(" | "),
+      frases_adaptadas: [d.ad1, d.ad2, d.ad3].filter(Boolean).join(" | "),
+      testes_feitos: [d.t1 && "teste 1", d.t2 && "teste 2", d.t3 && "teste 3"].filter(Boolean).join(", "),
+      rubrica_1_fala_continua: d.r1 || "",
+      rubrica_2_estrutura: d.r2 || "",
+      rubrica_3_preparacao: d.r3 || "",
+      rubrica_4_dirigida: d.r4 || "",
+      mais_dificil: d.dificuldade || "",
+      para_o_grupo: d.grupo || "",
       enviado_em: new Date().toISOString()
     };
-    if (!campos.semana || !campos.nome || !campos.email || !campos.mais_dificil) {
-      falhar("Preencha a semana, o nome, o e-mail e o que foi mais difícil.");
-      return;
-    }
-    document.getElementById("erro").style.display = "none";
-    document.getElementById("enviar").disabled = true;
+  }
+
+  function avisar(msg) { document.getElementById("status").textContent = msg; }
+
+  function enviar() {
+    var campos = montarEnvio();
+    if (!campos.nome) { avisar("Escreva seu nome no começo do material antes de enviar."); return; }
+    if (!campos.email) { avisar("Escreva o e-mail cadastrado na escola — é ele que liga as respostas ao seu registro."); return; }
+    var botao = document.getElementById("enviar");
+    botao.disabled = true;
+    avisar("Enviando…");
 
     // Zapier (planilha + e-mail da gestora): entrega sem ler a resposta
     if (ZAPIER) {
@@ -155,11 +411,8 @@
       } catch (e) {}
     }
 
-    var sucesso = function () {
-      document.getElementById("okSemana").textContent = campos.semana;
-      document.getElementById("form").style.display = "none";
-      document.getElementById("sucesso").style.display = "block";
-    };
+    var deuCerto = function (msg) { avisar(msg); botao.disabled = false; };
+    var deuErrado = function (msg) { avisar(msg); botao.disabled = false; };
 
     // Banco central do sistema: resposta legível = confirmação de verdade
     if (BACKEND) {
@@ -168,19 +421,21 @@
         body: JSON.stringify(Object.assign({ action: "novaAtividade" }, campos)) })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d && d.ok) sucesso();
-          else falhar("O registro não foi aceito (" + ((d && d.error) || "erro") + "). Tente de novo.");
+          if (d && d.ok) deuCerto("✓ Respostas recebidas. Agora me mande o áudio no privado.");
+          else deuErrado("O registro não foi aceito (" + ((d && d.error) || "erro") + "). Tente de novo.");
         })
         .catch(function () {
-          falhar("Sem conexão com o registro da escola. Confira a internet e tente de novo.");
+          deuErrado("O envio não completou. Verifique a conexão e tente de novo.");
         });
     } else if (ZAPIER) {
       // sem banco configurado no link, o envio ao Zapier é o que temos
-      sucesso();
+      deuCerto("✓ Respostas enviadas. Agora me mande o áudio no privado.");
     } else {
-      falhar("Este link está sem o endereço de envio. Avise a escola.");
+      deuErrado("Este link está sem o endereço de envio. Avise a escola.");
     }
   }
+
+  ligarCampos();
 </script>
 </body>
 </html>
