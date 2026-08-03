@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inglês sem Roteiro — Desafio de 8 semanas</title>
+<!--
+  Registro semanal do desafio. A aluna abre pelo link, preenche e envia.
+  O envio vai para DOIS lugares:
+    1. o banco central do sistema (?b= endereço do Web App /exec) —
+       action novaAtividade; o sistema puxa e registra no programa, na
+       semana certa, casando a aluna pelo e-mail;
+    2. o webhook do Zapier (?z= endereço do catch hook) — que alimenta a
+       planilha de conferência e o e-mail da gestora.
+  O 1 tem resposta legível (confirmação de verdade). O 2 é enviado em
+  modo no-cors: o navegador entrega mas não deixa ler a resposta — por
+  isso o sucesso mostrado à aluna vem do banco central.
+-->
+<style>
+  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 28px 0; }
+  .card { background: #fdfbf8; border-radius: 16px; padding: 32px 28px; max-width: 520px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 6px; }
+  h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
+  p.desc { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
+  label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; margin: 14px 0 5px; }
+  input, select, textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; }
+  textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+  .grupo { background: #f6f2ea; border-radius: 12px; padding: 4px 15px 15px; margin-top: 18px; }
+  .grupo .titulo { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9c6f56; margin: 12px 0 2px; }
+  .grupo .ajuda { font-size: 11.5px; color: #8a7c6b; line-height: 1.5; margin: 0 0 4px; }
+  .rubricas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 14px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px; cursor: pointer; margin-top: 20px; }
+  button:disabled { opacity: 0.6; cursor: wait; }
+  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; text-align: center; }
+  .ok { display: none; text-align: center; padding: 30px 10px; }
+  .ok h2 { font-size: 20px; color: #164951; margin: 0 0 8px; }
+  .ok p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0; }
+  .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 14px 0 0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="form">
+    <p class="eyebrow">Inglês sem Roteiro</p>
+    <h1>Desafio de 8 semanas</h1>
+    <p class="desc">Registro da sua semana. Preencha depois de concluir a prática — a professora usa estas respostas para preparar a devolutiva de sexta.</p>
+
+    <label>Semana *</label>
+    <select id="semana">
+      <option value="">Escolha a semana</option>
+      <option>1</option><option>2</option><option>3</option><option>4</option>
+      <option>5</option><option>6</option><option>7</option><option>8</option>
+    </select>
+    <label>Nome completo *</label>
+    <input id="nome" placeholder="Seu nome" />
+    <label>E-mail cadastrado na escola *</label>
+    <input id="email" type="email" placeholder="o e-mail que você usa com a escola" />
+
+    <div class="grupo">
+      <div class="titulo">A prática da semana</div>
+      <label>Vídeo escolhido</label>
+      <input id="video_escolhido" placeholder="Título ou link do vídeo" />
+      <label>Categorias</label>
+      <input id="categorias" placeholder="ex. viagem, trabalho" />
+      <label>Frases coletadas</label>
+      <textarea id="frases_coletadas" placeholder="As frases que você coletou do vídeo"></textarea>
+      <label>Frases adaptadas</label>
+      <textarea id="frases_adaptadas" placeholder="As frases adaptadas para a sua realidade"></textarea>
+      <label>Testes feitos</label>
+      <input id="testes_feitos" placeholder="ex. 3" />
+    </div>
+
+    <div class="grupo">
+      <div class="titulo">Auto-avaliação · 1 a 5</div>
+      <p class="ajuda">1 = muito difícil ainda · 5 = consegui com naturalidade</p>
+      <div class="rubricas">
+        <div>
+          <label>Fala contínua</label>
+          <select id="rubrica_1_fala_continua"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div>
+          <label>Estrutura</label>
+          <select id="rubrica_2_estrutura"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div>
+          <label>Preparação</label>
+          <select id="rubrica_3_preparacao"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div>
+          <label>Fala dirigida</label>
+          <select id="rubrica_4_dirigida"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+      </div>
+    </div>
+
+    <label>O que foi mais difícil nesta semana? *</label>
+    <textarea id="mais_dificil" placeholder="Conte com suas palavras — é o que orienta a devolutiva"></textarea>
+    <label>Algo para compartilhar com o grupo?</label>
+    <textarea id="para_o_grupo" placeholder="Opcional"></textarea>
+
+    <button id="enviar" onclick="enviar()">Enviar registro da semana</button>
+    <p class="erro" id="erro"></p>
+    <p class="nota">As respostas vão direto para a professora e para o seu registro no programa.</p>
+  </div>
+  <div class="ok" id="sucesso">
+    <h2>Registro recebido</h2>
+    <p>Sua semana <strong id="okSemana"></strong> está registrada.<br>A devolutiva vem no encontro de sexta.</p>
+  </div>
+</div>
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var BACKEND = params.get("b") || "";
+  var ZAPIER = params.get("z") || "";
+
+  function val(id) { return (document.getElementById(id).value || "").trim(); }
+  function falhar(msg) {
+    var e = document.getElementById("erro");
+    e.textContent = msg; e.style.display = "block";
+    document.getElementById("enviar").disabled = false;
+  }
+
+  function enviar() {
+    var campos = {
+      semana: val("semana"), nome: val("nome"), email: val("email"),
+      video_escolhido: val("video_escolhido"), categorias: val("categorias"),
+      frases_coletadas: val("frases_coletadas"), frases_adaptadas: val("frases_adaptadas"),
+      testes_feitos: val("testes_feitos"),
+      rubrica_1_fala_continua: val("rubrica_1_fala_continua"),
+      rubrica_2_estrutura: val("rubrica_2_estrutura"),
+      rubrica_3_preparacao: val("rubrica_3_preparacao"),
+      rubrica_4_dirigida: val("rubrica_4_dirigida"),
+      mais_dificil: val("mais_dificil"), para_o_grupo: val("para_o_grupo"),
+      enviado_em: new Date().toISOString()
+    };
+    if (!campos.semana || !campos.nome || !campos.email || !campos.mais_dificil) {
+      falhar("Preencha a semana, o nome, o e-mail e o que foi mais difícil.");
+      return;
+    }
+    document.getElementById("erro").style.display = "none";
+    document.getElementById("enviar").disabled = true;
+
+    // Zapier (planilha + e-mail da gestora): entrega sem ler a resposta
+    if (ZAPIER) {
+      try {
+        fetch(ZAPIER, { method: "POST", mode: "no-cors",
+          body: new URLSearchParams(campos) }).catch(function () {});
+      } catch (e) {}
+    }
+
+    var sucesso = function () {
+      document.getElementById("okSemana").textContent = campos.semana;
+      document.getElementById("form").style.display = "none";
+      document.getElementById("sucesso").style.display = "block";
+    };
+
+    // Banco central do sistema: resposta legível = confirmação de verdade
+    if (BACKEND) {
+      fetch(BACKEND, { method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(Object.assign({ action: "novaAtividade" }, campos)) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok) sucesso();
+          else falhar("O registro não foi aceito (" + ((d && d.error) || "erro") + "). Tente de novo.");
+        })
+        .catch(function () {
+          falhar("Sem conexão com o registro da escola. Confira a internet e tente de novo.");
+        });
+    } else if (ZAPIER) {
+      // sem banco configurado no link, o envio ao Zapier é o que temos
+      sucesso();
+    } else {
+      falhar("Este link está sem o endereço de envio. Avise a escola.");
+    }
+  }
+</script>
+</body>
+</html>
