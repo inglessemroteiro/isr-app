@@ -351,12 +351,16 @@
                   <select ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
                     <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="8"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
                   </select>
+                  <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Professora</div>
+                  <select ref="{{ turProfRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                    <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+                  </select>
                   <div style="display: flex; gap: 8px; align-items: flex-end;">
                     <div style="flex: 1;"><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nível</div>
                       <input ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
                     <button onclick="{{ onSalvarTurma }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
                   </div>
-                  <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A professora é atualizada automaticamente pela turma escolhida.</p>
+                  <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Em "Automática", a professora vem da turma escolhida. Para aula particular (ou exceção), escolha a professora na lista.</p>
                 </div>
               </sc-if>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
@@ -614,6 +618,7 @@ class Component extends DCLogic {
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
   ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
   turSelRef = React.createRef(); turNivelRef = React.createRef();
+  turProfRef = React.createRef();
   tagRef = React.createRef();
   saidaMotivoRef = React.createRef(); saidaDetalheRef = React.createRef();
   renParcelasRef = React.createRef(); renValorRef = React.createRef();
@@ -1058,15 +1063,25 @@ class Component extends DCLogic {
       out.edTurFg = this.state.editandoTurma ? "#9c6f56" : "#164951";
       out.onEditarTurma = () => this.setState(s => ({ editandoTurma: !s.editandoTurma }));
       out.turSelRef = this.turSelRef; out.turNivelRef = this.turNivelRef;
+      out.turProfRef = this.turProfRef;
       out.turmaOpts = CRM.turmasLista().map(u => {
         const label = u.nivel + " · " + u.turma;
         return { id: u.id, label: label + " · " + (u.teacher || "sem professora"), sel: p.turma === label };
       }).concat([{ id: "particular", label: "Particular", sel: (p.turma || "").indexOf("Particular") === 0 }]);
+      // aula particular não tem turma para herdar a professora — a escolha
+      // explícita aqui é o único jeito de dizer quem dá a aula dela.
+      // Em turma de grupo, "Automática" segue a professora da turma.
+      out.profOpts = [{ id: "", label: "Automática · pela turma", sel: !p.professora }]
+        .concat(CRM.equipeLista()
+          .filter(m => (m.papeis || []).indexOf("professora") >= 0)
+          .map(m => ({ id: m.nome, label: m.nome, sel: p.professora === m.nome })));
       out.onSalvarTurma = () => {
         const id = this.turSelRef.current && this.turSelRef.current.value;
         if (id) CRM.mudarTurma(p.id, id);
         const nv = (this.turNivelRef.current && this.turNivelRef.current.value || "").trim();
         if (nv) CRM.atualizarCadastro(p.id, { nivel: nv });
+        const prof = (this.turProfRef.current && this.turProfRef.current.value) || "";
+        CRM.updateLead(p.id, { professora: prof });
         this.setState({ editandoTurma: false });
       };
       // Quem renovou devendo continua devendo: as parcelas em aberto de

@@ -3685,6 +3685,119 @@
     return { apagado: true, nome: p.nome, motivo: motivo || "" };
   }
 
+  // ── DUPLICADAS ────────────────────────────────────────────────
+  // Dois aparelhos que criaram a mesma pessoa (importação no computador
+  // E no celular antes de conectar, p. ex.) geram dois registros com ids
+  // diferentes — e a mesclagem do sync, que trabalha por id, soma os
+  // dois. Aqui a escola junta as cópias: tudo vira um registro só e a
+  // cópia vira lápide (some em todos os aparelhos).
+  function pontosDeRegistro(p) {
+    return (p.contratos || []).length * 100 + (p.historico || []).length
+      + (p.turma ? 10 : 0) + (p.email ? 2 : 0) + (p.whatsapp ? 2 : 0)
+      + (p.status === "aluna" || p.status === "mvs" ? 50 : 0);
+  }
+  function pessoasDuplicadas() {
+    var vivos = loadPessoas();
+    var grupos = {};
+    vivos.forEach(function (p) {
+      var chaves = [];
+      if (p.nome) chaves.push("n:" + semAcento(p.nome));
+      if (p.email) chaves.push("e:" + String(p.email).toLowerCase().trim());
+      var f = p.whatsapp ? chaveFone(p.whatsapp) : "";
+      if (f) chaves.push("f:" + f);
+      chaves.forEach(function (k) { (grupos[k] = grupos[k] || []).push(p); });
+    });
+    var pares = {};
+    Object.keys(grupos).forEach(function (k) {
+      var g = grupos[k];
+      for (var i = 0; i < g.length; i++) for (var j = i + 1; j < g.length; j++) {
+        if (g[i].id === g[j].id) continue;
+        var par = [g[i], g[j]].sort(function (a, b) { return pontosDeRegistro(b) - pontosDeRegistro(a); });
+        pares[[par[0].id, par[1].id].join("|")] = { manter: par[0], apagar: par[1] };
+      }
+    });
+    return Object.keys(pares).map(function (k) { return pares[k]; });
+  }
+  function mesclarPessoas(manterId, apagarId) {
+    var alvo = getPessoa(manterId), dup = getPessoa(apagarId);
+    if (!alvo || !dup || manterId === apagarId) return false;
+    criarBackup("antes de mesclar " + dup.nome + " em " + alvo.nome);
+    mutate(manterId, function (x) {
+      // escalares: preenche só o que falta no registro que fica
+      ["email", "whatsapp", "nivel", "turma", "professora", "moeda", "canal"].forEach(function (c) {
+        if (!x[c] && dup[c]) x[c] = dup[c];
+      });
+      if ((!x.contratos || !x.contratos.length) && (dup.contratos || []).length) x.contratos = dup.contratos;
+      if (!x.origem && dup.origem) x.origem = dup.origem;
+      if ((!x.inscricao || !x.inscricao.length) && (dup.inscricao || []).length) x.inscricao = dup.inscricao;
+      x.documentos = (x.documentos || []).concat(dup.documentos || []);
+      x.tags = (x.tags || []).concat((dup.tags || []).filter(function (t) {
+        return (x.tags || []).indexOf(t) < 0; }));
+      // a linha do tempo da cópia não se perde: entra na do registro que fica
+      var ja = {};
+      (x.historico || []).forEach(function (h) { ja[h.data + "|" + h.texto] = 1; });
+      (dup.historico || []).forEach(function (h) {
+        if (!ja[h.data + "|" + h.texto]) (x.historico = x.historico || []).push(h);
+      });
+      (x.historico || []).sort(function (a, b) { return String(a.data) < String(b.data) ? -1 : 1; });
+      pushHist(x, "contato", "Registro duplicado mesclado (era \"" + dup.nome + "\")");
+    });
+    // tudo que apontava para a cópia passa a apontar para quem fica
+    toquesSave(toquesLista().map(function (t) {
+      if (t.pessoaId === apagarId) { t.pessoaId = manterId; carimbar(t); } return t; }));
+    pulsosSave(pulsosLista().map(function (t) {
+      if (t.pessoaId === apagarId) { t.pessoaId = manterId; carimbar(t); } return t; }));
+    var m = chamadasAll();
+    Object.keys(m).forEach(function (k) {
+      ["presencas", "tarefas"].forEach(function (campo) {
+        var mapa = m[k][campo];
+        if (mapa && mapa[apagarId] !== undefined) {
+          if (mapa[manterId] === undefined) mapa[manterId] = mapa[apagarId];
+          delete mapa[apagarId];
+        }
+      });
+    });
+    chamadasSaveLocal(m);
+    var moedas = moedasAjustesAll();
+    if (moedas[apagarId]) {
+      moedas[manterId] = (moedas[manterId] || []).concat(moedas[apagarId]);
+      delete moedas[apagarId];
+      try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(moedas)); } catch (e) {}
+    }
+    programasSave(programasLista().map(function (pr) {
+      var tinha = (pr.participantes || []).indexOf(apagarId) >= 0;
+      pr.participantes = (pr.participantes || []).filter(function (x) { return x !== apagarId; });
+      if (tinha && pr.participantes.indexOf(manterId) < 0) pr.participantes.push(manterId);
+      ["progresso", "respostas", "moedas"].forEach(function (campo) {
+        var mapa = pr[campo];
+        if (!mapa) return;
+        Object.keys(mapa).forEach(function (k) {
+          if (k.indexOf(apagarId) !== 0) return;
+          var novo = k.replace(apagarId, manterId);
+          if (mapa[novo] === undefined) mapa[novo] = mapa[k];
+          delete mapa[k];
+        });
+      });
+      if (tinha) carimbar(pr);
+      return pr;
+    }));
+    eventosSave(eventosLista().map(function (e) {
+      if (e.rsvps && e.rsvps[apagarId] !== undefined) {
+        if (e.rsvps[manterId] === undefined) e.rsvps[manterId] = e.rsvps[apagarId];
+        delete e.rsvps[apagarId]; carimbar(e);
+      }
+      if ((e.manuais || []).indexOf(apagarId) >= 0) {
+        e.manuais = e.manuais.filter(function (x) { return x !== apagarId; });
+        if (e.manuais.indexOf(manterId) < 0) e.manuais.push(manterId);
+        carimbar(e);
+      }
+      return e;
+    }));
+    // por fim a cópia vira lápide — some em todos os aparelhos
+    deleteLead(apagarId);
+    return true;
+  }
+
   function payloadLocal() {
     return {
       // pessoas vai CRU (com as lápides): é o sync que espalha o
@@ -8603,11 +8716,13 @@
     registrarPulso: registrarPulso, pulsosDe: pulsosDe, ultimoPulso: ultimoPulso,
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
-    carteiraProfessoras: carteiraProfessoras, capacidades: capacidades, setCapacidade: setCapacidade,
+    carteiraProfessoras: carteiraProfessoras, professoraEfetiva: professoraEfetiva,
+    capacidades: capacidades, setCapacidade: setCapacidade,
     ESQUEMA_VERSAO: ESQUEMA_VERSAO, esquemaVersao: esquemaVersao, setEsquemaVersao: setEsquemaVersao,
     criarBackup: criarBackup, backupsLista: backupsLista, restaurarBackup: restaurarBackup,
     apagarBackup: apagarBackup, exportarTudo: exportarTudo, importarTudo: importarTudo,
     exportarPessoa: exportarPessoa, apagarPessoa: apagarPessoa,
+    pessoasDuplicadas: pessoasDuplicadas, mesclarPessoas: mesclarPessoas,
     SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
     SEGMENTOS: SEGMENTOS, segmentoMeta: segmentoMeta, segmentoDe: segmentoDe,
     cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,
