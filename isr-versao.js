@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-g",
+  numero: "2026.08.03-h",
   data: "03/08/2026",
-  nota: "A detecção de duplicadas também casa nome curto com nome completo, mostra o motivo de cada par e ganha o Mesclar todos — os pares detectados se juntam de uma vez, com confirmação"
+  nota: "Importar ganha a aba Atualizar contatos: cola-se Nome e E-mail da planilha, a prévia mostra o que muda (de onde para onde) e o e-mail da planilha vale — o anterior fica na linha do tempo"
 };
