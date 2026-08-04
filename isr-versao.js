@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-d",
+  numero: "2026.08.03-e",
   data: "03/08/2026",
-  nota: "Apagar pessoas passa a valer em todos os aparelhos: no Perfil (Apagar do sistema, em dois cliques) e na seleção do CRM — os dados somem de verdade e a sincronização espalha o apagamento em vez de devolver a pessoa"
+  nota: "Aluna com contrato importado mas sem turma ganha o atalho Escolher turma no Perfil — coloca na turma sem refazer a matrícula nem cadastrar o pagamento de novo"
 };
