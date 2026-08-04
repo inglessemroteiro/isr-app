@@ -411,6 +411,7 @@
                 <div style="font-size: 11.5px; color: #a2957f; margin-top: 2px;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
               </div>
               <a href="{{ ex.waLink }}" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; white-space: nowrap;">Reativar</a>
+              <button onclick="{{ ex.onExcluir }}" title="Exclui a pessoa e todos os dados dela, em todos os aparelhos" style="border: 1px solid {{ ex.excluirBorda }}; background: {{ ex.excluirBg }}; color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ ex.excluirLabel }}</button>
             </div>
           </sc-for>
         </div>
@@ -986,11 +987,25 @@ class Component extends DCLogic {
     }));
     const novas = novasLeadsRaw.length;
 
-    const reativacao = CRM.REATIVACAO.map(ex => ({
-      nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
-      perfilHref: "ISR%20-%20Perfil.dc.html?id=" + ex.id,
-      waLink: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + ex.id + "&tpl=renov_abrir"
-    }));
+    const reativacao = CRM.REATIVACAO.map(ex => {
+      // excluir direto da lista, em dois cliques — mesma exclusão do
+      // Perfil: os dados somem e o apagamento vale em todos os aparelhos
+      const confirmando = this.state.confirmandoExcluirEx === ex.id;
+      return {
+        nome: ex.nome, motivo: ex.motivo, ultimaTurma: ex.ultimaTurma,
+        perfilHref: "ISR%20-%20Perfil.dc.html?id=" + ex.id,
+        waLink: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + ex.id + "&tpl=renov_abrir",
+        excluirLabel: confirmando ? "Confirmar exclusão" : "Excluir",
+        excluirBorda: confirmando ? "#cf6b5c" : "#e5dccf",
+        excluirBg: confirmando ? "#fdece9" : "#fff",
+        onExcluir: () => {
+          if (!confirmando) { this.setState({ confirmandoExcluirEx: ex.id }); return; }
+          CRM.apagarPessoa(ex.id, "excluída pela lista de reativação");
+          this.setState({ confirmandoExcluirEx: "" });
+          this.bump();
+        }
+      };
+    });
 
     // conversas de matrícula: o termômetro da agenda do comercial
     const reu = CRM.reunioesResumo(30);
