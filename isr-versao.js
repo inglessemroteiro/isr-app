@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-b",
+  numero: "2026.08.03-c",
   data: "03/08/2026",
-  nota: "Programa, Acompanhamento e Perfil se redesenham sozinhos quando o puxe do banco traz resposta do desafio ou cadastro novo — antes a atividade processada só aparecia numa segunda recarga da tela"
+  nota: "Turma do acompanhamento encerrada pode ser apagada de vez — em dois cliques, e o apagamento vale em todos os aparelhos (a sincronização espalha a marca em vez de ressuscitar a turma)"
 };

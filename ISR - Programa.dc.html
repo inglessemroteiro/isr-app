@@ -102,7 +102,10 @@
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Quem participa</span>
             <span style="flex: none; font-size: 11.5px; color: #6b6155;">{{ resumoParticipantes }}</span>
           </div>
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 6px;">
+            <sc-if value="{{ podeApagar }}">
+              <button onclick="{{ onApagarTurma }}" style="border: 1px solid {{ apagarBorda }}; background: {{ apagarFundo }}; color: {{ apagarCor }}; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ apagarLabel }}</button>
+            </sc-if>
             <button onclick="{{ onEncerrarTurma }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ encerradaLabel }}</button>
           </div>
           <p style="margin: 0 0 14px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Produto vendido à parte, por {{ precoPrograma }}. A maioria não está em turma; quem estiver aparece com a etiqueta ALUNA DE TURMA.</p>
@@ -567,6 +570,23 @@ class Component extends DCLogic {
       onEncerrarTurma: () => {
         if (prog.encerrada) CRM.reabrirPrograma(prog.id);
         else CRM.encerrarPrograma(prog.id);
+        this.setState({ confirmaApagar: false });
+        this.bump();
+      },
+      // apagar de vez só existe para turma já encerrada, em dois cliques —
+      // o primeiro vira a pergunta, o segundo apaga em todos os aparelhos.
+      // As pessoas e o que elas responderam noutras turmas ficam intactos.
+      podeApagar: !!prog.encerrada,
+      apagarLabel: this.state.confirmaApagar
+        ? "Apagar \"" + (prog.nome || "turma") + "\" em todos os aparelhos?"
+        : "Apagar turma",
+      apagarBorda: this.state.confirmaApagar ? "#cf6b5c" : "#e5dccf",
+      apagarFundo: this.state.confirmaApagar ? "#fdece9" : "#fff",
+      apagarCor: "#cf6b5c",
+      onApagarTurma: () => {
+        if (!this.state.confirmaApagar) { this.setState({ confirmaApagar: true }); return; }
+        CRM.apagarPrograma(prog.id);
+        this.setState({ confirmaApagar: false, programaId: "", turmaAberta: false });
         this.bump();
       },
 
