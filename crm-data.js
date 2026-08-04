@@ -3737,6 +3737,75 @@
     }
     return Object.keys(pares).map(function (k) { return pares[k]; });
   }
+  // ── ATUALIZAR CONTATOS ────────────────────────────────────────
+  // Cola-se as colunas Nome + E-mail (e WhatsApp, se houver) direto da
+  // planilha. Diferente da importação de leads — que só preenche campo
+  // vazio — aqui o e-mail da planilha VALE: quem tinha um antigo é
+  // atualizado, com o valor anterior guardado na linha do tempo.
+  function lerAtualizacaoContatos(texto) {
+    var linhas = String(texto || "").split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var out = [];
+    linhas.forEach(function (linha) {
+      var celulas = linha.split(/\t|\s{3,}| \| /).map(function (c) {
+        return c.replace(/&#13;|\r/g, "").trim();
+      }).filter(Boolean);
+      if (!celulas.length) return;
+      var nome = celulas[0];
+      if (!nome || /^nome$/i.test(nome) || nome.indexOf("@") >= 0) return; // cabeçalho/linha torta
+      // o e-mail é a primeira célula com @; célula com dois e-mails
+      // ("a@x / b@y") fica com o primeiro
+      var email = "";
+      celulas.slice(1).forEach(function (c) {
+        if (email || c.indexOf("@") < 0) return;
+        email = c.split(/[\s\/,;]+/).filter(function (t) { return t.indexOf("@") > 0; })[0] || "";
+      });
+      email = email.toLowerCase();
+      var fone = "";
+      celulas.slice(1).forEach(function (c) {
+        if (fone || c.indexOf("@") >= 0) return;
+        if ((c.match(/\d/g) || []).length >= 8) fone = c;
+      });
+      if (!email && !fone) { out.push({ nome: nome, acao: "sem-contato" }); return; }
+      // o nome da planilha pode ter apelido ou anotação depois de " - "
+      var nomeLimpo = nome.split(" - ")[0].split(" (")[0].trim();
+      var pes = pessoaPorNome(nomeLimpo) || pessoaPorNome(nome)
+        || pessoaPorContato(email, fone)
+        || pessoaPorNomeParecido(nomeLimpo) || pessoaPorNomeParecido(nome);
+      if (!pes) { out.push({ nome: nome, email: email, acao: "nao-encontrada" }); return; }
+      var emailAtual = String(pes.email || "").toLowerCase().trim();
+      var mudaEmail = email && emailAtual !== email;
+      var mudaFone = fone && chaveFone(fone) !== chaveFone(pes.whatsapp || "");
+      out.push({ nome: nome, pessoaId: pes.id, nomeSistema: pes.nome,
+        email: email, fone: fone, emailAtual: pes.email || "",
+        mudaEmail: mudaEmail, mudaFone: mudaFone,
+        acao: (mudaEmail || mudaFone) ? "atualizar" : "igual" });
+    });
+    if (!out.length) return { ok: false, linhas: [],
+      erro: "Não encontrei nenhuma linha com nome. Cole as colunas Nome e E-mail da planilha." };
+    return { ok: true, linhas: out };
+  }
+  function aplicarAtualizacaoContatos(leitura) {
+    if (!leitura || !leitura.ok) return { ok: false };
+    var atualizadas = 0;
+    (leitura.linhas || []).forEach(function (l) {
+      if (l.acao !== "atualizar") return;
+      mutate(l.pessoaId, function (x) {
+        if (l.mudaEmail) {
+          pushHist(x, "contato", "E-mail atualizado pela planilha"
+            + (x.email ? " · era " + x.email : ""));
+          x.email = l.email;
+        }
+        if (l.mudaFone) {
+          pushHist(x, "contato", "WhatsApp atualizado pela planilha"
+            + (x.whatsapp ? " · era " + x.whatsapp : ""));
+          x.whatsapp = l.fone;
+        }
+      });
+      atualizadas++;
+    });
+    return { ok: true, atualizadas: atualizadas };
+  }
+
   // mescla todos os pares detectados de uma vez; pares cuja cópia já
   // virou lápide numa mesclagem anterior são pulados
   function mesclarTodasDuplicadas() {
@@ -8752,6 +8821,8 @@
     exportarPessoa: exportarPessoa, apagarPessoa: apagarPessoa,
     pessoasDuplicadas: pessoasDuplicadas, mesclarPessoas: mesclarPessoas,
     mesclarTodasDuplicadas: mesclarTodasDuplicadas,
+    lerAtualizacaoContatos: lerAtualizacaoContatos,
+    aplicarAtualizacaoContatos: aplicarAtualizacaoContatos,
     SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
     SEGMENTOS: SEGMENTOS, segmentoMeta: segmentoMeta, segmentoDe: segmentoDe,
     cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,

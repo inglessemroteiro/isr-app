@@ -48,6 +48,7 @@
       <button onclick="{{ onAbaPagamentos }}" style="border: 1px solid {{ abaPagBorda }}; background: {{ abaPagBg }}; color: {{ abaPagFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Controle de Pagamento</button>
       <button onclick="{{ onAbaAlunas }}" style="border: 1px solid {{ abaAluBorda }}; background: {{ abaAluBg }}; color: {{ abaAluFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Alunas e turmas</button>
       <button onclick="{{ onAbaLeads }}" style="border: 1px solid {{ abaLedBorda }}; background: {{ abaLedBg }}; color: {{ abaLedFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Leads</button>
+      <button onclick="{{ onAbaContatos }}" style="border: 1px solid {{ abaCtBorda }}; background: {{ abaCtBg }}; color: {{ abaCtFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Atualizar contatos</button>
     </div>
 
     <!-- COMO COPIAR -->
@@ -222,6 +223,30 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ temLeituraContatos }}">
+      <div>
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">O que muda · {{ ctResumo }}</div>
+          <sc-for list="{{ ctLinhas }}" as="ct" hint-placeholder-count="8">
+            <div style="border-top: 1px solid #f4f1ec; padding: 9px 0;">
+              <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ ct.nome }}</span>
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: {{ ct.seloFg }}; background: {{ ct.seloBg }}; padding: 2px 8px; border-radius: 999px;">{{ ct.selo }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5; margin-top: 2px;">{{ ct.detalhe }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 16px;">
+          <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Só as linhas marcadas ATUALIZA mudam. O e-mail anterior fica registrado na linha do tempo da pessoa. Quem não foi encontrada não é criada aqui — confira o nome ou cadastre pela importação de leads.</p>
+          <button onclick="{{ onAplicarContatos }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ctAplicarLabel }}</button>
+          <sc-if value="{{ temCtFeito }}">
+            <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ ctFeito }}</p>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ temLeitura }}">
       <div>
         <!-- RESUMO DA LEITURA -->
@@ -333,6 +358,7 @@ class Component extends DCLogic {
             })(),
             leituraAlunas: null, alFeito: "", turmasVazias: [],
             leituraLeads: null, ldFeito: "",
+            leituraContatos: null, ctFeito: "",
             jfForms: null, jfErro: "", jfBuscando: false,
             syErro: "", syBuscando: false };
   jfChaveRef = React.createRef();
@@ -376,7 +402,11 @@ class Component extends DCLogic {
       abaPagBg: "#164951", abaPagFg: "#fff", abaPagBorda: "#164951",
       abaAluBg: "#fff", abaAluFg: "#8a7c6b", abaAluBorda: "#e5dccf",
       abaLedBg: "#fff", abaLedFg: "#8a7c6b", abaLedBorda: "#e5dccf",
+      abaCtBg: "#fff", abaCtFg: "#8a7c6b", abaCtBorda: "#e5dccf",
       onAbaPagamentos: () => {}, onAbaAlunas: () => {}, onAbaLeads: () => {},
+      onAbaContatos: () => {},
+      temLeituraContatos: false, ctResumo: "", ctLinhas: [],
+      ctAplicarLabel: "", onAplicarContatos: () => {}, temCtFeito: false, ctFeito: "",
       temLeituraLeads: false, ldResumo: [], ldLinhas: [],
       ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "",
       ehAbaLeads: false, jfSemChave: false, jfTemChave: false, jfChaveRef: this.jfChaveRef,
@@ -432,10 +462,17 @@ class Component extends DCLogic {
 
     const abaAlunas = this.state.aba === "alunas";
     const abaLeads = this.state.aba === "leads";
+    const abaContatos = this.state.aba === "contatos";
     const ler = () => {
       const txt = (this.colaRef.current && this.colaRef.current.value) || "";
       if (!txt.trim()) {
-        this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null, leituraLeads: null });
+        this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null, leituraLeads: null, leituraContatos: null });
+        return;
+      }
+      if (abaContatos) {
+        const r = CRM.lerAtualizacaoContatos(txt);
+        if (!r.ok) { this.setState({ erro: r.erro, leituraContatos: null }); return; }
+        this.setState({ leituraContatos: r, leitura: null, leituraAlunas: null, leituraLeads: null, erro: "", ctFeito: "" });
         return;
       }
       if (abaLeads) {
@@ -470,21 +507,28 @@ class Component extends DCLogic {
     // ── abas e leitura de alunas ──
     const AL = this.state.leituraAlunas;
     const LD = this.state.leituraLeads;
+    const CT = this.state.leituraContatos;
     Object.assign(base, {
-      comoCopiar: abaLeads
+      comoCopiar: abaContatos
+        ? "Cole as colunas Nome e E-mail (e WhatsApp, se houver) direto da planilha — pode selecionar as colunas no Google Sheets e copiar. Diferente da importação de leads, aqui o contato da planilha VALE: quem tinha um e-mail antigo é atualizado, e o valor anterior fica guardado na linha do tempo."
+        : abaLeads
         ? "Cole a lista de leads com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), WhatsApp, E-mail, Canal (Instagram, indicação…), Estágio (a contatar, em conversa, reunião, proposta, perdido), Nível, Observação e Data. Quem já é aluna não volta a ser lead."
         : (abaAlunas
           ? "Cole a lista de alunas com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), Turma, Nível, Professora, Horário, WhatsApp e E-mail — na ordem que estiverem."
           : "No Google Sheets, abra a aba Controle de Pagamento, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula."),
-      abaPagBg: (abaAlunas || abaLeads) ? "#fff" : "#164951", abaPagFg: (abaAlunas || abaLeads) ? "#8a7c6b" : "#fff",
-      abaPagBorda: (abaAlunas || abaLeads) ? "#e5dccf" : "#164951",
+      abaPagBg: (abaAlunas || abaLeads || abaContatos) ? "#fff" : "#164951",
+      abaPagFg: (abaAlunas || abaLeads || abaContatos) ? "#8a7c6b" : "#fff",
+      abaPagBorda: (abaAlunas || abaLeads || abaContatos) ? "#e5dccf" : "#164951",
       abaAluBg: abaAlunas ? "#164951" : "#fff", abaAluFg: abaAlunas ? "#fff" : "#8a7c6b",
       abaAluBorda: abaAlunas ? "#164951" : "#e5dccf",
       abaLedBg: abaLeads ? "#164951" : "#fff", abaLedFg: abaLeads ? "#fff" : "#8a7c6b",
       abaLedBorda: abaLeads ? "#164951" : "#e5dccf",
+      abaCtBg: abaContatos ? "#164951" : "#fff", abaCtFg: abaContatos ? "#fff" : "#8a7c6b",
+      abaCtBorda: abaContatos ? "#164951" : "#e5dccf",
       onAbaPagamentos: () => this.setState({ aba: "pagamentos", erro: "" }),
       onAbaAlunas: () => this.setState({ aba: "alunas", erro: "" }),
       onAbaLeads: () => this.setState({ aba: "leads", erro: "" }),
+      onAbaContatos: () => this.setState({ aba: "contatos", erro: "" }),
       onLer: ler,
 
       // ── direto do Jotform ──
@@ -620,6 +664,44 @@ class Component extends DCLogic {
         },
         temLdFeito: !!this.state.ldFeito, ldFeito: this.state.ldFeito
       } : {}),
+
+      temLeituraContatos: !!CT,
+      ...(CT ? (() => {
+        const muda = CT.linhas.filter(l => l.acao === "atualizar");
+        const SELOS = {
+          "atualizar": { selo: "ATUALIZA", fg: "#4a8a3d", bg: "#eef5ec" },
+          "igual": { selo: "já certo", fg: "#8a7c6b", bg: "#f2ece3" },
+          "nao-encontrada": { selo: "não encontrada", fg: "#c8622f", bg: "#fdf1ec" },
+          "sem-contato": { selo: "sem e-mail na linha", fg: "#c8622f", bg: "#fdf1ec" }
+        };
+        return {
+          ctResumo: muda.length + (muda.length === 1 ? " atualização" : " atualizações") + " · "
+            + CT.linhas.filter(l => l.acao === "igual").length + " já certos · "
+            + CT.linhas.filter(l => l.acao === "nao-encontrada").length + " não encontradas",
+          ctLinhas: CT.linhas.map(l => ({
+            nome: l.nome,
+            selo: SELOS[l.acao].selo, seloFg: SELOS[l.acao].fg, seloBg: SELOS[l.acao].bg,
+            detalhe: l.acao === "atualizar"
+              ? [l.mudaEmail ? (l.emailAtual ? l.emailAtual + " → " + l.email : "ganha " + l.email) : "",
+                 l.mudaFone ? "WhatsApp: " + l.fone : "",
+                 l.nomeSistema !== l.nome ? "no sistema: " + l.nomeSistema : ""]
+                .filter(Boolean).join(" · ")
+              : (l.acao === "igual" ? (l.email || "") : (l.email || ""))
+          })),
+          ctAplicarLabel: muda.length
+            ? "Atualizar " + muda.length + (muda.length === 1 ? " contato" : " contatos")
+            : "Nada a atualizar",
+          onAplicarContatos: () => {
+            if (!muda.length) return;
+            const r = CRM.aplicarAtualizacaoContatos(CT);
+            this.setState({ ctFeito: r.atualizadas
+              + (r.atualizadas === 1 ? " contato atualizado" : " contatos atualizados")
+              + ". O valor anterior ficou na linha do tempo de cada pessoa." });
+            this.bump();
+          },
+          temCtFeito: !!this.state.ctFeito, ctFeito: this.state.ctFeito
+        };
+      })() : {}),
 
       temLeituraAlunas: !!AL,
       ...(AL ? {
