@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-f",
+  numero: "2026.08.03-g",
   data: "03/08/2026",
-  nota: "Professora escolhível no Perfil (aula particular deixa de ficar sem professora) e a tela de Alunas aponta registros duplicados com mesclagem em dois cliques — contrato, histórico, presenças e miles se juntam no registro mais completo"
+  nota: "A detecção de duplicadas também casa nome curto com nome completo, mostra o motivo de cada par e ganha o Mesclar todos — os pares detectados se juntam de uma vez, com confirmação"
 };
