@@ -993,12 +993,18 @@ class Component extends DCLogic {
             if (pd.id === "programa") CRM.setProgramaPago(p.id, !pd.pago);
             this.bump();
           },
-          acaoLabel: pd.contratado ? acoes.edit : acoes.add,
+          // quem já tem contrato (ex.: importado do Controle de Pagamento)
+          // só precisa escolher a turma — reabrir a matrícula pediria o
+          // pagamento de novo e duplicaria o contrato
+          acaoLabel: pd.contratado ? acoes.edit
+            : (pd.id === "turma" && out.temContrato ? "Escolher turma" : acoes.add),
           acaoBg: abertos === pd.id ? "#f6eee4" : "#fff",
           acaoFg: abertos === pd.id ? "#9c6f56" : "#164951",
           onAcao: () => {
             if (pd.id === "turma") {
-              if (!pd.contratado) { window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id; return; }
+              if (!pd.contratado && !out.temContrato) {
+                window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id; return;
+              }
               this.setState({ editandoTurma: true });
               return;
             }
