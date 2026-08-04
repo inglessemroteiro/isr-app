@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-h",
+  numero: "2026.08.03-i",
   data: "03/08/2026",
-  nota: "Importar ganha a aba Atualizar contatos: cola-se Nome e E-mail da planilha, a prévia mostra o que muda (de onde para onde) e o e-mail da planilha vale — o anterior fica na linha do tempo"
+  nota: "A lista Reativação (ex-alunas recuperáveis) ganha o botão Excluir — mesma exclusão do Perfil, em dois cliques, valendo em todos os aparelhos"
 };
