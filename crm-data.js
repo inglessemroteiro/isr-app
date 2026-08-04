@@ -3696,27 +3696,55 @@
       + (p.turma ? 10 : 0) + (p.email ? 2 : 0) + (p.whatsapp ? 2 : 0)
       + (p.status === "aluna" || p.status === "mvs" ? 50 : 0);
   }
+  // nomes "parecidos": todas as palavras do nome mais curto aparecem no
+  // mais comprido (mínimo 2 palavras) — pega "Ana Souza" × "Ana Paula
+  // Souza", sem casar nomes de uma palavra só
+  function nomesParecem(a, b) {
+    var pa = semAcento(a || "").split(/\s+/).filter(Boolean);
+    var pb = semAcento(b || "").split(/\s+/).filter(Boolean);
+    if (pa.length < 2 || pb.length < 2) return false;
+    var curto = pa.length <= pb.length ? pa : pb;
+    var longo = pa.length <= pb.length ? pb : pa;
+    return curto.every(function (w) { return longo.indexOf(w) >= 0; });
+  }
   function pessoasDuplicadas() {
     var vivos = loadPessoas();
     var grupos = {};
     vivos.forEach(function (p) {
       var chaves = [];
-      if (p.nome) chaves.push("n:" + semAcento(p.nome));
-      if (p.email) chaves.push("e:" + String(p.email).toLowerCase().trim());
+      if (p.nome) chaves.push("n:" + semAcento(p.nome) + "|mesmo nome");
+      if (p.email) chaves.push("e:" + String(p.email).toLowerCase().trim() + "|mesmo e-mail");
       var f = p.whatsapp ? chaveFone(p.whatsapp) : "";
-      if (f) chaves.push("f:" + f);
+      if (f) chaves.push("f:" + f + "|mesmo telefone");
       chaves.forEach(function (k) { (grupos[k] = grupos[k] || []).push(p); });
     });
     var pares = {};
+    var registrar = function (a, b, motivo) {
+      if (a.id === b.id) return;
+      var par = [a, b].sort(function (x, y) { return pontosDeRegistro(y) - pontosDeRegistro(x); });
+      var k = [par[0].id, par[1].id].join("|");
+      if (!pares[k]) pares[k] = { manter: par[0], apagar: par[1], motivo: motivo };
+    };
     Object.keys(grupos).forEach(function (k) {
-      var g = grupos[k];
-      for (var i = 0; i < g.length; i++) for (var j = i + 1; j < g.length; j++) {
-        if (g[i].id === g[j].id) continue;
-        var par = [g[i], g[j]].sort(function (a, b) { return pontosDeRegistro(b) - pontosDeRegistro(a); });
-        pares[[par[0].id, par[1].id].join("|")] = { manter: par[0], apagar: par[1] };
-      }
+      var g = grupos[k], motivo = k.split("|")[1];
+      for (var i = 0; i < g.length; i++) for (var j = i + 1; j < g.length; j++)
+        registrar(g[i], g[j], motivo);
     });
+    // segunda passada: nome curto dentro do nome completo (importação em
+    // dois aparelhos raramente escreve o nome exatamente igual)
+    for (var i = 0; i < vivos.length; i++) for (var j = i + 1; j < vivos.length; j++) {
+      if (nomesParecem(vivos[i].nome, vivos[j].nome)) registrar(vivos[i], vivos[j], "nomes parecidos");
+    }
     return Object.keys(pares).map(function (k) { return pares[k]; });
+  }
+  // mescla todos os pares detectados de uma vez; pares cuja cópia já
+  // virou lápide numa mesclagem anterior são pulados
+  function mesclarTodasDuplicadas() {
+    var feitos = 0;
+    pessoasDuplicadas().forEach(function (par) {
+      if (mesclarPessoas(par.manter.id, par.apagar.id)) feitos++;
+    });
+    return feitos;
   }
   function mesclarPessoas(manterId, apagarId) {
     var alvo = getPessoa(manterId), dup = getPessoa(apagarId);
@@ -8723,6 +8751,7 @@
     apagarBackup: apagarBackup, exportarTudo: exportarTudo, importarTudo: importarTudo,
     exportarPessoa: exportarPessoa, apagarPessoa: apagarPessoa,
     pessoasDuplicadas: pessoasDuplicadas, mesclarPessoas: mesclarPessoas,
+    mesclarTodasDuplicadas: mesclarTodasDuplicadas,
     SINAIS: SINAIS, LIMIARES: LIMIARES, sinalMeta: sinalMeta,
     SEGMENTOS: SEGMENTOS, segmentoMeta: segmentoMeta, segmentoDe: segmentoDe,
     cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,
