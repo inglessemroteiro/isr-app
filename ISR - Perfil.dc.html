@@ -369,6 +369,15 @@
             </div>
           </sc-if>
 
+          <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Apagar do sistema</span>
+              <button onclick="{{ onApagarPessoa }}" style="border: 1px solid {{ apagarPesBorda }}; background: {{ apagarPesBg }}; color: #cf6b5c; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ apagarPesLabel }}</button>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ apagarPesAviso }}</p>
+          </div>
+
           <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
           <sc-if value="{{ ehAluna }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -714,6 +723,22 @@ class Component extends DCLogic {
            + (p.saida.reativavel ? " · pode ser reativada" : ""))
         : "",
       onReabrir: () => { CRM.reabrirMatricula(p.id); this.bump(); },
+      // apagar do sistema: dois cliques — o primeiro vira a pergunta.
+      // Os dados somem de verdade e o apagamento vale em todos os
+      // aparelhos (o sync espalha a marca em vez de devolver a pessoa).
+      apagarPesLabel: this.state.confirmaApagarPessoa
+        ? "Apagar \"" + p.nome + "\" de vez?" : "Apagar…",
+      apagarPesBorda: this.state.confirmaApagarPessoa ? "#cf6b5c" : "#e5dccf",
+      apagarPesBg: this.state.confirmaApagarPessoa ? "#fdece9" : "#fff",
+      apagarPesAviso: this.state.confirmaApagarPessoa
+        ? "O segundo clique apaga cadastro, histórico, financeiro e presenças desta pessoa, em todos os aparelhos. Uma cópia de segurança fica guardada neste aparelho."
+        : "Remove a pessoa e todos os dados dela do sistema. Não é o mesmo que encerrar a matrícula — encerrar mantém a história dela.",
+      onApagarPessoa: () => {
+        if (!this.state.confirmaApagarPessoa) { this.setState({ confirmaApagarPessoa: true }); return; }
+        const eraAluna = p.status === "aluna" || p.status === "mvs";
+        CRM.apagarPessoa(p.id, "apagada pelo perfil");
+        window.location.href = eraAluna ? "ISR%20-%20Alunas.dc.html" : "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html";
+      },
       encerrando: this.state.encerrando,
       saidaLabel: this.state.encerrando ? "Cancelar" : "Registrar saída",
       saidaBg: this.state.encerrando ? "#f6eee4" : "#fff",

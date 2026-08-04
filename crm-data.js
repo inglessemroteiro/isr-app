@@ -778,13 +778,26 @@
     });
     try { localStorage.setItem("isr_chamadas_v1", JSON.stringify(mapa)); } catch (e) {}
   }
-  function loadPessoas() {
+  // A lista crua guarda também as lápides (pessoas apagadas). Apagar não
+  // pode ser só remover: a mesclagem do sync SOMA registros e o banco
+  // devolvia a pessoa no puxe seguinte. A lápide guarda SÓ o id (os dados
+  // da pessoa somem de verdade), viaja pelo sync com carimbo novo, vence
+  // a cópia viva nos outros aparelhos e some das telas em todos eles.
+  function loadPessoasRaw() {
     ensureSeed();
     try { return JSON.parse(localStorage.getItem(PESSOAS_KEY)) || []; }
     catch (e) { return []; }
   }
+  function loadPessoas() {
+    return loadPessoasRaw().filter(function (p) { return !(p && p.apagado); });
+  }
   function savePessoasLocal(list) {
-    try { localStorage.setItem(PESSOAS_KEY, JSON.stringify(list)); } catch (e) {}
+    // quem salva recebeu a lista sem as lápides — devolvê-las aqui é o
+    // que impede um save comum de ressuscitar a pessoa apagada
+    var vivos = {};
+    (list || []).forEach(function (p) { if (p && p.id) vivos[p.id] = true; });
+    var lapides = loadPessoasRaw().filter(function (p) { return p && p.apagado && !vivos[p.id]; });
+    try { localStorage.setItem(PESSOAS_KEY, JSON.stringify((list || []).concat(lapides))); } catch (e) {}
   }
   function savePessoas(list) { savePessoasLocal(list); agendarSync(); }
   function getPessoa(id) { return loadPessoas().filter(function (p) { return p.id === id; })[0] || null; }
@@ -852,10 +865,14 @@
       pushHist(p, "perdido", "Marcado perdido · motivo: " + (motivo || "Outro"));
     });
   }
+  function lapidePessoa(id) { return { id: id, apagado: iso(today()), _v: Date.now() }; }
   function deleteLead(id) {
-    var list = loadPessoas().filter(function (p) { return p.id !== id; });
-    savePessoas(list);
-    return list;
+    // a pessoa vira lápide (só o id) para o apagamento valer em todos os
+    // aparelhos — remover da lista fazia o sync devolvê-la no puxe
+    var list = loadPessoasRaw().map(function (p) { return p.id === id ? lapidePessoa(id) : p; });
+    try { localStorage.setItem(PESSOAS_KEY, JSON.stringify(list)); } catch (e) {}
+    agendarSync();
+    return loadPessoas();
   }
   // Novo lead manual (spec 1.1: o registro nasce no primeiro contato)
   // Date.now() sozinho repetia o id quando a importação criava várias
@@ -3643,7 +3660,9 @@
     var p = getPessoa(id);
     if (!p) return { apagado: false };
     criarBackup("antes de apagar " + p.nome);
-    savePessoas(loadPessoas().filter(function (x) { return x.id !== id; }));
+    // vira lápide (só o id): os dados somem, e o sync espalha o
+    // apagamento em vez de ressuscitar a pessoa nos outros aparelhos
+    deleteLead(id);
     toquesSave(toquesLista().filter(function (x) { return x.pessoaId !== id; }));
     pulsosSave(pulsosLista().filter(function (x) { return x.pessoaId !== id; }));
     var m = chamadasAll();
@@ -3668,7 +3687,9 @@
 
   function payloadLocal() {
     return {
-      pessoas: loadPessoas(), custos: custosLista(), templates: tplStore(),
+      // pessoas vai CRU (com as lápides): é o sync que espalha o
+      // "esta pessoa foi apagada" para os outros aparelhos
+      pessoas: loadPessoasRaw(), custos: custosLista(), templates: tplStore(),
       turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),

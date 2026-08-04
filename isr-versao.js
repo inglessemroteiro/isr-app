@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-c",
+  numero: "2026.08.03-d",
   data: "03/08/2026",
-  nota: "Turma do acompanhamento encerrada pode ser apagada de vez — em dois cliques, e o apagamento vale em todos os aparelhos (a sincronização espalha a marca em vez de ressuscitar a turma)"
+  nota: "Apagar pessoas passa a valer em todos os aparelhos: no Perfil (Apagar do sistema, em dois cliques) e na seleção do CRM — os dados somem de verdade e a sincronização espalha o apagamento em vez de devolver a pessoa"
 };
