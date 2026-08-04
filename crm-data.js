@@ -1802,12 +1802,37 @@
     { id: "feedback", label: "Devolutiva enviada", curto: "devolutiva", cor: "#fc9082" }
   ];
   var PROGRAMAS_KEY = "isr_programas_v1";
-  function programasLista() {
+  // A lista crua guarda também as lápides (turmas apagadas). Apagar de
+  // verdade não pode ser só remover daqui: a mesclagem do sync SOMA
+  // registros, e o banco devolveria a turma no puxe seguinte. A lápide
+  // (campo "apagado", com carimbo novo) viaja pelo sync, vence a cópia
+  // viva nos outros aparelhos e some das telas em todos eles.
+  function programasRaw() {
     ensureSeed(); // o exemplo do programa nasce junto com o das pessoas
     try { var l = JSON.parse(localStorage.getItem(PROGRAMAS_KEY)); if (l && l.length) return l; } catch (e) {}
     return [];
   }
-  function programasSave(l) { carimbarLista(l); try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function programasLista() {
+    return programasRaw().filter(function (p) { return !(p && p.apagado); });
+  }
+  function programasSave(l) {
+    carimbarLista(l);
+    // quem salva recebeu a lista sem as lápides — devolvê-las aqui é o
+    // que impede um save qualquer de ressuscitar a turma apagada
+    var vivos = {};
+    (l || []).forEach(function (p) { if (p && p.id) vivos[p.id] = true; });
+    var lapides = programasRaw().filter(function (p) { return p && p.apagado && !vivos[p.id]; });
+    try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify((l || []).concat(lapides))); } catch (e) {}
+    agendarSync();
+  }
+  function apagarPrograma(id) {
+    var l = programasRaw(), achou = false;
+    l.forEach(function (p) { if (p && p.id === id) { p.apagado = iso(today()); carimbar(p); achou = true; } });
+    if (!achou) return false;
+    try { localStorage.setItem(PROGRAMAS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return true;
+  }
   // O acompanhamento é um produto à parte, com preço próprio. A maioria
   // de quem participa não está em turma nenhuma — e quem está em turma
   // pode participar também. As duas coisas são independentes.
@@ -3649,7 +3674,9 @@
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosLista(), cambio: taxaCambio(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
-      programas: programasLista(), avisos: avisosLista(),
+      // programas vai CRU (com as lápides): é o sync que espalha o
+      // "esta turma foi apagada" para os outros aparelhos
+      programas: programasRaw(), avisos: avisosLista(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -8517,6 +8544,7 @@
     aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
     particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
     encerrarPrograma: encerrarPrograma, reabrirPrograma: reabrirPrograma,
+    apagarPrograma: apagarPrograma,
     programasAbertos: programasAbertos, resumoProgramas: resumoProgramas,
     agendaComercial: agendaComercial,
     comentarPulso: comentarPulso,
