@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-e",
+  numero: "2026.08.03-f",
   data: "03/08/2026",
-  nota: "Aluna com contrato importado mas sem turma ganha o atalho Escolher turma no Perfil — coloca na turma sem refazer a matrícula nem cadastrar o pagamento de novo"
+  nota: "Professora escolhível no Perfil (aula particular deixa de ficar sem professora) e a tela de Alunas aponta registros duplicados com mesclagem em dois cliques — contrato, histórico, presenças e miles se juntam no registro mais completo"
 };
