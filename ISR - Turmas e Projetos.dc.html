@@ -54,6 +54,16 @@
       </select>
     </div>
 
+    <!-- SELEÇÃO · agir sobre várias turmas de uma vez -->
+    <sc-if value="{{ temSelecao }}">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fdece9; border: 1px solid #f3c4bb; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;">
+        <span style="font-size: 12.5px; font-weight: 700; color: #164951;">{{ selContagem }}</span>
+        <button onclick="{{ onSelExcluir }}" style="border: 1px solid {{ selExcluirBorda }}; background: {{ selExcluirBg }}; color: #cf6b5c; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ selExcluirLabel }}</button>
+        <button onclick="{{ onSelLimparTurmas }}" style="border: none; background: transparent; color: #9c6f56; font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 6px; font-family: inherit;">Limpar seleção</button>
+        <span style="font-size: 11px; color: #8a7c6b;">A exclusão vale em todos os aparelhos. Alunas de turma excluída ficam sem turma (o histórico registra).</span>
+      </div>
+    </sc-if>
+
     <!-- ABAS DE OCUPAÇÃO -->
     <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px;">
       <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="3">
@@ -85,6 +95,7 @@
           <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 15px 18px; min-width: 780px;">
             <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" checked="{{ u.sel }}" onchange="{{ u.onSel }}" title="Selecionar esta turma" style="width: 15px; height: 15px; accent-color: #348a8e; flex: none; cursor: pointer;" />
                 <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
                 <a href="{{ u.turmaHref }}" style="font-size: 14px; font-weight: 700; color: #164951; text-decoration: underline; text-underline-offset: 2px;">{{ u.nivel }}</a>
               </div>
@@ -172,7 +183,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null };
+  state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null,
+            selTurmas: {}, confirmaExcluirSel: false };
   ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
   edTeacherRef = React.createRef();
@@ -233,6 +245,12 @@ class Component extends DCLogic {
       const abaixoDoMinimo = u.ocupadas < minimo;
       const editando = this.state.editId === u.id;
       return {
+        sel: !!this.state.selTurmas[u.id],
+        onSel: () => this.setState(s => {
+          const m = Object.assign({}, s.selTurmas);
+          if (m[u.id]) delete m[u.id]; else m[u.id] = true;
+          return { selTurmas: m, confirmaExcluirSel: false };
+        }),
         turmaHref: "ISR%20-%20Turma.dc.html?id=" + u.id,
         nivel: u.nivel, turma: u.turma, cycle: u.cycle, teacher: u.teacher,
         cor: this.nivelCor(u.nivel),
@@ -302,9 +320,24 @@ class Component extends DCLogic {
         };
       });
 
+    const selIds = Object.keys(this.state.selTurmas);
     return {
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
       onTeacher: (e) => this.setState({ teacher: e.target.value }),
+      // barra de seleção: excluir várias turmas de uma vez, em dois cliques
+      temSelecao: selIds.length > 0,
+      selContagem: selIds.length === 1 ? "1 turma selecionada" : selIds.length + " turmas selecionadas",
+      selExcluirLabel: this.state.confirmaExcluirSel
+        ? "Confirmar exclusão" : (selIds.length === 1 ? "Excluir turma" : "Excluir turmas"),
+      selExcluirBorda: this.state.confirmaExcluirSel ? "#cf6b5c" : "#f3c4bb",
+      selExcluirBg: this.state.confirmaExcluirSel ? "#fff" : "transparent",
+      onSelExcluir: () => {
+        if (!selIds.length) return;
+        if (!this.state.confirmaExcluirSel) { this.setState({ confirmaExcluirSel: true }); return; }
+        selIds.forEach(id => CRM.removeTurma(id));
+        this.setState({ selTurmas: {}, confirmaExcluirSel: false, editId: null });
+      },
+      onSelLimparTurmas: () => this.setState({ selTurmas: {}, confirmaExcluirSel: false }),
       abas, turmas, vazio: turmas.length === 0,
       particulares, partVazio: particulares.length === 0,
       partCount: particulares.length + (particulares.length === 1 ? " aluna" : " alunas"),
