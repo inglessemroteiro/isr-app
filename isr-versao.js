@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-i",
+  numero: "2026.08.03-j",
   data: "03/08/2026",
-  nota: "A lista Reativação (ex-alunas recuperáveis) ganha o botão Excluir — mesma exclusão do Perfil, em dois cliques, valendo em todos os aparelhos"
+  nota: "Turmas: seleção múltipla com exclusão em dois cliques, valendo em todos os aparelhos (alunas da turma excluída ficam sem turma, com registro). E o cartão Pedagógico do Perfil aparece para toda aluna — antiga sem contrato registrado inclusive"
 };

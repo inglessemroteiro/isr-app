@@ -295,13 +295,26 @@
 
   // ── TURMAS EDITÁVEIS ──────────────────────────────────────────
   var TURMAS_KEY = "isr_turmas_v1";
-  function turmasLista() {
+  // A lista crua guarda também as lápides (turmas apagadas): remover da
+  // lista fazia a mesclagem do sync devolver a turma no puxe seguinte.
+  function turmasRaw() {
     // Lista vazia gravada é uma escolha ("apaguei tudo"), não ausência de
     // dado. Só volta ao exemplo quem nunca gravou nada.
     try { var st = JSON.parse(localStorage.getItem(TURMAS_KEY)); if (st) return st; } catch (e) {}
     return UNITS.map(function (u) { return Object.assign({ capacidade: CAPACIDADE_PADRAO }, u); });
   }
-  function turmasSave(list) { carimbarLista(list); try { localStorage.setItem(TURMAS_KEY, JSON.stringify(list)); } catch (e) {} agendarSync(); }
+  function turmasLista() {
+    return turmasRaw().filter(function (t) { return !(t && t.apagado); });
+  }
+  function turmasSave(list) {
+    carimbarLista(list);
+    // devolve as lápides ao gravar: um save comum não ressuscita turma
+    var vivas = {};
+    (list || []).forEach(function (t) { if (t && t.id) vivas[t.id] = true; });
+    var lapides = turmasRaw().filter(function (t) { return t && t.apagado && !vivas[t.id]; });
+    try { localStorage.setItem(TURMAS_KEY, JSON.stringify((list || []).concat(lapides))); } catch (e) {}
+    agendarSync();
+  }
   // O id era só Date.now(): duas turmas criadas no mesmo milissegundo (a
   // importação cria várias de uma vez) ficavam com o MESMO id, e editar
   // uma mexia na outra. O contador desempata.
@@ -321,8 +334,31 @@
     turmasSave(list); return list;
   }
   function removeTurma(id) {
-    var list = turmasLista().filter(function (t) { return t.id !== id; });
-    turmasSave(list); return list;
+    // a turma vira lápide para o apagamento valer em todos os aparelhos.
+    // Alunas da turma ficam "sem turma" — mas só se nenhuma outra turma
+    // viva tiver o mesmo rótulo (turmas duplicadas compartilham o rótulo,
+    // e apagar a cópia não pode desligar as alunas da que fica).
+    var alvo = turmasLista().filter(function (t) { return t.id === id; })[0];
+    if (!alvo) return turmasLista();
+    var raw = turmasRaw().map(function (t) {
+      return t.id === id ? { id: t.id, apagado: iso(today()), _v: Date.now() } : t;
+    });
+    try { localStorage.setItem(TURMAS_KEY, JSON.stringify(raw)); } catch (e) {}
+    agendarSync();
+    var rotulo = alvo.nivel + " · " + alvo.turma;
+    var aindaExiste = turmasLista().some(function (t) {
+      return (t.nivel + " · " + t.turma) === rotulo;
+    });
+    if (!aindaExiste) {
+      loadPessoas().forEach(function (p) {
+        if (p.turma !== rotulo) return;
+        mutate(p.id, function (x) {
+          x.turma = "";
+          pushHist(x, "estagio", "Turma " + rotulo + " excluída — aluna ficou sem turma");
+        });
+      });
+    }
+    return turmasLista();
   }
 
   // ── METAS DO CICLO (Config digita 1x — spec 13; demo fixo) ────
