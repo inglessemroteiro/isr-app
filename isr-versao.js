@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-j",
+  numero: "2026.08.03-k",
   data: "03/08/2026",
-  nota: "Turmas: seleção múltipla com exclusão em dois cliques, valendo em todos os aparelhos (alunas da turma excluída ficam sem turma, com registro). E o cartão Pedagógico do Perfil aparece para toda aluna — antiga sem contrato registrado inclusive"
+  nota: "O papel operação passa a ver o CRM e o Importar leads — a Érika trabalha o funil; Calculadora e Marketing seguem só do comercial"
 };
