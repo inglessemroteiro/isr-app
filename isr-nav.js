@@ -36,8 +36,11 @@
     {
       id: "comercial", label: "Comercial", cor: "#e07856",
       itens: [
-        { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Importar leads", desc: "Trazer leads da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial"] },
+        // operação também trabalha o funil (a Érika registra e responde
+        // leads), por isso vê o CRM e a importação — Calculadora e
+        // Marketing seguem só do comercial
+        { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Importar leads", desc: "Trazer leads da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
