@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-a",
+  numero: "2026.08.11-b",
   data: "11/08/2026",
-  nota: "Aula extra criada do Painel do Professor com responsável em lista; papéis novos de professora de aulas extras e shadow; e acertos do contrato com correção — remover um registro errado refaz o Total investido e o Caixa"
+  nota: "Cobrança com busca por aluna e alunas sem plano de pagamento apontadas (não somem mais em silêncio); o editor de contrato ganha o início do ciclo — desloca as parcelas para o mês certo em matrículas retroativas"
 };
