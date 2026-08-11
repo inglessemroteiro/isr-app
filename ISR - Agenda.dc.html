@@ -37,7 +37,9 @@
           <input ref="{{ evDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ evHoraRef }}" placeholder="Horário (ex. 19h)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ evDuracaoRef }}" placeholder="Duração em minutos (60)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <input ref="{{ evRespRef }}" placeholder="Professora responsável" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ evRespRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ respOpts }}" as="ro" hint-placeholder-count="5"><option value="{{ ro.id }}">{{ ro.label }}</option></sc-for>
+          </select>
           <input ref="{{ evLocalRef }}" placeholder="Local ou link da sala" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ evVagasRef }}" placeholder="Vagas (0 = sem limite)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <select ref="{{ evTurmaRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
@@ -492,6 +494,10 @@ class Component extends DCLogic {
           .forEach(r => { if (r.current) r.current.value = ""; });
         this.bump();
       },
+      // a responsável vem da Equipe (papéis professora e aulas extras):
+      // nome digitado à mão desligava a aula do Painel e das horas
+      respOpts: [{ id: "", label: "Responsável pela aula" }]
+        .concat(CRM.professorasDeAula().map(n => ({ id: n, label: n }))),
       onCriarEvento: () => {
         const titulo = this.val(this.evTituloRef), data = this.val(this.evDataRef);
         if (!titulo || !data) { window.alert("Informe pelo menos o título e a data."); return; }

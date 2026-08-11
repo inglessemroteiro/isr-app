@@ -60,7 +60,9 @@
       // O que acontece na aula: onde ela é dada, por quem e com que material.
       id: "ensino", label: "Ensino", cor: "#348a8e",
       itens: [
-        { label: "Painel do Professor", desc: "Aulas da semana e diário de classe", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora"] },
+        // professora de aulas extras e shadow também dão/acompanham aula:
+        // o Painel é a tela de trabalho delas
+        { label: "Painel do Professor", desc: "Aulas da semana e diário de classe", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora", "extra", "shadow"] },
         { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
         { label: "Programa no WhatsApp", desc: "Controle semanal do programa assíncrono", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] }
       ]

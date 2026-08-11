@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-m",
-  data: "03/08/2026",
-  nota: "Total investido (LTV) passa a somar o que foi pago de fato, e o encerramento ganha acerto final: parcelas em aberto canceladas (ou vencidas mantidas), valor do acerto e devolução — tudo no contrato e no Caixa"
+  numero: "2026.08.11-a",
+  data: "11/08/2026",
+  nota: "Aula extra criada do Painel do Professor com responsável em lista; papéis novos de professora de aulas extras e shadow; e acertos do contrato com correção — remover um registro errado refaz o Total investido e o Caixa"
 };

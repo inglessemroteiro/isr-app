@@ -2343,6 +2343,55 @@
         descricao: "Devolução · " + p2.nome, moeda: moeda, valor: cfg.devolucaoValor });
     return r;
   }
+  // Acertos avulsos e correção: registrar um acerto/devolução fora do
+  // fluxo de encerramento (ou depois dele) e remover um registrado
+  // errado — a remoção também tira o lançamento correspondente do Caixa.
+  function registrarAcerto(pessoaId, tipo, valor) {
+    var v = parseMoney(valor);
+    if (!(v > 0)) return false;
+    var ehDev = tipo === "devolucao";
+    mutate(pessoaId, function (p) {
+      var c = contratoVigente(p);
+      if (!c) {
+        c = { tipo: "Acerto", moeda: p.moeda || "€", meses: [] };
+        p.contratos = p.contratos || []; p.contratos.unshift(c);
+      }
+      c.acertos = c.acertos || [];
+      c.acertos.push({ tipo: ehDev ? "devolucao" : "acerto", valor: valor, em: iso(today()) });
+      pushHist(p, "pagamento", (ehDev ? "Devolução de " : "Acerto de ")
+        + fmtMoney(c.moeda || "R$", v) + (ehDev ? " registrada" : " recebido"));
+    });
+    var p2 = getPessoa(pessoaId);
+    var moeda = (contratoVigente(p2) || {}).moeda || p2.moeda || "€";
+    addLancamento({ tipo: ehDev ? "saida" : "entrada",
+      categoria: ehDev ? "devolução" : "acerto final",
+      descricao: (ehDev ? "Devolução · " : "Acerto final · ") + p2.nome,
+      moeda: moeda, valor: valor });
+    return true;
+  }
+  function removerAcerto(pessoaId, contratoIdx, acertoIdx) {
+    var removido = null, nome = "";
+    mutate(pessoaId, function (p) {
+      var c = (p.contratos || [])[parseInt(contratoIdx, 10) || 0];
+      if (!c || !c.acertos || !c.acertos[acertoIdx]) return;
+      removido = c.acertos.splice(acertoIdx, 1)[0];
+      nome = p.nome;
+      pushHist(p, "pagamento", (removido.tipo === "devolucao" ? "Devolução" : "Acerto")
+        + " de " + removido.valor + " removido (correção)");
+    });
+    if (!removido) return false;
+    // o lançamento que nasceu junto sai do Caixa (o primeiro que casar)
+    var alvo = (removido.tipo === "devolucao" ? "Devolução · " : "Acerto final · ") + nome;
+    var v = parseMoney(removido.valor);
+    var l = lancamentosLista();
+    for (var i = 0; i < l.length; i++) {
+      if (l[i].descricao === alvo && Math.abs((l[i].valor || 0) - v) < 0.005) {
+        l.splice(i, 1); lancamentosSave(l); break;
+      }
+    }
+    return true;
+  }
+
   function reabrirMatricula(id) {
     return mutate(id, function (p) {
       if (p.status !== "ex-aluna") return;
@@ -2517,6 +2566,23 @@
       return (x.nivel + " · " + x.turma) === p.turma;
     })[0];
     return (u && u.teacher) || "";
+  }
+
+  // Quem pode ser responsável por aula: professoras de turma e as de
+  // aulas extras. Shadow acompanha aulas, mas não responde por elas.
+  function professorasDeAula() {
+    return equipeLista().filter(function (m) {
+      var pp = m.papeis || [];
+      return pp.indexOf("professora") >= 0 || pp.indexOf("extra") >= 0;
+    }).map(function (m) { return m.nome; });
+  }
+  // Quem aparece no Painel do Professor: docentes de qualquer tipo —
+  // turma fixa, só aulas extras ou shadow.
+  function equipeDocente() {
+    return equipeLista().filter(function (m) {
+      var pp = m.papeis || [];
+      return pp.indexOf("professora") >= 0 || pp.indexOf("extra") >= 0 || pp.indexOf("shadow") >= 0;
+    }).map(function (m) { return m.nome; });
   }
 
   function carteiraProfessoras() {
@@ -4365,6 +4431,8 @@
     if (papeis.indexOf("comercial") >= 0) return "comercial";
     if (papeis.indexOf("operacao") >= 0) return "operacao";
     if (papeis.indexOf("professora") >= 0) return "professora";
+    if (papeis.indexOf("extra") >= 0) return "extra";
+    if (papeis.indexOf("shadow") >= 0) return "shadow";
     return null;
   }
   function liberarGestao(email) {
@@ -8858,6 +8926,7 @@
     // saída e renovação
     TIPOS_SAIDA: TIPOS_SAIDA, MOTIVOS_SAIDA: MOTIVOS_SAIDA,
     encerrarMatricula: encerrarMatricula, reabrirMatricula: reabrirMatricula,
+    registrarAcerto: registrarAcerto, removerAcerto: removerAcerto,
     renovarMatricula: renovarMatricula, retencao: retencao,
     saidasResumo: saidasResumo, exAlunas: exAlunas,
     // edição depois da matrícula
@@ -8924,6 +8993,7 @@
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
     carteiraProfessoras: carteiraProfessoras, professoraEfetiva: professoraEfetiva,
+    professorasDeAula: professorasDeAula, equipeDocente: equipeDocente,
     capacidades: capacidades, setCapacidade: setCapacidade,
     ESQUEMA_VERSAO: ESQUEMA_VERSAO, esquemaVersao: esquemaVersao, setEsquemaVersao: setEsquemaVersao,
     criarBackup: criarBackup, backupsLista: backupsLista, restaurarBackup: restaurarBackup,
