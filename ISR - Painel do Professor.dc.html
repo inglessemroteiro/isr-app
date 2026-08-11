@@ -268,7 +268,7 @@
 class Component extends DCLogic {
   state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
-            escolhendoData: false, linhaAberta: null,
+            escolhendoData: null, linhaAberta: null,
             novaExtraAberta: false, neFeito: "" };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
   neTituloRef = React.createRef(); neDataRef = React.createRef(); neHoraRef = React.createRef();
@@ -283,6 +283,15 @@ class Component extends DCLogic {
   }
   eventoParam() {
     try { return new URLSearchParams(window.location.search).get("evento") || ""; } catch (e) { return ""; }
+  }
+  // ?data=AAAA-MM-DD abre a chamada daquele dia (o link das chamadas na
+  // página da Turma usa isto); ?retro=1 abre direto o escolhedor de data
+  dataParam() {
+    try { const d = new URLSearchParams(window.location.search).get("data") || "";
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ""; } catch (e) { return ""; }
+  }
+  retroParam() {
+    try { return !!new URLSearchParams(window.location.search).get("retro"); } catch (e) { return false; }
   }
 
   diaLabel(isoStr) {
@@ -447,7 +456,8 @@ class Component extends DCLogic {
         || (turmasProfOcup[0] ? turmasProfOcup[0].label : null));
     const dataSel = this.state.chamadaData
       || (evSel ? evSel.data
-        : (!this.state.turmaChamada && proxima && proxima.label === turmaSel ? proxima.data : hojeIso));
+        : (!this.state.turmaChamada && this.dataParam() && tpTurma ? this.dataParam()
+          : (!this.state.turmaChamada && proxima && proxima.label === turmaSel ? proxima.data : hojeIso)));
     const presAtual = this.state.presencas
       || (turmaSel ? this.carregarChamada(turmaSel, dataSel, evSel ? evSel.id : null) : {});
     const alunas = evSel ? CRM.listaChamadaExtra(evSel.id) : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
@@ -754,9 +764,12 @@ class Component extends DCLogic {
           });
         return opcoes.slice(0, 6);
       })(),
-      escolhendoData: this.state.escolhendoData,
-      outraDataLabel: this.state.escolhendoData ? "fechar" : "outra aula ou data",
-      onOutraData: () => this.setState(s => ({ escolhendoData: !s.escolhendoData })),
+      // null = ainda não mexeu: vale o parâmetro ?retro=1 do link direto
+      escolhendoData: this.state.escolhendoData === null ? this.retroParam() : this.state.escolhendoData,
+      outraDataLabel: (this.state.escolhendoData === null ? this.retroParam() : this.state.escolhendoData)
+        ? "fechar" : "outra data · chamada retroativa",
+      onOutraData: () => this.setState(s => ({
+        escolhendoData: !(s.escolhendoData === null ? this.retroParam() : s.escolhendoData) })),
 
       onTodasPresentes: () => this.marcarTodas("presente", alunas, turmaSel, dataSel),
       onTodasFaltas: () => this.marcarTodas("falta", alunas, turmaSel, dataSel),

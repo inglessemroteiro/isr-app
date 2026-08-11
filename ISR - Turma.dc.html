@@ -104,17 +104,21 @@
             </div>
           </div>
 
-          <!-- CHAMADAS RECENTES -->
+          <!-- CHAMADAS RECENTES · cada uma abre no Painel para ver ou corrigir -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 16px;">
-            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Chamadas recentes</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Chamadas recentes</span>
+              <a href="{{ chamadaRetroHref }}" style="text-decoration: none; font-size: 11px; font-weight: 700; color: #9c6f56;">chamada retroativa →</a>
+            </div>
             <sc-if value="{{ semChamadas }}">
-              <div style="font-size: 12px; color: #b3a693;">Nenhuma chamada registrada ainda — use "fazer chamada" acima.</div>
+              <div style="font-size: 12px; color: #b3a693;">Nenhuma chamada registrada ainda — use "fazer chamada" acima, ou "chamada retroativa" para registrar uma aula que já passou.</div>
             </sc-if>
             <sc-for list="{{ chamadas }}" as="ch" hint-placeholder-count="3">
-              <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-size: 12px;">
-                <strong style="color: #164951;">{{ ch.data }}</strong>
-                <span style="color: #6b6155;">{{ ch.resumo }}</span>
-              </div>
+              <a href="{{ ch.href }}" title="Abrir esta chamada no Painel do Professor" style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-size: 12px; text-decoration: none;">
+                <strong style="color: #164951; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ ch.data }}</strong>
+                <span style="color: #6b6155; flex: 1;">{{ ch.resumo }}</span>
+                <span style="color: #348a8e; font-weight: 700; font-size: 11px;">abrir →</span>
+              </a>
             </sc-for>
           </div>
         </div>
@@ -251,7 +255,10 @@ class Component extends DCLogic {
       const n = e => est.filter(x => x === e).length;
       return {
         data: CRM.ddmm(ch.data),
-        resumo: (n("presente") + n("atraso")) + " presentes · " + n("falta") + " faltas" + (n("justificada") ? " · " + n("justificada") + " justif." : "")
+        resumo: (n("presente") + n("atraso")) + " presentes · " + n("falta") + " faltas" + (n("justificada") ? " · " + n("justificada") + " justif." : ""),
+        // abre exatamente esta chamada no Painel, para conferir ou corrigir
+        href: "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(u.label)
+          + "&data=" + ch.data
       };
     });
 
@@ -289,6 +296,7 @@ class Component extends DCLogic {
       edGravadasAtual: raw.gravadas || "",
       ocupLabel: u.ocupadas + "/" + u.capacidade,
       chamadaHref: "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(u.label),
+      chamadaRetroHref: "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(u.label) + "&retro=1",
       alunas, semAlunas: alunas.length === 0,
 
       // ── a turma é uma coisa só: horário, alunas e professora ──

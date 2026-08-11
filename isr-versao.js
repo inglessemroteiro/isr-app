@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-b",
+  numero: "2026.08.11-c",
   data: "11/08/2026",
-  nota: "Cobrança com busca por aluna e alunas sem plano de pagamento apontadas (não somem mais em silêncio); o editor de contrato ganha o início do ciclo — desloca as parcelas para o mês certo em matrículas retroativas"
+  nota: "Chamada retroativa com caminho claro (outra data · chamada retroativa) e acessível da página da Turma — cada chamada listada abre no Painel para conferir ou corrigir, e há o atalho para registrar aula que já passou"
 };
