@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-k",
+  numero: "2026.08.03-l",
   data: "03/08/2026",
-  nota: "O papel operação passa a ver o CRM e o Importar leads — a Érika trabalha o funil; Calculadora e Marketing seguem só do comercial"
+  nota: "Excluir turma agora fica de verdade: a marca de apagada não subia ao banco central e a sincronização devolvia a turma excluída no puxe seguinte"
 };

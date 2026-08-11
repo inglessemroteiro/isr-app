@@ -3936,7 +3936,9 @@
       // pessoas vai CRU (com as lápides): é o sync que espalha o
       // "esta pessoa foi apagada" para os outros aparelhos
       pessoas: loadPessoasRaw(), custos: custosLista(), templates: tplStore(),
-      turmas: turmasLista(), eventos: eventosLista(), chamadas: chamadasAll(),
+      // turmas vai CRU (com as lápides): sem isto a marca de "apagada"
+      // não subia ao banco e o puxe seguinte devolvia a turma
+      turmas: turmasRaw(), eventos: eventosLista(), chamadas: chamadasAll(),
       tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosLista(), cambio: taxaCambio(),
