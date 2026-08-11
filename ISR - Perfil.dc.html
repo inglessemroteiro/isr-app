@@ -165,6 +165,30 @@
                   </button>
                 </sc-for>
               </div>
+
+              <!-- ACERTOS · registrados no encerramento ou depois; removível para correção -->
+              <sc-if value="{{ temAcertos }}">
+                <div style="margin-top: 10px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 4px;">Acertos</div>
+                  <sc-for list="{{ acertosView }}" as="ac" hint-placeholder-count="2">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #164951; padding: 3px 0;">
+                      <span style="flex: 1;">{{ ac.label }}</span>
+                      <button onclick="{{ ac.onRemover }}" style="border: 1px solid {{ ac.borda }}; background: {{ ac.bg }}; color: #cf6b5c; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ac.btLabel }}</button>
+                    </div>
+                  </sc-for>
+                  <p style="margin: 4px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Remover um acerto também remove o lançamento correspondente do Caixa e refaz o Total investido.</p>
+                </div>
+              </sc-if>
+              <sc-if value="{{ podeRegistrarAcerto }}">
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+                  <select ref="{{ acTipoRef }}" style="padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                    <option value="acerto">Acerto recebido</option>
+                    <option value="devolucao">Devolução feita</option>
+                  </select>
+                  <input ref="{{ acValorRef }}" placeholder="Valor (ex. 20,00)" style="flex: 1; min-width: 110px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <button onclick="{{ onRegistrarAcerto }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar</button>
+                </div>
+              </sc-if>
               <div style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
                   <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Renegociar</span>
@@ -639,6 +663,7 @@ class Component extends DCLogic {
   saidaMotivoRef = React.createRef(); saidaDetalheRef = React.createRef();
   saidaParcelasRef = React.createRef(); saidaAcertoRef = React.createRef();
   saidaDevolucaoRef = React.createRef();
+  acTipoRef = React.createRef(); acValorRef = React.createRef();
   renParcelasRef = React.createRef(); renValorRef = React.createRef();
   noteRef = React.createRef();
   docNomeRef = React.createRef();
@@ -1119,6 +1144,36 @@ class Component extends DCLogic {
         border: "#cf6b5c", bg: "rgba(207,107,92,0.10)", fg: "#cf6b5c",
         onClick: () => { CRM.setParcelaPaga(p.id, m.key, true, m.contratoIdx); this.bump(); }
       }));
+      // acertos do contrato: lista com remoção (correção de registro
+      // errado) e, para matrícula encerrada, registro de novo acerto
+      const acertos = c.acertos || [];
+      out.temAcertos = acertos.length > 0;
+      out.acertosView = acertos.map((a, i) => {
+        const confirmando = this.state.removendoAcerto === i;
+        return {
+          label: (a.tipo === "devolucao" ? "Devolução · −" : "Acerto · +")
+            + CRM.fmtMoney(c.moeda || "R$", CRM.parseMoney(a.valor))
+            + (a.em ? " · " + CRM.ddmm(a.em) : ""),
+          btLabel: confirmando ? "Confirmar remoção" : "remover",
+          borda: confirmando ? "#cf6b5c" : "#e5dccf",
+          bg: confirmando ? "#fdece9" : "#fff",
+          onRemover: () => {
+            if (!confirmando) { this.setState({ removendoAcerto: i }); return; }
+            CRM.removerAcerto(p.id, 0, i);
+            this.setState({ removendoAcerto: null });
+            this.bump();
+          }
+        };
+      });
+      out.podeRegistrarAcerto = p.status === "ex-aluna";
+      out.acTipoRef = this.acTipoRef; out.acValorRef = this.acValorRef;
+      out.onRegistrarAcerto = () => {
+        const v = (this.acValorRef.current && this.acValorRef.current.value || "").trim();
+        if (!v) return;
+        CRM.registrarAcerto(p.id, (this.acTipoRef.current && this.acTipoRef.current.value) || "acerto", v);
+        if (this.acValorRef.current) this.acValorRef.current.value = "";
+        this.bump();
+      };
       out.mesesView = herdadas.concat((c.meses || []).map(m => ({
         label: m.label, valor: m.valor,
         // cancelada no encerramento: fica visível, mas não é dívida e o

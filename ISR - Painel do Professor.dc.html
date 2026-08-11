@@ -23,14 +23,42 @@
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>Painel Docente.</strong> Aulas dos próximos sete dias, registro de frequência e turmas atribuídas ao professor. As ausências são lançadas na linha do tempo da aluna.</p>
 
     <!-- SELETOR DE PROFESSORA -->
-    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
       <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; font-weight: 700;">Professora</div>
       <select onchange="{{ onTeacher }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
         <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="4">
           <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
         </sc-for>
       </select>
+      <button onclick="{{ onToggleNovaExtra }}" style="border: 1px solid {{ neBorda }}; background: {{ neBg }}; color: {{ neFg }}; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ neLabel }}</button>
     </div>
+
+    <!-- NOVA AULA EXTRA · criada daqui, já no nome da professora do painel -->
+    <sc-if value="{{ novaExtraAberta }}">
+      <div style="background: #fdfbf8; border: 1px solid #f0d9c8; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98060; margin-bottom: 4px;">Nova aula extra</div>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">A aula entra na agenda da responsável, aparece na área das alunas convidadas para confirmação de presença e gera chamada própria neste painel, contando nas horas de aula.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ neTituloRef }}" placeholder="Título da aula" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ neDataRef }}" type="date" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ neHoraRef }}" placeholder="Horário (ex. 19h)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ neDuracaoRef }}" placeholder="Duração em minutos" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ neRespRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ neRespOpts }}" as="nr" hint-placeholder-count="5"><option value="{{ nr.id }}" selected="{{ nr.sel }}">{{ nr.label }}</option></sc-for>
+          </select>
+          <input ref="{{ neLocalRef }}" placeholder="Local ou link da sala" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ neVagasRef }}" placeholder="Vagas (0 = sem limite)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ neTurmaRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ neTurmasAlvo }}" as="nt" hint-placeholder-count="6"><option value="{{ nt.id }}">{{ nt.label }}</option></sc-for>
+          </select>
+        </div>
+        <input ref="{{ neDescRef }}" placeholder="Descrição enviada às alunas (opcional)" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 10px;" />
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button onclick="{{ onCriarNovaExtra }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar aula extra</button>
+          <span style="font-size: 11.5px; color: #5a9e4b; font-weight: 600;">{{ neFeito }}</span>
+        </div>
+      </div>
+    </sc-if>
 
     <!-- PRÓXIMAS AULAS -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden; margin-bottom: 18px;">
@@ -240,8 +268,12 @@
 class Component extends DCLogic {
   state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
-            escolhendoData: false, linhaAberta: null };
+            escolhendoData: false, linhaAberta: null,
+            novaExtraAberta: false, neFeito: "" };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
+  neTituloRef = React.createRef(); neDataRef = React.createRef(); neHoraRef = React.createRef();
+  neDuracaoRef = React.createRef(); neRespRef = React.createRef(); neLocalRef = React.createRef();
+  neVagasRef = React.createRef(); neTurmaRef = React.createRef(); neDescRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
@@ -321,11 +353,21 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef };
+    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
+      novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "#e5dccf", neBg: "#fff", neFg: "#164951",
+      onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
+      neTituloRef: this.neTituloRef, neDataRef: this.neDataRef, neHoraRef: this.neHoraRef,
+      neDuracaoRef: this.neDuracaoRef, neRespRef: this.neRespRef, neLocalRef: this.neLocalRef,
+      neVagasRef: this.neVagasRef, neTurmaRef: this.neTurmaRef, neDescRef: this.neDescRef };
 
     const ocup = CRM.ocupacaoTurmas();
+    // docentes = quem tem turma + equipe com papel professora, aulas
+    // extras ou shadow — professora só de extras tem painel próprio
     const nomes = [];
     ocup.forEach(u => { if (u.teacher && nomes.indexOf(u.teacher) < 0) nomes.push(u.teacher); });
+    (CRM.equipeDocente ? CRM.equipeDocente() : []).forEach(n => {
+      if (nomes.indexOf(n) < 0) nomes.push(n);
+    });
 
     // professora inicial: a própria (se logada com nome de professora), senão a primeira
     const user = CRM.gestaoUser();
@@ -553,7 +595,42 @@ class Component extends DCLogic {
 
     return {
       teachers: nomes.map(n => ({ id: n, label: n, sel: n === teacher })),
-      onTeacher: (e) => this.setState({ teacher: e.target.value, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null, salvouAgora: false }),
+      onTeacher: (e) => this.setState({ teacher: e.target.value, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null, salvouAgora: false, novaExtraAberta: false }),
+
+      // ── nova aula extra criada do próprio painel ──
+      novaExtraAberta: this.state.novaExtraAberta,
+      neLabel: this.state.novaExtraAberta ? "fechar" : "+ Aula extra",
+      neBorda: this.state.novaExtraAberta ? "#f6eee4" : "#e5dccf",
+      neBg: this.state.novaExtraAberta ? "#f6eee4" : "#fff",
+      neFg: this.state.novaExtraAberta ? "#9c6f56" : "#164951",
+      onToggleNovaExtra: () => this.setState(s => ({ novaExtraAberta: !s.novaExtraAberta, neFeito: "" })),
+      neTituloRef: this.neTituloRef, neDataRef: this.neDataRef, neHoraRef: this.neHoraRef,
+      neDuracaoRef: this.neDuracaoRef, neRespRef: this.neRespRef, neLocalRef: this.neLocalRef,
+      neVagasRef: this.neVagasRef, neTurmaRef: this.neTurmaRef, neDescRef: this.neDescRef,
+      // a responsável vem da Equipe (professoras de turma e de aulas
+      // extras), já apontando para a professora deste painel
+      neRespOpts: (CRM.professorasDeAula ? CRM.professorasDeAula() : nomes)
+        .map(n => ({ id: n, label: n, sel: n === teacher })),
+      neTurmasAlvo: [{ id: "", label: "Aberta a todas as alunas" }]
+        .concat(CRM.turmasLista().map(u => {
+          const lbl = u.nivel + " · " + u.turma;
+          return { id: lbl, label: "Apenas " + lbl };
+        })),
+      neFeito: this.state.neFeito,
+      onCriarNovaExtra: () => {
+        const v = r => (r.current && r.current.value || "").trim();
+        const titulo = v(this.neTituloRef), data = v(this.neDataRef);
+        if (!titulo || !data) { this.setState({ neFeito: "Informe pelo menos o título e a data." }); return; }
+        CRM.addEvento({ titulo, data,
+          hora: v(this.neHoraRef), responsavel: v(this.neRespRef) || teacher,
+          duracao: v(this.neDuracaoRef), local: v(this.neLocalRef),
+          vagas: v(this.neVagasRef), descricao: v(this.neDescRef),
+          turmaAlvo: (this.neTurmaRef.current && this.neTurmaRef.current.value) || "" });
+        [this.neTituloRef, this.neHoraRef, this.neDuracaoRef, this.neLocalRef,
+         this.neVagasRef, this.neDescRef].forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ neFeito: "Aula extra criada — já está nas próximas aulas e na agenda." });
+        this.bump();
+      },
 
       aulas, aulasVazio: aulas.length === 0,
 
