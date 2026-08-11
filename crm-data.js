@@ -1179,7 +1179,7 @@
     (p.contratos || []).forEach(function (cx, idx) {
       if (idx === 0) return;
       (cx.meses || []).forEach(function (m) {
-        if (!m.pago) atrasHerdado.push(Object.assign({}, m, { anterior: true, contratoIdx: idx }));
+        if (!m.pago && !m.cancelada) atrasHerdado.push(Object.assign({}, m, { anterior: true, contratoIdx: idx }));
       });
     });
     var meses = atrasHerdado.concat((c.meses || []).map(function (m) {
@@ -1251,7 +1251,7 @@
     var out = [];
     (p.contratos || []).forEach(function (c, idx) {
       (c.meses || []).forEach(function (m) {
-        if (m.pago) return;
+        if (m.pago || m.cancelada) return; // cancelada no encerramento não é dívida
         out.push({ key: m.key, label: m.label, valor: m.valor,
           contratoIdx: idx, anterior: idx > 0,
           moeda: c.moeda || "R$",
@@ -1289,7 +1289,7 @@
     MESES_COBRANCA.forEach(function (m) { out[m.key] = { label: m.label, "R$": 0, "€": 0 }; });
     getCobranca().forEach(function (c) {
       (c.meses || []).forEach(function (m) {
-        if (!m.pago && out[m.key]) out[m.key][c.moeda] += parseMoney(m.valor || c.parcelaValor);
+        if (!m.pago && !m.cancelada && out[m.key]) out[m.key][c.moeda] += parseMoney(m.valor || c.parcelaValor);
       });
     });
     return out;
@@ -1333,13 +1333,39 @@
   }
 
   // ── LTV (oculto no perfil Comercial — spec 5) ─────────────────
-  function ltv(p) {
-    var tot = { "R$": 0, "€": 0 };
-    (p.contratos || []).forEach(function (c) { tot[c.moeda || "R$"] += parseMoney(c.valorTotal || ""); });
+  function fmtTotais(tot) {
     var parts = [];
     if (tot["R$"]) parts.push(fmtMoney("R$", tot["R$"]));
     if (tot["€"]) parts.push(fmtMoney("€", tot["€"]));
     return parts.join(" + ") || "—";
+  }
+  // LTV = o que a pessoa DE FATO pagou: parcelas pagas, sinal recebido,
+  // particulares e acompanhamento pagos, mais acertos finais e menos
+  // devoluções. Não é o valor contratado — quem sai no meio do ciclo
+  // (pagou uma aula e saiu) carrega o número verdadeiro sem ajuste
+  // manual. O contratado continua disponível em ltvContratado.
+  function ltv(p) {
+    var tot = { "R$": 0, "€": 0 };
+    (p.contratos || []).forEach(function (c) {
+      var moeda = c.moeda || "R$";
+      (c.meses || []).forEach(function (m) {
+        if (m.pago && !m.cancelada) tot[moeda] += parseMoney(m.valor || c.parcelaValor || "");
+      });
+      if (c.sinal && c.sinal.recebido) tot[moeda] += parseMoney(c.sinal.valor || "");
+      (c.acertos || []).forEach(function (a) {
+        tot[moeda] += (a.tipo === "devolucao" ? -1 : 1) * parseMoney(a.valor || "");
+      });
+    });
+    if (p.particular && p.particular.pago && p.particular.valor)
+      tot[p.moeda || "R$"] += parseMoney(p.particular.valor);
+    if (p.programa && p.programa.pago && p.programa.valor)
+      tot[p.programa.moeda || "€"] += parseMoney(p.programa.valor);
+    return fmtTotais(tot);
+  }
+  function ltvContratado(p) {
+    var tot = { "R$": 0, "€": 0 };
+    (p.contratos || []).forEach(function (c) { tot[c.moeda || "R$"] += parseMoney(c.valorTotal || ""); });
+    return fmtTotais(tot);
   }
 
   // ── OCUPAÇÃO / VAGAS (spec 10: ninguém digita) ────────────────
@@ -2250,7 +2276,7 @@
     "Motivo pessoal", "Outro"
   ];
   function encerrarMatricula(id, cfg) {
-    return mutate(id, function (p) {
+    var r = mutate(id, function (p) {
       var tipo = (cfg && cfg.tipo) || "saiu";
       var meta = TIPOS_SAIDA.filter(function (x) { return x.id === tipo; })[0] || TIPOS_SAIDA[1];
       p.statusAnterior = p.status;
@@ -2269,7 +2295,53 @@
       };
       pushHist(p, "estagio", meta.label + " · " + p.saida.motivo
         + (p.saida.detalhe ? " — " + p.saida.detalhe : ""));
+
+      // ── acerto final ──────────────────────────────────────────
+      // Parcelas em aberto: o padrão para quem sai é cancelar (ninguém
+      // mais cobra); "manter" preserva as VENCIDAS para cobrança de quem
+      // saiu devendo. As futuras são sempre canceladas — não existe
+      // cobrar mês que a pessoa não vai cursar.
+      var manterVencidas = cfg && cfg.parcelasAbertas === "manter";
+      var canceladas = 0;
+      (p.contratos || []).forEach(function (c) {
+        (c.meses || []).forEach(function (m) {
+          if (m.pago || m.cancelada) return;
+          if (manterVencidas && m.key <= mesAtualKey()) return;
+          m.cancelada = true; canceladas++;
+        });
+      });
+      if (canceladas) pushHist(p, "pagamento", canceladas
+        + (canceladas === 1 ? " parcela em aberto cancelada" : " parcelas em aberto canceladas")
+        + " no encerramento");
+
+      // Valor do acerto (pro-rata de quem saiu no começo) e devolução:
+      // entram no contrato — o LTV soma o acerto e desconta a devolução.
+      var c0 = contratoVigente(p);
+      if (!c0 && (cfg && (cfg.acertoValor || cfg.devolucaoValor))) {
+        c0 = { tipo: "Acerto", moeda: p.moeda || "€", meses: [] };
+        p.contratos = p.contratos || []; p.contratos.unshift(c0);
+      }
+      if (cfg && cfg.acertoValor && parseMoney(cfg.acertoValor) > 0) {
+        c0.acertos = c0.acertos || [];
+        c0.acertos.push({ tipo: "acerto", valor: cfg.acertoValor, em: iso(today()) });
+        pushHist(p, "pagamento", "Acerto final de " + fmtMoney(c0.moeda || "R$", parseMoney(cfg.acertoValor)) + " recebido no encerramento");
+      }
+      if (cfg && cfg.devolucaoValor && parseMoney(cfg.devolucaoValor) > 0) {
+        c0.acertos = c0.acertos || [];
+        c0.acertos.push({ tipo: "devolucao", valor: cfg.devolucaoValor, em: iso(today()) });
+        pushHist(p, "pagamento", "Devolução de " + fmtMoney(c0.moeda || "R$", parseMoney(cfg.devolucaoValor)) + " registrada no encerramento");
+      }
     });
+    // acerto e devolução também entram no Caixa como lançamentos
+    var p2 = getPessoa(id);
+    var moeda = (contratoVigente(p2) || {}).moeda || p2.moeda || "€";
+    if (cfg && cfg.acertoValor && parseMoney(cfg.acertoValor) > 0)
+      addLancamento({ tipo: "entrada", categoria: "acerto final",
+        descricao: "Acerto final · " + p2.nome, moeda: moeda, valor: cfg.acertoValor });
+    if (cfg && cfg.devolucaoValor && parseMoney(cfg.devolucaoValor) > 0)
+      addLancamento({ tipo: "saida", categoria: "devolução",
+        descricao: "Devolução · " + p2.nome, moeda: moeda, valor: cfg.devolucaoValor });
+    return r;
   }
   function reabrirMatricula(id) {
     return mutate(id, function (p) {
@@ -8876,7 +8948,8 @@
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil
-    ltv: ltv, contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
+    ltv: ltv, ltvContratado: ltvContratado,
+    contratoVigente: contratoVigente, tempoDesde: tempoDesde, mesAno: mesAno,
     // util
     firstName: firstName, fillTemplate: fillTemplate, waLink: waLink, waNumber: waNumber,
     relativeDays: relativeDays, isStale: isStale, ddmm: ddmm,

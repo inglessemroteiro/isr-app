@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.03-l",
+  numero: "2026.08.03-m",
   data: "03/08/2026",
-  nota: "Excluir turma agora fica de verdade: a marca de apagada não subia ao banco central e a sincronização devolvia a turma excluída no puxe seguinte"
+  nota: "Total investido (LTV) passa a somar o que foi pago de fato, e o encerramento ganha acerto final: parcelas em aberto canceladas (ou vencidas mantidas), valor do acerto e devolução — tudo no contrato e no Caixa"
 };
