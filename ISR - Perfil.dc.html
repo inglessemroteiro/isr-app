@@ -140,10 +140,12 @@
                     <input ref="{{ ctrVencRef }}" placeholder="{{ vencDiaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nº de parcelas</div>
                     <input ref="{{ ctrParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Início do ciclo (mês)</div>
+                    <input ref="{{ ctrInicioRef }}" type="month" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
                   <div style="display: flex; align-items: flex-end;">
                     <button onclick="{{ onSalvarContrato }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
                   </div>
-                  <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Preencha apenas os campos que deseja alterar; os demais permanecem como estão. Parcelas já pagas não são alteradas — reduzir o número remove apenas as em aberto no fim do contrato.</p>
+                  <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Preencha apenas os campos que deseja alterar; os demais permanecem como estão. Parcelas já pagas não são alteradas — reduzir o número remove apenas as em aberto no fim do contrato. Mudar o início do ciclo desloca todas as parcelas para começarem no mês escolhido — é o ajuste para mensalidades retroativas (a primeira parcela pode ficar no passado).</p>
                 </div>
               </sc-if>
               <div style="font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
@@ -664,6 +666,7 @@ class Component extends DCLogic {
   saidaParcelasRef = React.createRef(); saidaAcertoRef = React.createRef();
   saidaDevolucaoRef = React.createRef();
   acTipoRef = React.createRef(); acValorRef = React.createRef();
+  ctrInicioRef = React.createRef();
   renParcelasRef = React.createRef(); renValorRef = React.createRef();
   noteRef = React.createRef();
   docNomeRef = React.createRef();
@@ -965,13 +968,14 @@ class Component extends DCLogic {
       out.onEditarContrato = () => this.setState(s => ({ editandoContrato: !s.editandoContrato }));
       out.ctrTipoRef = this.ctrTipoRef; out.ctrCiclosRef = this.ctrCiclosRef;
       out.ctrValorRef = this.ctrValorRef; out.ctrVencRef = this.ctrVencRef;
-      out.ctrParcelasRef = this.ctrParcelasRef;
+      out.ctrParcelasRef = this.ctrParcelasRef; out.ctrInicioRef = this.ctrInicioRef;
       out.onSalvarContrato = () => {
         const v = r => (r.current && r.current.value || "").trim();
         CRM.atualizarContrato(p.id, {
           tipo: v(this.ctrTipoRef), ciclos: v(this.ctrCiclosRef),
           parcelaValor: v(this.ctrValorRef), vencDia: v(this.ctrVencRef),
-          parcelas: v(this.ctrParcelasRef)
+          parcelas: v(this.ctrParcelasRef),
+          inicioMes: v(this.ctrInicioRef)
         });
         this.setState({ editandoContrato: false });
       };

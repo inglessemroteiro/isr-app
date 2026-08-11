@@ -1199,6 +1199,16 @@
       .filter(function (p) { return (p.status === "aluna" || p.status === "mvs") && contratoVigente(p) && (contratoVigente(p).meses || []).length; })
       .map(toCobrancaShape);
   }
+  // Aluna ativa sem contrato ou sem parcelas não entra na cobrança — mas
+  // sumir da tela em silêncio esconde exatamente o furo que precisa de
+  // ação. A lista existe para a tela do Financeiro apontá-las.
+  function alunasSemPlano() {
+    return loadPessoas().filter(function (p) {
+      if (p.status !== "aluna" && p.status !== "mvs") return false;
+      var c = contratoVigente(p);
+      return !c || !(c.meses || []).length;
+    }).map(function (p) { return { id: p.id, nome: p.nome, turma: p.turma || "" }; });
+  }
   function cobrancaStatus(c) {
     var meses = c.meses || [];
     if (meses.length && meses.every(function (m) { return m.pago; })) return "quitada";
@@ -4889,6 +4899,26 @@
         (c.meses || []).forEach(function (m) { if (!m.pago) { m.valor = patch.parcelaValor; alteradas++; } });
         mudou.push("parcela → " + patch.parcelaValor + " (" + alteradas + " em aberto)");
         c.parcelaValor = patch.parcelaValor;
+      }
+
+      // início do ciclo: desloca TODAS as parcelas para começarem no mês
+      // escolhido (mantendo valores e o que já está pago) — é o caminho
+      // para matrícula registrada com atraso, cujas mensalidades são
+      // retroativas e nasceram no mês errado
+      if (patch.inicioMes && /^\d{4}-\d{2}$/.test(patch.inicioMes)) {
+        var ms0 = c.meses || [];
+        if (ms0.length && ms0[0].key !== patch.inicioMes) {
+          var y0 = parseInt(patch.inicioMes.slice(0, 4), 10);
+          var mo0 = parseInt(patch.inicioMes.slice(5, 7), 10);
+          var cursor = (mo0 === 1 ? (y0 - 1) : y0) + "-" + ("0" + (mo0 === 1 ? 12 : mo0 - 1)).slice(-2);
+          ms0.forEach(function (m) {
+            var prox = mesSeguinte(cursor);
+            m.key = prox.key; m.label = prox.label; cursor = prox.key;
+          });
+          c.inicio = patch.inicioMes + "-01";
+          c.fim = ms0[ms0.length - 1].key + "-28";
+          mudou.push("início → " + patch.inicioMes);
+        }
       }
 
       // nº de parcelas: acrescenta no fim ou remove as últimas ainda em aberto
@@ -8825,7 +8855,8 @@
     salvarProposta: salvarProposta, propostaDe: propostaDe, resumoProposta: resumoProposta,
     novaPessoa: novaPessoa,
     // cobrança
-    getCobranca: getCobranca, cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
+    getCobranca: getCobranca, alunasSemPlano: alunasSemPlano,
+    cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
     setParcelaPaga: setParcelaPaga, entradasPrevistas: entradasPrevistas,
     MES_NOMES: MES_NOMES, mesSeguinte: mesSeguinte, mesAnterior: mesAnterior,
     parseMoney: parseMoney, fmtMoney: fmtMoney, mesAtualKey: mesAtualKey,

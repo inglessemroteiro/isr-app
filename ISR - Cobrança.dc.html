@@ -120,6 +120,10 @@
 
     <!-- ═══ TABELA PARCELAS ═══ -->
     <sc-if value="{{ abaParcelas }}">
+      <div style="display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap;">
+        <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar aluna pelo nome" style="flex: 1; min-width: 180px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+        <span style="font-size: 11.5px; color: #8a7c6b;">{{ buscaContagem }}</span>
+      </div>
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 0 8px 8px 8px; overflow: hidden;">
         <div style="display: grid; grid-template-columns: 1.8fr 1.1fr 0.8fr 1fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4;">
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Aluna <span style="opacity:.5;">⌄</span></span>
@@ -175,7 +179,17 @@
           </sc-if>
         </sc-for>
       </div>
-      <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Estrutura espelhada da <strong>[ISR] Planilha Renovações</strong>. Dados de demonstração — integração real em <code>apps-script-integracoes.js</code>. Enviar mensagem registra contato no histórico da pessoa.</p>
+      <!-- ALUNAS SEM PLANO · ativas que não entram na cobrança -->
+      <sc-if value="{{ temSemPlano }}">
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 16px; margin-top: 14px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; margin-bottom: 4px;">Sem plano de pagamento · {{ semPlanoContagem }}</div>
+          <p style="margin: 0 0 8px; font-size: 12px; color: #6b6155; line-height: 1.6;">Alunas ativas sem contrato ou sem parcelas registradas — por isso não entram na cobrança nem nas previsões. Abra o perfil e registre o plano (a matrícula retroativa serve para quem começou antes do cadastro).</p>
+          <sc-for list="{{ semPlano }}" as="sp" hint-placeholder-count="4">
+            <a href="{{ sp.href }}" style="display: inline-block; text-decoration: none; background: #fff; border: 1px solid #f0d9c8; color: #164951; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; margin: 0 6px 6px 0;">{{ sp.nome }}</a>
+          </sc-for>
+        </div>
+      </sc-if>
+      <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Enviar mensagem registra contato no histórico da pessoa.</p>
     </sc-if>
 
     <!-- ═══ TABELA RENOVAÇÕES ═══ -->
@@ -233,8 +247,9 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0,
-            periodo: "tudo", de: "", ate: "", prevAberta: false, linkAberto: false };
-  linkRef = React.createRef();
+            periodo: "tudo", de: "", ate: "", prevAberta: false, linkAberto: false,
+            busca: "" };
+  linkRef = React.createRef(); buscaRef = React.createRef();
   deRef = React.createRef(); ateRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -313,7 +328,11 @@ class Component extends DCLogic {
       });
 
     const ftest = (FILTROS.filter(f => f.id === active)[0] || FILTROS[0]).test;
-    const visiveis = all.filter(c => ftest(CRM.cobrancaStatus(c))).filter(noPeriodo);
+    // busca por nome: corta a lista antes de qualquer outro filtro
+    const sem = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const bq = sem(this.state.busca.trim());
+    const daBusca = c => !bq || sem(c.nome).indexOf(bq) >= 0;
+    const visiveis = all.filter(daBusca).filter(c => ftest(CRM.cobrancaStatus(c))).filter(noPeriodo);
 
     const items = visiveis.map(c => {
       const st = CRM.cobrancaStatus(c);
@@ -460,6 +479,19 @@ class Component extends DCLogic {
       abasTabs, items, renovs, mesLabel,
       abaParcelas: abaParcelas, abaRenov: !abaParcelas,
       vazio: items.length === 0, renovVazia: renovs.length === 0,
+      // busca por aluna + quem está fora da cobrança por falta de plano
+      buscaRef: this.buscaRef,
+      onBusca: (e) => this.setState({ busca: e.target.value, openId: null }),
+      buscaContagem: bq ? items.length + " de " + all.length : all.length + (all.length === 1 ? " aluna" : " alunas"),
+      ...((() => {
+        const sp = CRM.alunasSemPlano ? CRM.alunasSemPlano() : [];
+        return {
+          temSemPlano: sp.length > 0,
+          semPlanoContagem: sp.length === 1 ? "1 aluna" : sp.length + " alunas",
+          semPlano: sp.map(x => ({ nome: x.nome + (x.turma ? " · " + x.turma : ""),
+            href: "ISR%20-%20Perfil.dc.html?id=" + x.id }))
+        };
+      })()),
       receberBRL: CRM.fmtMoney("R$", resumo.receber["R$"]),
       receberEUR: CRM.fmtMoney("€", resumo.receber["€"]),
       recebidoBRL: CRM.fmtMoney("R$", resumo.recebido["R$"]),
