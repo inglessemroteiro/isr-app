@@ -315,11 +315,18 @@
                 <select ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
                   <sc-for list="{{ motivosSaida }}" as="ms" hint-placeholder-count="8"><option value="{{ ms.v }}">{{ ms.v }}</option></sc-for>
                 </select>
-                <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap;">
-                  <input ref="{{ saidaDetalheRef }}" placeholder="Nas palavras dela (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                  <button onclick="{{ onEncerrar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
+                <input ref="{{ saidaDetalheRef }}" placeholder="Nas palavras dela (opcional)" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;" />
+                <!-- acerto final: parcelas em aberto + valores do caso -->
+                <select ref="{{ saidaParcelasRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                  <option value="cancelar">Cancelar as parcelas em aberto (padrão)</option>
+                  <option value="manter">Manter as vencidas para cobrança (saiu devendo)</option>
+                </select>
+                <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px;">
+                  <input ref="{{ saidaAcertoRef }}" placeholder="Acerto final recebido (opcional, ex. 20,00)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ saidaDevolucaoRef }}" placeholder="Devolução feita (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 </div>
-                <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O motivo alimenta a análise de retenção. Sem ele, não há como saber por que a escola perde aluna.</p>
+                <button onclick="{{ onEncerrar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
+                <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O motivo alimenta a análise de retenção. Acerto e devolução entram no contrato e no Caixa; o Total investido passa a refletir o que foi pago de verdade. As parcelas futuras são sempre canceladas.</p>
               </sc-if>
             </div>
           </sc-if>
@@ -333,10 +340,16 @@
             </div>
           </sc-if>
 
-            <!-- LTV -->
-            <div style="background: #164951; border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700;">Total investido (LTV)</span>
-              <span style="font-size: 17px; font-weight: 700; color: #9ec970;">{{ ltvValor }}</span>
+            <!-- LTV · o pago de verdade; o contratado fica de referência -->
+            <div style="background: #164951; border-radius: 12px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700;">Total investido (LTV)</span>
+                <span style="font-size: 17px; font-weight: 700; color: #9ec970;">{{ ltvValor }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 9px; color: rgba(255,255,255,0.45);">soma do que foi pago de fato</span>
+                <span style="font-size: 10.5px; color: rgba(255,255,255,0.55);">contratado: {{ ltvContratadoValor }}</span>
+              </div>
             </div>
 
           </sc-if>
@@ -624,6 +637,8 @@ class Component extends DCLogic {
   turProfRef = React.createRef();
   tagRef = React.createRef();
   saidaMotivoRef = React.createRef(); saidaDetalheRef = React.createRef();
+  saidaParcelasRef = React.createRef(); saidaAcertoRef = React.createRef();
+  saidaDevolucaoRef = React.createRef();
   renParcelasRef = React.createRef(); renValorRef = React.createRef();
   noteRef = React.createRef();
   docNomeRef = React.createRef();
@@ -759,11 +774,16 @@ class Component extends DCLogic {
       }),
       motivosSaida: CRM.MOTIVOS_SAIDA.map(v => ({ v })),
       saidaMotivoRef: this.saidaMotivoRef, saidaDetalheRef: this.saidaDetalheRef,
+      saidaParcelasRef: this.saidaParcelasRef,
+      saidaAcertoRef: this.saidaAcertoRef, saidaDevolucaoRef: this.saidaDevolucaoRef,
       onEncerrar: () => {
         CRM.encerrarMatricula(p.id, {
           tipo: this.state.tipoSaida,
           motivo: (this.saidaMotivoRef.current && this.saidaMotivoRef.current.value) || "Outro",
-          detalhe: (this.saidaDetalheRef.current && this.saidaDetalheRef.current.value || "").trim()
+          detalhe: (this.saidaDetalheRef.current && this.saidaDetalheRef.current.value || "").trim(),
+          parcelasAbertas: (this.saidaParcelasRef.current && this.saidaParcelasRef.current.value) || "cancelar",
+          acertoValor: (this.saidaAcertoRef.current && this.saidaAcertoRef.current.value || "").trim(),
+          devolucaoValor: (this.saidaDevolucaoRef.current && this.saidaDevolucaoRef.current.value || "").trim()
         });
         this.setState({ encerrando: false });
       },
@@ -978,6 +998,7 @@ class Component extends DCLogic {
         this.setState({ renovando: false });
       };
       out.ltvValor = CRM.ltv(p);
+      out.ltvContratadoValor = CRM.ltvContratado(p);
 
       // ── o que ela contratou: turma, particulares e acompanhamento ──
       const CORES_PROD = { turma: "#348a8e", particular: "#6b5b95", programa: "#e07856" };
@@ -1100,11 +1121,13 @@ class Component extends DCLogic {
       }));
       out.mesesView = herdadas.concat((c.meses || []).map(m => ({
         label: m.label, valor: m.valor,
-        icon: m.pago ? "✓" : (m.key === key ? "●" : "…"),
-        border: m.pago ? "#5a9e4b" : (m.key === key ? "#e07856" : "#e0dcd6"),
-        bg: m.pago ? "rgba(90,158,75,0.12)" : "#fff",
-        fg: m.pago ? "#5a9e4b" : "#6b6155",
-        onClick: () => { CRM.setParcelaPaga(p.id, m.key, !m.pago, 0); this.bump(); }
+        // cancelada no encerramento: fica visível, mas não é dívida e o
+        // clique não a marca paga por engano
+        icon: m.cancelada ? "×" : (m.pago ? "✓" : (m.key === key ? "●" : "…")),
+        border: m.cancelada ? "#e0dcd6" : (m.pago ? "#5a9e4b" : (m.key === key ? "#e07856" : "#e0dcd6")),
+        bg: m.cancelada ? "#f6f2ea" : (m.pago ? "rgba(90,158,75,0.12)" : "#fff"),
+        fg: m.cancelada ? "#b3a693" : (m.pago ? "#5a9e4b" : "#6b6155"),
+        onClick: m.cancelada ? () => {} : () => { CRM.setParcelaPaga(p.id, m.key, !m.pago, 0); this.bump(); }
       })));
     }
 
