@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-e",
+  numero: "2026.08.11-f",
   data: "11/08/2026",
-  nota: "Encerrar matrícula e Total investido aparecem para toda aluna — particular sem contrato registrado agora conclui, cancela e recebe acerto final normalmente"
+  nota: "Mural da equipe: mensagens por assunto para todo mundo, viajando pela sincronização (até ~5 min), com filtro, remoção e mensagem que vira pendência com dono — direto no Para hoje da pessoa"
 };
