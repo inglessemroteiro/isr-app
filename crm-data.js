@@ -2742,6 +2742,40 @@
   // ── AVISOS ────────────────────────────────────────────────────
   // Recado interno de uma pessoa da equipe pra outra. Fica na
   // Central de quem recebeu até ser lido.
+  // ── MURAL DA EQUIPE ───────────────────────────────────────────
+  // Mensagens por assunto, visíveis para toda a equipe. Não é conversa
+  // em tempo real: viaja pela sincronização do banco central (até ~5
+  // minutos para chegar nos outros aparelhos). Serve para aviso e
+  // registro — e qualquer mensagem pode virar pendência com dono.
+  var MURAL_KEY = "isr_mural_v1";
+  var ASSUNTOS_MURAL = ["Geral", "Pedagógico", "Comercial", "Operação"];
+  function muralRaw() {
+    try { return JSON.parse(localStorage.getItem(MURAL_KEY)) || []; } catch (e) { return []; }
+  }
+  function muralLista() {
+    return muralRaw().filter(function (m) { return !(m && m.apagada); });
+  }
+  function muralSaveRaw(l) { carimbarLista(l); try { localStorage.setItem(MURAL_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function muralPost(texto, assunto, autor) {
+    var t = (texto || "").trim();
+    if (!t) return null;
+    var l = muralRaw();
+    var m = { id: "mu" + Date.now() + Math.floor(Math.random() * 1000),
+      texto: t.slice(0, 2000),
+      assunto: ASSUNTOS_MURAL.indexOf(assunto) >= 0 ? assunto : "Geral",
+      autor: autor || "", em: new Date().toISOString() };
+    l.unshift(m);
+    muralSaveRaw(l.slice(0, 500)); // as 500 mais recentes bastam
+    return m;
+  }
+  // remover vira lápide: só filtrar da lista faria o sync devolver a
+  // mensagem no puxe seguinte (mesma regra de pessoas e turmas)
+  function muralRemover(id) {
+    muralSaveRaw(muralRaw().map(function (m) {
+      return m.id === id ? { id: m.id, apagada: true, _v: Date.now() } : m;
+    }));
+  }
+
   var AVISOS_KEY = "isr_avisos_v1";
   function avisosLista() {
     try { return JSON.parse(localStorage.getItem(AVISOS_KEY)) || []; } catch (e) { return []; }
@@ -3771,7 +3805,7 @@
     "isr_eventos_v1", "isr_chamadas_v1", "isr_tarefas_v1", "isr_feriados_v1", "isr_metas_v1",
     "isr_moedas_v1", "isr_equipe_v1", "isr_calc_v1", "isr_lancamentos_v1", "isr_cambio_v1",
     "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
-    "isr_avisos_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
+    "isr_avisos_v1", "isr_mural_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
@@ -4118,6 +4152,8 @@
       // programas vai CRU (com as lápides): é o sync que espalha o
       // "esta turma foi apagada" para os outros aparelhos
       programas: programasRaw(), avisos: avisosLista(),
+      // mural vai CRU (com as lápides das mensagens removidas)
+      mural: muralRaw(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -4133,6 +4169,7 @@
     grava(MOEDAS_KEY, d.moedas); grava(EQUIPE_KEY, d.equipe); grava(CALC_KEY, d.calc);
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
+    grava(MURAL_KEY, d.mural);
     if (d.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.cambio)); } catch (e) {} }
   }
 
@@ -4165,6 +4202,7 @@
       precos: lista("precos"),
       programas: lista("programas"),
       avisos: lista("avisos"),
+      mural: lista("mural"),
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
       por: (gestaoUser() || {}).email || ""
@@ -6966,7 +7004,7 @@
   var CHAVES_CONTEUDO = [
     PESSOAS_KEY, "isr_fila_adiados", "isr_turmas_v1", "isr_eventos_v1",
     "isr_chamadas_v1", "isr_tarefas_v1", "isr_moedas_v1", "isr_lancamentos_v1",
-    "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1",
+    "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1", "isr_mural_v1",
     "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1",
     "isr_extrato_reg_v1", "isr_orcamento_v1"
   ];
@@ -8989,6 +9027,8 @@
     atualizarCadastro: atualizarCadastro, setOnboardingData: setOnboardingData,
     // avisos internos
     avisosDe: avisosDe, avisar: avisar, marcarAvisoLido: marcarAvisoLido, avisosLista: avisosLista,
+    muralLista: muralLista, muralPost: muralPost, muralRemover: muralRemover,
+    ASSUNTOS_MURAL: ASSUNTOS_MURAL,
     // programa no WhatsApp
     MISSOES_PILOTO: MISSOES_PILOTO, ETAPAS_SEMANA: ETAPAS_SEMANA,
     programasLista: programasLista, addPrograma: addPrograma, getPrograma: getPrograma,

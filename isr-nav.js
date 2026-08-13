@@ -30,7 +30,8 @@
       id: "hoje", label: "Hoje", cor: "#9ec970",
       itens: [
         { label: "Central", desc: "Pendências consolidadas por prioridade", href: "ISR - Central.dc.html", perfis: null },
-        { label: "Agenda", desc: "Compromissos operacionais, comerciais e pedagógicos", href: "ISR - Agenda.dc.html", perfis: null }
+        { label: "Agenda", desc: "Compromissos operacionais, comerciais e pedagógicos", href: "ISR - Agenda.dc.html", perfis: null },
+        { label: "Mural da equipe", desc: "Mensagens da equipe por assunto; mensagem vira pendência", href: "ISR - Mural.dc.html", perfis: null }
       ]
     },
     {
