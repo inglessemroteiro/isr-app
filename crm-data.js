@@ -2720,6 +2720,7 @@
   function addTarefa(dados) {
     var l = tarefasLista();
     l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
+      detalhe: (dados.detalhe || "").trim(),
       prazo: dados.prazo || "", feita: false, criadaEm: iso(today()), por: dados.por || "" });
     l.sort(function (a, b) { return (a.prazo || "9999") < (b.prazo || "9999") ? -1 : 1; });
     tarefasSave(l); return l;
@@ -2944,24 +2945,47 @@
       }
     });
 
-    // pendências com prazo para hoje ou vencido
+    // pendências: sem prazo, entra na fila da pessoa desde a criação —
+    // pendência mandada para alguém tem que aparecer, não esperar data;
+    // com prazo, entra no dia (ou vencida)
     tarefasLista().forEach(function (tf) {
-      if (tf.feita || !tf.prazo) return;
-      var dp = parseISO(tf.prazo);
-      if (!dp || daysBetween(dp, today()) < 0) return;
-      itens.push({ regra: "RT", sinal: "pendencia_equipe", dono: tf.dono || "Gabi", urg: 1, icon: "", cor: "#9c6f56",
+      if (tf.feita) return;
+      var motivo;
+      if (!tf.prazo) {
+        motivo = "Pendência" + (tf.por ? " de " + tf.por : "")
+          + (tf.detalhe ? " · " + tf.detalhe : "");
+      } else {
+        var dp = parseISO(tf.prazo);
+        if (!dp || daysBetween(dp, today()) < 0) return;
+        motivo = "Pendência " + (daysBetween(dp, today()) === 0 ? "para hoje" : "venceu " + ddmm(tf.prazo))
+          + (tf.detalhe ? " · " + tf.detalhe : "");
+      }
+      itens.push({ regra: "RT", sinal: "pendencia_equipe", dono: tf.dono || "Gabi", urg: tf.prazo ? 1 : 3,
+        icon: "", cor: "#9c6f56",
         pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
-        motivo: "Pendência " + (daysBetween(dp, today()) === 0 ? "para hoje" : "venceu " + ddmm(tf.prazo)),
+        motivo: motivo.slice(0, 160),
         acao: "Concluir", tpl: "" });
     });
 
     // filtro por perfil
     var perfil = PERFIS.filter(function (pf) { return pf.id === perfilId; })[0];
     if (perfil && perfil.regras) itens = itens.filter(function (i) { return perfil.regras.indexOf(i.regra) >= 0; });
-    var donoPorPerfil = { comercial: "Carla", operacao: "Érika" };
-    var donoRT = donoPorPerfil[perfilId] || (perfilId === "professora" ? donoNome : null);
+    // o dono das pendências vem da EQUIPE real (quem tem o papel), não de
+    // nome fixo — e o casamento tolera nome completo ("Érika Lazaro"
+    // combina com "Érika"), senão a pendência some da fila da pessoa
+    var donoEquipe = function (papel) {
+      var m = equipeLista().filter(function (x) { return (x.papeis || []).indexOf(papel) >= 0; })[0];
+      return m ? m.nome : null;
+    };
+    var donoRT = perfilId === "comercial" ? (donoEquipe("comercial") || "Carla")
+      : (perfilId === "operacao" ? (donoEquipe("operacao") || "Érika")
+        : (perfilId === "professora" ? donoNome : null));
+    var mesmoNome = function (a, b) {
+      var sa = semAcento(a || "").split(/\s+/)[0], sb = semAcento(b || "").split(/\s+/)[0];
+      return !!sa && sa === sb;
+    };
     if (donoRT) {
-      itens = itens.filter(function (i) { return i.regra !== "RT" || i.dono === donoRT; });
+      itens = itens.filter(function (i) { return i.regra !== "RT" || mesmoNome(i.dono, donoRT); });
     }
 
     // adiar hoje tira da fila até amanhã — e vale também no Acompanhamento
