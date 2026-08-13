@@ -169,6 +169,8 @@
         </sc-if>
         <input ref="{{ tfPrazoRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         <button onclick="{{ onAddTarefa }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer;">+ Adicionar</button>
+        <input ref="{{ tfObsRef }}" placeholder="Observações (opcional) — contexto para quem vai resolver" onkeydown="{{ onTarefaKey }}" style="flex-basis: 100%; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; padding: 8px 12px; border-radius: 8px; font-family: inherit;" />
+        <span style="flex-basis: 100%; font-size: 10.5px; color: #b3a693; line-height: 1.4;">Adicionar (ou Enter) salva na hora e a pendência entra no "Para hoje" da pessoa — imediatamente sem prazo, ou no dia marcado.</span>
       </div>
       <sc-if value="{{ semTarefas }}">
         <div style="text-align: center; padding: 22px 20px; color: #9b8b7e; font-size: 12.5px;">Nenhuma pendência aberta. Adicione acima — com prazo, ela entra na fila "Para hoje" da pessoa no dia certo.</div>
@@ -176,7 +178,12 @@
       <sc-for list="{{ tarefas }}" as="tf" hint-placeholder-count="4">
         <div style="display: flex; align-items: center; gap: 12px; padding: 11px 18px; border-bottom: 1px solid #f7f4ef;">
           <button onclick="{{ tf.onFeita }}" title="Marcar como feita" style="width: 18px; height: 18px; border-radius: 50%; border: 2px solid #9ec970; background: #fff; cursor: pointer; flex: none;"></button>
-          <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: #3d3529;">{{ tf.titulo }}</span>
+          <span style="flex: 1; min-width: 0;">
+            <span style="display: block; font-size: 13px; font-weight: 600; color: #3d3529;">{{ tf.titulo }}</span>
+            <sc-if value="{{ tf.detalhe }}">
+              <span style="display: block; font-size: 11px; color: #8a7c6b; line-height: 1.4;">{{ tf.detalhe }}</span>
+            </sc-if>
+          </span>
           <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ tf.dono }}</span>
           <sc-if value="{{ tf.prazoLabel }}">
             <span style="flex: none; font-size: 11px; font-weight: 700; color: {{ tf.prazoCor }};">{{ tf.prazoLabel }}</span>
@@ -254,6 +261,7 @@ class Component extends DCLogic {
   tfTituloRef = React.createRef();
   tfDonoRef = React.createRef();
   tfPrazoRef = React.createRef();
+  tfObsRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
@@ -328,7 +336,7 @@ class Component extends DCLogic {
       .sort((x, y) => (x.prazo || "9999") < (y.prazo || "9999") ? -1 : 1);
 
     const tarefas = tarefasAbertas.map(tf => ({
-      titulo: tf.titulo, dono: tf.dono,
+      titulo: tf.titulo, dono: tf.dono, detalhe: tf.detalhe || "",
       prazoLabel: tf.prazo ? CRM.ddmm(tf.prazo) : "",
       prazoCor: tf.prazo && tf.prazo <= hojeIso && !tf.feita ? "#e07856" : "#8a7c6b",
       onFeita: () => { CRM.setTarefaFeita(tf.id, !soFeitas); this.bump(); },
@@ -342,9 +350,13 @@ class Component extends DCLogic {
       const dono = perfilAtivo === "gestora"
         ? ((this.tfDonoRef.current && this.tfDonoRef.current.value) || "Gabi")
         : donoDoPerfil[perfilAtivo];
-      CRM.addTarefa({ titulo, dono, prazo: (this.tfPrazoRef.current && this.tfPrazoRef.current.value) || "", por: (user && user.nome) || "" });
+      CRM.addTarefa({ titulo, dono,
+        detalhe: (this.tfObsRef.current && this.tfObsRef.current.value) || "",
+        prazo: (this.tfPrazoRef.current && this.tfPrazoRef.current.value) || "",
+        por: (user && user.nome) || "" });
       this.tfTituloRef.current.value = "";
       if (this.tfPrazoRef.current) this.tfPrazoRef.current.value = "";
+      if (this.tfObsRef.current) this.tfObsRef.current.value = "";
       this.bump();
     };
 
@@ -474,6 +486,7 @@ class Component extends DCLogic {
 
       podeAtribuir: perfilAtivo === "gestora",
       tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,
+      tfObsRef: this.tfObsRef,
       onAddTarefa: addTarefa,
       onTarefaKey: (e) => { if (e.key === "Enter") { e.preventDefault(); addTarefa(); } },
       temMais: !this.state.verTodos && filaAll.length > LIMIT,

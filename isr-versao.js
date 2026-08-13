@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-c",
+  numero: "2026.08.11-d",
   data: "11/08/2026",
-  nota: "Chamada retroativa com caminho claro (outra data · chamada retroativa) e acessível da página da Turma — cada chamada listada abre no Painel para conferir ou corrigir, e há o atalho para registrar aula que já passou"
+  nota: "Pendência mandada para alguém entra no Para hoje da pessoa na hora (sem esperar prazo), ganha campo de observações, e o dono da fila vem da equipe real — nome completo também casa"
 };
