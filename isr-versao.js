@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-d",
+  numero: "2026.08.11-e",
   data: "11/08/2026",
-  nota: "Pendência mandada para alguém entra no Para hoje da pessoa na hora (sem esperar prazo), ganha campo de observações, e o dono da fila vem da equipe real — nome completo também casa"
+  nota: "Encerrar matrícula e Total investido aparecem para toda aluna — particular sem contrato registrado agora conclui, cancela e recebe acerto final normalmente"
 };
