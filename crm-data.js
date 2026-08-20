@@ -1205,6 +1205,7 @@
   function alunasSemPlano() {
     return loadPessoas().filter(function (p) {
       if (p.status !== "aluna" && p.status !== "mvs") return false;
+      if (assinaturaAtiva(p)) return false; // assinatura \u00e9 recorr\u00eancia pr\u00f3pria
       var c = contratoVigente(p);
       return !c || !(c.meses || []).length;
     }).map(function (p) { return { id: p.id, nome: p.nome, turma: p.turma || "" }; });
@@ -3805,7 +3806,7 @@
     "isr_eventos_v1", "isr_chamadas_v1", "isr_tarefas_v1", "isr_feriados_v1", "isr_metas_v1",
     "isr_moedas_v1", "isr_equipe_v1", "isr_calc_v1", "isr_lancamentos_v1", "isr_cambio_v1",
     "isr_precos_v1", "isr_ticket_alvo_v1", "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1",
-    "isr_avisos_v1", "isr_mural_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
+    "isr_avisos_v1", "isr_mural_v1", "isr_assinatura_cfg_v1", "isr_cadencia_v1", "isr_categorias_saida_v1", "isr_extrato_reg_v1", "isr_orcamento_v1",
     "isr_resgates_v1", "isr_folha_paga_v1", "isr_comissao_faixas_v1", "isr_metas_periodo_v1",
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
@@ -4154,6 +4155,9 @@
       programas: programasRaw(), avisos: avisosLista(),
       // mural vai CRU (com as lápides das mensagens removidas)
       mural: muralRaw(),
+      // configurações que o app da aluna lê: sem elas no payload, o grupo
+      // da assinatura e o Book Club nunca chegavam ao aparelho da aluna
+      assinaturaCfg: assinaturaCfg(), bookclub: bookclubUrl(), bookclubAula: bookclubAula(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -4170,6 +4174,9 @@
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
     grava(MURAL_KEY, d.mural);
+    if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
+    if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
+    if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
     if (d.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.cambio)); } catch (e) {} }
   }
 
@@ -4203,6 +4210,7 @@
       programas: lista("programas"),
       avisos: lista("avisos"),
       mural: lista("mural"),
+      assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
       por: (gestaoUser() || {}).email || ""
@@ -4251,7 +4259,8 @@
             // Campos sem id (custos, modelos, metas, calculadora, câmbio)
             // não têm carimbo por registro: no puxe, vale o servidor —
             // é o que garante que um aparelho novo receba tudo.
-            ["custos", "templates", "metas", "calc", "cambio"].forEach(function (k) {
+            ["custos", "templates", "metas", "calc", "cambio",
+             "assinaturaCfg", "bookclub", "bookclubAula"].forEach(function (k) {
               if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
             });
             aplicarRemoto(resultado);
@@ -6256,6 +6265,64 @@
   }
 
   // A lista do que a pessoa tem contratado agora, produto a produto.
+  // ── ASSINATURA (produto recorrente: Book Club, desafios, plantão) ──
+  function ativarAssinatura(pessoaId, cfg) {
+    return mutate(pessoaId, function (p) {
+      p.assinatura = { inicio: iso(today()), valor: (cfg && cfg.valor) || "",
+        moeda: (cfg && cfg.moeda) || "\u20ac" };
+      if (p.status === "lead") { p.status = "aluna"; p.estagio = "matriculado"; }
+      pushHist(p, "estagio", "Assinatura ativada"
+        + (p.assinatura.valor ? " \u00b7 " + p.assinatura.valor + "/m\u00eas" : ""));
+    });
+  }
+  function encerrarAssinatura(pessoaId, motivo) {
+    return mutate(pessoaId, function (p) {
+      if (!p.assinatura) return;
+      p.assinatura.encerrada = iso(today());
+      pushHist(p, "estagio", "Assinatura encerrada" + (motivo ? " \u00b7 " + motivo : ""));
+    });
+  }
+  function assinaturaAtiva(p) { return !!(p && p.assinatura && !p.assinatura.encerrada); }
+  // O cancelamento pelo app N\u00c3O encerra sozinho: registra o pedido e
+  // cria a pend\u00eancia para a gest\u00e3o confirmar com a aluna.
+  function pedirCancelamentoAssinatura(pessoaId) {
+    var p0 = getPessoa(pessoaId);
+    if (!p0 || !assinaturaAtiva(p0)) return false;
+    if (p0.assinatura.pedidoCancelamento) return true; // j\u00e1 pedido
+    mutate(pessoaId, function (p) {
+      p.assinatura.pedidoCancelamento = iso(today());
+      pushHist(p, "contato", "Pediu o cancelamento da assinatura pelo app");
+    });
+    addTarefa({ titulo: "Cancelamento de assinatura: " + p0.nome,
+      detalhe: "Pedido feito pelo app. Confirmar com a aluna e encerrar a assinatura no perfil dela.",
+      dono: donoDaIntegracao(), por: "app da aluna" });
+    return true;
+  }
+  // nome, foto e bio: a pr\u00f3pria aluna edita no app dela
+  function updatePerfilAluna(pessoaId, patch) {
+    return mutate(pessoaId, function (p) {
+      if (patch.nome && patch.nome.trim() && patch.nome.trim() !== p.nome) {
+        pushHist(p, "contato", "Nome atualizado pela aluna no app \u00b7 era " + p.nome);
+        p.nome = patch.nome.trim();
+      }
+      if (patch.foto !== undefined) p.foto = (patch.foto || "").trim().slice(0, 500);
+      if (patch.bio !== undefined) p.bio = (patch.bio || "").trim().slice(0, 300);
+    });
+  }
+  // o que o app da assinante mostra \u00e9 configurado pela gest\u00e3o (Agenda)
+  var ASSIN_CFG_KEY = "isr_assinatura_cfg_v1";
+  var ASSIN_CFG_PADRAO = { grupoWhats: "", bannerAtivo: false, bannerTexto: "", bannerLink: "" };
+  function assinaturaCfg() {
+    try { return Object.assign({}, ASSIN_CFG_PADRAO,
+      JSON.parse(localStorage.getItem(ASSIN_CFG_KEY) || "{}")); }
+    catch (e) { return Object.assign({}, ASSIN_CFG_PADRAO); }
+  }
+  function setAssinaturaCfg(patch) {
+    var cfg = Object.assign(assinaturaCfg(), patch || {});
+    try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+    agendarSync(); return cfg;
+  }
+
   function produtosDe(pessoaId) {
     var p = getPessoa(pessoaId);
     if (!p) return [];
@@ -6279,6 +6346,16 @@
           + (pa.valor ? " · " + pa.valor : "")
         : "",
       pago: pa ? !!pa.pago : null });
+
+    var asn = p.assinatura;
+    out.push({ id: "assinatura", nome: "Assinatura",
+      contratado: !!(asn && !asn.encerrada),
+      detalhe: asn && !asn.encerrada
+        ? ("desde " + ddmm(asn.inicio)
+          + (asn.valor ? " \u00b7 " + asn.valor + "/m\u00eas" : "")
+          + (asn.pedidoCancelamento ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
+        : "",
+      pago: null });
 
     var pr = p.programa;
     out.push({ id: "programa", nome: "Acompanhamento",
@@ -9020,6 +9097,11 @@
     TIPOS_SAIDA: TIPOS_SAIDA, MOTIVOS_SAIDA: MOTIVOS_SAIDA,
     encerrarMatricula: encerrarMatricula, reabrirMatricula: reabrirMatricula,
     registrarAcerto: registrarAcerto, removerAcerto: removerAcerto,
+    // assinatura
+    ativarAssinatura: ativarAssinatura, encerrarAssinatura: encerrarAssinatura,
+    assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
+    updatePerfilAluna: updatePerfilAluna,
+    assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     renovarMatricula: renovarMatricula, retencao: retencao,
     saidasResumo: saidasResumo, exAlunas: exAlunas,
     // edição depois da matrícula

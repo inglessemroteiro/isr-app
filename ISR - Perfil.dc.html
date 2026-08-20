@@ -262,6 +262,8 @@
               </div>
             </div>
 
+
+          </sc-if>
           <!-- O QUE ELA CONTRATOU -->
           <sc-if value="{{ ehCliente }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px;">
@@ -304,6 +306,26 @@
                 </div>
               </sc-if>
 
+              <!-- ativar assinatura -->
+              <sc-if value="{{ addAssinatura }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 13px; margin-top: 12px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #164951; margin-bottom: 9px;">Assinatura</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Valor por mês</div>
+                      <input ref="{{ asnValorRef }}" placeholder="ex. 15,00" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
+                      <select ref="{{ asnMoedaRef }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                        <option value="€">€ euro</option>
+                        <option value="R$">R$ real</option>
+                      </select></div>
+                    <div style="display: flex; align-items: flex-end;">
+                      <button onclick="{{ onSalvarAssinatura }}" style="width: 100%; border: none; background: #c98a2e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Ativar</button>
+                    </div>
+                  </div>
+                  <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A assinante entra no app da aluna com o plantão de dúvidas, o desafio da semana e o grupo no WhatsApp. A cobrança é por fora (assinatura recorrente).</p>
+                </div>
+              </sc-if>
+
               <!-- acrescentar acompanhamento -->
               <sc-if value="{{ addPrograma }}">
                 <div style="background: #faf8f3; border-radius: 10px; padding: 13px; margin-top: 12px;">
@@ -323,8 +345,6 @@
                 </div>
               </sc-if>
             </div>
-          </sc-if>
-
           </sc-if>
 
           <!-- ENCERRAR / REABRIR MATRÍCULA · fora do bloco de contrato: aluna particular sem contrato registrado também encerra -->
@@ -656,6 +676,7 @@ class Component extends DCLogic {
               uf: React.createRef(), pais: React.createRef() };
   partAulasRef = React.createRef(); partValorRef = React.createRef();
   partPagoRef = React.createRef(); progPagoRef = React.createRef();
+  asnValorRef = React.createRef(); asnMoedaRef = React.createRef();
   cadNomeRef = React.createRef(); cadZapRef = React.createRef(); cadEmailRef = React.createRef();
   cadTurmaRef = React.createRef();
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
@@ -1032,117 +1053,6 @@ class Component extends DCLogic {
         this.setState({ renovando: false });
       };
 
-      // ── o que ela contratou: turma, particulares e acompanhamento ──
-      const CORES_PROD = { turma: "#348a8e", particular: "#6b5b95", programa: "#e07856" };
-      const abertos = this.state.abrindoProduto || "";
-      out.produtos = CRM.produtosDe(p.id).map(pd => {
-        const acoes = {
-          turma: { add: "Matricular em turma", edit: "Editar acima" },
-          particular: { add: "Contratar", edit: "Encerrar" },
-          programa: { add: "Incluir", edit: "Tirar" }
-        }[pd.id];
-        return {
-          nome: pd.nome,
-          cor: pd.contratado ? CORES_PROD[pd.id] : "#e0dcd6",
-          detalhe: pd.contratado ? pd.detalhe : "não contratado",
-          detCor: pd.contratado ? "#8a7c6b" : "#b8ada0",
-          temPago: pd.pago !== null,
-          pagoLabel: pd.pago ? "Pago" : "A receber",
-          pagoTitle: pd.pago ? "Marcar como não recebido" : "Marcar como recebido e lançar no Caixa",
-          pagoBg: pd.pago ? "rgba(90,158,75,0.16)" : "#fff",
-          pagoFg: pd.pago ? "#5a9e4b" : "#cf6b5c",
-          pagoBorda: pd.pago ? "rgba(90,158,75,0.35)" : "#e5dccf",
-          onPago: () => {
-            if (pd.id === "particular") CRM.setParticularPago(p.id, !pd.pago);
-            if (pd.id === "programa") CRM.setProgramaPago(p.id, !pd.pago);
-            this.bump();
-          },
-          // quem já tem contrato (ex.: importado do Controle de Pagamento)
-          // só precisa escolher a turma — reabrir a matrícula pediria o
-          // pagamento de novo e duplicaria o contrato
-          acaoLabel: pd.contratado ? acoes.edit
-            : (pd.id === "turma" && out.temContrato ? "Escolher turma" : acoes.add),
-          acaoBg: abertos === pd.id ? "#f6eee4" : "#fff",
-          acaoFg: abertos === pd.id ? "#9c6f56" : "#164951",
-          onAcao: () => {
-            if (pd.id === "turma") {
-              if (!pd.contratado && !out.temContrato) {
-                window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id; return;
-              }
-              this.setState({ editandoTurma: true });
-              return;
-            }
-            if (pd.contratado) {
-              if (pd.id === "particular") CRM.encerrarParticular(p.id, "Encerrado pela equipe");
-              if (pd.id === "programa") CRM.sairDoPrograma(p.id, "Tirada pela equipe");
-              this.bump();
-              return;
-            }
-            this.setState({ abrindoProduto: abertos === pd.id ? "" : pd.id });
-          }
-        };
-      });
-      out.ehCliente = ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
-      out.addParticular = abertos === "particular";
-      out.addPrograma = abertos === "programa";
-      out.partAulasRef = this.partAulasRef;
-      out.partValorRef = this.partValorRef;
-      out.partPagoRef = this.partPagoRef;
-      out.progPagoRef = this.progPagoRef;
-      out.onProgPago = e => this.setState({ progPago: !!e.target.checked });
-      out.onSalvarParticular = () => {
-        const g = r => (r.current && r.current.value || "").trim();
-        CRM.contratarParticular(p.id, {
-          aulas: g(this.partAulasRef),
-          valor: g(this.partValorRef),
-          moeda: (c && c.moeda) || p.moeda || "R$",
-          pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
-        });
-        this.setState({ abrindoProduto: "" });
-      };
-      const progsDisponiveis = CRM.programasAbertos ? CRM.programasAbertos() : CRM.programasLista();
-      const resumoPg = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
-      out.semProgramas = progsDisponiveis.length === 0;
-      out.semProgramasTexto = "Nenhuma turma aberta do acompanhamento. Abra uma na tela Programa.";
-      out.programasOpts = progsDisponiveis.map(pgm => ({
-        label: "+ " + pgm.nome
-          + (function () {
-              const r = resumoPg.filter(x => x.id === pgm.id)[0];
-              return r ? " · semana " + r.semana + " de " + r.semanas : "";
-            })()
-          + " · " + (pgm.moeda || "€") + " " + (pgm.preco || "27,00"),
-        onAdd: () => {
-          CRM.matricularNoPrograma(p.id, { programaId: pgm.id, pago: !!this.state.progPago });
-          this.setState({ abrindoProduto: "", progPago: false });
-        }
-      }));
-      out.editandoTurma = this.state.editandoTurma;
-      out.edTurLabel = this.state.editandoTurma ? "Fechar" : "Editar";
-      out.edTurBg = this.state.editandoTurma ? "#f6eee4" : "#fff";
-      out.edTurFg = this.state.editandoTurma ? "#9c6f56" : "#164951";
-      out.onEditarTurma = () => this.setState(s => ({ editandoTurma: !s.editandoTurma }));
-      out.turSelRef = this.turSelRef; out.turNivelRef = this.turNivelRef;
-      out.turProfRef = this.turProfRef;
-      out.turmaOpts = CRM.turmasLista().map(u => {
-        const label = u.nivel + " · " + u.turma;
-        return { id: u.id, label: label + " · " + (u.teacher || "sem professora"), sel: p.turma === label };
-      }).concat([{ id: "particular", label: "Particular", sel: (p.turma || "").indexOf("Particular") === 0 }]);
-      // aula particular não tem turma para herdar a professora — a escolha
-      // explícita aqui é o único jeito de dizer quem dá a aula dela.
-      // Em turma de grupo, "Automática" segue a professora da turma.
-      out.profOpts = [{ id: "", label: "Automática · pela turma", sel: !p.professora }]
-        .concat(CRM.equipeLista()
-          .filter(m => (m.papeis || []).indexOf("professora") >= 0)
-          .map(m => ({ id: m.nome, label: m.nome, sel: p.professora === m.nome })));
-      out.onSalvarTurma = () => {
-        const id = this.turSelRef.current && this.turSelRef.current.value;
-        if (id) CRM.mudarTurma(p.id, id);
-        const nv = (this.turNivelRef.current && this.turNivelRef.current.value || "").trim();
-        if (nv) CRM.atualizarCadastro(p.id, { nivel: nv });
-        const prof = (this.turProfRef.current && this.turProfRef.current.value) || "";
-        CRM.updateLead(p.id, { professora: prof });
-        this.setState({ editandoTurma: false });
-      };
       // Quem renovou devendo continua devendo: as parcelas em aberto de
       // ciclos anteriores aparecem antes das do ciclo atual, marcadas.
       const herdadas = CRM.parcelasAbertas(p).filter(m => m.anterior).map(m => ({
@@ -1192,6 +1102,133 @@ class Component extends DCLogic {
         onClick: m.cancelada ? () => {} : () => { CRM.setParcelaPaga(p.id, m.key, !m.pago, 0); this.bump(); }
       })));
     }
+
+    // ── o que ela contratou: turma, particulares e acompanhamento ──
+    const CORES_PROD = { turma: "#348a8e", particular: "#6b5b95", assinatura: "#c98a2e", programa: "#e07856" };
+    const abertos = this.state.abrindoProduto || "";
+    out.produtos = CRM.produtosDe(p.id).map(pd => {
+      const acoes = {
+        turma: { add: "Matricular em turma", edit: "Editar acima" },
+        particular: { add: "Contratar", edit: "Encerrar" },
+        assinatura: { add: "Ativar", edit: "Encerrar" },
+        programa: { add: "Incluir", edit: "Tirar" }
+      }[pd.id];
+      return {
+        nome: pd.nome,
+        cor: pd.contratado ? CORES_PROD[pd.id] : "#e0dcd6",
+        detalhe: pd.contratado ? pd.detalhe : "não contratado",
+        detCor: pd.contratado ? "#8a7c6b" : "#b8ada0",
+        temPago: pd.pago !== null,
+        pagoLabel: pd.pago ? "Pago" : "A receber",
+        pagoTitle: pd.pago ? "Marcar como não recebido" : "Marcar como recebido e lançar no Caixa",
+        pagoBg: pd.pago ? "rgba(90,158,75,0.16)" : "#fff",
+        pagoFg: pd.pago ? "#5a9e4b" : "#cf6b5c",
+        pagoBorda: pd.pago ? "rgba(90,158,75,0.35)" : "#e5dccf",
+        onPago: () => {
+          if (pd.id === "particular") CRM.setParticularPago(p.id, !pd.pago);
+          if (pd.id === "programa") CRM.setProgramaPago(p.id, !pd.pago);
+          this.bump();
+        },
+        // quem já tem contrato (ex.: importado do Controle de Pagamento)
+        // só precisa escolher a turma — reabrir a matrícula pediria o
+        // pagamento de novo e duplicaria o contrato
+        acaoLabel: pd.contratado ? acoes.edit
+          : (pd.id === "turma" && out.temContrato ? "Escolher turma" : acoes.add),
+        acaoBg: abertos === pd.id ? "#f6eee4" : "#fff",
+        acaoFg: abertos === pd.id ? "#9c6f56" : "#164951",
+        onAcao: () => {
+          if (pd.id === "turma") {
+            if (!pd.contratado && !out.temContrato) {
+              window.location.href = "ISR%20-%20Matr%C3%ADcula.dc.html?id=" + p.id; return;
+            }
+            this.setState({ editandoTurma: true });
+            return;
+          }
+          if (pd.contratado) {
+            if (pd.id === "particular") CRM.encerrarParticular(p.id, "Encerrado pela equipe");
+            if (pd.id === "assinatura") CRM.encerrarAssinatura(p.id);
+            if (pd.id === "programa") CRM.sairDoPrograma(p.id, "Tirada pela equipe");
+            this.bump();
+            return;
+          }
+          this.setState({ abrindoProduto: abertos === pd.id ? "" : pd.id });
+        }
+      };
+    });
+    // lead também vê o cartão: quem assina antes de se matricular é
+    // ativada daqui mesmo — ativar promove a pessoa a aluna
+    out.ehCliente = ["aluna", "mvs", "pausada", "programa", "lead"].indexOf(p.status) >= 0;
+    out.addParticular = abertos === "particular";
+    out.addAssinatura = abertos === "assinatura";
+    out.asnValorRef = this.asnValorRef;
+    out.asnMoedaRef = this.asnMoedaRef;
+    out.onSalvarAssinatura = () => {
+      const g = r => (r.current && r.current.value || "").trim();
+      CRM.ativarAssinatura(p.id, {
+        valor: g(this.asnValorRef),
+        moeda: (this.asnMoedaRef.current && this.asnMoedaRef.current.value) || "€"
+      });
+      this.setState({ abrindoProduto: "" });
+    };
+    out.addPrograma = abertos === "programa";
+    out.partAulasRef = this.partAulasRef;
+    out.partValorRef = this.partValorRef;
+    out.partPagoRef = this.partPagoRef;
+    out.progPagoRef = this.progPagoRef;
+    out.onProgPago = e => this.setState({ progPago: !!e.target.checked });
+    out.onSalvarParticular = () => {
+      const g = r => (r.current && r.current.value || "").trim();
+      CRM.contratarParticular(p.id, {
+        aulas: g(this.partAulasRef),
+        valor: g(this.partValorRef),
+        moeda: (c && c.moeda) || p.moeda || "R$",
+        pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
+      });
+      this.setState({ abrindoProduto: "" });
+    };
+    const progsDisponiveis = CRM.programasAbertos ? CRM.programasAbertos() : CRM.programasLista();
+    const resumoPg = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
+    out.semProgramas = progsDisponiveis.length === 0;
+    out.semProgramasTexto = "Nenhuma turma aberta do acompanhamento. Abra uma na tela Programa.";
+    out.programasOpts = progsDisponiveis.map(pgm => ({
+      label: "+ " + pgm.nome
+        + (function () {
+            const r = resumoPg.filter(x => x.id === pgm.id)[0];
+            return r ? " · semana " + r.semana + " de " + r.semanas : "";
+          })()
+        + " · " + (pgm.moeda || "€") + " " + (pgm.preco || "27,00"),
+      onAdd: () => {
+        CRM.matricularNoPrograma(p.id, { programaId: pgm.id, pago: !!this.state.progPago });
+        this.setState({ abrindoProduto: "", progPago: false });
+      }
+    }));
+    out.editandoTurma = this.state.editandoTurma;
+    out.edTurLabel = this.state.editandoTurma ? "Fechar" : "Editar";
+    out.edTurBg = this.state.editandoTurma ? "#f6eee4" : "#fff";
+    out.edTurFg = this.state.editandoTurma ? "#9c6f56" : "#164951";
+    out.onEditarTurma = () => this.setState(s => ({ editandoTurma: !s.editandoTurma }));
+    out.turSelRef = this.turSelRef; out.turNivelRef = this.turNivelRef;
+    out.turProfRef = this.turProfRef;
+    out.turmaOpts = CRM.turmasLista().map(u => {
+      const label = u.nivel + " · " + u.turma;
+      return { id: u.id, label: label + " · " + (u.teacher || "sem professora"), sel: p.turma === label };
+    }).concat([{ id: "particular", label: "Particular", sel: (p.turma || "").indexOf("Particular") === 0 }]);
+    // aula particular não tem turma para herdar a professora — a escolha
+    // explícita aqui é o único jeito de dizer quem dá a aula dela.
+    // Em turma de grupo, "Automática" segue a professora da turma.
+    out.profOpts = [{ id: "", label: "Automática · pela turma", sel: !p.professora }]
+      .concat(CRM.equipeLista()
+        .filter(m => (m.papeis || []).indexOf("professora") >= 0)
+        .map(m => ({ id: m.nome, label: m.nome, sel: p.professora === m.nome })));
+    out.onSalvarTurma = () => {
+      const id = this.turSelRef.current && this.turSelRef.current.value;
+      if (id) CRM.mudarTurma(p.id, id);
+      const nv = (this.turNivelRef.current && this.turNivelRef.current.value || "").trim();
+      if (nv) CRM.atualizarCadastro(p.id, { nivel: nv });
+      const prof = (this.turProfRef.current && this.turProfRef.current.value) || "";
+      CRM.updateLead(p.id, { professora: prof });
+      this.setState({ editandoTurma: false });
+    };
 
     // acompanhamento · check-in (aluna)
     if (out.ehAluna) {
