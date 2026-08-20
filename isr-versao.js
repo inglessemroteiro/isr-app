@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.11-f",
-  data: "11/08/2026",
-  nota: "Mural da equipe: mensagens por assunto para todo mundo, viajando pela sincronização (até ~5 min), com filtro, remoção e mensagem que vira pendência com dono — direto no Para hoje da pessoa"
+  numero: "2026.08.20-a",
+  data: "20/08/2026",
+  nota: "Assinatura: produto ativável no Perfil (até de lead), configuração na Agenda (grupo do Whats + banner de matrícula) e app da aluna em modo assinante — plantão com RSVP, desafio da semana, grupo, perfil editável (nome, foto, bio) e pedido de cancelamento que vira pendência da equipe"
 };
