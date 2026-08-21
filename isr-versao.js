@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-i",
+  numero: "2026.08.20-j",
   data: "20/08/2026",
-  nota: "CRM mais fácil de manter: Jotform lido pela Conexão quando o navegador bloqueia a chamada direta, prévia da importação com os novos primeiro, linguagem revisada, e pendências com destino — apontam para a aluna ou para a tela onde se resolvem"
+  nota: "App da aluna em 3 dobras (programa piloto + assinatura): Início com sequência de semanas ativas e cartão do desafio; dobra Desafio com jornada, material da semana, registro de resposta e ranking top 5; Perfil com dados, miles e cancelamento pelo systeme quando configurado"
 };

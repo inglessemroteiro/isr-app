@@ -6353,7 +6353,10 @@
   var ASSIN_CFG_PADRAO = { grupoWhats: "", bannerAtivo: false, bannerTexto: "", bannerLink: "",
     // o cartão "Desafio da semana" do app aponta para cá — a gestão
     // troca toda segunda pelo link da semana (ex. /170826)
-    desafioLink: "" };
+    desafioLink: "",
+    // cancelamento da assinatura: quando preenchido, o botão no app leva
+    // ao portal de pagamento (systeme); em branco, vale o pedido interno
+    cancelLink: "" };
   function assinaturaCfg() {
     try { return Object.assign({}, ASSIN_CFG_PADRAO,
       JSON.parse(localStorage.getItem(ASSIN_CFG_KEY) || "{}")); }
@@ -6965,6 +6968,28 @@
       participantes: (pg.participantes || []).length,
       moedas: moedasDoPrograma(pg, pessoaId)
     };
+  }
+
+  // A trilha do desafio: uma entrada por semana, com o que foi
+  // respondido — alimenta o streak e a jornada no app da aluna
+  function trilhaDesafio(pessoaId) {
+    var pg = programasLista().filter(function (x) {
+      return (x.participantes || []).indexOf(pessoaId) >= 0;
+    })[0];
+    if (!pg) return null;
+    var atual = semanaDoPrograma(pg);
+    var semanas = [];
+    for (var s = 1; s <= pg.semanas; s++)
+      semanas.push({ semana: s, feita: etapaFeita(pg, pessoaId, s, "audio"), atual: s === atual });
+    // sequência: semanas respondidas em linha, contando de trás para
+    // frente — a semana atual em aberto não quebra a sequência
+    var streak = 0;
+    for (var i = atual; i >= 1; i--) {
+      if (semanas[i - 1].feita) streak++;
+      else if (i === atual) continue;
+      else break;
+    }
+    return { semanas: semanas, semanaAtual: atual, total: pg.semanas, streak: streak };
   }
 
   // A última aula em que ela esteve presente e ainda não avaliou.
@@ -9106,6 +9131,7 @@
     chamadasDaTurma: chamadasDaTurma,
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
     responderMissao: responderMissao, programaDaAluna: programaDaAluna,
+    trilhaDesafio: trilhaDesafio,
     aulaAAvaliar: aulaAAvaliar, jornadaDaAluna: jornadaDaAluna,
     recompensasDaAluna: recompensasDaAluna, catalogoDaAluna: catalogoDaAluna,
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
