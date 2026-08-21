@@ -6311,7 +6311,10 @@
   }
   // o que o app da assinante mostra \u00e9 configurado pela gest\u00e3o (Agenda)
   var ASSIN_CFG_KEY = "isr_assinatura_cfg_v1";
-  var ASSIN_CFG_PADRAO = { grupoWhats: "", bannerAtivo: false, bannerTexto: "", bannerLink: "" };
+  var ASSIN_CFG_PADRAO = { grupoWhats: "", bannerAtivo: false, bannerTexto: "", bannerLink: "",
+    // o cartão "Desafio da semana" do app aponta para cá — a gestão
+    // troca toda segunda pelo link da semana (ex. /170826)
+    desafioLink: "" };
   function assinaturaCfg() {
     try { return Object.assign({}, ASSIN_CFG_PADRAO,
       JSON.parse(localStorage.getItem(ASSIN_CFG_KEY) || "{}")); }

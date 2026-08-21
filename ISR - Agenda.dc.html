@@ -56,8 +56,9 @@
     <sc-if value="{{ assinaturaAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #ecdcc2; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
         <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98a2e; margin-bottom: 4px;">Assinatura · o que a assinante vê no app</div>
-        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">O link do grupo aparece para toda assinante no app da aluna. O banner de matrícula só aparece quando estiver ligado — use nas janelas de matrícula para turmas. Campo em branco mantém o valor atual.</p>
+        <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">O link do desafio é o que o cartão "Desafio da semana" abre no app — troque toda segunda pelo link da semana (ex. /170826). O link do grupo aparece para toda assinante. O banner de matrícula só aparece quando estiver ligado. Campo em branco mantém o valor atual.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <input ref="{{ asnDesafioRef }}" placeholder="Link do desafio da semana (ex. /170826)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ asnGrupoRef }}" placeholder="Link do grupo no WhatsApp" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <select ref="{{ asnBannerSelRef }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
             <sc-for list="{{ asnBannerOpts }}" as="bo" hint-placeholder-count="2">
@@ -311,7 +312,7 @@ class Component extends DCLogic {
   ferDataRef = React.createRef(); ferNomeRef = React.createRef(); ferFimRef = React.createRef();
   asnGrupoRef = React.createRef(); asnBannerSelRef = React.createRef();
   asnBannerTextoRef = React.createRef(); asnBannerLinkRef = React.createRef();
-  asnLoteRef = React.createRef();
+  asnLoteRef = React.createRef(); asnDesafioRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
@@ -527,6 +528,7 @@ class Component extends DCLogic {
       asnBg: this.state.assinaturaAberto ? "#c98a2e" : "#fff",
       asnFg: this.state.assinaturaAberto ? "#fff" : "#164951",
       onToggleAssinatura: () => this.setState({ assinaturaAberto: !this.state.assinaturaAberto, novoAberto: false, feriadosAberto: false, bookclubAberto: false }),
+      asnDesafioRef: this.asnDesafioRef,
       asnGrupoRef: this.asnGrupoRef, asnBannerSelRef: this.asnBannerSelRef,
       asnBannerTextoRef: this.asnBannerTextoRef, asnBannerLinkRef: this.asnBannerLinkRef,
       asnBannerOpts: (() => {
@@ -537,7 +539,8 @@ class Component extends DCLogic {
       asnResumo: (() => {
         const cfg = window.ISRCRM.assinaturaCfg ? window.ISRCRM.assinaturaCfg() : null;
         if (!cfg) return "";
-        return "Hoje: " + (cfg.grupoWhats ? "com grupo" : "sem grupo ainda")
+        return "Hoje: desafio em " + (cfg.desafioLink || "/desafio (geral)")
+          + " · " + (cfg.grupoWhats ? "com grupo" : "sem grupo ainda")
           + " · banner " + (cfg.bannerAtivo ? "ligado" : "desligado")
           + (cfg.bannerAtivo && cfg.bannerTexto ? " · “" + cfg.bannerTexto + "”" : "");
       })(),
@@ -585,11 +588,12 @@ class Component extends DCLogic {
       onSalvarAssinaturaCfg: () => {
         const v = (r) => this.val(r);
         const patch = { bannerAtivo: (this.asnBannerSelRef.current && this.asnBannerSelRef.current.value) === "on" };
+        if (v(this.asnDesafioRef)) patch.desafioLink = v(this.asnDesafioRef);
         if (v(this.asnGrupoRef)) patch.grupoWhats = v(this.asnGrupoRef);
         if (v(this.asnBannerTextoRef)) patch.bannerTexto = v(this.asnBannerTextoRef);
         if (v(this.asnBannerLinkRef)) patch.bannerLink = v(this.asnBannerLinkRef);
         window.ISRCRM.setAssinaturaCfg(patch);
-        [this.asnGrupoRef, this.asnBannerTextoRef, this.asnBannerLinkRef]
+        [this.asnDesafioRef, this.asnGrupoRef, this.asnBannerTextoRef, this.asnBannerLinkRef]
           .forEach(r => { if (r.current) r.current.value = ""; });
         this.bump();
       },
