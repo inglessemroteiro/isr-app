@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-f",
+  numero: "2026.08.20-g",
   data: "20/08/2026",
-  nota: "Desafio da semana com login: as páginas datadas (ex. /170826) incluem a trava isr-trava.js — sem sessão, a pessoa entra com a senha e volta direto para o desafio"
+  nota: "O cartão Desafio da semana do app aponta para a semana atual: o link é configurado na Agenda (Assinatura) e trocado toda segunda"
 };
