@@ -87,7 +87,38 @@
              atividades). No celular os wrappers são blocos neutros. -->
         <div class="al-cols">
         <div class="al-main">
+        <!-- MODO DESAFIO · semana + sequência + cartão do desafio -->
+        <sc-if value="{{ modoDesafio }}">
+          <sc-if value="{{ temTrilha }}">
+            <section style="margin: 12px 0 14px;">
+              <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+                  <span style="font-size: 12px; font-weight: 700; color: #164951;">{{ trilhaSemanaLabel }}</span>
+                  <span style="flex: none; font-size: 11px; color: #7d6d63;">{{ streakFrase }}</span>
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <sc-for list="{{ trilhaChips }}" as="tc" hint-placeholder-count="8">
+                    <span style="width: 30px; height: 30px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">{{ tc.n }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <section style="margin: 0 0 20px;">
+            <button onclick="{{ onIrDesafio }}" class="isr-btn" style="display: block; width: 100%; text-align: left; border: none; background: #164951; border-radius: 16px; padding: 18px; cursor: pointer; font-family: inherit; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.5px;">{{ desafioCardTitulo }}</span>
+                <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 3px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ desafioCardSelo }}</span>
+              </div>
+              <span style="display: block; font-size: 18px; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 10px;">{{ desafioCardSub }}</span>
+              <span style="display: inline-block; background: #fc9082; color: #164951; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 10px;">Abrir o desafio →</span>
+            </button>
+          </section>
+        </sc-if>
+
         <!-- 1. AULA DE HOJE -->
+        <sc-if value="{{ temHero }}">
         <section style="margin: 12px 0 20px;">
           <div style="position: relative; background: #164951; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
             <div style="position: relative; height: 132px; overflow: hidden;">
@@ -119,9 +150,10 @@
             </div>
           </div>
         </section>
+        </sc-if>
 
-        <!-- ASSINANTE: desafio da semana, grupo no WhatsApp e banner de matrícula -->
-        <sc-if value="{{ soAssinatura }}">
+        <!-- MODO DESAFIO: grupo no WhatsApp e banner de matrícula -->
+        <sc-if value="{{ modoDesafio }}">
           <sc-if value="{{ temAsnBanner }}">
             <a href="{{ asnBannerLink }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: linear-gradient(135deg, #fc9082, #e07856); border-radius: 14px; padding: 15px 16px; margin: 0 0 12px; box-shadow: 0 4px 14px rgba(224,120,86,0.3);">
               <div style="font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">Matrículas abertas</div>
@@ -131,16 +163,6 @@
               </sc-if>
             </a>
           </sc-if>
-
-          <a href="{{ asnDesafioHref }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: #fff; padding: 14px 16px; margin: 0 0 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #fc9082;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="flex: 1; min-width: 0;">
-                <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 600; color: #2c3e50;">Desafio da semana</h4>
-                <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.5;">Responda o desafio e mande o áudio no grupo.</p>
-              </div>
-              <span style="flex: none; font-size: 10px; font-weight: 700; color: #fc9082; text-transform: uppercase; letter-spacing: 0.3px;">Abrir</span>
-            </div>
-          </a>
 
           <sc-if value="{{ temAsnGrupo }}">
             <a href="{{ asnGrupoLink }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: #fff; padding: 14px 16px; margin: 0 0 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #5a9a2e;">
@@ -164,7 +186,7 @@
         </sc-if>
 
         <!-- 3. SEUS PRÓXIMOS PASSOS -->
-        <sc-if value="{{ naoAssinatura }}">
+        <sc-if value="{{ naoModoDesafio }}">
         <section style="margin: 0 0 24px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px;">
             <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Pendências da semana</h3>
@@ -320,22 +342,6 @@
         </section>
         </sc-if>
 
-        <!-- RANKING DO GRUPO (programa) — posições e nomes, sem as contagens -->
-        <sc-if value="{{ temRanking }}">
-          <section style="margin: 0 0 20px;">
-            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Ranking do grupo</h3>
-              <p style="margin: 0 0 10px; font-size: 12px; color: #7d6d63; line-height: 1.55;">A ordem vem da participação nos desafios.</p>
-              <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="5">
-                <div style="display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 8px; background: {{ rk.bg }};">
-                  <span style="flex: none; width: 26px; font-size: 12.5px; font-weight: 800; color: {{ rk.cor }};">{{ rk.pos }}</span>
-                  <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
-                </div>
-              </sc-for>
-            </div>
-          </section>
-        </sc-if>
-
         <!-- FLIN · prática com IA, resgatada com miles -->
         <sc-if value="{{ flinAtivo }}">
           <a href="{{ flinUrl }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-decoration: none; background: #164951; border-radius: 14px; padding: 16px; margin: 0 0 20px;">
@@ -390,6 +396,7 @@
         </sc-if>
 
         <!-- 5. ATIVIDADES RECENTES -->
+        <sc-if value="{{ naoModoDesafio }}">
         <section style="margin: 0 0 8px;">
           <h3 style="margin: 0 0 12px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Atividades recentes</h3>
           <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -407,6 +414,7 @@
             </sc-for>
           </div>
         </section>
+        </sc-if>
         </div>
         </div>
       </sc-if>
@@ -574,6 +582,95 @@
       </sc-if>
 
       <!-- ══════════ CONTA ══════════ -->
+      <!-- ══════════ DESAFIO · jornada, resposta, ranking e devolutiva ══════════ -->
+      <sc-if value="{{ tabDesafio }}">
+
+        <!-- jornada das semanas -->
+        <sc-if value="{{ temTrilha }}">
+          <section style="margin: 12px 0 16px;">
+            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Sua jornada</h3>
+                <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ trilhaSemanaLabel }}</span>
+              </div>
+              <p style="margin: 0 0 12px; font-size: 12px; color: #7d6d63; line-height: 1.55;">{{ streakFrase }} {{ trilhaRestam }}</p>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <sc-for list="{{ trilhaChips }}" as="tc" hint-placeholder-count="8">
+                  <span style="width: 34px; height: 34px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;">{{ tc.n }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- o desafio da semana abre a página do material -->
+        <section style="margin: 0 0 16px;">
+          <a href="{{ asnDesafioHref }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: #164951; border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.5px;">{{ desafioCardTitulo }}</span>
+              <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 3px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ desafioCardSelo }}</span>
+            </div>
+            <span style="display: block; font-size: 16px; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 10px;">{{ desafioCardSub }}</span>
+            <span style="display: inline-block; background: #fc9082; color: #164951; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 10px;">Abrir o material da semana</span>
+          </a>
+        </section>
+
+        <!-- registrar a resposta (conta para a sequência, o ranking e as miles) -->
+        <sc-if value="{{ temMissao }}">
+          <section style="margin: 0 0 16px;">
+            <div style="background: #fff; padding: 14px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #fc9082;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
+                <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">Registrar a resposta</h4>
+                <span style="flex: none; background: {{ missaoBadgeBg }}; color: {{ missaoBadgeFg }}; padding: 3px 6px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ missaoBadge }}</span>
+              </div>
+              <p style="margin: 0 0 10px; font-size: 12px; color: #666; line-height: 1.6;">A resposta registrada conta para a sequência, o ranking e as miles.</p>
+
+              <sc-if value="{{ missaoFechada }}">
+                <button onclick="{{ onAbrirMissao }}" style="background: #fc9082; border: none; color: #fff; padding: 9px 14px; font-size: 9px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; border-radius: 10px; cursor: pointer; font-family: inherit;">Registrar</button>
+              </sc-if>
+
+              <sc-if value="{{ missaoAberta }}">
+                <textarea ref="{{ missaoRef }}" rows="3" placeholder="Escreva sua resposta" style="width: 100%; box-sizing: border-box; border: 1px solid #e0dcd6; background: #faf9f7; color: #2c3e50; font-size: 13px; padding: 10px 12px; border-radius: 10px; font-family: inherit; line-height: 1.6; resize: vertical;"></textarea>
+                <p style="margin: 6px 0 10px; font-size: 10px; color: #9b8b7e; line-height: 1.6;">Para responder em áudio, mande no grupo e escreva aqui o que gravou.</p>
+                <button onclick="{{ onResponderMissao }}" style="background: #fc9082; border: none; color: #fff; padding: 9px 14px; font-size: 9px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; border-radius: 10px; cursor: pointer; font-family: inherit;">Enviar resposta</button>
+                <sc-if value="{{ missaoErro }}">
+                  <p style="margin: 8px 0 0; font-size: 11px; color: #c8622f; line-height: 1.5;">{{ missaoErro }}</p>
+                </sc-if>
+              </sc-if>
+
+              <sc-if value="{{ missaoRespondida }}">
+                <div style="background: #faf9f7; border: 1px solid #f0ede8; padding: 11px 13px; border-radius: 10px;">
+                  <div style="font-size: 9px; font-weight: 600; color: #5a9a2e; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 5px;">Enviada {{ missaoEm }}</div>
+                  <div style="font-size: 12px; color: #2c3e50; line-height: 1.6;">{{ missaoResposta }}</div>
+                </div>
+                <p style="margin: 8px 0 0; font-size: 11px; color: {{ devolutivaCor }}; line-height: 1.5;">{{ devolutivaTexto }}</p>
+              </sc-if>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- ranking: top 5 e a posição dela -->
+        <sc-if value="{{ temRanking }}">
+          <section style="margin: 0 0 16px;">
+            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Ranking do grupo</h3>
+              <p style="margin: 0 0 10px; font-size: 12px; color: #7d6d63; line-height: 1.55;">A ordem vem da participação nos desafios.</p>
+              <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="6">
+                <div>
+                  <sc-if value="{{ rk.salto }}">
+                    <div style="text-align: center; color: #c9bfb2; font-size: 12px; padding: 2px 0;">···</div>
+                  </sc-if>
+                  <div style="display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 8px; background: {{ rk.bg }};">
+                    <span style="flex: none; width: 26px; font-size: 12.5px; font-weight: 800; color: {{ rk.cor }};">{{ rk.pos }}</span>
+                    <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+      </sc-if>
+
       <sc-if value="{{ tabConta }}">
 
         <!-- A Conta tinha tudo numa pilha só: certificado, plano, miles,
@@ -716,6 +813,12 @@
               </div>
               <sc-if value="{{ asnPediuCancelamento }}">
                 <div style="background: #faf9f7; border: 1px solid #f0ede8; padding: 11px 13px; font-size: 12px; color: #7d6d63; line-height: 1.5; border-radius: 10px; margin-top: 4px;">{{ asnPedidoEm }}</div>
+              </sc-if>
+              <sc-if value="{{ temCancelLink }}">
+                <div style="margin-top: 8px; border-top: 1px solid #f0ede8; padding-top: 10px;">
+                  <a href="{{ cancelLink }}" target="_blank" rel="noopener" style="display: inline-block; font-size: 11px; font-weight: 600; color: #9b8b7e; text-decoration: underline;">Gerenciar ou cancelar a assinatura</a>
+                  <p style="margin: 6px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A assinatura é gerenciada no portal de pagamento.</p>
+                </div>
               </sc-if>
               <sc-if value="{{ asnPodeCancelar }}">
                 <div style="margin-top: 8px; border-top: 1px solid #f0ede8; padding-top: 10px;">
@@ -961,30 +1064,39 @@ class Component extends DCLogic {
     // WhatsApp, e a conta com perfil, miles e o pedido de cancelamento.
     const asn = (CRM.assinaturaAtiva && CRM.assinaturaAtiva(p)) ? p.assinatura : null;
     const soAssinatura = !soPrograma && !!asn && !CRM.contratoVigente(p) && !p.turma;
-    const asnCfg = (soAssinatura || asn) && CRM.assinaturaCfg ? CRM.assinaturaCfg() : {};
+    const asnCfg = CRM.assinaturaCfg ? CRM.assinaturaCfg() : {};
+    // programa piloto e assinatura convergem no mesmo app de 3 dobras:
+    // Início (streak + desafio + plantão + grupo), Desafio (jornada,
+    // ranking e devolutiva) e Perfil (dados, miles, plano)
+    const modoDesafio = soPrograma || soAssinatura;
 
     const tab = this.state.tab;
     // Três destinos: o dia a dia, o que ela estuda e a conta dela.
     // ISR Miles vive dentro de Conta — o selo do topo leva direto.
-    const TABS = [
-      { id: "inicio", label: "Início", icone: "inicio" },
-      { id: "aulas", label: "Aulas", icone: "aulas" },
-      { id: "materiais", label: "Materiais", icone: "tarefa" },
-      { id: "conta", label: "Conta", icone: "perfil" }
-    ];
-    const tabs = TABS
-      .filter(t => !((soPrograma || soAssinatura) && (t.id === "aulas" || t.id === "materiais")))
-      .map(t => ({
-        label: t.label,
-        onClick: () => this.setState({ tab: t.id }),
-        cor: tab === t.id ? "#348a8e" : "#b3a89d"
-      }));
-    // A barra tem quatro posições fixas no markup; quem não faz turma
-    // some das duas do meio, e o rótulo vazio esconde o botão.
+    const TABS = modoDesafio
+      ? [
+          { id: "inicio", label: "Início" },
+          { id: "desafio", label: "Desafio" },
+          { id: "conta", label: "Perfil" }
+        ]
+      : [
+          { id: "inicio", label: "Início", icone: "inicio" },
+          { id: "aulas", label: "Aulas", icone: "aulas" },
+          { id: "materiais", label: "Materiais", icone: "tarefa" },
+          { id: "conta", label: "Conta", icone: "perfil" }
+        ];
+    const tabs = TABS.map(t => ({
+      label: t.label,
+      onClick: () => this.setState({ tab: t.id }),
+      cor: tab === t.id ? "#348a8e" : "#b3a89d"
+    }));
+    // A barra tem quatro posições fixas no markup; no modo desafio são
+    // três dobras — Início, Desafio e Perfil — e o rótulo vazio esconde
+    // o botão que sobra.
     const vazio = { label: "", cor: "transparent", onClick: () => {} };
     const tab0 = tabs[0] || vazio;
-    const tab1 = (soPrograma || soAssinatura) ? vazio : (tabs[1] || vazio);
-    const tab2 = (soPrograma || soAssinatura) ? vazio : (tabs[2] || vazio);
+    const tab1 = modoDesafio ? (tabs[1] || vazio) : (tabs[1] || vazio);
+    const tab2 = modoDesafio ? vazio : (tabs[2] || vazio);
     const tab3 = tabs[tabs.length - 1] || vazio;
 
     // primeiro o rótulo exato (normalizado); o "contém" fica de reserva —
@@ -1226,6 +1338,8 @@ class Component extends DCLogic {
       tabs, tab0, tab1, tab2, tab3,
       tabInicio: tab === "inicio", tabAulas: tab === "aulas",
       tabMateriais: tab === "materiais", tabConta: tab === "conta",
+      tabDesafio: modoDesafio && tab === "desafio",
+      modoDesafio, naoModoDesafio: !modoDesafio, temHero: !modoDesafio,
       irMiles: () => this.setState({ tab: "conta", contaVista: "miles" }),
       // seletor da aba Conta: "Sua conta" | "ISR Miles"
       contaVerConta: (this.state.contaVista || "conta") === "conta",
@@ -1295,21 +1409,28 @@ class Component extends DCLogic {
         ? jornada.presentes + " de " + jornada.aulas + " aulas com presença (" + jornada.frequencia + "%)."
         : "",
 
-      // ranking do grupo (programa): posições e primeiros nomes, sem as
-      // contagens de cada colega — esses números ficam só com a escola
-      temRanking: soPrograma && !!pg,
-      ranking: (soPrograma && pg ? CRM.rankingPrograma(pg.id) : []).slice(0, 10).map(r => {
-        const partes = String(r.nome || "").trim().split(/\s+/);
-        const curto = partes[0] + (partes[1] ? " " + partes[1][0] + "." : "");
-        const eu = r.pessoaId === p.id;
-        return {
-          pos: r.posicao + "º",
-          nome: eu ? "Você" : curto,
-          bg: eu ? "rgba(52,138,142,0.10)" : "transparent",
-          peso: eu ? "800" : (r.posicao <= 3 ? "700" : "500"),
-          cor: eu || r.posicao <= 3 ? "#164951" : "#6b6155"
-        };
-      }),
+      // ranking do grupo: top 5 + a posição dela, com primeiros nomes e
+      // sem as contagens de cada colega — esses números ficam com a escola
+      temRanking: modoDesafio && !!pg,
+      ranking: (() => {
+        const todas = (modoDesafio && pg ? CRM.rankingPrograma(pg.id) : []);
+        const minha = todas.filter(r => r.pessoaId === p.id)[0];
+        const lista = todas.slice(0, 5);
+        if (minha && minha.posicao > 5) lista.push(minha);
+        return lista.map(r => {
+          const partes = String(r.nome || "").trim().split(/\s+/);
+          const curto = partes[0] + (partes[1] ? " " + partes[1][0] + "." : "");
+          const eu = r.pessoaId === p.id;
+          return {
+            pos: r.posicao + "º",
+            nome: eu ? "Você" : curto,
+            bg: eu ? "rgba(52,138,142,0.10)" : "transparent",
+            peso: eu ? "800" : (r.posicao <= 3 ? "700" : "500"),
+            cor: eu || r.posicao <= 3 ? "#164951" : "#6b6155",
+            salto: !!(eu && minha && minha.posicao > 6)
+          };
+        });
+      })(),
 
       semJornada: !soPrograma && jornada.aulas === 0,
       numeros: soPrograma
@@ -1458,22 +1579,54 @@ class Component extends DCLogic {
 
       temExtras: extras.length > 0, extras,
 
-      // ── modo assinante: plantão (RSVP acima), desafio, grupo e banner ──
+      // ── modo desafio (programa + assinatura): plantão (RSVP), desafio,
+      // grupo e banner ──
       soAssinatura,
       naoAssinatura: !soAssinatura,
       // o cartão de progresso fala de ciclo e presença — sem turma, não há o que medir
-      temProgresso: !soAssinatura,
-      tituloExtras: soAssinatura ? "Plantão de dúvidas e aulas extras" : "Aulas extras",
-      semExtrasAsn: soAssinatura && extras.length === 0,
+      temProgresso: !modoDesafio,
+      tituloExtras: modoDesafio ? "Plantão de dúvidas e aulas extras" : "Aulas extras",
+      semExtrasAsn: modoDesafio && extras.length === 0,
       // o link vem da configuração da Agenda (a semana atual, ex. /170826);
       // sem configuração, vale a página geral do desafio
       asnDesafioHref: asnCfg.desafioLink || "desafio.html",
-      temAsnGrupo: soAssinatura && !!asnCfg.grupoWhats,
+      temAsnGrupo: modoDesafio && !!asnCfg.grupoWhats,
       asnGrupoLink: asnCfg.grupoWhats || "#",
-      temAsnBanner: soAssinatura && !!asnCfg.bannerAtivo,
+      temAsnBanner: modoDesafio && !!asnCfg.bannerAtivo,
       asnBannerTexto: asnCfg.bannerTexto || "Matrículas abertas para as turmas da escola",
       asnBannerTemLink: !!asnCfg.bannerLink,
       asnBannerLink: asnCfg.bannerLink || "#",
+
+      // ── Início · cabeçalho do desafio: semana + sequência (streak) ──
+      ...((() => {
+        const trilha = modoDesafio && CRM.trilhaDesafio ? CRM.trilhaDesafio(p.id) : null;
+        const chips = (trilha ? trilha.semanas : []).map(s => ({
+          n: String(s.semana),
+          bg: s.feita ? "#5a9a2e" : "#f0ede8",
+          fg: s.feita ? "#fff" : (s.atual ? "#164951" : "#b3a89d"),
+          borda: s.atual ? "#164951" : "transparent"
+        }));
+        return {
+          temTrilha: !!trilha,
+          trilhaChips: chips,
+          trilhaSemanaLabel: trilha ? "Semana " + trilha.semanaAtual + " de " + trilha.total : "",
+          streakFrase: trilha
+            ? (trilha.streak
+                ? "Sequência de " + trilha.streak + (trilha.streak === 1 ? " semana ativa" : " semanas ativas") + "."
+                : "Responda o desafio da semana para iniciar sua sequência.")
+            : "",
+          trilhaRestam: trilha && trilha.total > trilha.semanaAtual
+            ? "Restam " + (trilha.total - trilha.semanaAtual) + " semanas de desafio."
+            : ""
+        };
+      })()),
+      // cartão dominante do Início: abre a dobra Desafio
+      onIrDesafio: () => this.setState({ tab: "desafio" }),
+      desafioCardTitulo: pg ? "Desafio da semana " + pg.semana : "Desafio da semana",
+      desafioCardSub: pg && pg.missao ? pg.missao : "Toque para abrir o desafio desta semana.",
+      desafioCardSelo: pg && pg.respondeu ? "Respondido" : "A responder",
+      desafioCardSeloBg: pg && pg.respondeu ? "#eef5ec" : "#fdf1ec",
+      desafioCardSeloFg: pg && pg.respondeu ? "#5a9a2e" : "#c8622f",
 
       // conta · assinatura
       temPlanoAssinatura: !!asn,
@@ -1483,7 +1636,11 @@ class Component extends DCLogic {
       asnPedidoEm: asn && asn.pedidoCancelamento
         ? "Pedido de cancelamento enviado em " + CRM.ddmm(asn.pedidoCancelamento) + ". A escola confirma com você."
         : "",
-      asnPodeCancelar: !!asn && !(asn && asn.pedidoCancelamento),
+      // com o link do systeme configurado, o cancelamento é feito lá;
+      // sem ele, vale o pedido interno (pendência para a equipe)
+      temCancelLink: !!asn && !!asnCfg.cancelLink,
+      cancelLink: asnCfg.cancelLink || "#",
+      asnPodeCancelar: !!asn && !(asn && asn.pedidoCancelamento) && !asnCfg.cancelLink,
       asnCancelando: this.state.cancelandoAsn,
       asnNaoCancelando: !this.state.cancelandoAsn,
       onCancelarAsn: () => {
