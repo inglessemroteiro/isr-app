@@ -92,10 +92,16 @@
   function texto(id, t) { var el = document.getElementById(id); el.textContent = t; el.style.display = t ? "block" : "none"; }
   function valor(id) { return (document.getElementById(id).value || "").trim(); }
 
-  // ?con=<url do Apps Script>: o link embutido no portal já traz a conexão
-  // com a base da escola. No primeiro acesso o navegador da aluna baixa os
-  // dados sozinho — sem isso, um aparelho novo não teria como saber quem
-  // ela é.
+  // A decisão de quem entra consulta a base da escola. Num navegador
+  // novo ela está vazia — sem uma conexão padrão, todo e-mail dava
+  // "não está no sistema". O endereço da Conexão fica embutido aqui
+  // (o mesmo das páginas do desafio) e ?con= continua podendo trocá-lo.
+  var CONEXAO_PADRAO = "https://script.google.com/macros/s/AKfycbxZeKxCvROSNSsT-rhcbHEZ7dAW_JlF3n21N7vp_SA5ByMEPcRIzRnbMmP62DV267M0/exec";
+  try {
+    if (window.ISRCRM && !window.ISRCRM.backendUrl())
+      window.ISRCRM.setBackendUrl(CONEXAO_PADRAO);
+  } catch (e) {}
+
   var puxando = false;
   var aoTerminarPuxe = null;
   try {
@@ -126,11 +132,30 @@
   // ── Identity é a porta; quem decide o destino é o banco, pelo e-mail ──
   // equipe → gestão com os papéis dela · aluna (assinatura, regular ou
   // programa) → app da aluna · e-mail desconhecido → aviso.
+  var jaAtualizouBase = false;
   function decidirDestino(email) {
     if (puxando) { aoTerminarPuxe = function () { decidirDestino(email); }; mostrar("telaCarregando"); return; }
     var C = window.ISRCRM;
     var e = String(email || "").trim().toLowerCase();
     if (!e || !C) { mostrar("telaNaoEncontrada"); return; }
+    // e-mail ausente da base local: antes de negar, baixa a base da
+    // escola uma vez — num aparelho novo é aqui que os dados chegam
+    var conhecido = e === "gabisouza.prof@gmail.com"
+      || C.equipeLista().some(function (x) { return (x.email || "").trim().toLowerCase() === e; })
+      || C.getPessoas().some(function (x) { return (x.email || "").trim().toLowerCase() === e; });
+    if (!conhecido && !jaAtualizouBase && C.backendUrl()) {
+      jaAtualizouBase = true;
+      mostrar("telaCarregando");
+      var terminou = false;
+      var segue = function () {
+        if (terminou) return;
+        terminou = true;
+        decidirDestino(email);
+      };
+      try { C.carregarDoBackend(segue); } catch (er) { segue(); }
+      setTimeout(segue, 12000);
+      return;
+    }
     // liberarGestao devolve null para quem não é da equipe (ou é
     // prestadora sem acesso) — aí a busca segue pelo lado das alunas
     if (C.liberarGestao(e)) {
