@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="isr-trava.js"></script>
+<script src="./crm-data.js"></script>
+<script src="./isr-desafio.js"></script>
+<title>Semana 4 — Pegar transporte · Desafio · Inglês sem Roteiro</title>
+<!--
+  ══════════════════════════════════════════════════════════════════
+  MODELO OFICIAL DA PÁGINA SEMANAL DO DESAFIO
+  ══════════════════════════════════════════════════════════════════
+  Como usar (equipe de design):
+    1. Copie este arquivo e salve como DDMMAA.html (ex. 240826.html).
+    2. Troque APENAS o que está marcado com "TROCAR TODA SEMANA":
+       o título no <title> e no hero, o quadro "Como funciona a
+       semana", as telas de conteúdo e as variáveis SEMANA e TITULO
+       no script.
+    3. NÃO altere: os três <script> acima, os campos ocultos de nome
+       e e-mail, a linha de identidade, a mecânica do script no fim
+       (pintar/enviar/registrar) e a confirmação final.
+  O verificador do GitHub confere esses pontos a cada publicação.
+  Especificação completa: espec compartilhada pela gestão.
+  ══════════════════════════════════════════════════════════════════
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#f5f5f0;font-family:'Inter',system-ui,sans-serif;color:#164951}
+a{color:#229090}a:hover{color:#164951}
+.app{max-width:520px;margin:0 auto;background:#fffdf8;min-height:100vh;padding-bottom:240px}
+.hero{background:#164951;padding:22px 20px 24px;color:#f2ebe3}
+.kicker{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#9ec970}
+.hero h1{font-size:26px;font-weight:800;line-height:1.1;color:#fffdf8;margin-top:6px;letter-spacing:-.02em}
+.hero .tag{display:inline-block;background:#fc9082;color:#164951;font-size:11.5px;font-weight:800;padding:6px 13px;border-radius:99px;margin-top:14px}
+.step{padding:24px 20px;border-top:1px solid #eee4d6}
+.stephead{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px}
+.stephead .n{width:34px;height:34px;border-radius:11px;background:#348a8e;color:#fffdf8;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.stephead h2{font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.stephead .sub{font-size:10.5px;font-weight:700;color:#8a7465;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:2px}
+p.b{font-size:14px;line-height:1.55;color:#3a514f;text-wrap:pretty}
+p.b+p.b{margin-top:11px}
+p.b b{color:#164951}
+p.b em{color:#229090;font-style:italic}
+.lbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#229090;margin:18px 0 8px;display:block}
+.rows{display:flex;flex-direction:column;gap:1px;background:#e7ddcf;border-radius:12px;overflow:hidden;margin-top:12px}
+.row{background:#fbf6ee;padding:11px 14px;display:flex;gap:12px;align-items:baseline}
+.row .rk{font-size:12px;font-weight:800;color:#164951;flex:0 0 96px}
+.row .rv{font-size:12.5px;line-height:1.4;color:#3a514f}
+.row .rv i{display:block;font-size:11px;color:#8a7465;font-style:normal;font-weight:700;margin-top:2px}
+.audio{background:#164951;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:13px;margin-top:14px;text-decoration:none}
+.audio .ic{font-size:22px}
+.audio .ac{display:flex;flex-direction:column;gap:2px;flex:1}
+.audio .an{font-size:12.5px;font-weight:800;color:#fffdf8}
+.audio .ad{font-size:11.5px;color:#9ec970;line-height:1.35;font-style:italic}
+.audio .go{background:#fc9082;color:#164951;font-size:12px;font-weight:800;padding:9px 14px;border-radius:99px}
+.vlink{display:block;padding:14px 16px;border:1.5px solid #d9cbbb;border-radius:14px;margin-top:10px;text-decoration:none}
+.vlink .vn{font-size:14.5px;font-weight:800;color:#164951;display:flex;justify-content:space-between;gap:10px}
+.vlink .vm{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#8a7465;display:block;margin-bottom:4px}
+.vlink .vd{font-size:12px;color:#3a514f;line-height:1.45;display:block;margin-top:5px}
+.crit{border:1.5px solid #d9cbbb;border-radius:14px;overflow:hidden;margin-top:12px}
+.crit .ch{background:#164951;color:#fffdf8;font-size:13px;font-weight:800;padding:10px 14px;line-height:1.3}
+.crit .cl{display:flex;gap:10px;padding:10px 14px;border-top:1px solid #eee4d6;font-size:12px;line-height:1.4;color:#3a514f}
+.crit .cl .lv{flex:0 0 74px;font-size:11px;font-weight:800;color:#164951}
+.crit .cl.est{background:#eef6e2}
+.crit .cl.str{background:#fdece9}
+.fin{width:100%;min-height:52px;border:1.5px solid #d9cbbb;border-radius:12px;background:#fff;font-family:inherit;font-size:15px;color:#164951;padding:14px;outline:none}
+.fin:focus{border-color:#348a8e;box-shadow:0 0 0 3px rgba(52,138,142,.14)}
+textarea.fin{min-height:96px;line-height:1.5;resize:vertical}
+.chk{display:flex;align-items:center;gap:12px;min-height:52px;padding:9px 14px;border:1.5px solid #d9cbbb;border-radius:12px;margin-bottom:8px;font-size:13.5px;font-weight:600;color:#164951;cursor:pointer;background:#fff}
+.chk input{width:22px;height:22px;accent-color:#348a8e;flex:0 0 auto}
+.chk .ex{display:block;font-size:11.5px;font-weight:500;color:#8a7465;font-style:italic;margin-top:2px}
+.chk:has(input:checked){border-color:#348a8e;background:#f1f7f4}
+.q{margin-top:18px}
+.q .qt{font-size:14px;font-weight:800;color:#164951;line-height:1.35;margin-bottom:9px}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:flex-start;gap:11px;min-height:48px;padding:11px 13px;border:1.5px solid #d9cbbb;border-radius:12px;font-size:12.5px;line-height:1.35;color:#3a514f;cursor:pointer;background:#fff}
+.opt input{width:20px;height:20px;accent-color:#348a8e;flex:0 0 auto;margin-top:1px}
+.opt .em{font-weight:800;color:#164951}
+.opt:has(input:checked){border-color:#348a8e;background:#f1f7f4}
+.note{background:#eef6e2;border-left:4px solid #9ec970;border-radius:0 10px 10px 0;padding:12px 15px;font-size:12.5px;line-height:1.5;color:#2e4a3a;margin-top:12px}
+.note b{color:#164951}
+.note.coral{background:#fdece9;border-left-color:#fc9082}
+.steps{display:flex;flex-direction:column;gap:11px;margin-top:12px}
+.st1{display:flex;gap:11px;align-items:flex-start}
+.st1 .sn{flex:0 0 24px;height:24px;border-radius:8px;background:#348a8e;color:#fffdf8;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.st1 p{font-size:13.5px;line-height:1.5;color:#3a514f}
+.st1 p b{color:#164951}
+.ex1{border-left:3px solid #fc9082;padding-left:12px;font-size:13.5px;line-height:1.8;color:#164951;margin-top:10px}
+.ex1 s{color:#b09a89}
+.ex1 b{background:#eef6e2;padding:1px 5px;border-radius:4px}
+.kit{border:1.5px solid #d9cbbb;border-radius:14px;padding:13px 16px;margin-top:10px}
+.kit .km{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#8a7465}
+.kit .kl{font-size:13.5px;line-height:1.75;color:#164951;margin-top:5px}
+.quote{border-left:3px solid #9ec970;padding-left:12px;font-size:12.5px;line-height:1.5;color:#8a7465;font-style:italic;margin-top:8px}
+.bar{position:fixed;bottom:0;left:0;right:0;background:#fffdf8;border-top:1px solid #e7ddcf;padding:12px 16px 16px;display:flex;justify-content:center}
+.bar .inner{width:100%;max-width:488px;display:flex;flex-direction:column;gap:7px}
+.send{width:100%;min-height:56px;border:none;border-radius:14px;background:#fc9082;color:#164951;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;transition:background .18s cubic-bezier(.4,0,.2,1)}
+.send:hover{background:#9ec970}
+.st{font-size:12px;font-weight:600;color:#8a7465;text-align:center;min-height:16px;line-height:1.4}
+.prog{height:5px;border-radius:99px;background:#eee4d6;overflow:hidden}
+.pfill{display:block;height:100%;background:#9ec970;width:9%;border-radius:99px;transition:width .25s cubic-bezier(.4,0,.2,1)}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pnum{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8a7465}
+.back{background:transparent;border:none;font-family:inherit;font-size:13px;font-weight:700;color:#229090;cursor:pointer;padding:4px 2px}
+.back:hover{color:#164951}
+.back[hidden]{visibility:hidden;display:block}
+.foot{padding:22px 20px 8px;text-align:center;font-size:11px;color:#8a7465;font-weight:600;line-height:1.6}
+.foot b{color:#229090}
+
+.fb{display:none;margin-top:9px;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.5px;line-height:1.5}
+.fb.ok{display:block;background:#eef6e2;border-left:4px solid #9ec970;color:#2e4a3a}
+.fb.no{display:block;background:#fdece9;border-left:4px solid #fc9082;color:#164951}
+.aud-off{opacity:.55;pointer-events:none}
+.aud-off .go{background:#c9b8a8}
+.grid3{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.grid3 .fin{min-height:44px;font-size:13px;padding:10px 12px}
+.glabel{font-size:10px;font-weight:700;color:#8a7465;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+
+.ident{background:#f1f7f4;border:1.5px solid #b9d6cf;border-radius:12px;padding:12px 15px;font-size:13.5px;color:#164951;line-height:1.5}
+.ident a{font-weight:700}
+.pos-envio{display:none;background:#eef6e2;border:1.5px solid #9ec970;border-radius:14px;padding:16px;margin-top:14px;text-align:center}
+.pos-envio p{font-size:14px;font-weight:700;color:#2e4a3a;margin-bottom:12px}
+.pos-envio a{display:inline-block;background:#164951;color:#fffdf8;font-size:13px;font-weight:800;padding:12px 22px;border-radius:99px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hero">
+<span class="kicker">Desafio · Inglês sem Roteiro</span>
+<!-- ═══ TROCAR TODA SEMANA: título ═══ -->
+<h1>Semana 4 — Pegar transporte</h1>
+<span class="tag">Material da aluna</span>
+</div>
+
+<!-- TELA 1 · identidade (automática) + como funciona -->
+<div class="step">
+<!-- NÃO ALTERAR: a identidade vem do login; os campos ocultos seguem
+     alimentando a planilha, preenchidos sozinhos -->
+<div class="ident" id="ident-linha">Carregando sua identificação…</div>
+<div id="ident-campos" hidden>
+<span class="lbl">Nome</span>
+<input class="fin" type="text" data-f="nome" placeholder="Nome completo">
+<span class="lbl">E-mail</span>
+<input class="fin" type="email" data-f="email" placeholder="e-mail usado na matrícula">
+</div>
+
+<span class="lbl">Como funciona a semana</span>
+<!-- ═══ TROCAR TODA SEMANA: o combinado da semana ═══ -->
+<div class="rows">
+<div class="row"><span class="rk">Segunda</span><span class="rv">Você recebe este material e os áudios.</span></div>
+<div class="row"><span class="rk">Segunda a quarta</span><span class="rv">Você explora o gerador de anúncios e posta o seu no grupo.</span></div>
+<div class="row"><span class="rk">Até quinta</span><span class="rv">Manda o áudio no privado e finaliza aqui.</span></div>
+<div class="row"><span class="rk">Sexta</span><span class="rv">Devolutiva por áudio, no privado.</span></div>
+</div>
+</div>
+
+<!-- ═══ TROCAR TODA SEMANA: telas de conteúdo ═════════════════════
+     Cada <div class="step"> é uma tela do passo a passo. Crie
+     quantas quiser. Campos que devem ir para a planilha levam
+     data-f="nome_do_campo" (um nome por campo, sem repetir). ═══ -->
+<div class="step">
+<div class="stephead"><span class="n">📌</span><div><span class="sub">Enunciado</span><h2>O objetivo desta semana</h2></div></div>
+<p class="b"><b>Ao final da semana, você deve ser capaz de compreender a informação essencial de um anúncio de estação de trem ou ônibus. E caso não consiga, você deve ser capaz de conseguir a informação que precisa perguntando a outro passageiro ou a um funcionário da estação.</b></p>
+<p class="b">Nas três primeiras semanas, tudo o que você precisou entender foi dito para você, por alguém que ajusta a fala quando percebe que você não entendeu.</p>
+<p class="b">O anúncio na estação não é assim. Ele é rápido, sai distorcido pelo alto-falante, e ninguém repete.</p>
+<p class="b">A segunda parte do objetivo existe porque a primeira nunca funciona por completo. Ninguém entende todos os anúncios, e isso vale também para quem mora aqui há dez anos. O que decide se você pega o trem é o que você faz nos trinta segundos seguintes.</p>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">📤</span><div><span class="sub">As entregas</span><h2>O que você vai me entregar</h2></div></div>
+<p class="b">São duas entregas, e cada uma mostra uma parte do objetivo.</p>
+<div class="rows">
+<div class="row"><span class="rk">Entrega 1</span><span class="rv">No grupo, durante a semana: um anúncio que você montou, com uma pergunta para as colegas responderem.<i>mostra que você tira a informação essencial de um anúncio</i></span></div>
+<div class="row"><span class="rk">Entrega 2</span><span class="rv">No privado, até quinta: um áudio de uns 40 segundos, você perguntando a alguém na estação. Só a sua voz, com pausas curtas onde a outra pessoa falaria.<i>mostra que você consegue a informação quando ela não chegou inteira</i></span></div>
+</div>
+<p class="b" style="margin-top:12px">Dentro do áudio, você passa por quatro momentos:</p>
+<div class="rows">
+<div class="row"><span class="rk">1 · Abordar</span><span class="rv">chamar a atenção de alguém que não estava esperando por você</span></div>
+<div class="row"><span class="rk">2 · Confirmar</span><span class="rv">dizer o que você achou que ouviu e perguntar se está certo</span></div>
+<div class="row"><span class="rk">3 · Continuar</span><span class="rv">fazer uma segunda pergunta a partir do que a pessoa respondeu</span></div>
+<div class="row"><span class="rk">4 · Agradecer</span><span class="rv">e seguir para o trem</span></div>
+</div>
+<a class="audio aud-off" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO A2 — só a sua parte · 20s</span><span class="ad">É exatamente o formato do que você vai gravar.</span></span><span class="go">em breve</span></a>
+<a class="audio aud-off" style="background:#348a8e" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO A — a cena completa · 40s</span><span class="ad">Os dois lados, para você ver como a conversa funciona inteira.</span></span><span class="go">em breve</span></a>
+<span class="lbl">O que não faz parte desta semana</span>
+<p class="b">Comprar o bilhete e passar pela catraca aparecem nos vídeos, e vale aprender essas frases porque você vai usar. Mas elas não entram no seu áudio de quinta.</p>
+<p class="b">O motivo: pedir um bilhete se resolve com uma frase pronta, e o funcionário está ali para te atender. Perguntar a alguém na plataforma é outra coisa — você tem poucos segundos e a pessoa não estava esperando por você. É essa a habilidade que a semana constrói.</p>
+<span class="lbl">As quatro etapas</span>
+<div class="rows">
+<div class="row"><span class="rk">🔍 Observar</span><span class="rv">Coleta as frases da viagem e treina a escuta em anúncios reais.<i>produz os quadros preenchidos</i></span></div>
+<div class="row"><span class="rk">✏️ Adaptar</span><span class="rv">Monta a sua confirmação e a segunda pergunta.<i>produz as duas falas prontas</i></span></div>
+<div class="row"><span class="rk">🎧 Testar</span><span class="rv">Responde aos áudios interativos.<i>produz a conversa automatizada</i></span></div>
+<div class="row"><span class="rk">🎙️ Aplicar</span><span class="rv">Grava a cena inteira.<i>produz o áudio de quinta</i></span></div>
+</div>
+<p class="b" style="margin-top:12px">A etapa Observar mudou nesta semana. Ela tem duas partes, com duas fontes diferentes, e cada uma serve a uma metade do objetivo.</p>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🗺️</span><div><span class="sub">Antes de começar</span><h2>Uma viagem de verdade</h2></div></div>
+<p class="b">Escolha <b>uma viagem que você vai fazer ou gostaria de fazer</b> nas próximas semanas.</p>
+<a class="vlink" href="https://www.ns.nl/en" target="_blank" rel="noopener"><span class="vn">NS · trens na Holanda<span>→</span></span></a>
+<a class="vlink" href="https://9292.nl/en" target="_blank" rel="noopener"><span class="vn">9292 · qualquer transporte na Holanda<span>→</span></span></a>
+<span class="glabel" style="margin-top:12px">De onde</span>
+<input class="fin" type="text" data-f="viagem_de">
+<span class="glabel" style="margin-top:8px">Para onde</span>
+<input class="fin" type="text" data-f="viagem_para">
+<span class="glabel" style="margin-top:8px">Que dia</span>
+<input class="fin" type="text" data-f="viagem_dia">
+<span class="lbl">Agora ouça</span>
+<a class="audio aud-off" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO B — você pergunta, eu respondo · 40s</span><span class="ad">Não precisa responder ainda. Só ouça.</span></span><span class="go">em breve</span></a>
+<span class="lbl">Como foi ouvir isso?</span>
+<input class="fin" type="text" data-f="primeira_escuta">
+<div class="q"><div class="qt">Se você estivesse na estação sem entender o anúncio, você conseguiria perguntar para alguém?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="cp" data-f="conseguiria_perguntar" value="Sim"><span>Sim</span></label>
+<label class="opt"><input type="radio" name="cp" data-f="conseguiria_perguntar" value="Mais ou menos"><span>Mais ou menos</span></label>
+<label class="opt"><input type="radio" name="cp" data-f="conseguiria_perguntar" value="Não"><span>Não</span></label>
+</div></div>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">✅</span><div><span class="sub">Critérios de avaliação</span><h2>O que eu vou ouvir no seu áudio</h2></div></div>
+<p class="b"><b>A escala tem quatro pontos.</b> ✅ <i><b>Established</b></i> é o padrão do desafio: chegar ali significa que a tarefa está cumprida. ⭐ <i><b>Strength</b></i> está acima do que o desafio pede.</p>
+<div class="crit">
+<div class="ch">A abordagem acontece</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>O áudio começa direto na pergunta.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Chama a pessoa e emenda sem dar espaço.</span></div>
+<div class="cl est"><span class="lv">✅ Established</span><span>Abre com <em>"Excuse me"</em>, dá um segundo, e então pergunta.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>Abre reconhecendo a situação. <em>"Sorry — I didn't catch that announcement."</em></span></div>
+</div>
+<div class="crit">
+<div class="ch">A confirmação é específica</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>Diz que não entendeu, sem dizer o que precisa saber.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Pergunta de forma geral. <em>"What did they say?"</em></span></div>
+<div class="cl est"><span class="lv">✅ Established</span><span>Diz o que achou que ouviu e pede confirmação. <em>"Did they say platform five?"</em></span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>Confirma e já situa o que precisa. <em>"Did they say platform five? I'm going to Utrecht."</em></span></div>
+</div>
+<div class="crit">
+<div class="ch">A conversa continua depois da resposta</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>O áudio termina assim que a pessoa responde.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Agradece e encerra, mesmo sem ter resolvido.</span></div>
+<div class="cl est"><span class="lv">✅ Established</span><span>Faz uma segunda pergunta a partir da resposta.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>Resolve a situação inteira, inclusive quando a resposta muda o plano.</span></div>
+</div>
+<div class="crit">
+<div class="ch">A fala se sustenta</div>
+<div class="cl"><span class="lv">🌱 Building</span><span>Uma frase por vez, com parada entre elas.</span></div>
+<div class="cl"><span class="lv">♻️ Growing</span><span>Trechos contínuos, quebrados por paradas.</span></div>
+<div class="cl est"><span class="lv">✅ Established</span><span>Vai do começo ao fim sem parar. Há hesitação, mas nada interrompe.</span></div>
+<div class="cl str"><span class="lv">⭐ Strength</span><span>As frases se encadeiam com ritmo próprio.</span></div>
+</div>
+<p class="b" style="margin-top:12px">A segunda linha é a mais importante desta semana. Dizer <em>"I don't understand"</em> passa o problema inteiro para a outra pessoa, que não sabe por onde começar a te ajudar. Dizer <em>"did they say platform five?"</em> entrega um problema pequeno, que se resolve com uma palavra. E você só consegue fazer isso se tiver pegado alguma coisa do anúncio, que é o que a etapa Observar treina.</p>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🔍</span><div><span class="sub">Etapa 1 de 4 · parte A · os vídeos</span><h2>Observar</h2></div></div>
+<p class="b">Esta etapa tem duas fontes. <b>Os vídeos</b> preparam o que você vai <b>dizer</b>. <b>O gerador de anúncios</b>, na próxima tela, prepara o que você vai <b>ouvir</b>. Você pode fazer na ordem que preferir.</p>
+<p class="b">Escolha <b>dois vídeos</b>. Estão em ordem de dificuldade, do que fala mais devagar para o que fala em ritmo natural.</p>
+<a class="vlink" href="https://www.youtube.com/watch?v=FY9eQfdc9Gk" target="_blank" rel="noopener"><span class="vm">Fala pausada · bilheteria</span><span class="vn">Comprar o bilhete<span>→</span></span><span class="vd">Vocabulário da bilheteria, com a distinção entre <i>single ticket</i> e <i>return ticket</i>. Assista se você ainda não sabe pedir um bilhete, porque essa é a primeira coisa que acontece numa viagem.</span></a>
+<a class="vlink" href="https://www.youtube.com/watch?v=PnuTcgfcJb8" target="_blank" rel="noopener"><span class="vm">Diálogo · a estrutura completa</span><span class="vn">A viagem inteira, em diálogo<span>→</span></span><span class="vd">Uma viajante conversa com um funcionário em vários momentos da viagem, do bilhete até a plataforma.</span></a>
+<a class="vlink" href="https://www.youtube.com/watch?v=92FX5PhVjrQ" target="_blank" rel="noopener"><span class="vm">Ritmo natural</span><span class="vn">Um dia de transporte na Austrália<span>→</span></span><span class="vd">Traz o vocabulário das ações que você faz sem pensar — <i>tap the card</i>, <i>touch off</i> — e que ninguém ensina. Na segunda metade ela faz perguntas a funcionários da estação.</span></a>
+<span class="lbl">Quadro 1 — as ações da viagem</span>
+<p class="b">Anote as expressões usadas para cada ação. Nem todo vídeo tem todas.</p>
+<span class="glabel" style="margin-top:12px">Comprar bilhete de ida</span>
+<input class="fin" type="text" data-f="acao1">
+<span class="glabel" style="margin-top:8px">Comprar bilhete de ida e volta</span>
+<input class="fin" type="text" data-f="acao2">
+<span class="glabel" style="margin-top:8px">Validar o cartão ao entrar</span>
+<input class="fin" type="text" data-f="acao3">
+<span class="glabel" style="margin-top:8px">Validar o cartão ao sair</span>
+<input class="fin" type="text" data-f="acao4">
+<span class="glabel" style="margin-top:8px">Perguntar onde pegar o trem</span>
+<input class="fin" type="text" data-f="acao5">
+<span class="lbl">Quadro 2 — como se pergunta a alguém na estação</span>
+<span class="glabel" style="margin-top:12px">Ela se aproxima de alguém que não estava esperando por ela</span>
+<input class="fin" type="text" data-f="cena1">
+<span class="glabel" style="margin-top:8px">Ela diz para onde quer ir</span>
+<input class="fin" type="text" data-f="cena2">
+<span class="glabel" style="margin-top:8px">Ela pergunta onde pegar o trem</span>
+<input class="fin" type="text" data-f="cena3">
+<span class="glabel" style="margin-top:8px">Ela repete em voz alta o que ouviu, para conferir</span>
+<input class="fin" type="text" data-f="cena4">
+<span class="glabel" style="margin-top:8px">Ela agradece e sai</span>
+<input class="fin" type="text" data-f="cena5">
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🎧</span><div><span class="sub">Etapa 1 de 4 · parte B</span><h2>O laboratório de escuta</h2></div></div>
+<p class="b">Aqui você vai a um site que monta anúncios de estação com as gravações verdadeiras dos sistemas britânicos, e ouve quantas vezes quiser.</p>
+<a class="vlink" href="https://www.railannouncements.co.uk/" target="_blank" rel="noopener"><span class="vn">railannouncements.co.uk<span>→</span></span><span class="vd">É britânico, e isso é de propósito. A locução britânica é a mais difícil que você vai encontrar viajando pela Europa. Se você entende essa, entende o anúncio de Rotterdam Centraal.</span></a>
+<div class="note"><b>Comece por aqui:</b> em <i>Stations</i>, escolha <b>Amey — Phil Sayer</b>. É o sistema mais usado e a voz mais reconhecível das estações britânicas.</div>
+<span class="lbl">Você está procurando três informações</span>
+<div class="rows">
+<div class="row"><span class="rk">1</span><span class="rv"><b>Que trem é</b> — para onde vai</span></div>
+<div class="row"><span class="rk">2</span><span class="rv"><b>Que plataforma</b></span></div>
+<div class="row"><span class="rk">3</span><span class="rv"><b>Que horas, ou quanto de atraso</b></span></div>
+</div>
+<span class="lbl">Monte quatro anúncios, subindo a dificuldade</span>
+<div class="steps">
+<div class="st1"><span class="sn">1</span><p><b>O simples.</b> Um trem chegando, com destino e plataforma. Ouça até pegar as três informações.</p></div>
+<div class="st1"><span class="sn">2</span><p><b>Com as paradas.</b> O mesmo trem, agora listando as estações do caminho. A lista é longa e você não precisa dela. Treine ignorar o meio e pegar só as três informações.</p></div>
+<div class="st1"><span class="sn">3</span><p><b>Com atraso.</b> Aqui aparece um número novo, e ele é o que mais gera insegurança, porque você precisa entender quantos minutos.</p></div>
+<div class="st1"><span class="sn">4</span><p><b>Mudança de plataforma.</b> Este é o anúncio que faz gente perder trem, porque a informação que você já tinha deixou de valer.</p></div>
+</div>
+<span class="lbl">Quadro 3 — o que eu consegui pegar</span>
+<span class="glabel" style="margin-top:12px">Anúncio 1</span>
+<div class="grid3"><input class="fin" type="text" data-f="an1_trem" placeholder="que trem"><input class="fin" type="text" data-f="an1_plat" placeholder="plataforma"><input class="fin" type="text" data-f="an1_hora" placeholder="horário / atraso"></div>
+<span class="glabel" style="margin-top:12px">Anúncio 2</span>
+<div class="grid3"><input class="fin" type="text" data-f="an2_trem" placeholder="que trem"><input class="fin" type="text" data-f="an2_plat" placeholder="plataforma"><input class="fin" type="text" data-f="an2_hora" placeholder="horário / atraso"></div>
+<span class="glabel" style="margin-top:12px">Anúncio 3</span>
+<div class="grid3"><input class="fin" type="text" data-f="an3_trem" placeholder="que trem"><input class="fin" type="text" data-f="an3_plat" placeholder="plataforma"><input class="fin" type="text" data-f="an3_hora" placeholder="horário / atraso"></div>
+<span class="glabel" style="margin-top:12px">Anúncio 4</span>
+<div class="grid3"><input class="fin" type="text" data-f="an4_trem" placeholder="que trem"><input class="fin" type="text" data-f="an4_plat" placeholder="plataforma"><input class="fin" type="text" data-f="an4_hora" placeholder="horário / atraso"></div>
+<span class="lbl">O anúncio ao vivo</span>
+<p class="b">Quando os quatro estiverem fáceis, vá em <a href="https://www.railannouncements.co.uk/amey-live-train-announcements" target="_blank" rel="noopener">Live announcements</a> e ouça uma estação de verdade, agora, sem saber o que vai vir.</p>
+<p class="b">Este é o mais difícil de todos, e você não precisa entender tudo. Se conseguir pegar uma plataforma, já valeu.</p>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">💬</span><div><span class="sub">Entrega 1 · no grupo</span><h2>O desafio dos anúncios</h2></div></div>
+<div class="steps">
+<div class="st1"><span class="sn">1</span><p>Monte um anúncio no site e <b>baixe o áudio</b>.</p></div>
+<div class="st1"><span class="sn">2</span><p>Poste no grupo <b>com uma pergunta só</b>: <em>"Which platform?"</em>, <em>"How late is this train?"</em>, <em>"Where is this train going?"</em></p></div>
+<div class="st1"><span class="sn">3</span><p>As outras respondem em inglês, por texto.</p></div>
+<div class="st1"><span class="sn">4</span><p>Você confirma quem acertou.</p></div>
+</div>
+<p class="b" style="margin-top:12px">A pergunta única no fim é o que faz o jogo funcionar. Sem ela, quem ouve não sabe o que procurar e desiste no primeiro anúncio que não entende inteiro.</p>
+<p class="b">E repare no que acontece quando você monta o anúncio: para escolher um bom, você precisa ter entendido o seu primeiro. Quem pergunta treina tanto quanto quem responde.</p>
+<div class="note coral"><b>Na quarta o jogo sobe:</b> os anúncios do dia são só de <b>atraso e mudança de plataforma</b>. São os dois que fazem diferença de verdade numa viagem.</div>
+<span class="lbl">Anote o que você quer levar para o grupo</span>
+<textarea class="fin" data-f="grupo"></textarea>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">✏️</span><div><span class="sub">Etapa 2 de 4 · produz as duas falas</span><h2>Adaptar</h2></div></div>
+<p class="b">Aqui você monta as suas duas falas.</p>
+<div class="steps">
+<div class="st1"><span class="sn">1</span><p><b>A confirmação.</b> Você ouviu alguma coisa e não tem certeza. A frase precisa dizer <b>o que você achou que ouviu</b>, para a pessoa só ter que confirmar ou corrigir.</p></div>
+</div>
+<div class="ex1"><span>Sorry, did they say <b>platform five</b>?</span><br><span>Sorry, did they say the train to <b>Utrecht</b> is <b>delayed</b>?</span><br><span>Excuse me — is this the platform for <b>Amsterdam</b>?</span></div>
+<span class="glabel" style="margin-top:12px">A sua confirmação</span>
+<input class="fin" type="text" data-f="confirmacao">
+<div class="steps" style="margin-top:14px">
+<div class="st1"><span class="sn">2</span><p><b>A segunda pergunta.</b> A pessoa vai responder, e a resposta abre uma segunda coisa. Prepare uma pergunta para cada cenário:</p></div>
+</div>
+<span class="glabel" style="margin-top:8px">Se ela disser que sim, é essa plataforma</span>
+<input class="fin" type="text" data-f="seg1">
+<span class="glabel" style="margin-top:8px">Se ela disser que mudou de plataforma</span>
+<input class="fin" type="text" data-f="seg2">
+<span class="glabel" style="margin-top:8px">Se ela disser que o trem está atrasado</span>
+<input class="fin" type="text" data-f="seg3">
+<div class="steps" style="margin-top:14px">
+<div class="st1"><span class="sn">3</span><p><b>Verifique as frases</b> pela metodologia do tradutor. <a href="https://www.inglessemroteiro.com.br/school/course/desafio-8-semanas/lecture/10350164">Assista à aula aqui.</a></p></div>
+</div>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🎧</span><div><span class="sub">Etapa 3 de 4 · produz a conversa automatizada</span><h2>Testar</h2></div></div>
+<span class="lbl" style="margin-top:0">Teste 1 — a confirmação sai?</span>
+<p class="b">Diga a sua confirmação em voz alta, cinco vezes, sem olhar o papel.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t1"><span>Fiz o teste 1</span></label>
+<span class="lbl">Teste 2 — a conversa se sustenta?</span>
+<a class="audio aud-off" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO B — a resposta que confirma · 40s</span><span class="ad">O mesmo do começo. Agora responda em voz alta nas pausas.</span></span><span class="go">em breve</span></a>
+<p class="b" style="margin-top:12px">Aqui um passageiro confirma o que você ouviu. Rode até responder dentro das pausas.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t2"><span>Fiz o teste 2</span></label>
+<span class="lbl">Teste 3 — e quando a resposta muda o plano?</span>
+<a class="audio aud-off" style="background:#348a8e" target="_blank" rel="noopener"><span class="ic">🎧</span><span class="ac"><span class="an">ÁUDIO B2 — o funcionário da estação · 45s</span><span class="ad">Aqui é um funcionário, e ele diz que você está na plataforma errada.</span></span><span class="go">em breve</span></a>
+<p class="b" style="margin-top:12px">Este áudio exige a segunda pergunta. Repare também que o funcionário fala de um jeito um pouco mais formal do que o passageiro do Áudio B, e que responde com mais detalhe. São as duas fontes que você tem numa estação.</p>
+<p class="b">Se travar, volte ao passo 2 da etapa Adaptar e veja qual pergunta você preparou para esse cenário.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t3"><span>Fiz o teste 3</span></label>
+<span class="lbl">Teste 4 — o número entra?</span>
+<p class="b">Monte um anúncio de atraso no site, ouça, e diga em voz alta: <em>"So it's twenty minutes late?"</em></p>
+<p class="b">Repetir o número em voz alta é o que confirma que você pegou certo, e é o que uma pessoa faz de verdade na plataforma.</p>
+<label class="chk" style="margin-top:10px"><input type="checkbox" data-f="t4"><span>Fiz o teste 4</span></label>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🎙️</span><div><span class="sub">Etapa 4 de 4 · produz o áudio de quinta</span><h2>Aplicar</h2></div></div>
+<p class="b">Grave a cena inteira, do começo ao fim, como se você estivesse na estação.</p>
+<p class="b">Deixe pausas curtas, de um ou dois segundos, onde a outra pessoa falaria.</p>
+<p class="b">Passe pelos quatro momentos: <b>abordar, confirmar, continuar, agradecer</b>. Se travar, apague e grave de novo, quantas vezes precisar.</p>
+<span class="lbl">As 4 perguntas sobre o seu áudio</span>
+<p class="b">Ouça o áudio que você mandou e marque, em cada pergunta, a opção que descreve o que você ouviu.</p>
+<div class="q"><div class="qt">1 · Eu abordei a pessoa?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="🌱 Building"><span><span class="em">🌱</span> Comecei direto na pergunta.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="♻️ Growing"><span><span class="em">♻️</span> Chamei, mas já emendei sem dar espaço.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="✅ Established"><span><span class="em">✅</span> Falei <em>"Excuse me"</em>, dei um segundo, e aí perguntei.</span></label>
+<label class="opt"><input type="radio" name="r1" data-f="r1" value="⭐ Strength"><span><span class="em">⭐</span> Expliquei a situação antes de perguntar.</span></label>
+</div></div>
+<div class="q"><div class="qt">2 · A minha confirmação foi específica?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="🌱 Building"><span><span class="em">🌱</span> Falei que não entendi, sem dizer o que eu precisava.</span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="♻️ Growing"><span><span class="em">♻️</span> Perguntei de forma geral: <em>"What did they say?"</em></span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="✅ Established"><span><span class="em">✅</span> Disse o que eu achei que ouvi e pedi confirmação.</span></label>
+<label class="opt"><input type="radio" name="r2" data-f="r2" value="⭐ Strength"><span><span class="em">⭐</span> Confirmei e ainda disse para onde eu ia.</span></label>
+</div></div>
+<div class="q"><div class="qt">3 · Eu continuei depois da resposta?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="🌱 Building"><span><span class="em">🌱</span> Meu áudio acabou assim que ela respondeu.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="♻️ Growing"><span><span class="em">♻️</span> Agradeci e saí, mesmo sem ter resolvido.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="✅ Established"><span><span class="em">✅</span> Fiz uma segunda pergunta a partir do que ela disse.</span></label>
+<label class="opt"><input type="radio" name="r3" data-f="r3" value="⭐ Strength"><span><span class="em">⭐</span> Resolvi a situação inteira, inclusive quando a resposta mudou meu plano.</span></label>
+</div></div>
+<div class="q"><div class="qt">4 · Eu falei sem interromper?</div>
+<div class="opts">
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="🌱 Building"><span><span class="em">🌱</span> Uma frase por vez, parando entre elas.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="♻️ Growing"><span><span class="em">♻️</span> Alguns trechos seguidos, mas parei para lembrar.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="✅ Established"><span><span class="em">✅</span> Do começo ao fim sem parar. Hesitei, mas não interrompi.</span></label>
+<label class="opt"><input type="radio" name="r4" data-f="r4" value="⭐ Strength"><span><span class="em">⭐</span> As frases se conectaram de forma natural.</span></label>
+</div></div>
+<span class="lbl">O que foi mais difícil nesta semana?</span>
+<textarea class="fin" data-f="dificuldade"></textarea>
+<span class="lbl">E uma última</span>
+<p class="b">Dos quatro anúncios que você montou, qual foi o mais difícil, e por quê?</p>
+<textarea class="fin" data-f="anuncio_dificil"></textarea>
+</div>
+<div class="step">
+<div class="stephead"><span class="n">🗂️</span><div><span class="sub">Material de apoio</span><h2>Kit de frases</h2></div></div>
+<div class="kit"><span class="km">Abordar</span><div class="kl">Excuse me, sorry —<br>Sorry, I didn't catch that announcement.<br>Excuse me, are you waiting for the same train?<br>Excuse me, do you work here?</div></div>
+<div class="kit"><span class="km">Confirmar</span><div class="kl">Did they say platform five?<br>Did they say the train is delayed?<br>Is this the platform for ___?<br>So it's twenty minutes late?</div></div>
+<div class="kit"><span class="km">A segunda pergunta</span><div class="kl">Do you know which platform it is now?<br>Do you know how long the delay is?<br>Does this train stop at ___?<br>Is there another one after this?</div></div>
+<div class="kit"><span class="km">Quando não entender a pessoa</span><div class="kl">Sorry, which platform?<br>Sorry, could you say that again?<br>Could you write it down for me?</div></div>
+<div class="kit"><span class="km">Da viagem, se você precisar</span><div class="kl">A single to ___, please.<br>A return to ___, please.<br>Do I need to tap my card here?</div></div>
+<div class="kit"><span class="km">Fechar</span><div class="kl">That's great, thank you so much!<br>Thanks a lot — have a good trip!</div></div>
+</div>
+
+<!-- TELA FINAL · NÃO ALTERAR a mecânica (caixa do áudio, envio,
+     confirmação). O texto ao redor pode mudar. -->
+<div class="step">
+<div class="stephead"><span class="n">✓</span><div><span class="sub">Fechamento</span><h2>Para concluir a semana</h2></div></div>
+<p class="b">Mande o áudio no WhatsApp e marque abaixo. Depois toque em terminar.</p>
+<label class="chk"><input type="checkbox" data-f="audio_enviado"><span>Já mandei o áudio no WhatsApp</span></label>
+<div class="pos-envio" id="pos-envio">
+<p>Resposta registrada. Sua sequência foi atualizada.</p>
+<a href="ISR%20-%20Aluna.dc.html">Voltar ao app</a>
+</div>
+</div>
+
+<div class="foot">Inglês sem Roteiro · dúvidas no grupo</div>
+</div>
+
+<div class="bar"><div class="inner">
+<div class="prow"><button class="back" id="isr-back" onclick="voltar()">← Voltar</button><span class="pnum" id="isr-pnum"></span></div>
+<div class="prog"><span class="pfill" id="isr-pfill"></span></div>
+<button class="send" onclick="avancar()"><span id="isr-cta">Continuar</span></button>
+<div class="st" id="status"></div>
+</div></div>
+
+<script>
+// ═══ TROCAR TODA SEMANA ═══
+var SEMANA = "4";
+var TITULO = "Semana 4 — Pegar transporte";
+
+// ═══ NÃO ALTERAR DAQUI PARA BAIXO ═══
+var BACKEND_PADRAO = "https://script.google.com/macros/s/AKfycbxZeKxCvROSNSsT-rhcbHEZ7dAW_JlF3n21N7vp_SA5ByMEPcRIzRnbMmP62DV267M0/exec";
+var ZAPIER_PADRAO = "https://hooks.zapier.com/hooks/catch/20567641/46hjlly/";
+var params = new URLSearchParams(window.location.search);
+var BACKEND = params.get("b") || BACKEND_PADRAO;
+var ZAPIER = params.get("z") || ZAPIER_PADRAO;
+var CHAVE = "isr_desafio_semana" + SEMANA + "_v1";
+var CAMPOS = [];
+var tela = 0;
+
+function telas() { return Array.prototype.slice.call(document.querySelectorAll(".app > .step")); }
+
+function pintar() {
+  var s = telas();
+  if (!s.length) return;
+  tela = Math.max(0, Math.min(tela, s.length - 1));
+  s.forEach(function (el, n) { el.style.display = n === tela ? "" : "none"; });
+  var ultima = tela === s.length - 1;
+  document.getElementById("isr-pfill").style.width = ((tela + 1) / s.length * 100) + "%";
+  document.getElementById("isr-pnum").textContent = "Tela " + (tela + 1) + " de " + s.length;
+  document.getElementById("isr-cta").textContent = ultima ? "Terminei a Semana " + SEMANA : "Continuar";
+  document.getElementById("isr-back").hidden = tela === 0;
+  try { localStorage.setItem(CHAVE + "_tela", String(tela)); } catch (e) {}
+}
+
+function avancar() {
+  if (tela === telas().length - 1) { enviar(); return; }
+  tela++; avisar(""); pintar(); window.scrollTo(0, 0);
+}
+function voltar() { tela--; avisar(""); pintar(); window.scrollTo(0, 0); }
+
+function ligarCampos() {
+  CAMPOS = Array.prototype.slice.call(document.querySelectorAll("[data-f]"));
+  var salvo = {};
+  try { salvo = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (e) {}
+  CAMPOS.forEach(function (el) {
+    var k = el.dataset.f;
+    if (salvo[k] === undefined) return;
+    if (el.type === "checkbox") el.checked = !!salvo[k];
+    else if (el.type === "radio") el.checked = el.value === salvo[k];
+    else el.value = salvo[k];
+  });
+  var salvar = function () {
+    try { localStorage.setItem(CHAVE, JSON.stringify(coletar())); } catch (e) {}
+  };
+  CAMPOS.forEach(function (el) {
+    el.addEventListener("input", salvar);
+    el.addEventListener("change", salvar);
+  });
+}
+
+function coletar() {
+  var out = {};
+  CAMPOS.forEach(function (el) {
+    var k = el.dataset.f;
+    if (el.type === "checkbox") out[k] = el.checked;
+    else if (el.type === "radio") { if (el.checked) out[k] = el.value; else if (out[k] === undefined) out[k] = ""; }
+    else out[k] = el.value;
+  });
+  return out;
+}
+
+// tudo o que tem data-f vai para a planilha, com o nome do campo
+function montarEnvio() {
+  var d = coletar();
+  var out = { semana: SEMANA, semana_titulo: TITULO, enviado_em: new Date().toISOString() };
+  Object.keys(d).forEach(function (k) {
+    out[k] = typeof d[k] === "boolean" ? (d[k] ? "sim" : "não") : String(d[k] || "").trim();
+  });
+  out.audio_enviado = d.audio_enviado ? "sim" : "não";
+  return out;
+}
+
+function avisar(msg) { document.getElementById("status").textContent = msg; }
+
+// identidade: quem está logada não digita nada; sem sessão, os campos aparecem
+function mostrarIdentidade() {
+  var linha = document.getElementById("ident-linha");
+  var campos = document.getElementById("ident-campos");
+  var a = window.ISRDesafio ? ISRDesafio.aluna() : null;
+  if (a) {
+    linha.innerHTML = "Você está fazendo o desafio como <b></b> · " +
+      "<a href=\"aluna.html?trocar\">trocar de conta</a>";
+    linha.querySelector("b").textContent = a.nome.split(" ")[0];
+  } else {
+    linha.hidden = true;
+    campos.hidden = false;
+  }
+}
+
+function enviar() {
+  var campos = montarEnvio();
+  if (!campos.nome || !campos.email) {
+    avisar("Não achei sua identificação. Recarregue a página ou preencha nome e e-mail.");
+    tela = 0; pintar(); window.scrollTo(0, 0); return;
+  }
+  if (campos.audio_enviado !== "sim") {
+    avisar("Primeiro mande o áudio no WhatsApp. Depois marque a caixa acima e envie.");
+    return;
+  }
+  var botao = document.getElementById("isr-cta").parentElement;
+  botao.disabled = true;
+  avisar("Enviando…");
+
+  // registra a resposta no sistema: atualiza a sequência (streak),
+  // o ranque e as miles da aluna logada
+  try { if (window.ISRDesafio) ISRDesafio.registrar("Concluído pela página do desafio"); } catch (e) {}
+
+  if (ZAPIER) {
+    try {
+      fetch(ZAPIER, { method: "POST", mode: "no-cors",
+        body: new URLSearchParams(campos) }).catch(function () {});
+    } catch (e) {}
+  }
+
+  var fim = function (msg, deuCerto) {
+    avisar(msg); botao.disabled = false;
+    if (deuCerto) document.getElementById("pos-envio").style.display = "block";
+  };
+
+  if (BACKEND) {
+    fetch(BACKEND, { method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(Object.assign({ action: "novaAtividade" }, campos)) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.ok) fim("Semana " + SEMANA + " concluída.", true);
+        else fim("O registro não foi aceito (" + ((d && d.error) || "erro") + "). Tente de novo.");
+      })
+      .catch(function () {
+        fim("O envio não completou. Verifique a conexão e tente de novo.");
+      });
+  } else if (ZAPIER) {
+    fim("Semana " + SEMANA + " concluída.", true);
+  } else {
+    fim("Este link está sem o endereço de envio. Avise a escola.");
+  }
+}
+
+ligarCampos();
+mostrarIdentidade();
+try { tela = parseInt(localStorage.getItem(CHAVE + "_tela") || "0", 10) || 0; } catch (e) {}
+pintar();
+</script>
+</body>
+</html>
