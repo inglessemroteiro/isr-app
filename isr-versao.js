@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-m",
+  numero: "2026.08.20-n",
   data: "20/08/2026",
-  nota: "Página do desafio na visão da equipe: em vez dos campos de nome e e-mail, o aviso de visualização — a aluna logada vê o nome dela e não digita nada"
+  nota: "Login num aparelho novo: a porta traz a conexão da escola embutida e baixa a base antes de negar um e-mail — acaba o falso não está no sistema"
 };
