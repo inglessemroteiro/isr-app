@@ -2728,6 +2728,9 @@
     var l = tarefasLista();
     l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
       detalhe: (dados.detalhe || "").trim(),
+      // destino: a pendência pode apontar para a pessoa (abre o Perfil)
+      // ou para a tela onde ela se resolve
+      pessoaId: dados.pessoaId || "", tela: dados.tela || "",
       prazo: dados.prazo || "", feita: false, criadaEm: iso(today()), por: dados.por || "" });
     l.sort(function (a, b) { return (a.prazo || "9999") < (b.prazo || "9999") ? -1 : 1; });
     tarefasSave(l); return l;
@@ -3005,6 +3008,7 @@
         icon: "", cor: "#9c6f56",
         pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
         motivo: motivo.slice(0, 160),
+        href: tf.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + tf.pessoaId : (tf.tela || ""),
         acao: "Concluir", tpl: "" });
     });
 

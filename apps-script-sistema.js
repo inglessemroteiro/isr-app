@@ -30,6 +30,7 @@ function doGet(e) {
   if (action === "sistemaLoad") return json_(sistemaLoad_());
   if (action === "cadastrosPendentes") return json_(cadastrosPendentes_());
   if (action === "systemeContacts") return json_(systemeContacts_(e.parameter.key, e.parameter.limit));
+  if (action === "jotform") return json_(jotformProxy_(e.parameter.path, e.parameter.key, e.parameter.base));
   if (action === "atividadesPendentes") return json_(atividadesPendentes_());
   return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "systemeContacts", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
 }
@@ -321,6 +322,27 @@ function json_(obj) {
 // O navegador não consegue falar direto com a API do systeme (CORS);
 // este script busca os contatos e devolve para o app. A chave de API
 // vem do app a cada chamada e NÃO fica gravada aqui.
+// ── JOTFORM (inscrições dos funis → CRM) ─────────────────────────
+// Alguns navegadores bloqueiam a chamada direta do app à API do
+// Jotform (CORS). Este script busca no lugar do navegador e devolve a
+// mesma resposta. A chave vem do app a cada chamada e NÃO fica aqui.
+function jotformProxy_(path, key, base) {
+  if (!key) return { ok: false, error: "sem chave de API" };
+  if (!path || path.charAt(0) !== "/") return { ok: false, error: "caminho inválido" };
+  var b = base === "eu" ? "https://eu-api.jotform.com" : "https://api.jotform.com";
+  try {
+    var sep = path.indexOf("?") >= 0 ? "&" : "?";
+    var r = UrlFetchApp.fetch(b + path + sep + "apiKey=" + encodeURIComponent(key),
+      { muteHttpExceptions: true });
+    var d = JSON.parse(r.getContentText());
+    if (!d || d.responseCode !== 200)
+      return { ok: false, error: (d && d.message) || ("o Jotform respondeu " + r.getResponseCode()) };
+    return { ok: true, data: d };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
 function systemeContacts_(key, limit) {
   if (!key) return { ok: false, error: "sem chave de API" };
   try {
