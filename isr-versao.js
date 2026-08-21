@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-b",
+  numero: "2026.08.20-c",
   data: "20/08/2026",
-  nota: "Login com senha via Netlify Identity: a porta é o Identity (convite = só pagantes) e o destino vem do banco pelo e-mail — equipe cai na gestão com os papéis, assinante no modo assinante, aluna regular na área completa; assinatura a €27/mês por padrão"
+  nota: "Convite do Identity confiável: quem chega pelo link do e-mail vê a tela de criar senha (com botão manual se o widget não abrir sozinho) e convite vencido ganha aviso claro com o caminho de quem já tem senha"
 };

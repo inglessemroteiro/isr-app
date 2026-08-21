@@ -39,6 +39,19 @@
     <p>Conferindo seu acesso…</p>
   </div>
 
+  <!-- chegou pelo link do convite: criar a senha -->
+  <div class="tela" id="telaConvite">
+    <p>Seu convite chegou! Agora é só criar a sua senha.</p>
+    <button onclick="abrirConvite()">Criar minha senha →</button>
+    <p class="nota">Se nada acontecer ao tocar no botão, recarregue a página e tente de novo.</p>
+  </div>
+
+  <!-- o link do convite venceu ou já foi usado -->
+  <div class="tela" id="telaConviteVencido">
+    <p>Este link de convite não vale mais — ele vence em poucos dias e só funciona uma vez. Se você já criou a senha, é só entrar. Se não, peça um convite novo para a escola.</p>
+    <button onclick="abrirIdentity()">Já tenho senha — entrar →</button>
+  </div>
+
   <!-- logou, mas o e-mail não está no sistema -->
   <div class="tela" id="telaNaoEncontrada">
     <p>Seu login funcionou, mas não achei <strong id="emailNaoEncontrado"></strong> no sistema da escola. Confere se é o mesmo e-mail da matrícula — ou chama a Gabi no WhatsApp.</p>
@@ -57,7 +70,7 @@
 </div>
 <script>
   function mostrar(id) {
-    var telas = ["telaIdentity", "telaVerificando", "telaNaoEncontrada", "telaEmail"];
+    var telas = ["telaIdentity", "telaVerificando", "telaConvite", "telaConviteVencido", "telaNaoEncontrada", "telaEmail"];
     for (var i = 0; i < telas.length; i++)
       document.getElementById(telas[i]).style.display = telas[i] === id ? "block" : "none";
   }
@@ -115,7 +128,13 @@
   }
 
   var identity = window.netlifyIdentity || null;
+  // o e-mail de convite/recuperação aponta para cá com o token no #hash;
+  // o widget costuma abrir a tela de criar senha sozinho, mas quando não
+  // abre (já aconteceu), a aluna ficava olhando a porta sem saída — por
+  // isso a tela própria do convite, com botão manual
+  var temToken = /(invite_token|recovery_token|confirmation_token|email_change_token)=/.test(window.location.hash || "");
   function abrirIdentity() { if (identity) identity.open("login"); }
+  function abrirConvite() { if (identity) identity.open(); }
   function sairIdentity() {
     try { localStorage.removeItem("isr_aluna_id"); localStorage.removeItem("isr_gestao_user"); } catch (e) {}
     if (identity) identity.logout();
@@ -127,6 +146,7 @@
     identity.on("init", function (user) {
       if (user && trocando) { sairIdentity(); return; }
       if (user) { mostrar("telaVerificando"); decidirDestino(user.email); }
+      else if (temToken) mostrar("telaConvite");
       else mostrar("telaIdentity");
     });
     identity.on("login", function (user) {
@@ -135,7 +155,17 @@
       decidirDestino(user.email);
     });
     identity.on("logout", function () { mostrar("telaIdentity"); });
+    identity.on("error", function (err) {
+      // o motivo mais comum: link de convite vencido ou já usado
+      if (temToken) mostrar("telaConviteVencido");
+    });
     identity.init();
+    if (temToken) {
+      // se o widget não abrir a criação de senha sozinho em instantes,
+      // a tela do convite já está na frente com o botão manual
+      mostrar("telaConvite");
+      setTimeout(function () { try { if (!identity.currentUser()) identity.open(); } catch (e) {} }, 1200);
+    }
   } else {
     // sem o widget (offline, fora do Netlify): fluxo antigo de e-mail
     mostrar("telaEmail");
