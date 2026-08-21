@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-k",
+  numero: "2026.08.20-l",
   data: "20/08/2026",
-  nota: "Streak automático: a página do desafio, atrás do login, preenche nome e e-mail sozinha e registra a semana no sistema ao enviar — sequência, ranking e miles atualizam sem digitação"
+  nota: "Semana do desafio com fluxo garantido: modelo oficial desafio-modelo.html (identidade automática, registro e confirmação prontos) e verificador no GitHub que confere o contrato de cada página publicada"
 };
