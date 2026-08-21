@@ -312,7 +312,7 @@
                   <div style="font-size: 11px; font-weight: 700; color: #164951; margin-bottom: 9px;">Assinatura</div>
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
                     <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Valor por mês</div>
-                      <input ref="{{ asnValorRef }}" placeholder="ex. 15,00" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                      <input ref="{{ asnValorRef }}" placeholder="27,00 (padrão)" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
                       <select ref="{{ asnMoedaRef }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
                         <option value="€">€ euro</option>
@@ -1164,8 +1164,9 @@ class Component extends DCLogic {
     out.asnMoedaRef = this.asnMoedaRef;
     out.onSalvarAssinatura = () => {
       const g = r => (r.current && r.current.value || "").trim();
+      // €27/mês é o valor da assinatura — em branco, vale o padrão
       CRM.ativarAssinatura(p.id, {
-        valor: g(this.asnValorRef),
+        valor: g(this.asnValorRef) || "27",
         moeda: (this.asnMoedaRef.current && this.asnMoedaRef.current.value) || "€"
       });
       this.setState({ abrindoProduto: "" });

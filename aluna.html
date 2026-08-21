@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Inglês sem Roteiro — Entrar</title>
 <script src="./crm-data.js"></script>
+<!-- Netlify Identity: a porta com senha (convite = só pagantes). Se o
+     widget não carregar (site fora do Netlify, sem internet), a página
+     cai no fluxo antigo de e-mail para ninguém ficar trancada fora. -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
   body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
   .card { background: #fdfbf8; border-radius: 16px; padding: 34px 30px; max-width: 380px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
@@ -12,53 +16,136 @@
   h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
   p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
   input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; margin-bottom: 10px; }
-  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; border-radius: 999px; cursor: pointer; }
+  button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; border-radius: 999px; cursor: pointer; font-family: inherit; }
+  button.suave { background: transparent; color: #7d6d63; border: 1px solid #e5dccf; }
   .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
   .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
+  .tela { display: none; }
 </style>
 </head>
 <body>
 <div class="card">
   <p class="eyebrow">Inglês sem Roteiro</p>
   <h1>Área da aluna</h1>
-  <p>Entre com o e-mail que você usou na matrícula.</p>
-  <input id="email" type="email" placeholder="voce@email.com" autofocus />
-  <button onclick="entrar()">Entrar →</button>
-  <p class="erro" id="erro">Não achei esse e-mail. Confere se é o mesmo da matrícula — ou chama a Gabi no WhatsApp.</p>
-  <p class="nota">Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.</p>
+
+  <!-- porta com senha (Netlify Identity) -->
+  <div class="tela" id="telaIdentity">
+    <p>Entre com seu e-mail e senha. Ainda não tem senha? O convite chega no e-mail que você usou na matrícula.</p>
+    <button onclick="abrirIdentity()">Entrar →</button>
+  </div>
+
+  <!-- verificando quem é depois do login -->
+  <div class="tela" id="telaVerificando">
+    <p>Conferindo seu acesso…</p>
+  </div>
+
+  <!-- logou, mas o e-mail não está no sistema -->
+  <div class="tela" id="telaNaoEncontrada">
+    <p>Seu login funcionou, mas não achei <strong id="emailNaoEncontrado"></strong> no sistema da escola. Confere se é o mesmo e-mail da matrícula — ou chama a Gabi no WhatsApp.</p>
+    <button class="suave" onclick="sairIdentity()">Sair e tentar com outro e-mail</button>
+  </div>
+
+  <!-- fluxo antigo, só quando o widget não carrega -->
+  <div class="tela" id="telaEmail">
+    <p>Entre com o e-mail que você usou na matrícula.</p>
+    <input id="email" type="email" placeholder="voce@email.com" />
+    <button onclick="entrar()">Entrar →</button>
+    <p class="erro" id="erro">Não achei esse e-mail. Confere se é o mesmo da matrícula — ou chama a Gabi no WhatsApp.</p>
+  </div>
+
+  <p class="nota" id="notaRodape">Equipe da escola? Pode entrar por aqui mesmo — o sistema reconhece seu e-mail e abre a gestão.</p>
 </div>
 <script>
+  function mostrar(id) {
+    var telas = ["telaIdentity", "telaVerificando", "telaNaoEncontrada", "telaEmail"];
+    for (var i = 0; i < telas.length; i++)
+      document.getElementById(telas[i]).style.display = telas[i] === id ? "block" : "none";
+  }
+
   // ?con=<url do Apps Script>: o link embutido no portal já traz a conexão
   // com a base da escola. No primeiro acesso o navegador da aluna baixa os
   // dados sozinho — sem isso, um aparelho novo não teria como saber quem
   // ela é.
   var puxando = false;
+  var aoTerminarPuxe = null;
   try {
     var con = new URLSearchParams(window.location.search).get("con");
     if (con && window.ISRCRM) {
       if (window.ISRCRM.backendUrl() !== con) window.ISRCRM.setBackendUrl(con);
       puxando = true;
-      var nota = document.querySelector(".nota");
+      var nota = document.getElementById("notaRodape");
       if (nota) nota.textContent = "Conectando com a escola…";
       window.ISRCRM.carregarDoBackend(function () {
         puxando = false;
         if (nota) nota.textContent = "";
-        depoisDeConectar();
+        if (aoTerminarPuxe) aoTerminarPuxe();
       });
       // se a rede falhar, não prende a pessoa aqui para sempre
-      setTimeout(function () { if (puxando) { puxando = false; depoisDeConectar(); } }, 8000);
+      setTimeout(function () {
+        if (puxando) { puxando = false; if (aoTerminarPuxe) aoTerminarPuxe(); }
+      }, 8000);
     }
   } catch (e) { puxando = false; }
 
-  function depoisDeConectar() {
-    try {
-      if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
-        window.location.replace("ISR%20-%20Aluna.dc.html");
-      }
-    } catch (e) {}
+  // ── Identity é a porta; quem decide o destino é o banco, pelo e-mail ──
+  // equipe → gestão com os papéis dela · aluna (assinatura, regular ou
+  // programa) → app da aluna · e-mail desconhecido → aviso.
+  function decidirDestino(email) {
+    if (puxando) { aoTerminarPuxe = function () { decidirDestino(email); }; mostrar("telaVerificando"); return; }
+    var C = window.ISRCRM;
+    var e = String(email || "").trim().toLowerCase();
+    if (!e || !C) { mostrar("telaNaoEncontrada"); return; }
+    // liberarGestao devolve null para quem não é da equipe (ou é
+    // prestadora sem acesso) — aí a busca segue pelo lado das alunas
+    if (C.liberarGestao(e)) {
+      window.location.replace("ISR%20-%20Central.dc.html");
+      return;
+    }
+    var p = C.getPessoas().filter(function (x) {
+      return ["aluna", "mvs", "pausada", "programa"].indexOf(x.status) >= 0
+        && (x.email || "").trim().toLowerCase() === e;
+    })[0];
+    if (p) {
+      try { localStorage.setItem("isr_aluna_id", p.id); } catch (er) {}
+      window.location.replace("ISR%20-%20Aluna.dc.html");
+      return;
+    }
+    document.getElementById("emailNaoEncontrado").textContent = email;
+    mostrar("telaNaoEncontrada");
   }
-  // já logada e sem conexão para atualizar → direto pra área
-  if (!puxando) depoisDeConectar();
+
+  var identity = window.netlifyIdentity || null;
+  function abrirIdentity() { if (identity) identity.open("login"); }
+  function sairIdentity() {
+    try { localStorage.removeItem("isr_aluna_id"); localStorage.removeItem("isr_gestao_user"); } catch (e) {}
+    if (identity) identity.logout();
+    mostrar("telaIdentity");
+  }
+
+  if (identity) {
+    var trocando = window.location.search.indexOf("trocar") >= 0;
+    identity.on("init", function (user) {
+      if (user && trocando) { sairIdentity(); return; }
+      if (user) { mostrar("telaVerificando"); decidirDestino(user.email); }
+      else mostrar("telaIdentity");
+    });
+    identity.on("login", function (user) {
+      identity.close();
+      mostrar("telaVerificando");
+      decidirDestino(user.email);
+    });
+    identity.on("logout", function () { mostrar("telaIdentity"); });
+    identity.init();
+  } else {
+    // sem o widget (offline, fora do Netlify): fluxo antigo de e-mail
+    mostrar("telaEmail");
+    var notaEq = document.getElementById("notaRodape");
+    if (notaEq && !puxando) notaEq.innerHTML = 'Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.';
+    if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
+      if (puxando) { aoTerminarPuxe = function () { window.location.replace("ISR%20-%20Aluna.dc.html"); }; }
+      else window.location.replace("ISR%20-%20Aluna.dc.html");
+    }
+  }
 
   function entrar() {
     // a primeira carga dos dados pode ainda estar chegando
