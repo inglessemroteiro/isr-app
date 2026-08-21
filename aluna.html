@@ -114,6 +114,15 @@
     }
   } catch (e) { puxando = false; }
 
+  // ?voltar=/170826: a pessoa veio de uma página travada (o desafio da
+  // semana) — depois do login ela volta para lá em vez de cair no app.
+  // Só caminhos do próprio site valem; qualquer outra coisa é ignorada.
+  var voltar = null;
+  try {
+    var v = new URLSearchParams(window.location.search).get("voltar");
+    if (v && /^\/[^\s]*$/.test(v) && v.indexOf("//") !== 0 && v.indexOf(":") < 0) voltar = v;
+  } catch (e) {}
+
   // ── Identity é a porta; quem decide o destino é o banco, pelo e-mail ──
   // equipe → gestão com os papéis dela · aluna (assinatura, regular ou
   // programa) → app da aluna · e-mail desconhecido → aviso.
@@ -125,7 +134,7 @@
     // liberarGestao devolve null para quem não é da equipe (ou é
     // prestadora sem acesso) — aí a busca segue pelo lado das alunas
     if (C.liberarGestao(e)) {
-      window.location.replace("ISR%20-%20Central.dc.html");
+      window.location.replace(voltar || "ISR%20-%20Central.dc.html");
       return;
     }
     var p = C.getPessoas().filter(function (x) {
@@ -134,7 +143,7 @@
     })[0];
     if (p) {
       try { localStorage.setItem("isr_aluna_id", p.id); } catch (er) {}
-      window.location.replace("ISR%20-%20Aluna.dc.html");
+      window.location.replace(voltar || "ISR%20-%20Aluna.dc.html");
       return;
     }
     document.getElementById("emailNaoEncontrado").textContent = email;
@@ -308,7 +317,7 @@
     sessaoAluna = localStorage.getItem("isr_aluna_id");
   } catch (e) {}
   if (!trocando && !hashToken && (sessaoGestao || sessaoAluna)) {
-    var destino = sessaoGestao ? "ISR%20-%20Central.dc.html" : "ISR%20-%20Aluna.dc.html";
+    var destino = voltar || (sessaoGestao ? "ISR%20-%20Central.dc.html" : "ISR%20-%20Aluna.dc.html");
     if (puxando) aoTerminarPuxe = function () { window.location.replace(destino); };
     else window.location.replace(destino);
   } else {
