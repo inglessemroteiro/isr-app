@@ -1620,6 +1620,8 @@
       mesAtual: mesAtual, diasProxVenc: diasProxVenc,
       parcelasPagas: meses.filter(function (m) { return m.pago; }).length,
       faltas: faltasDe(p.id),
+      ultimaFaltaEm: ultimaFaltaDe(p.id),
+      ultimoToqueEm: (ultimoToque(p.id) || {}).data || null,
       onboarding: ob,
       onboardingFeitos: ob.filter(function (x) { return x.feito; }).length,
       // pendente é "para hoje ou já passou" — a Central usava esse critério
@@ -1658,7 +1660,11 @@
         : "Parcela vence em " + s.diasProxVenc + (s.diasProxVenc === 1 ? " dia" : " dias")
           + " (" + (s.mesAtual.valor || "") + ")");
     }
-    if (s.faltas >= LIMIARES.faltas)
+    // o aviso de ausências sai da tela quando um contato é registrado
+    // depois da última falta — e volta se houver falta nova
+    var faltaSemContato = s.faltas >= LIMIARES.faltas
+      && (!s.ultimoToqueEm || !s.ultimaFaltaEm || s.ultimoToqueEm < s.ultimaFaltaEm);
+    if (faltaSemContato)
       add("falta_recente", s.faltas + (s.faltas === 1 ? " ausência no ciclo" : " ausências no ciclo"));
     if (s.pulso && s.pulso.nota <= LIMIARES.avaliacaoBaixa)
       add("avaliacao_baixa", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
@@ -4737,14 +4743,32 @@
       salvoEm: new Date().toISOString(), por: por || "" };
     chamadasSaveLocal(m);
     agendarSync();
+    var ehParticular = turmaLabel.indexOf("Particular") === 0;
     // falta/justificada nova vai pra linha do tempo (re-salvar não duplica)
     Object.keys(presencas).forEach(function (pid) {
       var agora = estadoPresenca(presencas[pid]), antesE = estadoPresenca(antes[pid]);
-      if (agora === antesE) return;
-      if (agora === "falta") {
-        mutate(pid, function (p) { pushHist(p, "falta", "Faltou na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
-      } else if (agora === "justificada") {
-        mutate(pid, function (p) { pushHist(p, "falta", "Ausência justificada na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
+      if (agora !== antesE) {
+        if (agora === "falta") {
+          mutate(pid, function (p) { pushHist(p, "falta", "Faltou na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
+        } else if (agora === "justificada") {
+          mutate(pid, function (p) { pushHist(p, "falta", "Ausência justificada na aula de " + ddmm(dataIso) + " · " + turmaLabel); });
+        }
+      }
+      // chamada de aula particular mantém o pacote em dia: presença nova
+      // conta uma aula dada; corrigir para falta devolve a aula ao pacote.
+      // (estadoPresenca(undefined) vale "presente" — por isso o "in")
+      if (ehParticular) {
+        var dava = (pid in antes) && ["presente", "atraso"].indexOf(estadoPresenca(antes[pid])) >= 0;
+        var da = ["presente", "atraso"].indexOf(agora) >= 0;
+        if (da && !dava) mutate(pid, function (p) {
+          p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
+          p.particular.feitas = (p.particular.feitas || 0) + 1;
+          var tot = p.particular.aulas ? " de " + p.particular.aulas : "";
+          pushHist(p, "contato", "Aula particular dada em " + ddmm(dataIso) + " (" + p.particular.feitas + tot + ")");
+        });
+        if (!da && dava) mutate(pid, function (p) {
+          if (p.particular) p.particular.feitas = Math.max(0, (p.particular.feitas || 0) - 1);
+        });
       }
     });
     return m[key];
@@ -4768,6 +4792,14 @@
       if (m[k].presencas && estadoPresenca(m[k].presencas[pessoaId]) === "falta") n++;
     });
     return n;
+  }
+  function ultimaFaltaDe(pessoaId) {
+    var m = chamadasAll(), ultima = null;
+    Object.keys(m).forEach(function (k) {
+      if (m[k].presencas && estadoPresenca(m[k].presencas[pessoaId]) === "falta"
+          && m[k].data && (!ultima || m[k].data > ultima)) ultima = m[k].data;
+    });
+    return ultima;
   }
   // ── METAS DE PERÍODO ──────────────────────────────────────────
   //
@@ -6199,6 +6231,9 @@
     Object.keys(cham).forEach(function (k) {
       var ch = cham[k];
       if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      // chamada de particular já vira "aula dada" no pacote — contar aqui
+      // somaria a mesma aula duas vezes
+      if ((ch.turma || "").indexOf("Particular") === 0) return;
       var est = estadoPresenca(ch.presencas[pessoaId]);
       if (est !== "presente" && est !== "atraso") return;
       min += minAula;

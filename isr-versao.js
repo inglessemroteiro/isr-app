@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-g",
+  numero: "2026.08.20-h",
   data: "20/08/2026",
-  nota: "O cartão Desafio da semana do app aponta para a semana atual: o link é configurado na Agenda (Assinatura) e trocado toda segunda"
+  nota: "Aviso de ausências sai da Central após contato registrado (e volta com falta nova); chamada de aula particular no Painel do Professor com baixa no pacote; ranking do grupo no app da aluna sem expor as contagens das colegas"
 };

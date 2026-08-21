@@ -403,10 +403,10 @@ class Component extends DCLogic {
           onChamada: () => {
             if (ev) {
               const lbl = CRM.aulaExtraLabel(ev);
-              this.setState({ eventoChamada: ev.id, turmaChamada: lbl, chamadaData: ev.data,
+              this.setState({ eventoChamada: ev.id, particularChamada: null, turmaChamada: lbl, chamadaData: ev.data,
                 presencas: this.carregarChamada(lbl, ev.data, ev.id), tarefas: null, salvouAgora: false });
             } else if (daTurma) {
-              this.setState({ eventoChamada: null, turmaChamada: daTurma.label, chamadaData: it.data,
+              this.setState({ eventoChamada: null, particularChamada: null, turmaChamada: daTurma.label, chamadaData: it.data,
                 presencas: this.carregarChamada(daTurma.label, it.data), tarefas: null, salvouAgora: false });
             }
             const el = this.chamadaRef.current;
@@ -449,7 +449,17 @@ class Component extends DCLogic {
       return null;
     })();
 
+    // alunas particulares desta professora: entram no seletor da chamada
+    // como "Particular · Nome" — sem isso não havia como registrar a aula
+    // (nem presença, nem a baixa no pacote)
+    const particularesProf = CRM.getPessoas().filter(x => x.status === "aluna"
+      && ((x.turma || "").indexOf("Particular") === 0 || !!x.particular)
+      && (!x.professora || x.professora === teacher));
+    const partSel = (!evSel && this.state.particularChamada)
+      ? CRM.getPessoa(this.state.particularChamada) : null;
+
     const turmaSel = evSel ? CRM.aulaExtraLabel(evSel)
+      : partSel ? "Particular · " + partSel.nome
       : (this.state.turmaChamada
         || (tpTurma && tpTurma.teacher === teacher ? tpTurma.label : null)
         || (proxima ? proxima.label : null)
@@ -460,7 +470,9 @@ class Component extends DCLogic {
           : (!this.state.turmaChamada && proxima && proxima.label === turmaSel ? proxima.data : hojeIso)));
     const presAtual = this.state.presencas
       || (turmaSel ? this.carregarChamada(turmaSel, dataSel, evSel ? evSel.id : null) : {});
-    const alunas = evSel ? CRM.listaChamadaExtra(evSel.id) : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
+    const alunas = evSel ? CRM.listaChamadaExtra(evSel.id)
+      : partSel ? [partSel]
+      : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
     const salva = turmaSel ? CRM.getChamada(turmaSel, dataSel) : null;
     const tarAtual = this.state.tarefas || ((salva && salva.tarefas) || {});
 
@@ -646,8 +658,12 @@ class Component extends DCLogic {
 
       turmasChamada: turmasProfOcup.map(u => ({
         id: u.label, label: u.label + " · " + u.ocupadas + (u.ocupadas === 1 ? " aluna" : " alunas"),
-        sel: !evSel && u.label === turmaSel
-      })).concat(extrasProf.map(e => ({
+        sel: !evSel && !partSel && u.label === turmaSel
+      })).concat(particularesProf.map(px => ({
+        id: "part:" + px.id,
+        label: "Particular · " + px.nome,
+        sel: !evSel && !!partSel && partSel.id === px.id
+      }))).concat(extrasProf.map(e => ({
         id: "ev:" + e.id,
         label: "Aula extra · " + e.titulo + " · " + CRM.ddmm(e.data),
         sel: !!evSel && evSel.id === e.id
@@ -658,17 +674,24 @@ class Component extends DCLogic {
           const ev2 = CRM.getEvento(v.slice(3));
           if (!ev2) return;
           const lbl = CRM.aulaExtraLabel(ev2);
-          this.setState({ eventoChamada: ev2.id, turmaChamada: lbl, chamadaData: ev2.data,
+          this.setState({ eventoChamada: ev2.id, particularChamada: null, turmaChamada: lbl, chamadaData: ev2.data,
             presencas: this.carregarChamada(lbl, ev2.data, ev2.id), tarefas: null, salvouAgora: false });
           return;
         }
-        this.setState({ eventoChamada: null, turmaChamada: v, chamadaData: null,
+        if (v.indexOf("part:") === 0) {
+          const px = CRM.getPessoa(v.slice(5));
+          if (!px) return;
+          this.setState({ eventoChamada: null, particularChamada: px.id, turmaChamada: null, chamadaData: null,
+            presencas: this.carregarChamada("Particular · " + px.nome, dataSel), tarefas: null, salvouAgora: false });
+          return;
+        }
+        this.setState({ eventoChamada: null, particularChamada: null, turmaChamada: v, chamadaData: null,
           presencas: this.carregarChamada(v, dataSel), tarefas: null, salvouAgora: false });
       },
       chamadaData: dataSel,
       onDataChamada: (e) => {
         const v = e.target.value || this.hojeIso();
-        this.setState({ chamadaData: v, turmaChamada: turmaSel,
+        this.setState({ chamadaData: v, turmaChamada: partSel ? null : turmaSel,
           presencas: turmaSel ? this.carregarChamada(turmaSel, v, evSel ? evSel.id : null) : null,
           tarefas: null, salvouAgora: false });
       },
@@ -813,8 +836,13 @@ class Component extends DCLogic {
         this.bump();
       },
       onSalvarChamada: () => {
-        CRM.salvarChamada(turmaSel, dataSel, presAtual, (user && user.nome) || "", tarAtual);
-        this.setState({ salvouAgora: true, turmaChamada: turmaSel, chamadaData: dataSel, tarefas: tarAtual });
+        // a grade mostra "presente" para quem não foi tocada, mas quem não
+        // estava no registro não contava hora nem dava baixa no pacote —
+        // salvar grava o estado de todas as alunas listadas
+        const cheio = {};
+        alunas.forEach(a => { cheio[a.id] = presAtual[a.id] !== undefined ? presAtual[a.id] : true; });
+        CRM.salvarChamada(turmaSel, dataSel, cheio, (user && user.nome) || "", tarAtual);
+        this.setState({ salvouAgora: true, turmaChamada: partSel ? null : turmaSel, chamadaData: dataSel, tarefas: tarAtual });
       },
 
       turmasProf: turmasProfOcup.map(u => ({
