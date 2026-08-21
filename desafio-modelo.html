@@ -272,19 +272,13 @@ function montarEnvio() {
 
 function avisar(msg) { document.getElementById("status").textContent = msg; }
 
-// identidade: quem está logada não digita nada; sem sessão, os campos aparecem
+// identidade: aluna logada vê o nome dela; equipe vê o aviso de
+// visualização; sem sessão, os campos aparecem. A lógica vive no
+// isr-desafio.js — aqui só o fallback para quando ele não carregar.
 function mostrarIdentidade() {
-  var linha = document.getElementById("ident-linha");
-  var campos = document.getElementById("ident-campos");
-  var a = window.ISRDesafio ? ISRDesafio.aluna() : null;
-  if (a) {
-    linha.innerHTML = "Você está fazendo o desafio como <b></b> · " +
-      "<a href=\"aluna.html?trocar\">trocar de conta</a>";
-    linha.querySelector("b").textContent = a.nome.split(" ")[0];
-  } else {
-    linha.hidden = true;
-    campos.hidden = false;
-  }
+  if (window.ISRDesafio && ISRDesafio.pintarIdentidade) { ISRDesafio.pintarIdentidade(); return; }
+  document.getElementById("ident-linha").hidden = true;
+  document.getElementById("ident-campos").hidden = false;
 }
 
 function enviar() {

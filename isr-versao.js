@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-l",
+  numero: "2026.08.20-m",
   data: "20/08/2026",
-  nota: "Semana do desafio com fluxo garantido: modelo oficial desafio-modelo.html (identidade automática, registro e confirmação prontos) e verificador no GitHub que confere o contrato de cada página publicada"
+  nota: "Página do desafio na visão da equipe: em vez dos campos de nome e e-mail, o aviso de visualização — a aluna logada vê o nome dela e não digita nada"
 };
