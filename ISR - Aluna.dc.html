@@ -320,6 +320,22 @@
         </section>
         </sc-if>
 
+        <!-- RANKING DO GRUPO (programa) — posições e nomes, sem as contagens -->
+        <sc-if value="{{ temRanking }}">
+          <section style="margin: 0 0 20px;">
+            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+              <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Ranking do grupo</h3>
+              <p style="margin: 0 0 10px; font-size: 12px; color: #7d6d63; line-height: 1.55;">A ordem vem da participação nos desafios.</p>
+              <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="5">
+                <div style="display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 8px; background: {{ rk.bg }};">
+                  <span style="flex: none; width: 26px; font-size: 12.5px; font-weight: 800; color: {{ rk.cor }};">{{ rk.pos }}</span>
+                  <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
         <!-- FLIN · prática com IA, resgatada com miles -->
         <sc-if value="{{ flinAtivo }}">
           <a href="{{ flinUrl }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-decoration: none; background: #164951; border-radius: 14px; padding: 16px; margin: 0 0 20px;">
@@ -1278,6 +1294,22 @@ class Component extends DCLogic {
       resumoPresenca: jornada.aulas
         ? jornada.presentes + " de " + jornada.aulas + " aulas com presença (" + jornada.frequencia + "%)."
         : "",
+
+      // ranking do grupo (programa): posições e primeiros nomes, sem as
+      // contagens de cada colega — esses números ficam só com a escola
+      temRanking: soPrograma && !!pg,
+      ranking: (soPrograma && pg ? CRM.rankingPrograma(pg.id) : []).slice(0, 10).map(r => {
+        const partes = String(r.nome || "").trim().split(/\s+/);
+        const curto = partes[0] + (partes[1] ? " " + partes[1][0] + "." : "");
+        const eu = r.pessoaId === p.id;
+        return {
+          pos: r.posicao + "º",
+          nome: eu ? "Você" : curto,
+          bg: eu ? "rgba(52,138,142,0.10)" : "transparent",
+          peso: eu ? "800" : (r.posicao <= 3 ? "700" : "500"),
+          cor: eu || r.posicao <= 3 ? "#164951" : "#6b6155"
+        };
+      }),
 
       semJornada: !soPrograma && jornada.aulas === 0,
       numeros: soPrograma
