@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-j",
+  numero: "2026.08.20-k",
   data: "20/08/2026",
-  nota: "App da aluna em 3 dobras (programa piloto + assinatura): Início com sequência de semanas ativas e cartão do desafio; dobra Desafio com jornada, material da semana, registro de resposta e ranking top 5; Perfil com dados, miles e cancelamento pelo systeme quando configurado"
+  nota: "Streak automático: a página do desafio, atrás do login, preenche nome e e-mail sozinha e registra a semana no sistema ao enviar — sequência, ranking e miles atualizam sem digitação"
 };
