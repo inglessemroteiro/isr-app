@@ -6322,6 +6322,50 @@
     try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
     agendarSync(); return cfg;
   }
+  function assinantesAtivas() {
+    return loadPessoas().filter(function (p) { return assinaturaAtiva(p); });
+  }
+  // Lista colada (quem já está no desafio): uma pessoa por linha, no
+  // formato "Nome email" / "Nome <email>" / "Nome, email" ou só o e-mail.
+  // A leitura devolve a prévia; nada muda antes do aplicar.
+  function lerListaAssinantes(texto) {
+    var out = [], vistos = {};
+    String(texto || "").split(/\n/).forEach(function (linha) {
+      var l = linha.trim();
+      if (!l) return;
+      var emails = l.match(/[^\s,;<>"']+@[^\s,;<>"']+\.[^\s,;<>"']+/g) || [];
+      if (!emails.length) { out.push({ linha: l, email: "", nome: l, acao: "sem-email" }); return; }
+      emails.forEach(function (em) {
+        var email = em.toLowerCase();
+        if (vistos[email]) return;
+        vistos[email] = 1;
+        var nome = emails.length === 1
+          ? l.replace(em, "").replace(/[<>,;"']/g, " ").replace(/\s+/g, " ").trim()
+          : "";
+        var p = loadPessoas().filter(function (x) {
+          return (x.email || "").trim().toLowerCase() === email;
+        })[0];
+        if (p && assinaturaAtiva(p)) out.push({ email: email, nome: p.nome, id: p.id, acao: "ja-assinante" });
+        else if (p) out.push({ email: email, nome: p.nome, id: p.id, acao: "ativar" });
+        else out.push({ email: email, nome: nome || email.split("@")[0], acao: "criar" });
+      });
+    });
+    return out;
+  }
+  function aplicarListaAssinantes(itens, cfg) {
+    var valor = (cfg && cfg.valor) || "27";
+    var moeda = (cfg && cfg.moeda) || "€";
+    var n = 0;
+    (itens || []).forEach(function (it) {
+      if (it.acao === "ativar") { ativarAssinatura(it.id, { valor: valor, moeda: moeda }); n++; }
+      else if (it.acao === "criar") {
+        var p = novaPessoa({ nome: it.nome, email: it.email, origem: "Assinatura" });
+        ativarAssinatura(p.id, { valor: valor, moeda: moeda });
+        n++;
+      }
+    });
+    return n;
+  }
 
   function produtosDe(pessoaId) {
     var p = getPessoa(pessoaId);
@@ -9102,6 +9146,8 @@
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
+    assinantesAtivas: assinantesAtivas,
+    lerListaAssinantes: lerListaAssinantes, aplicarListaAssinantes: aplicarListaAssinantes,
     renovarMatricula: renovarMatricula, retencao: retencao,
     saidasResumo: saidasResumo, exAlunas: exAlunas,
     // edição depois da matrícula

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-d",
+  numero: "2026.08.20-e",
   data: "20/08/2026",
-  nota: "Entrada refeita sem o widget do Netlify: e-mail e senha direto na API do Identity — convite abre o formulário de criar senha, com redefinição de senha e aviso claro de link expirado"
+  nota: "Assinantes em lote na Agenda: cole a lista de quem já está no desafio (nome e e-mail por linha), veja a prévia, ative todas com o valor padrão e copie os e-mails prontos para o convite do Netlify"
 };
