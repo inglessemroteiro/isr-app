@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Inglês sem Roteiro — Entrar</title>
 <script src="./crm-data.js"></script>
-<!-- Netlify Identity: a porta com senha (convite = só pagantes). Se o
-     widget não carregar (site fora do Netlify, sem internet), a página
-     cai no fluxo antigo de e-mail para ninguém ficar trancada fora. -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
   body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
   .card { background: #fdfbf8; border-radius: 16px; padding: 34px 30px; max-width: 380px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
@@ -18,7 +14,10 @@
   input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; margin-bottom: 10px; }
   button { width: 100%; border: none; background: #348a8e; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; border-radius: 999px; cursor: pointer; font-family: inherit; }
   button.suave { background: transparent; color: #7d6d63; border: 1px solid #e5dccf; }
+  button[disabled] { opacity: 0.6; cursor: default; }
   .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
+  .info { display: none; font-size: 12px; color: #2a9d8f; font-weight: 600; margin: 10px 0 0; }
+  .link { display: inline-block; margin-top: 14px; font-size: 12px; color: #7d6d63; text-decoration: underline; cursor: pointer; background: none; border: none; width: auto; padding: 0; font-weight: 600; }
   .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
   .tela { display: none; }
 </style>
@@ -28,52 +27,70 @@
   <p class="eyebrow">Inglês sem Roteiro</p>
   <h1>Área da aluna</h1>
 
-  <!-- porta com senha (Netlify Identity) -->
-  <div class="tela" id="telaIdentity">
-    <p>Entre com seu e-mail e senha. Ainda não tem senha? O convite chega no e-mail que você usou na matrícula.</p>
-    <button onclick="abrirIdentity()">Entrar →</button>
+  <div class="tela" id="telaCarregando">
+    <p>Carregando…</p>
   </div>
 
-  <!-- verificando quem é depois do login -->
-  <div class="tela" id="telaVerificando">
-    <p>Conferindo seu acesso…</p>
+  <!-- login com e-mail e senha (Netlify Identity, direto na API) -->
+  <div class="tela" id="telaLogin">
+    <p>Entre com seu e-mail e senha.</p>
+    <input id="loginEmail" type="email" placeholder="E-mail" autocomplete="username" />
+    <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
+    <button id="btLogin" onclick="fazerLogin()">Entrar</button>
+    <p class="erro" id="loginErro"></p>
+    <button class="link" onclick="mostrar('telaEsqueci')">Esqueci minha senha</button>
+  </div>
+
+  <!-- redefinição de senha: pedir o link -->
+  <div class="tela" id="telaEsqueci">
+    <p>Informe seu e-mail para receber o link de redefinição de senha.</p>
+    <input id="esqueciEmail" type="email" placeholder="E-mail" autocomplete="username" />
+    <button id="btEsqueci" onclick="pedirRedefinicao()">Enviar link</button>
+    <p class="info" id="esqueciInfo"></p>
+    <p class="erro" id="esqueciErro"></p>
+    <button class="link" onclick="mostrar('telaLogin')">Voltar</button>
   </div>
 
   <!-- chegou pelo link do convite: criar a senha -->
   <div class="tela" id="telaConvite">
-    <p>Seu convite chegou! Agora é só criar a sua senha.</p>
-    <button onclick="abrirConvite()">Criar minha senha →</button>
-    <p class="nota">Se nada acontecer ao tocar no botão, recarregue a página e tente de novo.</p>
+    <p>Convite recebido. Crie sua senha de acesso.</p>
+    <input id="conviteSenha" type="password" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password" />
+    <button id="btConvite" onclick="aceitarConvite()">Criar senha</button>
+    <p class="erro" id="conviteErro"></p>
   </div>
 
-  <!-- o link do convite venceu ou já foi usado -->
-  <div class="tela" id="telaConviteVencido">
-    <p>Este link de convite não vale mais — ele vence em poucos dias e só funciona uma vez. Se você já criou a senha, é só entrar. Se não, peça um convite novo para a escola.</p>
-    <button onclick="abrirIdentity()">Já tenho senha — entrar →</button>
+  <!-- chegou pelo link de redefinição: nova senha -->
+  <div class="tela" id="telaRecovery">
+    <p>Defina sua nova senha.</p>
+    <input id="recoverySenha" type="password" placeholder="Nova senha (mínimo 8 caracteres)" autocomplete="new-password" />
+    <button id="btRecovery" onclick="salvarNovaSenha()">Salvar senha</button>
+    <p class="erro" id="recoveryErro"></p>
   </div>
 
-  <!-- logou, mas o e-mail não está no sistema -->
+  <!-- login feito, mas o e-mail não está no banco da escola -->
   <div class="tela" id="telaNaoEncontrada">
-    <p>Seu login funcionou, mas não achei <strong id="emailNaoEncontrado"></strong> no sistema da escola. Confere se é o mesmo e-mail da matrícula — ou chama a Gabi no WhatsApp.</p>
-    <button class="suave" onclick="sairIdentity()">Sair e tentar com outro e-mail</button>
+    <p>O e-mail <strong id="emailNaoEncontrado"></strong> não está no sistema da escola. Verifique se é o mesmo e-mail usado na matrícula ou fale com a escola.</p>
+    <button class="suave" onclick="voltarAoLogin()">Voltar</button>
   </div>
 
-  <!-- fluxo antigo, só quando o widget não carrega -->
+  <!-- fluxo antigo, só quando o Identity não responde -->
   <div class="tela" id="telaEmail">
-    <p>Entre com o e-mail que você usou na matrícula.</p>
-    <input id="email" type="email" placeholder="voce@email.com" />
-    <button onclick="entrar()">Entrar →</button>
-    <p class="erro" id="erro">Não achei esse e-mail. Confere se é o mesmo da matrícula — ou chama a Gabi no WhatsApp.</p>
+    <p>Entre com o e-mail usado na matrícula.</p>
+    <input id="email" type="email" placeholder="E-mail" />
+    <button onclick="entrar()">Entrar</button>
+    <p class="erro" id="erro">E-mail não encontrado. Verifique se é o mesmo usado na matrícula.</p>
   </div>
 
-  <p class="nota" id="notaRodape">Equipe da escola? Pode entrar por aqui mesmo — o sistema reconhece seu e-mail e abre a gestão.</p>
+  <p class="nota" id="notaRodape">Equipe da escola entra por aqui também — o sistema identifica o e-mail e abre a gestão.</p>
 </div>
 <script>
+  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaNaoEncontrada", "telaEmail"];
   function mostrar(id) {
-    var telas = ["telaIdentity", "telaVerificando", "telaConvite", "telaConviteVencido", "telaNaoEncontrada", "telaEmail"];
-    for (var i = 0; i < telas.length; i++)
-      document.getElementById(telas[i]).style.display = telas[i] === id ? "block" : "none";
+    for (var i = 0; i < TELAS.length; i++)
+      document.getElementById(TELAS[i]).style.display = TELAS[i] === id ? "block" : "none";
   }
+  function texto(id, t) { var el = document.getElementById(id); el.textContent = t; el.style.display = t ? "block" : "none"; }
+  function valor(id) { return (document.getElementById(id).value || "").trim(); }
 
   // ?con=<url do Apps Script>: o link embutido no portal já traz a conexão
   // com a base da escola. No primeiro acesso o navegador da aluna baixa os
@@ -86,11 +103,8 @@
     if (con && window.ISRCRM) {
       if (window.ISRCRM.backendUrl() !== con) window.ISRCRM.setBackendUrl(con);
       puxando = true;
-      var nota = document.getElementById("notaRodape");
-      if (nota) nota.textContent = "Conectando com a escola…";
       window.ISRCRM.carregarDoBackend(function () {
         puxando = false;
-        if (nota) nota.textContent = "";
         if (aoTerminarPuxe) aoTerminarPuxe();
       });
       // se a rede falhar, não prende a pessoa aqui para sempre
@@ -104,7 +118,7 @@
   // equipe → gestão com os papéis dela · aluna (assinatura, regular ou
   // programa) → app da aluna · e-mail desconhecido → aviso.
   function decidirDestino(email) {
-    if (puxando) { aoTerminarPuxe = function () { decidirDestino(email); }; mostrar("telaVerificando"); return; }
+    if (puxando) { aoTerminarPuxe = function () { decidirDestino(email); }; mostrar("telaCarregando"); return; }
     var C = window.ISRCRM;
     var e = String(email || "").trim().toLowerCase();
     if (!e || !C) { mostrar("telaNaoEncontrada"); return; }
@@ -127,60 +141,147 @@
     mostrar("telaNaoEncontrada");
   }
 
-  var identity = window.netlifyIdentity || null;
-  // o e-mail de convite/recuperação aponta para cá com o token no #hash;
-  // o widget costuma abrir a tela de criar senha sozinho, mas quando não
-  // abre (já aconteceu), a aluna ficava olhando a porta sem saída — por
-  // isso a tela própria do convite, com botão manual
-  var temToken = /(invite_token|recovery_token|confirmation_token|email_change_token)=/.test(window.location.hash || "");
-  function abrirIdentity() { if (identity) identity.open("login"); }
-  function abrirConvite() { if (identity) identity.open(); }
-  function sairIdentity() {
+  // ── Netlify Identity direto na API (sem o widget, que falhava em
+  // abrir a janela de senha em alguns navegadores) ──
+  var API = window.location.origin + "/.netlify/identity";
+  var hashToken = (window.location.hash || "").match(/(invite_token|recovery_token|confirmation_token)=([^&]+)/);
+  var trocando = window.location.search.indexOf("trocar") >= 0;
+
+  function comTempo(promessa, ms) {
+    return Promise.race([promessa, new Promise(function (_, rejeita) {
+      setTimeout(function () { rejeita(new Error("tempo esgotado")); }, ms);
+    })]);
+  }
+  function emailDoToken(accessToken) {
+    return fetch(API + "/user", { headers: { Authorization: "Bearer " + accessToken } })
+      .then(function (r) { if (!r.ok) throw new Error("user"); return r.json(); })
+      .then(function (u) { return u.email; });
+  }
+  function voltarAoLogin() {
     try { localStorage.removeItem("isr_aluna_id"); localStorage.removeItem("isr_gestao_user"); } catch (e) {}
-    if (identity) identity.logout();
-    mostrar("telaIdentity");
+    mostrar("telaLogin");
   }
 
-  if (identity) {
-    var trocando = window.location.search.indexOf("trocar") >= 0;
-    identity.on("init", function (user) {
-      if (user && trocando) { sairIdentity(); return; }
-      if (user) { mostrar("telaVerificando"); decidirDestino(user.email); }
-      else if (temToken) mostrar("telaConvite");
-      else mostrar("telaIdentity");
+  function fazerLogin() {
+    var email = valor("loginEmail"), senha = valor("loginSenha");
+    texto("loginErro", "");
+    if (!email || !senha) { texto("loginErro", "Informe e-mail e senha."); return; }
+    document.getElementById("btLogin").disabled = true;
+    fetch(API + "/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=password&username=" + encodeURIComponent(email) + "&password=" + encodeURIComponent(senha)
+    }).then(function (r) {
+      if (!r.ok) throw new Error("credenciais");
+      return r.json();
+    }).then(function () {
+      decidirDestino(email);
+    }).catch(function (e) {
+      document.getElementById("btLogin").disabled = false;
+      texto("loginErro", String(e.message).indexOf("credenciais") >= 0
+        ? "E-mail ou senha incorretos."
+        : "Falha de conexão. Tente novamente.");
     });
-    identity.on("login", function (user) {
-      identity.close();
-      mostrar("telaVerificando");
-      decidirDestino(user.email);
-    });
-    identity.on("logout", function () { mostrar("telaIdentity"); });
-    identity.on("error", function (err) {
-      // o motivo mais comum: link de convite vencido ou já usado
-      if (temToken) mostrar("telaConviteVencido");
-    });
-    identity.init();
-    if (temToken) {
-      // se o widget não abrir a criação de senha sozinho em instantes,
-      // a tela do convite já está na frente com o botão manual
-      mostrar("telaConvite");
-      setTimeout(function () { try { if (!identity.currentUser()) identity.open(); } catch (e) {} }, 1200);
-    }
-  } else {
-    // sem o widget (offline, fora do Netlify): fluxo antigo de e-mail
-    mostrar("telaEmail");
-    var notaEq = document.getElementById("notaRodape");
-    if (notaEq && !puxando) notaEq.innerHTML = 'Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.';
-    if (localStorage.getItem("isr_aluna_id") && window.location.search.indexOf("trocar") < 0) {
-      if (puxando) { aoTerminarPuxe = function () { window.location.replace("ISR%20-%20Aluna.dc.html"); }; }
-      else window.location.replace("ISR%20-%20Aluna.dc.html");
-    }
   }
 
+  function aceitarConvite() {
+    var senha = valor("conviteSenha");
+    texto("conviteErro", "");
+    if (senha.length < 8) { texto("conviteErro", "A senha precisa ter pelo menos 8 caracteres."); return; }
+    document.getElementById("btConvite").disabled = true;
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "signup", password: senha })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("convite");
+      return r.json();
+    }).then(function (d) {
+      return emailDoToken(d.access_token);
+    }).then(function (email) {
+      decidirDestino(email);
+    }).catch(function (e) {
+      document.getElementById("btConvite").disabled = false;
+      texto("conviteErro", String(e.message).indexOf("convite") >= 0
+        ? "Link expirado ou já usado. Peça um novo convite à escola."
+        : "Falha de conexão. Tente novamente.");
+    });
+  }
+
+  function salvarNovaSenha() {
+    var senha = valor("recoverySenha");
+    texto("recoveryErro", "");
+    if (senha.length < 8) { texto("recoveryErro", "A senha precisa ter pelo menos 8 caracteres."); return; }
+    document.getElementById("btRecovery").disabled = true;
+    var acesso = null;
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "recovery" })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("link");
+      return r.json();
+    }).then(function (d) {
+      acesso = d.access_token;
+      return fetch(API + "/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + acesso },
+        body: JSON.stringify({ password: senha })
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error("senha");
+      return emailDoToken(acesso);
+    }).then(function (email) {
+      decidirDestino(email);
+    }).catch(function (e) {
+      document.getElementById("btRecovery").disabled = false;
+      texto("recoveryErro", String(e.message).indexOf("link") >= 0
+        ? "Link expirado. Peça um novo em Esqueci minha senha."
+        : "Falha de conexão. Tente novamente.");
+    });
+  }
+
+  function pedirRedefinicao() {
+    var email = valor("esqueciEmail");
+    texto("esqueciErro", ""); texto("esqueciInfo", "");
+    if (!email) { texto("esqueciErro", "Informe o e-mail."); return; }
+    document.getElementById("btEsqueci").disabled = true;
+    fetch(API + "/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email })
+    }).then(function () {
+      texto("esqueciInfo", "Link de redefinição enviado para o e-mail informado.");
+    }).catch(function () {
+      document.getElementById("btEsqueci").disabled = false;
+      texto("esqueciErro", "Falha de conexão. Tente novamente.");
+    });
+  }
+
+  // confirmação de e-mail sem senha (tipo confirmation_token): verifica
+  // direto e segue para o destino
+  function confirmarEmail() {
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "signup" })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("link");
+      return r.json();
+    }).then(function (d) {
+      return emailDoToken(d.access_token);
+    }).then(function (email) {
+      decidirDestino(email);
+    }).catch(function () {
+      mostrar("telaLogin");
+      texto("loginErro", "Link expirado. Entre com sua senha ou peça um novo link.");
+    });
+  }
+
+  // fluxo antigo, só quando o Identity não responde
   function entrar() {
-    // a primeira carga dos dados pode ainda estar chegando
     if (puxando) { setTimeout(entrar, 600); return; }
-    var email = (document.getElementById("email").value || "").trim().toLowerCase();
+    var email = valor("email").toLowerCase();
     var erro = document.getElementById("erro");
     erro.style.display = "none";
     if (!email || !window.ISRCRM) { erro.style.display = "block"; return; }
@@ -191,9 +292,40 @@
     try { localStorage.setItem("isr_aluna_id", p.id); } catch (e) {}
     window.location.replace("ISR%20-%20Aluna.dc.html");
   }
-  document.getElementById("email").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") entrar();
-  });
+  document.getElementById("email").addEventListener("keydown", function (e) { if (e.key === "Enter") entrar(); });
+  document.getElementById("loginSenha").addEventListener("keydown", function (e) { if (e.key === "Enter") fazerLogin(); });
+
+  // ── entrada ──
+  mostrar("telaCarregando");
+  if (trocando) {
+    try { localStorage.removeItem("isr_aluna_id"); localStorage.removeItem("isr_gestao_user"); } catch (e) {}
+  }
+  // quem já entrou neste aparelho não digita a senha de novo: a sessão
+  // local vale até sair (?trocar)
+  var sessaoGestao = null, sessaoAluna = null;
+  try {
+    sessaoGestao = window.ISRCRM && window.ISRCRM.gestaoUser();
+    sessaoAluna = localStorage.getItem("isr_aluna_id");
+  } catch (e) {}
+  if (!trocando && !hashToken && (sessaoGestao || sessaoAluna)) {
+    var destino = sessaoGestao ? "ISR%20-%20Central.dc.html" : "ISR%20-%20Aluna.dc.html";
+    if (puxando) aoTerminarPuxe = function () { window.location.replace(destino); };
+    else window.location.replace(destino);
+  } else {
+    // o Identity responde neste endereço? Fora do Netlify (ou sem rede),
+    // a página cai no fluxo antigo de e-mail para ninguém ficar trancada
+    comTempo(fetch(API + "/settings"), 5000).then(function (r) {
+      if (!r.ok) throw new Error("sem identity");
+      if (hashToken && hashToken[1] === "invite_token") mostrar("telaConvite");
+      else if (hashToken && hashToken[1] === "recovery_token") mostrar("telaRecovery");
+      else if (hashToken && hashToken[1] === "confirmation_token") confirmarEmail();
+      else mostrar("telaLogin");
+    }).catch(function () {
+      mostrar("telaEmail");
+      var nota = document.getElementById("notaRodape");
+      if (nota) nota.innerHTML = 'Equipe da escola? Seu acesso é pela <a href="gestao.html" style="color: #2a9d8f; font-weight: 700;">área de gestão</a>.';
+    });
+  }
 </script>
 </body>
 </html>
