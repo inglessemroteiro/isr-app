@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-c",
+  numero: "2026.08.20-d",
   data: "20/08/2026",
-  nota: "Convite do Identity confiável: quem chega pelo link do e-mail vê a tela de criar senha (com botão manual se o widget não abrir sozinho) e convite vencido ganha aviso claro com o caminho de quem já tem senha"
+  nota: "Entrada refeita sem o widget do Netlify: e-mail e senha direto na API do Identity — convite abre o formulário de criar senha, com redefinição de senha e aviso claro de link expirado"
 };
