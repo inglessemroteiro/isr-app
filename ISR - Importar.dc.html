@@ -130,7 +130,7 @@
     <sc-if value="{{ temLeituraAlunas }}">
       <div>
         <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
-          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">Resumo da leitura</div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
             <sc-for list="{{ alResumo }}" as="rs" hint-placeholder-count="4">
               <div>
@@ -186,7 +186,7 @@
     <sc-if value="{{ temLeituraLeads }}">
       <div>
         <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
-          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">Resumo da leitura</div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
             <sc-for list="{{ ldResumo }}" as="rs" hint-placeholder-count="4">
               <div>
@@ -198,7 +198,7 @@
         </div>
 
         <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Lead por lead</div>
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Leads lidos</div>
           <sc-for list="{{ ldLinhas }}" as="ld" hint-placeholder-count="8">
             <div style="border-top: 1px solid #f4f1ec; padding: 9px 0;">
               <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
@@ -251,7 +251,7 @@
       <div>
         <!-- RESUMO DA LEITURA -->
         <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
-          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">O que eu li</div>
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 10px;">Resumo da leitura</div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px;">
             <sc-for list="{{ resumo }}" as="rs" hint-placeholder-count="4">
               <div>
@@ -367,21 +367,41 @@ class Component extends DCLogic {
   // O Jotform tem dois endereços de API — o comum e o europeu — e a chave
   // de uma conta guardada na Europa só funciona no europeu. Tenta primeiro
   // o endereço que funcionou da última vez; se a resposta vier com erro,
-  // tenta o outro e guarda o que respondeu.
+  // tenta o outro e guarda o que respondeu. Se o navegador bloquear a
+  // chamada direta (CORS), a busca passa pela Conexão (Apps Script),
+  // que fala com o Jotform pelo servidor.
   jfApi(caminho) {
     const CRM = window.ISRCRM;
-    const tenta = (base) => fetch(base + caminho)
+    const chave = CRM.jotformKey();
+    // a chave já vai na própria URL montada pelos chamadores; para a
+    // Conexão, o caminho vai sem ela e ela segue como parâmetro próprio
+    const caminhoSemChave = caminho
+      .replace(/([?&])apiKey=[^&]*&?/, "$1").replace(/[?&]$/, "");
+    const tentaDireto = (base) => fetch(base + caminho)
       .then(r => r.json())
       .then(d => {
         if (!d || d.responseCode !== 200) throw new Error((d && d.message) || "resposta inesperada");
         return d;
       });
+    const tentaConexao = (baseId) => {
+      const con = CRM.backendUrl();
+      if (!con) return Promise.reject(new Error("sem Conexão configurada"));
+      const url = con + (con.indexOf("?") >= 0 ? "&" : "?")
+        + "action=jotform&base=" + baseId
+        + "&key=" + encodeURIComponent(chave)
+        + "&path=" + encodeURIComponent(caminhoSemChave);
+      return fetch(url).then(r => r.json()).then(d => {
+        if (!d || !d.ok) throw new Error((d && d.error) || "resposta inesperada da Conexão");
+        return d.data;
+      });
+    };
     const base = CRM.jotformBase();
     const outra = CRM.jotformOutraBase(base);
-    return tenta(base).catch(e1 =>
-      tenta(outra)
-        .then(d => { CRM.setJotformBase(outra); return d; })
-        .catch(() => { throw e1; }));
+    const baseId = (b) => b.indexOf("eu-") >= 0 ? "eu" : "com";
+    return tentaDireto(base)
+      .catch(() => tentaDireto(outra).then(d => { CRM.setJotformBase(outra); return d; }))
+      .catch(() => tentaConexao(baseId(base)))
+      .catch(() => tentaConexao(baseId(outra)).then(d => { CRM.setJotformBase(outra); return d; }));
   }
   colaRef = React.createRef();
 
@@ -427,21 +447,21 @@ class Component extends DCLogic {
       if (!window.confirm(pergunta + "\n\nUma cópia de segurança é guardada antes.")) return;
       CRM.comecarDoZero({ tudo });
       this.setState({ zerado: tudo
-        ? "Tudo apagado. O app está vazio e pronto para receber os dados reais."
-        : "Alunas, turmas e financeiro apagados. Equipe e regras continuam como estavam.",
+        ? "Todos os dados foram removidos. A base está vazia."
+        : "Alunas, turmas e financeiro removidos. Equipe e configurações mantidas.",
         zerarAberto: false, leitura: null });
       this.bump();
     };
     Object.assign(base, {
       dentroFrase: dentro && dentro.pessoas
-        ? "Hoje o app tem " + dentro.pessoas + " pessoas ("
-          + dentro.alunas + (dentro.alunas === 1 ? " aluna" : " alunas") + " e "
+        ? "Base atual: " + dentro.pessoas + " pessoas ("
+          + dentro.alunas + (dentro.alunas === 1 ? " aluna" : " alunas") + ", "
           + dentro.leads + (dentro.leads === 1 ? " lead" : " leads") + "), "
           + dentro.turmas + (dentro.turmas === 1 ? " turma" : " turmas") + " e "
-          + dentro.chamadas + " chamadas. Se isso é o exemplo que veio de fábrica, "
-          + "limpe antes de importar — senão o de verdade fica misturado com o de mentira."
-        : "O app está vazio. Pode colar a planilha abaixo.",
-      zerarLabel: this.state.zerarAberto ? "fechar" : "limpar antes",
+          + dentro.chamadas + " chamadas. Se esses ainda são os dados de exemplo, "
+          + "remova-os antes de importar os dados reais."
+        : "A base está vazia. Cole a planilha abaixo.",
+      zerarLabel: this.state.zerarAberto ? "fechar" : "Remover dados",
       zerarAberto: this.state.zerarAberto,
       onZerar: () => this.setState({ zerarAberto: !this.state.zerarAberto }),
       onLimparExemplo: () => zerar(false),
@@ -556,7 +576,7 @@ class Component extends DCLogic {
                 count: parseInt(f.count, 10) || 0 })) });
           })
           .catch(e => this.setState({ jfBuscando: false, jfForms: null,
-            jfErro: "Não consegui falar com o Jotform (" + String(e.message || e).slice(0, 80) + "). Testei o endereço comum e o europeu — confira a chave." }));
+            jfErro: "Falha ao consultar o Jotform (" + String(e.message || e).slice(0, 80) + "). Verifique a chave de API. Foram testados os endereços comum e europeu, direto e pela Conexão." }));
       },
       temJfForms: !!(this.state.jfForms && this.state.jfForms.length),
       jfForms: (this.state.jfForms || []).map(f => ({
@@ -639,7 +659,14 @@ class Component extends DCLogic {
           { valor: String(LD.jaAlunas), label: "já são alunas (não entram)", cor: LD.jaAlunas ? "#fc9082" : "#9ec970" },
           { valor: String(LD.comAviso), label: "com algo a conferir", cor: LD.comAviso ? "#fc9082" : "#9ec970" }
         ],
-        ldLinhas: LD.linhas.map(l => ({
+        // novos primeiro, depois os que atualizam cadastro, depois os que
+        // não entram — antes ficava tudo misturado na ordem da planilha
+        ldLinhas: LD.linhas.slice()
+          .sort((a, b) => {
+            const grupo = l => l.avisos.length ? 2 : (l.existe ? 1 : 0);
+            return grupo(a) - grupo(b);
+          })
+          .map(l => ({
           nome: l.nome,
           seloLabel: l.avisos.length ? "não entra" : (l.existe ? "atualiza" : "novo"),
           selo: l.avisos.length ? "#c8622f" : (l.existe ? "#8a7c6b" : "#4a8a3d"),

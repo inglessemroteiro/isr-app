@@ -79,7 +79,10 @@
               <sc-if value="{{ item.ehMsg }}">
                 <a href="{{ item.perfilHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
               </sc-if>
-              <sc-if value="{{ item.ehTarefa }}">
+              <sc-if value="{{ item.temDestino }}">
+                <a href="{{ item.destinoHref }}" style="font-size: 13px; font-weight: 700; color: #2a9d8f; text-decoration: underline; text-underline-offset: 2px;">{{ item.nome }}</a>
+              </sc-if>
+              <sc-if value="{{ item.semDestino }}">
                 <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ item.nome }}</span>
               </sc-if>
               <sc-if value="{{ item.donoChip }}">
@@ -170,7 +173,14 @@
         <input ref="{{ tfPrazoRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         <button onclick="{{ onAddTarefa }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer;">+ Adicionar</button>
         <input ref="{{ tfObsRef }}" placeholder="Observações (opcional) — contexto para quem vai resolver" onkeydown="{{ onTarefaKey }}" style="flex-basis: 100%; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; padding: 8px 12px; border-radius: 8px; font-family: inherit;" />
-        <span style="flex-basis: 100%; font-size: 10.5px; color: #b3a693; line-height: 1.4;">Adicionar (ou Enter) salva na hora e a pendência entra no "Para hoje" da pessoa — imediatamente sem prazo, ou no dia marcado.</span>
+        <input ref="{{ tfPessoaRef }}" list="tfPessoas" placeholder="Aluna ou lead relacionado (opcional) — digite o nome" onkeydown="{{ onTarefaKey }}" style="flex: 1; min-width: 200px; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; padding: 8px 12px; border-radius: 8px; font-family: inherit;" />
+        <datalist id="tfPessoas">
+          <sc-for list="{{ tfPessoasOpts }}" as="po" hint-placeholder-count="8"><option value="{{ po.nome }}"></option></sc-for>
+        </datalist>
+        <select ref="{{ tfTelaRef }}" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <sc-for list="{{ tfTelasOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.href }}">{{ to.label }}</option></sc-for>
+        </select>
+        <span style="flex-basis: 100%; font-size: 10.5px; color: #b3a693; line-height: 1.4;">Adicionar (ou Enter) salva na hora e a pendência entra no "Para hoje" da pessoa — imediatamente sem prazo, ou no dia marcado. Com aluna ou tela indicada, a pendência vira um link direto para onde se resolve.</span>
       </div>
       <sc-if value="{{ semTarefas }}">
         <div style="text-align: center; padding: 22px 20px; color: #9b8b7e; font-size: 12.5px;">Nenhuma pendência aberta. Adicione acima — com prazo, ela entra na fila "Para hoje" da pessoa no dia certo.</div>
@@ -182,6 +192,9 @@
             <span style="display: block; font-size: 13px; font-weight: 600; color: #3d3529;">{{ tf.titulo }}</span>
             <sc-if value="{{ tf.detalhe }}">
               <span style="display: block; font-size: 11px; color: #8a7c6b; line-height: 1.4;">{{ tf.detalhe }}</span>
+            </sc-if>
+            <sc-if value="{{ tf.temDestino }}">
+              <a href="{{ tf.destinoHref }}" style="display: inline-block; font-size: 10.5px; font-weight: 700; color: #2a9d8f; text-decoration: none; margin-top: 2px;">{{ tf.destinoLabel }}</a>
             </sc-if>
           </span>
           <span style="flex: none; background: #f2ebe3; color: #8a7c6b; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">{{ tf.dono }}</span>
@@ -262,6 +275,8 @@ class Component extends DCLogic {
   tfDonoRef = React.createRef();
   tfPrazoRef = React.createRef();
   tfObsRef = React.createRef();
+  tfPessoaRef = React.createRef();
+  tfTelaRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
@@ -306,6 +321,11 @@ class Component extends DCLogic {
         donoChip: perfilAtivo === "gestora" ? (item.dono || "") : "",
         ehTarefa: item.regra === "RT",
         ehMsg: item.regra !== "RT",
+        // pendência com destino: o nome vira link para o Perfil da pessoa
+        // ou para a tela onde ela se resolve
+        temDestino: item.regra === "RT" && !!item.href,
+        semDestino: item.regra === "RT" && !item.href,
+        destinoHref: item.href || "",
         onConcluir: () => { CRM.setTarefaFeita(item.tarefaId, true); this.bump(); },
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + item.pessoaId,
         acaoHref: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId + "&tpl=" + item.tpl,
@@ -339,6 +359,11 @@ class Component extends DCLogic {
       titulo: tf.titulo, dono: tf.dono, detalhe: tf.detalhe || "",
       prazoLabel: tf.prazo ? CRM.ddmm(tf.prazo) : "",
       prazoCor: tf.prazo && tf.prazo <= hojeIso && !tf.feita ? "#e07856" : "#8a7c6b",
+      temDestino: !!(tf.pessoaId || tf.tela),
+      destinoHref: tf.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + tf.pessoaId : (tf.tela || ""),
+      destinoLabel: tf.pessoaId
+        ? "abrir " + ((CRM.getPessoa(tf.pessoaId) || {}).nome || "o perfil").split(" ")[0] + " →"
+        : "abrir a tela →",
       onFeita: () => { CRM.setTarefaFeita(tf.id, !soFeitas); this.bump(); },
       onRemover: () => { CRM.removeTarefa(tf.id); this.bump(); }
     }));
@@ -350,13 +375,20 @@ class Component extends DCLogic {
       const dono = perfilAtivo === "gestora"
         ? ((this.tfDonoRef.current && this.tfDonoRef.current.value) || "Gabi")
         : donoDoPerfil[perfilAtivo];
+      // nome digitado vira o id da pessoa (busca exata, sem acento)
+      const nomeRel = ((this.tfPessoaRef.current && this.tfPessoaRef.current.value) || "").trim();
+      const pessoaRel = nomeRel ? CRM.pessoaPorNome(nomeRel) : null;
       CRM.addTarefa({ titulo, dono,
         detalhe: (this.tfObsRef.current && this.tfObsRef.current.value) || "",
+        pessoaId: pessoaRel ? pessoaRel.id : "",
+        tela: (this.tfTelaRef.current && this.tfTelaRef.current.value) || "",
         prazo: (this.tfPrazoRef.current && this.tfPrazoRef.current.value) || "",
         por: (user && user.nome) || "" });
       this.tfTituloRef.current.value = "";
       if (this.tfPrazoRef.current) this.tfPrazoRef.current.value = "";
       if (this.tfObsRef.current) this.tfObsRef.current.value = "";
+      if (this.tfPessoaRef.current) this.tfPessoaRef.current.value = "";
+      if (this.tfTelaRef.current) this.tfTelaRef.current.value = "";
       this.bump();
     };
 
@@ -487,6 +519,25 @@ class Component extends DCLogic {
       podeAtribuir: perfilAtivo === "gestora",
       tfTituloRef: this.tfTituloRef, tfDonoRef: this.tfDonoRef, tfPrazoRef: this.tfPrazoRef,
       tfObsRef: this.tfObsRef,
+      tfPessoaRef: this.tfPessoaRef,
+      tfTelaRef: this.tfTelaRef,
+      tfPessoasOpts: CRM.getPessoas()
+        .filter(x => ["aluna", "mvs", "pausada", "programa", "lead"].indexOf(x.status) >= 0)
+        .map(x => ({ nome: x.nome }))
+        .sort((a, b) => a.nome.localeCompare(b.nome)),
+      tfTelasOpts: [
+        { href: "", label: "Tela relacionada (opcional)" },
+        { href: "ISR%20-%20Cobran%C3%A7a.dc.html", label: "Cobrança" },
+        { href: "ISR%20-%20Caixa.dc.html", label: "Caixa" },
+        { href: "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html", label: "CRM" },
+        { href: "ISR%20-%20Agenda.dc.html", label: "Agenda" },
+        { href: "ISR%20-%20Turmas%20e%20Projetos.dc.html", label: "Turmas e projetos" },
+        { href: "ISR%20-%20Alunas.dc.html", label: "Alunas" },
+        { href: "ISR%20-%20Acompanhamento.dc.html", label: "Acompanhamento" },
+        { href: "ISR%20-%20Painel%20do%20Professor.dc.html", label: "Painel do Professor" },
+        { href: "ISR%20-%20Importar.dc.html", label: "Importar" },
+        { href: "ISR%20-%20Mural.dc.html", label: "Mural da equipe" }
+      ],
       onAddTarefa: addTarefa,
       onTarefaKey: (e) => { if (e.key === "Enter") { e.preventDefault(); addTarefa(); } },
       temMais: !this.state.verTodos && filaAll.length > LIMIT,

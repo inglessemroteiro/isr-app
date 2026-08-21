@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-h",
+  numero: "2026.08.20-i",
   data: "20/08/2026",
-  nota: "Aviso de ausências sai da Central após contato registrado (e volta com falta nova); chamada de aula particular no Painel do Professor com baixa no pacote; ranking do grupo no app da aluna sem expor as contagens das colegas"
+  nota: "CRM mais fácil de manter: Jotform lido pela Conexão quando o navegador bloqueia a chamada direta, prévia da importação com os novos primeiro, linguagem revisada, e pendências com destino — apontam para a aluna ou para a tela onde se resolvem"
 };
