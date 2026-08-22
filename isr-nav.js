@@ -52,7 +52,7 @@
       id: "alunas", label: "Alunas", cor: "#fc9082",
       itens: [
         { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora"] },
+        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] },
         { label: "App da aluna", desc: "A tela que a aluna vê, para conferir", href: "ISR - Aluna.dc.html", perfis: null }
       ]
