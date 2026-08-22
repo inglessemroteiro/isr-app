@@ -1012,6 +1012,16 @@
           + (pr.sinalRecebido ? " recebido" : " ainda não recebido") : "");
   }
 
+  // A matrícula encerra a conversa de matrícula pendente. Sem isto, a
+  // conversa de quem fechou ficava aberta no funil ("passou da data")
+  // e nunca contava na conversão.
+  function concluirReuniaoPelaMatricula(p) {
+    if (p.reuniao && !p.reuniao.feita) {
+      p.reuniao.feita = true;
+      pushHist(p, "reuniao", "Conversa de matrícula concluída — virou matrícula");
+    }
+  }
+
   function matricular(id, cfg) {
     // condições já combinadas valem como padrão: o que não vier no
     // formulário da matrícula é herdado da proposta, sem redigitar
@@ -1040,6 +1050,7 @@
     return mutate(id, function (p) {
       p.status = "aluna";
       p.estagio = "matriculado";
+      concluirReuniaoPelaMatricula(p);
       p.turma = turmaLabel;
       p.professora = unit ? unit.teacher : "";
       p.formatos = (p.formatos || []).concat([particular ? "particular" : "grupo"]);
@@ -1142,6 +1153,7 @@
       horarios: p.horarios, querComecar: p.querComecar,
       estagio: p.estagio, badge: p.badge || "",
       proximoFollowup: p.proximoFollowup || "",
+      inscricao: p.inscricao || [],
       historico: p.historico || [], status: p.status, motivoPerda: p.motivoPerda || ""
     };
   }
@@ -1390,8 +1402,16 @@
     var marcadas = [], feitas = [], vencidas = [];
     loadPessoas().forEach(function (p) {
       if (!p.reuniao || !p.reuniao.data) return;
+      // Quem já virou aluna (turma, programa ou assinatura) tem a conversa
+      // resolvida por definição — mesmo que ninguém tenha apertado "feita".
+      // Sem isto, a matrícula da Carla ficava para sempre em "passou da
+      // data" e nunca contava na conversão.
+      var virou = p.status !== "lead";
+      // Lead perdido encerra a conversa junto: não vira "feita", mas
+      // também não fica cobrando para sempre.
+      if (!virou && p.estagio === "perdido" && !p.reuniao.feita) return;
       var r = { pessoaId: p.id, nome: p.nome, data: p.reuniao.data, hora: p.reuniao.hora || "",
-        feita: !!p.reuniao.feita, virouAluna: p.status === "aluna" };
+        feita: !!p.reuniao.feita || virou, virouAluna: virou };
       if (r.feita) { if (r.data >= addDays(-n)) feitas.push(r); }
       else if (r.data < hoje) vencidas.push(r);
       else if (r.data <= limite) marcadas.push(r);
@@ -2044,6 +2064,7 @@
         p.estagio = "matriculado";
         if (!p.desde) p.desde = desde;
       }
+      concluirReuniaoPelaMatricula(p);
       pushHist(p, "matricula", "Entrou no " + pg.nome + " · " + valorTxt
         + (pago ? " (pago)" : " (a receber)"));
     });
@@ -6345,6 +6366,7 @@
       p.assinatura = { inicio: iso(today()), valor: (cfg && cfg.valor) || "",
         moeda: (cfg && cfg.moeda) || "\u20ac" };
       if (p.status === "lead") { p.status = "aluna"; p.estagio = "matriculado"; }
+      concluirReuniaoPelaMatricula(p);
       pushHist(p, "estagio", "Assinatura ativada"
         + (p.assinatura.valor ? " \u00b7 " + p.assinatura.valor + "/m\u00eas" : ""));
     });
@@ -8406,7 +8428,7 @@
   function lerLeadsDoJotform(submissions, canalOuTitulo) {
     var linhas = ["Nome\tWhatsApp\tE-mail\tCanal\tEstágio\tNível\tObservação\tData"];
     (submissions || []).forEach(function (s) {
-      var nome = "", email = "", fone = "", nivel = "", nota = [];
+      var nome = "", email = "", fone = "", nivel = "", canal = "", nota = [];
       var ans = s.answers || {};
       Object.keys(ans).forEach(function (k) {
         var a = ans[k] || {};
@@ -8430,6 +8452,9 @@
           if (!fone) fone = v;
         } else if (rotulo.indexOf("nivel") >= 0) {
           nivel = v;
+        } else if (rotulo.indexOf("conheceu") >= 0 || rotulo.indexOf("como soube") >= 0) {
+          // "Como você nos conheceu" é o canal do lead, não uma observação
+          canal = v;
         } else {
           // Consentimento e termos não são história da pessoa — poluíam a
           // ficha ("Estou ciente que o contato será via e-mail…").
@@ -8448,7 +8473,7 @@
         }
       });
       if (!nome) return;
-      linhas.push([nome, fone, email, canalOuTitulo || "Aplicação", "", nivel,
+      linhas.push([nome, fone, email, canal || canalOuTitulo || "Aplicação", "", nivel,
         nota.join(" · ").slice(0, 800), (s.created_at || "").slice(0, 10)].join("\t"));
     });
     if (linhas.length === 1) return { ok: false, linhas: [],
