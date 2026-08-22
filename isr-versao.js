@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-n",
+  numero: "2026.08.20-o",
   data: "20/08/2026",
-  nota: "Login num aparelho novo: a porta traz a conexão da escola embutida e baixa a base antes de negar um e-mail — acaba o falso não está no sistema"
+  nota: "Feedback da equipe: follow-up com data livre (Perfil e CRM), cartão Presenças na ficha da aluna com as chamadas uma a uma, e Acompanhamento liberado para a operação"
 };

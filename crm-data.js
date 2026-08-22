@@ -4797,6 +4797,23 @@
     });
     return n;
   }
+  // Toda chamada em que a pessoa aparece, mais recente primeiro — é o
+  // que a ficha mostra para a equipe acompanhar faltas e fazer contato
+  function presencasDe(pessoaId) {
+    var m = chamadasAll(), out = [];
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      out.push({ data: ch.data, turma: ch.turma || "", estado: estadoPresenca(ch.presencas[pessoaId]) });
+    });
+    (eventosLista ? eventosLista() : []).forEach(function (e) {
+      var lista = e.chamada && e.chamada.presencas;
+      if (!lista || !(pessoaId in lista)) return;
+      out.push({ data: e.data, turma: "Aula extra · " + e.titulo, estado: estadoPresenca(lista[pessoaId]) });
+    });
+    out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    return out;
+  }
   function ultimaFaltaDe(pessoaId) {
     var m = chamadasAll(), ultima = null;
     Object.keys(m).forEach(function (k) {
@@ -9127,7 +9144,7 @@
     textoAulaExtra: textoAulaExtra, mailtoAulaExtra: mailtoAulaExtra,
     aulasExtraDaAluna: aulasExtraDaAluna,
     agendaItens: agendaItens, gcalLink: gcalLink,
-    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, alunasDaTurma: alunasDaTurma,
+    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, alunasDaTurma: alunasDaTurma,
     chamadasDaTurma: chamadasDaTurma,
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
     responderMissao: responderMissao, programaDaAluna: programaDaAluna,

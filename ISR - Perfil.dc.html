@@ -434,6 +434,25 @@
               <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
             </div>
           </div>
+
+          <!-- PRESENÇAS · chamada a chamada, para o acompanhamento fazer
+               contato ("a Franciny faltou 2 aulas seguidas") -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Presenças</span>
+              <span style="font-size: 10.5px; font-weight: 700; color: {{ presencasCor }};">{{ presencasResumo }}</span>
+            </div>
+            <sc-if value="{{ semPresencas }}">
+              <div style="font-size: 11px; color: #b8ada0;">Nenhuma chamada registrada para ela ainda.</div>
+            </sc-if>
+            <sc-for list="{{ presencasView }}" as="pz" hint-placeholder-count="6">
+              <div style="display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid #f4f1ec; font-size: 11.5px;">
+                <span style="flex: none; font-weight: 700; color: #164951;">{{ pz.data }}</span>
+                <span style="flex: 1; min-width: 0; color: #8a7c6b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pz.turma }}</span>
+                <span style="flex: none; font-weight: 700; color: {{ pz.cor }};">{{ pz.estado }}</span>
+              </div>
+            </sc-for>
+          </div>
           </sc-if>
 
           <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
@@ -542,10 +561,12 @@
                 </sc-for>
               </div>
               <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 6px;">Próximo follow-up: <strong style="color: #164951;">{{ followupAtual }}</strong></div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                 <sc-for list="{{ followups }}" as="fu" hint-placeholder-count="3">
                   <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
                 </sc-for>
+                <span style="font-size: 10px; color: #9b8b7e;">ou na data:</span>
+                <input type="date" onchange="{{ onFollowupData }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; padding: 5px 8px; border-radius: 8px; font-family: inherit;" />
               </div>
               <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ avisoFunil }}</p>
               <sc-if value="{{ marcandoReuniao }}">
@@ -1302,6 +1323,28 @@ class Component extends DCLogic {
       }));
     }
 
+      // presenças chamada a chamada — a Érika acompanha as faltas daqui
+      const pres = CRM.presencasDe ? CRM.presencasDe(p.id) : [];
+      const faltasN = pres.filter(z => z.estado === "falta").length;
+      const EST_PRES = {
+        presente: { label: "presente", cor: "#5a9e4b" },
+        atraso: { label: "com atraso", cor: "#d4941a" },
+        falta: { label: "faltou", cor: "#cf6b5c" },
+        justificada: { label: "avisou", cor: "#8a7c6b" }
+      };
+      out.semPresencas = pres.length === 0;
+      out.presencasResumo = pres.length
+        ? pres.length + (pres.length === 1 ? " aula" : " aulas") + " · "
+          + faltasN + (faltasN === 1 ? " falta" : " faltas")
+        : "";
+      out.presencasCor = faltasN >= 2 ? "#cf6b5c" : "#8a7c6b";
+      out.presencasView = pres.slice(0, 10).map(z => ({
+        data: CRM.ddmm(z.data),
+        turma: z.turma,
+        estado: (EST_PRES[z.estado] || EST_PRES.presente).label,
+        cor: (EST_PRES[z.estado] || EST_PRES.presente).cor
+      }));
+
     if (out.ehLead) {
       out.stageOptions = CRM.STAGES.map(s => {
         const sel = s.id === p.estagio;
@@ -1370,6 +1413,12 @@ class Component extends DCLogic {
       out.followups = CRM.followupPresets().map(f => ({
         label: f.label, onClick: () => { CRM.setFollowup(p.id, f.iso, f.label); this.bump(); }
       }));
+      // a Carla pediu a data livre: os três botões não cobrem "liga na
+      // volta das férias dela"
+      out.onFollowupData = (e) => {
+        const v = e.target.value;
+        if (v) { CRM.setFollowup(p.id, v, "data escolhida"); this.bump(); }
+      };
       const interesse = p.turmaInteresse || "";
       out.turmasInteresse = [{ id: "", label: "— ainda não definida", sel: !interesse }]
         .concat(CRM.ocupacaoTurmas().map(t => ({
