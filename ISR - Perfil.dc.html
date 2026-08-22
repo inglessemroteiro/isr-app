@@ -666,6 +666,26 @@
             </div>
           </sc-if>
 
+          <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
+               conversa) entra aqui, inclusive com data passada — é o que
+               zera o "sem contato há N dias" e o aviso de ausências -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Registrar contato</div>
+            <div style="font-size: 11px; color: #8a7c6b; margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <select ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
+              </select>
+              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Registrar</button>
+              <sc-if value="{{ rcFeito }}">
+                <span style="font-size: 11.5px; font-weight: 700; color: #5a9e4b; align-self: center;">Contato registrado.</span>
+              </sc-if>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Aceita data passada. O registro conta na cadência de contato e tira a pessoa do "sem contato" da Central.</p>
+          </div>
+
           <!-- AÇÕES RÁPIDAS -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
@@ -695,6 +715,7 @@ class Component extends DCLogic {
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
               uf: React.createRef(), pais: React.createRef() };
+  rcTipoRef = React.createRef(); rcDataRef = React.createRef(); rcNotaRef = React.createRef();
   partAulasRef = React.createRef(); partValorRef = React.createRef();
   partPagoRef = React.createRef(); progPagoRef = React.createRef();
   asnValorRef = React.createRef(); asnMoedaRef = React.createRef();
@@ -1323,6 +1344,31 @@ class Component extends DCLogic {
       }));
     }
 
+      // registrar contato manual, com data retroativa — mensagem mandada
+      // por fora (Whats, e-mail) entra aqui e conta na cadência
+      out.rcTipoRef = this.rcTipoRef;
+      out.rcDataRef = this.rcDataRef;
+      out.rcNotaRef = this.rcNotaRef;
+      out.rcTipos = CRM.TOQUE_TIPOS.map(t => ({ id: t.id, label: t.label }));
+      out.rcFeito = this.state.rcFeito;
+      const ut = CRM.ultimoToque(p.id);
+      const dst = CRM.diasSemToque(p.id);
+      out.ultimoContatoFrase = ut
+        ? "Último contato: " + CRM.ddmm(ut.data)
+          + (dst === 0 ? " (hoje)" : " (há " + dst + (dst === 1 ? " dia)" : " dias)"))
+        : "Nenhum contato registrado ainda.";
+      out.onRegistrarContatoManual = () => {
+        const g = r => ((r.current && r.current.value) || "").trim();
+        CRM.registrarToque(p.id,
+          g(this.rcTipoRef) || "checkin",
+          g(this.rcNotaRef),
+          { data: g(this.rcDataRef) || undefined, por: (CRM.gestaoUser() || {}).nome || "" });
+        if (this.rcNotaRef.current) this.rcNotaRef.current.value = "";
+        if (this.rcDataRef.current) this.rcDataRef.current.value = "";
+        this.setState({ rcFeito: true });
+        setTimeout(() => this.setState({ rcFeito: false }), 2500);
+        this.bump();
+      };
       // presenças chamada a chamada — a Érika acompanha as faltas daqui
       const pres = CRM.presencasDe ? CRM.presencasDe(p.id) : [];
       const faltasN = pres.filter(z => z.estado === "falta").length;
