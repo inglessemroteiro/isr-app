@@ -47,7 +47,12 @@
       <sc-if value="{{ temReuProximas }}">
         <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px;">
           <sc-for list="{{ reuProximas }}" as="rp" hint-placeholder-count="3">
-            <a href="{{ rp.href }}" style="text-decoration: none; background: {{ rp.bg }}; color: {{ rp.cor }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">{{ rp.label }}</a>
+            <span style="display: inline-flex; align-items: center; gap: 4px;">
+              <a href="{{ rp.href }}" style="text-decoration: none; background: {{ rp.bg }}; color: {{ rp.cor }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">{{ rp.label }}</a>
+              <sc-if value="{{ rp.podeFeita }}">
+                <button onclick="{{ rp.onFeita }}" title="A conversa aconteceu — marcar como feita" style="border: 1px solid #d8d2c6; background: #fff; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">feita ✓</button>
+              </sc-if>
+            </span>
           </sc-for>
         </div>
       </sc-if>
@@ -254,6 +259,20 @@
                     <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #c08a5e; font-weight: 700; margin-bottom: 4px;">Origem detalhada</div>
                     <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6;">{{ lead.origemDetalhe }}<br><span style="color: #a2957f;">Veio de:</span> {{ lead.veioDe }} · <span style="color: #a2957f;">Entrou por:</span> {{ lead.entrouPor }}</div>
                   </div>
+                  <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
+                  <sc-if value="{{ lead.temInscricao }}">
+                    <div style="margin-top: 12px; background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; padding: 10px 13px;">
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Ficha da inscrição</div>
+                      <sc-for list="{{ lead.inscricao }}" as="iq" hint-placeholder-count="3">
+                        <div style="padding: 5px 0; border-bottom: 1px solid #f4f1ec;">
+                          <sc-if value="{{ iq.rotulo }}">
+                            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b3a693; margin-bottom: 2px;">{{ iq.rotulo }}</div>
+                          </sc-if>
+                          <div style="font-size: 12px; color: #3d3529; line-height: 1.5;">{{ iq.valor }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
                 </div>
 
                 <div>
@@ -833,6 +852,15 @@ class Component extends DCLogic {
         out.origemDetalhe = l.origemDetalhe || "—";
         out.veioDe = l.veioDe || "—";
         out.entrouPor = l.entrouPor || "—";
+        // a ficha da inscrição inteira, pergunta a pergunta — o comercial
+        // trabalha aqui e precisa ver tudo o que a pessoa respondeu
+        out.temInscricao = !!(l.inscricao && l.inscricao.length);
+        out.inscricao = (l.inscricao || []).map(t => {
+          const i = t.indexOf(": ");
+          return (i > 2 && i < 90)
+            ? { rotulo: t.slice(0, i), valor: t.slice(i + 2) }
+            : { rotulo: "", valor: t };
+        });
         out.waStageLink = this.waForStage(l);
         out.followupInfo = l.proximoFollowup ? ("Próximo follow-up: " + CRM.ddmm(l.proximoFollowup) + " (" + CRM.relativeDays(l.proximoFollowup) + ")") : "";
         out.followups = CRM.followupPresets().map(f => ({
@@ -1025,7 +1053,11 @@ class Component extends DCLogic {
         label: CRM.ddmm(x.r.data) + (x.r.hora ? " " + x.r.hora : "") + " · " + CRM.firstName(x.r.nome),
         href: "ISR%20-%20Perfil.dc.html?id=" + x.r.pessoaId,
         bg: x.atrasada ? "rgba(207,107,92,0.12)" : "rgba(107,91,149,0.11)",
-        cor: x.atrasada ? "#cf6b5c" : "#6b5b95"
+        cor: x.atrasada ? "#cf6b5c" : "#6b5b95",
+        // conversa que passou da data se resolve aqui mesmo: aconteceu →
+        // feita; virou matrícula, o sistema marca sozinho na matrícula
+        podeFeita: x.atrasada,
+        onFeita: () => { CRM.marcarReuniaoFeita(x.r.pessoaId); this.bump(); }
       }));
 
     // ── ATIVIDADE ─────────────────────────────────────────────────

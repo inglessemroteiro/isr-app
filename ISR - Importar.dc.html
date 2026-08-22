@@ -73,15 +73,22 @@
             <button onclick="{{ onJfBuscarForms }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ jfBuscarLabel }}</button>
             <button onclick="{{ onJfTrocarChave }}" style="border: none; background: transparent; color: #b3a693; font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px; font-family: inherit;">trocar a chave</button>
           </div>
+          <sc-if value="{{ temJfForms }}">
+            <p style="margin: 10px 0 0; font-size: 11.5px; color: #a2957f; line-height: 1.6;">Sincronizar aplica na hora: cria os leads novos, completa telefone e e-mail vazios de quem já existe e não mexe em quem já é aluna. Nada é removido do sistema. Conferir antes mostra a lista linha a linha para aplicar depois.</p>
+          </sc-if>
           <sc-for list="{{ jfForms }}" as="jf" hint-placeholder-count="3">
-            <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f4f1ec; margin-top: 8px;">
-              <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f4f1ec; margin-top: 8px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 160px;">
                 <div style="font-size: 13px; font-weight: 600; color: #164951;">{{ jf.title }}</div>
                 <div style="font-size: 11px; color: #a2957f;">{{ jf.detalhe }}</div>
               </div>
-              <button onclick="{{ jf.onBuscar }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Buscar inscrições</button>
+              <button onclick="{{ jf.onSincronizar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Sincronizar</button>
+              <button onclick="{{ jf.onBuscar }}" style="border: 1px solid #d8d2c6; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conferir antes</button>
             </div>
           </sc-for>
+          <sc-if value="{{ temJfSync }}">
+            <div style="margin-top: 10px; background: #eef5ec; border: 1px solid #cfe0c8; border-radius: 8px; padding: 10px 13px; font-size: 12px; color: #3f6b35; line-height: 1.6;">{{ jfSync }}</div>
+          </sc-if>
         </sc-if>
         <sc-if value="{{ temJfErro }}">
           <p style="margin: 10px 0 0; font-size: 12px; color: #cf6b5c; font-weight: 600; line-height: 1.5;">{{ jfErro }}</p>
@@ -579,36 +586,66 @@ class Component extends DCLogic {
             jfErro: "Falha ao consultar o Jotform (" + String(e.message || e).slice(0, 80) + "). Verifique a chave de API. Foram testados os endereços comum e europeu, direto e pela Conexão." }));
       },
       temJfForms: !!(this.state.jfForms && this.state.jfForms.length),
-      jfForms: (this.state.jfForms || []).map(f => ({
-        title: f.title,
-        detalhe: f.count + (f.count === 1 ? " inscrição" : " inscrições"),
-        onBuscar: () => {
-          if (this.state.jfBuscando) return;
-          this.setState({ jfBuscando: true, jfErro: "" });
-          // Busca por páginas de 200 até acabar (teto de 1000): o
-          // histórico inteiro de inscrições entra de uma vez — o dedupe
-          // por e-mail/WhatsApp garante que repetir não duplica.
-          const buscarTudo = (offset, acc) =>
-            this.jfApi("/form/" + f.id + "/submissions?apiKey="
-              + encodeURIComponent(CRM.jotformKey())
-              + "&limit=200&orderby=created_at&offset=" + offset)
-              .then(d => {
-                const lote = d.content || [];
-                const todas = acc.concat(lote);
-                if (lote.length === 200 && todas.length < 1000) return buscarTudo(offset + 200, todas);
-                return todas;
-              });
-          buscarTudo(0, [])
-            .then(todas => {
-              const r2 = CRM.lerLeadsDoJotform(todas, f.title);
-              if (!r2.ok) { this.setState({ jfBuscando: false, jfErro: r2.erro }); return; }
-              this.setState({ jfBuscando: false, leituraLeads: r2,
-                leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
-            })
-            .catch(e => this.setState({ jfBuscando: false,
-              jfErro: "Não consegui buscar as inscrições (" + String(e.message || e).slice(0, 80) + ")." }));
-        }
-      })),
+      jfForms: (this.state.jfForms || []).map(f => {
+        // Busca por páginas de 200 até acabar (teto de 1000): o
+        // histórico inteiro de inscrições entra de uma vez — o dedupe
+        // por e-mail/WhatsApp garante que repetir não duplica.
+        const buscarTudo = (offset, acc) =>
+          this.jfApi("/form/" + f.id + "/submissions?apiKey="
+            + encodeURIComponent(CRM.jotformKey())
+            + "&limit=200&orderby=created_at&offset=" + offset)
+            .then(d => {
+              const lote = d.content || [];
+              const todas = acc.concat(lote);
+              if (lote.length === 200 && todas.length < 1000) return buscarTudo(offset + 200, todas);
+              return todas;
+            });
+        return {
+          title: f.title,
+          detalhe: f.count + (f.count === 1 ? " inscrição" : " inscrições"),
+          // Sincronizar: busca e aplica na hora, sem passar pela conferência.
+          // Só faz o que é seguro — criar novos, completar vazios — e conta
+          // o que fez. Nunca remove ninguém.
+          onSincronizar: () => {
+            if (this.state.jfBuscando) return;
+            this.setState({ jfBuscando: true, jfErro: "", jfSync: "" });
+            buscarTudo(0, [])
+              .then(todas => {
+                const r2 = CRM.lerLeadsDoJotform(todas, f.title);
+                if (!r2.ok) { this.setState({ jfBuscando: false, jfErro: r2.erro }); return; }
+                const ap = CRM.aplicarLeads(r2);
+                const partes = [
+                  r2.linhas.length + (r2.linhas.length === 1 ? " inscrição lida" : " inscrições lidas"),
+                  ap.criados + (ap.criados === 1 ? " lead novo criado" : " leads novos criados"),
+                  ap.atualizados + (ap.atualizados === 1 ? " cadastro atualizado" : " cadastros atualizados"),
+                  r2.jaAlunas + (r2.jaAlunas === 1 ? " já é aluna (fica como está)" : " já são alunas (ficam como estão)")
+                ];
+                if (ap.contatosCompletados)
+                  partes.push(ap.contatosCompletados + (ap.contatosCompletados === 1
+                    ? " contato de aluna completado" : " contatos de alunas completados"));
+                this.setState({ jfBuscando: false,
+                  jfSync: f.title + " sincronizado agora · " + partes.join(" · ") + " · nada foi removido" });
+                this.bump();
+              })
+              .catch(e => this.setState({ jfBuscando: false,
+                jfErro: "Não consegui buscar as inscrições (" + String(e.message || e).slice(0, 80) + ")." }));
+          },
+          onBuscar: () => {
+            if (this.state.jfBuscando) return;
+            this.setState({ jfBuscando: true, jfErro: "", jfSync: "" });
+            buscarTudo(0, [])
+              .then(todas => {
+                const r2 = CRM.lerLeadsDoJotform(todas, f.title);
+                if (!r2.ok) { this.setState({ jfBuscando: false, jfErro: r2.erro }); return; }
+                this.setState({ jfBuscando: false, leituraLeads: r2,
+                  leitura: null, leituraAlunas: null, erro: "", ldFeito: "" });
+              })
+              .catch(e => this.setState({ jfBuscando: false,
+                jfErro: "Não consegui buscar as inscrições (" + String(e.message || e).slice(0, 80) + ")." }));
+          }
+        };
+      }),
+      temJfSync: !!this.state.jfSync, jfSync: this.state.jfSync || "",
       temJfErro: !!this.state.jfErro, jfErro: this.state.jfErro,
 
       // ── direto do systeme.io (via Conexão, por causa do CORS) ──

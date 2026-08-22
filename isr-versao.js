@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-q",
+  numero: "2026.08.20-r",
   data: "20/08/2026",
-  nota: "Redesign do modo desafio no app da aluna com a identidade das páginas do desafio: fonte Inter carregada de verdade, hero escuro com trilha e ação principal, material e grupo em faixa teal, ranking com círculos de posição"
+  nota: "Conversa de matrícula dá baixa sozinha quando o lead vira aluna (e tem baixa em um clique no funil); Jotform ganha Sincronizar em um clique que só cria e completa — nunca remove —, o canal vem do Como você nos conheceu e a ficha da inscrição aparece no card do lead"
 };
