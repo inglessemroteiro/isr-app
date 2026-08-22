@@ -10,6 +10,11 @@
 <script src="./crm-data.js"></script>
 <script src="./isr-icones.js"></script>
 <link rel="stylesheet" href="./isr-tokens.css">
+<!-- a Inter é declarada no font-family desde sempre, mas nunca era
+     carregada — o app caía na fonte do sistema -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 <x-dc>
@@ -87,32 +92,26 @@
              atividades). No celular os wrappers são blocos neutros. -->
         <div class="al-cols">
         <div class="al-main">
-        <!-- MODO DESAFIO · semana + sequência + cartão do desafio -->
+        <!-- MODO DESAFIO · hero da semana: a marca do desafio, a trilha
+             e a ação da semana num bloco só -->
         <sc-if value="{{ modoDesafio }}">
-          <sc-if value="{{ temTrilha }}">
-            <section style="margin: 12px 0 14px;">
-              <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px;">
-                  <span style="font-size: 12px; font-weight: 700; color: #164951;">{{ trilhaSemanaLabel }}</span>
-                  <span style="flex: none; font-size: 11px; color: #7d6d63;">{{ streakFrase }}</span>
-                </div>
-                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                  <sc-for list="{{ trilhaChips }}" as="tc" hint-placeholder-count="8">
-                    <span style="width: 30px; height: 30px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">{{ tc.n }}</span>
+          <section style="margin: 12px 0 22px;">
+            <button onclick="{{ onIrDesafio }}" class="isr-btn" style="display: block; width: 100%; text-align: left; border: none; background: #164951; border-radius: 18px; padding: 22px 20px 24px; cursor: pointer; font-family: inherit; box-shadow: 0 10px 28px rgba(22,73,81,0.28);">
+              <span style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9ec970;">Desafio · Inglês sem Roteiro</span>
+                <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 4px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 999px;">{{ desafioCardSelo }}</span>
+              </span>
+              <span style="display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #fffdf8; line-height: 1.15; margin: 8px 0 6px;">{{ desafioCardTitulo }}</span>
+              <span style="display: block; font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.55; margin-bottom: 14px;">{{ desafioCardSub }}</span>
+              <sc-if value="{{ temTrilha }}">
+                <span style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                  <sc-for list="{{ trilhaChipsHero }}" as="tc" hint-placeholder-count="8">
+                    <span style="width: 32px; height: 32px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;">{{ tc.n }}</span>
                   </sc-for>
-                </div>
-              </div>
-            </section>
-          </sc-if>
-
-          <section style="margin: 0 0 20px;">
-            <button onclick="{{ onIrDesafio }}" class="isr-btn" style="display: block; width: 100%; text-align: left; border: none; background: #164951; border-radius: 16px; padding: 18px; cursor: pointer; font-family: inherit; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
-                <span style="font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.5px;">{{ desafioCardTitulo }}</span>
-                <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 3px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ desafioCardSelo }}</span>
-              </div>
-              <span style="display: block; font-size: 18px; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 10px;">{{ desafioCardSub }}</span>
-              <span style="display: inline-block; background: #fc9082; color: #164951; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 10px;">Abrir o desafio →</span>
+                </span>
+                <span style="display: block; font-size: 11.5px; color: #9ec970; margin-bottom: 14px;">{{ streakFrase }}</span>
+              </sc-if>
+              <span class="isr-btn-coral" style="display: inline-block; background: #fc9082; color: #164951; padding: 13px 22px; font-size: 14px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(252,144,130,0.35);">Abrir o desafio →</span>
             </button>
           </section>
         </sc-if>
@@ -165,14 +164,12 @@
           </sc-if>
 
           <sc-if value="{{ temAsnGrupo }}">
-            <a href="{{ asnGrupoLink }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: #fff; padding: 14px 16px; margin: 0 0 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #5a9a2e;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="flex: 1; min-width: 0;">
-                  <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 600; color: #2c3e50;">Grupo no WhatsApp</h4>
-                  <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.5;">Os áudios do desafio e os avisos acontecem lá.</p>
-                </div>
-                <span style="flex: none; font-size: 10px; font-weight: 700; color: #5a9a2e; text-transform: uppercase; letter-spacing: 0.3px;">Entrar</span>
-              </div>
+            <a href="{{ asnGrupoLink }}" target="_blank" rel="noopener" class="isr-btn" style="display: flex; align-items: center; gap: 13px; text-decoration: none; background: #164951; padding: 14px 16px; margin: 0 0 10px; border-radius: 14px;">
+              <span style="flex: 1; min-width: 0;">
+                <span style="display: block; font-size: 13px; font-weight: 800; color: #fffdf8;">Grupo no WhatsApp</span>
+                <span style="display: block; font-size: 11.5px; color: #9ec970; line-height: 1.4; margin-top: 2px;">Os áudios do desafio e os avisos acontecem lá.</span>
+              </span>
+              <span style="flex: none; background: #fc9082; color: #164951; font-size: 12px; font-weight: 800; padding: 9px 14px; border-radius: 99px;">Entrar</span>
             </a>
           </sc-if>
 
@@ -590,7 +587,7 @@
           <section style="margin: 12px 0 16px;">
             <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
               <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-                <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Sua jornada</h3>
+                <h3 style="margin: 0; font-size: 11px; font-weight: 800; color: #229090; text-transform: uppercase; letter-spacing: 0.09em;">Sua jornada</h3>
                 <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ trilhaSemanaLabel }}</span>
               </div>
               <p style="margin: 0 0 12px; font-size: 12px; color: #7d6d63; line-height: 1.55;">{{ streakFrase }} {{ trilhaRestam }}</p>
@@ -605,13 +602,13 @@
 
         <!-- o desafio da semana abre a página do material -->
         <section style="margin: 0 0 16px;">
-          <a href="{{ asnDesafioHref }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: #164951; border-radius: 16px; padding: 18px; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
-              <span style="font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.5px;">{{ desafioCardTitulo }}</span>
-              <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 3px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ desafioCardSelo }}</span>
-            </div>
-            <span style="display: block; font-size: 16px; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 10px;">{{ desafioCardSub }}</span>
-            <span style="display: inline-block; background: #fc9082; color: #164951; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 10px;">Abrir o material da semana</span>
+          <a href="{{ asnDesafioHref }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-decoration: none; background: #164951; border-radius: 18px; padding: 20px; box-shadow: 0 10px 28px rgba(22,73,81,0.28);">
+            <span style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9ec970;">{{ desafioCardTitulo }}</span>
+              <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 4px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 999px;">{{ desafioCardSelo }}</span>
+            </span>
+            <span style="display: block; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; color: #fffdf8; line-height: 1.35; margin: 8px 0 14px;">{{ desafioCardSub }}</span>
+            <span class="isr-btn-coral" style="display: inline-block; background: #fc9082; color: #164951; padding: 12px 20px; font-size: 13px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(252,144,130,0.35);">Abrir o material da semana</span>
           </a>
         </section>
 
@@ -653,16 +650,16 @@
         <sc-if value="{{ temRanking }}">
           <section style="margin: 0 0 16px;">
             <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <h3 style="margin: 0 0 4px; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Ranking do grupo</h3>
+              <h3 style="margin: 0 0 4px; font-size: 11px; font-weight: 800; color: #229090; text-transform: uppercase; letter-spacing: 0.09em;">Ranking do grupo</h3>
               <p style="margin: 0 0 10px; font-size: 12px; color: #7d6d63; line-height: 1.55;">A ordem vem da participação nos desafios.</p>
               <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="6">
                 <div>
                   <sc-if value="{{ rk.salto }}">
                     <div style="text-align: center; color: #c9bfb2; font-size: 12px; padding: 2px 0;">···</div>
                   </sc-if>
-                  <div style="display: flex; align-items: baseline; gap: 10px; padding: 7px 10px; border-radius: 8px; background: {{ rk.bg }};">
-                    <span style="flex: none; width: 26px; font-size: 12.5px; font-weight: 800; color: {{ rk.cor }};">{{ rk.pos }}</span>
-                    <span style="flex: 1; min-width: 0; font-size: 13px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
+                  <div style="display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 10px; background: {{ rk.bg }};">
+                    <span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: {{ rk.posBg }}; color: {{ rk.posFg }}; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800;">{{ rk.pos }}</span>
+                    <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
                   </div>
                 </div>
               </sc-for>
@@ -1427,6 +1424,8 @@ class Component extends DCLogic {
             bg: eu ? "rgba(52,138,142,0.10)" : "transparent",
             peso: eu ? "800" : (r.posicao <= 3 ? "700" : "500"),
             cor: eu || r.posicao <= 3 ? "#164951" : "#6b6155",
+            posBg: r.posicao === 1 ? "#fc9082" : (r.posicao <= 3 ? "#164951" : "#f0ede8"),
+            posFg: r.posicao === 1 ? "#164951" : (r.posicao <= 3 ? "#fffdf8" : "#8a7c6b"),
             salto: !!(eu && minha && minha.posicao > 6)
           };
         });
@@ -1606,9 +1605,17 @@ class Component extends DCLogic {
           fg: s.feita ? "#fff" : (s.atual ? "#164951" : "#b3a89d"),
           borda: s.atual ? "#164951" : "transparent"
         }));
+        // a mesma trilha sobre o hero escuro do Início (cores invertidas)
+        const chipsHero = (trilha ? trilha.semanas : []).map(s => ({
+          n: String(s.semana),
+          bg: s.feita ? "#9ec970" : "rgba(255,255,255,0.08)",
+          fg: s.feita ? "#164951" : (s.atual ? "#fffdf8" : "rgba(255,255,255,0.45)"),
+          borda: s.atual ? "#fc9082" : "transparent"
+        }));
         return {
           temTrilha: !!trilha,
           trilhaChips: chips,
+          trilhaChipsHero: chipsHero,
           trilhaSemanaLabel: trilha ? "Semana " + trilha.semanaAtual + " de " + trilha.total : "",
           streakFrase: trilha
             ? (trilha.streak
