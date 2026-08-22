@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-p",
+  numero: "2026.08.20-q",
   data: "20/08/2026",
-  nota: "Contato registrado de verdade: pendência removida não volta (lápide), botão Feito na fila registra o toque e tira o aviso, e o Perfil ganha registro de contato com data retroativa — que zera o sem contato"
+  nota: "Redesign do modo desafio no app da aluna com a identidade das páginas do desafio: fonte Inter carregada de verdade, hero escuro com trilha e ação principal, material e grupo em faixa teal, ranking com círculos de posição"
 };
