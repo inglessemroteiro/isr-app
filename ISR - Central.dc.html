@@ -93,6 +93,7 @@
           </div>
           <sc-if value="{{ item.ehMsg }}">
             <a href="{{ item.acaoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
+            <button onclick="{{ item.onFeito }}" title="Registrar que o contato foi feito — atualiza a data do último contato" style="flex: none; border: 1px solid #9ec970; background: #fff; color: #5a9e4b; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Feito</button>
           </sc-if>
           <sc-if value="{{ item.ehTarefa }}">
             <button onclick="{{ item.onConcluir }}" style="flex: none; border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px; cursor: pointer;">Concluir</button>
@@ -329,6 +330,15 @@ class Component extends DCLogic {
         onConcluir: () => { CRM.setTarefaFeita(item.tarefaId, true); this.bump(); },
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + item.pessoaId,
         acaoHref: "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId + "&tpl=" + item.tpl,
+        // "Feito" registra o toque de verdade: zera o "sem contato" e
+        // silencia o aviso de ausências — mandar a mensagem no WhatsApp
+        // não tem como ser detectado, o registro é este botão
+        onFeito: () => {
+          const TIPO_TOQUE = { faltou: "falta", atrasada: "cobranca", renovacao: "renovacao" };
+          CRM.registrarToque(item.pessoaId, TIPO_TOQUE[item.toque] || "checkin",
+            "Pela Central · " + (item.motivo || item.acao || ""));
+          this.bump();
+        },
         onAdiar: () => { CRM.adiarItem(item.regra, item.pessoaId); this.bump(); }
       };
     });

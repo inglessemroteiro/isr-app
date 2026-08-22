@@ -893,7 +893,9 @@
     return mutate(id, function (p) { p.proximoFollowup = isoStr; pushHist(p, "followup", "Follow-up agendado" + (label ? " · " + label : "")); });
   }
   function addNote(id, texto) { return addHistory(id, "nota", texto); }
-  function registrarContato(id, detalhe) { return addHistory(id, "contato", "Registrado contato" + (detalhe ? " · " + detalhe : "")); }
+  // registra um toque de verdade — é o toque que zera o "sem contato há
+  // N dias" e silencia o aviso de ausências (só o histórico não contava)
+  function registrarContato(id, detalhe) { return registrarToque(id, "checkin", detalhe || ""); }
   function marcarPerdido(id, motivo) {
     return mutate(id, function (p) {
       p.estagio = "perdido"; p.motivoPerda = motivo || "Outro"; p.saidaEm = iso(today());
@@ -2722,8 +2724,16 @@
   // ══════════════════════════════════════════════════════════════
   // ── PENDÊNCIAS (tarefas da equipe — Gabi distribui, cada uma vê a sua) ──
   var TAREFAS_KEY = "isr_tarefas_v1";
-  function tarefasLista() { try { return JSON.parse(localStorage.getItem(TAREFAS_KEY)) || []; } catch (e) { return []; } }
-  function tarefasSave(l) { carimbarLista(l); try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  // Pendência removida vira lápide: a mesclagem do sync soma listas por
+  // id — sem a lápide, o puxe seguinte devolvia a pendência à tela
+  function tarefasRaw() { try { return JSON.parse(localStorage.getItem(TAREFAS_KEY)) || []; } catch (e) { return []; } }
+  function tarefasLista() { return tarefasRaw().filter(function (tf) { return !(tf && tf.apagada); }); }
+  function tarefasSave(l) {
+    var lapides = tarefasRaw().filter(function (tf) { return tf && tf.apagada; });
+    carimbarLista(l);
+    try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l.concat(lapides))); } catch (e) {}
+    agendarSync();
+  }
   function addTarefa(dados) {
     var l = tarefasLista();
     l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
@@ -2807,7 +2817,14 @@
     l.forEach(function (a) { if (a.id === id) a.lido = true; });
     avisosSave(l); return l;
   }
-  function removeTarefa(id) { var l = tarefasLista().filter(function (tf) { return tf.id !== id; }); tarefasSave(l); return l; }
+  function removeTarefa(id) {
+    var l = tarefasRaw().map(function (tf) {
+      return tf.id === id ? { id: tf.id, apagada: iso(today()), _v: Date.now() } : tf;
+    });
+    try { localStorage.setItem(TAREFAS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return tarefasLista();
+  }
 
   // ── FERIADOS DA ESCOLA (a agenda pula as aulas nesses dias) ────
   var FERIADOS_KEY = "isr_feriados_v1";
@@ -2972,7 +2989,7 @@
           if (!sn.naCentral) return;
           itens.push({ regra: mapaRegra[sn.id] || sn.id, sinal: sn.id, dono: sn.dono, urg: sn.urg,
             icon: "", cor: sn.cor, pessoaId: p.id, nome: p.nome,
-            motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl });
+            motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl, toque: sn.toque || "" });
         });
       }
 
@@ -4156,7 +4173,8 @@
       // turmas vai CRU (com as lápides): sem isto a marca de "apagada"
       // não subia ao banco e o puxe seguinte devolvia a turma
       turmas: turmasRaw(), eventos: eventosLista(), chamadas: chamadasAll(),
-      tarefas: tarefasLista(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
+      // tarefas vai CRU (com as lápides das pendências removidas)
+      tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosLista(), cambio: taxaCambio(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),

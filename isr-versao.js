@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-o",
+  numero: "2026.08.20-p",
   data: "20/08/2026",
-  nota: "Feedback da equipe: follow-up com data livre (Perfil e CRM), cartão Presenças na ficha da aluna com as chamadas uma a uma, e Acompanhamento liberado para a operação"
+  nota: "Contato registrado de verdade: pendência removida não volta (lápide), botão Feito na fila registra o toque e tira o aviso, e o Perfil ganha registro de contato com data retroativa — que zera o sem contato"
 };
