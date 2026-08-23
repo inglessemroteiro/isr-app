@@ -177,7 +177,7 @@
             <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Comissão liberada neste mês</span>
             <span style="flex: none; font-size: 12px; font-weight: 700; color: #164951;">{{ totalLiberado }}</span>
           </div>
-          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">A comissão acompanha a parcela: entra quando a aluna paga.</p>
+          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">A comissão é liberada por parcela, na confirmação do pagamento.</p>
           <sc-for list="{{ parcelasComissao }}" as="pc" hint-placeholder-count="4">
             <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; color: #6b6155;">
               <span>{{ pc.nome }}</span><span style="flex: none; font-weight: 700; color: #164951;">{{ pc.valor }}</span>
@@ -188,10 +188,10 @@
       <sc-if value="{{ temAguardando }}">
         <div style="border-top: 1px solid #f4f1ec; margin-top: 6px; padding-top: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #b05c4c; font-weight: 700;">Aguardando a aluna pagar</span>
+            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #b05c4c; font-weight: 700;">Parcelas em aberto</span>
             <span style="flex: none; font-size: 12px; font-weight: 700; color: #b05c4c;">{{ totalAguardando }}</span>
           </div>
-          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">Parcelas deste mês ainda em aberto. A comissão entra quando o pagamento cair.</p>
+          <p style="margin: 0 0 8px; font-size: 11px; color: #b3a693; line-height: 1.5;">Parcelas deste mês ainda em aberto. A comissão é liberada na confirmação do pagamento.</p>
           <sc-for list="{{ aguardando }}" as="ag" hint-placeholder-count="4">
             <div style="display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12px; color: #8a7c6b;">
               <span>{{ ag.nome }}</span><span style="flex: none; font-weight: 700; color: #b05c4c;">{{ ag.valor }}</span>
@@ -211,7 +211,7 @@
         <button onclick="{{ onVerRegras }}" style="flex: none; border: 1px solid #164951; background: {{ regrasBtnBg }}; color: {{ regrasBtnFg }}; font-size: 12.5px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ verRegrasLabel }}</button>
       </div>
       <sc-if value="{{ verRegras }}">
-        <p style="margin: 14px 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Mudar aqui recalcula o mês inteiro. O piso garante que nenhuma professora receba menos do que receberia por hora de aula. A base da fatia são as matrículas ativas: parcela em aberto não reduz o pagamento da professora. Mensalidade em euro entra na folha convertida pela taxa abaixo. O teto limita o que uma professora custa sobre a receita das turmas dela: sem ele, quem tem uma turma só sai mais caro em proporção do que quem tem duas.</p>
+        <p style="margin: 14px 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Alterações recalculam o mês inteiro. O piso define o valor mínimo por hora de aula. O percentual incide sobre as matrículas ativas; parcela em aberto não reduz o pagamento da professora. Mensalidade em euro entra na folha convertida pela taxa abaixo. O teto limita o custo da professora como percentual da receita das turmas dela.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
           <sc-for list="{{ campos }}" as="cp" hint-placeholder-count="13">
             <div>
@@ -228,7 +228,7 @@
         <!-- FAIXAS DA COMISSÃO -->
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f2e9dd;">
           <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Faixas da comissão</div>
-          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">A porcentagem sobe conforme o valor fechado em contrato no mês. Cada degrau vale a partir do valor indicado até o próximo. Deixe a porcentagem em branco para apagar o degrau.</p>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">O percentual varia conforme o valor contratado no mês. Cada faixa vale do valor indicado até a seguinte. Deixe o percentual em branco para remover a faixa.</p>
 
           <div style="display: grid; grid-template-columns: 1.2fr 0.7fr 0.9fr 1.2fr; gap: 8px; margin-bottom: 6px;">
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 700;">A partir de</div>
@@ -321,13 +321,13 @@ class Component extends DCLogic {
           { label: "Tarefa",
             valor: t.pctTarefa === null ? "—" : t.pctTarefa + "%",
             cor: t.pctTarefa === null ? "#b3a693" : (t.tarefaOk ? "#5a9e4b" : "#d4a574") },
-          { label: "Fatia", valor: t.pct + "%", cor: t.metaOk ? "#5a9e4b" : "#164951" }
+          { label: "Percentual", valor: t.pct + "%", cor: t.metaOk ? "#5a9e4b" : "#164951" }
         ];
         if (t.moedaMista) metricas.push({ label: "Em " + cfg.moeda,
           valor: $(t.receita), cor: "#348a8e" });
 
         const alertas = [];
-        if (t.pisoAplicado) alertas.push({ label: "Piso aplicado · fatia daria " + $(t.porFatia),
+        if (t.pisoAplicado) alertas.push({ label: "Piso aplicado · o percentual resultaria em " + $(t.porFatia),
           bg: "rgba(207,107,92,0.12)", fg: "#b05c4c" });
         if (t.abaixoDoMinimo) alertas.push({ label: "Faltam " + t.faltamAlunas + " para o mínimo de " + CRM.MINIMO_TURMA,
           bg: "rgba(207,107,92,0.12)", fg: "#b05c4c" });
@@ -345,8 +345,8 @@ class Component extends DCLogic {
 
       if (paradas) itens.push({
         cor: "#e0dcd6",
-        titulo: paradas + (paradas === 1 ? " turma sem movimento" : " turmas sem movimento"),
-        metricas: [{ label: "Situação", valor: "sem aluna e sem aula", cor: "#b3a693" }],
+        titulo: paradas + (paradas === 1 ? " turma sem atividade no mês" : " turmas sem atividade no mês"),
+        metricas: [{ label: "Situação", valor: "sem aluna e sem aula registrada", cor: "#b3a693" }],
         alertas: [], valor: $(0)
       });
 
@@ -484,14 +484,14 @@ class Component extends DCLogic {
       { id: "fixo", label: "Fixo mensal", ajuda: "reunião + extras incluídas" },
       { id: "pctBase", label: "% da turma", ajuda: "sem as metas do ciclo" },
       { id: "pctMeta", label: "% com metas", ajuda: "frequência e devolutiva em dia" },
-      { id: "pisoAula", label: "Piso por aula", ajuda: "nunca menos que isto" },
+      { id: "pisoAula", label: "Piso por aula", ajuda: "valor mínimo por aula" },
       { id: "metaFrequencia", label: "Meta de frequência", ajuda: "% de presença no ciclo" },
       { id: "metaTarefas", label: "Meta de tarefa", ajuda: "% das aulas com tarefa marcada" },
       { id: "aulaParticular", label: "Aula particular", ajuda: "por aula dada" },
       { id: "extrasIncluidas", label: "Extras incluídas", ajuda: "já pagas pelo fixo" },
       { id: "aulaExtraAlem", label: "Extra além da cota", ajuda: "por aula" },
       { id: "tetoPct", label: "Teto por professora", ajuda: "% máximo da receita das turmas dela" },
-      { id: "diaPagamento", label: "Dia do pagamento", ajuda: "dia do mês em que a folha sai" },
+      { id: "diaPagamento", label: "Dia do pagamento", ajuda: "dia do mês do pagamento da folha" },
       { id: "mesesDepois", label: "Meses depois", ajuda: "0 no mesmo mês, 1 no seguinte" },
       { id: "cambioEur", label: "Euro em reais", ajuda: "quanto vale € 1 na folha" }
     ];
@@ -518,11 +518,11 @@ class Component extends DCLogic {
       // painel, sem carteira e sem remuneração combinada.
       temSemCadastro: (folha.semCadastro || []).length > 0,
       semCadastroFrase: ((folha.semCadastro || []).length === 1
-        ? "Uma pessoa dá aula sem estar no cadastro da equipe. "
-        : (folha.semCadastro || []).length + " pessoas dão aula sem estar no cadastro da equipe. ")
-        + "A folha é de quem é da equipe, então elas não entram no total do mês. "
+        ? "1 pessoa dá aula sem cadastro na equipe. "
+        : (folha.semCadastro || []).length + " pessoas dão aula sem cadastro na equipe. ")
+        + "Não entram no total da folha do mês. "
         + "O cálculo do que fizeram está feito e fica retido até o cadastro"
-        + (folha.totalRetido ? ": " + $(folha.totalRetido) + " parados." : "."),
+        + (folha.totalRetido ? ": " + $(folha.totalRetido) + " retidos." : "."),
       semCadastro: (folha.semCadastro || []).map(s => ({
         nome: s.nome,
         detalhe: (s.turmas.length
@@ -582,7 +582,7 @@ class Component extends DCLogic {
           const nova = i >= atuais.length;
           const naFaixa = !nova && com.faixaDe === f.de;
           return {
-            de: f.de === "" ? "novo degrau" : $(f.de),
+            de: f.de === "" ? "nova faixa" : $(f.de),
             pct: f.pct === "" ? "%" : f.pct + "%",
             bonus: f.bonus === "" ? "bônus" : $(f.bonus || 0),
             situacao: f.situacao || (nova ? "nome" : "—"),

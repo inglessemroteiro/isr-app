@@ -141,7 +141,7 @@
           <span style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">{{ instrucaoChamada }}</span>
           <span style="flex: 1;"></span>
           <button onclick="{{ onTodasPresentes }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Todas presentes</button>
-          <button onclick="{{ onTodasFaltas }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Ninguém veio</button>
+          <button onclick="{{ onTodasFaltas }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar todas como falta</button>
         </div>
       </sc-if>
 
@@ -159,7 +159,7 @@
                   <button onclick="{{ es.onClick }}" title="{{ es.title }}" style="border: 1px solid {{ es.border }}; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ es.label }}</button>
                 </sc-for>
               </div>
-              <button onclick="{{ al.onTarefa }}" title="A tarefa continua no caderno. Aqui só fica registrado se ela entregou." style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ al.tarefaLabel }}</button>
+              <button onclick="{{ al.onTarefa }}" title="Registra apenas a entrega da tarefa. O conteúdo permanece no caderno." style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 11.5px; font-weight: 700; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ al.tarefaLabel }}</button>
               <a href="{{ al.perfilHref }}" style="flex: none; font-size: 11px; font-weight: 700; color: #9b8b7e; text-decoration: none; padding: 7px 4px;">perfil</a>
             </div>
           </sc-for>
@@ -176,7 +176,7 @@
             </div>
           </sc-for>
           <span style="flex: 1; min-width: 4px;"></span>
-          <span style="font-size: 11px; color: #b3a693;">Toque na coluna de hoje para trocar o estado.</span>
+          <span style="font-size: 11px; color: #b3a693;">Toque na coluna do dia para alterar o estado.</span>
         </div>
 
         <div style="overflow-x: auto; border: 1px solid #f0ede8; border-radius: 10px;">
@@ -206,7 +206,7 @@
                 </sc-for>
                 <div style="flex: none; width: 64px; padding: 9px 8px; text-align: right; font-size: 12px; font-weight: 700; color: {{ ln.freqCor }};">{{ ln.freqLabel }}</div>
                 <div style="flex: none; width: 96px; padding: 7px 10px; display: flex; align-items: center; justify-content: center;">
-                  <button onclick="{{ ln.onTarefa }}" title="A tarefa continua no caderno. Aqui só fica registrado se ela entregou." style="border: 1px solid {{ ln.tarefaBorda }}; background: {{ ln.tarefaBg }}; color: {{ ln.tarefaFg }}; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ ln.tarefaLabel }}</button>
+                  <button onclick="{{ ln.onTarefa }}" title="Registra apenas a entrega da tarefa. O conteúdo permanece no caderno." style="border: 1px solid {{ ln.tarefaBorda }}; background: {{ ln.tarefaBg }}; color: {{ ln.tarefaFg }}; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ ln.tarefaLabel }}</button>
                 </div>
               </div>
             </sc-for>
@@ -223,7 +223,7 @@
           </div>
           <span style="font-size: 12px; color: #8a7c6b;">{{ resumoChamada }}</span>
           <sc-if value="{{ salvouAgora }}">
-            <span style="font-size: 12px; color: #348a8e; font-weight: 700;">Salva. Faltas foram para a linha do tempo das alunas.</span>
+            <span style="font-size: 12px; color: #348a8e; font-weight: 700;">Chamada salva. Faltas registradas na linha do tempo das alunas.</span>
           </sc-if>
         </div>
       </sc-if>
@@ -341,10 +341,10 @@ class Component extends DCLogic {
     falta: "rgba(207,107,92,0.14)", justificada: "rgba(107,91,149,0.14)" };
 
   ESTADOS = [
-    { id: "presente", label: "Presente", title: "Veio à aula", cor: "#348a8e" },
-    { id: "atraso", label: "Atrasou", title: "Veio, mas chegou depois do começo", cor: "#d4a574" },
-    { id: "falta", label: "Faltou", title: "Não veio. Entra como falta na linha do tempo dela", cor: "#cf6b5c" },
-    { id: "justificada", label: "Avisou", title: "Não veio, mas avisou antes. Não conta como falta", cor: "#6b5b95" }
+    { id: "presente", label: "Presente", title: "Presente na aula", cor: "#348a8e" },
+    { id: "atraso", label: "Atrasou", title: "Presente, com chegada após o início da aula", cor: "#d4a574" },
+    { id: "falta", label: "Faltou", title: "Ausente. Registrada como falta na linha do tempo da aluna", cor: "#cf6b5c" },
+    { id: "justificada", label: "Justificada", title: "Ausência comunicada antes. Não conta como falta", cor: "#6b5b95" }
   ];
 
   // eventoId preenchido = aula extra: a lista é quem confirmou mais quem a
@@ -504,7 +504,7 @@ class Component extends DCLogic {
         nome: l.nome, perfilHref: "ISR%20-%20Perfil.dc.html?id=" + l.id,
         estadoHoje: [
           estadoHoje ? ({ presente: "Presente hoje", atraso: "Atrasou hoje",
-            falta: "Faltou hoje", justificada: "Avisou hoje" }[estadoHoje]) : "",
+            falta: "Faltou hoje", justificada: "Justificada hoje" }[estadoHoje]) : "",
           l.faltas ? l.faltas + (l.faltas === 1 ? " falta no ciclo" : " faltas no ciclo") : ""
         ].filter(Boolean).join(" · "),
         estadoCor: estadoHoje ? (this.CORES[estadoHoje] || "#348a8e") : "#b3a693",
@@ -526,7 +526,7 @@ class Component extends DCLogic {
               ? "Toque para trocar: presente → atrasou → faltou → avisou"
               : (vazia ? "Aula sem chamada salva"
                        : CRM.ddmm(c.data) + " · " + ({ presente: "Presente", atraso: "Atrasou",
-                          falta: "Faltou", justificada: "Avisou" }[est])),
+                          falta: "Faltou", justificada: "Justificada" }[est])),
             onClick: () => {
               if (!c.atual) return;
               const atual = CRM.estadoPresenca(presAtual[l.id]);
@@ -581,7 +581,7 @@ class Component extends DCLogic {
         marcaBorda: estadoAtual === "falta" ? "#e5dccf" : (this.CORES[estadoAtual] || "#348a8e"),
         marcaTitulo: estadoAtual === "falta" ? "Marcar presença" : "Marcar falta",
         estadoLinha: ({ presente: "Presente", falta: "Faltou",
-          atraso: "Chegou atrasada", justificada: "Avisou que não vinha" }[estadoAtual] || "Presente")
+          atraso: "Chegou atrasada", justificada: "Ausência justificada" }[estadoAtual] || "Presente")
           + (faltas > 0 ? " · " + faltas + (faltas === 1 ? " falta no ciclo" : " faltas no ciclo") : ""),
         estadoCor: this.CORES[estadoAtual] || "#348a8e",
         onMarcar: () => this.marcar(p.id, estadoAtual === "falta" ? "presente" : "falta", presAtual, turmaSel, dataSel),
@@ -593,8 +593,8 @@ class Component extends DCLogic {
         maisFg: this.state.linhaAberta === p.id ? "#9c6f56" : "#c9b9a6",
         maisBorda: this.state.linhaAberta === p.id ? "#e5dccf" : "#eee3d6",
         ressalvas: [
-          { id: "atraso", label: estadoAtual === "atraso" ? "Chegou atrasada ✓" : "Chegou atrasada" },
-          { id: "justificada", label: estadoAtual === "justificada" ? "Avisou antes ✓" : "Avisou antes" }
+          { id: "atraso", label: estadoAtual === "atraso" ? "Atraso ✓" : "Atraso" },
+          { id: "justificada", label: estadoAtual === "justificada" ? "Justificada ✓" : "Justificada" }
         ].map(rv => {
           const on = rv.id === estadoAtual;
           return { label: rv.label,
@@ -650,7 +650,7 @@ class Component extends DCLogic {
           turmaAlvo: (this.neTurmaRef.current && this.neTurmaRef.current.value) || "" });
         [this.neTituloRef, this.neHoraRef, this.neDuracaoRef, this.neLocalRef,
          this.neVagasRef, this.neDescRef].forEach(r => { if (r.current) r.current.value = ""; });
-        this.setState({ neFeito: "Aula extra criada — já está nas próximas aulas e na agenda." });
+        this.setState({ neFeito: "Aula extra criada. Incluída nas próximas aulas e na agenda." });
         this.bump();
       },
 
@@ -747,8 +747,8 @@ class Component extends DCLogic {
       subtituloChamada: this.dataPorExtenso(dataSel)
         + (alunas.length ? " · " + alunas.length + (alunas.length === 1 ? " aluna" : " alunas") : ""),
       instrucaoChamada: evSel
-        ? "Cada aluna começa presente. Toque no estado de quem não veio ou chegou depois."
-        : "Diário do ciclo. Cada aluna começa presente; a coluna de hoje é a que se preenche.",
+        ? "Todas as alunas começam como presentes. Altere o estado das ausentes ou atrasadas."
+        : "Diário do ciclo. Todas começam como presentes; apenas a coluna do dia é editável.",
 
       // trocar de aula pelas aulas de verdade da semana
       aulasChamada: (() => {
@@ -807,7 +807,7 @@ class Component extends DCLogic {
         { letra: "P", label: "presente", bg: "rgba(52,138,142,0.12)", fg: "#348a8e" },
         { letra: "A", label: "atrasou", bg: "rgba(212,165,116,0.20)", fg: "#b0722c" },
         { letra: "F", label: "faltou", bg: "rgba(207,107,92,0.14)", fg: "#cf6b5c" },
-        { letra: "J", label: "avisou", bg: "rgba(107,91,149,0.14)", fg: "#6b5b95" }
+        { letra: "J", label: "justificada", bg: "rgba(107,91,149,0.14)", fg: "#6b5b95" }
       ],
       turmaVaziaLabel: turmaSel || "Esta turma",
       resumoChamada: alunas.length

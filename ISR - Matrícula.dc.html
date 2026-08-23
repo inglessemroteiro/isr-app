@@ -28,12 +28,12 @@
         <p style="margin: 10px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #2a9d8f;">Inglês sem Roteiro · Comercial</p>
         <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: #164951;">Matrícula de {{ nome }}</h1>
       </header>
-      <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6;">Comece pelo que ela comprou. A escola vende três coisas, e uma pessoa pode levar uma, duas ou as três.</p>
+      <p style="margin: 0 0 20px; font-size: 13px; color: #6b6155; line-height: 1.6;">Selecione os produtos contratados. É possível contratar mais de um.</p>
 
       <!-- PASSO 0 · O PRODUTO -->
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">1 · O que ela contratou</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Marque quantos quiser. Os passos seguintes mudam conforme a escolha.</p>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Selecione um ou mais. Os passos seguintes variam conforme a seleção.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
           <sc-for list="{{ opcoesProduto }}" as="op" hint-placeholder-count="3">
             <button onclick="{{ op.onPick }}" style="text-align: left; border: 1px solid {{ op.borda }}; background: {{ op.bg }}; padding: 13px 15px; border-radius: 10px; cursor: pointer; font-family: inherit;">
@@ -74,7 +74,7 @@
           </div>
         </div>
         <details style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
-          <summary style="font-size: 11.5px; color: #8a7c6b; cursor: pointer;">Documento e endereço — o contrato precisa disto</summary>
+          <summary style="font-size: 11.5px; color: #8a7c6b; cursor: pointer;">Documento e endereço (obrigatórios para o contrato)</summary>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
             <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
               <div>
@@ -83,7 +83,7 @@
               </div>
             </sc-for>
           </div>
-          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Ficam guardados só aqui e saem no arquivo dela em Escola · Dados.</p>
+          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Armazenados apenas no sistema e incluídos na exportação em Escola · Dados.</p>
         </details>
       </section>
 
@@ -91,7 +91,7 @@
       <sc-if value="{{ querTurma }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">{{ nTurma }}Turma</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo vêm junto com a turma escolhida.</p>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo são definidos pela turma selecionada.</p>
         <select ref="{{ turmaRef }}" onchange="{{ onTurma }}" style="width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;">
           <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="6">
             <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
@@ -142,7 +142,7 @@
         <sc-if value="{{ temProposta }}">
           <div style="background: rgba(52,138,142,0.07); border-radius: 9px; padding: 9px 12px; margin: 8px 0 0; font-size: 11.5px; color: #2a7a7e; line-height: 1.5;">Condições combinadas em {{ propostaEm }}: {{ propostaResumo }}</div>
         </sc-if>
-        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela cai no mês corrente. Se o dia de vencimento já passou, ela vai para o mês seguinte.</p>
+        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela é lançada no mês corrente; se o dia de vencimento já passou, no mês seguinte.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
           <div>
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
@@ -427,13 +427,13 @@ class Component extends DCLogic {
         + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
       { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e na lista de chamada da turma." },
       { cor: "#d4a574", texto: "As parcelas entram na Cobrança e no Caixa, na categoria da turma." },
-      { cor: "#9ec970", texto: "A integração dos primeiros 30 dias é criada e cai na fila da equipe: boas-vindas, confirmação da primeira aula, check-in da primeira semana e primeiro pagamento." },
+      { cor: "#9ec970", texto: "A integração dos primeiros 30 dias entra na fila da equipe: boas-vindas, confirmação da primeira aula, check-in da primeira semana e primeiro pagamento." },
       { cor: "#2a9d8f", texto: "Os materiais do ciclo da turma passam a aparecer na área da aluna." }
     ]);
     if (querParticular) efeitos.push({ cor: "#6b5b95",
       texto: "O pacote de aulas particulares fica no perfil dela, com as aulas dadas contadas uma a uma." });
     if (!querTurma && !querParticular && querPrograma) efeitos.push({ cor: "#e07856",
-      texto: "Ela vira cliente pelo acompanhamento: entra no sistema sem turma, sem contrato de mensalidade e com o app dela aberto no desafio da semana." });
+      texto: "Cadastrada como cliente do acompanhamento: sem turma e sem contrato de mensalidade. O app dela abre no desafio da semana." });
     if (querPrograma && progNome && (querTurma || querParticular)) efeitos.push({ cor: "#e07856",
       texto: "Além disso, ela entra no " + progNome + " · " + progPreco
         + (this.state.progPago ? ", já pago e lançado no Caixa." : ", a receber.") });
@@ -449,7 +449,7 @@ class Component extends DCLogic {
         ? [unidade.teacher ? "Professora: " + unidade.teacher : "",
            unidade.projeto ? "Projeto: " + unidade.projeto : "",
            unidade.ocupadas + " de " + unidade.capacidade + " vagas ocupadas"].filter(Boolean).join(" · ")
-        : "Aula individual, sem turma fixa. Combine o horário direto com a aluna.",
+        : "Aula individual, sem turma fixa. O horário é combinado diretamente com a aluna.",
       turmaLotada: !!unidade && unidade.vagas <= 0,
       ehParticular, aulasRef: this.aulasRef,
 

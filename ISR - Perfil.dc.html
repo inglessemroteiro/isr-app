@@ -70,7 +70,7 @@
               <button onclick="{{ onSalvarCadastro }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
             </div>
           </div>
-          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">CPF, RG e endereço são dados sensíveis. Ficam guardados para o contrato e saem no arquivo da aluna em Escola · Dados.</p>
+          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Usados na emissão do contrato e incluídos na exportação em Escola · Dados.</p>
         </sc-if>
         <sc-if value="{{ faltaCadastro }}">
           <div style="margin-top: 10px; background: rgba(212,165,116,0.14); border-radius: 9px; padding: 9px 12px; font-size: 11.5px; color: #9c6f56; line-height: 1.5;">{{ faltaCadastroTexto }}</div>
@@ -121,6 +121,77 @@
         <!-- ═══ COLUNA DIREITA · NÚMEROS E DOCUMENTOS ═══ -->
         <div class="pf-dir" style="display: flex; flex-direction: column; gap: 12px;">
 
+          <!-- LEAD: PAINEL DO FUNIL -->
+          <sc-if value="{{ ehLead }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Funil</div>
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;">
+                <sc-for list="{{ stageOptions }}" as="opt" hint-placeholder-count="7">
+                  <button onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
+                </sc-for>
+              </div>
+              <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 6px;">Próximo follow-up: <strong style="color: #164951;">{{ followupAtual }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <sc-for list="{{ followups }}" as="fu" hint-placeholder-count="3">
+                  <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
+                </sc-for>
+                <span style="font-size: 10px; color: #9b8b7e;">ou na data:</span>
+                <input type="date" onchange="{{ onFollowupData }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; padding: 5px 8px; border-radius: 8px; font-family: inherit;" />
+              </div>
+              <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ avisoFunil }}</p>
+              <sc-if value="{{ marcandoReuniao }}">
+                <div style="background: #f6f2ea; border-radius: 10px; padding: 13px 14px; margin-top: 12px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
+                  <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Ao confirmar: cria o evento na agenda de {{ donoReuniao }}, gera a pendência na Central e libera o convite para envio à lead.</p>
+                  <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
+                      <input ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <div>
+                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora · Brasília</div>
+                      <input ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+                    </div>
+                    <button onclick="{{ onMarcarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
+                    <button onclick="{{ onMarcarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                  </div>
+                  <sc-if value="{{ erroReuniao }}">
+                    <p style="margin: 9px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroReuniao }}</p>
+                  </sc-if>
+                  <sc-if value="{{ temBooking }}">
+                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
+                      <a href="{{ bookingUrl }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Ver horários disponíveis de {{ donoReuniao }}</a>
+                      <a href="{{ waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Enviar horários para a lead escolher</a>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ semBooking }}">
+                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
+                      <input ref="{{ bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 200px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <button onclick="{{ onSalvarBooking }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ temReuniao }}">
+                <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; background: rgba(107,91,149,0.07); border: 1px solid rgba(107,91,149,0.22); border-radius: 10px; padding: 10px 12px; margin-top: 12px;">
+                  <span style="font-size: 11.5px; color: #164951; font-weight: 700;">Conversa marcada: {{ reuniaoInfo }}</span>
+                  <a href="{{ waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Enviar convite</a>
+                  <a href="{{ gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Google Agenda</a>
+                </div>
+              </sc-if>
+              <div style="font-size: 10px; color: #9b8b7e; margin: 12px 0 6px;">Turma de interesse <span style="color: #b8ada0;">(vira sugestão na matrícula)</span></div>
+              <select onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
+                  <option value="{{ ti.id }}" selected="{{ ti.sel }}">{{ ti.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 12px; padding: 13px 15px;">
+              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada (imutável)</div>
+              <div style="font-size: 11px; color: #6b6155; line-height: 1.6;">{{ origemDetalhe }}<br><span style="color: #9b8b7e;">Veio de:</span> {{ veioDe }} · <span style="color: #9b8b7e;">Entrou por:</span> {{ entrouPor }}</div>
+            </div>
+          </sc-if>
+
           <!-- ALUNA: CONTRATO VIGENTE -->
           <sc-if value="{{ temContrato }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -145,7 +216,7 @@
                   <div style="display: flex; align-items: flex-end;">
                     <button onclick="{{ onSalvarContrato }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
                   </div>
-                  <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Preencha apenas os campos que deseja alterar; os demais permanecem como estão. Parcelas já pagas não são alteradas — reduzir o número remove apenas as em aberto no fim do contrato. Mudar o início do ciclo desloca todas as parcelas para começarem no mês escolhido — é o ajuste para mensalidades retroativas (a primeira parcela pode ficar no passado).</p>
+                  <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Campos em branco permanecem como estão. Parcelas pagas não são alteradas; reduzir o número remove apenas parcelas em aberto no fim do contrato. Alterar o início do ciclo desloca todas as parcelas para o mês escolhido (uso: mensalidades retroativas).</p>
                 </div>
               </sc-if>
               <div style="font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 2px;">{{ contratoTipo }} · {{ contratoCiclos }}</div>
@@ -199,7 +270,7 @@
 
                 <sc-if value="{{ renegAberto }}">
                   <div style="background: #faf8f3; border: 1px solid #eee3d6; border-radius: 10px; padding: 12px;">
-                    <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Soma o que está em aberto com o que ela vai contratar agora e divide no número de parcelas que cabe no ciclo.</p>
+                    <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Soma o saldo em aberto ao novo ciclo e divide pelo número de parcelas do ciclo.</p>
 
                     <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 11.5px; color: #6b6155; padding: 4px 0;">
                       <span>Em aberto · {{ renegNAbertas }}</span>
@@ -229,7 +300,7 @@
                     </div>
 
                     <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                      <button onclick="{{ onAplicarReneg }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Fechar acordo</button>
+                      <button onclick="{{ onAplicarReneg }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Aplicar renegociação</button>
                       <span style="font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ renegAviso }}</span>
                     </div>
                     <sc-if value="{{ renegErro }}">
@@ -264,11 +335,11 @@
 
 
           </sc-if>
+
           <!-- O QUE ELA CONTRATOU -->
           <sc-if value="{{ ehCliente }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">O que ela contratou</div>
-              <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Turma, aulas particulares e acompanhamento são produtos separados. Dá para ter um, dois ou os três.</p>
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 8px;">Produtos</div>
 
               <sc-for list="{{ produtos }}" as="pd" hint-placeholder-count="3">
                 <div style="border-top: 1px solid #f4f1ec; padding: 12px 0;">
@@ -301,7 +372,7 @@
                   </div>
                   <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: #6b6155; cursor: pointer;">
                     <input type="checkbox" ref="{{ partPagoRef }}" style="width: 15px; height: 15px; accent-color: #348a8e;" />
-                    Já pagou — lançar no Caixa agora
+                    Pagamento recebido — lançar no Caixa
                   </label>
                 </div>
               </sc-if>
@@ -322,7 +393,7 @@
                       <button onclick="{{ onSalvarAssinatura }}" style="width: 100%; border: none; background: #c98a2e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Ativar</button>
                     </div>
                   </div>
-                  <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A assinante entra no app da aluna com o plantão de dúvidas, o desafio da semana e o grupo no WhatsApp. A cobrança é por fora (assinatura recorrente).</p>
+                  <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A assinatura libera no app da aluna o plantão de dúvidas, o desafio da semana e o grupo no WhatsApp. A cobrança recorrente é processada fora do sistema.</p>
                 </div>
               </sc-if>
 
@@ -340,68 +411,65 @@
                   </div>
                   <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: #6b6155; cursor: pointer;">
                     <input type="checkbox" ref="{{ progPagoRef }}" onchange="{{ onProgPago }}" style="width: 15px; height: 15px; accent-color: #348a8e;" />
-                    Já pagou — lançar no Caixa agora
+                    Pagamento recebido — lançar no Caixa
                   </label>
                 </div>
               </sc-if>
             </div>
           </sc-if>
 
-          <!-- ENCERRAR / REABRIR MATRÍCULA · fora do bloco de contrato: aluna particular sem contrato registrado também encerra -->
-          <sc-if value="{{ podeEncerrar }}">
+          <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
+               conversa) entra aqui, inclusive com data passada — é o que
+               zera o "sem contato há N dias" e o aviso de ausências -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Encerrar matrícula</span>
-              <button onclick="{{ onToggleSaida }}" style="border: 1px solid #e5dccf; background: {{ saidaBg }}; color: {{ saidaFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ saidaLabel }}</button>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Registrar contato</div>
+            <div style="font-size: 11px; color: #8a7c6b; margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <select ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
+              </select>
+              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Registrar</button>
+              <sc-if value="{{ rcFeito }}">
+                <span style="font-size: 11.5px; font-weight: 700; color: #5a9e4b; align-self: center;">Contato registrado.</span>
+              </sc-if>
             </div>
-            <sc-if value="{{ encerrando }}">
-              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
-                <sc-for list="{{ tiposSaida }}" as="ts" hint-placeholder-count="3">
-                  <button onclick="{{ ts.onClick }}" title="{{ ts.desc }}" style="border: 1px solid {{ ts.borda }}; background: {{ ts.bg }}; color: {{ ts.fg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ts.label }}</button>
-                </sc-for>
-              </div>
-              <select ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
-                <sc-for list="{{ motivosSaida }}" as="ms" hint-placeholder-count="8"><option value="{{ ms.v }}">{{ ms.v }}</option></sc-for>
-              </select>
-              <input ref="{{ saidaDetalheRef }}" placeholder="Nas palavras dela (opcional)" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;" />
-              <!-- acerto final: parcelas em aberto + valores do caso -->
-              <select ref="{{ saidaParcelasRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
-                <option value="cancelar">Cancelar as parcelas em aberto (padrão)</option>
-                <option value="manter">Manter as vencidas para cobrança (saiu devendo)</option>
-              </select>
-              <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px;">
-                <input ref="{{ saidaAcertoRef }}" placeholder="Acerto final recebido (opcional, ex. 20,00)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <input ref="{{ saidaDevolucaoRef }}" placeholder="Devolução feita (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-              </div>
-              <button onclick="{{ onEncerrar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
-              <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O motivo alimenta a análise de retenção. Acerto e devolução entram no contrato e no Caixa; o Total investido passa a refletir o que foi pago de verdade. As parcelas futuras são sempre canceladas.</p>
-            </sc-if>
+            <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Aceita data retroativa. O registro entra na cadência de contato e remove a pessoa da lista "sem contato" da Central.</p>
           </div>
+
+          <!-- AÇÕES RÁPIDAS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+              <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
+                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
+              </sc-for>
+            </div>
+            <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
+          </div>
+
+          <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Acompanhamento · check-in</div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Próximo check-in: <strong style="color: #164951;">{{ checkinAtual }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
+                <button onclick="{{ onCheckin7 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 semana</button>
+                <button onclick="{{ onCheckin30 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 mês</button>
+                <input ref="{{ checkinDateRef }}" type="date" style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 6px 8px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onCheckinData }}" style="border: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Agendar</button>
+              </div>
+              <sc-if value="{{ temCheckin }}">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #f4f1ec; padding-top: 10px;">
+                  <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px;">+ Google Agenda</a>
+                  <button onclick="{{ onCheckinFeito }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Check-in feito</button>
+                </div>
+              </sc-if>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">O check-in agendado aparece na Central e na Agenda da escola.</p>
+            </div>
           </sc-if>
 
-          <sc-if value="{{ estaEncerrada }}">
-          <div style="background: #f6f2ea; border-left: 4px solid {{ saidaCor }}; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Matrícula encerrada</div>
-            <div style="font-size: 14px; font-weight: 700; color: {{ saidaCor }};">{{ saidaTipoLabel }} · {{ saidaMotivo }}</div>
-            <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 3px;">{{ saidaContexto }}</div>
-            <button onclick="{{ onReabrir }}" style="margin-top: 12px; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Reabrir matrícula</button>
-          </div>
-          </sc-if>
-
-          <!-- LTV · o pago de verdade; o contratado fica de referência -->
-          <div style="background: #164951; border-radius: 12px; padding: 14px 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700;">Total investido (LTV)</span>
-              <span style="font-size: 17px; font-weight: 700; color: #9ec970;">{{ ltvValor }}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-              <span style="font-size: 9px; color: rgba(255,255,255,0.45);">soma do que foi pago de fato</span>
-              <span style="font-size: 10.5px; color: rgba(255,255,255,0.55);">contratado: {{ ltvContratadoValor }}</span>
-            </div>
-          </div>
-
-
-          <sc-if value="{{ mostraPedagogico }}">
           <!-- PEDAGÓGICO · fora do bloco de contrato: toda aluna, antiga ou nova, edita turma e professora -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
@@ -443,7 +511,7 @@
               <span style="font-size: 10.5px; font-weight: 700; color: {{ presencasCor }};">{{ presencasResumo }}</span>
             </div>
             <sc-if value="{{ semPresencas }}">
-              <div style="font-size: 11px; color: #b8ada0;">Nenhuma chamada registrada para ela ainda.</div>
+              <div style="font-size: 11px; color: #b8ada0;">Nenhuma chamada registrada.</div>
             </sc-if>
             <sc-for list="{{ presencasView }}" as="pz" hint-placeholder-count="6">
               <div style="display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid #f4f1ec; font-size: 11.5px;">
@@ -453,36 +521,6 @@
               </div>
             </sc-for>
           </div>
-          </sc-if>
-
-          <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Apagar do sistema</span>
-              <button onclick="{{ onApagarPessoa }}" style="border: 1px solid {{ apagarPesBorda }}; background: {{ apagarPesBg }}; color: #cf6b5c; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ apagarPesLabel }}</button>
-            </div>
-            <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ apagarPesAviso }}</p>
-          </div>
-
-          <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
-          <sc-if value="{{ ehAluna }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Acompanhamento · check-in</div>
-              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Próximo check-in: <strong style="color: #164951;">{{ checkinAtual }}</strong></div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
-                <button onclick="{{ onCheckin7 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 semana</button>
-                <button onclick="{{ onCheckin30 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 mês</button>
-                <input ref="{{ checkinDateRef }}" type="date" style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 6px 8px; border-radius: 8px; font-family: inherit;" />
-                <button onclick="{{ onCheckinData }}" style="border: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Agendar</button>
-              </div>
-              <sc-if value="{{ temCheckin }}">
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #f4f1ec; padding-top: 10px;">
-                  <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px;">+ Google Agenda</a>
-                  <button onclick="{{ onCheckinFeito }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Check-in feito</button>
-                </div>
-              </sc-if>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">O check-in agendado aparece na Central e na Agenda da escola.</p>
-            </div>
           </sc-if>
 
           <!-- MOEDAS DA ALUNA -->
@@ -508,7 +546,7 @@
                 <input ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="flex: 1; min-width: 130px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
                 <button onclick="{{ onAddMoedas }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar</button>
               </div>
-              <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">Presença, parcela em dia e onboarding pontuam sozinhos. Aqui entram bônus (indicação, desafios) e resgates (valor negativo).</p>
+              <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">Presença, parcela em dia e onboarding são pontuados automaticamente. Este campo registra bônus (indicação, desafios) e resgates (valor negativo).</p>
             </div>
           </sc-if>
 
@@ -525,7 +563,7 @@
                 <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
                 <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
               </div>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários você marca na Agenda da escola (aula extra) — feriados não contam.</p>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários são marcados na Agenda da escola (aula extra); feriados não são contabilizados.</p>
             </div>
           </sc-if>
 
@@ -547,78 +585,7 @@
                   <input type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="padding: 5px 8px; font-size: 11px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 7px; background: #fff;" />
                 </div>
               </sc-for>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Pendências aparecem na fila da Érika.</p>
-            </div>
-          </sc-if>
-
-          <!-- LEAD: PAINEL DO FUNIL -->
-          <sc-if value="{{ ehLead }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Funil</div>
-              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;">
-                <sc-for list="{{ stageOptions }}" as="opt" hint-placeholder-count="7">
-                  <button onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
-                </sc-for>
-              </div>
-              <div style="font-size: 10px; color: #9b8b7e; margin-bottom: 6px;">Próximo follow-up: <strong style="color: #164951;">{{ followupAtual }}</strong></div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <sc-for list="{{ followups }}" as="fu" hint-placeholder-count="3">
-                  <button onclick="{{ fu.onClick }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 8px; cursor: pointer;">{{ fu.label }}</button>
-                </sc-for>
-                <span style="font-size: 10px; color: #9b8b7e;">ou na data:</span>
-                <input type="date" onchange="{{ onFollowupData }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; padding: 5px 8px; border-radius: 8px; font-family: inherit;" />
-              </div>
-              <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ avisoFunil }}</p>
-              <sc-if value="{{ marcandoReuniao }}">
-                <div style="background: #f6f2ea; border-radius: 10px; padding: 13px 14px; margin-top: 12px;">
-                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
-                  <p style="margin: 0 0 10px; font-size: 11px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ donoReuniao }}, vira pendência na Central e libera o convite para mandar à lead.</p>
-                  <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: flex-end;">
-                    <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
-                      <input ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-                    </div>
-                    <div>
-                      <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Hora · Brasília</div>
-                      <input ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-                    </div>
-                    <button onclick="{{ onMarcarConfirma }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
-                    <button onclick="{{ onMarcarCancela }}" style="border: 1px solid #e5dccf; background: #fff; color: #9b8b7e; font-size: 12px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
-                  </div>
-                  <sc-if value="{{ erroReuniao }}">
-                    <p style="margin: 9px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroReuniao }}</p>
-                  </sc-if>
-                  <sc-if value="{{ temBooking }}">
-                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
-                      <a href="{{ bookingUrl }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Ver horários disponíveis de {{ donoReuniao }}</a>
-                      <a href="{{ waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Mandar os horários pra lead escolher</a>
-                    </div>
-                  </sc-if>
-                  <sc-if value="{{ semBooking }}">
-                    <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid #eadfce;">
-                      <input ref="{{ bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 200px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                      <button onclick="{{ onSalvarBooking }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
-                    </div>
-                  </sc-if>
-                </div>
-              </sc-if>
-              <sc-if value="{{ temReuniao }}">
-                <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; background: rgba(107,91,149,0.07); border: 1px solid rgba(107,91,149,0.22); border-radius: 10px; padding: 10px 12px; margin-top: 12px;">
-                  <span style="font-size: 11.5px; color: #164951; font-weight: 700;">Conversa marcada: {{ reuniaoInfo }}</span>
-                  <a href="{{ waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Mandar convite</a>
-                  <a href="{{ gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;">Google Agenda</a>
-                </div>
-              </sc-if>
-              <div style="font-size: 10px; color: #9b8b7e; margin: 12px 0 6px;">Turma de interesse <span style="color: #b8ada0;">(vira sugestão na matrícula)</span></div>
-              <select onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
-                <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
-                  <option value="{{ ti.id }}" selected="{{ ti.sel }}">{{ ti.label }}</option>
-                </sc-for>
-              </select>
-            </div>
-            <div style="background: rgba(224,120,86,0.06); border: 1px solid rgba(224,120,86,0.2); border-radius: 12px; padding: 13px 15px;">
-              <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #c98060; font-weight: 700; margin-bottom: 4px;">Origem detalhada (imutável)</div>
-              <div style="font-size: 11px; color: #6b6155; line-height: 1.6;">{{ origemDetalhe }}<br><span style="color: #9b8b7e;">Veio de:</span> {{ veioDe }} · <span style="color: #9b8b7e;">Entrou por:</span> {{ entrouPor }}</div>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Etapas pendentes aparecem na fila do perfil Operação.</p>
             </div>
           </sc-if>
 
@@ -660,41 +627,75 @@
               <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ certResumo }}</p>
               <div style="display: flex; gap: 7px; flex-wrap: wrap;">
                 <a href="{{ certificadoHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir certificado</a>
-                <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #e5dccf; color: #8a7c6b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Ver o app dela</a>
+                <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #e5dccf; color: #8a7c6b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir o app da aluna</a>
               </div>
               <p style="margin: 9px 0 0; font-size: 10.5px; color: {{ acessoCor }};">{{ acessoTexto }}</p>
             </div>
           </sc-if>
 
-          <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
-               conversa) entra aqui, inclusive com data passada — é o que
-               zera o "sem contato há N dias" e o aviso de ausências -->
+          <!-- ENCERRAR / REABRIR MATRÍCULA · fora do bloco de contrato: aluna particular sem contrato registrado também encerra -->
+          <sc-if value="{{ podeEncerrar }}">
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Registrar contato</div>
-            <div style="font-size: 11px; color: #8a7c6b; margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <select ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
-                <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
-              </select>
-              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
-              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
-              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Registrar</button>
-              <sc-if value="{{ rcFeito }}">
-                <span style="font-size: 11.5px; font-weight: 700; color: #5a9e4b; align-self: center;">Contato registrado.</span>
-              </sc-if>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Encerrar matrícula</span>
+              <button onclick="{{ onToggleSaida }}" style="border: 1px solid #e5dccf; background: {{ saidaBg }}; color: {{ saidaFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ saidaLabel }}</button>
             </div>
-            <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Aceita data passada. O registro conta na cadência de contato e tira a pessoa do "sem contato" da Central.</p>
+            <sc-if value="{{ encerrando }}">
+              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                <sc-for list="{{ tiposSaida }}" as="ts" hint-placeholder-count="3">
+                  <button onclick="{{ ts.onClick }}" title="{{ ts.desc }}" style="border: 1px solid {{ ts.borda }}; background: {{ ts.bg }}; color: {{ ts.fg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ts.label }}</button>
+                </sc-for>
+              </div>
+              <select ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                <sc-for list="{{ motivosSaida }}" as="ms" hint-placeholder-count="8"><option value="{{ ms.v }}">{{ ms.v }}</option></sc-for>
+              </select>
+              <input ref="{{ saidaDetalheRef }}" placeholder="Relato da aluna (opcional)" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;" />
+              <!-- acerto final: parcelas em aberto + valores do caso -->
+              <select ref="{{ saidaParcelasRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                <option value="cancelar">Cancelar as parcelas em aberto (padrão)</option>
+                <option value="manter">Manter as parcelas vencidas para cobrança</option>
+              </select>
+              <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px;">
+                <input ref="{{ saidaAcertoRef }}" placeholder="Acerto final recebido (opcional, ex. 20,00)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ saidaDevolucaoRef }}" placeholder="Devolução feita (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              </div>
+              <button onclick="{{ onEncerrar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
+              <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">O motivo alimenta a análise de retenção. Acerto e devolução são lançados no contrato e no Caixa; o Total investido reflete o valor efetivamente pago. Parcelas futuras são sempre canceladas.</p>
+            </sc-if>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ estaEncerrada }}">
+          <div style="background: #f6f2ea; border-left: 4px solid {{ saidaCor }}; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Matrícula encerrada</div>
+            <div style="font-size: 14px; font-weight: 700; color: {{ saidaCor }};">{{ saidaTipoLabel }} · {{ saidaMotivo }}</div>
+            <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 3px;">{{ saidaContexto }}</div>
+            <button onclick="{{ onReabrir }}" style="margin-top: 12px; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Reabrir matrícula</button>
+          </div>
+          </sc-if>
+
+          <!-- LTV · o pago de verdade; o contratado fica de referência -->
+          <div style="background: #164951; border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 700;">Total investido (LTV)</span>
+              <span style="font-size: 17px; font-weight: 700; color: #9ec970;">{{ ltvValor }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+              <span style="font-size: 9px; color: rgba(255,255,255,0.45);">total pago até hoje</span>
+              <span style="font-size: 10.5px; color: rgba(255,255,255,0.55);">contratado: {{ ltvContratadoValor }}</span>
+            </div>
           </div>
 
-          <!-- AÇÕES RÁPIDAS -->
+
+          <sc-if value="{{ mostraPedagogico }}">
+
+          <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
-              <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
-                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
-              </sc-for>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Apagar do sistema</span>
+              <button onclick="{{ onApagarPessoa }}" style="border: 1px solid {{ apagarPesBorda }}; background: {{ apagarPesBg }}; color: #cf6b5c; font-size: 10.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ apagarPesLabel }}</button>
             </div>
-            <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
+            <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ apagarPesAviso }}</p>
           </div>
 
         </div>
@@ -812,7 +813,7 @@ class Component extends DCLogic {
     const partes = [];
     if (p.turma) partes.push(p.turma);
     if (p.professora) partes.push("Prof. " + p.professora);
-    if (p.desde) partes.push("conosco desde " + CRM.mesAno(p.desde) + " · " + CRM.tempoDesde(p.desde));
+    if (p.desde) partes.push("aluna desde " + CRM.mesAno(p.desde) + " · " + CRM.tempoDesde(p.desde));
     else if (p.entrouEm) partes.push("lead há " + CRM.tempoDesde(p.entrouEm));
     if (p.motivoPerda && p.estagio === "perdido") partes.push("saiu: " + p.motivoPerda);
 
@@ -905,14 +906,14 @@ class Component extends DCLogic {
         .concat(CRM.turmasLista().map(u => ({
           id: u.id, label: u.nivel + " · " + u.turma + " · " + (u.teacher || "sem professora") })))
         .concat([{ id: "particular", label: "Particular" },
-                 { id: "__sem", label: "Tirar da turma" }]),
+                 { id: "__sem", label: "Remover da turma" }]),
       camposDoc: CAMPOS_EXTRA.map(cx => ({
         label: cx.label, ref: this.docRefs[cx.id],
         atual: p[cx.id] || cx.exemplo
       })),
       faltaCadastro: falta.length > 0,
       faltaCadastroTexto: falta.length
-        ? "Para emitir contrato no nome dela falta: " + falta.join(" e ") + "."
+        ? "Para emitir o contrato falta: " + falta.join(" e ") + "."
         : "",
       onSalvarCadastro: () => {
         const v = r => (r.current && r.current.value || "").trim();
@@ -1009,14 +1010,14 @@ class Component extends DCLogic {
       }));
       out.renegAviso = "Ciclo de " + this.state.renegMeses + " meses aceita até "
         + CRM.maxParcelasDoCiclo(this.state.renegMeses) + " parcelas. "
-        + "As parcelas em aberto somem e viram estas.";
+        + "As parcelas em aberto são substituídas pelas novas.";
 
       out.onAplicarReneg = () => {
         if (!this.state.renegParcelas) {
           this.setState({ renegErro: "Escolha em quantas parcelas." }); return;
         }
         if (!sim.total) {
-          this.setState({ renegErro: "Não há nada em aberto para renegociar." }); return;
+          this.setState({ renegErro: "Não há parcelas em aberto para renegociar." }); return;
         }
         CRM.aplicarRenegociacao(p.id, Object.assign({}, simCfg,
           { parcelas: this.state.renegParcelas, motivo: "renegociação" }));
@@ -1150,10 +1151,10 @@ class Component extends DCLogic {
     const abertos = this.state.abrindoProduto || "";
     out.produtos = CRM.produtosDe(p.id).map(pd => {
       const acoes = {
-        turma: { add: "Matricular em turma", edit: "Editar acima" },
+        turma: { add: "Matricular em turma", edit: "Editar turma" },
         particular: { add: "Contratar", edit: "Encerrar" },
         assinatura: { add: "Ativar", edit: "Encerrar" },
-        programa: { add: "Incluir", edit: "Tirar" }
+        programa: { add: "Adicionar", edit: "Remover" }
       }[pd.id];
       return {
         nome: pd.nome,
@@ -1189,7 +1190,7 @@ class Component extends DCLogic {
           if (pd.contratado) {
             if (pd.id === "particular") CRM.encerrarParticular(p.id, "Encerrado pela equipe");
             if (pd.id === "assinatura") CRM.encerrarAssinatura(p.id);
-            if (pd.id === "programa") CRM.sairDoPrograma(p.id, "Tirada pela equipe");
+            if (pd.id === "programa") CRM.sairDoPrograma(p.id, "Removida pela equipe");
             this.bump();
             return;
           }
@@ -1375,8 +1376,8 @@ class Component extends DCLogic {
       const EST_PRES = {
         presente: { label: "presente", cor: "#5a9e4b" },
         atraso: { label: "com atraso", cor: "#d4941a" },
-        falta: { label: "faltou", cor: "#cf6b5c" },
-        justificada: { label: "avisou", cor: "#8a7c6b" }
+        falta: { label: "falta", cor: "#cf6b5c" },
+        justificada: { label: "falta justificada", cor: "#8a7c6b" }
       };
       out.semPresencas = pres.length === 0;
       out.presencasResumo = pres.length
@@ -1517,13 +1518,13 @@ class Component extends DCLogic {
     })();
 
     out.acoes = out.ehLead ? [
-      mk("Msg do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
+      mk("Mensagem do estágio", "#2a9d8f", p.estagio === "incompleta" ? "lead_incompleta" : "lead_followup", "mensagem do estágio"),
       mk("Confirmar conversa", "#6b5b95", "lead_reuniao", "confirmação de conversa"),
       mk("Link de pagamento", "#d4a574", "pag_link", "link de pagamento"),
       mk("Primeiro contato", "#e07856", "lead_primeiro", "primeiro contato")
     ] : [
       mk("Lembrete", "#2a9d8f", "pag_lembrete", "lembrete de vencimento"),
-      mk("Confirmar pagto", "#5a9e4b", "pag_confirmado", "confirmação de pagamento"),
+      mk("Confirmar pagamento", "#5a9e4b", "pag_confirmado", "confirmação de pagamento"),
       mk("Renovação", "#6b5b95", "renov_abrir", "conversa de renovação"),
       mk("Check-in", "#e07856", "checkin_mensal", "check-in")
     ];

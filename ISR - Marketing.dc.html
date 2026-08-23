@@ -29,7 +29,7 @@
     <!-- EDITAR METAS -->
     <sc-if value="{{ metasAberto }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Metas do ciclo · você cadastra 1x, o sistema acompanha sozinho</div>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Metas do ciclo · acompanhamento automático</div>
         <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b;">Aplicam-se à Central, ao Caixa e às barras de progresso. A meta de faturamento é o padrão mensal e pode ser sobrescrita mês a mês no Caixa. Deixe em branco os campos que não devem mudar.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Meta de faturamento R$ / mês</div>
@@ -59,7 +59,7 @@
           </sc-for>
         </div>
       </div>
-      <p style="margin: 0 0 14px; font-size: 12px; color: #8a7c6b; line-height: 1.55;">Cada mês tem o alvo dele. O sistema conta sozinho matrículas, vendas do acompanhamento, particulares e receita; para o resto, você mantém o contador.</p>
+      <p style="margin: 0 0 14px; font-size: 12px; color: #8a7c6b; line-height: 1.55;">Metas definidas por mês. Matrículas, vendas do acompanhamento, particulares e receita são contadas automaticamente; as demais têm contador manual.</p>
 
       <sc-if value="{{ semMetas }}">
         <p style="margin: 0 0 14px; font-size: 12.5px; color: #b3a693; line-height: 1.6;">Nenhuma meta para este mês. Cadastre abaixo.</p>
@@ -89,7 +89,7 @@
 
       <div style="border-top: 1px solid #f4f1ec; margin-top: 8px; padding-top: 14px;">
         <div style="display: grid; grid-template-columns: 2fr 0.7fr 1.4fr auto; gap: 8px;">
-          <input ref="{{ nmTituloRef }}" placeholder="O que é a meta (ex. matricular 5 na turma de Den Haag)" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ nmTituloRef }}" placeholder="Descrição da meta (ex. 5 matrículas na turma de Den Haag)" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ nmAlvoRef }}" type="number" placeholder="Alvo" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <select ref="{{ nmTipoRef }}" style="padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
             <sc-for list="{{ tiposMeta }}" as="tp" hint-placeholder-count="5">
@@ -183,7 +183,7 @@
           <span style="font-size: 12px; color: #6b6155; font-weight: 700;">{{ m.total }}</span>
         </div>
       </sc-for>
-      <p style="margin: 8px 0 0; font-size: 11px; color: #b3a693;">Se "Horário" dominar, o problema é grade — não anúncio.</p>
+      <p style="margin: 8px 0 0; font-size: 11px; color: #b3a693;">Motivos consolidados do CRM e das renovações perdidas.</p>
     </div>
 
     <!-- ORIGENS DETALHADAS (tabela) -->
@@ -203,7 +203,7 @@
       </sc-for>
     </div>
 
-    <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Conectada à <strong>[ISR] MKT - Leads_e_Alunos</strong>, esta tela mostra seu histórico real (Social Selling, Aplicação, Indicação, Site) com objeções e frases reais — via <code>apps-script-integracoes.js</code>.</p>
+    <p style="margin: 18px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Conectada à <strong>[ISR] MKT - Leads_e_Alunos</strong>, esta tela consolida o histórico de origens (Social Selling, Aplicação, Indicação, Site) e as objeções registradas — via <code>apps-script-integracoes.js</code>.</p>
 
   </div>
 </main>
@@ -301,8 +301,8 @@ class Component extends DCLogic {
           onAddMeta: () => {
             const titulo = this.val(this.nmTituloRef);
             const alvo = parseFloat(this.val(this.nmAlvoRef));
-            if (!titulo) { this.setState({ metaErro: "Escreva o que é a meta." }); return; }
-            if (!alvo || alvo <= 0) { this.setState({ metaErro: "Ponha o alvo em número." }); return; }
+            if (!titulo) { this.setState({ metaErro: "Informe a descrição da meta." }); return; }
+            if (!alvo || alvo <= 0) { this.setState({ metaErro: "Informe o alvo em número." }); return; }
             CRM.addMetaPeriodo({ titulo, alvo, tipo: this.val(this.nmTipoRef) || "livre", periodo: mes });
             if (this.nmTituloRef.current) this.nmTituloRef.current.value = "";
             if (this.nmAlvoRef.current) this.nmAlvoRef.current.value = "";

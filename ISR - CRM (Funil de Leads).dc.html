@@ -27,7 +27,7 @@
         <button onclick="{{ onNovoLead }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">Funil de leads, do primeiro contato ao fechamento. Proposta enviada é valor e parcelas mandados, aguardando resposta. Fechado é quando ela aceitou: escolher esse estágio abre a tela de matrícula, e a pessoa sai do funil e vira aluna. A vista Atividade mostra os mesmos registros por data.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 730px;">Funil de leads, do primeiro contato ao fechamento. Proposta enviada: valor e parcelas enviados, aguardando resposta. Fechado: abre a tela de matrícula e converte o lead em aluna. A vista Atividade lista os mesmos registros por data.</p>
 
     <!-- REUNIÕES: quantas estão marcadas, quantas viraram matrícula -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px;">
@@ -50,7 +50,7 @@
             <span style="display: inline-flex; align-items: center; gap: 4px;">
               <a href="{{ rp.href }}" style="text-decoration: none; background: {{ rp.bg }}; color: {{ rp.cor }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">{{ rp.label }}</a>
               <sc-if value="{{ rp.podeFeita }}">
-                <button onclick="{{ rp.onFeita }}" title="A conversa aconteceu — marcar como feita" style="border: 1px solid #d8d2c6; background: #fff; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">feita ✓</button>
+                <button onclick="{{ rp.onFeita }}" title="Marcar a conversa como realizada" style="border: 1px solid #d8d2c6; background: #fff; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">Feita</button>
               </sc-if>
             </span>
           </sc-for>
@@ -157,7 +157,7 @@
         <sc-if value="{{ vazio }}">
           <div style="text-align: center; padding: 44px 20px; color: #9b8b7e;">
             <div style="height: 4px;"></div>
-            <p style="margin: 0; font-size: 13px;">Nada nesta visão.</p>
+            <p style="margin: 0; font-size: 13px;">Nenhum lead neste estágio.</p>
           </div>
         </sc-if>
 
@@ -166,7 +166,7 @@
           <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; cursor: pointer; background: {{ lead.rowBg }}; min-width: 700px;">
             <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 7px;">
-                <input type="checkbox" checked="{{ lead.marcado }}" onclick="{{ lead.onSelClick }}" onchange="{{ lead.onMarcar }}" title="Marcar para agir em vários de uma vez" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0; flex: none;" />
+                <input type="checkbox" checked="{{ lead.marcado }}" onclick="{{ lead.onSelClick }}" onchange="{{ lead.onMarcar }}" title="Selecionar para ações em lote" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0; flex: none;" />
                 <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14.5px; font-weight: 700; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ lead.nome }}</a>
                 <span style="color: #b9ab99; font-size: 11px;">{{ lead.caret }}</span>
               </div>
@@ -198,7 +198,7 @@
               <sc-if value="{{ lead.agendandoReuniao }}">
                 <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
                   <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Conversa de matrícula</div>
-                  <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Ao marcar, entra na agenda de {{ lead.donoReuniao }}, vira pendência na Central e libera o convite com o link para mandar à lead.</p>
+                  <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">Ao confirmar: cria o evento na agenda de {{ lead.donoReuniao }}, gera a pendência na Central e libera o convite para envio à lead.</p>
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia</div>
@@ -217,16 +217,16 @@
                   <sc-if value="{{ lead.temBooking }}">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eadfce;">
                       <a href="{{ lead.bookingUrl }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Ver horários disponíveis de {{ lead.donoReuniao }}</a>
-                      <a href="{{ lead.waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Mandar os horários pra lead escolher</a>
+                      <a href="{{ lead.waEscolherHorario }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Enviar horários para a lead escolher</a>
                     </div>
-                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A página de horários agenda direto no calendário. Depois que a lead escolher, registre o dia e a hora aqui em cima — é o que põe a conversa na Central e no funil.</p>
+                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A página de horários agenda direto no calendário. Depois da escolha da lead, registre dia e hora nos campos acima para incluir a conversa na Central e no funil.</p>
                   </sc-if>
                   <sc-if value="{{ lead.semBooking }}">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eadfce;">
                       <input ref="{{ lead.bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 220px; padding: 9px 11px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                       <button onclick="{{ lead.onSalvarBooking }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
                     </div>
-                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Com a página de horários guardada, dá para mandar a lead escolher o horário sozinha — e o Google agenda direto no calendário de quem atende.</p>
+                    <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Com a página de horários salva, a lead escolhe o horário e o Google cria o evento no calendário do responsável.</p>
                   </sc-if>
                 </div>
               </sc-if>
@@ -278,7 +278,7 @@
                 <div>
                   <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 14px;">Próximo passo</div>
                   <a href="{{ lead.waStageLink }}" style="display: block; text-align: center; text-decoration: none; background: #348a8e; color: #fff; font-size: 14px; font-weight: 700; padding: 14px; border-radius: 10px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(52,138,142,0.25);">Enviar mensagem do estágio →</a>
-                  <div style="font-size: 12px; color: #8a7c6b; margin-bottom: 8px;">Lembrar de novo follow-up:</div>
+                  <div style="font-size: 12px; color: #8a7c6b; margin-bottom: 8px;">Agendar próximo follow-up:</div>
                   <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center;">
                     <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
                       <button onclick="{{ fu.onClick }}" style="border: 1px solid #e5dccf; background: #fff; color: #3d3529; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer;">{{ fu.label }}</button>
@@ -384,7 +384,7 @@
               <!-- MOTIVO DE PERDA -->
               <sc-if value="{{ lead.perdendo }}">
                 <div style="background: #fdf0ee; border: 1px solid #ecc9c2; border-radius: 10px; padding: 14px; margin-bottom: 14px;">
-                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b05c4c; font-weight: 700; margin-bottom: 10px;">Qual foi o motivo da perda?</div>
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b05c4c; font-weight: 700; margin-bottom: 10px;">Motivo da perda</div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <sc-for list="{{ lead.motivosOpts }}" as="mo" hint-placeholder-count="6">
                       <button onclick="{{ mo.onClick }}" style="border: 1px solid #cf6b5c; background: #fff; color: #b05c4c; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
@@ -403,7 +403,7 @@
                 <sc-if value="{{ lead.temReuniao }}">
                   <span style="background: rgba(224,120,86,0.12); color: #c96a48; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
                   <a href="{{ lead.gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Google Agenda</a>
-                  <a href="{{ lead.waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Mandar o convite</a>
+                  <a href="{{ lead.waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Enviar convite</a>
                   <button onclick="{{ lead.onReuniaoFeita }}" style="border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar como feita</button>
                 </sc-if>
                 <button onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lead.condLabel }}</button>
@@ -718,7 +718,7 @@ class Component extends DCLogic {
         { valor: String(t.reunioes), label: "conversas de matrícula", cor: CORES.reuniao },
         { valor: String(t.matriculas), label: "matrículas", cor: CORES.matricula },
         { valor: ag.conversao === null ? "—" : ag.conversao + "%",
-          label: "dos que entraram fecharam", cor: "#164951" }
+          label: "de conversão no período", cor: "#164951" }
       ],
       leitura, alerta, temAlerta: !!alerta,
       extrato, extratoVazio: extrato.length === 0,
@@ -922,7 +922,7 @@ class Component extends DCLogic {
         })();
         out.gcalReuniao = CRM.gcalReuniao(l.id);
         out.onReuniaoFeita = () => { CRM.marcarReuniaoFeita(l.id); this.bump(); };
-        out.onExcluir = () => { if (confirm("Excluir este lead? Não dá para desfazer.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
+        out.onExcluir = () => { if (confirm("Excluir este lead? Esta ação não pode ser desfeita.")) { CRM.deleteLead(l.id); this.setState({ openId: null }); } };
         out.perdendo = this.state.perdendoId === l.id;
         out.onMarcarPerdido = () => this.setState({ perdendoId: l.id, matriculandoId: null });
         out.onPerderCancela = () => this.setState({ perdendoId: null });
@@ -1041,10 +1041,10 @@ class Component extends DCLogic {
     const reuNumeros = [
       { valor: String(reu.marcadas.length), label: reu.marcadas.length === 1 ? "marcada" : "marcadas", cor: "#6b5b95" },
       { valor: String(reu.feitas.length), label: reu.feitas.length === 1 ? "feita" : "feitas", cor: "#348a8e" },
-      { valor: String(reu.converteu), label: reu.converteu === 1 ? "virou matrícula" : "viraram matrícula", cor: "#5a9e4b" },
+      { valor: String(reu.converteu), label: reu.converteu === 1 ? "convertida em matrícula" : "convertidas em matrícula", cor: "#5a9e4b" },
       { valor: reu.feitas.length ? reu.taxa + "%" : "—", label: "de conversão", cor: "#9c6f56" }
     ].concat(reu.vencidas.length
-      ? [{ valor: String(reu.vencidas.length), label: reu.vencidas.length === 1 ? "passou da data" : "passaram da data", cor: "#cf6b5c" }]
+      ? [{ valor: String(reu.vencidas.length), label: reu.vencidas.length === 1 ? "com data vencida" : "com data vencida", cor: "#cf6b5c" }]
       : []);
     const reuProximas = reu.vencidas.map(r => ({ r, atrasada: true }))
       .concat(reu.marcadas.map(r => ({ r, atrasada: false })))
@@ -1130,7 +1130,7 @@ class Component extends DCLogic {
       onLinkCadastro: () => {
         const b = CRM.backendUrl();
         if (!b) {
-          window.alert("Antes, conecte o banco central em gestao.html (Configurar banco central) — o link de cadastro envia os dados para lá.");
+          window.alert("Conecte o banco central em gestao.html (Configurar banco central) antes de gerar o link: o cadastro envia os dados para esse banco.");
           return;
         }
         const base = window.location.href.replace(/[^/]*$/, "");

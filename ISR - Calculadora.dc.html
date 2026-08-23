@@ -30,7 +30,7 @@
     <!-- TABELA DE PREÇOS -->
     <sc-if value="{{ tabelaAberta }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Tabela de preços · vale para escola toda</div>
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 4px;">Tabela de preços · aplicável à escola toda</div>
         <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.5;">Preço do ciclo e tetos de desconto. A equipe comercial negocia dentro destes limites sem necessidade de aprovação.</p>
         <div style="overflow-x: auto;">
           <div style="min-width: 720px;">
@@ -118,7 +118,7 @@
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 700; margin-bottom: 4px;">Valor total proposto ao aluno</div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <input ref="{{ totalRef }}" placeholder="{{ tabelaLabel }}" onchange="{{ onTotal }}" style="flex: 1; min-width: 0; padding: 11px 13px; font-size: 15px; font-weight: 700; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
-          <button onclick="{{ onTabelaCheia }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit;">Tabela cheia</button>
+          <button onclick="{{ onTabelaCheia }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 10px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; font-family: inherit;">Usar preço de tabela</button>
         </div>
         <p style="margin: 7px 0 0; font-size: 11px; color: #b3a693; line-height: 1.5;">Total do ciclo, não o valor da parcela. Em branco, aplica-se o preço de tabela.</p>
 
@@ -157,7 +157,7 @@
     </div>
 
     <!-- ESCADA DE CONCESSÕES -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Antes de mexer no preço, ofereça nesta ordem</div>
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Ordem recomendada de concessões</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 8px 18px 14px; margin-bottom: 22px;">
       <sc-for list="{{ escada }}" as="es" hint-placeholder-count="5">
         <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f4efe7;">
@@ -171,7 +171,7 @@
     </div>
 
     <!-- TEXTO PRO WHATSAPP -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Texto pronto para mandar</div>
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Texto da proposta</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
       <div style="background: #f6f2ea; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #3d3529; line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px;">{{ textoProposta }}</div>
       <button onclick="{{ onCopiar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelCopiar }}</button>
@@ -281,7 +281,7 @@ class Component extends DCLogic {
       { rotulo: "Preço de tabela", valor: dinheiro(r.tabela) },
       { rotulo: "Desconto máximo permitido", valor: r.descMax + "%" },
       { rotulo: "Piso · mínimo autorizado", valor: dinheiro(r.piso) },
-      { rotulo: "Desconto que você está dando", valor: r.descDado.toFixed(1) + "%", ruim: r.descDado > r.descMax + 0.05 },
+      { rotulo: "Desconto aplicado", valor: r.descDado.toFixed(1) + "%", ruim: r.descDado > r.descMax + 0.05 },
       { rotulo: r.avista ? "Pagamento único"
           : (r.sinal > 0 ? "Sinal + " + r.parcelas + "× de" : r.parcelas + "× de"),
         valor: dinheiro(r.valorParcela), forte: true },
@@ -363,7 +363,7 @@ class Component extends DCLogic {
       sinalNota: r.sinal > 0
         ? "Sinal de " + dinheiro(r.sinal) + " na assinatura. Restam " + dinheiro(r.aParcelar)
           + " em " + r.parcelas + (r.parcelas === 1 ? " parcela de " : " parcelas de ") + dinheiro(r.valorParcela) + "."
-        : "O sinal sai do valor a parcelar. O ciclo de " + (3 * r.ciclos) + " meses aceita até "
+        : "O sinal é deduzido do valor a parcelar. O ciclo de " + (3 * r.ciclos) + " meses aceita até "
           + r.maxParcelas + " parcelas.",
       onProduto: e => this.setState({ produtoId: e.target.value, total: "", parcelas: 1 }),
       totalRef: this.totalRef, tabelaLabel: dinheiro(r.tabela),

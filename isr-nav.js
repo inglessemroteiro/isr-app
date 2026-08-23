@@ -31,7 +31,7 @@
       itens: [
         { label: "Central", desc: "Pendências consolidadas por prioridade", href: "ISR - Central.dc.html", perfis: null },
         { label: "Agenda", desc: "Compromissos operacionais, comerciais e pedagógicos", href: "ISR - Agenda.dc.html", perfis: null },
-        { label: "Mural da equipe", desc: "Mensagens da equipe por assunto; mensagem vira pendência", href: "ISR - Mural.dc.html", perfis: null }
+        { label: "Mural da equipe", desc: "Mensagens da equipe por assunto, conversíveis em pendência", href: "ISR - Mural.dc.html", perfis: null }
       ]
     },
     {
@@ -41,7 +41,7 @@
         // leads), por isso vê o CRM e a importação — Calculadora e
         // Marketing seguem só do comercial
         { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
-        { label: "Importar leads", desc: "Trazer leads da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Importar leads", desc: "Importar leads da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
@@ -54,7 +54,7 @@
         { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] },
-        { label: "App da aluna", desc: "A tela que a aluna vê, para conferir", href: "ISR - Aluna.dc.html", perfis: null }
+        { label: "App da aluna", desc: "Visualização da área da aluna", href: "ISR - Aluna.dc.html", perfis: null }
       ]
     },
     {
@@ -75,7 +75,7 @@
         { label: "Cobrança", desc: "Recebíveis por situação e ações de cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
         { label: "Pagamentos", desc: "Folha do mês da equipe e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
         { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
-        { label: "Importar", desc: "Trazer o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
+        { label: "Importar", desc: "Importar o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
       ]
     },
     {
