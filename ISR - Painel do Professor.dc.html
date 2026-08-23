@@ -785,7 +785,22 @@ class Component extends DCLogic {
               }
             });
           });
-        return opcoes.slice(0, 6);
+        // alunas particulares sempre à mão: a aula delas não tem horário
+        // na agenda, então não apareceria em nenhum atalho
+        const chipsPart = particularesProf.map(px => {
+          const marcada = !!partSel && partSel.id === px.id;
+          return {
+            label: "Particular · " + CRM.firstName(px.nome),
+            bg: marcada ? "#164951" : "#fff",
+            fg: marcada ? "#fff" : "#6b5b95",
+            borda: marcada ? "#164951" : "#ddd6e8",
+            onClick: () => this.setState({ eventoChamada: null, particularChamada: px.id,
+              turmaChamada: null, chamadaData: null,
+              presencas: this.carregarChamada("Particular · " + px.nome, this.hojeIso()),
+              tarefas: null, salvouAgora: false, escolhendoData: false })
+          };
+        });
+        return opcoes.slice(0, 6).concat(chipsPart);
       })(),
       // null = ainda não mexeu: vale o parâmetro ?retro=1 do link direto
       escolhendoData: this.state.escolhendoData === null ? this.retroParam() : this.state.escolhendoData,
@@ -800,9 +815,11 @@ class Component extends DCLogic {
       chamadaRef: this.chamadaRef,
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
       colunas, linhas: linhasDiario, larguraGrade,
-      // aula extra é lista; turma é diário
-      modoLista: alunas.length > 0 && !!evSel,
-      modoDiario: alunas.length > 0 && !evSel,
+      // aula extra e aula particular são lista; turma é diário. O diário
+      // monta as linhas pela turma cadastrada — para particular vinha
+      // vazio, e a chamada ficava sem ninguém para marcar.
+      modoLista: alunas.length > 0 && (!!evSel || !!partSel),
+      modoDiario: alunas.length > 0 && !evSel && !partSel,
       legenda: [
         { letra: "P", label: "presente", bg: "rgba(52,138,142,0.12)", fg: "#348a8e" },
         { letra: "A", label: "atrasou", bg: "rgba(212,165,116,0.20)", fg: "#b0722c" },

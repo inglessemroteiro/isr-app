@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-s",
+  numero: "2026.08.20-t",
   data: "20/08/2026",
-  nota: "Inscrição incompleta sai do Para hoje; ficha da aluna reorganizada por prioridade de uso (Apagar vai para o fim) e cartão Produtos; Caixa: apagar lançamento não volta no sync (lápide), despesa aceita link de fatura e a folha da equipe cobra a partir do dia 15; revisão geral de linguagem nas telas"
+  nota: "Ficha da aluna com hierarquia: resumo no cabeçalho (turma, parcela do mês, presenças, último contato) e cartões agrupados em quatro abas — Acompanhamento, Financeiro, Aulas e presenças, Cadastro; chamada de aluna particular direto no Painel do Professor, pelo atalho fixo"
 };

@@ -50,6 +50,20 @@
             <sc-for list="{{ tagsSugeridas }}" as="ts" hint-placeholder-count="8"><option value="{{ ts.v }}"></option></sc-for>
           </datalist>
         </div>
+        <!-- RESUMO: os fatos-chave da aluna, sempre à vista -->
+        <sc-if value="{{ temResumoFicha }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; margin-top: 14px; border-top: 1px solid #f2e9dd; padding-top: 12px;">
+            <sc-for list="{{ resumoFicha }}" as="rf" hint-placeholder-count="4">
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b3a693; font-weight: 700; margin-bottom: 2px;">{{ rf.label }}</div>
+                <div style="font-size: 13px; font-weight: 700; color: {{ rf.cor }}; line-height: 1.35;">{{ rf.valor }}</div>
+                <sc-if value="{{ rf.sub }}">
+                  <div style="font-size: 10.5px; color: #8a7c6b;">{{ rf.sub }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
         <sc-if value="{{ editandoCadastro }}">
           <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #f2e9dd; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
             <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome</div>
@@ -97,6 +111,15 @@
           }
         }
       </style>
+
+      <!-- ABAS DA FICHA: os cartões agrupados por assunto -->
+      <sc-if value="{{ temAbas }}">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+          <sc-for list="{{ abasFicha }}" as="ab" hint-placeholder-count="4">
+            <button onclick="{{ ab.onClick }}" style="border: 1px solid {{ ab.borda }}; background: {{ ab.bg }}; color: {{ ab.fg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ab.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
 
       <!-- 2 COLUNAS -->
       <div class="pf-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
@@ -192,6 +215,88 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ abaAcompanhamento }}">
+          <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
+               conversa) entra aqui, inclusive com data passada — é o que
+               zera o "sem contato há N dias" e o aviso de ausências -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Registrar contato</div>
+            <div style="font-size: 11px; color: #8a7c6b; margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <select ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
+              </select>
+              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
+              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Registrar</button>
+              <sc-if value="{{ rcFeito }}">
+                <span style="font-size: 11.5px; font-weight: 700; color: #5a9e4b; align-self: center;">Contato registrado.</span>
+              </sc-if>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Aceita data retroativa. O registro entra na cadência de contato e remove a pessoa da lista "sem contato" da Central.</p>
+          </div>
+
+          <!-- AÇÕES RÁPIDAS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
+              <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
+                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
+              </sc-for>
+            </div>
+            <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
+          </div>
+
+          <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Acompanhamento · check-in</div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Próximo check-in: <strong style="color: #164951;">{{ checkinAtual }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
+                <button onclick="{{ onCheckin7 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 semana</button>
+                <button onclick="{{ onCheckin30 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 mês</button>
+                <input ref="{{ checkinDateRef }}" type="date" style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 6px 8px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onCheckinData }}" style="border: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Agendar</button>
+              </div>
+              <sc-if value="{{ temCheckin }}">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #f4f1ec; padding-top: 10px;">
+                  <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px;">+ Google Agenda</a>
+                  <button onclick="{{ onCheckinFeito }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Check-in feito</button>
+                </div>
+              </sc-if>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">O check-in agendado aparece na Central e na Agenda da escola.</p>
+            </div>
+          </sc-if>
+
+          <!-- MOEDAS DA ALUNA -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Moedas</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 15px; height: 15px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 2px solid #c9963f;"></span>
+                  <strong style="font-size: 15px; color: #164951;">{{ moedasTotal }}</strong>
+                </span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                <select ref="{{ moedasBonusRef }}" style="flex: 1; min-width: 150px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ bonusOpts }}" as="bo" hint-placeholder-count="8">
+                    <option value="{{ bo.id }}">{{ bo.label }}</option>
+                  </sc-for>
+                </select>
+                <button onclick="{{ onAplicarBonus }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px; cursor: pointer;">Aplicar</button>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <input ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="width: 80px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <input ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="flex: 1; min-width: 130px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onAddMoedas }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar</button>
+              </div>
+              <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">Presença, parcela em dia e onboarding são pontuados automaticamente. Este campo registra bônus (indicação, desafios) e resgates (valor negativo).</p>
+            </div>
+          </sc-if>
+          </sc-if>
+
+          <sc-if value="{{ abaFinanceiro }}">
           <!-- ALUNA: CONTRATO VIGENTE -->
           <sc-if value="{{ temContrato }}">
             <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -418,221 +523,6 @@
             </div>
           </sc-if>
 
-          <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
-               conversa) entra aqui, inclusive com data passada — é o que
-               zera o "sem contato há N dias" e o aviso de ausências -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Registrar contato</div>
-            <div style="font-size: 11px; color: #8a7c6b; margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <select ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
-                <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
-              </select>
-              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
-              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;" />
-              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: #2a9d8f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;">Registrar</button>
-              <sc-if value="{{ rcFeito }}">
-                <span style="font-size: 11.5px; font-weight: 700; color: #5a9e4b; align-self: center;">Contato registrado.</span>
-              </sc-if>
-            </div>
-            <p style="margin: 8px 0 0; font-size: 10px; color: #b3a693; line-height: 1.5;">Aceita data retroativa. O registro entra na cadência de contato e remove a pessoa da lista "sem contato" da Central.</p>
-          </div>
-
-          <!-- AÇÕES RÁPIDAS -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
-              <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
-                <a href="{{ a.href }}" style="text-decoration: none; text-align: center; background: {{ a.bg }}; color: #fff; font-size: 11px; font-weight: 700; padding: 10px 8px; border-radius: 8px;">{{ a.label }}</a>
-              </sc-for>
-            </div>
-            <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada envio registra um contato na linha do tempo.</p>
-          </div>
-
-          <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
-          <sc-if value="{{ ehAluna }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Acompanhamento · check-in</div>
-              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Próximo check-in: <strong style="color: #164951;">{{ checkinAtual }}</strong></div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
-                <button onclick="{{ onCheckin7 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 semana</button>
-                <button onclick="{{ onCheckin30 }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer;">Em 1 mês</button>
-                <input ref="{{ checkinDateRef }}" type="date" style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 6px 8px; border-radius: 8px; font-family: inherit;" />
-                <button onclick="{{ onCheckinData }}" style="border: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Agendar</button>
-              </div>
-              <sc-if value="{{ temCheckin }}">
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #f4f1ec; padding-top: 10px;">
-                  <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px;">+ Google Agenda</a>
-                  <button onclick="{{ onCheckinFeito }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer;">Check-in feito</button>
-                </div>
-              </sc-if>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">O check-in agendado aparece na Central e na Agenda da escola.</p>
-            </div>
-          </sc-if>
-
-          <!-- PEDAGÓGICO · fora do bloco de contrato: toda aluna, antiga ou nova, edita turma e professora -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Pedagógico</span>
-              <button onclick="{{ onEditarTurma }}" style="border: 1px solid #e5dccf; background: {{ edTurBg }}; color: {{ edTurFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edTurLabel }}</button>
-            </div>
-            <sc-if value="{{ editandoTurma }}">
-              <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Turma</div>
-                <select ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
-                  <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="8"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
-                </select>
-                <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Professora</div>
-                <select ref="{{ turProfRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
-                  <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
-                </select>
-                <div style="display: flex; gap: 8px; align-items: flex-end;">
-                  <div style="flex: 1;"><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nível</div>
-                    <input ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-                  <button onclick="{{ onSalvarTurma }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
-                </div>
-                <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Em "Automática", a professora vem da turma escolhida. Para aula particular (ou exceção), escolha a professora na lista.</p>
-              </div>
-            </sc-if>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
-              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Nível</div>{{ nivel }}</div>
-              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Professora</div>{{ professora }}</div>
-              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Faltas no ciclo</div>{{ faltasCiclo }}</div>
-              <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Turma</div>{{ turma }}</div>
-              <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
-            </div>
-          </div>
-
-          <!-- PRESENÇAS · chamada a chamada, para o acompanhamento fazer
-               contato ("a Franciny faltou 2 aulas seguidas") -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;">
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Presenças</span>
-              <span style="font-size: 10.5px; font-weight: 700; color: {{ presencasCor }};">{{ presencasResumo }}</span>
-            </div>
-            <sc-if value="{{ semPresencas }}">
-              <div style="font-size: 11px; color: #b8ada0;">Nenhuma chamada registrada.</div>
-            </sc-if>
-            <sc-for list="{{ presencasView }}" as="pz" hint-placeholder-count="6">
-              <div style="display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid #f4f1ec; font-size: 11.5px;">
-                <span style="flex: none; font-weight: 700; color: #164951;">{{ pz.data }}</span>
-                <span style="flex: 1; min-width: 0; color: #8a7c6b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pz.turma }}</span>
-                <span style="flex: none; font-weight: 700; color: {{ pz.cor }};">{{ pz.estado }}</span>
-              </div>
-            </sc-for>
-          </div>
-          </sc-if>
-
-          <!-- MOEDAS DA ALUNA -->
-          <sc-if value="{{ ehAluna }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Moedas</span>
-                <span style="display: inline-flex; align-items: center; gap: 6px;">
-                  <span style="width: 15px; height: 15px; border-radius: 50%; background: linear-gradient(135deg, #f0c75e, #d4a574); border: 2px solid #c9963f;"></span>
-                  <strong style="font-size: 15px; color: #164951;">{{ moedasTotal }}</strong>
-                </span>
-              </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-                <select ref="{{ moedasBonusRef }}" style="flex: 1; min-width: 150px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
-                  <sc-for list="{{ bonusOpts }}" as="bo" hint-placeholder-count="8">
-                    <option value="{{ bo.id }}">{{ bo.label }}</option>
-                  </sc-for>
-                </select>
-                <button onclick="{{ onAplicarBonus }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px; cursor: pointer;">Aplicar</button>
-              </div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <input ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="width: 80px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-                <input ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="flex: 1; min-width: 130px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-                <button onclick="{{ onAddMoedas }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar</button>
-              </div>
-              <p style="margin: 8px 0 0; font-size: 10px; color: #b8ada0;">Presença, parcela em dia e onboarding são pontuados automaticamente. Este campo registra bônus (indicação, desafios) e resgates (valor negativo).</p>
-            </div>
-          </sc-if>
-
-          <!-- AULAS PARTICULARES · PACOTE -->
-          <sc-if value="{{ ehParticular }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Aulas particulares · pacote</span>
-                <span style="font-size: 11px; font-weight: 700; color: {{ pacoteCor }};">{{ pacoteResumo }}</span>
-              </div>
-              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Início: <strong style="color: #164951;">{{ pacoteInicio }}</strong> · restam <strong style="color: #164951;">{{ pacoteRestam }}</strong></div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <button onclick="{{ onAulaDada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;">+ Registrar aula dada</button>
-                <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-                <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
-              </div>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários são marcados na Agenda da escola (aula extra); feriados não são contabilizados.</p>
-            </div>
-          </sc-if>
-
-          <!-- ONBOARDING · PRIMEIROS 30 DIAS -->
-          <sc-if value="{{ temOnboarding }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Onboarding · primeiros 30 dias</span>
-                <span style="font-size: 10px; font-weight: 700; color: {{ obResumoCor }};">{{ obResumo }}</span>
-              </div>
-              <sc-for list="{{ obView }}" as="ob" hint-placeholder-count="4">
-                <button onclick="{{ ob.onToggle }}" title="Clique para marcar feito/pendente" style="display: flex; width: 100%; box-sizing: border-box; text-align: left; align-items: center; gap: 9px; border: none; background: transparent; cursor: pointer; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-family: inherit;">
-                  <span style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{ ob.cor }}; background: {{ ob.bg }}; color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none;">{{ ob.check }}</span>
-                  <span style="flex: 1; font-size: 12px; color: {{ ob.fg }};">{{ ob.label }}</span>
-                  <span style="font-size: 10px; color: #b8ada0;">{{ ob.quando }}</span>
-                </button>
-                <div style="display: flex; align-items: center; gap: 8px; padding: 0 0 8px 26px;">
-                  <span style="font-size: 10px; color: #b8ada0;">Previsto para</span>
-                  <input type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="padding: 5px 8px; font-size: 11px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 7px; background: #fff;" />
-                </div>
-              </sc-for>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Etapas pendentes aparecem na fila do perfil Operação.</p>
-            </div>
-          </sc-if>
-
-          <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
-          <sc-if value="{{ temInscricao }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Ficha da inscrição</div>
-              <sc-for list="{{ inscricao }}" as="q" hint-placeholder-count="3">
-                <div style="padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
-                  <sc-if value="{{ q.rotulo }}">
-                    <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; color: #b3a693; margin-bottom: 3px;">{{ q.rotulo }}</div>
-                  </sc-if>
-                  <div style="font-size: 12.5px; color: #3d3529; line-height: 1.55;">{{ q.valor }}</div>
-                </div>
-              </sc-for>
-            </div>
-          </sc-if>
-
-          <!-- DOCUMENTOS -->
-          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Documentos</div>
-            <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="1">
-              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: #2a9d8f; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #f4f1ec;">{{ doc.nome }}</a>
-            </sc-for>
-            <sc-if value="{{ semDocs }}">
-              <div style="font-size: 11px; color: #b8ada0; margin-bottom: 4px;">Nenhum documento ainda.</div>
-            </sc-if>
-            <div style="display: flex; gap: 6px; margin-top: 10px;">
-              <input ref="{{ docNomeRef }}" placeholder="Nome (ex. Contrato 3.2026)" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-              <input ref="{{ docLinkRef }}" placeholder="Link do Drive" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
-              <button onclick="{{ onAddDoc }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">+</button>
-            </div>
-          </div>
-
-          <!-- CERTIFICADO E APP -->
-          <sc-if value="{{ ehAluna }}">
-            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Certificado</div>
-              <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ certResumo }}</p>
-              <div style="display: flex; gap: 7px; flex-wrap: wrap;">
-                <a href="{{ certificadoHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir certificado</a>
-                <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #e5dccf; color: #8a7c6b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir o app da aluna</a>
-              </div>
-              <p style="margin: 9px 0 0; font-size: 10.5px; color: {{ acessoCor }};">{{ acessoTexto }}</p>
-            </div>
-          </sc-if>
-
           <!-- ENCERRAR / REABRIR MATRÍCULA · fora do bloco de contrato: aluna particular sem contrato registrado também encerra -->
           <sc-if value="{{ podeEncerrar }}">
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -687,7 +577,145 @@
           </div>
 
 
-          <sc-if value="{{ mostraPedagogico }}">
+          </sc-if>
+
+          <sc-if value="{{ abaAulas }}">
+          <!-- PEDAGÓGICO · fora do bloco de contrato: toda aluna, antiga ou nova, edita turma e professora -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Pedagógico</span>
+              <button onclick="{{ onEditarTurma }}" style="border: 1px solid #e5dccf; background: {{ edTurBg }}; color: {{ edTurFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edTurLabel }}</button>
+            </div>
+            <sc-if value="{{ editandoTurma }}">
+              <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Turma</div>
+                <select ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                  <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="8"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
+                </select>
+                <div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Professora</div>
+                <select ref="{{ turProfRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; margin-bottom: 8px;">
+                  <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+                </select>
+                <div style="display: flex; gap: 8px; align-items: flex-end;">
+                  <div style="flex: 1;"><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nível</div>
+                    <input ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                  <button onclick="{{ onSalvarTurma }}" style="flex: none; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                </div>
+                <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Em "Automática", a professora vem da turma escolhida. Para aula particular (ou exceção), escolha a professora na lista.</p>
+              </div>
+            </sc-if>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #164951;">
+              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Nível</div>{{ nivel }}</div>
+              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Professora</div>{{ professora }}</div>
+              <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Faltas no ciclo</div>{{ faltasCiclo }}</div>
+              <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Turma</div>{{ turma }}</div>
+              <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
+            </div>
+          </div>
+
+          <!-- PRESENÇAS · chamada a chamada, para o acompanhamento fazer
+               contato ("a Franciny faltou 2 aulas seguidas") -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Presenças</span>
+              <span style="font-size: 10.5px; font-weight: 700; color: {{ presencasCor }};">{{ presencasResumo }}</span>
+            </div>
+            <sc-if value="{{ semPresencas }}">
+              <div style="font-size: 11px; color: #b8ada0;">Nenhuma chamada registrada.</div>
+            </sc-if>
+            <sc-for list="{{ presencasView }}" as="pz" hint-placeholder-count="6">
+              <div style="display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid #f4f1ec; font-size: 11.5px;">
+                <span style="flex: none; font-weight: 700; color: #164951;">{{ pz.data }}</span>
+                <span style="flex: 1; min-width: 0; color: #8a7c6b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pz.turma }}</span>
+                <span style="flex: none; font-weight: 700; color: {{ pz.cor }};">{{ pz.estado }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- AULAS PARTICULARES · PACOTE -->
+          <sc-if value="{{ ehParticular }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Aulas particulares · pacote</span>
+                <span style="font-size: 11px; font-weight: 700; color: {{ pacoteCor }};">{{ pacoteResumo }}</span>
+              </div>
+              <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Início: <strong style="color: #164951;">{{ pacoteInicio }}</strong> · restam <strong style="color: #164951;">{{ pacoteRestam }}</strong></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <button onclick="{{ onAulaDada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;">+ Registrar aula dada</button>
+                <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+                <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
+              </div>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários são marcados na Agenda da escola (aula extra); feriados não são contabilizados.</p>
+            </div>
+          </sc-if>
+
+          <!-- ONBOARDING · PRIMEIROS 30 DIAS -->
+          <sc-if value="{{ temOnboarding }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Onboarding · primeiros 30 dias</span>
+                <span style="font-size: 10px; font-weight: 700; color: {{ obResumoCor }};">{{ obResumo }}</span>
+              </div>
+              <sc-for list="{{ obView }}" as="ob" hint-placeholder-count="4">
+                <button onclick="{{ ob.onToggle }}" title="Clique para marcar feito/pendente" style="display: flex; width: 100%; box-sizing: border-box; text-align: left; align-items: center; gap: 9px; border: none; background: transparent; cursor: pointer; padding: 7px 0; border-bottom: 1px solid #f4f1ec; font-family: inherit;">
+                  <span style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{ ob.cor }}; background: {{ ob.bg }}; color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none;">{{ ob.check }}</span>
+                  <span style="flex: 1; font-size: 12px; color: {{ ob.fg }};">{{ ob.label }}</span>
+                  <span style="font-size: 10px; color: #b8ada0;">{{ ob.quando }}</span>
+                </button>
+                <div style="display: flex; align-items: center; gap: 8px; padding: 0 0 8px 26px;">
+                  <span style="font-size: 10px; color: #b8ada0;">Previsto para</span>
+                  <input type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="padding: 5px 8px; font-size: 11px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 7px; background: #fff;" />
+                </div>
+              </sc-for>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada etapa concluída entra na linha do tempo. Etapas pendentes aparecem na fila do perfil Operação.</p>
+            </div>
+          </sc-if>
+
+          <!-- CERTIFICADO E APP -->
+          <sc-if value="{{ ehAluna }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Certificado</div>
+              <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.55;">{{ certResumo }}</p>
+              <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+                <a href="{{ certificadoHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir certificado</a>
+                <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid #e5dccf; color: #8a7c6b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;">Abrir o app da aluna</a>
+              </div>
+              <p style="margin: 9px 0 0; font-size: 10.5px; color: {{ acessoCor }};">{{ acessoTexto }}</p>
+            </div>
+          </sc-if>
+          </sc-if>
+
+          <sc-if value="{{ abaCadastro }}">
+          <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
+          <sc-if value="{{ temInscricao }}">
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Ficha da inscrição</div>
+              <sc-for list="{{ inscricao }}" as="q" hint-placeholder-count="3">
+                <div style="padding: 8px 0; border-bottom: 1px solid #f4f1ec;">
+                  <sc-if value="{{ q.rotulo }}">
+                    <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; color: #b3a693; margin-bottom: 3px;">{{ q.rotulo }}</div>
+                  </sc-if>
+                  <div style="font-size: 12.5px; color: #3d3529; line-height: 1.55;">{{ q.valor }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- DOCUMENTOS -->
+          <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">Documentos</div>
+            <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="1">
+              <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: #2a9d8f; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #f4f1ec;">{{ doc.nome }}</a>
+            </sc-for>
+            <sc-if value="{{ semDocs }}">
+              <div style="font-size: 11px; color: #b8ada0; margin-bottom: 4px;">Nenhum documento ainda.</div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; margin-top: 10px;">
+              <input ref="{{ docNomeRef }}" placeholder="Nome (ex. Contrato 3.2026)" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+              <input ref="{{ docLinkRef }}" placeholder="Link do Drive" style="flex: 1; min-width: 0; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
+              <button onclick="{{ onAddDoc }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 8px; cursor: pointer;">+</button>
+            </div>
+          </div>
 
           <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
           <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
@@ -697,6 +725,7 @@
             </div>
             <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">{{ apagarPesAviso }}</p>
           </div>
+          </sc-if>
 
         </div>
       </div>
@@ -1201,6 +1230,55 @@ class Component extends DCLogic {
     // lead também vê o cartão: quem assina antes de se matricular é
     // ativada daqui mesmo — ativar promove a pessoa a aluna
     out.ehCliente = ["aluna", "mvs", "pausada", "programa", "lead"].indexOf(p.status) >= 0;
+
+    // ── abas da ficha: os cartões agrupados por assunto ──
+    // Lead não tem abas: a ficha dele é curta e mostra tudo de uma vez.
+    const ehLeadFicha = p.status === "lead";
+    const abaAtual = this.state.abaFicha || "acompanhamento";
+    out.temAbas = !ehLeadFicha;
+    out.abasFicha = [
+      { id: "acompanhamento", label: "Acompanhamento" },
+      { id: "financeiro", label: "Financeiro" },
+      { id: "aulas", label: "Aulas e presenças" },
+      { id: "cadastro", label: "Cadastro" }
+    ].map(a => ({
+      label: a.label,
+      bg: abaAtual === a.id ? "#164951" : "#fff",
+      fg: abaAtual === a.id ? "#fff" : "#164951",
+      borda: abaAtual === a.id ? "#164951" : "#e5dccf",
+      onClick: () => this.setState({ abaFicha: a.id })
+    }));
+    out.abaAcompanhamento = ehLeadFicha || abaAtual === "acompanhamento";
+    out.abaFinanceiro = ehLeadFicha || abaAtual === "financeiro";
+    out.abaAulas = !ehLeadFicha && abaAtual === "aulas";
+    out.abaCadastro = ehLeadFicha || abaAtual === "cadastro";
+
+    // ── resumo do cabeçalho: os fatos-chave sem procurar em cartão ──
+    out.temResumoFicha = !ehLeadFicha;
+    if (out.temResumoFicha) {
+      const cvR = CRM.contratoVigente(p);
+      const mesKeyR = new Date().toISOString().slice(0, 7);
+      const mAtualR = cvR ? ((cvR.meses || []).filter(m => m.key === mesKeyR)[0] || null) : null;
+      const presR = CRM.presencasDe ? CRM.presencasDe(p.id) : [];
+      const faltasR = presR.filter(x => x.estado === "falta").length;
+      const dstR = CRM.diasSemToque(p.id);
+      out.resumoFicha = [
+        { label: "Turma", valor: p.turma || "—",
+          sub: p.professora ? "Prof. " + p.professora : "", cor: "#164951" },
+        { label: "Parcela do mês", valor: cvR ? (cvR.parcelaValor || "—") : "sem contrato",
+          sub: mAtualR ? (mAtualR.pago ? "paga" : (mAtualR.cancelada ? "cancelada" : "em aberto")) : "",
+          cor: mAtualR && !mAtualR.pago && !mAtualR.cancelada ? "#cf6b5c" : "#164951" },
+        { label: "Presenças", cor: faltasR >= 2 ? "#cf6b5c" : "#164951", sub: "",
+          valor: presR.length
+            ? presR.length + (presR.length === 1 ? " aula" : " aulas") + " · "
+              + faltasR + (faltasR === 1 ? " falta" : " faltas")
+            : "—" },
+        { label: "Último contato", sub: "",
+          valor: dstR === null ? "sem registro"
+            : (dstR === 0 ? "hoje" : "há " + dstR + (dstR === 1 ? " dia" : " dias")),
+          cor: dstR !== null && dstR > 21 ? "#cf6b5c" : "#164951" }
+      ];
+    }
     out.addParticular = abertos === "particular";
     out.addAssinatura = abertos === "assinatura";
     out.asnValorRef = this.asnValorRef;
