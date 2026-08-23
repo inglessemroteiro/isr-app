@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-u",
+  numero: "2026.08.20-v",
   data: "20/08/2026",
-  nota: "Agenda das aulas particulares: marcar a série inteira de uma vez (toda semana, a cada 15 dias ou mensal), remarcação registrada com a data de origem e contada por mês (o combinado é 1), aula na Agenda da escola e no painel da professora, com chamada"
+  nota: "Linguagem da agenda de particulares corrigida para o padrão do sistema (Remarcações no mês: 0 de 1, Agendar série, aula agendada/realizada) e verificador automático de linguagem rodando no CI a cada publicação"
 };
