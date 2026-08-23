@@ -6624,6 +6624,9 @@
     // o cartão "Desafio da semana" do app aponta para cá — a gestão
     // troca toda segunda pelo link da semana (ex. /170826)
     desafioLink: "",
+    // arte do post da semana: vira a capa do app da aluna. Em branco, a
+    // capa mostra o número da semana no lugar da imagem.
+    semanaCapa: "",
     // cancelamento da assinatura: quando preenchido, o botão no app leva
     // ao portal de pagamento (systeme); em branco, vale o pedido interno
     cancelLink: "" };

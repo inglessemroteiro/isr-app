@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-v",
-  data: "20/08/2026",
-  nota: "Linguagem da agenda de particulares corrigida para o padrão do sistema (Remarcações no mês: 0 de 1, Agendar série, aula agendada/realizada) e verificador automático de linguagem rodando no CI a cada publicação"
+  numero: "2026.08.21",
+  data: "21/08/2026",
+  nota: "App da aluna do desafio no design aprovado: tela escura com a capa da semana, título do tema, sequência em barras e carimbos do ciclo; o material da semana abre dentro do app, já identificado, e responder acende a sequência na hora"
 };
