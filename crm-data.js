@@ -4442,6 +4442,55 @@
     } catch (e) { if (cb) cb(0); }
   }
 
+  // Assinaturas vindas do systeme pelo Zapier. A planilha é a caixa de
+  // entrada; aqui o evento vira ação: assinou ativa (criando a pessoa se
+  // ela ainda não existe), cancelou encerra. O mesmo motor da lista
+  // colada na Agenda — que continua valendo como conferência.
+  function processarAssinaturasPendentes(cb) {
+    var url = backendUrl();
+    if (!url) { if (cb) cb(0); return; }
+    try {
+      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=assinaturasPendentes")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
+          var mexeu = 0;
+          d.itens.forEach(function (ev) {
+            var email = String(ev.email || "").trim().toLowerCase();
+            if (!email) return;
+            var pes = loadPessoas().filter(function (x) {
+              return (x.email || "").trim().toLowerCase() === email;
+            })[0];
+            if (ev.evento === "cancelou") {
+              if (pes && assinaturaAtiva(pes)) {
+                encerrarAssinatura(pes.id, "Cancelou no systeme");
+                mexeu++;
+              }
+            } else {
+              if (!pes) {
+                pes = novaPessoa({ nome: ev.nome || email.split("@")[0], email: email,
+                  origem: "Assinatura" });
+              }
+              if (!assinaturaAtiva(pes)) {
+                ativarAssinatura(pes.id, { valor: ev.valor || "27", moeda: ev.moeda || "\u20ac" });
+                mexeu++;
+                // o convite do Netlify continua sendo um passo humano
+                // enquanto o Zap não cuidar dele
+                addTarefa({ titulo: "Convidar " + (pes.nome || email) + " no Netlify",
+                  detalhe: email + " · assinou pelo systeme e precisa do acesso ao app",
+                  dono: "Gabi", por: "sistema" });
+              }
+            }
+            try {
+              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "assinaturaProcessada", id: ev.id }) }).catch(function () {});
+            } catch (e) {}
+          });
+          if (cb) cb(mexeu);
+        }).catch(function () { if (cb) cb(0); });
+    } catch (e) { if (cb) cb(0); }
+  }
+
   // ao abrir qualquer tela: puxa a base compartilhada + cadastros novos
   // (silencioso). E enquanto a tela fica aberta, repete a cada 5 minutos —
   // inscrição que chega pelo link de cadastro entra sozinha no funil.
@@ -4451,10 +4500,12 @@
     carregarDoBackend(function () {
       processarCadastrosPendentes(function (n1) {
         processarAtividadesPendentes(function (n2) {
-          var novos = (n1 || 0) + (n2 || 0);
-          if (novos > 0) {
-            try { window.dispatchEvent(new CustomEvent("isr-dados-novos", { detail: { novos: novos } })); } catch (e) {}
-          }
+          processarAssinaturasPendentes(function (n3) {
+            var novos = (n1 || 0) + (n2 || 0) + (n3 || 0);
+            if (novos > 0) {
+              try { window.dispatchEvent(new CustomEvent("isr-dados-novos", { detail: { novos: novos } })); } catch (e) {}
+            }
+          });
         });
       });
     });
@@ -9464,6 +9515,7 @@
     receitaParticularesNoMes: receitaParticularesNoMes,
     furosDeCadastro: furosDeCadastro, marcarFuroCiente: marcarFuroCiente,
     processarAtividadesPendentes: processarAtividadesPendentes,
+    processarAssinaturasPendentes: processarAssinaturasPendentes,
     folhaNoCaixa: folhaNoCaixa, comercialDaEquipe: comercialDaEquipe,
     conferenciaFinanceira: conferenciaFinanceira,
     lerControlePagamento: lerControlePagamento,

@@ -104,6 +104,34 @@
               <span style="font-size: 10.5px; color: #b3a693;">Só quem entrou agora precisa de convite no Netlify.</span>
             </div>
           </sc-if>
+          <!-- AUTOMAÇÃO · o Zapier faz o que a lista faz, sem esperar segunda -->
+          <div style="border-top: 1px solid #f0e8d8; margin-top: 14px; padding-top: 12px;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span style="font-size: 12px; font-weight: 700; color: #164951;">Automação pelo Zapier</span>
+              <button onclick="{{ onToggleZap }}" style="border: 1px solid #e5dccf; background: {{ zapBg }}; color: {{ zapFg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ zapLabel }}</button>
+            </div>
+            <sc-if value="{{ zapAberto }}">
+              <div style="margin-top: 10px; background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 12px 14px;">
+                <p style="margin: 0 0 10px; font-size: 12px; color: #6b6155; line-height: 1.6;">Com o Zap ligado, assinatura e cancelamento entram sozinhos e a lista acima passa a ser conferência. O endereço abaixo é o que o Zapier chama.</p>
+                <sc-if value="{{ zapTemUrl }}">
+                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                    <code style="flex: 1; min-width: 200px; font-size: 11px; color: #164951; background: #f6f2ea; border-radius: 8px; padding: 9px 11px; word-break: break-all;">{{ zapUrl }}</code>
+                    <button onclick="{{ onCopiarZapUrl }}" style="border: 1px solid #c98a2e; background: #fff; color: #c98a2e; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ zapCopiarLabel }}</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ zapSemUrl }}">
+                  <p style="margin: 0 0 10px; font-size: 12px; color: #cf6b5c; line-height: 1.6;">A Conexão ainda não está configurada. Configure em Escola → Conexão para gerar o endereço.</p>
+                </sc-if>
+                <sc-for list="{{ zapPassos }}" as="zp" hint-placeholder-count="4">
+                  <div style="display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px solid #f4f1ec;">
+                    <span style="flex: none; width: 22px; height: 22px; border-radius: 7px; background: #348a8e; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{ zp.n }}</span>
+                    <span style="flex: 1; font-size: 12px; color: #3d3529; line-height: 1.55;">{{ zp.texto }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
           <sc-if value="{{ temPrevia }}">
             <div style="margin-top: 10px;">
               <sc-for list="{{ previaLote }}" as="pl" hint-placeholder-count="4">
@@ -593,6 +621,33 @@ class Component extends DCLogic {
           : " assinantes do sistema não estão na lista") + " — cancelaram no systeme.";
       })(),
       asnLoteRef: this.asnLoteRef,
+      // ── automação: o endereço que o Zapier chama e o passo a passo ──
+      zapAberto: !!this.state.zapAberto,
+      zapLabel: this.state.zapAberto ? "fechar" : "como ligar",
+      zapBg: this.state.zapAberto ? "#f6eee4" : "#fff",
+      zapFg: this.state.zapAberto ? "#9c6f56" : "#164951",
+      onToggleZap: () => this.setState(s => ({ zapAberto: !s.zapAberto })),
+      ...((() => {
+        const con = window.ISRCRM.backendUrl ? window.ISRCRM.backendUrl() : "";
+        return {
+          zapTemUrl: !!con, zapSemUrl: !con,
+          zapUrl: con || "",
+          zapCopiarLabel: this.state.copiadoZap ? "Endereço copiado" : "Copiar endereço",
+          onCopiarZapUrl: () => {
+            try { navigator.clipboard.writeText(con); } catch (err) {}
+            this.setState({ copiadoZap: true });
+            setTimeout(() => this.setState({ copiadoZap: false }), 2200);
+          },
+          zapPassos: [
+            { n: "1", texto: "No Zapier, crie um Zap com gatilho no systeme.io: nova assinatura." },
+            { n: "2", texto: "Ação: Webhooks by Zapier → POST, para o endereço acima." },
+            { n: "3", texto: "Em Data, envie quatro campos: action = assinaturaEvento · evento = assinou · email = o e-mail da pessoa · nome = o nome dela." },
+            { n: "4", texto: "Duplique o Zap para o gatilho de cancelamento, trocando evento = cancelou." },
+            { n: "5", texto: "Para o acesso ao app, acrescente uma segunda ação Webhooks: POST para https://api.netlify.com/api/v1/sites/SEU-SITE/identity/users/invite, com o token do Netlify no cabeçalho Authorization e o e-mail no corpo." },
+            { n: "6", texto: "Ligado o Zap, quem assina entra e recebe o convite em minutos. A lista colada aqui continua valendo como conferência." }
+          ]
+        };
+      })()),
       temPrevia: !!(this.state.asnPrevia && this.state.asnPrevia.length),
       previaLote: (this.state.asnPrevia || []).map(it => {
         const M = {

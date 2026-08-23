@@ -32,6 +32,7 @@ function doGet(e) {
   if (action === "systemeContacts") return json_(systemeContacts_(e.parameter.key, e.parameter.limit));
   if (action === "jotform") return json_(jotformProxy_(e.parameter.path, e.parameter.key, e.parameter.base));
   if (action === "atividadesPendentes") return json_(atividadesPendentes_());
+  if (action === "assinaturasPendentes") return json_(assinaturasPendentes_());
   return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "systemeContacts", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
 }
 
@@ -49,10 +50,75 @@ function doPost(e) {
       return json_(novaAtividade_(body.action ? body : (e.parameter || {})));
     if (action === "atividadeProcessada")
       return json_(atividadeProcessada_(body.id || (e.parameter && e.parameter.id)));
+    if (action === "assinaturaEvento")
+      return json_(assinaturaEvento_(body.action ? body : (e.parameter || {})));
+    if (action === "assinaturaProcessada")
+      return json_(assinaturaProcessada_(body.id || (e.parameter && e.parameter.id)));
     return json_({ ok: false, error: "ação desconhecida" });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+// ── ASSINATURAS (systeme → Zapier → sistema) ─────────────────────
+// O Zapier faz um POST quando alguém assina ou cancela no systeme. A
+// linha fica guardada aqui e o sistema aplica no próximo puxe: ativa a
+// assinatura, ou encerra. Nada é decidido nesta planilha — ela é a
+// caixa de entrada, e o sistema é quem sabe o que fazer com o evento.
+var ASSIN_SHEET = "Assinaturas recebidas";
+var ASSIN_HEAD = ["ID", "Recebido em", "Evento", "Nome", "E-mail", "Valor", "Moeda", "Processado"];
+
+function assinSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(ASSIN_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ASSIN_SHEET);
+    sh.getRange(1, 1, 1, ASSIN_HEAD.length).setValues([ASSIN_HEAD]).setFontWeight("bold");
+  }
+  return sh;
+}
+
+function assinaturaEvento_(p) {
+  p = p || {};
+  var email = String(p.email || "").trim().toLowerCase();
+  if (!email) return { ok: false, error: "sem e-mail" };
+  // "assinou" é o padrão: um Zap mal configurado não deve cancelar
+  // ninguém por omissão do campo
+  var ev = String(p.evento || "assinou").toLowerCase();
+  ev = (ev.indexOf("cancel") >= 0 || ev.indexOf("encerr") >= 0) ? "cancelou" : "assinou";
+  var id = "asn" + new Date().getTime() + Math.floor(Math.random() * 1000);
+  assinSheet_().appendRow([id, new Date().toISOString(), ev,
+    String(p.nome || ""), email, String(p.valor || ""), String(p.moeda || ""), ""]);
+  return { ok: true, id: id, evento: ev };
+}
+
+function assinaturasPendentes_() {
+  var sh = assinSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return { ok: true, itens: [] };
+  var rows = sh.getRange(2, 1, last - 1, ASSIN_HEAD.length).getValues();
+  var itens = [];
+  rows.forEach(function (r) {
+    if (r[7]) return; // já processado
+    itens.push({ id: r[0], recebidoEm: r[1], evento: String(r[2] || ""),
+      nome: String(r[3] || ""), email: String(r[4] || ""),
+      valor: String(r[5] || ""), moeda: String(r[6] || "") });
+  });
+  return { ok: true, itens: itens };
+}
+
+function assinaturaProcessada_(id) {
+  var sh = assinSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return { ok: false, error: "fila vazia" };
+  var rows = sh.getRange(2, 1, last - 1, ASSIN_HEAD.length).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i][0] === id) {
+      sh.getRange(i + 2, ASSIN_HEAD.length).setValue(new Date().toISOString());
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: "evento não encontrado" };
 }
 
 // ── ATIVIDADES DAS ALUNAS (Zapier → sistema) ─────────────────────
