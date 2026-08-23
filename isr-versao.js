@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-a",
+  numero: "2026.08.21-b",
   data: "21/08/2026",
-  nota: "Lista semanal do systeme como referência dos assinantes: quem entrou é ativada e entra na lista de convite do Netlify, quem continua não é alterada e quem saiu pode ser encerrada com um clique"
+  nota: "App da aluna inteiro no visual novo, inclusive para aluna de turma: fundo escuro, títulos serifados, cartões translúcidos e barra de abas opaca; frases da tela revisadas"
 };

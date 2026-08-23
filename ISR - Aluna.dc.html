@@ -18,7 +18,7 @@
 </head>
 <body>
 <x-dc>
-<main style="background: {{ fundoApp }}; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #2c3e50; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
+<main class="isr-escuro" style="background: {{ fundoApp }}; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #2c3e50; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
 
   <style>
     /* O ponto do selo "ao vivo" pulsa; quem pediu menos movimento
@@ -33,34 +33,74 @@
     @keyframes isrPop { 0% { transform: scale(.6) rotate(-4deg); opacity: 0; } 70% { transform: scale(1.06) rotate(1deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
     .isr-spark { animation: isrSpark 2.6s ease-in-out infinite; }
     .isr-pop { animation: isrPop .5s cubic-bezier(.2,1.4,.4,1); }
-    .isr-btn:active { transform: scale(0.98); }
-    .isr-btn-coral:hover { filter: brightness(1.05); }
-    .isr-btn-dark:hover { filter: brightness(1.12); }
 
-    /* No computador (e no embed do systeme aberto no computador) a página
-       deixa o corredor de celular: o Início abre em coluna principal
-       (aula + pendências da semana) e coluna de apoio (progresso, FLIN,
-       extras, atividades); as demais abas ficam numa coluna única
-       confortável, centrada. Cabeçalho e barra de abas acompanham. */
-    @media (min-width: 900px) {
-      main > header {
-        padding: 16px max(32px, calc((100% - 976px) / 2)) !important;
-      }
-      main > div[style*="max-width: 420px"] {
-        max-width: 1024px !important;
-        padding: 28px 24px !important;
-      }
-      nav div[style*="max-width: 420px"] {
-        max-width: 1024px !important;
-      }
-      main > div[style*="max-width: 420px"] > section {
-        max-width: 640px;
-        margin-left: auto !important;
-        margin-right: auto !important;
-      }
-      .al-cols { display: flex; gap: 26px; align-items: flex-start; }
-      .al-main { flex: 1.45; min-width: 0; }
-      .al-side { flex: 1; min-width: 0; }
+    /* ══ PALETA DA ALUNA ══════════════════════════════════════════
+       O app inteiro é escuro, como o desafio. As telas de turma foram
+       escritas com estilo em cada elemento; converter uma a uma seria
+       centenas de edições e nenhuma garantia de que a próxima nasce
+       certa. Aqui a paleta é traduzida de uma vez.
+
+       O framework normaliza o estilo em linha para rgb(), então é por
+       esse formato que os seletores procuram — não pelo hexadecimal
+       escrito no HTML. */
+    .isr-escuro [style*="background: rgb(255, 255, 255)"],
+    .isr-escuro [style*="background: rgb(250, 249, 247)"],
+    .isr-escuro [style*="background: rgb(245, 243, 240)"],
+    .isr-escuro [style*="background: rgb(247, 245, 241)"],
+    .isr-escuro [style*="background: rgb(240, 237, 232)"],
+    .isr-escuro [style*="background: rgb(255, 253, 248)"] {
+      background: rgba(242, 235, 227, 0.07) !important;
+      border-color: rgba(242, 235, 227, 0.16) !important;
+      box-shadow: none !important;
+    }
+    .isr-escuro [style*="rgb(232, 229, 224)"],
+    .isr-escuro [style*="rgb(224, 220, 214)"],
+    .isr-escuro [style*="rgb(240, 237, 232)"] {
+      border-color: rgba(242, 235, 227, 0.16) !important;
+    }
+    /* texto escuro vira creme; texto de apoio, creme apagado */
+    .isr-escuro [style*="color: rgb(44, 62, 80)"],
+    .isr-escuro [style*="color: rgb(22, 73, 81)"],
+    .isr-escuro [style*="color: rgb(61, 53, 41)"] { color: #f2ebe3 !important; }
+    .isr-escuro [style*="color: rgb(125, 109, 99)"],
+    .isr-escuro [style*="color: rgb(155, 139, 126)"],
+    .isr-escuro [style*="color: rgb(102, 102, 102)"],
+    .isr-escuro [style*="color: rgb(107, 97, 85)"],
+    .isr-escuro [style*="color: rgb(179, 166, 147)"],
+    .isr-escuro [style*="color: rgb(184, 173, 160)"] { color: rgba(242, 235, 227, 0.6) !important; }
+    /* teal e verde escuros não se leem sobre o fundo: viram o verde claro */
+    .isr-escuro [style*="color: rgb(52, 138, 142)"],
+    .isr-escuro [style*="color: rgb(90, 154, 46)"],
+    .isr-escuro [style*="color: rgb(34, 144, 144)"] { color: #9ec970 !important; }
+    .isr-escuro [style*="color: rgb(200, 98, 47)"] { color: #fc9082 !important; }
+    /* blocos que já eram escuros descem um tom, para separar do fundo */
+    .isr-escuro [style*="background: rgb(22, 73, 81)"] { background: #0e343a !important; }
+    .isr-escuro [style*="background: rgb(52, 138, 142)"] { background: #229090 !important; }
+    /* dentro de coral e verde a leitura é sempre no teal escuro */
+    .isr-escuro [style*="background: rgb(252, 144, 130)"],
+    .isr-escuro [style*="background: rgb(158, 201, 112)"] { color: #164951 !important; }
+    .isr-escuro [style*="background: rgb(252, 144, 130)"] *,
+    .isr-escuro [style*="background: rgb(158, 201, 112)"] * { color: #164951 !important; }
+    /* fundos claros de destaque (verde e coral suaves) ganham versão escura */
+    .isr-escuro [style*="background: rgb(238, 245, 236)"] { background: rgba(158, 201, 112, 0.14) !important; }
+    .isr-escuro [style*="background: rgb(253, 241, 236)"] { background: rgba(252, 144, 130, 0.14) !important; }
+    /* Barra de abas: precisa ser opaca, senão o conteúdo passa por trás.
+       O seletor leva o [style] junto para vencer a regra dos cartões,
+       que também casa com o fundo branco do nav. */
+    .isr-escuro nav[style] {
+      background: #0e343a !important;
+      border-top-color: rgba(242, 235, 227, 0.12) !important;
+      box-shadow: none !important;
+    }
+    /* títulos grandes na serifada do desafio */
+    .isr-escuro h1, .isr-escuro h2 {
+      font-family: 'DM Serif Display', Georgia, serif !important;
+      font-weight: 400 !important; letter-spacing: 0 !important;
+    }
+    /* rótulos de seção em caixa alta seguem a monoespaçada */
+    .isr-escuro h3 {
+      font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+      letter-spacing: 2px !important; color: rgba(242, 235, 227, 0.6) !important;
     }
   </style>
 
@@ -74,20 +114,12 @@
 
     <!-- CABEÇALHO — o selo ISR Miles fica discreto, à direita -->
     <sc-if value="{{ naoModoDesafio }}">
-    <header style="padding: 14px 16px; background: #fff; border-bottom: 1px solid #e8e5e0; display: flex; align-items: center; gap: 12px;">
-      <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" style="height: 34px; width: auto; flex: none;" alt="Inglês sem Roteiro" />
-      <div style="flex: 1; min-width: 0;">
-        <div style="font-size: 14px; font-weight: 600; letter-spacing: -0.3px; color: #2c3e50;">Bem-vinda, {{ primeiroNome }}</div>
-        <div style="font-size: 10px; color: #7d6d63; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nivelCiclo }}</div>
-      </div>
-      <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: flex; align-items: center; gap: 6px; border: none; background: #fdf1ec; padding: 5px 12px 5px 6px; border-radius: 999px; cursor: pointer; font-family: inherit;">
-        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" style="display: block;">
-          <circle cx="16" cy="16" r="14.2" fill="none" stroke="#348a8e" stroke-width="1.4" stroke-dasharray="2.6 3.4" opacity="0.55"></circle>
-          <circle cx="13" cy="18.5" r="6.8" fill="#fc9082"></circle>
-          <path d="M22.4 7.2 L24 11.6 L28.4 13.2 L24 14.8 L22.4 19.2 L20.8 14.8 L16.4 13.2 L20.8 11.6 Z" fill="#348a8e"></path>
-        </svg>
-        <span style="font-size: 13px; font-weight: 800; color: #164951;">{{ milesTotal }}</span>
-      </button>
+    <header style="max-width: 420px; margin: 0 auto; padding: 18px 20px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <span style="min-width: 0;">
+        <span style="display: block; font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; letter-spacing: 0.06em; color: #f2ebe3;">ISR</span>
+        <span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #9ec970; text-transform: uppercase; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nivelCiclo }}</span>
+      </span>
+      <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 5px; border: none; background: #fc9082; color: #164951; padding: 5px 12px; border-radius: 999px; font-family: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.25);">✦ {{ milesTotal }} miles</button>
     </header>
     </sc-if>
 
@@ -152,6 +184,14 @@
               <p style="margin: 10px 0 0; font-size: 11.5px; line-height: 1.5; color: rgba(242,235,227,0.5);">Cada desafio respondido acende uma semana e vale <strong style="color: #fc9082;">+{{ dsPontosMissao }} miles</strong>.</p>
             </div>
           </sc-if>
+        </sc-if>
+
+        <!-- saudação: a aluna de turma também abre o app pelo nome -->
+        <sc-if value="{{ naoModoDesafio }}">
+          <div style="padding: 0 0 14px;">
+            <p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; color: #9ec970; text-transform: uppercase;">Bem-vinda, {{ primeiroNome }}</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(242,235,227,0.55);">{{ turma }}</p>
+          </div>
         </sc-if>
 
         <!-- 1. AULA DE HOJE -->
@@ -1308,13 +1348,13 @@ class Component extends DCLogic {
     if (soPrograma && pg) {
       const faltamSemanas = pg.semanas - pg.semana;
       incentivo = faltamSemanas > 0
-        ? "Faltam " + faltamSemanas + (faltamSemanas === 1 ? " semana" : " semanas") + " para concluir o programa."
+        ? faltamSemanas + (faltamSemanas === 1 ? " semana restante" : " semanas restantes") + " no programa."
         : "Última semana do programa.";
     } else if (pc && pc.restam > 0) {
       // o certificado é contado em horas: dizer só "aulas" esconde o que ela leva
-      incentivo = "Faltam " + pc.restam + (pc.restam === 1 ? " aula" : " aulas")
+      incentivo = pc.restam + (pc.restam === 1 ? " aula restante" : " aulas restantes")
         + " para concluir o ciclo."
-        + (horas ? " Você já tem " + horas.horasTotais + " h; o certificado sai com "
+        + (horas ? " Total cursado: " + horas.horasTotais + " h. O certificado é emitido com "
             + horas.certificado.horas + " h." : "")
         + (pc.faltou ? " Faltas até aqui: " + pc.faltou + (pc.faltou === 1 ? " aula." : " aulas.") : "");
     } else if (pc) {
@@ -1411,7 +1451,9 @@ class Component extends DCLogic {
       // progresso
       cicloPct: cicloPct + "%", cicloLabel,
       incentivo,
-      milesSub: rec.proxima ? "Faltam " + rec.faltam + " para " + rec.proxima.nome : "Saldo suficiente para todo o catálogo",
+      milesSub: rec.proxima
+        ? rec.faltam + (rec.faltam === 1 ? " mile para: " : " miles para: ") + rec.proxima.nome
+        : "Saldo suficiente para todo o catálogo",
       milesCta: rec.disponiveis.length ? "Resgatar" : "Ver",
 
       // aulas
@@ -1511,9 +1553,9 @@ class Component extends DCLogic {
       certPronto: !!horas && horas.certificado.pronto,
       certFrase: horas
         ? (horas.certificado.pronto
-            ? "O ciclo está completo. O certificado sai com " + horas.certificado.horas
+            ? "Ciclo concluído. O certificado é emitido com " + horas.certificado.horas
               + " horas de aula em " + (horas.certificado.nivel || "seu nível") + "."
-            : "Faltam " + horas.faltamHoras + " horas para fechar o ciclo. No fim, o certificado sai com "
+            : horas.faltamHoras + " horas para concluir o ciclo. O certificado é emitido com "
               + horas.certificado.horas + " horas.")
         : "",
       duracaoAula: horas ? horas.minutosAula + " min por aula" : "",
@@ -1567,7 +1609,7 @@ class Component extends DCLogic {
         ? (this.state.pulsoFeito
             ? "A professora vê isto no acompanhamento da turma."
             : "Comentário opcional. A professora usa para ajustar a próxima aula.")
-        : "Só a professora vê. Serve para ajustar a próxima aula.",
+        : "Visível apenas para a professora. Usada no ajuste da próxima aula.",
 
       pulsoAberto: !this.state.pulsoId,
       pulsoDado: !!this.state.pulsoId,
@@ -1658,7 +1700,7 @@ class Component extends DCLogic {
       onIrDesafio: () => this.setState({ tab: "desafio" }),
 
       // ── MODO DESAFIO · os dados das três telas ──
-      fundoApp: modoDesafio ? "#164951" : "#f8f6f3",
+      fundoApp: "#164951",
       padConteudo: modoDesafio ? "0 0 16px" : "16px",
       tabPerfilDesafio: modoDesafio && tab === "conta",
       ...((() => {
@@ -1859,7 +1901,7 @@ class Component extends DCLogic {
       proxRecNome: rec.proxima ? rec.proxima.nome : "",
       proxRecPct: rec.pct + "%",
       proxRecFrase: rec.proxima
-        ? "Faltam " + rec.faltam + (rec.faltam === 1 ? " mile" : " miles")
+        ? rec.faltam + (rec.faltam === 1 ? " mile restante" : " miles restantes")
         : "",
 
       // ── catálogo em três níveis ──
@@ -1880,7 +1922,7 @@ class Component extends DCLogic {
           let nota = "", notaCor = "#9b8b7e";
           if (bloq) { nota = bloq.texto; notaCor = "#7d6d63"; }
           else if (r.faltam) {
-            nota = "Faltam " + r.faltam + (r.faltam === 1 ? " mile" : " miles");
+            nota = r.faltam + (r.faltam === 1 ? " mile restante" : " miles restantes");
             notaCor = "#7d6d63";
           } else if (r.vagas && r.vagas.minimo && !r.vagas.atingiuMinimo) {
             nota = "Mínimo de " + r.vagas.minimo
