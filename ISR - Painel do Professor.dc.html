@@ -306,7 +306,7 @@ class Component extends DCLogic {
     return { label: sem + " " + dm, cor: "#8a7c6b" };
   }
 
-  tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : "#6b5b95"; }
+  tipoCor(tipo) { return tipo === "aula_extra" ? "#e07856" : (tipo === "particular" ? "#8a6fb0" : "#6b5b95"); }
 
   CORES = { presente: "#348a8e", atraso: "#d4a574", falta: "#fff", justificada: "#6b5b95" };
   DIA_LONGO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
@@ -390,18 +390,25 @@ class Component extends DCLogic {
 
     // ── próximas aulas (7 dias) ──
     const aulas = CRM.agendaItens(7)
-      .filter(it => (it.tipo === "aula" || it.tipo === "aula_extra") && it.responsavel === teacher)
+      .filter(it => (it.tipo === "aula" || it.tipo === "aula_extra" || it.tipo === "particular")
+        && (it.responsavel === teacher || (it.tipo === "particular" && !it.responsavel)))
       .map(it => {
         const dl = this.diaLabel(it.data);
         const daTurma = turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0 && it.titulo.indexOf(u.turma) >= 0)[0];
         const ev = it.eventoId ? CRM.getEvento(it.eventoId) : null;
+        const alunaPart = it.tipo === "particular" ? CRM.getPessoa(it.pessoaId) : null;
         return {
           dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
           quando: dl.label + (it.hora ? " · " + it.hora : ""),
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
           gcal: ev ? CRM.gcalLinkEvento(ev) : CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
           onChamada: () => {
-            if (ev) {
+            if (alunaPart) {
+              this.setState({ eventoChamada: null, particularChamada: alunaPart.id, turmaChamada: null,
+                chamadaData: it.data,
+                presencas: this.carregarChamada("Particular · " + alunaPart.nome, it.data),
+                tarefas: null, salvouAgora: false });
+            } else if (ev) {
               const lbl = CRM.aulaExtraLabel(ev);
               this.setState({ eventoChamada: ev.id, particularChamada: null, turmaChamada: lbl, chamadaData: ev.data,
                 presencas: this.carregarChamada(lbl, ev.data, ev.id), tarefas: null, salvouAgora: false });
@@ -789,15 +796,22 @@ class Component extends DCLogic {
         // na agenda, então não apareceria em nenhum atalho
         const chipsPart = particularesProf.map(px => {
           const marcada = !!partSel && partSel.id === px.id;
+          // a chamada abre na aula marcada mais próxima, não em "hoje"
+          const prox = CRM.proximaAulaParticular ? CRM.proximaAulaParticular(px.id) : null;
+          const dia = prox ? this.diaLabel(prox.data) : null;
           return {
-            label: "Particular · " + CRM.firstName(px.nome),
+            label: "Particular · " + CRM.firstName(px.nome)
+              + (dia ? " · " + dia.label : ""),
             bg: marcada ? "#164951" : "#fff",
             fg: marcada ? "#fff" : "#6b5b95",
             borda: marcada ? "#164951" : "#ddd6e8",
-            onClick: () => this.setState({ eventoChamada: null, particularChamada: px.id,
-              turmaChamada: null, chamadaData: null,
-              presencas: this.carregarChamada("Particular · " + px.nome, this.hojeIso()),
-              tarefas: null, salvouAgora: false, escolhendoData: false })
+            onClick: () => {
+              const quando = prox ? prox.data : this.hojeIso();
+              this.setState({ eventoChamada: null, particularChamada: px.id,
+                turmaChamada: null, chamadaData: quando,
+                presencas: this.carregarChamada("Particular · " + px.nome, quando),
+                tarefas: null, salvouAgora: false, escolhendoData: false });
+            }
           };
         });
         return opcoes.slice(0, 6).concat(chipsPart);
