@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21",
+  numero: "2026.08.21-a",
   data: "21/08/2026",
-  nota: "App da aluna do desafio no design aprovado: tela escura com a capa da semana, título do tema, sequência em barras e carimbos do ciclo; o material da semana abre dentro do app, já identificado, e responder acende a sequência na hora"
+  nota: "Lista semanal do systeme como referência dos assinantes: quem entrou é ativada e entra na lista de convite do Netlify, quem continua não é alterada e quem saiu pode ser encerrada com um clique"
 };
