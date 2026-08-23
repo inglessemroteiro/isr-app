@@ -1,8 +1,13 @@
-# A cada publicação, confere que as páginas do desafio (DDMMAA.html)
-# mantêm o contrato com o sistema: trava de login, identidade automática
-# e registro da semana. Um X vermelho no commit significa que a página
-# publicada perdeu parte do modelo — o log da ação diz exatamente o quê.
-name: Verificar páginas do desafio
+# A cada publicação, confere dois contratos do app:
+#
+# 1. As páginas do desafio (DDMMAA.html) mantêm trava de login,
+#    identidade automática e registro da semana.
+# 2. O texto de interface segue a linguagem de sistema — sem metáfora,
+#    tom de conversa ou frase de venda.
+#
+# Um X vermelho no commit significa que a publicação quebrou um dos
+# dois; o log da ação diz exatamente o quê e onde.
+name: Verificar app
 
 on:
   push:
@@ -13,5 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Conferir o contrato das páginas
+      - name: Conferir o contrato das páginas do desafio
         run: node verificar-desafio.js
+      - name: Conferir a linguagem das telas
+        run: node verificar-linguagem.js

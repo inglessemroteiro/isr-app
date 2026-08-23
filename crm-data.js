@@ -5335,14 +5335,13 @@
   // rastro. A série resolve isso: marca as N aulas de uma vez, na
   // cadência combinada, e cada aula guarda o próprio histórico.
   //
-  // Remarcar é direito da aluna, mas o combinado é uma vez por mês. O
-  // sistema não bloqueia — quem decide abrir exceção é a escola —, ele
-  // conta e avisa.
+  // Remarcação tem limite de uma por mês. O sistema não bloqueia — abrir
+  // exceção é decisão da escola —, apenas contabiliza e sinaliza.
   var LIMITE_REMARCACAO_MES = 1;
   var CADENCIAS = [
-    { id: "semanal", label: "Toda semana", dias: 7 },
-    { id: "quinzenal", label: "A cada 15 dias", dias: 14 },
-    { id: "mensal", label: "Uma vez por mês", dias: 28 }
+    { id: "semanal", label: "Semanal", dias: 7 },
+    { id: "quinzenal", label: "Quinzenal", dias: 14 },
+    { id: "mensal", label: "Mensal", dias: 28 }
   ];
 
   function agendaParticular(pessoaId) {
@@ -5361,7 +5360,7 @@
     var quantas = parseInt(cfg.quantidade, 10) || 0;
     var cad = CADENCIAS.filter(function (c) { return c.id === cfg.cadencia; })[0] || CADENCIAS[0];
     var d0 = parseISO(cfg.inicio || "");
-    if (!quantas || !d0) return { ok: false, erro: "Informe a data da primeira aula e quantas aulas marcar." };
+    if (!quantas || !d0) return { ok: false, erro: "Informe a data da primeira aula e a quantidade." };
     var hora = (cfg.hora || "").trim();
     var pes = getPessoa(pessoaId);
     if (!pes) return { ok: false, erro: "Aluna não encontrada." };
@@ -5395,10 +5394,10 @@
       // o total contratado acompanha o que foi marcado, quando ninguém
       // tinha registrado quantidade antes
       if (!p.particular.aulas) p.particular.aulas = novas.length;
-      pushHist(p, "matricula", novas.length + " aulas particulares marcadas · "
-        + cad.label.toLowerCase() + " · de " + ddmm(novas[0].data)
+      pushHist(p, "matricula", novas.length + " aulas particulares agendadas · "
+        + cad.label.toLowerCase() + " · " + ddmm(novas[0].data)
         + " a " + ddmm(novas[novas.length - 1].data)
-        + (hora ? " às " + hora : ""));
+        + (hora ? " · " + hora : ""));
     });
     return { ok: true, marcadas: novas.length,
       primeira: novas[0].data, ultima: novas[novas.length - 1].data };
@@ -5423,7 +5422,7 @@
     if (!novaData) return { ok: false, erro: "Escolha a nova data." };
     var alvo = agendaParticular(pessoaId).filter(function (a) { return a.id === aulaId; })[0];
     if (!alvo) return { ok: false, erro: "Aula não encontrada." };
-    if (alvo.estado === "feita") return { ok: false, erro: "Esta aula já foi dada." };
+    if (alvo.estado === "feita") return { ok: false, erro: "Aula já realizada." };
 
     var mesDaRemarcacao = iso(today()).slice(0, 7);
     var antesNoMes = remarcacoesNoMes(pessoaId, mesDaRemarcacao);
@@ -5452,8 +5451,8 @@
       avisar(prof, "Aula particular de " + pes.nome + " remarcada: "
         + ddmm(dataAntiga) + " → " + ddmm(novaData)
         + (novaHora ? " às " + novaHora : "")
-        + (excedeu ? " · " + noMes + "ª remarcação no mês (o combinado é "
-            + LIMITE_REMARCACAO_MES + " por mês)" : ""), "aula");
+        + (excedeu ? " · " + noMes + "ª remarcação no mês (limite: "
+            + LIMITE_REMARCACAO_MES + ")" : ""), "aula");
     }
     return { ok: true, noMes: noMes, limite: LIMITE_REMARCACAO_MES, excedeu: excedeu,
       de: dataAntiga, para: novaData };
@@ -8533,7 +8532,7 @@
       if (estagioBruto && !estagio && !jaAluna)
         notas.push("Não entendi o estágio “" + estagioBruto + "” — entra como A contatar");
       if (!whatsapp && !email && !jaAluna)
-        notas.push("Sem WhatsApp nem e-mail — entra, mas não dá para contatar");
+        notas.push("Sem WhatsApp nem e-mail — entra, mas fica sem canal de contato");
 
       // "05/02" sem ano é deste ano; o formulário exporta "2026-04-27 18:55"
       var desde = "";
@@ -9206,16 +9205,16 @@
       descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 8, obs: "" },
     { id: "part_eur", nome: "Particular EUR", moeda: "€", ciclo: 480,
       descAvista: 10, descParcelado: 5, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 3,
-      obs: "Defasado: €40/aula é preço de particular BR. Proposta pra contratos novos: €200–220/mês" },
+      obs: "Defasado: €40/aula é preço de particular BR. Proposta para contratos novos: €200–220/mês" },
     { id: "dupla_eur", nome: "Aula em dupla EUR (por pessoa)", moeda: "€", ciclo: 330,
       descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 3,
-      obs: "Mesmo nível CEFR + mesma agenda. Se uma sai, a outra migra pra particular ou repõe a dupla" },
+      obs: "Mesmo nível CEFR + mesma agenda. Se uma sai, a outra migra para particular ou repõe a dupla" },
     { id: "dupla_brl", nome: "Aula em dupla BRL (por pessoa)", moeda: "R$", ciclo: 1950,
       descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 8,
       obs: "Mesmas regras da dupla EUR" },
     { id: "addon_eur", nome: "Add-on particular quinzenal (EUR)", moeda: "€", ciclo: 240,
       descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4,
-      obs: "2 aulas 1:1 por mês pra quem já está no grupo. Sobe junto se o particular for reajustado" },
+      obs: "2 aulas 1:1 por mês para quem já está no grupo. Sobe junto se o particular for reajustado" },
     { id: "addon_brl", nome: "Add-on particular quinzenal (BRL)", moeda: "R$", ciclo: 1470,
       descAvista: 5, descParcelado: 0, desc2Ciclos: 5, descRenovacao: 5, maxParcelas: 4,
       obs: "Mesma lógica do add-on EUR" },
