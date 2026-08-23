@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-r",
+  numero: "2026.08.20-s",
   data: "20/08/2026",
-  nota: "Conversa de matrícula dá baixa sozinha quando o lead vira aluna (e tem baixa em um clique no funil); Jotform ganha Sincronizar em um clique que só cria e completa — nunca remove —, o canal vem do Como você nos conheceu e a ficha da inscrição aparece no card do lead"
+  nota: "Inscrição incompleta sai do Para hoje; ficha da aluna reorganizada por prioridade de uso (Apagar vai para o fim) e cartão Produtos; Caixa: apagar lançamento não volta no sync (lápide), despesa aceita link de fatura e a folha da equipe cobra a partir do dia 15; revisão geral de linguagem nas telas"
 };

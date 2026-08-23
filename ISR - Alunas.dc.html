@@ -35,7 +35,7 @@
           <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #cf6b5c;">Registros duplicados · {{ duplicadasContagem }}</span>
           <button onclick="{{ onMesclarTodos }}" style="border: 1px solid {{ todosBorda }}; background: {{ todosBg }}; color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ todosLabel }}</button>
         </div>
-        <p style="margin: 0 0 10px; font-size: 12px; color: #6b6155; line-height: 1.6;">A mesma pessoa existe duas vezes (dois aparelhos criaram o registro antes de conectar, por exemplo). Mesclar junta tudo — contrato, histórico, presenças e miles — no registro mais completo e remove a cópia em todos os aparelhos. Confira a lista antes de mesclar todos: par que não for a mesma pessoa, mescle individualmente ou deixe como está.</p>
+        <p style="margin: 0 0 10px; font-size: 12px; color: #6b6155; line-height: 1.6;">Dois registros da mesma pessoa (criados em aparelhos diferentes antes de conectar, por exemplo). Mesclar transfere contrato, histórico, presenças e miles para o registro mais completo e remove a cópia em todos os aparelhos. Revise os pares antes de mesclar em lote.</p>
         <sc-for list="{{ duplicadas }}" as="dp" hint-placeholder-count="3">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid #f3d9d3;">
             <span style="font-size: 12.5px; color: #164951; flex: 1; min-width: 220px;"><strong>{{ dp.manterNome }}</strong> <span style="color: #8a7c6b;">{{ dp.manterDetalhe }}</span><br><span style="color: #b09a89;">cópia: {{ dp.apagarNome }} {{ dp.apagarDetalhe }} · {{ dp.motivo }}</span></span>
@@ -337,7 +337,7 @@ class Component extends DCLogic {
       onPeriodo: () => this.setState(s => ({ retMeses: s.retMeses === 12 ? 6 : 12 })),
       vazio: alunas.length === 0,
       contagem: filtradas.length === todas.length
-        ? (precisam ? precisam + (precisam === 1 ? " aluna exige atenção" : " alunas exigem atenção") : "Todas em dia")
+        ? (precisam ? precisam + (precisam === 1 ? " aluna com pendência" : " alunas com pendências") : "Nenhuma pendência")
         : (filtradas.length + " de " + todas.length),
       temFiltro: !!(this.state.busca || this.state.turma || this.state.professora || this.state.risco || this.state.tag),
       buscaRef: this.buscaRef,

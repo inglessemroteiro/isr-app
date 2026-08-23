@@ -51,7 +51,7 @@
 
     <!-- NÚMEROS DA SEMANA -->
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
-      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Como está a semana</span>
+      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Resumo da semana</span>
       <button onclick="{{ onDetalhes }}" style="border: 1px solid #e5dccf; background: {{ detBg }}; color: {{ detFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ detLabel }}</button>
     </div>
     <sc-if value="{{ detalhesAbertos }}">
@@ -82,7 +82,7 @@
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Cadência de contato</span>
         <button onclick="{{ onEditarCadencia }}" style="border: 1px solid #e5dccf; background: {{ cadBg }}; color: {{ cadFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cadLabel }}</button>
       </div>
-      <p style="margin: 0 0 12px; font-size: 12px; color: #6b6155; line-height: 1.6; max-width: 720px;">Cada aluna entra num segmento pela situação em que está, e cada segmento tem seu intervalo. A carga semanal abaixo é o que a escola precisa dar para manter todas dentro da cadência.</p>
+      <p style="margin: 0 0 12px; font-size: 12px; color: #6b6155; line-height: 1.6; max-width: 720px;">Cada aluna pertence a um segmento, e cada segmento define o intervalo entre contatos. A carga semanal abaixo é o volume de contatos necessário para manter a cadência.</p>
 
       <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f4f1ec;">
         <div>
@@ -204,7 +204,7 @@
             </div>
 
             <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b5b95; margin-bottom: 3px;">Avaliação informada pela aluna</div>
-            <p style="margin: 0 0 7px; font-size: 11px; color: #a2957f; line-height: 1.5;">Registre a resposta da aluna, não a impressão da equipe. É o indicador com maior correlação com renovação.</p>
+            <p style="margin: 0 0 7px; font-size: 11px; color: #a2957f; line-height: 1.5;">Registre a resposta da aluna, não a impressão da equipe.</p>
             <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 9px;">
               <sc-for list="{{ f.pulsos }}" as="pl" hint-placeholder-count="5">
                 <button onclick="{{ pl.onClick }}" style="border: 1px solid {{ pl.borda }}; background: {{ pl.bg }}; color: {{ pl.fg }}; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pl.label }}</button>
@@ -444,7 +444,7 @@ class Component extends DCLogic {
           usoBorda: ruim ? "#ecc9c2" : "#eee3d6",
           usoFrase: u.nunca
             ? u.nunca + (u.nunca === 1 ? " aluna nunca abriu o app" : " alunas nunca abriram o app")
-              + ". Sem uso do app não há avaliação de aula, e sem avaliação a satisfação fica cega."
+              + ". Sem uso do app não há avaliação de aula, e o indicador de satisfação fica sem dados."
             : "Todas já abriram o app pelo menos uma vez."
         };
       }).call(this),
@@ -458,13 +458,13 @@ class Component extends DCLogic {
         if (!toda.length) return "Nenhuma aluna ativa no momento.";
         if (!vencidas.length) return "Nenhum contato pendente agora.";
         const n = Math.min(3, vencidas.length);
-        return "Fale com " + (n === 1 ? "esta aluna" : "estas " + n + " alunas") + " hoje.";
+        return n === 1 ? "1 aluna com contato pendente hoje." : n + " alunas com contato pendente hoje.";
       })(),
       chamadaDetalhe: (() => {
         const vencidas = toda.filter(f => !f.tocadaEstaSemana && f.motivos.length);
         if (!toda.length) return "";
         if (!vencidas.length)
-          return "A cadência da semana está em dia. Voltam a aparecer aqui conforme o intervalo de cada segmento.";
+          return "Cadência da semana em dia. As alunas voltam a esta lista conforme o intervalo do segmento.";
         return vencidas.length + (vencidas.length === 1 ? " aluna está" : " alunas estão")
           + " fora da cadência. A lista completa fica abaixo, com o motivo de cada uma.";
       })(),

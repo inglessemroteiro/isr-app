@@ -156,7 +156,7 @@
     // ALUNOS
     { id: "aluno_boasvindas", categoria: "Alunos", titulo: "Boas-vindas (matrícula nova)",
       corpo: "Oiê, {{primeiroNome}}! Seja MUITO bem-vinda ao Inglês sem Roteiro! 🎉\nSua turma é a {{turma}} ({{horario}}). Em breve você recebe o acesso à sua área da aluna com tudo o que precisa.\nQualquer dúvida, é só me chamar por aqui. Bora aprender inglês de verdade! 💛" },
-    { id: "aluno_faltou", categoria: "Alunos", titulo: "Sentimos sua falta",
+    { id: "aluno_faltou", categoria: "Alunos", titulo: "Contato após ausência",
       corpo: "Oi, {{primeiroNome}}! Senti sua falta na última aula da {{turma}}. 🥺\nTá tudo bem? Se precisar remarcar algo ou estiver com alguma dificuldade, me conta — a gente dá um jeito juntas. 💪" },
     // CHECK-IN
     { id: "checkin_mensal", categoria: "Check-in", titulo: "Check-in mensal",
@@ -182,7 +182,7 @@
       corpo: "Oi, {{primeiroNome}}! Seja bem-vinda ao MVS! 🎉\nVocê vai receber as situações da semana por aqui. Faça no seu ritmo — o objetivo é destravar, não ser perfeita. Qualquer dúvida, me chama! 💛" },
     { id: "mvs_checkin", categoria: "MVS", titulo: "Check-in semanal MVS",
       corpo: "Oi, {{primeiroNome}}! Como foi com a situação dessa semana? 😊\nMe manda um áudio contando como se saiu — pode ser em inglês ou português, do jeito que sair. O importante é praticar!" },
-    { id: "mvs_upsell", categoria: "MVS", titulo: "Convite pra experimentar grupo",
+    { id: "mvs_upsell", categoria: "MVS", titulo: "Convite para aula em grupo",
       corpo: "Oi, {{primeiroNome}}! Você está indo tão bem no MVS que queria te fazer um convite: que tal experimentar uma aula em grupo, sem compromisso?\nTem turma de {{nivel}} com vaga aberta — acho que você ia amar a energia. Topa? 💛" }
   ];
 
@@ -1162,7 +1162,8 @@
 
   function isParaHojeLead(l) {
     if (l.estagio === "perdido" || l.estagio === "matriculado") return false;
-    if (l.estagio === "incompleta") return true;
+    // Inscrição incompleta fica estacionada na aba própria: só volta ao
+    // Para hoje se alguém marcar um follow-up de propósito.
     if (l.proximoFollowup) {
       var d = parseISO(l.proximoFollowup);
       if (d && daysBetween(d, today()) >= 0) return true;
@@ -1436,9 +1437,9 @@
   //  renovação e é o único que a aluna responde, não a gente.
   // ══════════════════════════════════════════════════════════════
   var TOQUE_TIPOS = [
-    { id: "checkin",   label: "Acompanhamento",  cor: "#2a9d8f", desc: "Conversa sobre como ela está indo" },
+    { id: "checkin",   label: "Acompanhamento",  cor: "#2a9d8f", desc: "Conversa sobre o progresso da aluna" },
     { id: "feedback",  label: "Devolutiva",      cor: "#6b5b95", desc: "Retorno sobre tarefa ou áudio" },
-    { id: "elogio",    label: "Reconhecimento",  cor: "#9ec970", desc: "Celebrar um avanço" },
+    { id: "elogio",    label: "Reconhecimento",  cor: "#9ec970", desc: "Registro de avanço" },
     { id: "falta",     label: "Ausência",        cor: "#e07856", desc: "Contato após falta" },
     { id: "cobranca",  label: "Cobrança",        cor: "#cf6b5c", desc: "Assunto financeiro" },
     { id: "renovacao", label: "Renovação",       cor: "#d4a574", desc: "Conversa sobre o próximo ciclo" },
@@ -1597,7 +1598,7 @@
       dono: "Gabi", acao: "Fazer check-in", tpl: "checkin_mensal", tipo: "checkin",
       risco: "", toque: "", naCentral: true, urg: 2 },
     { id: "evolucao_positiva", label: "Evolução positiva", cor: "#9ec970", peso: 8,
-      dono: "Gabi", acao: "Reconhecer", tpl: "checkin_mensal", tipo: "elogio",
+      dono: "Gabi", acao: "Registrar reconhecimento", tpl: "checkin_mensal", tipo: "elogio",
       risco: "", toque: "indo_bem", naCentral: false, urg: 6 }
   ];
   // Limiares, definidos uma vez só.
@@ -1740,13 +1741,13 @@
     { id: "em_risco", label: "Em risco", dias: 7, cor: "#cf6b5c", ordem: 1,
       desc: "Pagamento atrasado, ausências ou dificuldade relatada. Enquanto durar, contato semanal." },
     { id: "nova", label: "Primeiro ciclo", dias: 7, cor: "#9ec970", ordem: 2,
-      desc: "Nos primeiros 42 dias a aluna decide se fica. É onde o contato rende mais." },
+      desc: "Primeiros 42 dias de contrato. Contato semanal." },
     { id: "programa", label: "No programa", dias: 7, cor: "#348a8e", ordem: 3,
       desc: "Participa de um programa no WhatsApp, que já pressupõe devolutiva semanal." },
     { id: "renovacao", label: "Perto de renovar", dias: 14, cor: "#6b5b95", ordem: 4,
-      desc: "O ciclo termina em breve. A conversa de renovação precisa de terreno preparado." },
+      desc: "Ciclo próximo do fim. Contato frequente até a renovação." },
     { id: "estavel", label: "Estável", dias: 30, cor: "#8a7c6b", ordem: 5,
-      desc: "Em dia, presente e avaliando bem. Contato mensal mantém o vínculo sem sufocar." }
+      desc: "Em dia, presente e com boa avaliação. Contato mensal." }
   ];
   function cadenciaConfig() {
     var base = {};
@@ -2073,7 +2074,7 @@
 
     var dono = donoDaIntegracao();
     avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
-      + ". Mande o desafio da semana e adicione ao grupo.", "programa");
+      + ". Envie o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
       detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual."
         + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
@@ -2304,11 +2305,11 @@
   // ══════════════════════════════════════════════════════════════
   var TIPOS_SAIDA = [
     { id: "pausou",   label: "Pausou",             cor: "#d4a574", reativavel: true,
-      desc: "Vai voltar; parou por um motivo pontual" },
+      desc: "Pausa temporária, com previsão de retorno" },
     { id: "saiu",     label: "Saiu",               cor: "#cf6b5c", reativavel: true,
       desc: "Encerrou sem previsão de retorno" },
     { id: "concluiu", label: "Concluiu o objetivo", cor: "#5a9e4b", reativavel: false,
-      desc: "Chegou onde queria chegar" }
+      desc: "Objetivo atingido" }
   ];
   var MOTIVOS_SAIDA = [
     "Financeiro", "Horário incompatível", "Falta de tempo", "Não sentiu evolução",
@@ -2426,7 +2427,7 @@
     var l = lancamentosLista();
     for (var i = 0; i < l.length; i++) {
       if (l[i].descricao === alvo && Math.abs((l[i].valor || 0) - v) < 0.005) {
-        l.splice(i, 1); lancamentosSave(l); break;
+        removeLancamento(l[i].id); break;
       }
     }
     return true;
@@ -2990,15 +2991,8 @@
               acao: "Mensagem do estágio", tpl: "lead_followup" });
           }
         }
-        if (p.estagio === "incompleta") {
-          var e = parseISO(p.entrouEm);
-          if (e && daysBetween(e, today()) >= 1) {
-            itens.push({ regra: "R2", sinal: "inscricao_incompleta", dono: "Carla", urg: 2, icon: "", cor: "#9c6f56",
-              pessoaId: p.id, nome: p.nome,
-              motivo: "Inscrição incompleta há " + daysBetween(e, today()) + "d" + (p.badge ? " · " + p.badge.toLowerCase() : ""),
-              acao: "Mensagem de inscrição", tpl: "lead_incompleta" });
-          }
-        }
+        // Inscrição incompleta não entra na fila: o estágio é um
+        // estacionamento deliberado, não uma pendência do dia.
       }
 
       // ── alunas: os sinais do catálogo único, filtrados pelos acionáveis ──
@@ -3021,11 +3015,35 @@
           itens.push({ regra: "R12", sinal: "reativar", dono: "Carla", urg: 5, icon: "", cor: "#b8ada0",
             pessoaId: p.id, nome: p.nome,
             motivo: "Saiu há " + Math.floor(m6 / 30) + " meses"
-              + (p.motivoPerda ? " (" + p.motivoPerda.toLowerCase() + ")" : "") + " — hora de reativar",
+              + (p.motivoPerda ? " (" + p.motivoPerda.toLowerCase() + ")" : "") + " · elegível para reativação",
             acao: "Reativar", tpl: "renov_abrir" });
         }
       }
     });
+
+    // ── folha da equipe: a equipe recebe todo dia 15 ──
+    // Do dia do pagamento em diante, folha ainda não quitada vira item da
+    // fila do financeiro, com link direto para a folha. O mês cobrado é o
+    // do trabalho: com mesesDepois=1, em agosto paga-se a folha de julho.
+    var cfgFolha = configPagamento();
+    if (today().getDate() >= (cfgFolha.diaPagamento || 15)) {
+      var dAlvo = today(); dAlvo.setDate(1);
+      dAlvo.setMonth(dAlvo.getMonth() - (cfgFolha.mesesDepois || 0));
+      var kAlvo = dAlvo.getFullYear() + "-" + ("0" + (dAlvo.getMonth() + 1)).slice(-2);
+      var fpMes = folhaPagamento(kAlvo);
+      var fpPend = fpMes.linhas.concat(fpMes.fixos || [])
+        .filter(function (x) { return !pagamentoFeito(x.nome, fpMes.mes); });
+      if (fpPend.length) {
+        itens.push({ regra: "R4", sinal: "folha_dia15", dono: "Érika", urg: 1, icon: "", cor: "#9c6f56",
+          pessoaId: "folha:" + fpMes.mes, nome: "Folha da equipe",
+          motivo: "Pagamento da equipe: dia " + (cfgFolha.diaPagamento || 15) + " · " + fpPend.length
+            + (fpPend.length === 1 ? " pagamento pendente" : " pagamentos pendentes")
+            + " da folha de " + fpMes.mes.slice(5, 7) + "/" + fpMes.mes.slice(0, 4) + " ("
+            + fpPend.map(function (x) { return firstName(x.nome); }).slice(0, 4).join(", ") + ")",
+          href: "ISR%20-%20Pagamentos.dc.html",
+          acao: "Abrir a folha", tpl: "" });
+      }
+    }
 
     // pendências: sem prazo, entra na fila da pessoa desde a criação —
     // pendência mandada para alguém tem que aparecer, não esperar data;
@@ -4072,7 +4090,7 @@
         acao: (mudaEmail || mudaFone) ? "atualizar" : "igual" });
     });
     if (!out.length) return { ok: false, linhas: [],
-      erro: "Não encontrei nenhuma linha com nome. Cole as colunas Nome e E-mail da planilha." };
+      erro: "Nenhuma linha com nome encontrada. Cole as colunas Nome e E-mail da planilha." };
     return { ok: true, linhas: out };
   }
   function aplicarAtualizacaoContatos(leitura) {
@@ -4197,7 +4215,7 @@
       // tarefas vai CRU (com as lápides das pendências removidas)
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
-      lancamentos: lancamentosLista(), cambio: taxaCambio(),
+      lancamentos: lancamentosRaw(), cambio: taxaCambio(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
       // programas vai CRU (com as lápides): é o sync que espalha o
       // "esta turma foi apagada" para os outros aparelhos
@@ -5357,7 +5375,7 @@
     metaTarefas: 80,       // % das chamadas do mês com tarefa marcada
     tetoPct: 32,           // teto: a professora nunca custa mais que isto da receita das turmas dela
     cambioEur: 6.20,       // quantos R$ vale 1 €, para a folha em R$
-    diaPagamento: 5,       // dia em que a folha é paga
+    diaPagamento: 15,      // dia em que a folha é paga (a equipe recebe dia 15)
     mesesDepois: 1         // o trabalho de um mês é pago no mês seguinte
   };
 
@@ -6604,7 +6622,7 @@
       { label: "Compartilhou post da ISR", valor: 5 }] },
     { grupo: "Indicações", cor: "#9c6f56", itens: [
       { label: "Indicou um amigo", valor: 20 },
-      { label: "Trouxe convidado pra apresentação", valor: 60 },
+      { label: "Trouxe convidado para a apresentação", valor: 60 },
       { label: "Indicação virou matrícula", valor: 200 }] }
   ];
   // ISR Miles — o nome vem da metáfora de viagem da marca.
@@ -6625,11 +6643,11 @@
   };
   var MOEDAS_RESGATES = [
     // ── fácil: primeiras semanas ──
-    { id: "flin", nome: "Desbloquear a prática com IA", cat: "flin", nivel: "facil",
+    { id: "flin", nome: "Acesso à prática com IA", cat: "flin", nivel: "facil",
       custo: 20, flin: "sempre", umaVez: true,
-      detalhe: "Libera a prática com IA para sempre. Não conta hora de aula." },
+      detalhe: "Acesso permanente à prática com IA. Não conta hora de aula." },
     { id: "rg1", nome: "Escolhe o tema de uma aula extra", cat: "aula", nivel: "facil", custo: 80 },
-    { id: "rg11", nome: "Passe livre · 1 falta não conta", cat: "aula", nivel: "facil",
+    { id: "rg11", nome: "Abono de 1 falta", cat: "aula", nivel: "facil",
       custo: 120, porCiclo: 1,
       detalhe: "Uma ausência do ciclo deixa de contar na sua frequência." },
 
@@ -6637,7 +6655,7 @@
     { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", nivel: "medio", custo: 180 },
     { id: "rg12", nome: "Feedback em vídeo da professora", cat: "mentoria", nivel: "medio",
       custo: 250, vagasMes: 4,
-      detalhe: "Um vídeo com o retrato do seu progresso e o que treinar a seguir." },
+      detalhe: "Vídeo com a avaliação do seu progresso e os próximos pontos a treinar." },
     { id: "rg13", nome: "Workshop exclusivo do mês", cat: "comunidade", nivel: "medio",
       custo: 300, vagasMes: 12, minimoMes: 4,
       detalhe: "Encontro ao vivo só para quem resgatou. Acontece com no mínimo 4 inscritas." },
@@ -6645,15 +6663,15 @@
     // ── difícil: quem já tem estrada na escola ──
     { id: "rg14", nome: "Um ciclo do acompanhamento no WhatsApp", cat: "programa", nivel: "dificil",
       custo: 450, minCiclos: 2,
-      detalhe: "O programa de desafios semanais, de graça, a partir do segundo ciclo." },
+      detalhe: "Programa de desafios semanais, sem custo, a partir do segundo ciclo." },
     { id: "rg8", nome: "€10 de desconto na mensalidade", cat: "desconto", nivel: "dificil",
       custo: 500, minCiclos: 3,
-      detalhe: "A partir do terceiro ciclo, quando a renovação já é hábito." },
+      detalhe: "Disponível a partir do terceiro ciclo." },
     { id: "rg3", nome: "30 min de conversa 1:1 com a Gabi", cat: "mentoria", nivel: "dificil",
       custo: 500, vagasMes: 4 },
     { id: "rg7", nome: "Carta de recomendação em inglês", cat: "carreira", nivel: "dificil",
       custo: 600, minCiclos: 2,
-      detalhe: "A partir do segundo ciclo, quando a escola já conhece o seu trabalho." }
+      detalhe: "Disponível a partir do segundo ciclo." }
   ];
 
   // ── LIMITES DE RESGATE ────────────────────────────────────────
@@ -6676,7 +6694,7 @@
     var mes = hoje.slice(0, 7);
     var todos = resgatesAll();
     if (r.umaVez && todos.some(function (x) { return x.pessoaId === pessoaId && x.resgateId === r.id; }))
-      return { motivo: "ja", texto: "Você já tem este." };
+      return { motivo: "ja", texto: "Já resgatado." };
     if (r.minCiclos && ciclosDe(pessoaId) < r.minCiclos)
       return { motivo: "ciclos", texto: "A partir do " + r.minCiclos + "º ciclo na escola." };
     if (r.porCiclo) {
@@ -6685,14 +6703,14 @@
         return x.pessoaId === pessoaId && x.resgateId === r.id && (!pc.desde || x.em >= pc.desde);
       }).length;
       if (noCiclo >= r.porCiclo)
-        return { motivo: "ciclo", texto: "Um por ciclo. Volta no ciclo que vem." };
+        return { motivo: "ciclo", texto: "Limite de um por ciclo. Disponível no próximo ciclo." };
     }
     if (r.vagasMes) {
       var noMes = todos.filter(function (x) {
         return x.resgateId === r.id && (x.em || "").slice(0, 7) === mes;
       }).length;
       if (noMes >= r.vagasMes)
-        return { motivo: "vagas", texto: "Vagas do mês esgotadas. Volta no dia 1." };
+        return { motivo: "vagas", texto: "Vagas do mês esgotadas. Novas vagas no dia 1." };
     }
     return null;
   }
@@ -7407,11 +7425,21 @@
   // um workshop avulso. É o que faltava pra "para onde foi" deixar
   // de ser sempre a mesma lista de custos fixos.
   var LANC_KEY = "isr_lancamentos_v1";
-  function lancamentosLista() {
-    try { var l = JSON.parse(localStorage.getItem(LANC_KEY)); if (l && l.length) return l; } catch (e) {}
-    return [];
+  // Lançamento apagado vira lápide {id, apagado, _v}: o merge do sync soma
+  // listas por id, então um filtro simples ressuscitava o item no próximo
+  // puxe — apagar uma receita no Caixa "não pegava".
+  function lancamentosRaw() {
+    try { return JSON.parse(localStorage.getItem(LANC_KEY)) || []; } catch (e) { return []; }
   }
-  function lancamentosSave(l) { carimbarLista(l); try { localStorage.setItem(LANC_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function lancamentosLista() {
+    return lancamentosRaw().filter(function (l) { return !(l && l.apagado); });
+  }
+  function lancamentosSave(l) {
+    var lapides = lancamentosRaw().filter(function (x) { return x && x.apagado; });
+    carimbarLista(l);
+    try { localStorage.setItem(LANC_KEY, JSON.stringify(l.concat(lapides))); } catch (e) {}
+    agendarSync();
+  }
   function addLancamento(dados) {
     var l = lancamentosLista();
     l.push({ id: "lc" + Date.now() + Math.floor(Math.random() * 1000),
@@ -7420,12 +7448,19 @@
       categoria: dados.categoria || (dados.tipo === "entrada" ? "outra" : "outros"),
       descricao: dados.descricao || "Lançamento",
       moeda: dados.moeda || "R$",
+      // link da fatura ou comprovante (arquivo no Drive) — abre direto do Caixa
+      fatura: (dados.fatura || "").trim(),
       valor: typeof dados.valor === "number" ? dados.valor : parseMoney(dados.valor) });
     lancamentosSave(l);
     return l;
   }
   function removeLancamento(id) {
-    lancamentosSave(lancamentosLista().filter(function (x) { return x.id !== id; }));
+    var l = lancamentosRaw().map(function (x) {
+      return x.id === id ? { id: x.id, apagado: iso(today()), _v: Date.now() } : x;
+    });
+    try { localStorage.setItem(LANC_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return lancamentosLista();
   }
   // Editar um lançamento sem apagar e redigitar: categoria errada e valor
   // errado são os dois jeitos mais comuns de um número contar dobrado.
@@ -7437,6 +7472,7 @@
       if (patch.categoria !== undefined && patch.categoria !== "") l[i].categoria = patch.categoria;
       if (patch.data !== undefined && patch.data !== "") l[i].data = patch.data;
       if (patch.moeda !== undefined && patch.moeda !== "") l[i].moeda = patch.moeda;
+      if (patch.fatura !== undefined && patch.fatura !== "") l[i].fatura = patch.fatura.trim();
       if (patch.valor !== undefined && patch.valor !== "") {
         var v = typeof patch.valor === "number" ? patch.valor : parseMoney(patch.valor);
         if (v) l[i].valor = v;
@@ -7545,7 +7581,7 @@
       return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
     }).concat(folhaNoCaixa(key)).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
-        valor: l.valor, fixo: false, data: l.data, lancId: l.id };
+        valor: l.valor, fixo: false, data: l.data, lancId: l.id, fatura: l.fatura || "" };
     }));
 
     // ordena: atrasada primeiro (é o que precisa de ação), depois em aberto, depois pago
@@ -7749,7 +7785,7 @@
       if (s.indexOf("nome") >= 0 && (s.indexOf("parcela") >= 0 || s.indexOf("tipo") >= 0)) { iCab = i; break; }
     }
     if (iCab < 0) return { ok: false, linhas: [],
-      erro: "Não encontrei a linha de títulos. Copie a planilha inteira, incluindo a linha com Nome, Tipo e Valor da parcela." };
+      erro: "Linha de títulos não encontrada. Copie a planilha inteira, incluindo a linha com Nome, Tipo e Valor da parcela." };
 
     var cab = separarLinha(linhas[iCab]);
     var col = {
@@ -7762,7 +7798,7 @@
       venc: acharColuna(cab, ["data de vencimento", "vencimento"]),
       parcela: acharColuna(cab, ["valor da parcela", "valor parcela"])
     };
-    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Coluna Nome não encontrada." };
 
     var anoBase = opts.ano || today().getFullYear();
     var colsMes = mesesDasColunas(cab, anoBase);
@@ -8010,7 +8046,7 @@
       if (s.indexOf("nome") >= 0) { iCab = i; cab = separarLinha(linhas[i]); break; }
     }
     if (iCab < 0) return { ok: false, linhas: [],
-      erro: "Não encontrei a linha de títulos. Ela precisa ter pelo menos a coluna Nome." };
+      erro: "Linha de títulos não encontrada. É obrigatória a coluna Nome." };
 
     // colar o Controle de Pagamento aqui não é erro da pessoa — é o mesmo
     // arquivo. A resposta certa é apontar a aba, não reclamar de coluna.
@@ -8018,7 +8054,7 @@
     if (sCab.indexOf("valor da parcela") >= 0 || sCab.indexOf("quantos ciclos") >= 0
         || sCab.indexOf("data de vencimento") >= 0) {
       return { ok: false, linhas: [], controleDePagamento: true,
-        erro: "Essa é a planilha do Controle de Pagamento — importe pela aba ao lado. Ela já cria as alunas, e as anotações de \u201cparticular\u201d e de nível entram junto." };
+        erro: "Esta é a planilha do Controle de Pagamento — importe pela aba ao lado, que cria as alunas e registra as anotações de \u201cparticular\u201d e de nível." };
     }
 
     var col = {
@@ -8030,7 +8066,7 @@
       whatsapp: acharColuna(cab, ["whatsapp", "telefone", "celular", "fone"]),
       email: acharColuna(cab, ["email", "e-mail"])
     };
-    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Coluna Nome não encontrada." };
 
     var pega = function (c, idx) { return idx >= 0 ? (c[idx] || "").trim() : ""; };
     var equipe = {};
@@ -8186,17 +8222,17 @@
       if (s.indexOf("nome") >= 0) { iCab = i; cab = separarLinha(linhas[i]); break; }
     }
     if (iCab < 0) return { ok: false, linhas: [],
-      erro: "Não encontrei a linha de títulos. Ela precisa ter pelo menos a coluna Nome." };
+      erro: "Linha de títulos não encontrada. É obrigatória a coluna Nome." };
 
     var sCab = semAcento(cab.join(" "));
     if (sCab.indexOf("valor da parcela") >= 0 || sCab.indexOf("quantos ciclos") >= 0
         || sCab.indexOf("data de vencimento") >= 0) {
       return { ok: false, linhas: [], controleDePagamento: true,
-        erro: "Essa é a planilha do Controle de Pagamento — importe pela aba dela. Ela já cria as alunas com contrato e tudo." };
+        erro: "Esta é a planilha do Controle de Pagamento — importe pela aba correspondente, que cria as alunas com contrato." };
     }
     if (sCab.indexOf("professora") >= 0 && sCab.indexOf("turma") >= 0) {
       return { ok: false, linhas: [], listaDeAlunas: true,
-        erro: "Essa parece a lista de alunas e turmas — importe pela aba Alunas e turmas. Lead é quem ainda não fechou." };
+        erro: "Esta parece a lista de alunas e turmas — importe pela aba Alunas e turmas. Leads são contatos ainda não matriculados." };
     }
 
     var col = {
@@ -8212,7 +8248,7 @@
       nota: acharColuna(cab, ["nota", "observacao", "observação", "obs", "comentario", "comentário"]),
       desde: acharColuna(cab, ["desde", "data de entrada", "data", "quando", "entrou"])
     };
-    if (col.nome < 0) return { ok: false, linhas: [], erro: "Não achei a coluna Nome." };
+    if (col.nome < 0) return { ok: false, linhas: [], erro: "Coluna Nome não encontrada." };
 
     var pega = function (c, idx) { return idx >= 0 ? (c[idx] || "").trim() : ""; };
     // o vocabulário do funil da escola: Acompanhar, Ganho, Contato
@@ -8386,7 +8422,7 @@
         (c.registered_at || "").slice(0, 10)].join("\t"));
     });
     if (linhas.length === 1) return { ok: false, linhas: [],
-      erro: "O systeme respondeu, mas nenhum contato tinha nome nem e-mail." };
+      erro: "Resposta do systeme sem contatos com nome ou e-mail." };
     return lerLeads(linhas.join("\n"));
   }
 
@@ -8477,7 +8513,7 @@
         nota.join(" · ").slice(0, 800), (s.created_at || "").slice(0, 10)].join("\t"));
     });
     if (linhas.length === 1) return { ok: false, linhas: [],
-      erro: "O Jotform respondeu, mas nenhuma inscrição tinha nome. Confira se o formulário certo foi escolhido." };
+      erro: "Resposta do Jotform sem inscrições com nome. Verifique o formulário selecionado." };
     return lerLeads(linhas.join("\n"));
   }
 
@@ -8988,9 +9024,9 @@
   ];
   // O que oferecer ANTES de mexer no preço — nesta ordem.
   var ESCADA_CONCESSOES = [
-    { titulo: "Piloto Sem Roteiro de bônus", detalhe: "€27 / R$157 de valor percebido, custo perto de zero — é assíncrono" },
+    { titulo: "Piloto Sem Roteiro de bônus", detalhe: "€27 / R$157 de valor de tabela; custo operacional baixo (assíncrono)" },
     { titulo: "Fechar 2 ciclos", detalhe: "Desconto adicional já previsto na tabela + preço congelado na renovação" },
-    { titulo: "Desconto por indicação", detalhe: "Vale só quando a indicada se matricula — é o desconto que se paga sozinho" },
+    { titulo: "Desconto por indicação", detalhe: "Vale apenas quando a indicada se matricula" },
     { titulo: "1 sessão de interview coaching", detalhe: "Máximo 1 por contrato — custa hora da Gabi" },
     { titulo: "Só então: desconto em dinheiro", detalhe: "Nunca abaixo do piso" }
   ];

@@ -52,7 +52,7 @@
       </button>
       <sc-if value="{{ confAberta }}">
         <div style="margin-top: 12px;">
-          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada linha refaz uma conta por um caminho diferente e compara com o que a tela mostra. Se as duas não baterem, o número está errado — e aparece aqui. Isto diz se os números são confiáveis, não se o mês foi bom: um mês no vermelho pode ter todas as verificações verdes.</p>
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada verificação recalcula um valor por um método independente e o compara ao exibido na tela; divergências aparecem abaixo. A verificação avalia a consistência dos dados, não o resultado do mês.</p>
           <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
             <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
               <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
@@ -85,7 +85,7 @@
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Previsto × Realizado</span>
         <button onclick="{{ onOrcEditar }}" style="border: 1px solid #e5dccf; background: {{ orcBtnBg }}; color: {{ orcBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ orcBtnLabel }}</button>
       </div>
-      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto nasce calculado — contratos na receita, custos fixos e folha na despesa — e você pode ajustar linha a linha para este mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto é calculado dos contratos (receita) e dos custos fixos e folha (despesa), e pode ser ajustado linha a linha neste mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
 
       <div style="overflow-x: auto;"><div style="min-width: 540px;">
       <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #eee3d6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693;">
@@ -167,14 +167,14 @@
           <div onclick="{{ s.onClick }}" title="{{ s.titulo }}" style="flex: 1; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 3px;">
             <span style="font-size: 8.5px; font-weight: 700; color: {{ s.corValor }};">{{ s.topo }}</span>
             <div style="position: relative; width: 100%; flex: 1; min-height: 0;">
-              <span title="o que saiu" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{ s.alturaCusto }}; border-radius: 4px 4px 0 0; background: #f0ddd7;"></span>
+              <span title="Despesas do mês" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{ s.alturaCusto }}; border-radius: 4px 4px 0 0; background: #f0ddd7;"></span>
               <span style="position: absolute; left: 22%; right: 22%; bottom: 0; height: {{ s.alturaBar }}; min-height: 2px; border-radius: 4px 4px 0 0; background: {{ s.cor }};"></span>
             </div>
             <span style="font-size: 9px; font-weight: 700; color: {{ s.corLabel }}; white-space: nowrap;">{{ s.curto }}</span>
           </div>
         </sc-for>
       </div>
-      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} apenas para leitura consolidada. É estimativa, não contabilidade. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
+      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} apenas para leitura consolidada. Valores estimados, sem finalidade contábil. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
     </div>
 
     <!-- DE ONDE ENTROU / PARA ONDE FOI -->
@@ -195,7 +195,7 @@
           </div>
         </sc-for>
         <sc-if value="{{ semEntradas }}">
-          <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nada entrou neste mês ainda.</p>
+          <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nenhuma receita registrada neste mês.</p>
         </sc-if>
 
         <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Detalhamento por aluna</div>
@@ -249,6 +249,9 @@
                 <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
               </div>
               <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
+              <sc-if value="{{ s.temFatura }}">
+                <a href="{{ s.faturaHref }}" target="_blank" rel="noopener" title="Abrir a fatura anexada" style="flex: none; font-size: 10.5px; font-weight: 700; color: #348a8e; text-decoration: none; border: 1px solid #c9dede; padding: 3px 9px; border-radius: 999px;">fatura</a>
+              </sc-if>
               <sc-if value="{{ s.editavel }}">
                 <button onclick="{{ s.onEditar }}" title="Editar este lançamento: valor, categoria, moeda e data" style="border: none; background: transparent; color: #b3a693; font-size: 10.5px; font-weight: 700; cursor: pointer; padding: 2px 4px; font-family: inherit;">editar</button>
               </sc-if>
@@ -267,6 +270,7 @@
                   <sc-for list="{{ s.edCatOpts }}" as="co" hint-placeholder-count="6"><option value="{{ co.id }}">{{ co.label }}</option></sc-for>
                 </select>
                 <input ref="{{ s.leDataRef }}" placeholder="{{ s.edDataAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ s.leFatRef }}" placeholder="{{ s.edFaturaAtual }}" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
                 <button onclick="{{ s.onSalvarLanc }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
               </div>
             </sc-if>
@@ -280,9 +284,10 @@
           </select>
           <select ref="{{ saiMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
           <input ref="{{ saiValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ saiFatRef }}" placeholder="Link da fatura no Drive (opcional)" style="flex-basis: 100%; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar despesa</button>
         </div>
-        <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês.</p>
+        <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês. Para anexar a fatura (PDF), guarde o arquivo no Drive e cole o link: o lançamento ganha o botão "fatura".</p>
 
         <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 12px;">
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -310,7 +315,7 @@
             <sc-if value="{{ temErroCat }}">
               <p style="margin: 7px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroCat }}</p>
             </sc-if>
-            <p style="margin: 7px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As cinco primeiras são fixas. Uma categoria criada só pode ser apagada enquanto nenhum custo ou lançamento estiver usando ela.</p>
+            <p style="margin: 7px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As cinco primeiras categorias são fixas. Categorias criadas só podem ser excluídas sem custo ou lançamento vinculado.</p>
           </sc-if>
         </div>
       </div>
@@ -400,7 +405,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
           <input type="file" ref="{{ arquivoRef }}" accept=".csv,.tsv,.txt" onchange="{{ onArquivo }}" style="display: none;" />
-          <button onclick="{{ onEscolherArquivo }}" title="Exporte o extrato do Wise ou do Asaas como CSV e envie o arquivo direto, sem copiar e colar" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">…ou enviar o arquivo</button>
+          <button onclick="{{ onEscolherArquivo }}" title="Aceita o extrato do Wise ou do Asaas exportado em CSV" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Enviar arquivo</button>
         </div>
       </div>
 
@@ -424,11 +429,11 @@
                 <span style="color: {{ s.confCor }}; font-weight: 700;"> · {{ s.confLabel }}</span>
               </div>
               <sc-if value="{{ s.pendente }}">
-                <select onchange="{{ s.onTroca }}" title="Se a sugestão apontou a pessoa errada, escolha aqui a parcela certa antes de conciliar" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
+                <select onchange="{{ s.onTroca }}" title="Selecione outra parcela caso a sugestão esteja incorreta" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
                   <sc-for list="{{ s.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
                 </select>
                 <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
-                <button onclick="{{ s.onIgnorar }}" title="Não é parcela de aluna. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
+                <button onclick="{{ s.onIgnorar }}" title="Transação sem vínculo com parcela. Fica registrada e não retorna nas próximas análises." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
               </sc-if>
               <sc-if value="{{ s.feita }}">
                 <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">{{ s.feitaLabel }}</span>
@@ -440,7 +445,7 @@
               <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ x.icon }}; flex: none;"></span>
               <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
               <sc-if value="{{ x.conciliavel }}">
-                <select onchange="{{ x.onTroca }}" title="Se esse dinheiro é de uma aluna, escolha a parcela e concilie" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
+                <select onchange="{{ x.onTroca }}" title="Selecione a parcela correspondente para conciliar o crédito" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
                   <sc-for list="{{ x.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
                 </select>
                 <button onclick="{{ x.onConciliarManual }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
@@ -449,7 +454,7 @@
                 <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.lancarLabel }}</button>
               </sc-if>
               <sc-if value="{{ x.temMinhaConta }}">
-                <button onclick="{{ x.onMinhaConta }}" title="Dinheiro indo para a sua própria empresa ou para você. Não vira despesa, e nas próximas importações o app reconhece sozinho." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Entre minhas contas</button>
+                <button onclick="{{ x.onMinhaConta }}" title="Transferência para empresa ou conta própria. Não é registrada como despesa e passa a ser reconhecida automaticamente nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Transferência entre contas próprias</button>
               </sc-if>
               <sc-if value="{{ x.ignoravel }}">
                 <button onclick="{{ x.onIgnorar }}" title="Não é da escola. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
@@ -488,6 +493,7 @@ class Component extends DCLogic {
   arquivoRef = React.createRef();
   leDescRef = React.createRef(); leValorRef = React.createRef();
   leCatRef = React.createRef(); leMoedaRef = React.createRef(); leDataRef = React.createRef();
+  leFatRef = React.createRef(); saiFatRef = React.createRef();
   novaCatRef = React.createRef();
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
@@ -559,8 +565,8 @@ class Component extends DCLogic {
           + CRM.fmtMoney("R$", Math.abs(f.totalReais.resultado)),
         eur: (f.resultado["R$"] < 0 ? "− " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"]))
           + "  ·  " + (f.resultado["€"] < 0 ? "− " : "") + CRM.fmtMoney("€", Math.abs(f.resultado["€"])),
-        nota: "Tudo somado, euro a " + CRM.fmtMoney("R$", (CRM.configPagamento().cambioEur || 0))
-          + ". Abaixo, cada moeda em separado." }
+        nota: "Total consolidado, euro a " + CRM.fmtMoney("R$", (CRM.configPagamento().cambioEur || 0))
+          + ". Valores por moeda abaixo." }
     ].map(n => Object.assign({ corBrl: n.cor, corEur: n.cor }, n)); // cada moeda pinta o próprio sinal
 
     // ── meta por moeda ──
@@ -647,9 +653,10 @@ class Component extends DCLogic {
           ? "Folha calculada · para mudar, ajuste em Equipe"
           : (s.fixo ? "Custo fixo · " + catLabel
                     : "Lançamento de " + CRM.ddmm(s.data) + " · " + catLabel))
-          + (dobra ? " · atenção: a folha da equipe já entra calculada — confira se não está dobrando" : ""),
+          + (dobra ? " · a folha da equipe já é calculada automaticamente; verifique duplicidade" : ""),
         removivel: !!s.lancId,
         onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); },
+        temFatura: !!s.fatura, faturaHref: s.fatura || "#",
         editavel: !!s.lancId,
         editando: !!s.lancId && this.state.edLanc === s.lancId,
         onEditar: () => this.setState(st => ({ edLanc: st.edLanc === s.lancId ? null : s.lancId })),
@@ -659,8 +666,10 @@ class Component extends DCLogic {
         edMoedaOpts: [{ id: "", label: "Moeda: " + s.moeda + " (manter)" },
           { id: "R$", label: "R$" }, { id: "€", label: "€" }],
         edDataAtual: CRM.ddmm(s.data) || "dd/mm/aaaa",
+        edFaturaAtual: s.fatura || "Link da fatura no Drive (opcional)",
         leDescRef: this.leDescRef, leValorRef: this.leValorRef,
         leCatRef: this.leCatRef, leMoedaRef: this.leMoedaRef, leDataRef: this.leDataRef,
+        leFatRef: this.leFatRef,
         onSalvarLanc: () => {
           const v = r => ((r.current && r.current.value) || "").trim();
           const dt = v(this.leDataRef);
@@ -668,6 +677,7 @@ class Component extends DCLogic {
           CRM.updateLancamento(s.lancId, {
             descricao: v(this.leDescRef), valor: v(this.leValorRef),
             categoria: v(this.leCatRef), moeda: v(this.leMoedaRef),
+            fatura: v(this.leFatRef),
             data: dp.length === 3 ? (dp[2] + "-" + dp[1] + "-" + dp[0]) : ""
           });
           this.setState({ edLanc: null });
@@ -855,7 +865,7 @@ class Component extends DCLogic {
           ? (ehFolha
               ? (folhaJaPaga
                   ? "Pagamento para " + x.pessoaEquipe + " · a folha de " + mesTrans.slice(5, 7) + "/" + mesTrans.slice(0, 4) + " já está marcada como paga"
-                  : "Pagamento para " + x.pessoaEquipe + " · a folha dela já é despesa calculada. Este débito quita a folha do mês, não vira despesa nova.")
+                  : "Pagamento para " + x.pessoaEquipe + " · a folha já consta como despesa calculada. Este débito quita a folha do mês e não gera nova despesa.")
               : "Débito bancário · lançar como despesa do mês")
           : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição",
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
@@ -973,16 +983,16 @@ class Component extends DCLogic {
       // "As contas fecham" foi um erro de palavra: em português isso soa
       // como "o mês fechou no azul". Aqui não se julga resultado nenhum —
       // só se os mesmos números batem entre as telas.
-      confTitulo: conf.ok ? "Os números batem entre si" : "Os números não batem",
+      confTitulo: conf.ok ? "Valores consistentes" : "Divergências encontradas",
       confResumo: conf.ok
-        ? conf.total + " verificações de consistência · não julga o resultado do mês"
+        ? conf.total + " verificações de consistência"
         : conf.falhas.length + (conf.falhas.length === 1 ? " divergência" : " divergências")
           + " de " + conf.total + " verificações de consistência",
       confCor: conf.ok ? "#5a9e4b" : "#cf6b5c",
       confBg: conf.ok ? "#fdfbf8" : "#fdf1ec",
       confBorda: conf.ok ? "#eee3d6" : "#f3d4c8",
       confAberta: this.state.confAberta,
-      confLabel: this.state.confAberta ? "fechar" : "ver a conta",
+      confLabel: this.state.confAberta ? "fechar" : "ver detalhes",
       onConf: () => this.setState({ confAberta: !this.state.confAberta }),
       conferencia: conf.checks.map(c => ({
         titulo: c.titulo,
@@ -1051,7 +1061,7 @@ class Component extends DCLogic {
         this.bump();
       },
       saiDescRef: this.saiDescRef, saiValorRef: this.saiValorRef,
-      saiMoedaRef: this.saiMoedaRef, saiCatRef: this.saiCatRef,
+      saiMoedaRef: this.saiMoedaRef, saiCatRef: this.saiCatRef, saiFatRef: this.saiFatRef,
       onAddSaida: () => {
         const desc = (this.saiDescRef.current && this.saiDescRef.current.value || "").trim();
         const valor = CRM.parseMoney((this.saiValorRef.current && this.saiValorRef.current.value) || "");
@@ -1060,8 +1070,10 @@ class Component extends DCLogic {
           categoria: (this.saiCatRef.current && this.saiCatRef.current.value) || "outros",
           descricao: desc,
           moeda: (this.saiMoedaRef.current && this.saiMoedaRef.current.value) || "R$",
+          fatura: (this.saiFatRef.current && this.saiFatRef.current.value) || "",
           valor, data: mes.key + "-15" });
         this.saiDescRef.current.value = ""; this.saiValorRef.current.value = "";
+        if (this.saiFatRef.current) this.saiFatRef.current.value = "";
         this.bump();
       },
 
@@ -1108,7 +1120,7 @@ class Component extends DCLogic {
            // transação, e registrar o saldo como transação seria um erro
            // grande e silencioso
            + (analise.colunaSaldo
-               ? " A última coluna do seu extrato é o saldo — usei a coluna anterior como valor da transação."
+               ? " A última coluna do extrato é o saldo; a coluna anterior foi usada como valor da transação."
                : "")
            + (analise.porNome
                ? " " + analise.porNome + (analise.porNome === 1 ? " foi achado" : " foram achados")
@@ -1116,7 +1128,7 @@ class Component extends DCLogic {
                : "")
            + (analise.ambiguas
                ? " " + analise.ambiguas + (analise.ambiguas === 1 ? " linha tem" : " linhas têm")
-                 + " mais de um número e são poucas para eu saber qual é o valor: confira antes de confirmar."
+                 + " mais de um número e não permitem identificar o valor com segurança: confira antes de confirmar."
                : "")
            // colar o mesmo extrato de novo não pode duplicar nada
            + ((analise.jaRegistradas || []).length
@@ -1125,7 +1137,7 @@ class Component extends DCLogic {
                  + " de uma análise anterior e não " + (analise.jaRegistradas.length === 1 ? "entra" : "entram") + " de novo."
                : "")
            + (analise.moedaDoArquivo
-               ? " O extrato diz a própria moeda (" + analise.moedaDoArquivo + ") e ela foi usada na análise."
+               ? " O extrato declara a moeda (" + analise.moedaDoArquivo + "), usada nesta análise."
                : "")
            + ((analise.internas || []).length
                ? " " + analise.internas.length
