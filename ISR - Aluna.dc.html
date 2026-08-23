@@ -14,11 +14,11 @@
      carregada — o app caía na fonte do sistema -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 <x-dc>
-<main style="background: #f8f6f3; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #2c3e50; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
+<main style="background: {{ fundoApp }}; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #2c3e50; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
 
   <style>
     /* O ponto do selo "ao vivo" pulsa; quem pediu menos movimento
@@ -26,6 +26,13 @@
     @keyframes isrPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
     .isr-ao-vivo { animation: isrPulse 1.6s ease-in-out infinite; }
     .isr-btn { transition: transform .12s cubic-bezier(0.4,0,0.2,1), filter .15s cubic-bezier(0.4,0,0.2,1); }
+    /* modo desafio: o botão tem sombra sólida e afunda ao toque */
+    .isr-fisico { box-shadow: 0 5px 0 #b85f52; }
+    .isr-fisico:active { transform: translateY(2px); box-shadow: 0 3px 0 #b85f52; }
+    @keyframes isrSpark { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    @keyframes isrPop { 0% { transform: scale(.6) rotate(-4deg); opacity: 0; } 70% { transform: scale(1.06) rotate(1deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+    .isr-spark { animation: isrSpark 2.6s ease-in-out infinite; }
+    .isr-pop { animation: isrPop .5s cubic-bezier(.2,1.4,.4,1); }
     .isr-btn:active { transform: scale(0.98); }
     .isr-btn-coral:hover { filter: brightness(1.05); }
     .isr-btn-dark:hover { filter: brightness(1.12); }
@@ -66,6 +73,7 @@
   <sc-if value="{{ ok }}">
 
     <!-- CABEÇALHO — o selo ISR Miles fica discreto, à direita -->
+    <sc-if value="{{ naoModoDesafio }}">
     <header style="padding: 14px 16px; background: #fff; border-bottom: 1px solid #e8e5e0; display: flex; align-items: center; gap: 12px;">
       <img src="uploads/Logo ISR-20260619T084739Z-3-001/logo grande ISR_logo1_03.png" style="height: 34px; width: auto; flex: none;" alt="Inglês sem Roteiro" />
       <div style="flex: 1; min-width: 0;">
@@ -81,8 +89,17 @@
         <span style="font-size: 13px; font-weight: 800; color: #164951;">{{ milesTotal }}</span>
       </button>
     </header>
+    </sc-if>
 
-    <div style="padding: 16px; max-width: 420px; margin: 0 auto 76px;">
+    <!-- CABEÇALHO DO DESAFIO — marca, saudação e o selo de miles -->
+    <sc-if value="{{ modoDesafio }}">
+      <header style="max-width: 420px; margin: 0 auto; padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; letter-spacing: 0.06em; color: #f2ebe3;">ISR</span>
+        <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 5px; border: none; background: #fc9082; color: #164951; padding: 5px 12px; border-radius: 999px; font-family: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.25);">✦ {{ milesTotal }} miles</button>
+      </header>
+    </sc-if>
+
+    <div style="padding: {{ padConteudo }}; max-width: 420px; margin: 0 auto 76px;">
 
       <!-- ══════════ INÍCIO ══════════ -->
       <sc-if value="{{ tabInicio }}">
@@ -92,28 +109,49 @@
              atividades). No celular os wrappers são blocos neutros. -->
         <div class="al-cols">
         <div class="al-main">
-        <!-- MODO DESAFIO · hero da semana: a marca do desafio, a trilha
-             e a ação da semana num bloco só -->
+        <!-- MODO DESAFIO · Início: capa da semana, título e sequência -->
         <sc-if value="{{ modoDesafio }}">
-          <section style="margin: 12px 0 22px;">
-            <button onclick="{{ onIrDesafio }}" class="isr-btn" style="display: block; width: 100%; text-align: left; border: none; background: #164951; border-radius: 18px; padding: 22px 20px 24px; cursor: pointer; font-family: inherit; box-shadow: 0 10px 28px rgba(22,73,81,0.28);">
-              <span style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-                <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9ec970;">Desafio · Inglês sem Roteiro</span>
-                <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 4px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 999px;">{{ desafioCardSelo }}</span>
-              </span>
-              <span style="display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #fffdf8; line-height: 1.15; margin: 8px 0 6px;">{{ desafioCardTitulo }}</span>
-              <span style="display: block; font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.55; margin-bottom: 14px;">{{ desafioCardSub }}</span>
-              <sc-if value="{{ temTrilha }}">
-                <span style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-                  <sc-for list="{{ trilhaChipsHero }}" as="tc" hint-placeholder-count="8">
-                    <span style="width: 32px; height: 32px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 800;">{{ tc.n }}</span>
-                  </sc-for>
-                </span>
-                <span style="display: block; font-size: 11.5px; color: #9ec970; margin-bottom: 14px;">{{ streakFrase }}</span>
+          <div style="padding: 0 24px 6px;">
+            <p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; color: #9ec970; text-transform: uppercase;">Bem-vinda, {{ primeiroNome }}</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(242,235,227,0.55);">{{ dsCiclo }}</p>
+          </div>
+
+          <!-- a arte do post da semana, em moldura de foto -->
+          <div style="position: relative; margin-top: 12px;">
+            <div style="position: relative; height: 250px; margin: 0 14px; transform: rotate(-1.2deg); border: 10px solid #f2ebe3; box-shadow: 0 14px 30px rgba(0,0,0,0.35); background: #0e343a; overflow: hidden;">
+              <sc-if value="{{ dsTemCapa }}">
+                <img src="{{ dsCapa }}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
               </sc-if>
-              <span class="isr-btn-coral" style="display: inline-block; background: #fc9082; color: #164951; padding: 13px 22px; font-size: 14px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(252,144,130,0.35);">Abrir o desafio →</span>
-            </button>
-          </section>
+              <sc-if value="{{ dsSemCapa }}">
+                <span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'DM Serif Display', Georgia, serif; font-size: 74px; color: rgba(242,235,227,0.22);">{{ dsSemanaN }}</span>
+              </sc-if>
+              <span style="position: absolute; top: -18px; left: 34px; width: 92px; height: 26px; background: rgba(158,201,112,0.85); transform: rotate(-6deg);"></span>
+              <span style="position: absolute; bottom: -14px; right: 28px; width: 80px; height: 24px; background: rgba(242,235,227,0.75); transform: rotate(5deg);"></span>
+            </div>
+            <div style="position: absolute; right: 20px; bottom: -18px; background: #fc9082; color: #164951; padding: 8px 14px; transform: rotate(4deg); font-size: 13px; font-weight: 800; letter-spacing: 1.5px; box-shadow: 0 5px 14px rgba(0,0,0,0.3); z-index: 2;">{{ dsSemanaSelo }}</div>
+          </div>
+
+          <div style="padding: 34px 24px 0;">
+            <h1 style="margin: 0; font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1; color: #f2ebe3;">{{ dsTitulo }}</h1>
+            <p style="margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: {{ dsEstadoCor }};">{{ dsEstado }}</p>
+            <button onclick="{{ onIrDesafio }}" class="isr-btn isr-fisico" style="margin-top: 18px; width: 100%; background: #fc9082; color: #164951; border: none; border-radius: 14px; padding: 17px 22px; font-size: 16px; font-weight: 800; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"><span>Abrir o desafio</span><span style="font-size: 20px;">→</span></button>
+          </div>
+
+          <!-- sequência: uma barra por semana do ciclo -->
+          <sc-if value="{{ temTrilha }}">
+            <div style="margin: 26px 24px 24px; background: rgba(242,235,227,0.08); border: 1px dashed rgba(242,235,227,0.35); border-radius: 14px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(242,235,227,0.7); text-transform: uppercase;">Sua sequência</span>
+                <span style="font-size: 11px; font-weight: 700; color: #9ec970; white-space: nowrap;">✦ {{ dsStreakCurto }}</span>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <sc-for list="{{ dsBarras }}" as="bs" hint-placeholder-count="8">
+                  <span style="flex: 1; height: 8px; border-radius: 99px; background: {{ bs.bg }}; box-shadow: {{ bs.brilho }};"></span>
+                </sc-for>
+              </div>
+              <p style="margin: 10px 0 0; font-size: 11.5px; line-height: 1.5; color: rgba(242,235,227,0.5);">Cada desafio respondido acende uma semana e vale <strong style="color: #fc9082;">+{{ dsPontosMissao }} miles</strong>.</p>
+            </div>
+          </sc-if>
         </sc-if>
 
         <!-- 1. AULA DE HOJE -->
@@ -149,37 +187,6 @@
             </div>
           </div>
         </section>
-        </sc-if>
-
-        <!-- MODO DESAFIO: grupo no WhatsApp e banner de matrícula -->
-        <sc-if value="{{ modoDesafio }}">
-          <sc-if value="{{ temAsnBanner }}">
-            <a href="{{ asnBannerLink }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; background: linear-gradient(135deg, #fc9082, #e07856); border-radius: 14px; padding: 15px 16px; margin: 0 0 12px; box-shadow: 0 4px 14px rgba(224,120,86,0.3);">
-              <div style="font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">Matrículas abertas</div>
-              <div style="font-size: 14px; font-weight: 700; color: #fff; line-height: 1.4;">{{ asnBannerTexto }}</div>
-              <sc-if value="{{ asnBannerTemLink }}">
-                <div style="font-size: 10px; font-weight: 700; color: #164951; background: rgba(255,255,255,0.9); display: inline-block; padding: 6px 12px; border-radius: 999px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.3px;">Saber mais</div>
-              </sc-if>
-            </a>
-          </sc-if>
-
-          <sc-if value="{{ temAsnGrupo }}">
-            <a href="{{ asnGrupoLink }}" target="_blank" rel="noopener" class="isr-btn" style="display: flex; align-items: center; gap: 13px; text-decoration: none; background: #164951; padding: 14px 16px; margin: 0 0 10px; border-radius: 14px;">
-              <span style="flex: 1; min-width: 0;">
-                <span style="display: block; font-size: 13px; font-weight: 800; color: #fffdf8;">Grupo no WhatsApp</span>
-                <span style="display: block; font-size: 11.5px; color: #9ec970; line-height: 1.4; margin-top: 2px;">Os áudios do desafio e os avisos são publicados lá.</span>
-              </span>
-              <span style="flex: none; background: #fc9082; color: #164951; font-size: 12px; font-weight: 800; padding: 9px 14px; border-radius: 99px;">Entrar</span>
-            </a>
-          </sc-if>
-
-          <sc-if value="{{ semExtrasAsn }}">
-            <div style="background: #fff; padding: 14px 16px; margin: 0 0 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0;">
-              <h4 style="margin: 0 0 3px; font-size: 13px; font-weight: 600; color: #2c3e50;">Plantão de dúvidas</h4>
-              <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.5;">Nenhum plantão agendado. Quando houver, ele aparece aqui para você confirmar presença.</p>
-            </div>
-          </sc-if>
-          <div style="margin-bottom: 16px;"></div>
         </sc-if>
 
         <!-- 3. SEUS PRÓXIMOS PASSOS -->
@@ -581,92 +588,81 @@
       <!-- ══════════ CONTA ══════════ -->
       <!-- ══════════ DESAFIO · jornada, resposta, ranking e devolutiva ══════════ -->
       <sc-if value="{{ tabDesafio }}">
+        <!-- O material da semana abre aqui dentro: a aluna responde sem
+             sair do app, e o registro acende a sequência na hora. -->
+        <div style="display: flex; flex-direction: column; min-height: calc(100vh - 190px);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: #0e343a;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #fc9082; text-transform: uppercase;">Desafio · semana {{ dsSemanaN }}</span>
+            <span style="flex: none; background: {{ dsSeloBg }}; border: 1.5px solid {{ dsSeloBorda }}; color: {{ dsSeloFg }}; padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; transform: rotate(-2deg);">{{ dsSelo }}</span>
+          </div>
+          <sc-if value="{{ dsTemMaterial }}">
+            <iframe src="{{ dsMaterialSrc }}" title="Material da semana" style="flex: 1; width: 100%; border: none; background: #fffdf8; min-height: 70vh;"></iframe>
+          </sc-if>
+          <sc-if value="{{ dsSemMaterial }}">
+            <div style="padding: 40px 24px; text-align: center;">
+              <p style="margin: 0; font-size: 13px; line-height: 1.6; color: rgba(242,235,227,0.7);">O material desta semana ainda não foi publicado.</p>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
 
-        <!-- jornada das semanas -->
+      <!-- PERFIL DO DESAFIO · carimbos do ciclo e extrato de miles -->
+      <sc-if value="{{ tabPerfilDesafio }}">
+        <header style="padding: 26px 24px 0; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 72px; height: 72px; flex: none; border: 4px solid #f2ebe3; border-radius: 50%; background: #fc9082; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.3); font-family: 'DM Serif Display', Georgia, serif; font-size: 34px; color: #164951;">{{ dsInicial }}</span>
+          <span style="min-width: 0;">
+            <span style="display: block; font-family: 'DM Serif Display', Georgia, serif; font-size: 32px; color: #f2ebe3; line-height: 1.1;">{{ primeiroNome }}</span>
+            <span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #9ec970; text-transform: uppercase; margin-top: 2px;">{{ dsCiclo }}</span>
+          </span>
+        </header>
+
+        <div style="display: flex; gap: 10px; padding: 22px 24px 0;">
+          <div style="flex: 1; background: #fc9082; border-radius: 16px; padding: 16px; transform: rotate(-1deg);">
+            <p style="margin: 0; font-family: 'DM Serif Display', Georgia, serif; font-size: 38px; line-height: 1; color: #164951;">{{ milesTotal }}</p>
+            <p style="margin: 4px 0 0; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: #164951; text-transform: uppercase;">✦ ISR Miles</p>
+          </div>
+          <div style="flex: 1; background: #9ec970; border-radius: 16px; padding: 16px; transform: rotate(1deg);">
+            <p style="margin: 0; font-family: 'DM Serif Display', Georgia, serif; font-size: 38px; line-height: 1; color: #164951;">{{ dsStreakN }}</p>
+            <p style="margin: 4px 0 0; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: #164951; text-transform: uppercase;">Semanas seguidas</p>
+          </div>
+        </div>
+
         <sc-if value="{{ temTrilha }}">
-          <section style="margin: 12px 0 16px;">
-            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px;">
-                <h3 style="margin: 0; font-size: 11px; font-weight: 800; color: #229090; text-transform: uppercase; letter-spacing: 0.09em;">Sua jornada</h3>
-                <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ trilhaSemanaLabel }}</span>
-              </div>
-              <p style="margin: 0 0 12px; font-size: 12px; color: #7d6d63; line-height: 1.55;">{{ streakFrase }} {{ trilhaRestam }}</p>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <sc-for list="{{ trilhaChips }}" as="tc" hint-placeholder-count="8">
-                  <span style="width: 34px; height: 34px; border-radius: 50%; background: {{ tc.bg }}; color: {{ tc.fg }}; border: 2px solid {{ tc.borda }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;">{{ tc.n }}</span>
-                </sc-for>
-              </div>
-            </div>
-          </section>
-        </sc-if>
-
-        <!-- o desafio da semana abre a página do material -->
-        <section style="margin: 0 0 16px;">
-          <a href="{{ asnDesafioHref }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-decoration: none; background: #164951; border-radius: 18px; padding: 20px; box-shadow: 0 10px 28px rgba(22,73,81,0.28);">
-            <span style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-              <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9ec970;">{{ desafioCardTitulo }}</span>
-              <span style="flex: none; background: {{ desafioCardSeloBg }}; color: {{ desafioCardSeloFg }}; padding: 4px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; border-radius: 999px;">{{ desafioCardSelo }}</span>
-            </span>
-            <span style="display: block; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; color: #fffdf8; line-height: 1.35; margin: 8px 0 14px;">{{ desafioCardSub }}</span>
-            <span class="isr-btn-coral" style="display: inline-block; background: #fc9082; color: #164951; padding: 12px 20px; font-size: 13px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(252,144,130,0.35);">Abrir o material da semana</span>
-          </a>
-        </section>
-
-        <!-- registrar a resposta (conta para a sequência, o ranking e as miles) -->
-        <sc-if value="{{ temMissao }}">
-          <section style="margin: 0 0 16px;">
-            <div style="background: #fff; padding: 14px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e8e5e0; border-left: 4px solid #fc9082;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px;">
-                <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50;">Registrar a resposta</h4>
-                <span style="flex: none; background: {{ missaoBadgeBg }}; color: {{ missaoBadgeFg }}; padding: 3px 6px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-radius: 999px;">{{ missaoBadge }}</span>
-              </div>
-              <p style="margin: 0 0 10px; font-size: 12px; color: #666; line-height: 1.6;">A resposta registrada conta para a sequência, o ranking e as miles.</p>
-
-              <sc-if value="{{ missaoFechada }}">
-                <button onclick="{{ onAbrirMissao }}" style="background: #fc9082; border: none; color: #fff; padding: 9px 14px; font-size: 9px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; border-radius: 10px; cursor: pointer; font-family: inherit;">Registrar</button>
-              </sc-if>
-
-              <sc-if value="{{ missaoAberta }}">
-                <textarea ref="{{ missaoRef }}" rows="3" placeholder="Escreva sua resposta" style="width: 100%; box-sizing: border-box; border: 1px solid #e0dcd6; background: #faf9f7; color: #2c3e50; font-size: 13px; padding: 10px 12px; border-radius: 10px; font-family: inherit; line-height: 1.6; resize: vertical;"></textarea>
-                <p style="margin: 6px 0 10px; font-size: 10px; color: #9b8b7e; line-height: 1.6;">Para responder em áudio, envie no grupo e registre aqui o que gravou.</p>
-                <button onclick="{{ onResponderMissao }}" style="background: #fc9082; border: none; color: #fff; padding: 9px 14px; font-size: 9px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; border-radius: 10px; cursor: pointer; font-family: inherit;">Enviar resposta</button>
-                <sc-if value="{{ missaoErro }}">
-                  <p style="margin: 8px 0 0; font-size: 11px; color: #c8622f; line-height: 1.5;">{{ missaoErro }}</p>
-                </sc-if>
-              </sc-if>
-
-              <sc-if value="{{ missaoRespondida }}">
-                <div style="background: #faf9f7; border: 1px solid #f0ede8; padding: 11px 13px; border-radius: 10px;">
-                  <div style="font-size: 9px; font-weight: 600; color: #5a9a2e; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 5px;">Enviada {{ missaoEm }}</div>
-                  <div style="font-size: 12px; color: #2c3e50; line-height: 1.6;">{{ missaoResposta }}</div>
-                </div>
-                <p style="margin: 8px 0 0; font-size: 11px; color: {{ devolutivaCor }}; line-height: 1.5;">{{ devolutivaTexto }}</p>
-              </sc-if>
-            </div>
-          </section>
-        </sc-if>
-
-        <!-- ranking: top 5 e a posição dela -->
-        <sc-if value="{{ temRanking }}">
-          <section style="margin: 0 0 16px;">
-            <div style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <h3 style="margin: 0 0 4px; font-size: 11px; font-weight: 800; color: #229090; text-transform: uppercase; letter-spacing: 0.09em;">Ranking do grupo</h3>
-              <p style="margin: 0 0 10px; font-size: 12px; color: #7d6d63; line-height: 1.55;">A ordem vem da participação nos desafios.</p>
-              <sc-for list="{{ ranking }}" as="rk" hint-placeholder-count="6">
-                <div>
-                  <sc-if value="{{ rk.salto }}">
-                    <div style="text-align: center; color: #c9bfb2; font-size: 12px; padding: 2px 0;">···</div>
-                  </sc-if>
-                  <div style="display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 10px; background: {{ rk.bg }};">
-                    <span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: {{ rk.posBg }}; color: {{ rk.posFg }}; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800;">{{ rk.pos }}</span>
-                    <span style="flex: 1; min-width: 0; font-size: 13.5px; font-weight: {{ rk.peso }}; color: {{ rk.cor }};">{{ rk.nome }}</span>
-                  </div>
-                </div>
+          <div style="padding: 24px 24px 0;">
+            <p style="margin: 0 0 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(242,235,227,0.6); text-transform: uppercase;">Carimbos do ciclo</p>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+              <sc-for list="{{ dsCarimbos }}" as="cb" hint-placeholder-count="8">
+                <span class="{{ cb.classe }}" style="aspect-ratio: 1; border: {{ cb.borda }}; border-radius: 50%; transform: rotate({{ cb.giro }}); display: flex; flex-direction: column; align-items: center; justify-content: center; color: {{ cb.cor }};">
+                  <span style="font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; line-height: 1;">{{ cb.n }}</span>
+                  <sc-if value="{{ cb.marca }}"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 8px; font-weight: 800;">{{ cb.marca }}</span></sc-if>
+                </span>
               </sc-for>
             </div>
-          </section>
+          </div>
+        </sc-if>
+
+        <div style="padding: 24px;">
+          <p style="margin: 0 0 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(242,235,227,0.6); text-transform: uppercase;">Seus ISR Miles</p>
+          <sc-if value="{{ semMiles }}">
+            <p style="margin: 0; font-size: 12.5px; color: rgba(242,235,227,0.55); line-height: 1.6;">O extrato aparece aqui a partir do primeiro desafio respondido.</p>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ milesExtrato }}" as="mo" hint-placeholder-count="5">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; background: rgba(242,235,227,0.06); border-radius: 10px; padding: 11px 14px;">
+                <span style="font-size: 12.5px; color: rgba(242,235,227,0.85); line-height: 1.45;">{{ mo.label }}</span>
+                <span style="flex: none; font-size: 12.5px; font-weight: 800; color: #fc9082; white-space: nowrap;">{{ mo.valorLabel }} ✦</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ temCancelLink }}">
+          <div style="padding: 0 24px 24px;">
+            <a href="{{ cancelLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; font-size: 11.5px; font-weight: 600; color: rgba(242,235,227,0.45); text-decoration: none; padding: 10px;">Gerenciar assinatura</a>
+          </div>
         </sc-if>
       </sc-if>
+
 
       <sc-if value="{{ tabConta }}">
 
@@ -975,6 +971,7 @@
     </div>
 
     <!-- NAVEGAÇÃO · ícones oficiais da escola (traço 1.8, currentColor) -->
+    <sc-if value="{{ naoModoDesafio }}">
     <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e8e5e0; z-index: 26; box-shadow: 0 -1px 6px rgba(0,0,0,0.05);">
       <div style="max-width: 420px; margin: 0 auto; display: flex; height: 56px;">
           <button onclick="{{ tab0.onClick }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: {{ tab0.cor }};">
@@ -995,6 +992,18 @@
           </button>
       </div>
     </nav>
+    </sc-if>
+
+    <!-- NAVEGAÇÃO DO DESAFIO · três abas, em texto -->
+    <sc-if value="{{ modoDesafio }}">
+      <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #0e343a; z-index: 26;">
+        <div style="max-width: 420px; margin: 0 auto; display: flex; gap: 6px; padding: 6px 10px 10px;">
+          <sc-for list="{{ dsTabs }}" as="dt" hint-placeholder-count="3">
+            <button onclick="{{ dt.onClick }}" class="isr-btn" style="flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; border: none; background: {{ dt.bg }}; color: {{ dt.cor }}; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;">{{ dt.label }}</button>
+          </sc-for>
+        </div>
+      </nav>
+    </sc-if>
 
   </sc-if>
 
@@ -1008,6 +1017,21 @@ class Component extends DCLogic {
             perfilAberto: false, perfilSalvo: false, cancelandoAsn: false };
   corrTextoRef = React.createRef();
   missaoRef = React.createRef();
+
+  // O material da semana abre num quadro dentro do app. Quando a aluna
+  // termina, a página avisa daqui de dentro e a tela se atualiza — sem
+  // isso a sequência só acenderia no próximo carregamento.
+  componentDidMount() {
+    this.aoRegistrar = (ev) => {
+      if (ev.origin !== window.location.origin) return;
+      if (!ev.data || ev.data.isr !== "desafio-registrado") return;
+      this.setState(s => ({ tick: s.tick + 1, tab: "inicio" }));
+    };
+    window.addEventListener("message", this.aoRegistrar);
+  }
+  componentWillUnmount() {
+    if (this.aoRegistrar) window.removeEventListener("message", this.aoRegistrar);
+  }
   pulsoTextoRef = React.createRef();
   perfilNomeRef = React.createRef();
   perfilFotoRef = React.createRef();
@@ -1334,7 +1358,10 @@ class Component extends DCLogic {
         : [turmaRaw ? turmaRaw.nivel : (p.nivel || ""), cicloDoAno].filter(Boolean).join(" • ") || "Inglês sem Roteiro",
       tabs, tab0, tab1, tab2, tab3,
       tabInicio: tab === "inicio", tabAulas: tab === "aulas",
-      tabMateriais: tab === "materiais", tabConta: tab === "conta",
+      tabMateriais: tab === "materiais",
+      // no modo desafio o Perfil é o do desafio; a Conta completa é do
+      // app de turma
+      tabConta: !modoDesafio && tab === "conta",
       tabDesafio: modoDesafio && tab === "desafio",
       modoDesafio, naoModoDesafio: !modoDesafio, temHero: !modoDesafio,
       irMiles: () => this.setState({ tab: "conta", contaVista: "miles" }),
@@ -1576,7 +1603,7 @@ class Component extends DCLogic {
       },
       onPularComentario: () => this.setState({ pulsoFeito: true, pulsoComentou: false }),
 
-      temExtras: extras.length > 0, extras,
+      temExtras: !modoDesafio && extras.length > 0, extras,
 
       // ── modo desafio (programa + assinatura): plantão (RSVP), desafio,
       // grupo e banner ──
@@ -1629,6 +1656,88 @@ class Component extends DCLogic {
       })()),
       // cartão dominante do Início: abre a dobra Desafio
       onIrDesafio: () => this.setState({ tab: "desafio" }),
+
+      // ── MODO DESAFIO · os dados das três telas ──
+      fundoApp: modoDesafio ? "#164951" : "#f8f6f3",
+      padConteudo: modoDesafio ? "0 0 16px" : "16px",
+      tabPerfilDesafio: modoDesafio && tab === "conta",
+      ...((() => {
+        if (!modoDesafio) return {};
+        const trilha = CRM.trilhaDesafio ? CRM.trilhaDesafio(p.id) : null;
+        const semanaN = pg ? pg.semana : (trilha ? trilha.semanaAtual : 0);
+        // o título da semana já existe no programa (a lista de missões)
+        const pgObj = pg && CRM.getPrograma ? CRM.getPrograma(pg.id) : null;
+        const titulo = (pgObj && (pgObj.missoes || [])[semanaN - 1])
+          || (pg && pg.missao) || "Desafio da semana";
+        const respondeu = !!(pg && pg.respondeu);
+        const dois = n => (n < 10 ? "0" : "") + n;
+        const totalSem = trilha ? trilha.total : 8;
+        const barras = [];
+        for (let i = 1; i <= totalSem; i++) {
+          const s = trilha ? (trilha.semanas[i - 1] || {}) : {};
+          barras.push({
+            bg: s.feita ? "#9ec970" : (s.atual ? "#fc9082" : "rgba(242,235,227,0.18)"),
+            brilho: s.atual && !s.feita ? "0 0 10px rgba(252,144,130,0.5)" : "none"
+          });
+        }
+        const carimbos = [];
+        for (let i = 1; i <= totalSem; i++) {
+          const s = trilha ? (trilha.semanas[i - 1] || {}) : {};
+          const giros = ["-7deg", "4deg", "-4deg", "5deg", "-5deg", "3deg", "-3deg", "6deg"];
+          carimbos.push({
+            n: String(i),
+            marca: s.feita ? "✦ OK" : (s.atual ? "AQUI" : ""),
+            cor: s.feita ? "#9ec970" : (s.atual ? "#fc9082" : "rgba(242,235,227,0.3)"),
+            borda: s.feita ? "2.5px solid #9ec970"
+              : (s.atual ? "2.5px dashed #fc9082" : "1.5px dashed rgba(242,235,227,0.25)"),
+            giro: s.feita || s.atual ? giros[(i - 1) % giros.length] : "0deg",
+            classe: s.atual && !s.feita ? "isr-spark" : (s.feita ? "isr-pop" : "")
+          });
+        }
+        return {
+          dsCiclo: (p.nivel ? p.nivel + " · " : "")
+            + (trilha ? "Semana " + trilha.semanaAtual + " de " + trilha.total : "Desafio"),
+          dsSemanaN: String(semanaN || ""),
+          dsSemanaSelo: "SEMANA " + dois(semanaN || 0),
+          dsTitulo: titulo,
+          dsCapa: asnCfg.semanaCapa || "",
+          dsTemCapa: !!asnCfg.semanaCapa,
+          dsSemCapa: !asnCfg.semanaCapa,
+          dsEstado: respondeu
+            ? "Desafio respondido. Sua sequência continua."
+            : "Responda o desafio da semana para manter sua sequência.",
+          dsEstadoCor: respondeu ? "#9ec970" : "rgba(242,235,227,0.75)",
+          dsBarras: barras,
+          dsCarimbos: carimbos,
+          dsStreakN: String(trilha ? trilha.streak : 0),
+          dsStreakCurto: (trilha ? trilha.streak : 0)
+            + ((trilha ? trilha.streak : 0) === 1 ? " semana seguida" : " semanas seguidas"),
+          dsPontosMissao: CRM.MOEDAS_PROGRAMA ? CRM.MOEDAS_PROGRAMA.resposta : 20,
+          dsInicial: (p.nome || "?").trim().charAt(0).toUpperCase(),
+          dsSelo: respondeu ? "Respondido ✦" : "A responder",
+          dsSeloFg: respondeu ? "#9ec970" : "#fc9082",
+          dsSeloBorda: respondeu ? "#9ec970" : "#fc9082",
+          dsSeloBg: respondeu ? "rgba(158,201,112,0.15)" : "rgba(252,144,130,0.15)",
+          // O material abre dentro do app e recebe quem está logada: assim
+          // a aluna não redigita nome e e-mail, e a resposta já entra no
+          // nome dela.
+          dsMaterialSrc: asnCfg.desafioLink
+            ? asnCfg.desafioLink + (asnCfg.desafioLink.indexOf("?") >= 0 ? "&" : "?") + "aluna=" + p.id
+            : "",
+          dsTemMaterial: !!asnCfg.desafioLink,
+          dsSemMaterial: !asnCfg.desafioLink,
+          dsTabs: [
+            { id: "inicio", label: "Início" },
+            { id: "desafio", label: "Desafio" },
+            { id: "conta", label: "Perfil" }
+          ].map(x => ({
+            label: x.label,
+            bg: tab === x.id ? "rgba(252,144,130,0.16)" : "transparent",
+            cor: tab === x.id ? "#fc9082" : "rgba(242,235,227,0.5)",
+            onClick: () => this.setState({ tab: x.id })
+          }))
+        };
+      })()),
       desafioCardTitulo: pg ? "Desafio da semana " + pg.semana : "Desafio da semana",
       desafioCardSub: pg && pg.missao ? pg.missao : "Toque para abrir o desafio desta semana.",
       desafioCardSelo: pg && pg.respondeu ? "Respondido" : "A responder",

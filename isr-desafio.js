@@ -11,10 +11,19 @@
 //      registra a resposta da semana no sistema: é o que atualiza a
 //      sequência (streak), o ranking e as miles da aluna.
 window.ISRDesafio = (function () {
+  // Dentro do app da aluna a página abre num quadro (iframe) e o app diz
+  // quem está logada pelo endereço. Fora do app o parâmetro é ignorado:
+  // ali vale só a sessão do aparelho, guardada pelo login.
+  function idDoQuadro() {
+    try {
+      if (window.self === window.top) return "";
+      return new URLSearchParams(window.location.search).get("aluna") || "";
+    } catch (e) { return ""; }
+  }
   function aluna() {
     try {
       var C = window.ISRCRM;
-      var id = localStorage.getItem("isr_aluna_id");
+      var id = idDoQuadro() || localStorage.getItem("isr_aluna_id");
       if (!C || !id) return null;
       var p = C.getPessoa(id);
       return p ? { id: p.id, nome: p.nome, email: p.email || "" } : null;
@@ -66,7 +75,17 @@ window.ISRDesafio = (function () {
     if (pg.respondeu) return true; // a semana já está registrada — não duplica
     C.responderMissao(pg.id, a.id, pg.semana,
       String(texto || "Concluído pela página do desafio").slice(0, 500));
+    avisarApp();
     return true;
+  }
+  // Quando a página abre dentro do app da aluna, o app precisa saber que
+  // a semana foi respondida para acender a sequência na hora — o dado
+  // muda no mesmo aparelho, mas a tela de fora não percebe sozinha.
+  function avisarApp() {
+    try {
+      if (window.self === window.top) return;
+      window.parent.postMessage({ isr: "desafio-registrado" }, window.location.origin);
+    } catch (e) {}
   }
   function iniciar() { preencher(); pintarIdentidade(); }
   if (document.readyState === "loading")
