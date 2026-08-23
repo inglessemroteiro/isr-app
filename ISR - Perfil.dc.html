@@ -645,7 +645,77 @@
                 <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
                 <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
               </div>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Os horários são marcados na Agenda da escola (aula extra); feriados não são contabilizados.</p>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Feriados não são contabilizados.</p>
+            </div>
+
+            <!-- AULAS PARTICULARES · AGENDA DA SÉRIE -->
+            <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Aulas marcadas</span>
+                <button onclick="{{ onToggleSerie }}" style="border: 1px solid #e5dccf; background: {{ serieBg }}; color: {{ serieFg }}; font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ serieLabel }}</button>
+              </div>
+
+              <sc-if value="{{ temProximaAula }}">
+                <div style="background: rgba(107,91,149,0.08); border-radius: 9px; padding: 10px 12px; margin-bottom: 10px;">
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8b7e; font-weight: 700;">Próxima aula</div>
+                  <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ proximaAulaLabel }}</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ marcandoSerie }}">
+                <div style="background: #faf8f3; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Primeira aula</div>
+                      <input ref="{{ serDataRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Horário</div>
+                      <input ref="{{ serHoraRef }}" placeholder="ex. 10h" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Repetir</div>
+                      <select ref="{{ serCadRef }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                        <sc-for list="{{ cadenciasOpts }}" as="cd" hint-placeholder-count="3"><option value="{{ cd.id }}" selected="{{ cd.sel }}">{{ cd.label }}</option></sc-for>
+                      </select></div>
+                    <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Quantas aulas</div>
+                      <input ref="{{ serQtdRef }}" type="number" placeholder="{{ serQtdSugerida }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+                    <div style="display: flex; align-items: flex-end;">
+                      <button onclick="{{ onMarcarSerie }}" style="width: 100%; border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Marcar aulas</button>
+                    </div>
+                  </div>
+                  <sc-if value="{{ serErro }}">
+                    <p style="margin: 8px 0 0; font-size: 11px; color: #cf6b5c; font-weight: 600;">{{ serErro }}</p>
+                  </sc-if>
+                  <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As aulas entram na Agenda da escola e no painel da professora, com chamada própria. Datas em feriado passam para a data seguinte da mesma cadência.</p>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ semSerie }}">
+                <div style="font-size: 11.5px; color: #b8ada0;">Nenhuma aula marcada. Use "Marcar série" para agendar as aulas do pacote de uma vez.</div>
+              </sc-if>
+
+              <sc-for list="{{ serieView }}" as="sa" hint-placeholder-count="5">
+                <div style="border-top: 1px solid #f4f1ec; padding: 8px 0;">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ sa.cor }};"></span>
+                    <span style="flex: none; font-size: 12.5px; font-weight: 700; color: #164951;">{{ sa.quando }}</span>
+                    <span style="flex: 1; min-width: 60px; font-size: 11px; color: {{ sa.estadoCor }};">{{ sa.estado }}</span>
+                    <sc-if value="{{ sa.editavel }}">
+                      <button onclick="{{ sa.onRemarcar }}" style="flex: none; border: 1px solid #e5dccf; background: {{ sa.remarcarBg }}; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 5px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ sa.remarcarLabel }}</button>
+                      <button onclick="{{ sa.onCancelar }}" title="Cancelar esta aula" style="flex: none; border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ sa.temHistorico }}">
+                    <div style="font-size: 10.5px; color: #9c6f56; margin-top: 3px;">{{ sa.historico }}</div>
+                  </sc-if>
+                  <sc-if value="{{ sa.remarcando }}">
+                    <div style="background: #faf8f3; border-radius: 9px; padding: 10px; margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                      <input ref="{{ reDataRef }}" type="date" style="padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <input ref="{{ reHoraRef }}" placeholder="{{ sa.horaAtual }}" style="width: 80px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <input ref="{{ reMotivoRef }}" placeholder="Motivo (opcional)" style="flex: 1; min-width: 120px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                      <button onclick="{{ sa.onConfirmarRemarcacao }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Remarcar</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+
+              <div style="border-top: 1px solid #f4f1ec; margin-top: 10px; padding-top: 9px; font-size: 11px; color: {{ remarcacoesCor }}; line-height: 1.5;">{{ remarcacoesFrase }}</div>
             </div>
           </sc-if>
 
@@ -767,6 +837,9 @@ class Component extends DCLogic {
   docLinkRef = React.createRef();
   checkinDateRef = React.createRef();
   pacAulasRef = React.createRef();
+  serDataRef = React.createRef(); serHoraRef = React.createRef();
+  serCadRef = React.createRef(); serQtdRef = React.createRef();
+  reDataRef = React.createRef(); reHoraRef = React.createRef(); reMotivoRef = React.createRef();
   renegValorRef = React.createRef();
   renegNovoRef = React.createRef(); renegDescRef = React.createRef();
   moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
@@ -1403,6 +1476,88 @@ class Component extends DCLogic {
         const v = parseInt((this.pacAulasRef.current && this.pacAulasRef.current.value) || "", 10);
         if (v > 0) { CRM.updateParticular(p.id, { aulas: v }); this.bump(); }
       };
+
+      // ── agenda da série: quando cada aula do pacote acontece ──
+      const agenda = CRM.agendaParticular(p.id);
+      const hojeIso = new Date().toISOString().slice(0, 10);
+      const prox = CRM.proximaAulaParticular(p.id);
+      out.temProximaAula = !!prox;
+      out.proximaAulaLabel = prox
+        ? CRM.ddmm(prox.data) + (prox.hora ? " às " + prox.hora : "")
+          + " · " + CRM.relativeDays(prox.data)
+        : "";
+      out.marcandoSerie = !!this.state.marcandoSerie;
+      out.serieLabel = this.state.marcandoSerie ? "fechar" : "Marcar série";
+      out.serieBg = this.state.marcandoSerie ? "#f6eee4" : "#fff";
+      out.serieFg = this.state.marcandoSerie ? "#9c6f56" : "#164951";
+      out.onToggleSerie = () => this.setState(s => ({ marcandoSerie: !s.marcandoSerie, serErro: "" }));
+      out.serDataRef = this.serDataRef; out.serHoraRef = this.serHoraRef;
+      out.serCadRef = this.serCadRef; out.serQtdRef = this.serQtdRef;
+      out.serQtdSugerida = restam && restam > 0 ? String(restam) : "ex. 10";
+      out.cadenciasOpts = CRM.CADENCIAS_PARTICULAR.map(c2 => ({
+        id: c2.id, label: c2.label, sel: (pac.cadencia || "semanal") === c2.id }));
+      out.serErro = this.state.serErro || "";
+      out.onMarcarSerie = () => {
+        const g = r => ((r.current && r.current.value) || "").trim();
+        const r2 = CRM.agendarSerieParticular(p.id, {
+          inicio: g(this.serDataRef), hora: g(this.serHoraRef) || pac.hora || "",
+          cadencia: (this.serCadRef.current && this.serCadRef.current.value) || "semanal",
+          quantidade: g(this.serQtdRef) || restam || 0
+        });
+        if (!r2.ok) { this.setState({ serErro: r2.erro }); return; }
+        this.setState({ marcandoSerie: false, serErro: "" });
+        this.bump();
+      };
+      out.semSerie = agenda.length === 0;
+      out.reDataRef = this.reDataRef; out.reHoraRef = this.reHoraRef; out.reMotivoRef = this.reMotivoRef;
+      const EST_AULA = {
+        feita: { label: "aula dada", cor: "#5a9e4b" },
+        cancelada: { label: "cancelada", cor: "#b8ada0" },
+        marcada: { label: "marcada", cor: "#6b5b95" }
+      };
+      out.serieView = agenda.map(a => {
+        const meta = EST_AULA[a.estado] || EST_AULA.marcada;
+        const remarcs = a.remarcacoes || [];
+        const atrasada = a.estado === "marcada" && a.data < hojeIso;
+        return {
+          quando: CRM.ddmm(a.data) + (a.hora ? " · " + a.hora : ""),
+          cor: atrasada ? "#e07856" : meta.cor,
+          estado: atrasada ? "sem chamada registrada" : meta.label,
+          estadoCor: atrasada ? "#e07856" : "#8a7c6b",
+          editavel: a.estado === "marcada",
+          horaAtual: a.hora || "Horário",
+          temHistorico: remarcs.length > 0,
+          historico: remarcs.length
+            ? "Remarcada " + remarcs.length + (remarcs.length === 1 ? " vez" : " vezes")
+              + " · de " + remarcs.map(r2 => CRM.ddmm(r2.de)).join(", ")
+              + (remarcs[remarcs.length - 1].motivo ? " · " + remarcs[remarcs.length - 1].motivo : "")
+            : "",
+          remarcando: this.state.remarcandoAula === a.id,
+          remarcarLabel: this.state.remarcandoAula === a.id ? "fechar" : "Remarcar",
+          remarcarBg: this.state.remarcandoAula === a.id ? "#f6eee4" : "#fff",
+          onRemarcar: () => this.setState(s => ({
+            remarcandoAula: s.remarcandoAula === a.id ? null : a.id })),
+          onConfirmarRemarcacao: () => {
+            const g = r => ((r.current && r.current.value) || "").trim();
+            const r2 = CRM.remarcarAulaParticular(p.id, a.id, g(this.reDataRef), g(this.reHoraRef), g(this.reMotivoRef));
+            if (!r2.ok) return;
+            this.setState({ remarcandoAula: null });
+            this.bump();
+          },
+          onCancelar: () => {
+            if (!confirm("Cancelar a aula de " + CRM.ddmm(a.data) + "? A aula sai da agenda e não conta como dada.")) return;
+            CRM.cancelarAulaParticular(p.id, a.id, "");
+            this.bump();
+          }
+        };
+      });
+      const nRem = CRM.remarcacoesNoMes(p.id);
+      const lim = CRM.LIMITE_REMARCACAO_MES;
+      out.remarcacoesFrase = nRem === 0
+        ? "Nenhuma remarcação neste mês. O combinado é " + lim + " por mês."
+        : nRem + (nRem === 1 ? " remarcação" : " remarcações") + " neste mês"
+          + (nRem > lim ? " · acima do combinado (" + lim + " por mês)" : " de " + lim + " combinada.");
+      out.remarcacoesCor = nRem > lim ? "#cf6b5c" : "#8a7c6b";
     }
 
     // onboarding · primeiros 30 dias (qualquer pessoa que tenha o checklist)

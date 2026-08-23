@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.20-t",
+  numero: "2026.08.20-u",
   data: "20/08/2026",
-  nota: "Ficha da aluna com hierarquia: resumo no cabeçalho (turma, parcela do mês, presenças, último contato) e cartões agrupados em quatro abas — Acompanhamento, Financeiro, Aulas e presenças, Cadastro; chamada de aluna particular direto no Painel do Professor, pelo atalho fixo"
+  nota: "Agenda das aulas particulares: marcar a série inteira de uma vez (toda semana, a cada 15 dias ou mensal), remarcação registrada com a data de origem e contada por mês (o combinado é 1), aula na Agenda da escola e no painel da professora, com chamada"
 };

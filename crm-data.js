@@ -4830,6 +4830,9 @@
         if (!da && dava) mutate(pid, function (p) {
           if (p.particular) p.particular.feitas = Math.max(0, (p.particular.feitas || 0) - 1);
         });
+        // a aula marcada na série sai de "marcada" quando a chamada
+        // acontece — é a chamada que diz se a aula existiu
+        if (da !== dava) marcarAulaParticularFeita(pid, dataIso, da);
       }
     });
     return m[key];
@@ -5322,6 +5325,199 @@
 
     if (cfg.pago && valorTxt) registrarPagamentoParticular(id);
     return getPessoa(id);
+  }
+
+  // ── AGENDA DAS AULAS PARTICULARES ─────────────────────────────
+  //
+  // O pacote dizia quantas aulas foram contratadas e quantas já foram
+  // dadas, mas não QUANDO cada uma acontece: a aula particular não tinha
+  // data em lugar nenhum, não entrava na agenda e remarcação não deixava
+  // rastro. A série resolve isso: marca as N aulas de uma vez, na
+  // cadência combinada, e cada aula guarda o próprio histórico.
+  //
+  // Remarcar é direito da aluna, mas o combinado é uma vez por mês. O
+  // sistema não bloqueia — quem decide abrir exceção é a escola —, ele
+  // conta e avisa.
+  var LIMITE_REMARCACAO_MES = 1;
+  var CADENCIAS = [
+    { id: "semanal", label: "Toda semana", dias: 7 },
+    { id: "quinzenal", label: "A cada 15 dias", dias: 14 },
+    { id: "mensal", label: "Uma vez por mês", dias: 28 }
+  ];
+
+  function agendaParticular(pessoaId) {
+    var p = getPessoa(pessoaId);
+    var lista = (p && p.particular && p.particular.agenda) || [];
+    return lista.slice().sort(function (a, b) {
+      return (a.data + (a.hora || "")) < (b.data + (b.hora || "")) ? -1 : 1;
+    });
+  }
+
+  // Marca N aulas de uma vez, na cadência escolhida. Feriado não vira
+  // aula: a data pula para a ocorrência seguinte e a série segue dali,
+  // sem perder aula nem encavalar duas no mesmo dia.
+  function agendarSerieParticular(pessoaId, cfg) {
+    cfg = cfg || {};
+    var quantas = parseInt(cfg.quantidade, 10) || 0;
+    var cad = CADENCIAS.filter(function (c) { return c.id === cfg.cadencia; })[0] || CADENCIAS[0];
+    var d0 = parseISO(cfg.inicio || "");
+    if (!quantas || !d0) return { ok: false, erro: "Informe a data da primeira aula e quantas aulas marcar." };
+    var hora = (cfg.hora || "").trim();
+    var pes = getPessoa(pessoaId);
+    if (!pes) return { ok: false, erro: "Aluna não encontrada." };
+
+    var jaMarcadas = {};
+    agendaParticular(pessoaId).forEach(function (a) {
+      if (a.estado === "marcada") jaMarcadas[a.data] = true;
+    });
+
+    var novas = [], d = new Date(d0), guarda = 0;
+    while (novas.length < quantas && guarda < 400) {
+      guarda++;
+      var dataIso = iso(d);
+      if (!ehFeriado(dataIso) && !jaMarcadas[dataIso]) {
+        novas.push({ id: "ap" + Date.now() + "_" + novas.length,
+          data: dataIso, hora: hora, estado: "marcada", remarcacoes: [] });
+        jaMarcadas[dataIso] = true;
+        d.setDate(d.getDate() + cad.dias);
+      } else {
+        // feriado (ou dia já ocupado) empurra pela mesma cadência,
+        // preservando o dia da semana combinado
+        d.setDate(d.getDate() + cad.dias);
+      }
+    }
+
+    mutate(pessoaId, function (p) {
+      p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
+      p.particular.agenda = (p.particular.agenda || []).concat(novas);
+      p.particular.cadencia = cad.id;
+      if (hora) p.particular.hora = hora;
+      // o total contratado acompanha o que foi marcado, quando ninguém
+      // tinha registrado quantidade antes
+      if (!p.particular.aulas) p.particular.aulas = novas.length;
+      pushHist(p, "matricula", novas.length + " aulas particulares marcadas · "
+        + cad.label.toLowerCase() + " · de " + ddmm(novas[0].data)
+        + " a " + ddmm(novas[novas.length - 1].data)
+        + (hora ? " às " + hora : ""));
+    });
+    return { ok: true, marcadas: novas.length,
+      primeira: novas[0].data, ultima: novas[novas.length - 1].data };
+  }
+
+  function remarcacoesNoMes(pessoaId, mesKey) {
+    var mes = mesKey || mesAtualKey();
+    var n = 0;
+    agendaParticular(pessoaId).forEach(function (a) {
+      (a.remarcacoes || []).forEach(function (r) {
+        if ((r.em || "").slice(0, 7) === mes) n++;
+      });
+    });
+    return n;
+  }
+
+  // Remarcar guarda a data antiga: a aula não "muda de lugar" em
+  // silêncio, ela fica marcada como remarcada e o mês registra o uso.
+  function remarcarAulaParticular(pessoaId, aulaId, novaData, novaHora, motivo) {
+    var pes = getPessoa(pessoaId);
+    if (!pes) return { ok: false, erro: "Aluna não encontrada." };
+    if (!novaData) return { ok: false, erro: "Escolha a nova data." };
+    var alvo = agendaParticular(pessoaId).filter(function (a) { return a.id === aulaId; })[0];
+    if (!alvo) return { ok: false, erro: "Aula não encontrada." };
+    if (alvo.estado === "feita") return { ok: false, erro: "Esta aula já foi dada." };
+
+    var mesDaRemarcacao = iso(today()).slice(0, 7);
+    var antesNoMes = remarcacoesNoMes(pessoaId, mesDaRemarcacao);
+    var dataAntiga = alvo.data, horaAntiga = alvo.hora || "";
+
+    mutate(pessoaId, function (p) {
+      (p.particular.agenda || []).forEach(function (a) {
+        if (a.id !== aulaId) return;
+        a.remarcacoes = (a.remarcacoes || []).concat([{
+          de: dataAntiga, deHora: horaAntiga, para: novaData, paraHora: novaHora || horaAntiga,
+          em: iso(today()), motivo: (motivo || "").trim() }]);
+        a.data = novaData;
+        if (novaHora) a.hora = novaHora;
+        a.estado = "marcada";
+      });
+      pushHist(p, "contato", "Aula particular remarcada · " + ddmm(dataAntiga)
+        + " → " + ddmm(novaData) + (novaHora ? " às " + novaHora : "")
+        + (motivo ? " · " + motivo : ""));
+    });
+
+    var noMes = antesNoMes + 1;
+    var excedeu = noMes > LIMITE_REMARCACAO_MES;
+    // a professora precisa saber que a aula dela mudou de dia
+    var prof = (pes.particular && pes.particular.professora) || pes.professora || "";
+    if (prof) {
+      avisar(prof, "Aula particular de " + pes.nome + " remarcada: "
+        + ddmm(dataAntiga) + " → " + ddmm(novaData)
+        + (novaHora ? " às " + novaHora : "")
+        + (excedeu ? " · " + noMes + "ª remarcação no mês (o combinado é "
+            + LIMITE_REMARCACAO_MES + " por mês)" : ""), "aula");
+    }
+    return { ok: true, noMes: noMes, limite: LIMITE_REMARCACAO_MES, excedeu: excedeu,
+      de: dataAntiga, para: novaData };
+  }
+
+  function cancelarAulaParticular(pessoaId, aulaId, motivo) {
+    var alvo = agendaParticular(pessoaId).filter(function (a) { return a.id === aulaId; })[0];
+    if (!alvo) return { ok: false, erro: "Aula não encontrada." };
+    mutate(pessoaId, function (p) {
+      (p.particular.agenda || []).forEach(function (a) {
+        if (a.id === aulaId) { a.estado = "cancelada"; a.canceladaEm = iso(today());
+          a.motivoCancelamento = (motivo || "").trim(); }
+      });
+      pushHist(p, "contato", "Aula particular de " + ddmm(alvo.data) + " cancelada"
+        + (motivo ? " · " + motivo : ""));
+    });
+    return { ok: true };
+  }
+
+  function removerAulaParticular(pessoaId, aulaId) {
+    mutate(pessoaId, function (p) {
+      if (!p.particular) return;
+      p.particular.agenda = (p.particular.agenda || []).filter(function (a) { return a.id !== aulaId; });
+    });
+    return agendaParticular(pessoaId);
+  }
+
+  // A chamada é a fonte da verdade: dar a aula marca a data como feita.
+  function marcarAulaParticularFeita(pessoaId, dataIso, feita) {
+    mutate(pessoaId, function (p) {
+      if (!p.particular || !p.particular.agenda) return;
+      p.particular.agenda.forEach(function (a) {
+        if (a.data !== dataIso || a.estado === "cancelada") return;
+        a.estado = feita === false ? "marcada" : "feita";
+      });
+    });
+  }
+
+  function proximaAulaParticular(pessoaId) {
+    var hoje = iso(today());
+    return agendaParticular(pessoaId).filter(function (a) {
+      return a.estado === "marcada" && a.data >= hoje;
+    })[0] || null;
+  }
+
+  // Aulas particulares marcadas de todas as alunas, para a agenda da
+  // escola e para o painel da professora.
+  function aulasParticularesAgendadas(deIso, ateIso, professora) {
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      if (!p.particular || !p.particular.agenda) return;
+      var prof = p.particular.professora || p.professora || "";
+      if (professora && prof && prof !== professora) return;
+      p.particular.agenda.forEach(function (a) {
+        if (a.estado === "cancelada") return;
+        if (deIso && a.data < deIso) return;
+        if (ateIso && a.data > ateIso) return;
+        out.push({ pessoaId: p.id, nome: p.nome, aulaId: a.id, data: a.data,
+          hora: a.hora || "", estado: a.estado, professora: prof,
+          remarcada: (a.remarcacoes || []).length > 0 });
+      });
+    });
+    out.sort(function (a, b) { return (a.data + (a.hora || "")) < (b.data + (b.hora || "")) ? -1 : 1; });
+    return out;
   }
 
   function registrarPagamentoParticular(id) {
@@ -7230,6 +7426,14 @@
       if (p.desde && dentro(p.desde) && (p.status === "aluna" || p.status === "mvs"))
         itens.push({ data: p.desde, hora: "", tipo: "matricula", pessoaId: p.id,
           titulo: "Matrícula · " + p.nome, responsavel: "Carla" });
+    });
+    // aulas particulares marcadas: a agenda da escola só via turma e
+    // aula extra, então a aula particular não existia para ninguém
+    aulasParticularesAgendadas().forEach(function (ap) {
+      if (!dentro(ap.data) || ap.estado === "feita") return;
+      itens.push({ data: ap.data, hora: ap.hora, tipo: "particular",
+        titulo: "Particular · " + ap.nome + (ap.remarcada ? " · remarcada" : ""),
+        pessoaId: ap.pessoaId, aulaId: ap.aulaId, responsavel: ap.professora || "" });
     });
     eventosLista().forEach(function (e) {
       if (dentro(e.data)) {
@@ -9357,6 +9561,12 @@
     MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
     progressoCiclo: progressoCiclo,
     contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
+    CADENCIAS_PARTICULAR: CADENCIAS, LIMITE_REMARCACAO_MES: LIMITE_REMARCACAO_MES,
+    agendaParticular: agendaParticular, agendarSerieParticular: agendarSerieParticular,
+    remarcarAulaParticular: remarcarAulaParticular, cancelarAulaParticular: cancelarAulaParticular,
+    removerAulaParticular: removerAulaParticular, remarcacoesNoMes: remarcacoesNoMes,
+    proximaAulaParticular: proximaAulaParticular, marcarAulaParticularFeita: marcarAulaParticularFeita,
+    aulasParticularesAgendadas: aulasParticularesAgendadas,
     setParticularPago: setParticularPago, produtosDe: produtosDe,
     PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
