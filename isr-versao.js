@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-b",
+  numero: "2026.08.21-c",
   data: "21/08/2026",
-  nota: "App da aluna inteiro no visual novo, inclusive para aluna de turma: fundo escuro, títulos serifados, cartões translúcidos e barra de abas opaca; frases da tela revisadas"
+  nota: "Assinatura do systeme entra sozinha pelo Zapier: quem assina é ativada e vira pendência de convite; quem cancela tem a assinatura encerrada. A lista colada na Agenda segue valendo como conferência"
 };
