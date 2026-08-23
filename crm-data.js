@@ -6668,21 +6668,40 @@
         else out.push({ email: email, nome: nome || email.split("@")[0], acao: "criar" });
       });
     });
+    // Quem é assinante aqui e não está na lista colada saiu do systeme:
+    // a lista é a fonte da verdade do que está pago. Só entra na conta
+    // quando a lista tem gente — colar vazio não encerra ninguém.
+    if (out.filter(function (x) { return x.email; }).length) {
+      assinantesAtivas().forEach(function (p) {
+        var em = (p.email || "").trim().toLowerCase();
+        if (em && vistos[em]) return;
+        out.push({ email: em, nome: p.nome, id: p.id, acao: "encerrar" });
+      });
+    }
     return out;
   }
+  // Aplica a lista da semana: cria e ativa quem entrou, deixa quem
+  // continua exatamente como está (não reativa, para o convite do
+  // Netlify não sair de novo) e encerra quem saiu do systeme.
   function aplicarListaAssinantes(itens, cfg) {
     var valor = (cfg && cfg.valor) || "27";
     var moeda = (cfg && cfg.moeda) || "€";
-    var n = 0;
+    var criados = 0, ativados = 0, encerrados = 0, mantidos = 0;
     (itens || []).forEach(function (it) {
-      if (it.acao === "ativar") { ativarAssinatura(it.id, { valor: valor, moeda: moeda }); n++; }
+      if (it.acao === "ativar") { ativarAssinatura(it.id, { valor: valor, moeda: moeda }); ativados++; }
       else if (it.acao === "criar") {
         var p = novaPessoa({ nome: it.nome, email: it.email, origem: "Assinatura" });
         ativarAssinatura(p.id, { valor: valor, moeda: moeda });
-        n++;
-      }
+        criados++;
+      } else if (it.acao === "encerrar" && cfg && cfg.encerrarAusentes) {
+        encerrarAssinatura(it.id, "Fora da lista do systeme");
+        encerrados++;
+      } else if (it.acao === "ja-assinante") mantidos++;
     });
-    return n;
+    return { criados: criados, ativados: ativados, encerrados: encerrados,
+      mantidos: mantidos, novos: criados + ativados,
+      // compatível com quem só lia o número
+      valueOf: function () { return criados + ativados; } };
   }
 
   function produtosDe(pessoaId) {

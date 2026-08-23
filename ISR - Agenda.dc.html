@@ -82,7 +82,7 @@
             <button onclick="{{ onCopiarAsnEmails }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ asnCopiarLabel }}</button>
             <span style="font-size: 10.5px; color: #b3a693;">Cole no convite do Netlify (Identity → Invite users) para liberar o login.</span>
           </div>
-          <p style="margin: 0 0 8px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Cole a lista abaixo, uma pessoa por linha (nome e e-mail, ou só o e-mail). Nenhum registro é alterado antes da confirmação na prévia.</p>
+          <p style="margin: 0 0 8px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Cole a lista de assinantes ativas do systeme, uma por linha (nome e e-mail, ou só o e-mail). A lista é a referência: quem entrou é ativada, quem continua não é alterada e quem saiu pode ser encerrada. Nenhum registro muda antes da confirmação na prévia.</p>
           <textarea ref="{{ asnLoteRef }}" rows="4" placeholder="Maria Silva maria@email.com&#10;joana@email.com" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; resize: vertical;"></textarea>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px;">
             <button onclick="{{ onLerLote }}" style="border: 1px solid #c98a2e; background: #fff; color: #c98a2e; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Processar lista</button>
@@ -92,6 +92,18 @@
             </sc-if>
             <span style="font-size: 11.5px; color: #5a9e4b; font-weight: 600;">{{ asnLoteMsg }}</span>
           </div>
+          <sc-if value="{{ temAusentes }}">
+            <label style="display: flex; align-items: center; gap: 9px; margin-top: 10px; background: #fdf1ec; border: 1px solid #f0d9c8; border-radius: 9px; padding: 10px 13px; font-size: 12px; color: #9c6f56; line-height: 1.5; cursor: pointer;">
+              <input type="checkbox" checked="{{ encerrarAusentes }}" onchange="{{ onToggleEncerrar }}" style="width: 16px; height: 16px; accent-color: #cf6b5c; flex: none;" />
+              <span>Encerrar quem saiu · {{ ausentesFrase }}</span>
+            </label>
+          </sc-if>
+          <sc-if value="{{ temNovosParaConvidar }}">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+              <button onclick="{{ onCopiarNovos }}" style="border: 1px solid #c98a2e; background: #fff; color: #c98a2e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ asnCopiarNovosLabel }}</button>
+              <span style="font-size: 10.5px; color: #b3a693;">Só quem entrou agora precisa de convite no Netlify.</span>
+            </div>
+          </sc-if>
           <sc-if value="{{ temPrevia }}">
             <div style="margin-top: 10px;">
               <sc-for list="{{ previaLote }}" as="pl" hint-placeholder-count="4">
@@ -560,21 +572,47 @@ class Component extends DCLogic {
         this.setState({ copiadoAsn: true });
         setTimeout(() => this.setState({ copiadoAsn: false }), 2200);
       },
+      // Convidar no Netlify só faz sentido para quem entrou agora: quem
+      // já tem acesso receberia um convite repetido a cada semana.
+      temNovosParaConvidar: !!(this.state.asnPrevia || []).filter(it => it.acao === "criar" || it.acao === "ativar").length,
+      asnCopiarNovosLabel: this.state.copiadoNovos ? "E-mails copiados" : "Copiar e-mails de quem entrou",
+      onCopiarNovos: () => {
+        const emails = (this.state.asnPrevia || [])
+          .filter(it => it.acao === "criar" || it.acao === "ativar")
+          .map(it => it.email).filter(Boolean).join(", ");
+        try { navigator.clipboard.writeText(emails); } catch (err) {}
+        this.setState({ copiadoNovos: true });
+        setTimeout(() => this.setState({ copiadoNovos: false }), 2200);
+      },
+      encerrarAusentes: !!this.state.encerrarAusentes,
+      onToggleEncerrar: () => this.setState(s => ({ encerrarAusentes: !s.encerrarAusentes })),
+      temAusentes: !!(this.state.asnPrevia || []).filter(it => it.acao === "encerrar").length,
+      ausentesFrase: (() => {
+        const n = (this.state.asnPrevia || []).filter(it => it.acao === "encerrar").length;
+        return n + (n === 1 ? " assinante do sistema não está na lista"
+          : " assinantes do sistema não estão na lista") + " — cancelaram no systeme.";
+      })(),
       asnLoteRef: this.asnLoteRef,
       temPrevia: !!(this.state.asnPrevia && this.state.asnPrevia.length),
       previaLote: (this.state.asnPrevia || []).map(it => {
         const M = {
-          "criar": { label: "nova no sistema · ativar", cor: "#c98a2e" },
-          "ativar": { label: "já cadastrada · ativar", cor: "#c98a2e" },
-          "ja-assinante": { label: "já é assinante", cor: "#5a9e4b" },
+          "criar": { label: "entrou · ativar e convidar", cor: "#c98a2e" },
+          "ativar": { label: "entrou · ativar e convidar", cor: "#c98a2e" },
+          "ja-assinante": { label: "continua · nada a fazer", cor: "#5a9e4b" },
+          "encerrar": { label: "saiu do systeme · encerrar", cor: "#cf6b5c" },
           "sem-email": { label: "sem e-mail · ignorada", cor: "#b3a693" }
         }[it.acao];
         return { rotulo: it.email ? it.nome + " · " + it.email : it.linha,
           acaoLabel: M.label, cor: M.cor };
       }),
       aplicarLoteLabel: (() => {
-        const n = (this.state.asnPrevia || []).filter(it => it.acao === "criar" || it.acao === "ativar").length;
-        return "Ativar " + n + (n === 1 ? " assinatura" : " assinaturas");
+        const p = this.state.asnPrevia || [];
+        const n = p.filter(it => it.acao === "criar" || it.acao === "ativar").length;
+        const e = this.state.encerrarAusentes ? p.filter(it => it.acao === "encerrar").length : 0;
+        const partes = [];
+        if (n) partes.push("ativar " + n);
+        if (e) partes.push("encerrar " + e);
+        return partes.length ? "Aplicar · " + partes.join(" e ") : "Aplicar lista";
       })(),
       onLerLote: () => {
         const txt = (this.asnLoteRef.current && this.asnLoteRef.current.value) || "";
@@ -582,11 +620,16 @@ class Component extends DCLogic {
         this.setState({ asnPrevia: itens, asnLoteMsg: itens.length ? "" : "Cole a lista antes de processar." });
       },
       onAplicarLote: () => {
-        const n = window.ISRCRM.aplicarListaAssinantes(this.state.asnPrevia || []);
+        const r = window.ISRCRM.aplicarListaAssinantes(this.state.asnPrevia || [],
+          { encerrarAusentes: !!this.state.encerrarAusentes });
         if (this.asnLoteRef.current) this.asnLoteRef.current.value = "";
-        this.setState({ asnPrevia: null,
-          asnLoteMsg: n + (n === 1 ? " assinatura ativada." : " assinaturas ativadas.")
-            + " Convide os e-mails no painel do Netlify." });
+        const partes = [];
+        if (r.novos) partes.push(r.novos + (r.novos === 1 ? " assinatura ativada" : " assinaturas ativadas"));
+        if (r.mantidos) partes.push(r.mantidos + " sem alteração");
+        if (r.encerrados) partes.push(r.encerrados + (r.encerrados === 1 ? " encerrada" : " encerradas"));
+        this.setState({ asnPrevia: null, encerrarAusentes: false,
+          asnLoteMsg: (partes.join(" · ") || "Nada a aplicar")
+            + (r.novos ? ". Convide no Netlify apenas quem entrou." : ".") });
         this.bump();
       },
       onLimparLote: () => this.setState({ asnPrevia: null, asnLoteMsg: "" }),
