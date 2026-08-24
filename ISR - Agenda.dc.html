@@ -68,6 +68,7 @@
           </select>
           <input ref="{{ asnBannerTextoRef }}" placeholder="Texto do banner (ex. Matrículas abertas para as turmas)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ asnBannerLinkRef }}" placeholder="Link do banner (página de matrícula)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ asnWhatsEscolaRef }}" placeholder="WhatsApp da escola (contato de quem perdeu o acesso)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <input ref="{{ asnCancelRef }}" placeholder="Link de cancelamento no systeme (opcional)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
         </div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -357,6 +358,7 @@ class Component extends DCLogic {
   asnLoteRef = React.createRef(); asnDesafioRef = React.createRef();
   asnCapaRef = React.createRef();
   asnCancelRef = React.createRef();
+  asnWhatsEscolaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
@@ -574,6 +576,7 @@ class Component extends DCLogic {
       asnFg: this.state.assinaturaAberto ? "#fff" : "#164951",
       onToggleAssinatura: () => this.setState({ assinaturaAberto: !this.state.assinaturaAberto, novoAberto: false, feriadosAberto: false, bookclubAberto: false }),
       asnDesafioRef: this.asnDesafioRef, asnCancelRef: this.asnCancelRef,
+      asnWhatsEscolaRef: this.asnWhatsEscolaRef,
       asnCapaRef: this.asnCapaRef,
       asnGrupoRef: this.asnGrupoRef, asnBannerSelRef: this.asnBannerSelRef,
       asnBannerTextoRef: this.asnBannerTextoRef, asnBannerLinkRef: this.asnBannerLinkRef,
@@ -587,6 +590,7 @@ class Component extends DCLogic {
         if (!cfg) return "";
         return "Hoje: desafio em " + (cfg.desafioLink || "/desafio (geral)")
           + " · " + (cfg.grupoWhats ? "grupo cadastrado" : "sem grupo cadastrado")
+          + " · " + (cfg.whatsEscola ? "contato da escola: " + cfg.whatsEscola : "sem contato da escola")
           + " · banner " + (cfg.bannerAtivo ? "ligado" : "desligado")
           + (cfg.bannerAtivo && cfg.bannerTexto ? " · “" + cfg.bannerTexto + "”" : "");
       })(),
@@ -695,11 +699,12 @@ class Component extends DCLogic {
         if (v(this.asnDesafioRef)) patch.desafioLink = v(this.asnDesafioRef);
         if (v(this.asnCapaRef)) patch.semanaCapa = v(this.asnCapaRef);
         if (v(this.asnCancelRef)) patch.cancelLink = v(this.asnCancelRef);
+        if (v(this.asnWhatsEscolaRef)) patch.whatsEscola = v(this.asnWhatsEscolaRef);
         if (v(this.asnGrupoRef)) patch.grupoWhats = v(this.asnGrupoRef);
         if (v(this.asnBannerTextoRef)) patch.bannerTexto = v(this.asnBannerTextoRef);
         if (v(this.asnBannerLinkRef)) patch.bannerLink = v(this.asnBannerLinkRef);
         window.ISRCRM.setAssinaturaCfg(patch);
-        [this.asnDesafioRef, this.asnCapaRef, this.asnCancelRef, this.asnGrupoRef, this.asnBannerTextoRef, this.asnBannerLinkRef]
+        [this.asnDesafioRef, this.asnCapaRef, this.asnCancelRef, this.asnWhatsEscolaRef, this.asnGrupoRef, this.asnBannerTextoRef, this.asnBannerLinkRef]
           .forEach(r => { if (r.current) r.current.value = ""; });
         this.bump();
       },

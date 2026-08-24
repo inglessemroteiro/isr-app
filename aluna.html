@@ -67,6 +67,13 @@
     <p class="erro" id="recoveryErro"></p>
   </div>
 
+  <!-- login feito, o e-mail está no banco mas o acesso não está ativo -->
+  <div class="tela" id="telaReativar">
+    <p>Para reativar seu acesso no Inglês sem Roteiro, fale conosco pelo WhatsApp.</p>
+    <button id="btReativarWhats" onclick="falarComEscola()">Falar pelo WhatsApp</button>
+    <button class="link" onclick="voltarAoLogin()">Voltar</button>
+  </div>
+
   <!-- login feito, mas o e-mail não está no banco da escola -->
   <div class="tela" id="telaNaoEncontrada">
     <p>O e-mail <strong id="emailNaoEncontrado"></strong> não está no sistema da escola. Verifique se é o mesmo e-mail usado na matrícula ou fale com a escola.</p>
@@ -84,7 +91,7 @@
   <p class="nota" id="notaRodape">Equipe da escola entra por aqui também — o sistema identifica o e-mail e abre a gestão.</p>
 </div>
 <script>
-  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaNaoEncontrada", "telaEmail"];
+  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail"];
   function mostrar(id) {
     for (var i = 0; i < TELAS.length; i++)
       document.getElementById(TELAS[i]).style.display = TELAS[i] === id ? "block" : "none";
@@ -162,17 +169,36 @@
       window.location.replace(voltar || "ISR%20-%20Central.dc.html");
       return;
     }
-    var p = C.getPessoas().filter(function (x) {
-      return ["aluna", "mvs", "pausada", "programa"].indexOf(x.status) >= 0
-        && (x.email || "").trim().toLowerCase() === e;
-    })[0];
-    if (p) {
-      try { localStorage.setItem("isr_aluna_id", p.id); } catch (er) {}
+    var acesso = C.acessoPorEmail(e);
+    if (acesso.situacao === "liberado") {
+      try { localStorage.setItem("isr_aluna_id", acesso.pessoa.id); } catch (er) {}
       window.location.replace(voltar || "ISR%20-%20Aluna.dc.html");
       return;
     }
+    // o e-mail está na base, mas nada está contratado agora: assinatura
+    // cancelada no systeme, turma encerrada, ex-aluna
+    if (acesso.situacao === "encerrado") { mostrarReativar(); return; }
     document.getElementById("emailNaoEncontrado").textContent = email;
     mostrar("telaNaoEncontrada");
+  }
+
+  // ── acesso encerrado: quem resolve é a escola, pelo WhatsApp ──
+  function mostrarReativar() {
+    try { localStorage.removeItem("isr_aluna_id"); } catch (e) {}
+    var bt = document.getElementById("btReativarWhats");
+    if (bt) bt.style.display = linkEscola() ? "block" : "none";
+    mostrar("telaReativar");
+  }
+  function linkEscola() {
+    try {
+      return window.ISRCRM && window.ISRCRM.linkWhatsappEscola
+        ? window.ISRCRM.linkWhatsappEscola("Olá, quero reativar meu acesso no Inglês sem Roteiro.")
+        : "";
+    } catch (e) { return ""; }
+  }
+  function falarComEscola() {
+    var url = linkEscola();
+    if (url) window.open(url, "_blank");
   }
 
   // ── Netlify Identity direto na API (sem o widget, que falhava em
@@ -341,10 +367,24 @@
     sessaoGestao = window.ISRCRM && window.ISRCRM.gestaoUser();
     sessaoAluna = localStorage.getItem("isr_aluna_id");
   } catch (e) {}
+  // a sessão local não é um passe vitalício: se o acesso da aluna foi
+  // encerrado desde a última entrada, ela para na tela de reativação
+  function acessoDaSessao() {
+    try {
+      if (!sessaoAluna || sessaoGestao || !window.ISRCRM) return true;
+      var p = window.ISRCRM.getPessoa(sessaoAluna);
+      if (!p) return true;
+      return window.ISRCRM.acessoLiberado(p);
+    } catch (e) { return true; }
+  }
   if (!trocando && !hashToken && (sessaoGestao || sessaoAluna)) {
     var destino = voltar || (sessaoGestao ? "ISR%20-%20Central.dc.html" : "ISR%20-%20Aluna.dc.html");
-    if (puxando) aoTerminarPuxe = function () { window.location.replace(destino); };
-    else window.location.replace(destino);
+    var seguir = function () {
+      if (acessoDaSessao()) window.location.replace(destino);
+      else mostrarReativar();
+    };
+    if (puxando) aoTerminarPuxe = seguir;
+    else seguir();
   } else {
     // o Identity responde neste endereço? Fora do Netlify (ou sem rede),
     // a página cai no fluxo antigo de e-mail para ninguém ficar trancada

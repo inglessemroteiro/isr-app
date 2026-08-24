@@ -106,7 +106,18 @@
 
   <sc-if value="{{ naoEncontrada }}">
     <div style="max-width: 420px; margin: 0 auto; padding: 48px 20px; text-align: center;">
-      <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #7d6d63;">Matrícula não encontrada.<br><a href="aluna.html?trocar" style="color: #348a8e; font-weight: 600;">Entrar novamente</a></p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #f2ebe3;">Matrícula não encontrada.<br><a href="aluna.html?trocar" style="color: #9ec970; font-weight: 600;">Entrar novamente</a></p>
+    </div>
+  </sc-if>
+
+  <!-- acesso encerrado: a saída é falar com a escola -->
+  <sc-if value="{{ semAcesso }}">
+    <div style="max-width: 420px; margin: 0 auto; padding: 48px 20px; text-align: center;">
+      <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.7; color: #f2ebe3;">Para reativar seu acesso no Inglês sem Roteiro, fale conosco pelo WhatsApp.</p>
+      <sc-if value="{{ temWhatsEscola }}">
+        <a href="{{ whatsEscolaLink }}" target="_blank" rel="noopener" style="display: inline-block; background: #9ec970; color: #10353b; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; padding: 13px 26px; border-radius: 999px; text-decoration: none;">Falar pelo WhatsApp</a>
+      </sc-if>
+      <p style="margin: 18px 0 0; font-size: 12px; line-height: 1.7;"><a href="aluna.html?trocar" style="color: rgba(242, 235, 227, 0.6); font-weight: 600;">Entrar com outro e-mail</a></p>
     </div>
   </sc-if>
 
@@ -1107,14 +1118,25 @@ class Component extends DCLogic {
     const refs = { corrTextoRef: this.corrTextoRef, missaoRef: this.missaoRef,
       perfilNomeRef: this.perfilNomeRef, perfilFotoRef: this.perfilFotoRef,
       perfilBioRef: this.perfilBioRef };
-    const nada = Object.assign({ ok: false, naoEncontrada: true, tabs: [], materiais: [],
+    const nada = Object.assign({ ok: false, naoEncontrada: true, semAcesso: false,
+      temWhatsEscola: false, whatsEscolaLink: "", tabs: [], materiais: [],
       parcelas: [], extras: [], documentos: [], milesExtrato: [], ganharGrupos: [],
       disponiveis: [], bloqueados: [], numeros: [], notas: [], atividades: [],
       gravacoes: [], proximas: [], passadas: [] }, refs);
     if (!CRM) return nada;
 
     const TEM_ACESSO = { aluna: 1, mvs: 1, pausada: 1, programa: 1 };
-    let p = CRM.getPessoa(this.alunaId());
+    const idAluna = this.alunaId();
+    let p = CRM.getPessoa(idAluna);
+    // acesso encerrado (assinatura cancelada no systeme, turma
+    // encerrada): o app não abre e nem cai no cadastro de outra pessoa —
+    // mostra o contato da escola
+    if (idAluna && p && CRM.acessoLiberado && !CRM.acessoLiberado(p)) {
+      const wa = CRM.linkWhatsappEscola
+        ? CRM.linkWhatsappEscola("Olá, quero reativar meu acesso no Inglês sem Roteiro.") : "";
+      return Object.assign({}, nada, { naoEncontrada: false, semAcesso: true,
+        temWhatsEscola: !!wa, whatsEscolaLink: wa });
+    }
     if (!p || !TEM_ACESSO[p.status]) p = CRM.getPessoas().filter(x => TEM_ACESSO[x.status])[0] || null;
     if (!p) return nada;
     // Quem comprou só o acompanhamento não tem turma, aula nem parcela.
@@ -1391,7 +1413,8 @@ class Component extends DCLogic {
     }));
 
     return Object.assign({
-      ok: true, naoEncontrada: false,
+      ok: true, naoEncontrada: false, semAcesso: false,
+      temWhatsEscola: false, whatsEscolaLink: "",
       primeiroNome: CRM.firstName(p.nome),
       nivelCiclo: soAssinatura
         ? "Assinante"

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-c",
+  numero: "2026.08.21-d",
   data: "21/08/2026",
-  nota: "Assinatura do systeme entra sozinha pelo Zapier: quem assina é ativada e vira pendência de convite; quem cancela tem a assinatura encerrada. A lista colada na Agenda segue valendo como conferência"
+  nota: "Quem perdeu o acesso (assinatura cancelada, turma encerrada) para numa tela com o contato da escola no WhatsApp, em vez de entrar no app ou receber \"e-mail não está no sistema\". O número é cadastrado na Agenda → Assinatura"
 };
