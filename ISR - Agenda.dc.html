@@ -633,6 +633,10 @@ class Component extends DCLogic {
       onToggleZap: () => this.setState(s => ({ zapAberto: !s.zapAberto })),
       ...((() => {
         const con = window.ISRCRM.backendUrl ? window.ISRCRM.backendUrl() : "";
+        // o convite do Identity só aceita o token que o Netlify entrega
+        // dentro de uma função do próprio site — por isso o Zapier chama
+        // a função, e não a API do Identity direto
+        const convite = window.location.origin + "/.netlify/functions/convidar-aluna";
         return {
           zapTemUrl: !!con, zapSemUrl: !con,
           zapUrl: con || "",
@@ -647,8 +651,9 @@ class Component extends DCLogic {
             { n: "2", texto: "Ação: Webhooks by Zapier → POST, para o endereço acima." },
             { n: "3", texto: "Em Data, envie quatro campos: action = assinaturaEvento · evento = assinou · email = o e-mail da pessoa · nome = o nome dela." },
             { n: "4", texto: "Duplique o Zap para o gatilho de cancelamento, trocando evento = cancelou." },
-            { n: "5", texto: "Para o acesso ao app, acrescente uma segunda ação Webhooks: POST para https://api.netlify.com/api/v1/sites/SEU-SITE/identity/users/invite, com o token do Netlify no cabeçalho Authorization e o e-mail no corpo." },
-            { n: "6", texto: "Ligado o Zap, quem assina entra e recebe o convite em minutos. A lista colada aqui continua valendo como conferência." }
+            { n: "5", texto: "No Netlify, em Site configuration → Environment variables, crie ISR_CONVITE_CHAVE com uma senha qualquer. É ela que autoriza o Zapier a convidar." },
+            { n: "6", texto: "De volta ao Zap da assinatura, acrescente uma segunda ação Webhooks: POST para " + convite + ", enviando email = o e-mail da pessoa e chave = a mesma senha." },
+            { n: "7", texto: "Ligado o Zap, quem assina entra e recebe o convite em minutos. Quem já tem conta não é convidada de novo. A lista colada aqui continua valendo como conferência." }
           ]
         };
       })()),
