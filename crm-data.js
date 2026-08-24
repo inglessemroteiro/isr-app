@@ -6680,7 +6680,10 @@
     semanaCapa: "",
     // cancelamento da assinatura: quando preenchido, o botão no app leva
     // ao portal de pagamento (systeme); em branco, vale o pedido interno
-    cancelLink: "" };
+    cancelLink: "",
+    // WhatsApp de contato da escola: é o que aparece para quem tenta
+    // entrar no app sem acesso ativo (assinatura cancelada, ex-aluna)
+    whatsEscola: "" };
   function assinaturaCfg() {
     try { return Object.assign({}, ASSIN_CFG_PADRAO,
       JSON.parse(localStorage.getItem(ASSIN_CFG_KEY) || "{}")); }
@@ -6693,6 +6696,39 @@
   }
   function assinantesAtivas() {
     return loadPessoas().filter(function (p) { return assinaturaAtiva(p); });
+  }
+
+  // ── ACESSO AO APP DA ALUNA ────────────────────────────────────
+  // O acesso segue o produto contratado, não o rótulo da ficha: quem
+  // cancela a assinatura no systeme continua com status "aluna", e sem
+  // esta verificação continuaria entrando no app depois de sair.
+  function acessoLiberado(p) {
+    if (!p || p.status === "ex-aluna") return false;
+    if (["aluna", "mvs", "pausada", "programa"].indexOf(p.status) < 0) return false;
+    if (p.turma) return true;
+    return produtosDe(p.id).some(function (x) { return x.contratado; });
+  }
+  // Três desfechos para um e-mail que acabou de fazer login:
+  // liberado (abre o app) · encerrado (já teve acesso e não tem mais) ·
+  // desconhecido (e-mail que não existe na base).
+  function acessoPorEmail(email) {
+    var e = String(email || "").trim().toLowerCase();
+    if (!e) return { situacao: "desconhecido", pessoa: null };
+    var achadas = loadPessoas().filter(function (x) {
+      return (x.email || "").trim().toLowerCase() === e;
+    });
+    if (!achadas.length) return { situacao: "desconhecido", pessoa: null };
+    var ativa = achadas.filter(acessoLiberado)[0];
+    if (ativa) return { situacao: "liberado", pessoa: ativa };
+    return { situacao: "encerrado", pessoa: achadas[0] };
+  }
+  // Número da escola para quem precisa falar com alguém. Sem número
+  // cadastrado o link abre o WhatsApp sem destinatário — por isso a
+  // tela só mostra o botão quando há número.
+  function whatsappEscola() { return (assinaturaCfg().whatsEscola || "").trim(); }
+  function linkWhatsappEscola(texto) {
+    var n = whatsappEscola();
+    return n ? waLink(n, texto || "") : "";
   }
   // Lista colada (quem já está no desafio): uma pessoa por linha, no
   // formato "Nome email" / "Nome <email>" / "Nome, email" ou só o e-mail.
@@ -9587,6 +9623,8 @@
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
+    acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
+    whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,
     assinantesAtivas: assinantesAtivas,
     lerListaAssinantes: lerListaAssinantes, aplicarListaAssinantes: aplicarListaAssinantes,
     renovarMatricula: renovarMatricula, retencao: retencao,
