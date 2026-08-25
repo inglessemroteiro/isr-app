@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-e",
+  numero: "2026.08.21-f",
   data: "21/08/2026",
-  nota: "O convite no Netlify passa a ser feito por uma função do próprio site, chamada pelo Zapier: o Identity só aceita o token de administrador de dentro do site, e quem já tem conta não é convidada de novo"
+  nota: "Caixa: quem cancela sai da receita (a parcela cancelada continuava a cobrar), a assinatura e o acompanhamento passam a aparecer como cobrança automática, e a tela abre dizendo se o mês deu lucro ou prejuízo"
 };

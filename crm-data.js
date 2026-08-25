@@ -3539,7 +3539,9 @@
       (p.contratos || []).forEach(function (c, ci) {
         if ((c.moeda || p.moeda || "R$") !== moeda) return;
         (c.meses || []).forEach(function (m) {
-          if (m.pago) return;
+          // cancelada no encerramento não é dívida: não pode aparecer
+          // como candidata na conciliação do extrato
+          if (m.pago || m.cancelada) return;
           var v = parseMoney(m.valor || c.parcelaValor);
           if (!v) return;
           out.push({ pessoaId: p.id, nome: p.nome, mesKey: m.key, mesLabel: m.label,
@@ -7676,6 +7678,7 @@
     { id: "particular", label: "Aulas particulares",   cor: "#6b5b95" },
     { id: "mvs",        label: "MVS · autoguiado",     cor: "#2a9d8f" },
     { id: "programa",   label: "Acompanhamento",       cor: "#e07856" },
+    { id: "assinatura", label: "Assinatura",           cor: "#c98a2e" },
     { id: "sinal",      label: "Sinais de matrícula",  cor: "#9ec970" },
     { id: "extra",      label: "Aulas extras",         cor: "#d4a574" },
     { id: "outra",      label: "Outras receitas",      cor: "#b8ada0" }
@@ -7863,6 +7866,10 @@
         var moeda = c.moeda || p.moeda || "R$";
         (c.meses || []).forEach(function (m) {
           if (m.key !== key || !m.valor) return;
+          // Parcela cancelada no encerramento não é receita: ninguém
+          // vai cobrar quem saiu por um mês que ela não vai cursar.
+          // Sem isto, quem cancelou continuava aparecendo a receber.
+          if (m.cancelada && !m.pago) return;
           var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
           var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
           entradas.push({ pessoaId: p.id, nome: p.nome,
@@ -7871,13 +7878,44 @@
             moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
             pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje });
         });
-        if (c.sinal && c.sinal.valor && (p.desde || "").slice(0, 7) === key) {
+        if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key) {
           entradas.push({ pessoaId: p.id, nome: p.nome, categoria: "sinal",
             detalhe: "Sinal de matrícula", moeda: moeda,
             valor: parseMoney(c.sinal.valor), valorLabel: c.sinal.valor,
             pago: !!c.sinal.recebido, venc: p.desde,
             atrasada: !c.sinal.recebido && p.desde < hoje });
         }
+      });
+
+      // ── RECORRENTES: assinatura e acompanhamento ──────────────
+      // Não têm parcela em contrato — a cobrança se repete todo mês
+      // enquanto o produto vale. Sem isto, a receita recorrente da
+      // escola não aparecia no Caixa: o resultado do mês ignorava
+      // tudo que entra pelo systeme.
+      [{ obj: p.assinatura, cat: "assinatura", rotulo: "Assinatura",
+         fim: p.assinatura && p.assinatura.encerrada },
+       { obj: p.programa, cat: "programa",
+         rotulo: (p.programa && p.programa.nome) || "Acompanhamento",
+         fim: p.programa && p.programa.encerrado }].forEach(function (r) {
+        var o = r.obj;
+        if (!o || !o.valor) return;
+        var ini = String(o.inicio || o.desde || "").slice(0, 10);
+        if (!ini || ini.slice(0, 7) > key) return;
+        // o mês do encerramento ainda conta: quando a pessoa cancela, a
+        // cobrança daquele ciclo já tinha acontecido
+        if (r.fim && String(r.fim).slice(0, 7) < key) return;
+        // dia da cobrança = dia em que começou (limitado para não cair
+        // num dia que o mês não tem)
+        var dia = parseInt(ini.slice(8, 10), 10) || 1;
+        if (dia > 28) dia = 28;
+        var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
+        entradas.push({ pessoaId: p.id, nome: p.nome, categoria: r.cat,
+          detalhe: r.rotulo + " · cobrança automática",
+          moeda: o.moeda || p.moeda || "€",
+          valor: parseMoney(o.valor), valorLabel: o.valor,
+          // cobrança automática: passou o dia, entrou. Não existe
+          // "atrasada" aqui — ou já rodou, ou ainda vai rodar.
+          pago: venc <= hoje, venc: venc, atrasada: false, recorrente: true });
       });
     });
 
@@ -9169,14 +9207,21 @@
       if (!c) return;
       var m = c.moeda || p.moeda || "R$";
       (c.meses || []).forEach(function (x) {
-        if (x.key === k && !x.pago && x.valor) {
+        if (x.key === k && !x.pago && !x.cancelada && x.valor) {
           if (abertoCobranca[m] === undefined) abertoCobranca[m] = 0;
           abertoCobranca[m] += parseMoney(x.valor);
         }
       });
     });
-    var abertoCaixa = { "R$": fin.aReceber["R$"] + fin.atrasado["R$"],
-                        "€": fin.aReceber["€"] + fin.atrasado["€"] };
+    // a comparação é sobre parcela de contrato: sinal, lançamento avulso
+    // e cobrança automática (assinatura, acompanhamento) não passam pela
+    // tela de Cobrança
+    var abertoCaixa = { "R$": 0, "€": 0 };
+    fin.entradas.forEach(function (e) {
+      if (e.pago || e.recorrente || e.lancId || e.categoria === "sinal" || !e.pessoaId) return;
+      if (abertoCaixa[e.moeda] === undefined) abertoCaixa[e.moeda] = 0;
+      abertoCaixa[e.moeda] += e.valor;
+    });
     add("cobranca_bate_caixa", "O que está em aberto é o mesmo nas duas telas",
       cent(abertoCobranca["R$"]) === cent(abertoCaixa["R$"])
         && cent(abertoCobranca["€"]) === cent(abertoCaixa["€"]),

@@ -25,7 +25,7 @@
         <a href="ISR%20-%20Cobran%C3%A7a.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Cobrança</a>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>Demonstrativo Financeiro Mensal.</strong> Apura receitas por origem e despesas por categoria, com comparação à meta de faturamento e ao ponto de equilíbrio. Valores segregados por moeda; leituras consolidadas são identificadas como estimativa.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>O dinheiro do mês.</strong> O que entrou, o que saiu e o que sobrou — por origem e por categoria, com a meta e o ponto de equilíbrio. Real e euro aparecem separados; onde os dois são somados, a taxa de conversão está escrita.</p>
 
     <!-- NAVEGADOR DE MÊS -->
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -40,33 +40,27 @@
       </sc-if>
     </div>
 
-    <!-- CONFERÊNCIA — a conta refeita por outro caminho -->
-    <div style="background: {{ confBg }}; border: 1px solid {{ confBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
-      <button onclick="{{ onConf }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; text-align: left;">
-        <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
-          <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ confCor }};"></span>
-          <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ confTitulo }}</span>
-          <span style="font-size: 11.5px; color: #8a7c6b;">{{ confResumo }}</span>
-        </span>
-        <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ confLabel }}</span>
-      </button>
-      <sc-if value="{{ confAberta }}">
-        <div style="margin-top: 12px;">
-          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada verificação recalcula um valor por um método independente e o compara ao exibido na tela; divergências aparecem abaixo. A verificação avalia a consistência dos dados, não o resultado do mês.</p>
-          <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
-            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
-              <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ cf.titulo }}</div>
-                <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ cf.linha }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-      </sc-if>
+    <!-- O MÊS EM UMA FRASE — a pergunta que a tela precisa responder -->
+    <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid {{ resCor }}; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;">
+      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">{{ resTitulo }}</div>
+      <div style="font-size: 27px; font-weight: 700; letter-spacing: -0.6px; color: {{ resCor }}; margin: 4px 0 2px;">{{ resValor }}</div>
+      <div style="font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ resFrase }}</div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f4f1ec;">
+        <sc-for list="{{ resColunas }}" as="rc" hint-placeholder-count="3">
+          <div>
+            <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f; margin-bottom: 4px;">{{ rc.label }}</div>
+            <div style="font-size: 15px; font-weight: 700; color: {{ rc.cor }};">{{ rc.brl }}</div>
+            <div style="font-size: 12px; font-weight: 700; color: {{ rc.corEur }};">{{ rc.eur }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
     </div>
 
-    <!-- OS CINCO NÚMEROS -->
+
+    <!-- OS NÚMEROS DO MÊS -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 8px;">
       <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="5">
         <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ n.cor }}; border-radius: 10px; padding: 13px 15px;">
@@ -77,7 +71,6 @@
         </div>
       </sc-for>
     </div>
-    <p style="margin: 0 0 20px; font-size: 11px; color: #b3a693;">Saldo = receitas efetivamente recebidas menos despesas do mês. Não considera valores a receber.</p>
 
     <!-- PREVISTO × REALIZADO -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
@@ -85,7 +78,7 @@
         <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Previsto × Realizado</span>
         <button onclick="{{ onOrcEditar }}" style="border: 1px solid #e5dccf; background: {{ orcBtnBg }}; color: {{ orcBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ orcBtnLabel }}</button>
       </div>
-      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto é calculado dos contratos (receita) e dos custos fixos e folha (despesa), e pode ser ajustado linha a linha neste mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto vem dos contratos e das cobranças automáticas (receita) e dos custos fixos e da folha (despesa), e pode ser ajustado linha a linha neste mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
 
       <div style="overflow-x: auto;"><div style="min-width: 540px;">
       <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #eee3d6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693;">
@@ -198,7 +191,7 @@
           <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nenhuma receita registrada neste mês.</p>
         </sc-if>
 
-        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Detalhamento por aluna</div>
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Cada entrada do mês</div>
         <sc-for list="{{ entradas }}" as="e" hint-placeholder-count="5">
           <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
             <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ e.cor }}; flex: none;"></span>
@@ -468,11 +461,37 @@
       </sc-if>
     </div>
 
+    <!-- CONFERÊNCIA — a conta refeita por outro caminho -->
+    <div style="background: {{ confBg }}; border: 1px solid {{ confBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+      <button onclick="{{ onConf }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; text-align: left;">
+        <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+          <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ confCor }};"></span>
+          <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ confTitulo }}</span>
+          <span style="font-size: 11.5px; color: #8a7c6b;">{{ confResumo }}</span>
+        </span>
+        <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ confLabel }}</span>
+      </button>
+      <sc-if value="{{ confAberta }}">
+        <div style="margin-top: 12px;">
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada verificação recalcula um valor por um método independente e o compara ao exibido na tela; divergências aparecem abaixo. A verificação avalia a consistência dos dados, não o resultado do mês.</p>
+          <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
+              <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ cf.titulo }}</div>
+                <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ cf.linha }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- CÂMBIO -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 220px;">
         <div style="font-size: 12.5px; font-weight: 700; color: #164951;">Taxa de conversão cambial</div>
-        <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">Aplicada apenas ao gráfico de evolução e aos totais estimados. Nos demais indicadores, os valores permanecem segregados por moeda.</div>
+        <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">Usada no gráfico de evolução e sempre que real e euro precisam virar um número só. Nos demais lugares, cada moeda aparece separada.</div>
       </div>
       <input ref="{{ cambioRef }}" placeholder="{{ cambioValor }}" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
       <button onclick="{{ onSalvarCambio }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
@@ -527,7 +546,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [],
+    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -548,26 +567,61 @@ class Component extends DCLogic {
     // ── os cinco números ──
     const numeros = [
       { label: "Recebido", cor: "#348a8e", brl: CRM.fmtMoney("R$", f.recebido["R$"]), eur: CRM.fmtMoney("€", f.recebido["€"]),
-        nota: "Valores creditados em conta" },
+        nota: "O que já caiu na conta" },
       { label: "A receber", cor: "#d4a574", brl: CRM.fmtMoney("R$", f.aReceber["R$"]), eur: CRM.fmtMoney("€", f.aReceber["€"]),
-        nota: "Contratos vigentes, ainda não vencidos" },
+        nota: "Ainda vai vencer neste mês" },
       { label: "Em atraso", cor: "#cf6b5c", brl: CRM.fmtMoney("R$", f.atrasado["R$"]), eur: CRM.fmtMoney("€", f.atrasado["€"]),
-        nota: f.atrasado["R$"] + f.atrasado["€"] > 0 ? "Vencidos e não liquidados" : "Sem vencimentos em aberto" },
+        nota: f.atrasado["R$"] + f.atrasado["€"] > 0 ? "Venceu e não foi pago" : "Nada vencido em aberto" },
       { label: "Despesas", cor: "#9c6f56", brl: CRM.fmtMoney("R$", f.saiu["R$"]), eur: CRM.fmtMoney("€", f.saiu["€"]),
-        nota: "Custos fixos e lançamentos do período" },
-      // O saldo é o único número que não pode ser lido por moeda. A receita
-      // vem em euro e real; a despesa é quase toda em real. Separado, dá
-      // "prejuízo em R$ e lucro em €" — as duas metades de um resultado só.
-      { label: "Saldo do mês", cor: f.totalReais.resultado >= 0 ? "#348a8e" : "#cf6b5c",
-        corBrl: f.totalReais.resultado >= 0 ? "#348a8e" : "#cf6b5c",
-        corEur: "#a2957f",
-        brl: (f.totalReais.resultado < 0 ? "− " : "")
-          + CRM.fmtMoney("R$", Math.abs(f.totalReais.resultado)),
-        eur: (f.resultado["R$"] < 0 ? "− " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"]))
-          + "  ·  " + (f.resultado["€"] < 0 ? "− " : "") + CRM.fmtMoney("€", Math.abs(f.resultado["€"])),
-        nota: "Total consolidado, euro a " + CRM.fmtMoney("R$", (CRM.configPagamento().cambioEur || 0))
-          + ". Valores por moeda abaixo." }
+        nota: "Custos fixos, folha e lançamentos" },
     ].map(n => Object.assign({ corBrl: n.cor, corEur: n.cor }, n)); // cada moeda pinta o próprio sinal
+
+    // ── o mês em uma frase ──
+    // A pergunta é "sobrou ou faltou?". Ela vem antes de qualquer outra
+    // coisa na tela, em palavras, e só depois vêm os números por moeda.
+    const ehFuturo = mes.key > atualKey;
+    const ehAtual = mes.key === atualKey;
+    const res = f.totalReais.resultado;
+    const cambio = CRM.configPagamento().cambioEur || 0;
+    const resTitulo = (ehFuturo ? "Previsão · " : (ehAtual ? "Até hoje · " : "Fechado · ")) + mes.label;
+    const resValor = ehFuturo
+      ? (f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu >= 0
+          ? "Deve sobrar " + CRM.fmtMoney("R$", f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)
+          : "Deve faltar " + CRM.fmtMoney("R$", Math.abs(f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)))
+      : (res > 0 ? "Lucro de " + CRM.fmtMoney("R$", res)
+        : (res < 0 ? "Prejuízo de " + CRM.fmtMoney("R$", Math.abs(res)) : "Entrou o mesmo que saiu"));
+    const resCor = ehFuturo ? "#d4a574" : (res > 0 ? "#5a9e4b" : (res < 0 ? "#cf6b5c" : "#8a7c6b"));
+    const resFrase = "Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
+      + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu) + "."
+      + (f.recebido["\u20ac"] > 0 ? " Euro convertido a " + CRM.fmtMoney("R$", cambio) + " para somar com o real." : "")
+      + (ehAtual ? " O mês ainda não acabou." : "")
+      // real negativo e euro positivo (ou o contrário) é o caso mais fácil
+      // de ler errado: o total verde esconde a metade vermelha
+      + ((f.resultado["R$"] < 0) !== (f.resultado["\u20ac"] < 0)
+          && f.resultado["R$"] !== 0 && f.resultado["\u20ac"] !== 0
+        ? " Atenção: em real o mês está " + (f.resultado["R$"] < 0 ? "negativo" : "positivo")
+          + " e em euro, " + (f.resultado["\u20ac"] < 0 ? "negativo" : "positivo")
+          + ". O valor acima junta as duas moedas pelo câmbio."
+        : "");
+    const corSinal = v => v < 0 ? "#cf6b5c" : "#5a9e4b";
+    const resColunas = [
+      { label: "Entrou", cor: "#348a8e", corEur: "#a2957f",
+        brl: CRM.fmtMoney("R$", f.recebido["R$"]), eur: CRM.fmtMoney("\u20ac", f.recebido["\u20ac"]) },
+      { label: "Saiu", cor: "#cf6b5c", corEur: "#a2957f",
+        brl: CRM.fmtMoney("R$", f.saiu["R$"]), eur: CRM.fmtMoney("\u20ac", f.saiu["\u20ac"]) },
+      // aqui cada moeda pinta o próprio sinal: o verde do total não pode
+      // esconder um real negativo
+      { label: res >= 0 ? "Sobrou" : "Faltou",
+        cor: corSinal(f.resultado["R$"]), corEur: corSinal(f.resultado["\u20ac"]),
+        brl: (f.resultado["R$"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"])),
+        eur: (f.resultado["\u20ac"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("\u20ac", Math.abs(f.resultado["\u20ac"])) }
+    ];
+    const pend = [];
+    if (CRM.emReais(f.aReceber) > 0) pend.push(duo(f.aReceber) + " ainda a receber");
+    if (CRM.emReais(f.atrasado) > 0) pend.push(duo(f.atrasado) + " em atraso");
+    const resPendente = pend.length
+      ? "Fora desta conta: " + pend.join(" e ") + ". Só entra aqui o que já caiu."
+      : "Nada em aberto neste mês.";
 
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
@@ -1002,6 +1056,8 @@ class Component extends DCLogic {
           : ("esperado " + c.esperado + " · encontrado " + c.obtido
              + (c.detalhe ? " · " + c.detalhe : ""))
       })),
+
+      resTitulo, resValor, resCor, resFrase, resColunas, resPendente,
 
       catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
       catsSaida: barras(f.porCatSaida, CRM.catsSaida()),
