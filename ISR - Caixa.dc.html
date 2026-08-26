@@ -57,6 +57,22 @@
       </div>
 
       <div style="margin-top: 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
+
+      <!-- por onde o dinheiro passou: o total só faz sentido se der para
+           conferir com o extrato de cada banco -->
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f; margin-bottom: 8px;">Por conta</div>
+        <sc-for list="{{ resContas }}" as="cc" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; align-items: baseline; padding: 5px 0; font-size: 12px; flex-wrap: wrap;">
+            <span style="flex: 1; min-width: 90px; font-weight: 700; color: {{ cc.corNome }};">{{ cc.nome }}</span>
+            <span style="flex: none; color: #348a8e;">{{ cc.entrou }}</span>
+            <span style="flex: none; color: #cf6b5c;">{{ cc.saiu }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ semConta }}">
+          <p style="margin: 6px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">{{ semContaFrase }}</p>
+        </sc-if>
+      </div>
     </div>
 
 
@@ -211,6 +227,9 @@
 
         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
           <input ref="{{ entDescRef }}" placeholder="Descrição da receita (ex. workshop)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ entContaRef }}" title="Em qual conta entrou" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ contasSimples }}" as="cs" hint-placeholder-count="4"><option value="{{ cs.id }}">{{ cs.nome }}</option></sc-for>
+          </select>
           <select ref="{{ entMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
           <input ref="{{ entValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <button onclick="{{ onAddEntrada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar receita</button>
@@ -274,6 +293,9 @@
           <input ref="{{ saiDescRef }}" placeholder="Descrição da despesa (ex. contabilidade)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
           <select ref="{{ saiCatRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
             <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+          </select>
+          <select ref="{{ saiContaRef }}" title="De qual conta saiu" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ contasSimples }}" as="cs2" hint-placeholder-count="4"><option value="{{ cs2.id }}">{{ cs2.nome }}</option></sc-for>
           </select>
           <select ref="{{ saiMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
           <input ref="{{ saiValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
@@ -388,11 +410,35 @@
     <!-- CONCILIAÇÃO DE EXTRATO -->
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Conciliação bancária</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+        <span style="font-size: 11.5px; color: #8a7c6b;">Contas: {{ contasResumo }}</span>
+        <button onclick="{{ onToggleContas }}" style="border: 1px solid #e5dccf; background: {{ contasBg }}; color: {{ contasFg }}; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ contasBtnLabel }}</button>
+      </div>
+      <sc-if value="{{ contasAberto }}">
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+          <sc-for list="{{ contasCad }}" as="cg" hint-placeholder-count="4">
+            <div style="display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f7f2ea; font-size: 12px;">
+              <span style="flex: 1; font-weight: 700; color: #164951;">{{ cg.nome }}</span>
+              <span style="flex: none; color: #a2957f;">{{ cg.moeda }}</span>
+              <button onclick="{{ cg.onRemove }}" title="Apagar conta" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 6px;">×</button>
+            </div>
+          </sc-for>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+            <input ref="{{ novaContaRef }}" placeholder="Nome da conta (ex. Mercado Pago)" style="flex: 1; min-width: 150px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <select ref="{{ novaContaMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
+            <button onclick="{{ onAddConta }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Acrescentar</button>
+          </div>
+          <sc-if value="{{ temErroConta }}">
+            <p style="margin: 8px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">{{ erroConta }}</p>
+          </sc-if>
+        </div>
+      </sc-if>
       <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Cole as linhas do extrato bancário — uma transação por linha, no formato <code style="background: #f6eee4; padding: 1px 6px; border-radius: 4px;">dd/mm/aaaa ; descrição ; valor</code> (valor negativo indica débito). Créditos são associados às parcelas em aberto; débitos são lançados como despesa do mês. <strong>O sistema apenas sugere: nenhum registro é gravado sem confirmação.</strong></p>
       <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-        <select onchange="{{ onMoedaExtrato }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
-          <option value="€" selected="{{ moedaEUR }}">Conta em € (Wise EUR)</option>
-          <option value="R$" selected="{{ moedaBRL }}">Conta em R$ (Sicredi / Wise BRL)</option>
+        <select onchange="{{ onContaExtrato }}" title="De qual conta é este extrato" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;">
+          <sc-for list="{{ contasOpts }}" as="co" hint-placeholder-count="4">
+            <option value="{{ co.id }}" selected="{{ co.sel }}">{{ co.label }}</option>
+          </sc-for>
         </select>
         <textarea ref="{{ extratoRef }}" placeholder="Cole aqui o extrato exportado do banco ou do Asaas, com a linha de títulos. Também aceita uma linha por lançamento: 28/05/2026 ; Recebeu de Ana Beatriz ; 125,00" style="flex: 1; min-width: 300px; min-height: 90px; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; color: #3d3529; font-size: 12px; line-height: 1.6; padding: 12px 14px; font-family: monospace; resize: vertical;"></textarea>
         <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -502,7 +548,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { offset: 0, moedaExtrato: "€", analise: null, conciliadas: {}, lancadas: {},
+  state = { offset: 0, moedaExtrato: "€", contaExtrato: "", contasAberto: false, erroConta: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, edLanc: null };
@@ -517,6 +563,17 @@ class Component extends DCLogic {
   custoNomeRef = React.createRef(); custoMoedaRef = React.createRef();
   custoValorRef = React.createRef(); custoCatRef = React.createRef();
   entDescRef = React.createRef(); entValorRef = React.createRef(); entMoedaRef = React.createRef();
+  entContaRef = React.createRef(); saiContaRef = React.createRef();
+  novaContaRef = React.createRef(); novaContaMoedaRef = React.createRef();
+
+  // conta do extrato em análise: a escolhida ou, na primeira abertura, a
+  // primeira conta cadastrada na moeda em uso
+  contaAtual() {
+    if (this.state.contaExtrato) return this.state.contaExtrato;
+    const l = (window.ISRCRM && window.ISRCRM.contasLista) ? window.ISRCRM.contasLista() : [];
+    const c = l.filter(x => x.moeda === this.state.moedaExtrato)[0] || l[0];
+    return c ? c.id : "";
+  }
   saiDescRef = React.createRef(); saiValorRef = React.createRef();
   saiMoedaRef = React.createRef(); saiCatRef = React.createRef();
   metaBrlRef = React.createRef(); metaEurRef = React.createRef();
@@ -546,7 +603,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [],
+    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -616,6 +673,21 @@ class Component extends DCLogic {
         brl: (f.resultado["R$"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"])),
         eur: (f.resultado["\u20ac"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("\u20ac", Math.abs(f.resultado["\u20ac"])) }
     ];
+    // por onde o dinheiro passou. Sem conta marcada, o movimento cai em
+    // "não informada" — que é um aviso, não uma conta.
+    const contasCad = CRM.contasLista ? CRM.contasLista() : [];
+    const pc = f.porConta || {};
+    const resContas = contasCad.map(c => ({
+      id: c.id, nome: c.nome, corNome: "#164951",
+      entrou: pc[c.id] ? duo(pc[c.id].entrou) : "—",
+      saiu: pc[c.id] && (pc[c.id].saiu["R$"] || pc[c.id].saiu["\u20ac"])
+        ? "\u2212 " + duo(pc[c.id].saiu) : ""
+    })).filter(x => x.entrou !== "—" || x.saiu);
+    const semC = pc.sem_conta;
+    const temSemConta = !!(semC && (CRM.emReais(semC.entrou) > 0 || CRM.emReais(semC.saiu) > 0));
+    if (temSemConta) resContas.push({ id: "sem_conta", nome: "Não informada", corNome: "#9c6f56",
+      entrou: duo(semC.entrou), saiu: (semC.saiu["R$"] || semC.saiu["\u20ac"]) ? "\u2212 " + duo(semC.saiu) : "" });
+
     const pend = [];
     if (CRM.emReais(f.aReceber) > 0) pend.push(duo(f.aReceber) + " ainda a receber");
     if (CRM.emReais(f.atrasado) > 0) pend.push(duo(f.atrasado) + " em atraso");
@@ -839,7 +911,7 @@ class Component extends DCLogic {
         CRM.addLancamento({ tipo: "entrada", categoria: "outros",
           descricao: trans.descricao.slice(0, 60),
           moeda: this.state.moedaExtrato, valor: Math.abs(trans.valor),
-          data: dataIso });
+          conta: this.contaAtual(), data: dataIso });
         CRM.registrarTransacao(trans, "recebimento avulso");
         return "avu";
       }
@@ -849,7 +921,7 @@ class Component extends DCLogic {
         return "prog";
       }
       const [pid, mk, cidx] = troca.split("|");
-      CRM.conciliar(pid, mk, trans.descricao, trans, cidx === undefined ? undefined : parseInt(cidx, 10));
+      CRM.conciliar(pid, mk, trans.descricao, trans, cidx === undefined ? undefined : parseInt(cidx, 10), this.contaAtual());
       return true;
     };
     const sugestoes = analise ? analise.sugestoes.map((s, i) => {
@@ -880,7 +952,7 @@ class Component extends DCLogic {
           // dela, não a sugestão
           const feito = troca
             ? aplicarTroca(troca, s.trans)
-            : (CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans, s.contratoIdx), true);
+            : (CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans, s.contratoIdx, this.contaAtual()), true);
           this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: feito }) }));
         },
         onIgnorar: () => {
@@ -960,6 +1032,7 @@ class Component extends DCLogic {
             CRM.addLancamento({ tipo: "saida", categoria: x.categoria || "outros",
               descricao: x.trans.descricao.slice(0, 60),
               moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+              conta: this.contaAtual(),
               data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
             CRM.registrarTransacao(x.trans, "despesa");
           }
@@ -1058,6 +1131,46 @@ class Component extends DCLogic {
       })),
 
       resTitulo, resValor, resCor, resFrase, resColunas, resPendente,
+      resContas, semConta: temSemConta,
+      semContaFrase: "Movimento sem conta marcada. Ao lançar ou conciliar, escolha por onde o dinheiro passou — é o que permite bater com o extrato de cada banco.",
+      contasOpts: contasCad.map(c => ({ id: c.id, sel: c.id === this.contaAtual(),
+        label: c.nome + " · " + c.moeda })),
+      contasSimples: contasCad.map(c => ({ id: c.id, nome: c.nome })),
+      entContaRef: this.entContaRef, saiContaRef: this.saiContaRef,
+      contasResumo: contasCad.map(c => c.nome).join(" · ") || "nenhuma cadastrada",
+      contasAberto: this.state.contasAberto,
+      contasBtnLabel: this.state.contasAberto ? "Fechar" : "Gerenciar",
+      contasBg: this.state.contasAberto ? "#f6eee4" : "#fff",
+      contasFg: this.state.contasAberto ? "#9c6f56" : "#164951",
+      onToggleContas: () => this.setState(s => ({ contasAberto: !s.contasAberto, erroConta: "" })),
+      contasCad: contasCad.map(c => ({ nome: c.nome, moeda: c.moeda,
+        onRemove: () => {
+          const r = CRM.removeConta(c.id);
+          if (!r.removida) {
+            this.setState({ erroConta: "\"" + c.nome + "\" tem movimento lançado e não pode ser apagada." });
+            return;
+          }
+          this.setState({ erroConta: "" }); this.bump();
+        } })),
+      novaContaRef: this.novaContaRef, novaContaMoedaRef: this.novaContaMoedaRef,
+      onAddConta: () => {
+        const nome = (this.novaContaRef.current && this.novaContaRef.current.value || "").trim();
+        const moeda = (this.novaContaMoedaRef.current && this.novaContaMoedaRef.current.value) || "R$";
+        if (!nome) return;
+        if (!CRM.addConta(nome, moeda)) {
+          this.setState({ erroConta: "Já existe uma conta com esse nome." });
+          return;
+        }
+        this.novaContaRef.current.value = "";
+        this.setState({ erroConta: "" }); this.bump();
+      },
+      temErroConta: !!this.state.erroConta, erroConta: this.state.erroConta,
+      onContaExtrato: (e) => {
+        const c = (CRM.contaMeta && CRM.contaMeta(e.target.value)) || null;
+        this.setState({ contaExtrato: e.target.value, moedaExtrato: c ? c.moeda : this.state.moedaExtrato,
+          analise: null, conciliadas: {}, lancadas: {} });
+      },
+
 
       catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
       catsSaida: barras(f.porCatSaida, CRM.catsSaida()),
@@ -1112,6 +1225,7 @@ class Component extends DCLogic {
         if (!desc || !valor) return;
         CRM.addLancamento({ tipo: "entrada", categoria: "outra", descricao: desc,
           moeda: (this.entMoedaRef.current && this.entMoedaRef.current.value) || "R$",
+          conta: (this.entContaRef.current && this.entContaRef.current.value) || "",
           valor, data: mes.key + "-15" });
         this.entDescRef.current.value = ""; this.entValorRef.current.value = "";
         this.bump();
@@ -1127,6 +1241,7 @@ class Component extends DCLogic {
           descricao: desc,
           moeda: (this.saiMoedaRef.current && this.saiMoedaRef.current.value) || "R$",
           fatura: (this.saiFatRef.current && this.saiFatRef.current.value) || "",
+          conta: (this.saiContaRef.current && this.saiContaRef.current.value) || "",
           valor, data: mes.key + "-15" });
         this.saiDescRef.current.value = ""; this.saiValorRef.current.value = "";
         if (this.saiFatRef.current) this.saiFatRef.current.value = "";
@@ -1166,8 +1281,6 @@ class Component extends DCLogic {
       },
 
       // conciliação
-      moedaEUR: this.state.moedaExtrato === "€", moedaBRL: this.state.moedaExtrato === "R$",
-      onMoedaExtrato: (e) => this.setState({ moedaExtrato: e.target.value, analise: null, conciliadas: {}, lancadas: {} }),
       extratoRef: this.extratoRef, temAnalise: !!analise, sugestoes, semMatch,
       resumoAnalise: analise
         ? (analise.sugestoes.length + (analise.sugestoes.length === 1 ? " crédito associado" : " créditos associados")
@@ -1223,6 +1336,7 @@ class Component extends DCLogic {
               CRM.addLancamento({ tipo: "saida", categoria: "impostos",
                 descricao: x.trans.descricao.slice(0, 60),
                 moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+                conta: this.contaAtual(),
                 data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
               CRM.registrarTransacao(x.trans, "despesa");
               marca[i] = true;
@@ -1235,7 +1349,7 @@ class Component extends DCLogic {
         const feitas = {};
         idxCerteiras.forEach(i => {
           const s = analise.sugestoes[i];
-          CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans);
+          CRM.conciliar(s.pessoaId, s.mesKey, s.trans.descricao, s.trans, undefined, this.contaAtual());
           feitas[i] = true;
         });
         this.setState(st => ({ conciliadas: Object.assign({}, st.conciliadas, feitas) }));
