@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-g",
+  numero: "2026.08.21-h",
   data: "21/08/2026",
-  nota: "Quem saiu para de gerar parcela a vencer no Caixa, por qualquer porta de saída, e a conferência aponta o cadastro a arrumar. A conciliação passa a ler extrato do Wise, do bunq e do Stripe além do brasileiro"
+  nota: "A semana 240826 voltou a ter trava de login e registro de resposta: o download do editor tinha trocado os scripts do sistema por endereços internos. O preparar-desafio.js desembrulha o download e repõe o que falta"
 };
