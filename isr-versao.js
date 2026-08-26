@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-f",
+  numero: "2026.08.21-g",
   data: "21/08/2026",
-  nota: "Caixa: quem cancela sai da receita (a parcela cancelada continuava a cobrar), a assinatura e o acompanhamento passam a aparecer como cobrança automática, e a tela abre dizendo se o mês deu lucro ou prejuízo"
+  nota: "Quem saiu para de gerar parcela a vencer no Caixa, por qualquer porta de saída, e a conferência aponta o cadastro a arrumar. A conciliação passa a ler extrato do Wise, do bunq e do Stripe além do brasileiro"
 };

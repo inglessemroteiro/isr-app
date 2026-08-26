@@ -900,7 +900,22 @@
     return mutate(id, function (p) {
       p.estagio = "perdido"; p.motivoPerda = motivo || "Outro"; p.saidaEm = iso(today());
       if (p.status === "aluna") p.status = "ex-aluna";
-      pushHist(p, "perdido", "Marcado perdido · motivo: " + (motivo || "Outro"));
+      // quem tinha contrato (importado do controle de pagamento, por
+      // exemplo) não pode continuar gerando parcela a vencer
+      var hojeIso = iso(today());
+      var canceladas = 0;
+      (p.contratos || []).forEach(function (c) {
+        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+        (c.meses || []).forEach(function (m) {
+          if (m.pago || m.cancelada) return;
+          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+          if (venc < hojeIso) return;   // vencida continua sendo dívida
+          m.cancelada = true; canceladas++;
+        });
+      });
+      pushHist(p, "perdido", "Marcado perdido · motivo: " + (motivo || "Outro")
+        + (canceladas ? " · " + canceladas
+          + (canceladas === 1 ? " parcela a vencer cancelada" : " parcelas a vencer canceladas") : ""));
     });
   }
   function lapidePessoa(id) { return { id: id, apagado: iso(today()), _v: Date.now() }; }
@@ -3346,15 +3361,21 @@
     var cru = String(texto || "").split("\n");
 
     // ── caminho 1: tabela com linha de títulos ────────────────
-    // O Asaas fala português (Data/Valor); o Wise fala inglês
-    // (Date/Amount/Currency). Colado é tab; arquivo .csv é vírgula ou
-    // ponto e vírgula. Tudo é a mesma coisa: colunas com título.
+    // Cada banco fala uma língua e o arquivo é o mesmo: colunas com
+    // título. Asaas em português (Data/Valor), Wise e Stripe em inglês
+    // (Date ou Created / Amount), bunq em holandês (Datum/Bedrag).
+    // Colado é tab; arquivo .csv é vírgula ou ponto e vírgula.
+    var COL_DATA = ["data", "date", "datum", "created", "criado"];
+    var COL_VALOR = ["valor", "amount", "bedrag", "bruto"];
     var iCab = -1, cab = null, delim = "\t";
     var DELIMS = ["\t", ";", ","];
+    var temAlgum = function (linha, termos) {
+      for (var t = 0; t < termos.length; t++) if (linha.indexOf(termos[t]) >= 0) return true;
+      return false;
+    };
     for (var i = 0; i < Math.min(cru.length, 15) && iCab < 0; i++) {
       var s = semAcento(cru[i]);
-      if (!((s.indexOf("data") >= 0 && s.indexOf("valor") >= 0)
-        || (s.indexOf("date") >= 0 && s.indexOf("amount") >= 0))) continue;
+      if (!(temAlgum(s, COL_DATA) && temAlgum(s, COL_VALOR))) continue;
       for (var di = 0; di < DELIMS.length; di++) {
         var cels = separarExtratoLinha(cru[i], DELIMS[di]);
         if (cels.length >= 3) { iCab = i; cab = cels; delim = DELIMS[di]; break; }
@@ -3363,9 +3384,12 @@
 
     if (iCab >= 0) {
       var col = {
-        data: colunaPorTitulo(cab, ["data", "date"]),
-        desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição", "description"]),
-        valor: colunaPorTitulo(cab, ["valor", "amount"]),
+        data: colunaPorTitulo(cab, COL_DATA),
+        // "quem pagou" tem nome diferente em cada banco: descrição no
+        // Asaas, omschrijving/naam no bunq, customer no Stripe
+        desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição", "description",
+          "omschrijving", "naam", "counterparty", "customer", "merchant", "name", "payer"]),
+        valor: colunaPorTitulo(cab, COL_VALOR),
         tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c", "transaction type"]),
         moeda: colunaPorTitulo(cab, ["moeda", "currency"]),
         // o id que o gateway dá à transação é a identidade dela: é o que
@@ -7862,6 +7886,13 @@
       // a categoria vem do que a pessoa é, não do contrato
       var ehParticular = !!p.particular || /^particular/i.test(p.turma || "");
       var catPessoa = p.status === "mvs" ? "mvs" : (ehParticular ? "particular" : "grupo");
+      // Quem saiu não gera receita futura. O que já venceu continua
+      // valendo (quem saiu devendo ainda deve); o que ainda ia vencer
+      // não é receita de ninguém. Vale para toda forma de saída —
+      // encerramento, lead perdido ou registro antigo sem marcação.
+      var ativa = ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0
+        && p.estagio !== "perdido";
+      var futuroDeQuemSaiu = function (pago, venc) { return !ativa && !pago && venc >= hoje; };
       (p.contratos || []).forEach(function (c) {
         var moeda = c.moeda || p.moeda || "R$";
         (c.meses || []).forEach(function (m) {
@@ -7872,13 +7903,15 @@
           if (m.cancelada && !m.pago) return;
           var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
           var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
+          if (futuroDeQuemSaiu(m.pago, venc)) return;
           entradas.push({ pessoaId: p.id, nome: p.nome,
             categoria: catPessoa,
             detalhe: p.turma || (c.tipo || ""),
             moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
             pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje });
         });
-        if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key) {
+        if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key
+            && !futuroDeQuemSaiu(c.sinal.recebido, p.desde)) {
           entradas.push({ pessoaId: p.id, nome: p.nome, categoria: "sinal",
             detalhe: "Sinal de matrícula", moeda: moeda,
             valor: parseMoney(c.sinal.valor), valorLabel: c.sinal.valor,
@@ -7909,6 +7942,7 @@
         var dia = parseInt(ini.slice(8, 10), 10) || 1;
         if (dia > 28) dia = 28;
         var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
+        if (futuroDeQuemSaiu(venc <= hoje, venc)) return;
         entradas.push({ pessoaId: p.id, nome: p.nome, categoria: r.cat,
           detalhe: r.rotulo + " · cobrança automática",
           moeda: o.moeda || p.moeda || "€",
@@ -9201,32 +9235,58 @@
         : "");
 
     // 9. O que a Cobrança mostra em aberto é o que o Caixa espera receber.
+    //    A comparação é sobre a mesma população — as alunas que a tela de
+    //    Cobrança lista — e por dois caminhos diferentes: a ficha de
+    //    cobrança de um lado, o Caixa do outro.
+    var naCobranca = getCobranca();
+    var idsCobranca = {};
     var abertoCobranca = { "R$": 0, "€": 0 };
-    loadPessoas().forEach(function (p) {
-      var c = contratoVigente(p);
-      if (!c) return;
-      var m = c.moeda || p.moeda || "R$";
-      (c.meses || []).forEach(function (x) {
+    naCobranca.forEach(function (cb) {
+      idsCobranca[cb.id] = 1;
+      var m = cb.moeda || "R$";
+      (cb.meses || []).forEach(function (x) {
         if (x.key === k && !x.pago && !x.cancelada && x.valor) {
           if (abertoCobranca[m] === undefined) abertoCobranca[m] = 0;
           abertoCobranca[m] += parseMoney(x.valor);
         }
       });
     });
-    // a comparação é sobre parcela de contrato: sinal, lançamento avulso
-    // e cobrança automática (assinatura, acompanhamento) não passam pela
-    // tela de Cobrança
+    // sinal, lançamento avulso e cobrança automática (assinatura,
+    // acompanhamento) não passam pela tela de Cobrança
     var abertoCaixa = { "R$": 0, "€": 0 };
     fin.entradas.forEach(function (e) {
-      if (e.pago || e.recorrente || e.lancId || e.categoria === "sinal" || !e.pessoaId) return;
+      if (e.pago || e.recorrente || e.lancId || e.categoria === "sinal") return;
+      if (!e.pessoaId || !idsCobranca[e.pessoaId]) return;
       if (abertoCaixa[e.moeda] === undefined) abertoCaixa[e.moeda] = 0;
       abertoCaixa[e.moeda] += e.valor;
     });
     add("cobranca_bate_caixa", "O que está em aberto é o mesmo nas duas telas",
       cent(abertoCobranca["R$"]) === cent(abertoCaixa["R$"])
-        && cent(abertoCobranca["€"]) === cent(abertoCaixa["€"]),
-      fmtMoney("R$", abertoCobranca["R$"]) + " e " + fmtMoney("€", abertoCobranca["€"]),
-      fmtMoney("R$", abertoCaixa["R$"]) + " e " + fmtMoney("€", abertoCaixa["€"]));
+        && cent(abertoCobranca["\u20ac"]) === cent(abertoCaixa["\u20ac"]),
+      fmtMoney("R$", abertoCobranca["R$"]) + " e " + fmtMoney("\u20ac", abertoCobranca["\u20ac"]),
+      fmtMoney("R$", abertoCaixa["R$"]) + " e " + fmtMoney("\u20ac", abertoCaixa["\u20ac"]));
+
+    // 9b. Parcela a vencer de quem já saiu não é receita — e some do
+    //     Caixa. Se sobrar alguma marcada assim, é dado a arrumar.
+    var fantasmas = [];
+    loadPessoas().forEach(function (p) {
+      var ativa = ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0
+        && p.estagio !== "perdido";
+      if (ativa) return;
+      (p.contratos || []).forEach(function (c) {
+        var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
+        (c.meses || []).forEach(function (m) {
+          if (m.pago || m.cancelada || !m.valor || m.key !== k) return;
+          var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+          if (venc >= iso(today())) fantasmas.push(p.nome);
+        });
+      });
+    });
+    add("saida_sem_cobranca", "Ninguém que saiu está gerando parcela a vencer",
+      fantasmas.length === 0, "0 pessoas", fantasmas.length + " pessoas",
+      fantasmas.length
+        ? "Fora do Caixa, mas ainda marcadas na ficha: " + unicos(fantasmas).join(", ")
+        : "");
 
     // 10. O resultado é entrada menos saída, sem atalho.
     var res = { "R$": fin.recebido["R$"] - fin.saiu["R$"],
