@@ -514,6 +514,9 @@
               <sc-if value="{{ x.temMinhaConta }}">
                 <button onclick="{{ x.onMinhaConta }}" title="Transferência para empresa ou conta própria. Não é registrada como despesa e passa a ser reconhecida automaticamente nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Transferência entre contas próprias</button>
               </sc-if>
+              <sc-if value="{{ x.conferivel }}">
+                <button onclick="{{ x.onConferir }}" title="O valor já está no Caixa como cobrança automática. Marcar como conferida evita que a linha volte na próxima análise." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conferida</button>
+              </sc-if>
               <sc-if value="{{ x.ignoravel }}">
                 <button onclick="{{ x.onIgnorar }}" title="Não é da escola. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
               </sc-if>
@@ -944,8 +947,10 @@ class Component extends DCLogic {
     // "certeira" = valor bate exato E o primeiro nome aparece na descrição do banco.
     // Só essas podem ir em lote; o resto exige olho humano — marcar a parcela
     // da pessoa errada como paga é um estrago difícil de achar depois.
-    const certeira = s => !s.porNome && Math.abs(s.valor - s.trans.valor) < 0.01 &&
-      (s.trans.descricao || "").toLowerCase().indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0;
+    const certeira = s => Math.abs(s.valor - s.trans.valor) < 0.01
+      && (s.porEmail
+        || (!s.porNome && (s.trans.descricao || "").toLowerCase()
+              .indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0));
     // toda parcela em aberto na moeda do extrato — inclusive de contrato
     // encerrado, porque o Asaas paga retroativo — mais a saída "outro",
     // para dinheiro que não é parcela de ninguém
@@ -1001,13 +1006,22 @@ class Component extends DCLogic {
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + s.pessoaId,
         // Gateway desconta taxa: achar pelo nome e mostrar a diferença é
         // melhor do que dizer "sem correspondência".
-        confLabel: (s.porNome
-          ? (s.diferenca < 0
-              ? "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
-              : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
-          : (cert ? "Nome e valor conferem" : "Requer verificação"))
+        // o e-mail é a identificação mais forte: vale mais do que o
+        // valor bater, porque a taxa do gateway muda o valor
+        confLabel: (s.porEmail
+          ? "E-mail confere · " + s.email
+            + (Math.abs(s.diferenca) >= 0.01
+                ? (s.diferenca < 0
+                    ? " · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
+                    : " · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
+                : "")
+          : (s.porNome
+            ? (s.diferenca < 0
+                ? "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
+                : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
+            : (cert ? "Nome e valor conferem" : "Requer verificação")))
           + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : ""),
-        confCor: s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a"),
+        confCor: s.porEmail ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
           : (feita === "avu" ? "Recebimento avulso"
@@ -1060,13 +1074,19 @@ class Component extends DCLogic {
                   ? "Pagamento para " + x.pessoaEquipe + " · a folha de " + mesTrans.slice(5, 7) + "/" + mesTrans.slice(0, 4) + " já está marcada como paga"
                   : "Pagamento para " + x.pessoaEquipe + " · a folha já consta como despesa calculada. Este débito quita a folha do mês e não gera nova despesa.")
               : "Débito bancário · lançar como despesa do mês")
-          : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição",
+          : (x.tipo === "sem_parcela"
+              ? (x.recorrente
+                  ? "É de " + x.nome + " (" + x.email + ") · " + x.recorrente
+                    + " já contada no Caixa deste mês. Marque como conferida para ela não voltar."
+                  : "É de " + x.nome + " (" + x.email + "), mas ela não tem parcela em aberto. Escolha abaixo o que este pagamento quita.")
+              : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição"),
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
+          : (lancada === "conf" ? "Conferida"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
           : (lancada === "avu" ? "Recebimento avulso"
-          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))),
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada"))))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // dinheiro indo para a própria empresa (GF Education) ou para a
         // própria pessoa não é despesa — e marcado uma vez, o extrato
@@ -1086,6 +1106,11 @@ class Component extends DCLogic {
           if (!t) return;
           const feito = aplicarTroca(t, x.trans);
           marcar(feito === true ? "conc" : feito);
+        },
+        conferivel: !lancada && x.tipo === "sem_parcela" && !!x.recorrente,
+        onConferir: () => {
+          CRM.registrarTransacao(x.trans, x.recorrente + " de " + x.nome);
+          marcar("conf");
         },
         ignoravel: !lancada && !folhaJaPaga,
         onIgnorar: () => { CRM.registrarTransacao(x.trans, "ignorada"); marcar("ign"); },
@@ -1381,6 +1406,16 @@ class Component extends DCLogic {
            // grande e silencioso
            + (analise.colunaSaldo
                ? " A última coluna do extrato é o saldo; a coluna anterior foi usada como valor da transação."
+               : "")
+           + (analise.porEmail
+               ? " " + analise.porEmail
+                 + (analise.porEmail === 1 ? " foi identificado" : " foram identificados")
+                 + " pelo e-mail de quem pagou."
+               : "")
+           + (analise.semParcela
+               ? " " + analise.semParcela
+                 + (analise.semParcela === 1 ? " é de aluna reconhecida" : " são de alunas reconhecidas")
+                 + " sem parcela em aberto — provavelmente assinatura ou acompanhamento."
                : "")
            + (analise.porNome
                ? " " + analise.porNome + (analise.porNome === 1 ? " foi achado" : " foram achados")

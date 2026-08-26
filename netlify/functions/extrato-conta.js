@@ -57,9 +57,16 @@ async function stripe(de, ate) {
       const fonte = t.source && typeof t.source === "object" ? t.source : null;
       const quem = (fonte && (fonte.billing_details && fonte.billing_details.name))
         || (fonte && fonte.description) || t.description || t.type;
+      // o e-mail é o que casa a cobrança com a aluna: o nome no cartão
+      // vem abreviado, o e-mail é o mesmo do cadastro
+      const doCartao = fonte && fonte.billing_details && fonte.billing_details.email;
+      const doRecibo = fonte && (fonte.receipt_email || fonte.customer_email);
+      const naDescricao = (String((fonte && fonte.description) || t.description || "")
+        .match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i) || [])[0];
       linhas.push({
         data: ddmmaaaa(new Date(t.created * 1000).toISOString()),
         descricao: String(quem || t.type).slice(0, 120),
+        email: String(doCartao || doRecibo || naDescricao || "").toLowerCase(),
         // o valor líquido é o que mexeu no saldo; a taxa vem na própria
         // linha para a conciliação lançar como despesa
         valor: t.amount / 100,
@@ -94,22 +101,25 @@ async function asaas(de, ate) {
     if (!res.ok) throw new Error("Asaas " + res.status + ": " + ((corpo.errors && corpo.errors[0] && corpo.errors[0].description) || ""));
 
     for (const pg of (corpo.data || [])) {
-      // o nome de quem pagou é o que casa a linha com a aluna
+      // nome e e-mail de quem pagou: o e-mail é o que casa com a ficha
       let nome = pg.customerName || "";
-      if (!nome && pg.customer) {
+      let email = pg.customerEmail || "";
+      if ((!nome || !email) && pg.customer) {
         if (clientes[pg.customer] === undefined) {
           try {
             const rc = await fetch("https://api.asaas.com/v3/customers/" + pg.customer,
               { headers: { access_token: ASAAS } });
             const c = await rc.json();
-            clientes[pg.customer] = (c && c.name) || "";
-          } catch (e) { clientes[pg.customer] = ""; }
+            clientes[pg.customer] = { nome: (c && c.name) || "", email: (c && c.email) || "" };
+          } catch (e) { clientes[pg.customer] = { nome: "", email: "" }; }
         }
-        nome = clientes[pg.customer];
+        nome = nome || clientes[pg.customer].nome;
+        email = email || clientes[pg.customer].email;
       }
       linhas.push({
         data: ddmmaaaa(pg.paymentDate || pg.confirmedDate || pg.dueDate),
         descricao: (nome || pg.description || "Recebimento").slice(0, 120),
+        email: String(email || "").toLowerCase(),
         valor: typeof pg.netValue === "number" ? pg.netValue : pg.value,
         taxa: (typeof pg.netValue === "number" && typeof pg.value === "number")
           ? Math.round((pg.value - pg.netValue) * 100) / 100 : 0,
