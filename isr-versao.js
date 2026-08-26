@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-i",
+  numero: "2026.08.21-j",
   data: "21/08/2026",
-  nota: "O Caixa passa a saber que o dinheiro chega em quatro contas (Asaas, Stripe, Wise, bunq): cada lançamento e cada conciliação guarda por onde passou, e o resultado do mês pode ser conferido conta a conta"
+  nota: "Stripe e Asaas entregam o extrato pela própria API, e o repasse do Stripe que cai no bunq é reconhecido como transferência entre contas — o mesmo dinheiro não é contado duas vezes"
 };

@@ -444,10 +444,29 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button onclick="{{ onAnalisar }}" style="border: none; background: #164951; color: #fff; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">Analisar</button>
           <input type="file" ref="{{ arquivoRef }}" accept=".csv,.tsv,.txt" onchange="{{ onArquivo }}" style="display: none;" />
-          <button onclick="{{ onEscolherArquivo }}" title="Aceita o extrato do Wise ou do Asaas exportado em CSV" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Enviar arquivo</button>
+          <button onclick="{{ onEscolherArquivo }}" title="Aceita o extrato do Wise, do bunq, do Stripe ou do Asaas exportado em CSV" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Enviar arquivo</button>
+          <sc-if value="{{ contaTemApi }}">
+            <button onclick="{{ onBuscarApi }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 12px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ buscarApiLabel }}</button>
+          </sc-if>
         </div>
       </div>
 
+      <sc-if value="{{ contaTemApi }}">
+        <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <sc-if value="{{ semChaveApi }}">
+            <input ref="{{ chaveApiRef }}" type="password" placeholder="Senha de leitura dos extratos" style="width: 230px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <button onclick="{{ onSalvarChaveApi }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar neste aparelho</button>
+            <span style="font-size: 11px; color: #b3a693;">É a ISR_EXTRATO_CHAVE do Netlify. Fica só aqui, não vai para a planilha.</span>
+          </sc-if>
+          <sc-if value="{{ temChaveApi }}">
+            <span style="font-size: 11px; color: #b3a693;">Senha guardada neste aparelho.</span>
+            <button onclick="{{ onEsquecerChaveApi }}" style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 4px 6px; cursor: pointer; font-family: inherit;">esquecer</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ temErroApi }}">
+          <p style="margin: 8px 0 0; font-size: 12px; color: #cf6b5c; line-height: 1.6;">{{ erroApi }}</p>
+        </sc-if>
+      </sc-if>
       <sc-if value="{{ temAnalise }}">
         <div style="margin-top: 16px; border-top: 1px solid #f2e9dd; padding-top: 14px;">
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
@@ -548,7 +567,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { offset: 0, moedaExtrato: "€", contaExtrato: "", contasAberto: false, erroConta: "", analise: null, conciliadas: {}, lancadas: {},
+  state = { offset: 0, moedaExtrato: "€", contaExtrato: "", contasAberto: false, erroConta: "",
+    buscandoApi: false, erroApi: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, edLanc: null };
@@ -565,9 +585,56 @@ class Component extends DCLogic {
   entDescRef = React.createRef(); entValorRef = React.createRef(); entMoedaRef = React.createRef();
   entContaRef = React.createRef(); saiContaRef = React.createRef();
   novaContaRef = React.createRef(); novaContaMoedaRef = React.createRef();
+  chaveApiRef = React.createRef();
 
   // conta do extrato em análise: a escolhida ou, na primeira abertura, a
   // primeira conta cadastrada na moeda em uso
+  chaveApi() {
+    try { return localStorage.getItem("isr_extrato_chave") || ""; } catch (e) { return ""; }
+  }
+
+  // Busca o extrato do mês na API do gateway e joga na mesma análise do
+  // arquivo colado — a conciliação não sabe (nem precisa saber) se as
+  // linhas vieram de um CSV ou da API.
+  async buscarApi(mesKey) {
+    const CRM = window.ISRCRM;
+    const conta = this.contaAtual();
+    const chave = this.chaveApi();
+    if (!chave) { this.setState({ erroApi: "Guarde a senha de leitura antes de buscar." }); return; }
+    const ultimo = new Date(parseInt(mesKey.slice(0, 4), 10), parseInt(mesKey.slice(5, 7), 10), 0).getDate();
+    this.setState({ buscandoApi: true, erroApi: "" });
+    try {
+      const res = await fetch("/.netlify/functions/extrato-conta", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conta, chave, de: mesKey + "-01",
+          ate: mesKey + "-" + (ultimo < 10 ? "0" : "") + ultimo })
+      });
+      const corpo = await res.json();
+      if (!corpo.ok) throw new Error(corpo.erro || ("resposta " + res.status));
+      const trans = (corpo.linhas || []).map(l => ({
+        data: l.data, descricao: l.descricao, valor: l.valor,
+        moeda: l.moeda, idExterno: l.idExterno,
+        colunaSaldo: false, ambiguo: false, deTabela: true, interna: false
+      }));
+      if (!trans.length) {
+        this.setState({ buscandoApi: false, erroApi: "Nenhum movimento neste mês nessa conta." });
+        return;
+      }
+      const moedas = [...new Set(trans.map(x => x.moeda).filter(Boolean))];
+      const moeda = (moedas.length === 1 && (moedas[0] === "R$" || moedas[0] === "€"))
+        ? moedas[0] : this.state.moedaExtrato;
+      const a = CRM.sugerirConciliacao(trans, moeda, conta);
+      a.colunaSaldo = false; a.ambiguas = 0; a.deTabela = true;
+      a.moedaDoArquivo = moedas.length === 1 ? moedas[0] : "";
+      a.daApi = CRM.contaLabel(conta);
+      this.setState({ analise: a, conciliadas: {}, lancadas: {}, trocas: {},
+        moedaExtrato: moeda, buscandoApi: false, erroApi: "" });
+    } catch (err) {
+      this.setState({ buscandoApi: false,
+        erroApi: "A busca falhou: " + String((err && err.message) || err) });
+    }
+  }
+
   contaAtual() {
     if (this.state.contaExtrato) return this.state.contaExtrato;
     const l = (window.ISRCRM && window.ISRCRM.contasLista) ? window.ISRCRM.contasLista() : [];
@@ -593,7 +660,7 @@ class Component extends DCLogic {
     if (moedas.length === 1 && (moedas[0] === "R$" || moedas[0] === "€")) {
       moeda = moedas[0]; doArquivo = moedas[0];
     }
-    const a = CRM.sugerirConciliacao(trans, moeda);
+    const a = CRM.sugerirConciliacao(trans, moeda, this.contaAtual());
     a.colunaSaldo = trans.some(x => x.colunaSaldo);
     a.ambiguas = trans.filter(x => x.ambiguo).length;
     a.deTabela = trans.length > 0 && trans.every(x => x.deTabela);
@@ -1137,6 +1204,29 @@ class Component extends DCLogic {
         label: c.nome + " · " + c.moeda })),
       contasSimples: contasCad.map(c => ({ id: c.id, nome: c.nome })),
       entContaRef: this.entContaRef, saiContaRef: this.saiContaRef,
+
+      // Stripe e Asaas entregam o extrato pela própria API: em vez de
+      // baixar o arquivo, o Caixa pede o período. A senha fica só neste
+      // aparelho — nunca na planilha, nunca no site publicado.
+      contaTemApi: ["stripe", "asaas"].indexOf(this.contaAtual()) >= 0,
+      buscarApiLabel: this.state.buscandoApi
+        ? "Buscando…"
+        : "Buscar em " + (CRM.contaLabel(this.contaAtual()) || "conta"),
+      chaveApiRef: this.chaveApiRef,
+      temChaveApi: !!this.chaveApi(), semChaveApi: !this.chaveApi(),
+      onSalvarChaveApi: () => {
+        const v = (this.chaveApiRef.current && this.chaveApiRef.current.value || "").trim();
+        if (!v) return;
+        try { localStorage.setItem("isr_extrato_chave", v); } catch (e) {}
+        this.setState({ erroApi: "" }); this.bump();
+      },
+      onEsquecerChaveApi: () => {
+        try { localStorage.removeItem("isr_extrato_chave"); } catch (e) {}
+        this.bump();
+      },
+      temErroApi: !!this.state.erroApi, erroApi: this.state.erroApi,
+      onBuscarApi: () => this.buscarApi(mes.key),
+
       contasResumo: contasCad.map(c => c.nome).join(" · ") || "nenhuma cadastrada",
       contasAberto: this.state.contasAberto,
       contasBtnLabel: this.state.contasAberto ? "Fechar" : "Gerenciar",
@@ -1283,7 +1373,8 @@ class Component extends DCLogic {
       // conciliação
       extratoRef: this.extratoRef, temAnalise: !!analise, sugestoes, semMatch,
       resumoAnalise: analise
-        ? (analise.sugestoes.length + (analise.sugestoes.length === 1 ? " crédito associado" : " créditos associados")
+        ? ((analise.daApi ? "Extrato buscado direto no " + analise.daApi + ". " : "")
+           + analise.sugestoes.length + (analise.sugestoes.length === 1 ? " crédito associado" : " créditos associados")
            + " · " + analise.semMatch.length + " sem correspondência. Nenhum registro é alterado até a confirmação."
            // extrato com coluna de saldo: o último número da linha não é a
            // transação, e registrar o saldo como transação seria um erro
@@ -1309,10 +1400,19 @@ class Component extends DCLogic {
                ? " O extrato declara a moeda (" + analise.moedaDoArquivo + "), usada nesta análise."
                : "")
            + ((analise.internas || []).length
-               ? " " + analise.internas.length
-                 + (analise.internas.length === 1 ? " linha é movimentação" : " linhas são movimentação")
-                 + " entre as suas próprias contas (troca de moeda, transferência para a sua empresa) e não "
-                 + (analise.internas.length === 1 ? "vira" : "viram") + " receita nem despesa."
+               ? (() => {
+                   const n = analise.internas.length;
+                   // de qual conta veio cada repasse: é o que separa
+                   // "dinheiro novo" de "dinheiro que já foi contado"
+                   const de = [];
+                   analise.internas.forEach(x => {
+                     if (x.deContaNome && de.indexOf(x.deContaNome) < 0) de.push(x.deContaNome);
+                   });
+                   return " " + n + (n === 1 ? " linha é repasse" : " linhas são repasse")
+                     + (de.length ? " de " + de.join(" e ") : " entre as suas próprias contas")
+                     + ": esse dinheiro já foi contado na conta de origem e não "
+                     + (n === 1 ? "entra" : "entram") + " de novo.";
+                 })()
                : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),

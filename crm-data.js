@@ -3531,6 +3531,23 @@
     var d = semAcento(descricao || "");
     return contasProprias().some(function (n) { return n.length >= 3 && d.indexOf(n) >= 0; });
   }
+  // Repasse de uma conta da escola para outra: no extrato do bunq, o
+  // dinheiro do Stripe chega como "STRIPE PAYMENTS". Devolve a conta de
+  // origem quando reconhece — nunca a própria conta do extrato, senão
+  // toda linha do bunq viraria transferência do bunq.
+  function contaDaDescricao(descricao, contaAtual) {
+    var d = semAcento(descricao || "");
+    if (!d) return null;
+    var achada = null;
+    contasLista().forEach(function (c) {
+      if (achada || c.id === contaAtual) return;
+      var termos = (c.apelidos && c.apelidos.length ? c.apelidos : [c.nome])
+        .map(function (x) { return semAcento(x); })
+        .filter(function (x) { return x.length >= 3; });
+      if (termos.some(function (t) { return d.indexOf(t) >= 0; })) achada = c;
+    });
+    return achada;
+  }
 
   var EXTRATO_REG_KEY = "isr_extrato_reg_v1";
   function extratoRegAll() {
@@ -3576,7 +3593,7 @@
     return out;
   }
 
-  function sugerirConciliacao(transacoes, moeda) {
+  function sugerirConciliacao(transacoes, moeda, contaAtual) {
     // o que já foi processado numa análise anterior sai da fila
     var jaRegistradas = [];
     transacoes = transacoes.filter(function (t) {
@@ -3589,6 +3606,11 @@
     // qualquer sugestão
     var internas = [];
     transacoes = transacoes.filter(function (t) {
+      var outra = contaDaDescricao(t.descricao, contaAtual);
+      if (outra) {
+        internas.push(Object.assign({}, t, { deConta: outra.id, deContaNome: outra.nome }));
+        return false;
+      }
       if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
       return true;
     });
@@ -7732,11 +7754,15 @@
   // A lista vem preenchida com as quatro; quem usa menos apaga, quem usa
   // outra acrescenta.
   var CONTAS_KEY = "isr_contas_v1";
+  // Os apelidos são como a conta aparece no extrato DAS OUTRAS. O
+  // repasse do Stripe cai no bunq descrito como "STRIPE PAYMENTS UK": se
+  // o sistema não reconhecer, conta o mesmo dinheiro duas vezes — uma no
+  // Stripe, quando a aluna pagou, e outra no bunq, quando o repasse caiu.
   var CONTAS_PADRAO = [
-    { id: "asaas",  nome: "Asaas",  moeda: "R$" },
-    { id: "stripe", nome: "Stripe", moeda: "\u20ac" },
-    { id: "wise",   nome: "Wise",   moeda: "\u20ac" },
-    { id: "bunq",   nome: "bunq",   moeda: "\u20ac" }
+    { id: "asaas",  nome: "Asaas",  moeda: "R$", apelidos: ["asaas"] },
+    { id: "stripe", nome: "Stripe", moeda: "\u20ac", apelidos: ["stripe"] },
+    { id: "wise",   nome: "Wise",   moeda: "\u20ac", apelidos: ["wise", "transferwise"] },
+    { id: "bunq",   nome: "bunq",   moeda: "\u20ac", apelidos: ["bunq"] }
   ];
   function contasLista() {
     try {
@@ -7765,7 +7791,8 @@
     var id = slugCategoria(limpo);
     if (!id || contaMeta(id)) return null;
     var l = contasLista();
-    l.push({ id: id, nome: limpo, moeda: moeda === "\u20ac" ? "\u20ac" : "R$" });
+    l.push({ id: id, nome: limpo, moeda: moeda === "\u20ac" ? "\u20ac" : "R$",
+      apelidos: [semAcento(limpo)] });
     contasSave(l);
     return l[l.length - 1];
   }
@@ -9805,6 +9832,7 @@
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
+    contaDaDescricao: contaDaDescricao,
     addConta: addConta, removeConta: removeConta,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
     whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,
