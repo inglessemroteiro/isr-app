@@ -3670,7 +3670,7 @@
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
   }
 
-  function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx) {
+  function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx, conta) {
     setParcelaPaga(pessoaId, mesKey, true, contratoIdx);
     // A parcela guarda o que de fato aconteceu no banco: quando caiu e
     // quanto caiu. O valor de face segue sendo o combinado; a diferença é
@@ -3684,11 +3684,15 @@
               if (trans.data) m.pagoEm = trans.data.split("/").reverse().join("-");
               if (trans.valor) m.valorRecebido = trans.valor;
               if (trans.idExterno) m.idExterno = trans.idExterno;
+              // por onde o dinheiro caiu: é o que permite conferir a
+              // parcela com o extrato certo depois
+              if (conta || trans.conta) m.conta = conta || trans.conta;
             }
           });
         });
       });
-      registrarTransacao(trans, "parcela de " + mesKey);
+      registrarTransacao(trans, "parcela de " + mesKey
+        + (conta || trans.conta ? " \u00b7 " + contaLabel(conta || trans.conta) : ""));
     }
     addHistory(pessoaId, "pagamento", "Pagamento conciliado com o extrato" + (descricao ? " · " + descricao.slice(0, 60) : ""));
   }
@@ -4241,7 +4245,7 @@
       // tarefas vai CRU (com as lápides das pendências removidas)
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       equipe: equipeLista(), calc: calcParams(),
-      lancamentos: lancamentosRaw(), cambio: taxaCambio(),
+      lancamentos: lancamentosRaw(), cambio: taxaCambio(), contas: contasLista(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
       // programas vai CRU (com as lápides): é o sync que espalha o
       // "esta turma foi apagada" para os outros aparelhos
@@ -4266,7 +4270,7 @@
     grava(MOEDAS_KEY, d.moedas); grava(EQUIPE_KEY, d.equipe); grava(CALC_KEY, d.calc);
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
-    grava(MURAL_KEY, d.mural);
+    grava(MURAL_KEY, d.mural); grava(CONTAS_KEY, d.contas);
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
     if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
@@ -4297,6 +4301,7 @@
       equipe: lista("equipe"),
       calc: local.calc,
       lancamentos: lista("lancamentos"),
+      contas: lista("contas"),
       toques: lista("toques"),
       pulsos: lista("pulsos"),
       precos: lista("precos"),
@@ -7717,6 +7722,61 @@
     { id: "impostos",    label: "Impostos e taxas", cor: "#9c6f56" },
     { id: "outros",      label: "Outros",           cor: "#b8ada0" }
   ];
+  // ── CONTAS DO CAIXA ───────────────────────────────────────────
+  //
+  // O dinheiro da escola chega em quatro lugares diferentes — Asaas,
+  // Stripe, Wise e bunq — e o Caixa somava tudo num balaio só. Sem saber
+  // por onde entrou, não dá para conferir com o extrato de cada banco
+  // nem responder "quanto tem em cada conta".
+  //
+  // A lista vem preenchida com as quatro; quem usa menos apaga, quem usa
+  // outra acrescenta.
+  var CONTAS_KEY = "isr_contas_v1";
+  var CONTAS_PADRAO = [
+    { id: "asaas",  nome: "Asaas",  moeda: "R$" },
+    { id: "stripe", nome: "Stripe", moeda: "\u20ac" },
+    { id: "wise",   nome: "Wise",   moeda: "\u20ac" },
+    { id: "bunq",   nome: "bunq",   moeda: "\u20ac" }
+  ];
+  function contasLista() {
+    try {
+      var g = JSON.parse(localStorage.getItem(CONTAS_KEY));
+      if (g && g.length) return g;
+    } catch (e) {}
+    return CONTAS_PADRAO.slice();
+  }
+  function contasSave(l) {
+    try { localStorage.setItem(CONTAS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return l;
+  }
+  function contaMeta(id) {
+    var l = contasLista();
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+    return null;
+  }
+  function contaLabel(id) {
+    var c = contaMeta(id);
+    return c ? c.nome : "";
+  }
+  function addConta(nome, moeda) {
+    var limpo = (nome || "").trim();
+    if (!limpo) return null;
+    var id = slugCategoria(limpo);
+    if (!id || contaMeta(id)) return null;
+    var l = contasLista();
+    l.push({ id: id, nome: limpo, moeda: moeda === "\u20ac" ? "\u20ac" : "R$" });
+    contasSave(l);
+    return l[l.length - 1];
+  }
+  function removeConta(id) {
+    // conta com movimento não some: os lançamentos ficariam sem origem
+    var emUso = lancamentosLista().some(function (l) { return l.conta === id; });
+    if (emUso) return { removida: false, motivo: "em_uso" };
+    contasSave(contasLista().filter(function (c) { return c.id !== id; }));
+    return { removida: true };
+  }
+
   var CAT_EXTRA_KEY = "isr_categorias_saida_v1";
   var CORES_CATEGORIA = ["#5a9e4b", "#c98060", "#7b8fa8", "#a4785f", "#5e8f8f",
     "#8f6f9e", "#b0722c", "#7a9e6b", "#9e6b7a", "#6b7a9e"];
@@ -7789,6 +7849,8 @@
       moeda: dados.moeda || "R$",
       // link da fatura ou comprovante (arquivo no Drive) — abre direto do Caixa
       fatura: (dados.fatura || "").trim(),
+      // por onde o dinheiro entrou ou saiu (Asaas, Stripe, Wise, bunq)
+      conta: (dados.conta || "").trim(),
       valor: typeof dados.valor === "number" ? dados.valor : parseMoney(dados.valor) });
     lancamentosSave(l);
     return l;
@@ -7812,6 +7874,7 @@
       if (patch.data !== undefined && patch.data !== "") l[i].data = patch.data;
       if (patch.moeda !== undefined && patch.moeda !== "") l[i].moeda = patch.moeda;
       if (patch.fatura !== undefined && patch.fatura !== "") l[i].fatura = patch.fatura.trim();
+      if (patch.conta !== undefined && patch.conta !== "") l[i].conta = patch.conta;
       if (patch.valor !== undefined && patch.valor !== "") {
         var v = typeof patch.valor === "number" ? patch.valor : parseMoney(patch.valor);
         if (v) l[i].valor = v;
@@ -7908,7 +7971,8 @@
             categoria: catPessoa,
             detalhe: p.turma || (c.tipo || ""),
             moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
-            pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje });
+            pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje,
+            conta: m.conta || "" });
         });
         if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key
             && !futuroDeQuemSaiu(c.sinal.recebido, p.desde)) {
@@ -7958,14 +8022,15 @@
       entradas.push({ pessoaId: "", nome: l.descricao, categoria: l.categoria || "outra",
         detalhe: "Lançamento", moeda: l.moeda, valor: l.valor,
         valorLabel: fmtMoney(l.moeda, l.valor), pago: true, venc: l.data,
-        atrasada: false, lancId: l.id });
+        atrasada: false, lancId: l.id, conta: l.conta || "" });
     });
 
     var saidas = custosDoMes(key).map(function (c) {
       return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
     }).concat(folhaNoCaixa(key)).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
-        valor: l.valor, fixo: false, data: l.data, lancId: l.id, fatura: l.fatura || "" };
+        valor: l.valor, fixo: false, data: l.data, lancId: l.id, fatura: l.fatura || "",
+        conta: l.conta || "" };
     }));
 
     // ordena: atrasada primeiro (é o que precisa de ação), depois em aberto, depois pago
@@ -7982,6 +8047,17 @@
       if (!mapa[cat]) mapa[cat] = zero();
       mapa[cat][moeda] += v;
     };
+    // por onde o dinheiro passou: uma linha por conta, com o que entrou
+    // e o que saiu de cada uma. É o que permite conferir com o extrato
+    // de cada banco, em vez de somar quatro contas num número só.
+    var porConta = {};
+    var naConta = function (id) {
+      var k = id || "sem_conta";
+      if (!porConta[k]) porConta[k] = { id: k, entrou: zero(), saiu: zero() };
+      return porConta[k];
+    };
+    entradas.forEach(function (e) { if (e.pago) naConta(e.conta).entrou[e.moeda] += e.valor; });
+    saidas.forEach(function (x) { naConta(x.conta).saiu[x.moeda] += x.valor; });
     entradas.forEach(function (e) {
       if (e.pago) { recebido[e.moeda] += e.valor; acumula(porCatEntrada, e.categoria, e.moeda, e.valor); }
       else if (e.atrasada) atrasado[e.moeda] += e.valor;
@@ -7997,7 +8073,7 @@
 
     return {
       key: key, entradas: entradas, saidas: saidas,
-      porCatEntrada: porCatEntrada, porCatSaida: porCatSaida,
+      porCatEntrada: porCatEntrada, porCatSaida: porCatSaida, porConta: porConta,
       recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
       previsto: previsto,
       // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
@@ -9728,6 +9804,8 @@
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
+    contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
+    addConta: addConta, removeConta: removeConta,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
     whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,
     assinantesAtivas: assinantesAtivas,

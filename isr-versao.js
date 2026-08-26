@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-h",
+  numero: "2026.08.21-i",
   data: "21/08/2026",
-  nota: "A semana 240826 voltou a ter trava de login e registro de resposta: o download do editor tinha trocado os scripts do sistema por endereços internos. O preparar-desafio.js desembrulha o download e repõe o que falta"
+  nota: "O Caixa passa a saber que o dinheiro chega em quatro contas (Asaas, Stripe, Wise, bunq): cada lançamento e cada conciliação guarda por onde passou, e o resultado do mês pode ser conferido conta a conta"
 };
