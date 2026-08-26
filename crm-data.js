@@ -3527,6 +3527,23 @@
     agendarSync();
     return l;
   }
+  // O Stripe põe o e-mail de quem pagou na descrição da cobrança
+  // ("Subscription payment for offers: #3315658 [ISR] Aulas em Grupo -
+  // PARCELADO - maria@gmail.com"). O e-mail é o identificador mais
+  // confiável que existe aqui: nome vem abreviado ou com o sobrenome do
+  // marido, valor muda com a taxa do gateway — e-mail não muda.
+  //
+  // A exigência de ponto e domínio no fim descarta o e-mail cortado por
+  // um export ("maria@gm..."): melhor não reconhecer do que reconhecer
+  // a pessoa errada.
+  function emailDaTransacao(t) {
+    if (!t) return "";
+    var direto = String(t.email || "").trim().toLowerCase();
+    if (direto.indexOf("@") > 0) return direto;
+    var m = String(t.descricao || "").match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+    return m ? m[0].toLowerCase() : "";
+  }
+
   function ehContaPropria(descricao) {
     var d = semAcento(descricao || "");
     return contasProprias().some(function (n) { return n.length >= 3 && d.indexOf(n) >= 0; });
@@ -3622,6 +3639,53 @@
     var chaveAberta = function (a) { return a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx; };
     var sugestoes = [], semMatch = [], pendentes = [];
 
+    // ── 0ª passada: o e-mail bate ─────────────────────────────
+    // Antes de tentar por valor ou por nome: se a linha traz o e-mail de
+    // uma aluna cadastrada, é ela. O valor pode estar diferente (taxa do
+    // gateway) e o nome pode nem aparecer.
+    var idPorEmail = {};
+    loadPessoas().forEach(function (p) {
+      var e = String(p.email || "").trim().toLowerCase();
+      if (e) idPorEmail[e] = p;
+    });
+    var restam = [];
+    transacoes.forEach(function (t) {
+      if (t.valor <= 0) { restam.push(t); return; }
+      var e = emailDaTransacao(t);
+      var pes = e ? idPorEmail[e] : null;
+      if (!pes) { restam.push(t); return; }
+      var cands = abertas.filter(function (a) {
+        return a.pessoaId === pes.id && !usadas[chaveAberta(a)];
+      });
+      if (!cands.length) {
+        // reconhecida, mas sem parcela em aberto: costuma ser assinatura
+        // ou acompanhamento, que não têm parcela. Dizer de quem é o
+        // dinheiro já resolve metade do problema.
+        // assinatura e acompanhamento já entram no Caixa como cobrança
+        // automática: conciliar de novo contaria o mesmo dinheiro duas
+        // vezes. Aqui a linha só precisa ser conferida.
+        var recorrente = assinaturaAtiva(pes) ? "assinatura"
+          : ((pes.programa && !pes.programa.encerrado) ? "acompanhamento" : "");
+        semMatch.push({ trans: t, tipo: "sem_parcela", pessoaId: pes.id,
+          nome: pes.nome, email: e, recorrente: recorrente });
+        return;
+      }
+      cands.sort(function (a, b) {
+        var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
+        if (dv) return dv;
+        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
+        return a.mesKey < b.mesKey ? -1 : 1;
+      });
+      var alvo = cands[0];
+      usadas[chaveAberta(alvo)] = true;
+      sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
+        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
+        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
+        porEmail: true, email: e,
+        contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
+    });
+    transacoes = restam;
+
     // ── 1ª passada: valor bate ────────────────────────────────
     transacoes.forEach(function (t) {
       if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
@@ -3689,7 +3753,9 @@
 
     return { sugestoes: sugestoes, semMatch: semMatch,
       jaRegistradas: jaRegistradas, internas: internas,
-      porNome: sugestoes.filter(function (s) { return s.porNome; }).length };
+      porNome: sugestoes.filter(function (s) { return s.porNome; }).length,
+      porEmail: sugestoes.filter(function (s) { return s.porEmail; }).length,
+      semParcela: semMatch.filter(function (s) { return s.tipo === "sem_parcela"; }).length };
   }
 
   function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx, conta) {
@@ -9832,7 +9898,7 @@
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
-    contaDaDescricao: contaDaDescricao,
+    contaDaDescricao: contaDaDescricao, emailDaTransacao: emailDaTransacao,
     addConta: addConta, removeConta: removeConta,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
     whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,
