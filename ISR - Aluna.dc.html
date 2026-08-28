@@ -709,7 +709,29 @@
 
         <sc-if value="{{ temCancelLink }}">
           <div style="padding: 0 24px 24px;">
-            <a href="{{ cancelLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; font-size: 11.5px; font-weight: 600; color: rgba(242,235,227,0.45); text-decoration: none; padding: 10px;">Gerenciar assinatura</a>
+            <a href="{{ cancelLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; font-size: 11.5px; font-weight: 600; color: rgba(242,235,227,0.45); text-decoration: underline; padding: 10px;">Gerenciar ou cancelar a assinatura</a>
+          </div>
+        </sc-if>
+
+        <!-- sem portal de cobrança configurado, o pedido passa pela escola.
+             Sem este bloco a assinante não tinha como cancelar pelo app. -->
+        <sc-if value="{{ asnPodeCancelar }}">
+          <div style="padding: 0 24px 24px; text-align: center;">
+            <sc-if value="{{ asnCancelando }}">
+              <p style="margin: 0 0 10px; font-size: 12px; line-height: 1.6; color: rgba(242,235,227,0.7);">Confirmar o pedido de cancelamento? A escola recebe o pedido e confirma com você antes de encerrar a assinatura.</p>
+              <div style="display: flex; gap: 8px; justify-content: center;">
+                <button onclick="{{ onCancelarAsn }}" class="isr-btn" style="border: none; background: #c8622f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Confirmar pedido</button>
+                <button onclick="{{ onNaoCancelarAsn }}" class="isr-btn" style="border: 1px solid rgba(242,235,227,0.25); background: transparent; color: rgba(242,235,227,0.7); font-size: 11.5px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Voltar</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ asnNaoCancelando }}">
+              <button onclick="{{ onCancelarAsn }}" class="isr-btn" style="border: none; background: transparent; color: rgba(242,235,227,0.45); font-size: 11.5px; font-weight: 600; padding: 10px; cursor: pointer; font-family: inherit; text-decoration: underline;">Pedir cancelamento da assinatura</button>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ asnPediuCancelamento }}">
+          <div style="padding: 0 24px 24px;">
+            <p style="margin: 0; text-align: center; font-size: 11.5px; line-height: 1.6; color: rgba(242,235,227,0.55);">{{ asnPedidoEm }}</p>
           </div>
         </sc-if>
       </sc-if>

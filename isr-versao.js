@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-k",
+  numero: "2026.08.21-l",
   data: "21/08/2026",
-  nota: "A conciliação passa a identificar a aluna pelo e-mail que vem na cobrança, antes de tentar por valor ou por nome. Quem já está no Caixa como cobrança automática aparece para conferir, não para lançar de novo"
+  nota: "A assinante volta a ter como cancelar pelo app, e encerrar a assinatura no sistema passa a criar a pendência de parar a cobrança no systeme — encerrar aqui nunca parou de cobrar lá"
 };

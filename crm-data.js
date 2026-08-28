@@ -4582,7 +4582,7 @@
             })[0];
             if (ev.evento === "cancelou") {
               if (pes && assinaturaAtiva(pes)) {
-                encerrarAssinatura(pes.id, "Cancelou no systeme");
+                encerrarAssinatura(pes.id, "Cancelou no systeme", true);
                 mexeu++;
               }
             } else {
@@ -6754,12 +6754,24 @@
         + (p.assinatura.valor ? " \u00b7 " + p.assinatura.valor + "/m\u00eas" : ""));
     });
   }
-  function encerrarAssinatura(pessoaId, motivo) {
-    return mutate(pessoaId, function (p) {
+  // Encerrar aqui NÃO para a cobrança: quem cobra é o systeme (pelo
+  // Stripe). Quando o encerramento nasce na gestão, fica a pendência de
+  // parar a cobrança lá — senão a aluna sai da escola e continua sendo
+  // debitada todo mês. Quando a notícia vem do próprio gateway
+  // (jaParouNoGateway), não há o que fazer: já parou.
+  function encerrarAssinatura(pessoaId, motivo, jaParouNoGateway) {
+    var p0 = getPessoa(pessoaId);
+    var r = mutate(pessoaId, function (p) {
       if (!p.assinatura) return;
       p.assinatura.encerrada = iso(today());
       pushHist(p, "estagio", "Assinatura encerrada" + (motivo ? " \u00b7 " + motivo : ""));
     });
+    if (p0 && p0.assinatura && !jaParouNoGateway) {
+      addTarefa({ titulo: "Parar a cobrança de " + p0.nome + " no systeme",
+        detalhe: "A assinatura foi encerrada no sistema. Enquanto não for cancelada no systeme, o cartão dela continua sendo debitado.",
+        dono: donoDaIntegracao(), por: "Caixa" });
+    }
+    return r;
   }
   function assinaturaAtiva(p) { return !!(p && p.assinatura && !p.assinatura.encerrada); }
   // O cancelamento pelo app N\u00c3O encerra sozinho: registra o pedido e
@@ -6900,7 +6912,7 @@
         ativarAssinatura(p.id, { valor: valor, moeda: moeda });
         criados++;
       } else if (it.acao === "encerrar" && cfg && cfg.encerrarAusentes) {
-        encerrarAssinatura(it.id, "Fora da lista do systeme");
+        encerrarAssinatura(it.id, "Fora da lista do systeme", true);
         encerrados++;
       } else if (it.acao === "ja-assinante") mantidos++;
     });
