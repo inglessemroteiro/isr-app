@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-r",
+  numero: "2026.08.21-s",
   data: "21/08/2026",
-  nota: "Na conciliação, quem tem o nome na linha do extrato escolhe a parcela primeiro — um crédito sem identificação não leva mais a parcela de quem seria reconhecido depois. E o trocar mostra as parcelas da própria aluna no topo"
+  nota: "Conciliação: nome com uma letra trocada é reconhecido (Bonfim/BOMFIM), crédito da própria empresa sai da conta, pagamento à equipe além da folha vira despesa, e quem ainda não está na base vira aluna pela própria linha"
 };
