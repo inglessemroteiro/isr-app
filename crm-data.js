@@ -3789,14 +3789,14 @@
       }
       if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
       // repasse do gateway para o banco e saldo retido por ele: dinheiro
-      // que continua sendo da escola, não despesa
-      if ((t.valor || 0) < 0) {
-        var sis = linhaDeSistema(t.descricao);
+      // que continua sendo da escola, não despesa. O saldo retido volta
+      // depois como crédito ("released after a payout") e também não é
+      // receita — por isso a regra vale nos dois sentidos.
+      var sis = linhaDeSistema(t.descricao);
+      if (sis === "retencao" || (sis === "repasse" && (t.valor || 0) < 0)) {
         if (sis === "repasse") registrarRepasse(t, contaAtual, moeda);
-        if (sis === "repasse" || sis === "retencao") {
-          internas.push(Object.assign({}, t, { sistema: sis }));
-          return false;
-        }
+        internas.push(Object.assign({}, t, { sistema: sis }));
+        return false;
       }
       // o outro lado do repasse: crédito de mesmo valor que já saiu do
       // gateway, chegando aqui com um IBAN no lugar do nome
@@ -8514,12 +8514,19 @@
         confirmado: !!l.conta });
     });
 
+    // A despesa tem o mesmo problema da receita: custo fixo e folha entram
+    // calculados, sem ninguém ter visto o dinheiro sair. Só o lançamento
+    // com conta e a folha já quitada têm linha de banco atrás.
     var saidas = custosDoMes(key).map(function (c) {
-      return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda, valor: c.valor, fixo: true };
-    }).concat(folhaNoCaixa(key)).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
+      return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda,
+        valor: c.valor, fixo: true, confirmado: false };
+    }).concat(folhaNoCaixa(key).map(function (x) {
+      return Object.assign({}, x, {
+        confirmado: !!(x.pessoa && pagamentoFeito(x.pessoa, key)) });
+    })).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
         valor: l.valor, fixo: false, data: l.data, lancId: l.id, fatura: l.fatura || "",
-        conta: l.conta || "" };
+        conta: l.conta || "", confirmado: !!l.conta };
     }));
 
     // ordena: atrasada primeiro (é o que precisa de ação), depois em aberto, depois pago
@@ -8561,7 +8568,12 @@
       else if (e.atrasada) atrasado[e.moeda] += e.valor;
       else aReceber[e.moeda] += e.valor;
     });
-    saidas.forEach(function (s) { saiu[s.moeda] += s.valor; acumula(porCatSaida, s.categoria, s.moeda, s.valor); });
+    var saiuConfirmado = zero(), saiuPresumido = zero();
+    saidas.forEach(function (s) {
+      saiu[s.moeda] += s.valor; acumula(porCatSaida, s.categoria, s.moeda, s.valor);
+      if (s.confirmado) saiuConfirmado[s.moeda] += s.valor;
+      else saiuPresumido[s.moeda] += s.valor;
+    });
 
     var meta = metaDoMes(key);
     var faturado = { "R$": recebido["R$"], "€": recebido["€"] };
@@ -8574,6 +8586,7 @@
       porCatEntrada: porCatEntrada, porCatSaida: porCatSaida, porConta: porConta,
       recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
       confirmado: confirmado, presumido: presumido,
+      saiuConfirmado: saiuConfirmado, saiuPresumido: saiuPresumido,
       previsto: previsto,
       // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
       resultado: { "R$": recebido["R$"] - saiu["R$"], "€": recebido["€"] - saiu["€"] },
@@ -8587,9 +8600,11 @@
       totalReais: { recebido: emReais(recebido), aReceber: emReais(aReceber),
         atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
         confirmado: emReais(confirmado), presumido: emReais(presumido),
+        saiuConfirmado: emReais(saiuConfirmado), saiuPresumido: emReais(saiuPresumido),
         resultado: emReais(recebido) - emReais(saiu),
-        // o resultado contando só o que tem extrato atrás
-        resultadoConfirmado: emReais(confirmado) - emReais(saiu) }
+        // o mês contando só o que passou pelo banco, dos dois lados: é o
+        // número que pode ser conferido linha por linha no extrato
+        resultadoConfirmado: emReais(confirmado) - emReais(saiuConfirmado) }
     };
   }
 
@@ -8615,11 +8630,15 @@
     f.linhas.forEach(function (l) {
       out.push({ nome: l.nome + " · aulas do mês", categoria: "equipe",
         moeda: moeda, valor: Math.round(l.total * 100) / 100,
+        // o nome puro, para saber depois se essa folha já foi vista
+        // saindo no extrato
+        pessoa: l.nome,
         fixo: true, calculado: true, origem: "folha" });
     });
     (f.fixos || []).forEach(function (x) {
       out.push({ nome: x.nome + " · valor mensal", categoria: "equipe",
         moeda: moeda, valor: Math.round(x.total * 100) / 100,
+        pessoa: x.nome,
         fixo: true, calculado: true, origem: "folha_fixo" });
     });
 
@@ -9700,8 +9719,11 @@
     var folha = folhaPagamento(k);
     var checks = [];
     var cent = function (v) { return Math.round(v * 100); };
-    var add = function (id, titulo, ok, esperado, obtido, detalhe) {
-      checks.push({ id: id, titulo: titulo, ok: ok,
+    // "info" é estado do trabalho, não erro de dado: aparece na lista com
+    // o número, mas não reprova o mês. Conciliação que ainda não foi feita
+    // não é inconsistência.
+    var add = function (id, titulo, ok, esperado, obtido, detalhe, info) {
+      checks.push({ id: id, titulo: titulo, ok: ok, info: !!info,
         esperado: esperado, obtido: obtido, detalhe: detalhe || "" });
     };
 
@@ -9801,6 +9823,40 @@
         ? "A folha já é calculada. Remova em Caixa: " + todosDuplicados.join(", ")
         : "");
 
+    // 7b. Custo fixo digitado que também foi lançado a partir do extrato:
+    //     o mesmo gasto entra duas vezes e o mês fecha pior do que é.
+    //     Só o custo fixo entra aqui — a folha já é o item 7.
+    var lancSaidaMes = lancamentosDoMes(k).filter(function (l) { return l.tipo === "saida"; });
+    var fixoDobrado = custosDoMes(k).filter(function (c) {
+      if (c.categoria === "equipe") return false;
+      return lancSaidaMes.some(function (l) {
+        return l.moeda === c.moeda && Math.abs(l.valor - c.valor) <= 0.02;
+      });
+    }).map(function (c) { return c.nome + " (" + fmtMoney(c.moeda, c.valor) + ")"; });
+    add("custo_fixo_sem_dobra", "Nenhum custo fixo repete um lançamento do extrato",
+      fixoDobrado.length === 0, "0 suspeitos", fixoDobrado.length + " suspeitos",
+      fixoDobrado.length
+        ? "Mesmo valor digitado como custo fixo e lançado do extrato: " + fixoDobrado.join(", ")
+          + ". Mantenha um dos dois."
+        : "");
+
+    // 7c. Quanto do mês pode ser conferido no banco. Com tudo passando
+    //     pelas contas, o que não tem linha de extrato atrás é estimativa
+    //     — e estimativa somada a dinheiro real produz resultado que
+    //     ninguém consegue auditar.
+    var foraDoExtrato = fin.totalReais.presumido + fin.totalReais.saiuPresumido;
+    add("mes_tem_extrato", "Todo o movimento do mês tem extrato atrás",
+      cent(foraDoExtrato) === 0,
+      "0 fora do extrato", fmtMoney("R$", foraDoExtrato) + " fora do extrato",
+      cent(foraDoExtrato) === 0
+        ? "Entrada e despesa conferidas linha a linha"
+        : fmtMoney("R$", fin.totalReais.presumido) + " de entrada e "
+          + fmtMoney("R$", fin.totalReais.saiuPresumido) + " de despesa entram por cadastro. "
+          + "Pelo extrato, o mês fecha em "
+          + (fin.totalReais.resultadoConfirmado >= 0 ? "lucro de " : "prejuízo de ")
+          + fmtMoney("R$", Math.abs(fin.totalReais.resultadoConfirmado)) + ".",
+      true);
+
     // 8. Aluna ativa sem contrato é receita que ninguém vai cobrar.
     var semContrato = loadPessoas().filter(function (p) {
       return p.status === "aluna" && !contratoVigente(p);
@@ -9875,7 +9931,7 @@
       fmtMoney("R$", res["R$"]) + " e " + fmtMoney("€", res["€"]),
       fmtMoney("R$", fin.resultado["R$"]) + " e " + fmtMoney("€", fin.resultado["€"]));
 
-    var falhas = checks.filter(function (c) { return !c.ok; });
+    var falhas = checks.filter(function (c) { return !c.ok && !c.info; });
     return { mes: k, checks: checks, total: checks.length,
       passaram: checks.length - falhas.length, falhas: falhas,
       ok: falhas.length === 0 };

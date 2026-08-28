@@ -779,18 +779,24 @@ class Component extends DCLogic {
     // ninguém consegue conferir. Aqui as duas aparecem separadas.
     const tr = f.totalReais;
     const presum = tr.presumido || 0;
-    const resConfirma = presum < 0.01
-      ? (tr.recebido > 0
-          ? "Todo o valor contado como recebido tem linha de extrato atrás."
-          : "Nada recebido neste mês ainda.")
-      : "Desse total, " + CRM.fmtMoney("R$", tr.confirmado || 0) + " está conferido com o extrato e "
-        + CRM.fmtMoney("R$", presum) + " é cobrança automática ou parcela marcada na mão, sem linha de banco. "
-        + "Contando só o conferido, o mês fica em "
-        + ((tr.resultadoConfirmado || 0) >= 0
-            ? "lucro de " + CRM.fmtMoney("R$", tr.resultadoConfirmado || 0)
-            : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(tr.resultadoConfirmado || 0)))
-        + ".";
-    const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
+    const presumSaiu = tr.saiuPresumido || 0;
+    const rc = tr.resultadoConfirmado || 0;
+    const semExtratoFrase = [
+      presum >= 0.01 ? CRM.fmtMoney("R$", presum) + " de entrada" : "",
+      presumSaiu >= 0.01 ? CRM.fmtMoney("R$", presumSaiu) + " de despesa" : ""
+    ].filter(Boolean).join(" e ");
+    const resConfirma = !semExtratoFrase
+      ? (tr.recebido > 0 || tr.saiu > 0
+          ? "Todo o movimento deste mês tem linha de extrato atrás."
+          : "Nenhum movimento neste mês ainda.")
+      : "Pelo extrato: entrou " + CRM.fmtMoney("R$", tr.confirmado || 0)
+        + " e saiu " + CRM.fmtMoney("R$", tr.saiuConfirmado || 0) + ", o que dá "
+        + (rc >= 0 ? "lucro de " + CRM.fmtMoney("R$", rc)
+                   : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(rc)))
+        + ". Fora disso, " + semExtratoFrase
+        + " entram por cadastro (cobrança automática, parcela marcada na mão, folha calculada, custo fixo) "
+        + "e ainda não foram vistos em nenhuma conta.";
+    const resConfirmaCor = !semExtratoFrase ? "#8a7c6b" : "#9c6f56";
 
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
@@ -880,6 +886,7 @@ class Component extends DCLogic {
           ? "Folha calculada · para mudar, ajuste em Equipe"
           : (s.fixo ? "Custo fixo · " + catLabel
                     : "Lançamento de " + CRM.ddmm(s.data) + " · " + catLabel))
+          + (s.confirmado ? "" : " · sem confirmação no extrato")
           + (dobra ? " · a folha da equipe já é calculada automaticamente; verifique duplicidade" : ""),
         removivel: !!s.lancId,
         onRemove: () => { CRM.removeLancamento(s.lancId); this.bump(); },
@@ -1302,7 +1309,8 @@ class Component extends DCLogic {
       onConf: () => this.setState({ confAberta: !this.state.confAberta }),
       conferencia: conf.checks.map(c => ({
         titulo: c.titulo,
-        cor: c.ok ? "#9ec970" : "#cf6b5c",
+        // pendência de conciliação não é erro de dado: pinta como aviso
+        cor: c.ok ? "#9ec970" : (c.info ? "#d4a574" : "#cf6b5c"),
         linha: c.ok
           ? (c.detalhe || ("confere: " + c.obtido))
           : ("esperado " + c.esperado + " · encontrado " + c.obtido
