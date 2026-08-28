@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-x",
+  numero: "2026.08.21-y",
   data: "21/08/2026",
-  nota: "Conciliação: assinatura que o sistema não conhecia pode ser registrada pela própria linha do extrato, pelo valor cheio, e a linha explica quando o mês do pagamento já está quitado"
+  nota: "Conciliação: pagamento de parcela marcada na mão é reconhecido como a confirmação dela, não como pagamento novo do mês seguinte; e a tela diz por que uma aluna matriculada não tem parcela em aberto (moeda do contrato, parcelas já pagas)"
 };
