@@ -57,6 +57,7 @@
       </div>
 
       <div style="margin-top: 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
+      <div style="margin-top: 6px; font-size: 11.5px; color: {{ resConfirmaCor }}; line-height: 1.6;">{{ resConfirma }}</div>
 
       <!-- por onde o dinheiro passou: o total só faz sentido se der para
            conferir com o extrato de cada banco -->
@@ -771,6 +772,26 @@ class Component extends DCLogic {
       ? "Fora desta conta: " + pend.join(" e ") + ". Só entra aqui o que já caiu."
       : "Nada em aberto neste mês.";
 
+    // ── quanto desse número tem extrato atrás ──
+    // "Recebido" vinha de duas origens misturadas: parcela conciliada com
+    // o banco e parcela marcada na mão, mais a cobrança automática que
+    // entra só porque o dia passou. Somadas, produzem um lucro que
+    // ninguém consegue conferir. Aqui as duas aparecem separadas.
+    const tr = f.totalReais;
+    const presum = tr.presumido || 0;
+    const resConfirma = presum < 0.01
+      ? (tr.recebido > 0
+          ? "Todo o valor contado como recebido tem linha de extrato atrás."
+          : "Nada recebido neste mês ainda.")
+      : "Desse total, " + CRM.fmtMoney("R$", tr.confirmado || 0) + " está conferido com o extrato e "
+        + CRM.fmtMoney("R$", presum) + " é cobrança automática ou parcela marcada na mão, sem linha de banco. "
+        + "Contando só o conferido, o mês fica em "
+        + ((tr.resultadoConfirmado || 0) >= 0
+            ? "lucro de " + CRM.fmtMoney("R$", tr.resultadoConfirmado || 0)
+            : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(tr.resultadoConfirmado || 0)))
+        + ".";
+    const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
+
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
       const pct = f.pctMeta[m];
@@ -835,7 +856,11 @@ class Component extends DCLogic {
       const st = statusMeta(e);
       const catLabel = CRM.catMeta(CRM.CAT_ENTRADA, e.categoria).label;
       const jaDiz = (e.detalhe || "").toLowerCase().indexOf(catLabel.toLowerCase().split(" ")[0]) >= 0;
-      return { nome: e.nome, detalhe: [e.detalhe, jaDiz ? "" : catLabel].filter(Boolean).join(" · "),
+      // recebido sem linha de banco atrás: a lista precisa dizer quais
+      // são, senão o total não tem como ser conferido
+      const semExtrato = e.pago && !e.confirmado ? "sem confirmação no extrato" : "";
+      return { nome: e.nome,
+        detalhe: [e.detalhe, jaDiz ? "" : catLabel, semExtrato].filter(Boolean).join(" · "),
         valor: CRM.fmtMoney(e.moeda, e.valor), status: st.txt, cor: st.cor, corValor: st.val,
         href: e.pessoaId ? ("ISR%20-%20Perfil.dc.html?id=" + e.pessoaId) : "#",
         removivel: !!e.lancId,
@@ -1166,6 +1191,12 @@ class Component extends DCLogic {
         conferivel: !lancada && x.tipo === "sem_parcela" && !!x.recorrente,
         onConferir: () => {
           CRM.registrarTransacao(x.trans, x.recorrente + " de " + x.nome);
+          // a cobrança daquele mês deixa de ser presunção: existe linha
+          // de banco atrás dela
+          if (CRM.confirmarRecorrente) {
+            CRM.confirmarRecorrente(x.pessoaId, mesTrans,
+              x.recorrente === "acompanhamento" ? "programa" : "assinatura", x.trans);
+          }
           marcar("conf");
         },
         ignoravel: !lancada && !folhaJaPaga,
@@ -1279,6 +1310,7 @@ class Component extends DCLogic {
       })),
 
       resTitulo, resValor, resCor, resFrase, resColunas, resPendente,
+      resConfirma, resConfirmaCor,
       resContas, semConta: temSemConta,
       semContaFrase: "Movimento sem conta marcada. Ao lançar ou conciliar, escolha por onde o dinheiro passou — é o que permite bater com o extrato de cada banco.",
       contasOpts: contasCad.map(c => ({ id: c.id, sel: c.id === this.contaAtual(),

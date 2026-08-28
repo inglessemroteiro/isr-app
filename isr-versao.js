@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-t",
+  numero: "2026.08.21-u",
   data: "21/08/2026",
-  nota: "Conciliação: repasse do gateway reconhecido nos dois extratos, saldo retido e linha de valor zero fora da fila, taxa de uso já classificada, transferência que chega só com o número da conta ganha dono, e a diferença de valor mostra a parcela e o que falta"
+  nota: "Caixa: o resultado do mês separa o que tem linha de extrato atrás do que é presunção (parcela marcada na mão e cobrança automática que entra só porque o dia passou)"
 };
