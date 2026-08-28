@@ -4582,7 +4582,8 @@
             })[0];
             if (ev.evento === "cancelou") {
               if (pes && pes.assinatura && !pes.assinatura.encerrada) {
-                encerrarAssinatura(pes.id, "Cancelou no systeme", true);
+                encerrarAssinatura(pes.id, "Cancelou no systeme", true,
+                  String(ev.ate || "").slice(0, 10) || undefined);
                 mexeu++;
               }
             } else {

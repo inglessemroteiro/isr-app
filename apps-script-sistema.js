@@ -66,13 +66,21 @@ function doPost(e) {
 // assinatura, ou encerra. Nada é decidido nesta planilha — ela é a
 // caixa de entrada, e o sistema é quem sabe o que fazer com o evento.
 var ASSIN_SHEET = "Assinaturas recebidas";
-var ASSIN_HEAD = ["ID", "Recebido em", "Evento", "Nome", "E-mail", "Valor", "Moeda", "Processado"];
+var ASSIN_HEAD = ["ID", "Recebido em", "Evento", "Nome", "E-mail", "Valor", "Moeda", "Acesso até", "Processado"];
 
 function assinSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(ASSIN_SHEET);
   if (!sh) {
     sh = ss.insertSheet(ASSIN_SHEET);
+    sh.getRange(1, 1, 1, ASSIN_HEAD.length).setValues([ASSIN_HEAD]).setFontWeight("bold");
+    return sh;
+  }
+  // aba criada antes da coluna "Acesso até": abre espaço para ela sem
+  // embaralhar o que já foi gravado
+  var cab = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
+  if (cab.length < ASSIN_HEAD.length && String(cab[7] || "") === "Processado") {
+    sh.insertColumnBefore(8);
     sh.getRange(1, 1, 1, ASSIN_HEAD.length).setValues([ASSIN_HEAD]).setFontWeight("bold");
   }
   return sh;
@@ -88,7 +96,8 @@ function assinaturaEvento_(p) {
   ev = (ev.indexOf("cancel") >= 0 || ev.indexOf("encerr") >= 0) ? "cancelou" : "assinou";
   var id = "asn" + new Date().getTime() + Math.floor(Math.random() * 1000);
   assinSheet_().appendRow([id, new Date().toISOString(), ev,
-    String(p.nome || ""), email, String(p.valor || ""), String(p.moeda || ""), ""]);
+    String(p.nome || ""), email, String(p.valor || ""), String(p.moeda || ""),
+    String(p.ate || ""), ""]);
   return { ok: true, id: id, evento: ev };
 }
 
@@ -99,10 +108,13 @@ function assinaturasPendentes_() {
   var rows = sh.getRange(2, 1, last - 1, ASSIN_HEAD.length).getValues();
   var itens = [];
   rows.forEach(function (r) {
-    if (r[7]) return; // já processado
+    if (r[8]) return; // já processado
     itens.push({ id: r[0], recebidoEm: r[1], evento: String(r[2] || ""),
       nome: String(r[3] || ""), email: String(r[4] || ""),
-      valor: String(r[5] || ""), moeda: String(r[6] || "") });
+      valor: String(r[5] || ""), moeda: String(r[6] || ""),
+      // fim do período já pago, quando o Zap souber dizer: é até quando
+      // o acesso dela continua valendo
+      ate: r[7] instanceof Date ? Utilities.formatDate(r[7], "UTC", "yyyy-MM-dd") : String(r[7] || "") });
   });
   return { ok: true, itens: itens };
 }
