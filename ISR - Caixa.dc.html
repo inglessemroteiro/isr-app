@@ -1019,6 +1019,15 @@ class Component extends DCLogic {
             label: pr.nome + " · " + pr.programaNome + " · "
               + CRM.fmtMoney(this.state.moedaExtrato, pr.valor) + " · acompanhamento" });
         });
+      // assinatura e acompanhamento não têm parcela: sem isto, o
+      // pagamento de quem assina não tinha onde dar baixa
+      (CRM.recorrentesDoMes ? CRM.recorrentesDoMes(mes.key, this.state.moedaExtrato) : [])
+        .filter(r => !r.confirmado)
+        .forEach(r => {
+          l.push({ v: "__rec|" + r.pessoaId + "|" + r.qual,
+            label: r.nome + " · " + r.rotulo + " de " + mes.label + " · "
+              + CRM.fmtMoney(this.state.moedaExtrato, r.valor) });
+        });
       l.push({ v: "__avulso", label: "outro — lançar como recebimento avulso" });
       return l;
     })() : [];
@@ -1026,7 +1035,8 @@ class Component extends DCLogic {
     // o que permite conferir num clique se o mês sugerido é o certo
     const opcoesPara = (pessoaId) => {
       if (!pessoaId || abertasOpts.length < 2) return abertasOpts;
-      const ehDela = o => o.v.indexOf(pessoaId + "|") === 0 || o.v === "__prog|" + pessoaId;
+      const ehDela = o => o.v.indexOf(pessoaId + "|") === 0 || o.v === "__prog|" + pessoaId
+        || o.v.indexOf("__rec|" + pessoaId + "|") === 0;
       const corpo = abertasOpts.slice(1);
       const dela = corpo.filter(ehDela);
       if (!dela.length) return abertasOpts;
@@ -1051,6 +1061,18 @@ class Component extends DCLogic {
         CRM.setProgramaPago(troca.slice(7), true, dataIso);
         CRM.registrarTransacao(trans, "acompanhamento");
         return "prog";
+      }
+      // baixa da cobrança recorrente: o mês da linha do extrato é que
+      // manda, não o mês aberto na tela
+      if (troca.indexOf("__rec|") === 0) {
+        const [, pid, qual] = troca.split("|");
+        const mesDaLinha = dataIso ? dataIso.slice(0, 7) : mes.key;
+        CRM.confirmarRecorrente(pid, mesDaLinha, qual, trans);
+        // a cobrança do mês tinha falhado e o dinheiro apareceu
+        if (qual === "assinatura") CRM.registrarPagamentoAssinatura(pid);
+        CRM.registrarTransacao(trans, (qual === "programa" ? "acompanhamento" : "assinatura")
+          + " de " + mesDaLinha);
+        return "conf";
       }
       const [pid, mk, cidx] = troca.split("|");
       CRM.conciliar(pid, mk, trans.descricao, trans, cidx === undefined ? undefined : parseInt(cidx, 10), this.contaAtual());
@@ -1078,7 +1100,13 @@ class Component extends DCLogic {
               ? "Nome confere" + difDaParcela(s)
               : (cert ? "Nome e valor conferem"
                 : (s.assinatura ? "Cobrança de assinatura · valor confere" : "Requer verificação")))))
-          + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : ""),
+          + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : "")
+          // por que não caiu no mês anterior: o mais antigo em aberto
+          // continua em aberto, e o valor dele é outro
+          + (s.anterior
+              ? " · " + CRM.firstName(s.nome) + " continua com " + s.anterior.mesLabel
+                + " em aberto (" + CRM.fmtMoney(this.state.moedaExtrato, s.anterior.valor) + ")"
+              : ""),
         confCor: (s.porEmail || s.porIdent) ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"

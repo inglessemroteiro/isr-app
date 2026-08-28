@@ -3833,6 +3833,30 @@
     var equipe = equipeLista().map(function (x) { return x.nome; });
     var usadas = {};
     var chaveAberta = function (a) { return a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx; };
+    // A escolha pode cair num mês mais novo do que o mais antigo em
+    // aberto — porque o valor bate nele e não no outro, ou porque o
+    // antigo é de contrato encerrado. Quando isso acontece, a linha
+    // precisa dizer, senão parece erro: pagamento de agosto casando com
+    // setembro sem explicação.
+    // Quem está nomeado na linha, quando o nome é forte o bastante (duas
+    // partes). Sem isto, "Beatryz Cordeiro" casava com a parcela de "Ana
+    // Beatriz" — um primeiro nome parecido bastava, e a parcela ia para a
+    // pessoa errada. Com dono definido, só as parcelas dele concorrem.
+    var donoDaLinha = function (t) {
+      var melhor = null, placar = 0;
+      loadPessoas().forEach(function (p) {
+        var n = partesNaDescricao(p.nome, t.descricao);
+        if (n >= 2 && n > placar) { placar = n; melhor = p; }
+      });
+      return melhor;
+    };
+    var anteriorEmAberto = function (alvo) {
+      var antes = abertas.filter(function (a) {
+        return a.pessoaId === alvo.pessoaId && a.mesKey < alvo.mesKey
+          && !usadas[chaveAberta(a)];
+      }).sort(function (a, b) { return a.mesKey < b.mesKey ? -1 : 1; })[0];
+      return antes ? { mesKey: antes.mesKey, mesLabel: antes.mesLabel, valor: antes.valor } : null;
+    };
     var sugestoes = [], semMatch = [], pendentes = [];
 
     // ── 0ª passada: o e-mail bate ─────────────────────────────
@@ -3878,8 +3902,12 @@
       cands.sort(function (a, b) {
         var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
         if (dv) return dv;
-        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
-        return perto(a, b);
+        // o que já venceu na data do pagamento vem antes, mesmo estando
+        // num contrato encerrado: quem paga em agosto está quitando
+        // agosto, não adiantando setembro do contrato novo
+        var pp = perto(a, b);
+        if (pp) return pp;
+        return a.encerrada === b.encerrada ? 0 : (a.encerrada ? 1 : -1);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;
@@ -3887,6 +3915,7 @@
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
         diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
         porEmail: !!e, email: e || ident, porIdent: ident || undefined,
+        anterior: anteriorEmAberto(alvo),
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
     transacoes = restam;
@@ -3920,14 +3949,17 @@
         var an = desc.indexOf(firstName(a.nome).toLowerCase()) >= 0 ? 0 : 1;
         var bn = desc.indexOf(firstName(b.nome).toLowerCase()) >= 0 ? 0 : 1;
         if (an !== bn) return an - bn;
-        // contrato vigente ganha do encerrado quando os dois cabem
-        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
-        return perto1(a, b);
+        // a parcela já vencida na data do pagamento vem antes; contrato
+        // vigente só decide quando as duas estão do mesmo lado da data
+        var pp1 = perto1(a, b);
+        if (pp1) return pp1;
+        return a.encerrada === b.encerrada ? 0 : (a.encerrada ? 1 : -1);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0,
+        anterior: anteriorEmAberto(alvo),
         // a cobrança recorrente do gateway não traz o nome de quem pagou,
         // só o nome da oferta: dizer isso é melhor do que deixar a linha
         // sem explicação
@@ -3941,8 +3973,11 @@
     // correspondência" e deixar a pessoa procurar na mão.
     pendentes.forEach(function (t) {
       var desc = semAcento(t.descricao || "");
+      // a linha nomeia alguém da base: só as parcelas dela concorrem
+      var dono = donoDaLinha(t);
       var cands = abertas.filter(function (a) {
         if (usadas[chaveAberta(a)]) return false;
+        if (dono) return a.pessoaId === dono.id;
         var partes = semAcento(a.nome).split(/\s+/).filter(function (x) { return x.length >= 4; });
         if (!partes.length) return false;
         // pelo menos duas partes do nome, ou o primeiro nome se for único
@@ -3953,15 +3988,38 @@
       cands.sort(function (a, b) {
         var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
         if (dv) return dv;
-        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
-        return perto2(a, b);
+        var pp2 = perto2(a, b);
+        if (pp2) return pp2;
+        return a.encerrada === b.encerrada ? 0 : (a.encerrada ? 1 : -1);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
         diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true,
+        anterior: anteriorEmAberto(alvo),
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
+    });
+
+    // ── quem foi reconhecido pelo nome mas não tem parcela ────
+    // Assinante não tem parcela nenhuma: a linha dela caía em "nome não
+    // aparece na descrição", que além de inútil era falso — o nome está
+    // na descrição, o que não existe é parcela. Dizendo de quem é, a
+    // tela consegue oferecer a cobrança do mês como destino.
+    semMatch.forEach(function (x) {
+      if (x.tipo !== "sem_match" || (x.trans.valor || 0) <= 0) return;
+      var pes = loadPessoas().filter(function (p) {
+        var partes = semAcento(p.nome).split(/\s+/).filter(function (w) { return w.length >= 4; });
+        return partes.length
+          && partesNaDescricao(p.nome, x.trans.descricao) >= Math.min(2, partes.length);
+      })[0];
+      if (!pes) return;
+      x.tipo = "sem_parcela";
+      x.pessoaId = pes.id;
+      x.nome = pes.nome;
+      x.email = String(pes.email || "").trim().toLowerCase();
+      x.recorrente = assinaturaAtiva(pes) ? "assinatura"
+        : ((pes.programa && !pes.programa.encerrado) ? "acompanhamento" : "");
     });
 
     // ── saídas: quem é da equipe já sai categorizada ──────────
@@ -4019,6 +4077,34 @@
       dono: donoDaIntegracao(), por: "Caixa" });
     if (trans) registrarTransacao(trans, "aluna criada pelo extrato");
     return p;
+  }
+
+  // Quem paga por assinatura não tem parcela nenhuma: o pagamento dela
+  // chega no extrato e não existe linha para dar baixa. Aqui estão as
+  // cobranças recorrentes vivas no mês, para a conciliação poder
+  // oferecê-las como destino.
+  function recorrentesDoMes(key, moeda) {
+    var k = key || mesAtualKey();
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      [{ obj: p.assinatura, qual: "assinatura", rotulo: "Assinatura",
+         fim: p.assinatura && p.assinatura.encerrada },
+       { obj: p.programa, qual: "programa",
+         rotulo: (p.programa && p.programa.nome) || "Acompanhamento",
+         fim: p.programa && p.programa.encerrado }].forEach(function (r) {
+        var o = r.obj;
+        if (!o || !o.valor) return;
+        var m = o.moeda || p.moeda || "€";
+        if (moeda && m !== moeda) return;
+        var ini = String(o.inicio || o.desde || "").slice(0, 10);
+        if (!ini || ini.slice(0, 7) > k) return;
+        if (r.fim && String(r.fim).slice(0, 7) < k) return;
+        out.push({ pessoaId: p.id, nome: p.nome, qual: r.qual, rotulo: r.rotulo,
+          mesKey: k, valor: parseMoney(o.valor), moeda: m,
+          confirmado: !!(o.confirmados && o.confirmados[k]) });
+      });
+    });
+    return out.sort(function (a, b) { return a.nome < b.nome ? -1 : 1; });
   }
 
   function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx, conta) {
@@ -10475,6 +10561,7 @@
     calcularProposta: calcularProposta, calcularPacote: calcularPacote,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
+    recorrentesDoMes: recorrentesDoMes,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil
