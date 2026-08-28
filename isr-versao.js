@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-e",
+  numero: "2026.08.28-f",
   data: "28/08/2026",
-  nota: "Conciliar por busca: digite o nome e o pagamento vai para qualquer aluna da base, com parcela em aberto ou não — pagamento à vista entra no nome dela"
+  nota: "Extrato com duas moedas na mesma busca (Stripe cobra em real e em euro) passa a ser analisado por moeda; e as linhas já tratadas numa análise anterior podem ser vistas e desfeitas"
 };

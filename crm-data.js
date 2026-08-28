@@ -3730,6 +3730,16 @@
   function transacaoRegistrada(t) {
     return extratoRegAll()[chaveTransacao(t)] || null;
   }
+  // Tira uma transação do registro: ela volta a aparecer na próxima
+  // análise. É o que permite refazer uma conciliação feita errado sem
+  // apagar o mês inteiro.
+  function esquecerTransacao(t) {
+    var reg = extratoRegAll();
+    delete reg[chaveTransacao(t)];
+    try { localStorage.setItem(EXTRATO_REG_KEY, JSON.stringify(reg)); } catch (e) {}
+    agendarSync();
+    return reg;
+  }
   function registrarTransacao(t, uso) {
     var reg = extratoRegAll();
     reg[chaveTransacao(t)] = { em: iso(today()), uso: uso || "" };
@@ -3839,7 +3849,37 @@
       }).length;
   }
 
+  // O extrato do Stripe vem com as duas moedas na mesma busca: aluna
+  // brasileira cobrada em real, europeia em euro. Analisar tudo contra as
+  // parcelas de UMA moeda comparava valores de mundos diferentes — e os
+  // pagamentos da outra moeda simplesmente não casavam com ninguém.
+  // Aqui cada moeda roda a sua análise e os resultados se juntam.
   function sugerirConciliacao(transacoes, moeda, contaAtual) {
+    var lista = transacoes || [];
+    var moedas = [];
+    lista.forEach(function (t) {
+      var m = t.moeda || moeda;
+      if (moedas.indexOf(m) < 0) moedas.push(m);
+    });
+    if (moedas.length <= 1) return conciliarUmaMoeda(lista, moedas[0] || moeda, contaAtual);
+    var partes = moedas.map(function (m) {
+      return conciliarUmaMoeda(lista.filter(function (t) { return (t.moeda || moeda) === m; }),
+        m, contaAtual);
+    });
+    var junta = function (campo) {
+      return partes.reduce(function (acc, x) { return acc.concat(x[campo] || []); }, []);
+    };
+    var soma = function (campo) {
+      return partes.reduce(function (acc, x) { return acc + (x[campo] || 0); }, 0);
+    };
+    return { sugestoes: junta("sugestoes"), semMatch: junta("semMatch"),
+      jaRegistradas: junta("jaRegistradas"), internas: junta("internas"),
+      semValor: junta("semValor"), retiradasDetectadas: junta("retiradasDetectadas"),
+      porNome: soma("porNome"), porEmail: soma("porEmail"), semParcela: soma("semParcela"),
+      moedasDaBusca: moedas };
+  }
+
+  function conciliarUmaMoeda(transacoes, moeda, contaAtual) {
     // o que já foi processado numa análise anterior sai da fila
     var jaRegistradas = [];
     transacoes = transacoes.filter(function (t) {
@@ -10881,6 +10921,7 @@
     linkPagamentoPadrao: linkPagamentoPadrao, setLinkPagamentoPadrao: setLinkPagamentoPadrao,
     alunasSemLinkDePagamento: alunasSemLinkDePagamento,
     registrarTransacao: registrarTransacao, transacaoRegistrada: transacaoRegistrada,
+    esquecerTransacao: esquecerTransacao,
     contasProprias: contasProprias, addContaPropria: addContaPropria,
     removerContaPropria: removerContaPropria, ehContaPropria: ehContaPropria,
     orcamentoDoMes: orcamentoDoMes, setOrcamento: setOrcamento,

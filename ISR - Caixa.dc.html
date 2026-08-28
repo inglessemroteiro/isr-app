@@ -482,6 +482,23 @@
               <button onclick="{{ onLancarRetiradas }}" title="Transferências para contas suas já reconhecidas. Não são despesa e não mudam o lucro; entram no Caixa como retirada do mês." style="border: 1px solid #d8c4b2; background: #fff; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ retiradasLabel }}</button>
             </sc-if>
           </div>
+          <sc-if value="{{ temJaRegistradas }}">
+            <div style="margin-bottom: 10px; border: 1px solid #f2e9dd; border-radius: 10px; padding: 10px 12px; background: #fdfbf8;">
+              <button onclick="{{ onVerRegistradas }}" style="border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; font-size: 11.5px; font-weight: 700; color: #348a8e;">{{ verRegistradasLabel }}</button>
+              <sc-if value="{{ registradasAbertas }}">
+                <div style="margin-top: 8px;">
+                  <p style="margin: 0 0 8px; font-size: 11px; color: #8a7c6b; line-height: 1.6;">Estas linhas já foram tratadas numa análise anterior e por isso não voltam. Se alguma foi tratada errado, esqueça o registro: ela reaparece na próxima análise.</p>
+                  <sc-for list="{{ jaRegistradas }}" as="j" hint-placeholder-count="4">
+                    <div style="display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid #f2e9dd; font-size: 11.5px; flex-wrap: wrap;">
+                      <span style="flex: 1; min-width: 160px; color: #3d3529;">{{ j.desc }}</span>
+                      <span style="flex: none; color: #8a7c6b;">{{ j.uso }}</span>
+                      <button onclick="{{ j.onEsquecer }}" style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 4px 6px; cursor: pointer; font-family: inherit;">esquecer</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
           <sc-for list="{{ sugestoes }}" as="s" hint-placeholder-count="2">
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
               <span style="width: 9px; height: 9px; border-radius: 50%; background: #5a9e4b; flex: none;"></span>
@@ -642,7 +659,8 @@ class Component extends DCLogic {
     buscandoApi: false, erroApi: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
-            trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "" };
+            trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "",
+            regAbertas: false };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
@@ -1924,6 +1942,27 @@ class Component extends DCLogic {
             this.setState({ retirouAuto: true });
             this.bump();
           }
+        };
+      }).call(this),
+      // O que já foi tratado antes some da fila e vira só um número no
+      // resumo. Se uma dessas linhas foi tratada errado, não havia como
+      // saber nem como desfazer.
+      ...(function () {
+        const jr = analise ? (analise.jaRegistradas || []) : [];
+        return {
+          temJaRegistradas: jr.length > 0,
+          registradasAbertas: !!this.state.regAbertas,
+          verRegistradasLabel: (this.state.regAbertas ? "ocultar" : "ver")
+            + " as " + jr.length + (jr.length === 1 ? " linha já tratada" : " linhas já tratadas")
+            + " numa análise anterior",
+          onVerRegistradas: () => this.setState(st => ({ regAbertas: !st.regAbertas })),
+          jaRegistradas: jr.map(r => ({
+            desc: (r.trans.descricao || "").slice(0, 60) + " · "
+              + CRM.fmtMoney(this.state.moedaExtrato, r.trans.valor)
+              + (r.trans.data ? " em " + r.trans.data.slice(0, 5) : ""),
+            uso: (r.uso || "sem registro do que foi feito") + (r.em ? " · " + CRM.ddmm(r.em) : ""),
+            onEsquecer: () => { CRM.esquecerTransacao(r.trans); this.analisar(); }
+          }))
         };
       }).call(this),
       onConciliarCerteiras: () => {
