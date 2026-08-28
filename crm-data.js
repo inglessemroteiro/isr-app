@@ -3505,27 +3505,53 @@
   // "GF Education" é a empresa dela na Holanda; mandar dinheiro para lá
   // não é despesa — é o mesmo dinheiro trocando de bolso. A escola marca
   // uma vez quem é "conta própria" e o extrato passa a reconhecer sozinho.
+  // Conta própria não é uma coisa só. Dinheiro indo de uma empresa da
+  // escola para outra continua sendo da escola. Dinheiro indo para a
+  // conta pessoal da dona saiu da escola — não é despesa, mas é
+  // retirada, e precisa aparecer.
+  //
+  // Guardado como {nome, tipo}. A lista antiga era só de nomes: ela é
+  // lida do mesmo jeito e o tipo é deduzido do nome até alguém dizer.
   var CONTAS_PROPRIAS_KEY = "isr_contas_proprias_v1";
+  function pareceEmpresa(nome) {
+    return /\bltda\b|\bme\b|\bmei\b|eireli|\bs\.?a\b|\bllc\b|\binc\b|education|comercio|servicos|holding|company/
+      .test(semAcento(nome || ""));
+  }
   function contasProprias() {
-    try { return JSON.parse(localStorage.getItem(CONTAS_PROPRIAS_KEY)) || []; } catch (e) { return []; }
+    var bruto = [];
+    try { bruto = JSON.parse(localStorage.getItem(CONTAS_PROPRIAS_KEY)) || []; } catch (e) { bruto = []; }
+    return bruto.map(function (x) {
+      if (typeof x === "string") return { nome: x, tipo: pareceEmpresa(x) ? "empresa" : "pessoal" };
+      return { nome: x.nome, tipo: x.tipo === "pessoal" ? "pessoal" : "empresa" };
+    }).filter(function (x) { return x.nome; });
   }
-  function addContaPropria(nome) {
-    var s = semAcento(nome || "").trim();
-    if (!s || s.length < 3) return contasProprias();
-    var l = contasProprias();
-    if (l.indexOf(s) < 0) {
-      l.push(s);
-      try { localStorage.setItem(CONTAS_PROPRIAS_KEY, JSON.stringify(l)); } catch (e) {}
-      agendarSync();
-    }
-    return l;
-  }
-  function removerContaPropria(nome) {
-    var s = semAcento(nome || "").trim();
-    var l = contasProprias().filter(function (n) { return n !== s; });
+  function contasPropriasSalvar(l) {
     try { localStorage.setItem(CONTAS_PROPRIAS_KEY, JSON.stringify(l)); } catch (e) {}
     agendarSync();
     return l;
+  }
+  function addContaPropria(nome, tipo) {
+    var s = semAcento(nome || "").trim();
+    if (!s || s.length < 3) return contasProprias();
+    var t = tipo === "pessoal" ? "pessoal" : (tipo === "empresa" ? "empresa"
+      : (pareceEmpresa(s) ? "empresa" : "pessoal"));
+    var l = contasProprias();
+    var achada = l.filter(function (x) { return x.nome === s; })[0];
+    if (achada) { achada.tipo = t; return contasPropriasSalvar(l); }
+    l.push({ nome: s, tipo: t });
+    return contasPropriasSalvar(l);
+  }
+  function removerContaPropria(nome) {
+    var s = semAcento(nome || "").trim();
+    return contasPropriasSalvar(contasProprias().filter(function (x) { return x.nome !== s; }));
+  }
+  // "empresa", "pessoal" ou "" quando a descrição não é de conta sua.
+  function tipoDaContaPropria(descricao) {
+    var d = semAcento(descricao || "");
+    var achada = contasProprias().filter(function (x) {
+      return x.nome.length >= 3 && d.indexOf(x.nome) >= 0;
+    })[0];
+    return achada ? achada.tipo : "";
   }
   // O Stripe põe o e-mail de quem pagou na descrição da cobrança
   // ("Subscription payment for offers: #3315658 [ISR] Aulas em Grupo -
@@ -3649,7 +3675,7 @@
 
   function ehContaPropria(descricao) {
     var d = semAcento(descricao || "");
-    return contasProprias().some(function (n) { return n.length >= 3 && d.indexOf(n) >= 0; });
+    return contasProprias().some(function (x) { return x.nome.length >= 3 && d.indexOf(x.nome) >= 0; });
   }
   // O extrato do gateway vem cheio de linhas que não são despesa da
   // escola, e perguntar sobre cada uma enche a tela de decisão que não
@@ -3833,7 +3859,13 @@
         internas.push(Object.assign({}, t, { deConta: outra.id, deContaNome: outra.nome }));
         return false;
       }
-      if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
+      // conta própria: entre as empresas da escola o dinheiro continua
+      // dentro; para a conta pessoal ele saiu, e isso é retirada
+      var tipoProprio = tipoDaContaPropria(t.descricao);
+      if (t.interna || tipoProprio) {
+        internas.push(Object.assign({}, t, { contaPropria: tipoProprio || "empresa" }));
+        return false;
+      }
       // repasse do gateway para o banco e saldo retido por ele: dinheiro
       // que continua sendo da escola, não despesa. O saldo retido volta
       // depois como crédito ("released after a payout") e também não é
@@ -4187,8 +4219,16 @@
       else x.categoria = "outros";
     });
 
+    // saída para conta pessoal já reconhecida: sai da fila como interna,
+    // mas continua sendo dinheiro que deixou a escola. A tela oferece
+    // lançar como retirada — sem isso ela sumia de vez.
+    var retiradasDetectadas = internas.filter(function (x) {
+      return x.contaPropria === "pessoal" && (x.valor || 0) < 0;
+    });
+
     return { sugestoes: sugestoes, semMatch: semMatch,
       jaRegistradas: jaRegistradas, internas: internas, semValor: semValor,
+      retiradasDetectadas: retiradasDetectadas,
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length,
       porEmail: sugestoes.filter(function (s) { return s.porEmail; }).length,
       semParcela: semMatch.filter(function (s) { return s.tipo === "sem_parcela"; }).length };
@@ -10880,6 +10920,7 @@
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
+    tipoDaContaPropria: tipoDaContaPropria, pareceEmpresa: pareceEmpresa,
     contaDaDescricao: contaDaDescricao, emailDaTransacao: emailDaTransacao,
     linhaDeSistema: linhaDeSistema, identDaTransacao: identDaTransacao,
     registrarRepasse: registrarRepasse, repasseCasando: repasseCasando,

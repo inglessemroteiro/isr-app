@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-c",
+  numero: "2026.08.28-d",
   data: "28/08/2026",
-  nota: "Contrato em real com cobrança em euro passa a ser conciliado pelo câmbio; o resultado do mês desconta toda a despesa conhecida e nunca superestima; retirada para conta própria aparece com nome"
+  nota: "Conta própria separa empresa de pessoal: transferência entre as suas empresas não muda nada, transferência para a sua conta pessoal vira retirada do mês"
 };
