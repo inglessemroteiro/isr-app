@@ -3707,8 +3707,24 @@
     transacoes = restam;
 
     // ── 1ª passada: valor bate ────────────────────────────────
+    // Quem tem o nome na linha escolhe primeiro. Sem isto, um crédito que
+    // só bate por valor levava a parcela de quem seria reconhecido pelo
+    // nome logo depois — e a pessoa certa acabava recebendo o mês errado,
+    // o que sobrou.
+    var temNomeNaLinha = function (t) {
+      var d = (t.descricao || "").toLowerCase();
+      return abertas.some(function (a) {
+        return Math.abs(a.valor - t.valor) <= 0.6
+          && d.indexOf(firstName(a.nome).toLowerCase()) >= 0;
+      });
+    };
+    var comNome = [], semNome = [];
     transacoes.forEach(function (t) {
       if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
+      (temNomeNaLinha(t) ? comNome : semNome).push(t);
+    });
+
+    comNome.concat(semNome).forEach(function (t) {
       var cands = abertas.filter(function (a) {
         return !usadas[chaveAberta(a)] && Math.abs(a.valor - t.valor) <= 0.6;
       });

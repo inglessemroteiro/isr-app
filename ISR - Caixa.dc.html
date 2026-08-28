@@ -973,6 +973,17 @@ class Component extends DCLogic {
       l.push({ v: "__avulso", label: "outro — lançar como recebimento avulso" });
       return l;
     })() : [];
+    // no "trocar para…", as parcelas da própria pessoa vêm primeiro: é
+    // o que permite conferir num clique se o mês sugerido é o certo
+    const opcoesPara = (pessoaId) => {
+      if (!pessoaId || abertasOpts.length < 2) return abertasOpts;
+      const ehDela = o => o.v.indexOf(pessoaId + "|") === 0 || o.v === "__prog|" + pessoaId;
+      const corpo = abertasOpts.slice(1);
+      const dela = corpo.filter(ehDela);
+      if (!dela.length) return abertasOpts;
+      return [abertasOpts[0]].concat(dela, corpo.filter(o => !ehDela(o)));
+    };
+
     // conciliação escolhida no "trocar": parcela (pid|mês|contrato) ou avulso
     const aplicarTroca = (troca, trans) => {
       const dataIso = (() => {
@@ -1028,7 +1039,7 @@ class Component extends DCLogic {
         feitaLabel: feita === "ign" ? "Ignorada"
           : (feita === "avu" ? "Recebimento avulso"
           : (feita === "prog" ? "Acompanhamento pago" : "Conciliada")),
-        trocaOpts: abertasOpts,
+        trocaOpts: opcoesPara(s.pessoaId),
         onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["s" + i]: e.target.value }) })),
         onConciliar: () => {
           // se a pessoa escolheu outra parcela no "trocar", vale a escolha
@@ -1101,7 +1112,7 @@ class Component extends DCLogic {
         },
         // crédito que a análise não achou: a pessoa escolhe a parcela
         conciliavel: !saida && !lancada,
-        trocaOpts: abertasOpts,
+        trocaOpts: opcoesPara(x.pessoaId),
         onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["x" + i]: e.target.value }) })),
         onConciliarManual: () => {
           const t = this.state.trocas["x" + i];

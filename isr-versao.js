@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-q",
+  numero: "2026.08.21-r",
   data: "21/08/2026",
-  nota: "A conciliação passa a olhar a data do pagamento: entre parcelas do mesmo valor, quita primeiro o que já venceu, da mais antiga para a mais nova. A data aparece do lado do valor na sugestão"
+  nota: "Na conciliação, quem tem o nome na linha do extrato escolhe a parcela primeiro — um crédito sem identificação não leva mais a parcela de quem seria reconhecido depois. E o trocar mostra as parcelas da própria aluna no topo"
 };
