@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-s",
+  numero: "2026.08.21-t",
   data: "21/08/2026",
-  nota: "Conciliação: nome com uma letra trocada é reconhecido (Bonfim/BOMFIM), crédito da própria empresa sai da conta, pagamento à equipe além da folha vira despesa, e quem ainda não está na base vira aluna pela própria linha"
+  nota: "Conciliação: repasse do gateway reconhecido nos dois extratos, saldo retido e linha de valor zero fora da fila, taxa de uso já classificada, transferência que chega só com o número da conta ganha dono, e a diferença de valor mostra a parcela e o que falta"
 };
