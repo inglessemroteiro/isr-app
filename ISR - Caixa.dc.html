@@ -720,16 +720,30 @@ class Component extends DCLogic {
     const ehAtual = mes.key === atualKey;
     const res = f.totalReais.resultado;
     const cambio = CRM.configPagamento().cambioEur || 0;
-    const resTitulo = (ehFuturo ? "Previsão · " : (ehAtual ? "Até hoje · " : "Fechado · ")) + mes.label;
+    // O número grande é o do extrato quando existe extrato: é o único que
+    // pode ser conferido no banco. O outro — que soma cobrança automática
+    // e parcela marcada na mão — vem logo abaixo, com nome.
+    const rConf = f.totalReais.resultadoConfirmado || 0;
+    const foraDoExtrato = (f.totalReais.presumido || 0) + (f.totalReais.saiuPresumido || 0);
+    const mandaExtrato = !ehFuturo && foraDoExtrato >= 0.01;
+    const resTitulo = ehFuturo ? ("Previsão · " + mes.label)
+      : (mandaExtrato ? ("Pelo extrato · " + mes.label)
+        : ((ehAtual ? "Até hoje · " : "Fechado · ") + mes.label));
+    const frasear = (v) => v > 0 ? "Lucro de " + CRM.fmtMoney("R$", v)
+      : (v < 0 ? "Prejuízo de " + CRM.fmtMoney("R$", Math.abs(v)) : "Entrou o mesmo que saiu");
     const resValor = ehFuturo
       ? (f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu >= 0
           ? "Deve sobrar " + CRM.fmtMoney("R$", f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)
           : "Deve faltar " + CRM.fmtMoney("R$", Math.abs(f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)))
-      : (res > 0 ? "Lucro de " + CRM.fmtMoney("R$", res)
-        : (res < 0 ? "Prejuízo de " + CRM.fmtMoney("R$", Math.abs(res)) : "Entrou o mesmo que saiu"));
-    const resCor = ehFuturo ? "#d4a574" : (res > 0 ? "#5a9e4b" : (res < 0 ? "#cf6b5c" : "#8a7c6b"));
-    const resFrase = "Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
-      + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu) + "."
+      : frasear(mandaExtrato ? rConf : res);
+    const corDe = (v) => v > 0 ? "#5a9e4b" : (v < 0 ? "#cf6b5c" : "#8a7c6b");
+    const resCor = ehFuturo ? "#d4a574" : corDe(mandaExtrato ? rConf : res);
+    const resFrase = (mandaExtrato
+        ? "Entrou " + CRM.fmtMoney("R$", f.totalReais.confirmado || 0)
+          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiuConfirmado || 0)
+          + ", conferidos linha a linha com o extrato."
+        : "Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
+          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu) + ".")
       + (f.recebido["\u20ac"] > 0 ? " Euro convertido a " + CRM.fmtMoney("R$", cambio) + " para somar com o real." : "")
       + (ehAtual ? " O mês ainda não acabou." : "")
       // real negativo e euro positivo (ou o contrário) é o caso mais fácil
@@ -792,13 +806,12 @@ class Component extends DCLogic {
       ? (tr.recebido > 0 || tr.saiu > 0
           ? "Todo o movimento deste mês tem linha de extrato atrás."
           : "Nenhum movimento neste mês ainda.")
-      : "Pelo extrato: entrou " + CRM.fmtMoney("R$", tr.confirmado || 0)
-        + " e saiu " + CRM.fmtMoney("R$", tr.saiuConfirmado || 0) + ", o que dá "
-        + (rc >= 0 ? "lucro de " + CRM.fmtMoney("R$", rc)
-                   : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(rc)))
-        + ". Fora disso, " + semExtratoFrase
-        + " entram por cadastro (cobrança automática, parcela marcada na mão, folha calculada, custo fixo) "
-        + "e ainda não foram vistos em nenhuma conta.";
+      : "Somando também o que entra por cadastro — " + semExtratoFrase
+        + ", de cobrança automática, parcela marcada na mão, folha calculada e custo fixo — o mês daria "
+        + (res >= 0 ? "lucro de " + CRM.fmtMoney("R$", res)
+                    : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(res)))
+        + ". Esse valor não pode ser conferido no banco: enquanto a linha não aparece em nenhuma conta, "
+        + "ela é estimativa.";
     const resConfirmaCor = !semExtratoFrase ? "#8a7c6b" : "#9c6f56";
 
     // ── meta por moeda ──
@@ -861,6 +874,18 @@ class Component extends DCLogic {
       : (e.atrasada ? { txt: "Em atraso", cor: "#cf6b5c", val: "#cf6b5c" }
                     : { txt: "A receber", cor: "#d4a574", val: "#9c6f56" });
 
+    // as linhas que estão contando o mesmo dinheiro duas vezes: a lista
+    // precisa apontá-las, senão a soma continua errada sem explicação
+    const dupes = CRM.duplicidadesDeReceita ? CRM.duplicidadesDeReceita(mes.key) : { recorrentes: [], lancamentos: [] };
+    const ehDupe = (e) => {
+      if (e.recorrente && e.pessoaId
+          && dupes.recorrentes.some(d => d.pessoaId === e.pessoaId
+              && d.moeda === e.moeda && Math.abs(d.valor - e.valor) < 0.01))
+        return "esta pessoa tem duas cobranças recorrentes de mesmo valor no mês";
+      if (e.lancId && dupes.lancamentos.some(d => d.ids.indexOf(e.lancId) >= 0))
+        return "outro lançamento do mesmo valor no mês";
+      return "";
+    };
     const entradas = f.entradas.map(e => {
       const st = statusMeta(e);
       const catLabel = CRM.catMeta(CRM.CAT_ENTRADA, e.categoria).label;
@@ -868,8 +893,10 @@ class Component extends DCLogic {
       // recebido sem linha de banco atrás: a lista precisa dizer quais
       // são, senão o total não tem como ser conferido
       const semExtrato = e.pago && !e.confirmado ? "sem confirmação no extrato" : "";
+      const dupe = ehDupe(e);
       return { nome: e.nome,
-        detalhe: [e.detalhe, jaDiz ? "" : catLabel, semExtrato].filter(Boolean).join(" · "),
+        detalhe: [e.detalhe, jaDiz ? "" : catLabel, semExtrato,
+          dupe ? "verifique duplicidade: " + dupe : ""].filter(Boolean).join(" · "),
         valor: CRM.fmtMoney(e.moeda, e.valor), status: st.txt, cor: st.cor, corValor: st.val,
         href: e.pessoaId ? ("ISR%20-%20Perfil.dc.html?id=" + e.pessoaId) : "#",
         removivel: !!e.lancId,
