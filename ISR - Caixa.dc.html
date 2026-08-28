@@ -491,9 +491,19 @@
                 <span style="color: {{ s.confCor }}; font-weight: 700;"> · {{ s.confLabel }}</span>
               </div>
               <sc-if value="{{ s.pendente }}">
-                <select onchange="{{ s.onTroca }}" title="Selecione outra parcela caso a sugestão esteja incorreta" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
-                  <sc-for list="{{ s.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
-                </select>
+                <div style="flex: none; width: 230px; position: relative;">
+                  <input value="{{ s.buscaValor }}" oninput="{{ s.onBusca }}" placeholder="{{ s.buscaPlaceholder }}" title="Digite o nome da aluna, o mês ou o produto para trocar o destino deste pagamento" style="width: 100%; padding: 8px 12px; font-size: 11px; font-family: inherit; color: #3d3529; border: 1px solid {{ s.buscaCor }}; border-radius: 999px; background: #fff; box-sizing: border-box;">
+                  <sc-if value="{{ s.temResultados }}">
+                    <div style="margin-top: 4px; border: 1px solid #eee3d6; border-radius: 10px; background: #fff; overflow: hidden;">
+                      <sc-for list="{{ s.resultados }}" as="o" hint-placeholder-count="4">
+                        <button onclick="{{ o.onEscolher }}" style="display: block; width: 100%; text-align: left; border: none; border-bottom: 1px solid #f7f2ea; background: #fff; color: #3d3529; font-size: 11px; padding: 7px 10px; cursor: pointer; font-family: inherit;">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ s.semResultado }}">
+                    <div style="margin-top: 4px; font-size: 10.5px; color: #a2957f;">Nenhuma aluna ou parcela com esse nome.</div>
+                  </sc-if>
+                </div>
                 <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
                 <button onclick="{{ s.onIgnorar }}" title="Transação sem vínculo com parcela. Fica registrada e não retorna nas próximas análises." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
               </sc-if>
@@ -507,9 +517,19 @@
               <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ x.icon }}; flex: none;"></span>
               <div style="flex: 1; min-width: 180px; font-size: 12.5px; color: #6b6155;">{{ x.transDesc }} ({{ x.transValor }}) — <span style="color: #a2957f;">{{ x.motivo }}</span></div>
               <sc-if value="{{ x.conciliavel }}">
-                <select onchange="{{ x.onTroca }}" title="Selecione a parcela correspondente para conciliar o crédito" style="max-width: 180px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: #8a7c6b; border: 1px solid #e5dccf; border-radius: 999px; background: #fff;">
-                  <sc-for list="{{ x.trocaOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
-                </select>
+                <div style="flex: none; width: 230px; position: relative;">
+                  <input value="{{ x.buscaValor }}" oninput="{{ x.onBusca }}" placeholder="{{ x.buscaPlaceholder }}" title="Digite o nome da aluna para lançar este pagamento no nome dela" style="width: 100%; padding: 8px 12px; font-size: 11px; font-family: inherit; color: #3d3529; border: 1px solid {{ x.buscaCor }}; border-radius: 999px; background: #fff; box-sizing: border-box;">
+                  <sc-if value="{{ x.temResultados }}">
+                    <div style="margin-top: 4px; border: 1px solid #eee3d6; border-radius: 10px; background: #fff; overflow: hidden;">
+                      <sc-for list="{{ x.resultados }}" as="o" hint-placeholder-count="4">
+                        <button onclick="{{ o.onEscolher }}" style="display: block; width: 100%; text-align: left; border: none; border-bottom: 1px solid #f7f2ea; background: #fff; color: #3d3529; font-size: 11px; padding: 7px 10px; cursor: pointer; font-family: inherit;">{{ o.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ x.semResultado }}">
+                    <div style="margin-top: 4px; font-size: 10.5px; color: #a2957f;">Nenhuma aluna ou parcela com esse nome.</div>
+                  </sc-if>
+                </div>
                 <button onclick="{{ x.onConciliarManual }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
               </sc-if>
               <sc-if value="{{ x.lancavel }}">
@@ -622,7 +642,7 @@ class Component extends DCLogic {
     buscandoApi: false, erroApi: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
-            trocas: {}, edLanc: null, retirouAuto: false, audFeito: "" };
+            trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "" };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
@@ -1116,15 +1136,67 @@ class Component extends DCLogic {
             label: r.nome + " · " + r.rotulo + " de " + mes.label + " · "
               + CRM.fmtMoney(this.state.moedaExtrato, r.valor) });
         });
+      // Toda pessoa da base, sempre. Pagamento à vista, extra, acerto:
+      // não há parcela para casar, mas há dona. Sem isto a única saída
+      // era "recebimento avulso", que perde de quem era o dinheiro.
+      const jaListadas = {};
+      l.forEach(o => { const i = o.v.split("|")[1] || o.v.split("|")[0]; if (i) jaListadas[i] = 1; });
+      CRM.getPessoas()
+        .slice()
+        .sort((a, c) => (a.nome || "") < (c.nome || "") ? -1 : 1)
+        .forEach(pe => {
+          l.push({ v: "__pessoa|" + pe.id,
+            label: pe.nome + " · lançar no nome dela"
+              + (jaListadas[pe.id] ? " (sem parcela)" : "") });
+        });
+      // Toda pessoa da base, sempre. Pagamento à vista, extra ou acerto
+      // não tem parcela para casar, mas tem dona. Sem isto a única saída
+      // era "recebimento avulso", que perde de quem era o dinheiro.
+      CRM.getPessoas().slice()
+        .sort((a, c) => (a.nome || "") < (c.nome || "") ? -1 : 1)
+        .forEach(pe => {
+          l.push({ v: "__pessoa|" + pe.id, label: pe.nome + " · lançar no nome dela" });
+        });
       l.push({ v: "__avulso", label: "outro — lançar como recebimento avulso" });
       return l;
     })() : [];
+    // A lista de destinos tem a base inteira: mais de cem opções não
+    // cabem num seletor. Aqui vira busca — digita o nome, aparecem as
+    // opções daquela pessoa, clica na certa.
+    const buscaDe = (chave, pessoaId, escolhido) => {
+      const termo = (this.state.buscas[chave] || "").trim().toLowerCase();
+      const opts = opcoesPara(pessoaId).filter(o => o.v);
+      const escolhida = escolhido ? opts.filter(o => o.v === escolhido)[0] : null;
+      const casa = (o) => {
+        if (!termo) return false;
+        return termo.split(/\s+/).every(t => o.label.toLowerCase().indexOf(t) >= 0);
+      };
+      const achados = termo ? opts.filter(casa).slice(0, 6) : [];
+      return {
+        buscaValor: this.state.buscas[chave] || "",
+        buscaPlaceholder: escolhida ? escolhida.label.slice(0, 40) : "trocar para… (digite o nome)",
+        buscaCor: escolhida ? "#5a9e4b" : "#e5dccf",
+        temResultados: achados.length > 0,
+        semResultado: !!termo && achados.length === 0,
+        resultados: achados.map(o => ({
+          label: o.label,
+          onEscolher: () => this.setState(st => ({
+            trocas: Object.assign({}, st.trocas, { [chave]: o.v }),
+            buscas: Object.assign({}, st.buscas, { [chave]: "" })
+          }))
+        })),
+        onBusca: (e) => {
+          const v = e.target.value;
+          this.setState(st => ({ buscas: Object.assign({}, st.buscas, { [chave]: v }) }));
+        }
+      };
+    };
     // no "trocar para…", as parcelas da própria pessoa vêm primeiro: é
     // o que permite conferir num clique se o mês sugerido é o certo
     const opcoesPara = (pessoaId) => {
       if (!pessoaId || abertasOpts.length < 2) return abertasOpts;
       const ehDela = o => o.v.indexOf(pessoaId + "|") === 0 || o.v === "__prog|" + pessoaId
-        || o.v.indexOf("__rec|" + pessoaId + "|") === 0;
+        || o.v.indexOf("__rec|" + pessoaId + "|") === 0 || o.v === "__pessoa|" + pessoaId;
       const corpo = abertasOpts.slice(1);
       const dela = corpo.filter(ehDela);
       if (!dela.length) return abertasOpts;
@@ -1149,6 +1221,12 @@ class Component extends DCLogic {
         CRM.setProgramaPago(troca.slice(7), true, dataIso);
         CRM.registrarTransacao(trans, "acompanhamento");
         return "prog";
+      }
+      // pagamento no nome de alguém, sem parcela para casar: à vista,
+      // extra, acerto — o dinheiro entra com dona, não como avulso
+      if (troca.indexOf("__pessoa|") === 0) {
+        CRM.registrarPagamentoDePessoa(troca.slice(9), trans, this.contaAtual(), "pagamento à vista");
+        return "pes";
       }
       // baixa da cobrança recorrente: o mês da linha do extrato é que
       // manda, não o mês aberto na tela
@@ -1220,9 +1298,9 @@ class Component extends DCLogic {
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
           : (feita === "avu" ? "Recebimento avulso"
-          : (feita === "prog" ? "Acompanhamento pago" : "Conciliada")),
-        trocaOpts: opcoesPara(s.pessoaId),
-        onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["s" + i]: e.target.value }) })),
+          : (feita === "pes" ? "Lançado no nome dela"
+          : (feita === "prog" ? "Acompanhamento pago" : "Conciliada"))),
+        ...buscaDe("s" + i, s.pessoaId, troca),
         onConciliar: () => {
           // se a pessoa escolheu outra parcela no "trocar", vale a escolha
           // dela, não a sugestão
@@ -1305,13 +1383,14 @@ class Component extends DCLogic {
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "nova" ? "Aluna cadastrada"
+          : (lancada === "pes" ? "Lançado no nome dela"
           : (lancada === "ret" ? "Retirada"
           : (lancada === "asn" ? "Assinatura registrada"
           : (lancada === "conf" ? "Conferida"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
           : (lancada === "avu" ? "Recebimento avulso"
-          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))))))),
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada"))))))))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // pagamento à equipe além da folha calculada (um extra, um
         // acerto): quitar a folha esconderia essa despesa
@@ -1364,8 +1443,7 @@ class Component extends DCLogic {
         },
         // crédito que a análise não achou: a pessoa escolhe a parcela
         conciliavel: !saida && !lancada,
-        trocaOpts: opcoesPara(x.pessoaId),
-        onTroca: (e) => this.setState(st => ({ trocas: Object.assign({}, st.trocas, { ["x" + i]: e.target.value }) })),
+        ...buscaDe("x" + i, x.pessoaId, this.state.trocas["x" + i]),
         onConciliarManual: () => {
           const t = this.state.trocas["x" + i];
           if (!t) return;

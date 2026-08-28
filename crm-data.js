@@ -4295,6 +4295,30 @@
     return out.sort(function (a, b) { return a.nome < b.nome ? -1 : 1; });
   }
 
+  // Pagamento que não corresponde a parcela nenhuma: à vista, um extra,
+  // um acerto. Antes, a única saída era "recebimento avulso", que perde
+  // a dona do dinheiro. Aqui o pagamento entra no nome dela, com o
+  // registro na ficha — mesmo que ela não tenha contrato.
+  function registrarPagamentoDePessoa(pessoaId, trans, conta, rotulo) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var quando = "";
+    var d = String((trans && trans.data) || "").split("/");
+    if (d.length === 3) quando = d[2] + "-" + d[1] + "-" + d[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(quando)) quando = iso(today());
+    var moeda = (trans && trans.moeda) || p.moeda || "R$";
+    var valor = Math.abs((trans && trans.valor) || 0);
+    addLancamento({ tipo: "entrada",
+      categoria: p.status === "mvs" ? "mvs" : "outra",
+      descricao: p.nome + (rotulo ? " · " + rotulo : " · pagamento"),
+      moeda: moeda, valor: valor, conta: conta || "", data: quando,
+      pessoaId: p.id });
+    addHistory(pessoaId, "pagamento", "Pagamento de " + fmtMoney(moeda, valor)
+      + " reconhecido no extrato" + (rotulo ? " · " + rotulo : ""));
+    if (trans) registrarTransacao(trans, "pagamento de " + p.nome);
+    return p;
+  }
+
   function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx, conta) {
     setParcelaPaga(pessoaId, mesKey, true, contratoIdx);
     // A parcela guarda o que de fato aconteceu no banco: quando caiu e
@@ -8608,6 +8632,9 @@
       fatura: (dados.fatura || "").trim(),
       // por onde o dinheiro entrou ou saiu (Asaas, Stripe, Wise, bunq)
       conta: (dados.conta || "").trim(),
+      // de quem é este dinheiro, quando é de alguém: pagamento à vista
+      // não tem parcela, mas tem dona
+      pessoaId: (dados.pessoaId || "").trim(),
       valor: typeof dados.valor === "number" ? dados.valor : parseMoney(dados.valor) });
     lancamentosSave(l);
     return l;
@@ -8800,7 +8827,7 @@
       retiradas[l.moeda] = (retiradas[l.moeda] || 0) + l.valor;
     });
     lancs.filter(function (l) { return l.tipo === "entrada"; }).forEach(function (l) {
-      entradas.push({ pessoaId: "", nome: l.descricao, categoria: l.categoria || "outra",
+      entradas.push({ pessoaId: l.pessoaId || "", nome: l.descricao, categoria: l.categoria || "outra",
         detalhe: "Lançamento", moeda: l.moeda, valor: l.valor,
         valorLabel: fmtMoney(l.moeda, l.valor), pago: true, venc: l.data,
         atrasada: false, lancId: l.id, conta: l.conta || "",
@@ -11029,6 +11056,7 @@
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
+    registrarPagamentoDePessoa: registrarPagamentoDePessoa,
     parcelasPagasSemExtrato: parcelasPagasSemExtrato,
     situacaoDasParcelas: situacaoDasParcelas,
     duplicidadesDeReceita: duplicidadesDeReceita,
