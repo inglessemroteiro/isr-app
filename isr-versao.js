@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-w",
+  numero: "2026.08.21-x",
   data: "21/08/2026",
-  nota: "Conciliação: assinante tem onde dar baixa (a cobrança do mês entra no \"trocar para\"), nome forte na linha manda na escolha da pessoa, mês vencido ganha do contrato novo e a linha avisa quando sobra mês mais antigo em aberto"
+  nota: "Conciliação: assinatura que o sistema não conhecia pode ser registrada pela própria linha do extrato, pelo valor cheio, e a linha explica quando o mês do pagamento já está quitado"
 };

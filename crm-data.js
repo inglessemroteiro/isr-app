@@ -3857,6 +3857,14 @@
       }).sort(function (a, b) { return a.mesKey < b.mesKey ? -1 : 1; })[0];
       return antes ? { mesKey: antes.mesKey, mesLabel: antes.mesLabel, valor: antes.valor } : null;
     };
+    // O mês sugerido é posterior ao mês do pagamento e não sobrou nada
+    // atrás: quer dizer que o mês do pagamento já está quitado e esta
+    // linha adianta o próximo. Dizer isso evita a leitura de erro —
+    // "paguei em agosto, por que casou com setembro?".
+    var adiantaMes = function (alvo, t) {
+      var mesT = mesDaTransacao(t);
+      return (mesT && alvo.mesKey > mesT) ? mesT : "";
+    };
     var sugestoes = [], semMatch = [], pendentes = [];
 
     // ── 0ª passada: o e-mail bate ─────────────────────────────
@@ -3915,7 +3923,7 @@
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
         diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
         porEmail: !!e, email: e || ident, porIdent: ident || undefined,
-        anterior: anteriorEmAberto(alvo),
+        anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
     transacoes = restam;
@@ -3959,7 +3967,7 @@
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0,
-        anterior: anteriorEmAberto(alvo),
+        anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
         // a cobrança recorrente do gateway não traz o nome de quem pagou,
         // só o nome da oferta: dizer isso é melhor do que deixar a linha
         // sem explicação
@@ -3997,7 +4005,7 @@
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
         diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true,
-        anterior: anteriorEmAberto(alvo),
+        anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
 
@@ -7117,8 +7125,12 @@
   // A lista do que a pessoa tem contratado agora, produto a produto.
   // ── ASSINATURA (produto recorrente: Book Club, desafios, plantão) ──
   function ativarAssinatura(pessoaId, cfg) {
+    // quando a assinatura \u00e9 reconhecida pelo extrato, o in\u00edcio \u00e9 o dia do
+    // pagamento \u2014 \u00e9 ele que define o dia da cobran\u00e7a nos meses seguintes
+    var ini = String((cfg && cfg.inicio) || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ini)) ini = iso(today());
     return mutate(pessoaId, function (p) {
-      p.assinatura = { inicio: iso(today()), valor: (cfg && cfg.valor) || "",
+      p.assinatura = { inicio: ini, valor: (cfg && cfg.valor) || "",
         moeda: (cfg && cfg.moeda) || "\u20ac" };
       if (p.status === "lead") { p.status = "aluna"; p.estagio = "matriculado"; }
       concluirReuniaoPelaMatricula(p);
@@ -8494,6 +8506,11 @@
       label: MES_NOMES[d.getMonth()] + " de " + d.getFullYear(),
       curto: MES_NOMES[d.getMonth()].slice(0, 3) + "/" + String(d.getFullYear()).slice(2),
       offset: n };
+  }
+  // "2026-08" → "Agosto"
+  function mesLabelDe(key) {
+    var m = parseInt(String(key || "").slice(5, 7), 10);
+    return (m >= 1 && m <= 12) ? MES_NOMES[m - 1] : String(key || "");
   }
   function mesesFinanceiro(back, fwd) {
     var out = [];
@@ -10430,7 +10447,7 @@
     catsSaida: catsSaida, addCategoriaSaida: addCategoriaSaida,
     removeCategoriaSaida: removeCategoriaSaida,
     financeiroMes: financeiroMes, financeiroSerie: financeiroSerie, previsaoMes: previsaoMes,
-    mesesFinanceiro: mesesFinanceiro, mesOffset: mesOffset,
+    mesesFinanceiro: mesesFinanceiro, mesOffset: mesOffset, mesLabelDe: mesLabelDe,
     lancamentosLista: lancamentosLista, addLancamento: addLancamento,
     removeLancamento: removeLancamento, updateLancamento: updateLancamento,
     lancamentosDoMes: lancamentosDoMes,
