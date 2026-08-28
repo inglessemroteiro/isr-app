@@ -145,8 +145,9 @@ exports.handler = async (event) => {
 
   let corpo = {};
   try { corpo = JSON.parse(event.body || "{}"); } catch (e) {}
-  if (corpo.chave !== CHAVE)
-    return { statusCode: 401, headers, body: JSON.stringify({ ok: false, erro: "chave inválida" }) };
+  if (String(corpo.chave || "").trim() !== String(CHAVE).trim())
+    return { statusCode: 401, headers, body: JSON.stringify({ ok: false,
+      erro: "A senha guardada no Caixa não é a mesma que está no Netlify em ISR_EXTRATO_CHAVE. Clique em \"esquecer\" e cole a senha de novo, copiando do Netlify." }) };
 
   const conta = String(corpo.conta || "").toLowerCase();
   const de = String(corpo.de || "").slice(0, 10);
