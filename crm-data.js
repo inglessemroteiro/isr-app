@@ -7108,6 +7108,20 @@
       pushHist(p, "pagamento", "Cobran\u00e7a da assinatura voltou a passar");
     });
   }
+  // A cobrança automática entra no Caixa porque o dia passou, não porque
+  // alguém viu o dinheiro. Quando a linha aparece no extrato e você marca
+  // como conferida, aquele mês deixa de ser presunção.
+  function confirmarRecorrente(pessoaId, mesKey, qual, trans) {
+    var campo = qual === "programa" ? "programa" : "assinatura";
+    var k = String(mesKey || "").slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(k)) return null;
+    return mutate(pessoaId, function (p) {
+      if (!p[campo]) return;
+      if (!p[campo].confirmados) p[campo].confirmados = {};
+      p[campo].confirmados[k] = { em: iso(today()),
+        valor: trans && trans.valor ? Math.abs(trans.valor) : undefined };
+    });
+  }
   function assinaturaFalhando(p) {
     return !!(p && p.assinatura && p.assinatura.falhou && !p.assinatura.encerrada);
   }
@@ -8433,6 +8447,10 @@
             detalhe: p.turma || (c.tipo || ""),
             moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
             pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje,
+            // "pago" e "visto no extrato" são coisas diferentes. Só a
+            // conciliação escreve pagoEm/idExterno: marcar na mão não
+            // prova que o dinheiro caiu.
+            confirmado: !!(m.pagoEm || m.idExterno),
             conta: m.conta || "" });
         });
         if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key
@@ -8441,6 +8459,7 @@
             detalhe: "Sinal de matrícula", moeda: moeda,
             valor: parseMoney(c.sinal.valor), valorLabel: c.sinal.valor,
             pago: !!c.sinal.recebido, venc: p.desde,
+            confirmado: !!c.sinal.conciliado,
             atrasada: !c.sinal.recebido && p.desde < hoje });
         }
       });
@@ -8477,6 +8496,10 @@
           pago: venc <= hoje && !(o.falhou && o.falhou.slice(0, 7) === key),
           venc: venc,
           atrasada: !!(o.falhou && o.falhou.slice(0, 7) === key && venc <= hoje),
+          // presumida por natureza: o dia passou e ninguém avisou que
+          // falhou. Vira confirmada quando a linha aparece no extrato e
+          // você marca como conferida.
+          confirmado: !!(o.confirmados && o.confirmados[key]),
           recorrente: true });
       });
     });
@@ -8486,7 +8509,9 @@
       entradas.push({ pessoaId: "", nome: l.descricao, categoria: l.categoria || "outra",
         detalhe: "Lançamento", moeda: l.moeda, valor: l.valor,
         valorLabel: fmtMoney(l.moeda, l.valor), pago: true, venc: l.data,
-        atrasada: false, lancId: l.id, conta: l.conta || "" });
+        atrasada: false, lancId: l.id, conta: l.conta || "",
+        // lançamento com conta veio do extrato ou foi copiado dele
+        confirmado: !!l.conta });
     });
 
     var saidas = custosDoMes(key).map(function (c) {
@@ -8522,8 +8547,17 @@
     };
     entradas.forEach(function (e) { if (e.pago) naConta(e.conta).entrou[e.moeda] += e.valor; });
     saidas.forEach(function (x) { naConta(x.conta).saiu[x.moeda] += x.valor; });
+    // Quanto do que está contado como recebido tem uma linha de banco
+    // atrás. O resto é presunção: parcela marcada na mão e cobrança
+    // automática que ninguém conferiu. Somar os dois num número só é o
+    // que faz o mês fechar com lucro que não existe.
+    var confirmado = zero(), presumido = zero();
     entradas.forEach(function (e) {
-      if (e.pago) { recebido[e.moeda] += e.valor; acumula(porCatEntrada, e.categoria, e.moeda, e.valor); }
+      if (e.pago) {
+        recebido[e.moeda] += e.valor; acumula(porCatEntrada, e.categoria, e.moeda, e.valor);
+        if (e.confirmado) confirmado[e.moeda] += e.valor;
+        else presumido[e.moeda] += e.valor;
+      }
       else if (e.atrasada) atrasado[e.moeda] += e.valor;
       else aReceber[e.moeda] += e.valor;
     });
@@ -8539,6 +8573,7 @@
       key: key, entradas: entradas, saidas: saidas,
       porCatEntrada: porCatEntrada, porCatSaida: porCatSaida, porConta: porConta,
       recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
+      confirmado: confirmado, presumido: presumido,
       previsto: previsto,
       // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
       resultado: { "R$": recebido["R$"] - saiu["R$"], "€": recebido["€"] - saiu["€"] },
@@ -8551,7 +8586,10 @@
       pctEquilibrio: pct(emReais(recebido), emReais(saiu)),
       totalReais: { recebido: emReais(recebido), aReceber: emReais(aReceber),
         atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
-        resultado: emReais(recebido) - emReais(saiu) }
+        confirmado: emReais(confirmado), presumido: emReais(presumido),
+        resultado: emReais(recebido) - emReais(saiu),
+        // o resultado contando só o que tem extrato atrás
+        resultadoConfirmado: emReais(confirmado) - emReais(saiu) }
     };
   }
 
@@ -10267,6 +10305,7 @@
     ativarAssinatura: ativarAssinatura, encerrarAssinatura: encerrarAssinatura,
     assinaturaNoAviso: assinaturaNoAviso, fimDoCicloPago: fimDoCicloPago,
     registrarFalhaAssinatura: registrarFalhaAssinatura,
+    confirmarRecorrente: confirmarRecorrente,
     registrarPagamentoAssinatura: registrarPagamentoAssinatura,
     assinaturaFalhando: assinaturaFalhando,
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
