@@ -3610,6 +3610,38 @@
     return out;
   }
 
+  // "Bonfim" no cadastro e "BOMFIM" no extrato são a mesma pessoa;
+  // "Giovana" e "Giovanna" também. Uma letra de diferença não pode
+  // custar o reconhecimento — mas só em palavras longas o bastante para
+  // a semelhança significar alguma coisa.
+  function quaseIgual(a, b) {
+    if (a === b) return true;
+    if (a.length < 5 || b.length < 5) return false;
+    if (Math.abs(a.length - b.length) > 1) return false;
+    var i = 0, j = 0, dif = 0;
+    while (i < a.length && j < b.length) {
+      if (a.charAt(i) === b.charAt(j)) { i++; j++; continue; }
+      if (++dif > 1) return false;
+      if (a.length > b.length) i++;
+      else if (a.length < b.length) j++;
+      else { i++; j++; }
+    }
+    if (i < a.length || j < b.length) dif++;
+    return dif <= 1;
+  }
+  // Quantas partes do nome aparecem na descrição, aceitando a letra
+  // trocada. Devolve o número, para quem chama decidir o quanto basta.
+  function partesNaDescricao(nome, descricao) {
+    var desc = semAcento(descricao);
+    var palavras = desc.split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 3; });
+    return semAcento(nome).split(/\s+/)
+      .filter(function (x) { return x.length >= 4; })
+      .filter(function (p) {
+        if (desc.indexOf(p) >= 0) return true;
+        return palavras.some(function (w) { return quaseIgual(w, p); });
+      }).length;
+  }
+
   function sugerirConciliacao(transacoes, moeda, contaAtual) {
     // o que já foi processado numa análise anterior sai da fila
     var jaRegistradas = [];
@@ -3757,8 +3789,7 @@
         var partes = semAcento(a.nome).split(/\s+/).filter(function (x) { return x.length >= 4; });
         if (!partes.length) return false;
         // pelo menos duas partes do nome, ou o primeiro nome se for único
-        var achou = partes.filter(function (x) { return desc.indexOf(x) >= 0; }).length;
-        return achou >= Math.min(2, partes.length);
+        return partesNaDescricao(a.nome, t.descricao) >= Math.min(2, partes.length);
       });
       if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
       var perto2 = porProximidade(t);
@@ -3782,8 +3813,8 @@
       var desc = semAcento(x.trans.descricao || "");
       var quem = equipe.filter(function (n) {
         var partes = semAcento(n).split(/\s+/).filter(function (p) { return p.length >= 4; });
-        return partes.length && partes.filter(function (p) { return desc.indexOf(p) >= 0; }).length
-          >= Math.min(2, partes.length);
+        return partes.length
+          && partesNaDescricao(n, x.trans.descricao) >= Math.min(2, partes.length);
       })[0];
       if (quem) { x.categoria = "equipe"; x.pessoaEquipe = quem; }
       else if (/taxa|tarifa|mensageria|notificacao|boleto|pix/.test(desc)) x.categoria = "impostos";
@@ -3795,6 +3826,39 @@
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length,
       porEmail: sugestoes.filter(function (s) { return s.porEmail; }).length,
       semParcela: semMatch.filter(function (s) { return s.tipo === "sem_parcela"; }).length };
+  }
+
+  // Crédito de alguém que ainda não está na base. Virar "recebimento
+  // avulso" resolve o dinheiro e perde a pessoa: no mês seguinte a linha
+  // dela volta igual. Aqui a aluna nasce do próprio extrato, com o
+  // pagamento no nome dela e a pendência de completar o plano.
+  function novaAlunaDoExtrato(nome, trans, conta) {
+    var limpo = String(nome || "").trim().slice(0, 60);
+    if (!limpo) return null;
+    var quando = "";
+    var d = String((trans && trans.data) || "").split("/");
+    if (d.length === 3) quando = d[2] + "-" + d[1] + "-" + d[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(quando)) quando = iso(today());
+    var moeda = (trans && trans.moeda) || "R$";
+    var valor = Math.abs((trans && trans.valor) || 0);
+
+    var p = novaPessoa({ nome: limpo, moeda: moeda, canal: "Extrato bancário" });
+    mutate(p.id, function (x) {
+      x.status = "aluna";
+      x.estagio = "matriculado";
+      x.desde = quando;
+      pushHist(x, "pagamento", "Pagamento de " + fmtMoney(moeda, valor)
+        + " reconhecido no extrato \u00b7 cadastro criado a partir dele");
+    });
+    addLancamento({ tipo: "entrada", categoria: "outra",
+      descricao: limpo + " \u00b7 pagamento sem plano cadastrado",
+      moeda: moeda, valor: valor, conta: conta || "", data: quando });
+    addTarefa({ titulo: "Completar o plano de " + limpo,
+      detalhe: "Entrou pelo extrato com " + fmtMoney(moeda, valor)
+        + ". Falta turma, valor da parcela e n\u00famero de parcelas para a cobran\u00e7a passar a existir.",
+      dono: donoDaIntegracao(), por: "Caixa" });
+    if (trans) registrarTransacao(trans, "aluna criada pelo extrato");
+    return p;
   }
 
   function conciliar(pessoaId, mesKey, descricao, trans, contratoIdx, conta) {
@@ -10039,6 +10103,7 @@
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
     contaDaDescricao: contaDaDescricao, emailDaTransacao: emailDaTransacao,
+    partesNaDescricao: partesNaDescricao, novaAlunaDoExtrato: novaAlunaDoExtrato,
     addConta: addConta, removeConta: removeConta,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
     whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,

@@ -511,6 +511,12 @@
               <sc-if value="{{ x.lancavel }}">
                 <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.lancarLabel }}</button>
               </sc-if>
+              <sc-if value="{{ x.temNovaAluna }}">
+                <button onclick="{{ x.onNovaAluna }}" title="Cria a aluna com este pagamento no nome dela e deixa a pendência de completar turma, valor e parcelas." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.novaAlunaLabel }}</button>
+              </sc-if>
+              <sc-if value="{{ x.temExtraEquipe }}">
+                <button onclick="{{ x.onExtraEquipe }}" title="Pagamento à equipe além do que a folha calcula: entra como despesa própria, sem quitar a folha do mês." style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.extraEquipeLabel }}</button>
+              </sc-if>
               <sc-if value="{{ x.temMinhaConta }}">
                 <button onclick="{{ x.onMinhaConta }}" title="Transferência para empresa ou conta própria. Não é registrada como despesa e passa a ser reconhecida automaticamente nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Transferência entre contas próprias</button>
               </sc-if>
@@ -1095,20 +1101,45 @@ class Component extends DCLogic {
               : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição"),
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
+          : (lancada === "nova" ? "Aluna cadastrada"
           : (lancada === "conf" ? "Conferida"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
           : (lancada === "avu" ? "Recebimento avulso"
-          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada"))))),
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
+        // pagamento à equipe além da folha calculada (um extra, um
+        // acerto): quitar a folha esconderia essa despesa
+        temExtraEquipe: saida && ehFolha && !lancada,
+        extraEquipeLabel: "Foi a mais — lançar como despesa",
+        onExtraEquipe: () => {
+          const d = (x.trans.data || "").split("/");
+          CRM.addLancamento({ tipo: "saida", categoria: "equipe",
+            descricao: x.pessoaEquipe + " · pagamento além da folha",
+            moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+            conta: this.contaAtual(),
+            data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          CRM.registrarTransacao(x.trans, "despesa além da folha");
+          marcar(true);
+        },
         // dinheiro indo para a própria empresa (GF Education) ou para a
         // própria pessoa não é despesa — e marcado uma vez, o extrato
         // reconhece sozinho nas próximas importações
-        temMinhaConta: saida && !ehFolha && !lancada && !!contraparte,
+        // vale para os dois lados: dinheiro que vai para a própria
+        // empresa e dinheiro que vem dela não são despesa nem receita
+        temMinhaConta: !ehFolha && !lancada && !!contraparte,
         onMinhaConta: () => {
           CRM.addContaPropria(contraparte);
           CRM.registrarTransacao(x.trans, "conta própria");
           marcar("int");
+        },
+        // crédito de quem ainda não está na base: em vez de virar
+        // recebimento sem dono, a aluna nasce do extrato
+        temNovaAluna: !saida && !lancada && !!contraparte && x.tipo !== "sem_parcela",
+        novaAlunaLabel: "Cadastrar " + contraparte.split(/\s+/).slice(0, 2).join(" "),
+        onNovaAluna: () => {
+          CRM.novaAlunaDoExtrato(contraparte, x.trans, this.contaAtual());
+          marcar("nova");
         },
         // crédito que a análise não achou: a pessoa escolhe a parcela
         conciliavel: !saida && !lancada,
