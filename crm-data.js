@@ -3634,6 +3634,25 @@
     // todas as parcelas em aberto — inclusive de contrato encerrado, que é
     // como chega o pagamento retroativo do Asaas
     var abertas = parcelasAbertasTodas(moeda);
+    // A data do pagamento é um sinal forte e estava sendo ignorada: quem
+    // paga em 20/08 está quitando o que já venceu, não a parcela de
+    // setembro. Entre candidatas de mesmo peso, as já vencidas na data do
+    // pagamento vêm primeiro, da mais antiga para a mais nova; as que
+    // ainda vão vencer ficam por último.
+    var mesDaTransacao = function (t) {
+      var d = String((t && t.data) || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      return d ? d[3] + "-" + d[2] : "";
+    };
+    var porProximidade = function (t) {
+      var mesT = mesDaTransacao(t);
+      return function (a, b) {
+        if (mesT) {
+          var fa = a.mesKey > mesT ? 1 : 0, fb = b.mesKey > mesT ? 1 : 0;
+          if (fa !== fb) return fa - fb;
+        }
+        return a.mesKey < b.mesKey ? -1 : (a.mesKey > b.mesKey ? 1 : 0);
+      };
+    };
     var equipe = equipeLista().map(function (x) { return x.nome; });
     var usadas = {};
     var chaveAberta = function (a) { return a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx; };
@@ -3670,11 +3689,12 @@
           nome: pes.nome, email: e, recorrente: recorrente });
         return;
       }
+      var perto = porProximidade(t);
       cands.sort(function (a, b) {
         var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
         if (dv) return dv;
         if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
-        return a.mesKey < b.mesKey ? -1 : 1;
+        return perto(a, b);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;
@@ -3694,13 +3714,14 @@
       });
       if (!cands.length) { pendentes.push(t); return; }
       var desc = (t.descricao || "").toLowerCase();
+      var perto1 = porProximidade(t);
       cands.sort(function (a, b) {
         var an = desc.indexOf(firstName(a.nome).toLowerCase()) >= 0 ? 0 : 1;
         var bn = desc.indexOf(firstName(b.nome).toLowerCase()) >= 0 ? 0 : 1;
         if (an !== bn) return an - bn;
         // contrato vigente ganha do encerrado quando os dois cabem
         if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
-        return a.mesKey < b.mesKey ? -1 : 1;
+        return perto1(a, b);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;
@@ -3724,10 +3745,12 @@
         return achou >= Math.min(2, partes.length);
       });
       if (!cands.length) { semMatch.push({ trans: t, tipo: "sem_match" }); return; }
+      var perto2 = porProximidade(t);
       cands.sort(function (a, b) {
         var dv = Math.abs(a.valor - t.valor) - Math.abs(b.valor - t.valor);
         if (dv) return dv;
-        return a.encerrada === b.encerrada ? 0 : (a.encerrada ? 1 : -1);
+        if (a.encerrada !== b.encerrada) return a.encerrada ? 1 : -1;
+        return perto2(a, b);
       });
       var alvo = cands[0];
       usadas[chaveAberta(alvo)] = true;

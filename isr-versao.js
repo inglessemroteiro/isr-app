@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-p",
+  numero: "2026.08.21-q",
   data: "21/08/2026",
-  nota: "O systeme fala direto com a Conexão: a ação Enviar webhook aponta para o endereço com o evento na URL, e o e-mail é achado dentro do corpo no formato que vier. Cancelamento e cobrança falhada dispensam o Zapier"
+  nota: "A conciliação passa a olhar a data do pagamento: entre parcelas do mesmo valor, quita primeiro o que já venceu, da mais antiga para a mais nova. A data aparece do lado do valor na sugestão"
 };
