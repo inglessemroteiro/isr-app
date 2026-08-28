@@ -478,6 +478,9 @@
             <sc-if value="{{ temTaxas }}">
               <button onclick="{{ onLancarTaxas }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar as {{ nTaxas }} taxas como despesa ({{ totalTaxas }})</button>
             </sc-if>
+            <sc-if value="{{ temRetiradasAuto }}">
+              <button onclick="{{ onLancarRetiradas }}" title="Transferências para contas suas já reconhecidas. Não são despesa e não mudam o lucro; entram no Caixa como retirada do mês." style="border: 1px solid #d8c4b2; background: #fff; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ retiradasLabel }}</button>
+            </sc-if>
           </div>
           <sc-for list="{{ sugestoes }}" as="s" hint-placeholder-count="2">
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
@@ -519,7 +522,10 @@
                 <button onclick="{{ x.onExtraEquipe }}" title="Pagamento à equipe além do que a folha calcula: entra como despesa própria, sem quitar a folha do mês." style="border: 1px solid #cf6b5c; background: #fff; color: #cf6b5c; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.extraEquipeLabel }}</button>
               </sc-if>
               <sc-if value="{{ x.temMinhaConta }}">
-                <button onclick="{{ x.onMinhaConta }}" title="Transferência para empresa ou conta própria. Não é registrada como despesa e passa a ser reconhecida automaticamente nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Transferência entre contas próprias</button>
+                <button onclick="{{ x.onMinhaConta }}" title="Dinheiro indo de uma empresa sua para outra. Continua sendo da escola: não é despesa nem retirada, e passa a ser reconhecido nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.minhaContaLabel }}</button>
+              </sc-if>
+              <sc-if value="{{ x.temRetirada }}">
+                <button onclick="{{ x.onRetirada }}" title="Dinheiro saindo da escola para a sua conta pessoal. Não é despesa e não muda o lucro, mas aparece no Caixa como retirada do mês." style="border: 1px solid #9c6f56; background: #fff; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Retirada para conta pessoal</button>
               </sc-if>
               <sc-if value="{{ x.temNovaAssinatura }}">
                 <button onclick="{{ x.onNovaAssinatura }}" title="O dinheiro chega todo mês pelo gateway e o sistema não sabe que este produto existe. Registrar a assinatura faz a receita dela aparecer no Caixa daqui para a frente." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.novaAssinaturaLabel }}</button>
@@ -616,7 +622,7 @@ class Component extends DCLogic {
     buscandoApi: false, erroApi: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
-            trocas: {}, edLanc: null };
+            trocas: {}, edLanc: null, retirouAuto: false, audFeito: "" };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
@@ -1299,12 +1305,13 @@ class Component extends DCLogic {
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "nova" ? "Aluna cadastrada"
+          : (lancada === "ret" ? "Retirada"
           : (lancada === "asn" ? "Assinatura registrada"
           : (lancada === "conf" ? "Conferida"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
           : (lancada === "avu" ? "Recebimento avulso"
-          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada"))))))),
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))))))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // pagamento à equipe além da folha calculada (um extra, um
         // acerto): quitar a folha esconderia essa despesa
@@ -1325,22 +1332,27 @@ class Component extends DCLogic {
         // reconhece sozinho nas próximas importações
         // vale para os dois lados: dinheiro que vai para a própria
         // empresa e dinheiro que vem dela não são despesa nem receita
+        // "conta própria" são duas coisas diferentes: entre as empresas
+        // da escola o dinheiro continua dentro; para a conta pessoal ele
+        // saiu. A primeira não muda nada, a segunda é retirada.
         temMinhaConta: !ehFolha && !lancada && !!contraparte,
+        minhaContaLabel: saida ? "Entre minhas empresas" : "Transferência entre contas próprias",
         onMinhaConta: () => {
-          CRM.addContaPropria(contraparte);
-          // dinheiro saindo da escola para uma conta sua não é despesa —
-          // não muda o lucro —, mas saiu do caixa e precisa aparecer.
-          // Sem registro, ele simplesmente sumia da tela.
-          if (saida) {
-            const d = (x.trans.data || "").split("/");
-            CRM.addLancamento({ tipo: "retirada", categoria: "retirada",
-              descricao: contraparte,
-              moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
-              conta: this.contaAtual(),
-              data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
-          }
-          CRM.registrarTransacao(x.trans, "conta própria");
+          CRM.addContaPropria(contraparte, "empresa");
+          CRM.registrarTransacao(x.trans, "entre empresas próprias");
           marcar("int");
+        },
+        temRetirada: saida && !ehFolha && !lancada && !!contraparte,
+        onRetirada: () => {
+          CRM.addContaPropria(contraparte, "pessoal");
+          const d = (x.trans.data || "").split("/");
+          CRM.addLancamento({ tipo: "retirada", categoria: "retirada",
+            descricao: contraparte,
+            moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+            conta: this.contaAtual(),
+            data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          CRM.registrarTransacao(x.trans, "retirada para conta pessoal");
+          marcar("ret");
         },
         // crédito de quem ainda não está na base: em vez de virar
         // recebimento sem dono, a aluna nasce do extrato
@@ -1808,6 +1820,31 @@ class Component extends DCLogic {
               marca[i] = true;
             });
             this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, marca) }));
+          }
+        };
+      }).call(this),
+      // transferência para conta pessoal já reconhecida sai da fila
+      // antes de aparecer: sem isto, some sem virar retirada nenhuma
+      ...(function () {
+        const rets = analise ? (analise.retiradasDetectadas || []) : [];
+        const total = rets.reduce((s, x) => s + Math.abs(x.valor), 0);
+        return {
+          temRetiradasAuto: rets.length > 0 && !this.state.retirouAuto,
+          retiradasLabel: "Lançar " + rets.length
+            + (rets.length === 1 ? " retirada" : " retiradas") + " · "
+            + CRM.fmtMoney(this.state.moedaExtrato, total),
+          onLancarRetiradas: () => {
+            rets.forEach(x => {
+              const d = (x.data || "").split("/");
+              CRM.addLancamento({ tipo: "retirada", categoria: "retirada",
+                descricao: (x.descricao || "Conta pessoal").slice(0, 60),
+                moeda: this.state.moedaExtrato, valor: Math.abs(x.valor),
+                conta: this.contaAtual(),
+                data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+              CRM.registrarTransacao(x, "retirada para conta pessoal");
+            });
+            this.setState({ retirouAuto: true });
+            this.bump();
           }
         };
       }).call(this),
