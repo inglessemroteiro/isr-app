@@ -3735,6 +3735,52 @@
     return out;
   }
 
+  // Parcela que alguém marcou como paga na mão e que nunca foi vista no
+  // banco. Quando o pagamento dela aparece no extrato, essa linha é a
+  // CONFIRMAÇÃO da parcela — não um pagamento novo. Sem isto, a
+  // conciliação ia procurar uma parcela em aberto, achava a do mês
+  // seguinte e a aluna acabava com dois meses pagos por um pagamento só.
+  function parcelasPagasSemExtrato(moeda) {
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      (p.contratos || []).forEach(function (c, ci) {
+        if (moeda && (c.moeda || p.moeda || "R$") !== moeda) return;
+        (c.meses || []).forEach(function (m) {
+          if (!m.pago || m.pagoEm || m.idExterno) return;
+          var v = parseMoney(m.valor || c.parcelaValor);
+          if (!v) return;
+          out.push({ pessoaId: p.id, nome: p.nome, mesKey: m.key, mesLabel: m.label,
+            valor: v, contratoIdx: ci, moeda: c.moeda || p.moeda || "R$" });
+        });
+      });
+    });
+    return out;
+  }
+  // O que existe no contrato de uma pessoa, para a tela explicar por que
+  // não achou parcela em aberto em vez de só dizer que não achou.
+  function situacaoDasParcelas(pessoaId, mesKey, moeda) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var r = { abertasNaMoeda: 0, abertasOutraMoeda: 0, moedasOutras: [],
+      pagasNoMes: 0, temContrato: !!(p.contratos || []).length };
+    (p.contratos || []).forEach(function (c) {
+      var m = c.moeda || p.moeda || "R$";
+      (c.meses || []).forEach(function (x) {
+        if (x.cancelada || !parseMoney(x.valor || c.parcelaValor)) return;
+        if (x.pago) {
+          if (mesKey && x.key === mesKey) r.pagasNoMes++;
+          return;
+        }
+        if (m === moeda) r.abertasNaMoeda++;
+        else {
+          r.abertasOutraMoeda++;
+          if (r.moedasOutras.indexOf(m) < 0) r.moedasOutras.push(m);
+        }
+      });
+    });
+    return r;
+  }
+
   // "Bonfim" no cadastro e "BOMFIM" no extrato são a mesma pessoa;
   // "Giovana" e "Giovanna" também. Uma letra de diferença não pode
   // custar o reconhecimento — mas só em palavras longas o bastante para
@@ -3861,6 +3907,27 @@
     // atrás: quer dizer que o mês do pagamento já está quitado e esta
     // linha adianta o próximo. Dizer isso evita a leitura de erro —
     // "paguei em agosto, por que casou com setembro?".
+    // A parcela do mês do pagamento já está marcada como paga e nunca foi
+    // vista no banco: esta linha é a prova dela. A tolerância de valor é
+    // maior aqui porque o gateway desconta a taxa — € 82,01 no extrato é
+    // a parcela de € 85,00.
+    var pagasSem = parcelasPagasSemExtrato(moeda);
+    var confirmacaoPara = function (pessoaId, t) {
+      var mesT = mesDaTransacao(t);
+      if (!mesT) return null;
+      return pagasSem.filter(function (a) {
+        if (a.pessoaId !== pessoaId || usadas[chaveAberta(a)]) return false;
+        if (a.mesKey !== mesT) return false;
+        return Math.abs(a.valor - t.valor) <= Math.max(0.6, a.valor * 0.15);
+      })[0] || null;
+    };
+    var comoConfirmacao = function (t, alvo, extra) {
+      usadas[chaveAberta(alvo)] = true;
+      sugestoes.push(Object.assign({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
+        mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
+        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
+        confirmacao: true, contratoIdx: alvo.contratoIdx, encerrada: false }, extra || {}));
+    };
     var adiantaMes = function (alvo, t) {
       var mesT = mesDaTransacao(t);
       return (mesT && alvo.mesKey > mesT) ? mesT : "";
@@ -3890,6 +3957,14 @@
         if (!pes) ident = "";
       }
       if (!pes) { restam.push(t); return; }
+      // antes de procurar parcela em aberto: a do mês do pagamento pode
+      // já estar marcada como paga na mão, e então esta linha é a prova
+      // dela, não um pagamento novo
+      var conf0 = confirmacaoPara(pes.id, t);
+      if (conf0) {
+        comoConfirmacao(t, conf0, { porEmail: !!e, email: e || ident, porIdent: ident || undefined });
+        return;
+      }
       var cands = abertas.filter(function (a) {
         return a.pessoaId === pes.id && !usadas[chaveAberta(a)];
       });
@@ -3903,7 +3978,8 @@
         var recorrente = assinaturaAtiva(pes) ? "assinatura"
           : ((pes.programa && !pes.programa.encerrado) ? "acompanhamento" : "");
         semMatch.push({ trans: t, tipo: "sem_parcela", pessoaId: pes.id,
-          nome: pes.nome, email: e || ident, recorrente: recorrente });
+          nome: pes.nome, email: e || ident, recorrente: recorrente,
+          situacao: situacaoDasParcelas(pes.id, mesDaTransacao(t), moeda) });
         return;
       }
       var perto = porProximidade(t);
@@ -3940,6 +4016,36 @@
           && d.indexOf(firstName(a.nome).toLowerCase()) >= 0;
       });
     };
+    // ── 0b: linha com nome forte, parcela do mês já marcada na mão ──
+    // Mesmo caso da passada acima, para quem é reconhecido pelo nome e
+    // não pelo e-mail. Vem antes da busca por valor: senão o pagamento
+    // dela ia parar na parcela em aberto do mês seguinte.
+    var restamB = [];
+    transacoes.forEach(function (t) {
+      if (t.valor <= 0) { restamB.push(t); return; }
+      var dono0 = donoDaLinha(t);
+      var conf = dono0 ? confirmacaoPara(dono0.id, t) : null;
+      // O nome do gateway pode não ser o nome do cadastro — "Fernanda
+      // Alves" no cartão e "Fernanda Chalita" na ficha. Com o mês e o
+      // valor batendo numa parcela já marcada como paga, o primeiro nome
+      // basta, desde que só uma pessoa se encaixe: duas candidatas viram
+      // dúvida, e dúvida não pode virar baixa.
+      if (!conf) {
+        var mesT = mesDaTransacao(t);
+        var desc = semAcento(t.descricao || "");
+        var possiveis = mesT ? pagasSem.filter(function (a) {
+          if (usadas[chaveAberta(a)] || a.mesKey !== mesT) return false;
+          if (Math.abs(a.valor - t.valor) > Math.max(0.6, a.valor * 0.15)) return false;
+          var pn = semAcento(firstName(a.nome));
+          return pn.length >= 4 && desc.indexOf(pn) >= 0;
+        }) : [];
+        if (possiveis.length === 1) conf = possiveis[0];
+      }
+      if (conf) comoConfirmacao(t, conf, { porNome: true });
+      else restamB.push(t);
+    });
+    transacoes = restamB;
+
     var comNome = [], semNome = [];
     transacoes.forEach(function (t) {
       if (t.valor <= 0) { semMatch.push({ trans: t, tipo: "saida" }); return; }
@@ -4028,6 +4134,7 @@
       x.email = String(pes.email || "").trim().toLowerCase();
       x.recorrente = assinaturaAtiva(pes) ? "assinatura"
         : ((pes.programa && !pes.programa.encerrado) ? "acompanhamento" : "");
+      x.situacao = situacaoDasParcelas(pes.id, mesDaTransacao(x.trans), moeda);
     });
 
     // ── saídas: quem é da equipe já sai categorizada ──────────
@@ -10579,6 +10686,8 @@
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
+    parcelasPagasSemExtrato: parcelasPagasSemExtrato,
+    situacaoDasParcelas: situacaoDasParcelas,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil

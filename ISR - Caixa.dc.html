@@ -1095,7 +1095,16 @@ class Component extends DCLogic {
         // melhor do que dizer "sem correspondência".
         // o e-mail é a identificação mais forte: vale mais do que o
         // valor bater, porque a taxa do gateway muda o valor
-        confLabel: (s.porEmail
+        // a parcela já estava marcada como paga: esta linha não põe
+        // dinheiro novo no mês, só prova o que já estava lá
+        confLabel: s.confirmacao
+          ? (s.mesLabel + " já está marcada como paga · esta linha é o pagamento dela no extrato"
+             + (Math.abs(s.diferenca) >= 0.01
+                 ? " · caíram " + CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor)
+                   + " dos " + CRM.fmtMoney(this.state.moedaExtrato, s.valor)
+                   + (s.diferenca < 0 ? " (taxa do gateway)" : "")
+                 : ""))
+          : (s.porEmail
           ? "E-mail confere · " + s.email + difDaParcela(s)
           : (s.porIdent
             ? "Conta já identificada · " + s.porIdent + difDaParcela(s)
@@ -1115,7 +1124,8 @@ class Component extends DCLogic {
                   ? " · nada em aberto em " + CRM.mesLabelDe(s.adianta)
                     + ", esta linha adianta o mês seguinte"
                   : "")),
-        confCor: (s.porEmail || s.porIdent) ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
+        confCor: (s.confirmacao || s.porEmail || s.porIdent) ? "#5a9e4b"
+          : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
           : (feita === "avu" ? "Recebimento avulso"
@@ -1139,6 +1149,25 @@ class Component extends DCLogic {
     const idxCerteiras = analise
       ? analise.sugestoes.map((s, i) => (certeira(s) && !this.state.conciliadas[i]) ? i : -1).filter(i => i >= 0)
       : [];
+    // Por que uma aluna matriculada não tem parcela em aberto para este
+    // pagamento. Sem dizer o motivo, a tela parece estar afirmando que
+    // ela não é aluna.
+    const porQueSemParcela = (x) => {
+      const st = x.situacao;
+      if (!st) return "não há parcela em aberto no nome dela. Escolha abaixo o que este pagamento quita.";
+      if (!st.temContrato)
+        return "ela não tem contrato cadastrado, só a ficha. Escolha abaixo o que este pagamento quita.";
+      if (st.abertasOutraMoeda && !st.abertasNaMoeda)
+        return "as parcelas dela estão em " + st.moedasOutras.join(" e ")
+          + " e esta linha é em " + this.state.moedaExtrato
+          + ". Corrija a moeda do contrato no perfil dela, ou escolha abaixo o que este pagamento quita.";
+      if (st.pagasNoMes)
+        return "a parcela do mês já está marcada como paga e com o pagamento conferido. "
+          + "Se este crédito é outro dinheiro, escolha abaixo o que ele quita.";
+      if (!st.abertasNaMoeda && !st.abertasOutraMoeda)
+        return "todas as parcelas dela já estão pagas. Escolha abaixo o que este pagamento quita.";
+      return "as parcelas em aberto dela são de outros valores. Escolha abaixo qual este pagamento quita.";
+    };
     const semMatch = analise ? analise.semMatch.map((x, i) => {
       const saida = x.tipo === "saida";
       const lancada = this.state.lancadas[i];
@@ -1176,8 +1205,9 @@ class Component extends DCLogic {
               ? (x.recorrente
                   ? "É de " + x.nome + (x.email ? " (" + x.email + ")" : "") + " · " + x.recorrente
                     + " já contada no Caixa deste mês. Marque como conferida para ela não voltar."
-                  : "É de " + x.nome + (x.email ? " (" + x.email + ")" : "")
-                    + ", e não há parcela em aberto no nome dela. Se o pagamento é de assinatura, registre abaixo; se quita outra coisa, escolha na lista.")
+                  // "não tem parcela em aberto" não explica nada para
+                  // quem está matriculada: o motivo é sempre um destes
+                  : "É de " + x.nome + (x.email ? " (" + x.email + ")" : "") + " · " + porQueSemParcela(x))
               : (soNumero
                   ? "A linha traz só o número da conta que enviou. Escolha em \"trocar para\" de quem é: as próximas transferências desse número já entram identificadas."
                   : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição")),
