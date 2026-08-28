@@ -44,6 +44,24 @@ const ddmmaaaa = (iso) => {
 async function stripe(de, ate) {
   if (!STRIPE) throw new Error("A chave do Stripe não está no Netlify. Crie STRIPE_API_KEY (ou API_ISR_SYSTEM) e faça um Trigger deploy.");
   const linhas = [];
+  const clientes = {};
+  // A cobrança de assinatura não traz o nome de quem pagou: a descrição é
+  // o nome da oferta ("Subscription payment for offers: #3315658 [ISR]
+  // Aulas em Grupo"), igual para todas as alunas do mesmo produto. Quem
+  // sabe quem é o cliente do Stripe — e é ele que tem o e-mail que casa
+  // com a ficha da aluna.
+  const cliente = async (id) => {
+    if (!id || typeof id !== "string") return { nome: "", email: "" };
+    if (clientes[id] === undefined) {
+      try {
+        const rc = await fetch("https://api.stripe.com/v1/customers/" + id,
+          { headers: { Authorization: "Bearer " + STRIPE } });
+        const c = await rc.json();
+        clientes[id] = { nome: (c && c.name) || "", email: (c && c.email) || "" };
+      } catch (e) { clientes[id] = { nome: "", email: "" }; }
+    }
+    return clientes[id];
+  };
   let starting_after = null;
   for (let pagina = 0; pagina < 10; pagina++) {
     const q = new URLSearchParams({ limit: "100" });
@@ -58,20 +76,24 @@ async function stripe(de, ate) {
     const corpo = await res.json();
     if (!res.ok) throw new Error("Stripe " + res.status + ": " + ((corpo.error || {}).message || ""));
 
-    (corpo.data || []).forEach(function (t) {
+    for (const t of (corpo.data || [])) {
       const fonte = t.source && typeof t.source === "object" ? t.source : null;
-      const quem = (fonte && (fonte.billing_details && fonte.billing_details.name))
-        || (fonte && fonte.description) || t.description || t.type;
+      const noCartao = fonte && fonte.billing_details && fonte.billing_details.name;
       // o e-mail é o que casa a cobrança com a aluna: o nome no cartão
       // vem abreviado, o e-mail é o mesmo do cadastro
       const doCartao = fonte && fonte.billing_details && fonte.billing_details.email;
       const doRecibo = fonte && (fonte.receipt_email || fonte.customer_email);
       const naDescricao = (String((fonte && fonte.description) || t.description || "")
         .match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i) || [])[0];
+      // sem nome e sem e-mail na cobrança, o cliente do Stripe tem os dois
+      const c = (!noCartao || !(doCartao || doRecibo || naDescricao))
+        ? await cliente(fonte && fonte.customer) : { nome: "", email: "" };
+      const quem = noCartao || c.nome
+        || (fonte && fonte.description) || t.description || t.type;
       linhas.push({
         data: ddmmaaaa(new Date(t.created * 1000).toISOString()),
         descricao: String(quem || t.type).slice(0, 120),
-        email: String(doCartao || doRecibo || naDescricao || "").toLowerCase(),
+        email: String(doCartao || doRecibo || naDescricao || c.email || "").toLowerCase(),
         // o valor líquido é o que mexeu no saldo; a taxa vem na própria
         // linha para a conciliação lançar como despesa
         valor: t.amount / 100,
@@ -80,7 +102,7 @@ async function stripe(de, ate) {
         idExterno: t.id,
         tipo: t.type
       });
-    });
+    }
     if (!corpo.has_more) break;
     starting_after = (corpo.data[corpo.data.length - 1] || {}).id;
     if (!starting_after) break;

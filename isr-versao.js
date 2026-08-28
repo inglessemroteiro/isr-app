@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-u",
+  numero: "2026.08.21-v",
   data: "21/08/2026",
-  nota: "Caixa: o resultado do mês separa o que tem linha de extrato atrás do que é presunção (parcela marcada na mão e cobrança automática que entra só porque o dia passou)"
+  nota: "Caixa: o mês fecha pelo extrato dos dois lados — entrada e despesa separam o que passou pelo banco do que entra por cadastro; cobrança de assinatura no Stripe chega com o nome e o e-mail de quem pagou; saldo liberado pelo gateway não é receita"
 };
