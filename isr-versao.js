@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-d",
+  numero: "2026.08.28-e",
   data: "28/08/2026",
-  nota: "Conta própria separa empresa de pessoal: transferência entre as suas empresas não muda nada, transferência para a sua conta pessoal vira retirada do mês"
+  nota: "Conciliar por busca: digite o nome e o pagamento vai para qualquer aluna da base, com parcela em aberto ou não — pagamento à vista entra no nome dela"
 };
