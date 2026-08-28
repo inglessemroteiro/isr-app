@@ -4581,7 +4581,7 @@
               return (x.email || "").trim().toLowerCase() === email;
             })[0];
             if (ev.evento === "cancelou") {
-              if (pes && assinaturaAtiva(pes)) {
+              if (pes && pes.assinatura && !pes.assinatura.encerrada) {
                 encerrarAssinatura(pes.id, "Cancelou no systeme", true);
                 mexeu++;
               }
@@ -6759,12 +6759,33 @@
   // parar a cobrança lá — senão a aluna sai da escola e continua sendo
   // debitada todo mês. Quando a notícia vem do próprio gateway
   // (jaParouNoGateway), não há o que fazer: já parou.
-  function encerrarAssinatura(pessoaId, motivo, jaParouNoGateway) {
+  // Cancelar não é perder o acesso na hora: no systeme, a assinatura
+  // vale até o fim do período já pago, e só então o acesso cai. Esta é a
+  // data desse fim — a próxima data de cobrança que não vai acontecer.
+  function fimDoCicloPago(asn, apartirDe) {
+    var ini = String((asn && asn.inicio) || "").slice(0, 10);
+    if (!ini) return "";
+    var dia = parseInt(ini.slice(8, 10), 10) || 1;
+    if (dia > 28) dia = 28;
+    var base = parseISO(apartirDe || iso(today())) || today();
+    var alvo = new Date(base.getFullYear(), base.getMonth(), dia);
+    if (alvo <= base) alvo = new Date(base.getFullYear(), base.getMonth() + 1, dia);
+    return iso(alvo);
+  }
+  function encerrarAssinatura(pessoaId, motivo, jaParouNoGateway, ateIso) {
     var p0 = getPessoa(pessoaId);
+    if (p0 && p0.assinatura && p0.assinatura.encerrada) return p0;  // já encerrada
     var r = mutate(pessoaId, function (p) {
       if (!p.assinatura) return;
+      // "encerrada" é a data do cancelamento — é o que faz a cobrança
+      // parar de contar no Caixa. "ate" é o último dia de acesso, já que
+      // o período foi pago; passar "agora" tira o acesso no mesmo dia.
       p.assinatura.encerrada = iso(today());
-      pushHist(p, "estagio", "Assinatura encerrada" + (motivo ? " \u00b7 " + motivo : ""));
+      p.assinatura.ate = ateIso === "agora" ? ""
+        : (ateIso || fimDoCicloPago(p.assinatura));
+      pushHist(p, "estagio", "Assinatura cancelada" + (motivo ? " \u00b7 " + motivo : "")
+        + (p.assinatura.ate && p.assinatura.ate > iso(today())
+            ? " \u00b7 acesso at\u00e9 " + ddmm(p.assinatura.ate) : ""));
     });
     if (p0 && p0.assinatura && !jaParouNoGateway) {
       addTarefa({ titulo: "Parar a cobrança de " + p0.nome + " no systeme",
@@ -6773,7 +6794,18 @@
     }
     return r;
   }
-  function assinaturaAtiva(p) { return !!(p && p.assinatura && !p.assinatura.encerrada); }
+  // Ativa é quem não cancelou — e também quem cancelou mas ainda está
+  // dentro do que pagou. Cortar o acesso no dia do pedido seria tirar
+  // dela um período que já foi cobrado.
+  function assinaturaAtiva(p) {
+    if (!p || !p.assinatura) return false;
+    if (!p.assinatura.encerrada) return true;
+    return !!(p.assinatura.ate && p.assinatura.ate >= iso(today()));
+  }
+  // Cancelada, mas ainda usando o período pago.
+  function assinaturaNoAviso(p) {
+    return !!(p && p.assinatura && p.assinatura.encerrada && assinaturaAtiva(p));
+  }
   // O cancelamento pelo app N\u00c3O encerra sozinho: registra o pedido e
   // cria a pend\u00eancia para a gest\u00e3o confirmar com a aluna.
   function pedirCancelamentoAssinatura(pessoaId) {
@@ -6893,6 +6925,9 @@
       assinantesAtivas().forEach(function (p) {
         var em = (p.email || "").trim().toLowerCase();
         if (em && vistos[em]) return;
+        // quem já cancelou some da lista do systeme mas continua com
+        // acesso até o fim do que pagou: não é uma saída nova
+        if (p.assinatura && p.assinatura.encerrada) return;
         out.push({ email: em, nome: p.nome, id: p.id, acao: "encerrar" });
       });
     }
@@ -6948,11 +6983,13 @@
 
     var asn = p.assinatura;
     out.push({ id: "assinatura", nome: "Assinatura",
-      contratado: !!(asn && !asn.encerrada),
-      detalhe: asn && !asn.encerrada
+      contratado: assinaturaAtiva(p),
+      detalhe: assinaturaAtiva(p)
         ? ("desde " + ddmm(asn.inicio)
           + (asn.valor ? " \u00b7 " + asn.valor + "/m\u00eas" : "")
-          + (asn.pedidoCancelamento ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
+          + (assinaturaNoAviso(p) ? " \u00b7 CANCELADA \u00b7 acesso at\u00e9 " + ddmm(asn.ate) : "")
+          + (asn.pedidoCancelamento && !asn.encerrada
+              ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
         : "",
       pago: null });
 
@@ -9906,6 +9943,7 @@
     registrarAcerto: registrarAcerto, removerAcerto: removerAcerto,
     // assinatura
     ativarAssinatura: ativarAssinatura, encerrarAssinatura: encerrarAssinatura,
+    assinaturaNoAviso: assinaturaNoAviso, fimDoCicloPago: fimDoCicloPago,
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-l",
+  numero: "2026.08.21-m",
   data: "21/08/2026",
-  nota: "A assinante volta a ter como cancelar pelo app, e encerrar a assinatura no sistema passa a criar a pendência de parar a cobrança no systeme — encerrar aqui nunca parou de cobrar lá"
+  nota: "Cancelar deixa de cortar o acesso na hora: como no systeme, a assinatura vale até o fim do período já pago, e só então o app fecha. A receita para no mês do cancelamento"
 };
