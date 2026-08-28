@@ -25,6 +25,12 @@
 var DB_SHEET = "_SistemaDB";      // dado bruto (não mexer)
 var CHUNK = 45000;                // limite seguro por célula
 
+// Carimbo da versão publicada. Abrir o endereço da Conexão sem nenhum
+// ?action= devolve este número: é assim que se sabe, olhando, se a
+// versão que está no ar é a mesma do arquivo — sem isso, uma publicação
+// esquecida parece funcionar até a hora errada.
+var VERSAO_SCRIPT = "2026.08.21-p";
+
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || "";
   if (action === "sistemaLoad") return json_(sistemaLoad_());
@@ -33,7 +39,12 @@ function doGet(e) {
   if (action === "jotform") return json_(jotformProxy_(e.parameter.path, e.parameter.key, e.parameter.base));
   if (action === "atividadesPendentes") return json_(atividadesPendentes_());
   if (action === "assinaturasPendentes") return json_(assinaturasPendentes_());
-  return json_({ ok: true, servico: "ISR Banco Central", acoes: ["sistemaLoad", "cadastrosPendentes", "systemeContacts", "POST sistemaSave", "POST novoCadastro", "POST cadastroProcessado"] });
+  return json_({ ok: true, servico: "ISR Banco Central", versao: VERSAO_SCRIPT,
+    leituras: ["sistemaLoad", "cadastrosPendentes", "atividadesPendentes",
+      "assinaturasPendentes", "systemeContacts", "jotform"],
+    escritas: ["sistemaSave", "novoCadastro", "cadastroProcessado",
+      "novaAtividade", "atividadeProcessada", "assinaturaEvento", "assinaturaProcessada"],
+    eventosDeAssinatura: ["assinou", "cancelou", "falhou", "pagou"] });
 }
 
 function doPost(e) {
