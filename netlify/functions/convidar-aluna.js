@@ -43,9 +43,13 @@ exports.handler = async (event, context) => {
     } catch (e) {}
   }
 
-  const enviada = corpo.chave || (event.headers && event.headers['x-isr-chave']) || '';
-  if (enviada !== CHAVE)
-    return { statusCode: 401, headers, body: JSON.stringify({ ok: false, erro: 'chave inválida' }) };
+  // espaço sobrando na variável do Netlify ou no que foi colado não pode
+  // ser a diferença entre funcionar e não funcionar
+  const enviada = String(corpo.chave || (event.headers && event.headers['x-isr-chave']) || '').trim();
+  if (enviada !== String(CHAVE).trim())
+    return { statusCode: 401, headers, body: JSON.stringify({ ok: false,
+      erro: 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
+        + 'No campo "chave" vai o VALOR da senha, não o nome da variável.' }) };
 
   const email = String(corpo.email || '').trim().toLowerCase();
   if (!email || email.indexOf('@') < 0)
