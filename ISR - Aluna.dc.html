@@ -710,6 +710,14 @@
         <sc-if value="{{ temCancelLink }}">
           <div style="padding: 0 24px 24px;">
             <a href="{{ cancelLink }}" target="_blank" rel="noopener" style="display: block; text-align: center; font-size: 11.5px; font-weight: 600; color: rgba(242,235,227,0.45); text-decoration: underline; padding: 10px;">Gerenciar ou cancelar a assinatura</a>
+            <p style="margin: 2px 0 0; text-align: center; font-size: 10.5px; line-height: 1.6; color: rgba(242,235,227,0.35);">Na sua conta: Configurações → Gerenciar minhas assinaturas. Ao cancelar, o acesso continua até o fim do período já pago.</p>
+          </div>
+        </sc-if>
+
+        <!-- cancelou e ainda está usando o que pagou -->
+        <sc-if value="{{ asnNoAviso }}">
+          <div style="padding: 0 24px 24px;">
+            <p style="margin: 0; text-align: center; font-size: 11.5px; line-height: 1.6; color: rgba(242,235,227,0.55);">{{ asnAteFrase }}</p>
           </div>
         </sc-if>
 
@@ -1843,7 +1851,12 @@ class Component extends DCLogic {
       // sem ele, vale o pedido interno (pendência para a equipe)
       temCancelLink: !!asn && !!asnCfg.cancelLink,
       cancelLink: asnCfg.cancelLink || "#",
-      asnPodeCancelar: !!asn && !(asn && asn.pedidoCancelamento) && !asnCfg.cancelLink,
+      asnPodeCancelar: !!asn && !asn.pedidoCancelamento && !asn.encerrada && !asnCfg.cancelLink,
+      // já cancelada, mas o período pago ainda corre
+      asnNoAviso: !!(CRM.assinaturaNoAviso && CRM.assinaturaNoAviso(p)),
+      asnAteFrase: (asn && asn.encerrada && asn.ate)
+        ? "Assinatura cancelada. Seu acesso vai até " + CRM.ddmm(asn.ate) + "."
+        : "",
       asnCancelando: this.state.cancelandoAsn,
       asnNaoCancelando: !this.state.cancelandoAsn,
       onCancelarAsn: () => {
