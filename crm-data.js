@@ -3857,6 +3857,27 @@
     // todas as parcelas em aberto — inclusive de contrato encerrado, que é
     // como chega o pagamento retroativo do Asaas
     var abertas = parcelasAbertasTodas(moeda);
+    // A aluna brasileira tem contrato em real e paga pelo Stripe, que
+    // cobra em euro. A parcela dela existe, só está na outra moeda — e
+    // ficava fora da conciliação inteira. Aqui ela entra convertida pelo
+    // câmbio configurado, guardando o valor de face original.
+    var outraMoeda = moeda === "€" ? "R$" : "€";
+    var cambio = taxaCambio() || 0;
+    if (cambio > 0) {
+      parcelasAbertasTodas(outraMoeda).forEach(function (a) {
+        var convertido = outraMoeda === "R$" ? a.valor / cambio : a.valor * cambio;
+        abertas.push(Object.assign({}, a, {
+          valor: Math.round(convertido * 100) / 100,
+          convertida: true, moedaOriginal: outraMoeda, valorOriginal: a.valor }));
+      });
+    }
+    // Convertida nunca bate no centavo: o câmbio do dia não é o
+    // configurado e o gateway ainda desconta a taxa. A folga é maior
+    // para ela, e só para ela.
+    var cabeNoValor = function (a, t) {
+      var folga = a.convertida ? Math.max(3, a.valor * 0.15) : 0.6;
+      return Math.abs(a.valor - t.valor) <= folga;
+    };
     // A data do pagamento é um sinal forte e estava sendo ignorada: quem
     // paga em 20/08 está quitando o que já venceu, não a parcela de
     // setembro. Entre candidatas de mesmo peso, as já vencidas na data do
@@ -3997,9 +4018,11 @@
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
-        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
+        diferenca: alvo.convertida ? 0 : Math.round((t.valor - alvo.valor) * 100) / 100,
         porEmail: !!e, email: e || ident, porIdent: ident || undefined,
         anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
+        convertida: alvo.convertida, valorOriginal: alvo.valorOriginal,
+        moedaOriginal: alvo.moedaOriginal,
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
     transacoes = restam;
@@ -4012,8 +4035,7 @@
     var temNomeNaLinha = function (t) {
       var d = (t.descricao || "").toLowerCase();
       return abertas.some(function (a) {
-        return Math.abs(a.valor - t.valor) <= 0.6
-          && d.indexOf(firstName(a.nome).toLowerCase()) >= 0;
+        return cabeNoValor(a, t) && d.indexOf(firstName(a.nome).toLowerCase()) >= 0;
       });
     };
     // ── 0b: linha com nome forte, parcela do mês já marcada na mão ──
@@ -4053,8 +4075,14 @@
     });
 
     comNome.concat(semNome).forEach(function (t) {
+      var descLinha = (t.descricao || "").toLowerCase();
       var cands = abertas.filter(function (a) {
-        return !usadas[chaveAberta(a)] && Math.abs(a.valor - t.valor) <= 0.6;
+        if (usadas[chaveAberta(a)] || !cabeNoValor(a, t)) return false;
+        // Parcela convertida só entra quando a linha diz o nome dela. A
+        // folga do câmbio é larga: por valor sozinho, um pagamento em
+        // euro casaria com quase qualquer parcela em real.
+        if (a.convertida && descLinha.indexOf(firstName(a.nome).toLowerCase()) < 0) return false;
+        return true;
       });
       if (!cands.length) { pendentes.push(t); return; }
       var desc = (t.descricao || "").toLowerCase();
@@ -4074,6 +4102,8 @@
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0,
         anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
+        convertida: alvo.convertida, valorOriginal: alvo.valorOriginal,
+        moedaOriginal: alvo.moedaOriginal,
         // a cobrança recorrente do gateway não traz o nome de quem pagou,
         // só o nome da oferta: dizer isso é melhor do que deixar a linha
         // sem explicação
@@ -4110,8 +4140,11 @@
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
-        diferenca: Math.round((t.valor - alvo.valor) * 100) / 100, porNome: true,
+        diferenca: alvo.convertida ? 0 : Math.round((t.valor - alvo.valor) * 100) / 100,
+        porNome: true,
         anterior: anteriorEmAberto(alvo), adianta: adiantaMes(alvo, t),
+        convertida: alvo.convertida, valorOriginal: alvo.valorOriginal,
+        moedaOriginal: alvo.moedaOriginal,
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
 
@@ -8523,7 +8556,11 @@
     var l = lancamentosLista();
     l.push({ id: "lc" + Date.now() + Math.floor(Math.random() * 1000),
       data: dados.data || iso(today()),
-      tipo: dados.tipo === "entrada" ? "entrada" : "saida",
+      // "retirada" é dinheiro saindo para conta da própria dona: não é
+      // despesa da escola, não muda o lucro, mas saiu do caixa e precisa
+      // ser visto
+      tipo: dados.tipo === "entrada" ? "entrada"
+        : (dados.tipo === "retirada" ? "retirada" : "saida"),
       categoria: dados.categoria || (dados.tipo === "entrada" ? "outra" : "outros"),
       descricao: dados.descricao || "Lançamento",
       moeda: dados.moeda || "R$",
@@ -8715,6 +8752,13 @@
     });
 
     var lancs = lancamentosDoMes(key);
+    // Retirada para conta própria não é despesa da escola — não muda o
+    // lucro — mas é dinheiro que saiu da conta. Some do resultado e
+    // aparece com nome próprio.
+    var retiradas = { "R$": 0, "€": 0 };
+    lancs.filter(function (l) { return l.tipo === "retirada"; }).forEach(function (l) {
+      retiradas[l.moeda] = (retiradas[l.moeda] || 0) + l.valor;
+    });
     lancs.filter(function (l) { return l.tipo === "entrada"; }).forEach(function (l) {
       entradas.push({ pessoaId: "", nome: l.descricao, categoria: l.categoria || "outra",
         detalhe: "Lançamento", moeda: l.moeda, valor: l.valor,
@@ -8797,6 +8841,7 @@
       recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
       confirmado: confirmado, presumido: presumido,
       saiuConfirmado: saiuConfirmado, saiuPresumido: saiuPresumido,
+      retiradas: retiradas,
       previsto: previsto,
       // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
       resultado: { "R$": recebido["R$"] - saiu["R$"], "€": recebido["€"] - saiu["€"] },
@@ -8811,7 +8856,14 @@
         atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
         confirmado: emReais(confirmado), presumido: emReais(presumido),
         saiuConfirmado: emReais(saiuConfirmado), saiuPresumido: emReais(saiuPresumido),
+        retiradas: emReais(retiradas),
         resultado: emReais(recebido) - emReais(saiu),
+        // O número que não pode enganar: só o dinheiro que entrou de
+        // verdade, menos TUDO que a escola já sabe que paga no mês —
+        // inclusive a folha e o custo fixo que ainda não passaram pelo
+        // banco. Errar para menos é seguro; errar para mais vira decisão
+        // tomada com dinheiro que não existe.
+        resultadoPrudente: emReais(confirmado) - emReais(saiu),
         // o mês contando só o que passou pelo banco, dos dois lados: é o
         // número que pode ser conferido linha por linha no extrato
         resultadoConfirmado: emReais(confirmado) - emReais(saiuConfirmado) }
@@ -10048,35 +10100,12 @@
       });
     });
 
-    // 3. Contrato numa moeda, dinheiro chegando em outra. Não dá para
-    //    corrigir sozinho: trocar R$ 400 por € 400 inventa preço. Fica
-    //    apontado, com os dois números na frente.
-    pessoas.forEach(function (p) {
-      var moedaPaga = {};
-      (p.contratos || []).forEach(function (c) {
-        (c.meses || []).forEach(function (m) {
-          if (m.pagoEm && m.valorRecebido && m.conta) {
-            var mo = c.moeda || p.moeda || "R$";
-            moedaPaga[mo] = (moedaPaga[mo] || 0) + 1;
-          }
-        });
-      });
-      var vig = contratoVigente(p);
-      if (!vig) return;
-      var mc = vig.moeda || p.moeda || "R$";
-      if (p.moeda && p.moeda !== mc) {
-        problemas.push({
-          id: "moeda|" + p.id, tipo: "moeda_do_contrato", gravidade: "media",
-          pessoaId: p.id, nome: p.nome,
-          titulo: p.nome + " tem ficha em " + p.moeda + " e contrato em " + mc,
-          detalhe: "Vale a moeda do contrato nas cobranças. Se o dinheiro dela chega na outra, "
-            + "o valor das parcelas precisa ser refeito no perfil — trocar só o símbolo mudaria o preço.",
-          seguro: false, rotuloCorrecao: ""
-        });
-      }
-    });
+    // Contrato em real com cobrança em euro NÃO é problema: é o desenho
+    // da escola, aluna brasileira pagando pelo gateway europeu. Quem
+    // resolve isso é a conciliação, que converte pelo câmbio — não uma
+    // pendência para alguém arrumar.
 
-    // 4. Duas fichas para a mesma pessoa: mesmo e-mail, ou nome igual.
+    // 3. Duas fichas para a mesma pessoa: mesmo e-mail, ou nome igual.
     //    Juntar cadastro é risco (histórico, contrato, acesso): aqui só
     //    aponta, com os dois nomes.
     var porEmail = {}, porNome = {};

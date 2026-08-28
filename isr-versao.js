@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-b",
+  numero: "2026.08.28-c",
   data: "28/08/2026",
-  nota: "Revisão dos dados: o Caixa varre a base, corrige de uma vez o que tem evidência de qual lado é o certo (cobrança recorrente repetida, lançamento em dobro) e agrupa o resto por tipo, com o motivo"
+  nota: "Contrato em real com cobrança em euro passa a ser conciliado pelo câmbio; o resultado do mês desconta toda a despesa conhecida e nunca superestima; retirada para conta própria aparece com nome"
 };

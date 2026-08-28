@@ -755,9 +755,11 @@ class Component extends DCLogic {
     // O número grande é o do extrato quando existe extrato: é o único que
     // pode ser conferido no banco. O outro — que soma cobrança automática
     // e parcela marcada na mão — vem logo abaixo, com nome.
-    const rConf = f.totalReais.resultadoConfirmado || 0;
+    const rConf = f.totalReais.resultadoPrudente || 0;
     const foraDoExtrato = (f.totalReais.presumido || 0) + (f.totalReais.saiuPresumido || 0);
-    const mandaExtrato = !ehFuturo && foraDoExtrato >= 0.01;
+    // basta haver receita ainda não vista no banco para o número de cima
+    // ser o prudente: a despesa já entra inteira nos dois casos
+    const mandaExtrato = !ehFuturo && (f.totalReais.presumido || 0) >= 0.01;
     const resTitulo = ehFuturo ? ("Previsão · " + mes.label)
       : (mandaExtrato ? ("Pelo extrato · " + mes.label)
         : ((ehAtual ? "Até hoje · " : "Fechado · ") + mes.label));
@@ -772,10 +774,14 @@ class Component extends DCLogic {
     const resCor = ehFuturo ? "#d4a574" : corDe(mandaExtrato ? rConf : res);
     const resFrase = (mandaExtrato
         ? "Entrou " + CRM.fmtMoney("R$", f.totalReais.confirmado || 0)
-          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiuConfirmado || 0)
-          + ", conferidos linha a linha com o extrato."
+          + ", só o que apareceu no extrato. Saiu " + CRM.fmtMoney("R$", f.totalReais.saiu)
+          + ", contando tudo que a escola paga no mês, folha e custo fixo inclusive."
         : "Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
           + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu) + ".")
+      + ((f.totalReais.retiradas || 0) > 0
+          ? " Além disso, " + CRM.fmtMoney("R$", f.totalReais.retiradas)
+            + " saíram para contas suas — não é despesa e não muda este número."
+          : "")
       + (f.recebido["\u20ac"] > 0 ? " Euro convertido a " + CRM.fmtMoney("R$", cambio) + " para somar com o real." : "")
       + (ehAtual ? " O mês ainda não acabou." : "")
       // real negativo e euro positivo (ou o contrário) é o caso mais fácil
@@ -834,17 +840,19 @@ class Component extends DCLogic {
       presum >= 0.01 ? CRM.fmtMoney("R$", presum) + " de entrada" : "",
       presumSaiu >= 0.01 ? CRM.fmtMoney("R$", presumSaiu) + " de despesa" : ""
     ].filter(Boolean).join(" e ");
-    const resConfirma = !semExtratoFrase
+    // a despesa já entra inteira no número de cima, então o que sobra
+    // para dizer aqui é o que ainda não entrou: a receita presumida
+    const resConfirma = presum < 0.01
       ? (tr.recebido > 0 || tr.saiu > 0
-          ? "Todo o movimento deste mês tem linha de extrato atrás."
+          ? "Toda a receita deste mês tem linha de extrato atrás."
           : "Nenhum movimento neste mês ainda.")
-      : "Somando também o que entra por cadastro — " + semExtratoFrase
-        + ", de cobrança automática, parcela marcada na mão, folha calculada e custo fixo — o mês daria "
+      : "Contando também as entradas que ainda não apareceram em conta nenhuma — "
+        + CRM.fmtMoney("R$", tr.presumido || 0)
+        + " de cobrança automática e parcela marcada na mão — o mês daria "
         + (res >= 0 ? "lucro de " + CRM.fmtMoney("R$", res)
                     : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(res)))
-        + ". Esse valor não pode ser conferido no banco: enquanto a linha não aparece em nenhuma conta, "
-        + "ela é estimativa.";
-    const resConfirmaCor = !semExtratoFrase ? "#8a7c6b" : "#9c6f56";
+        + ". Enquanto esse dinheiro não aparece no extrato, ele é estimativa.";
+    const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
 
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
@@ -1184,6 +1192,12 @@ class Component extends DCLogic {
               : (cert ? "Nome e valor conferem"
                 : (s.assinatura ? "Cobrança de assinatura · valor confere" : "Requer verificação")))))
           + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : "")
+          // contrato em real, cobrança em euro pelo gateway: a parcela é
+          // a mesma, o valor de face continua na moeda do contrato
+          + (s.convertida
+              ? " · parcela de " + CRM.fmtMoney(s.moedaOriginal, s.valorOriginal)
+                + ", cobrada em " + this.state.moedaExtrato + " pelo gateway"
+              : "")
           // por que não caiu no mês anterior: o mais antigo em aberto
           // continua em aberto, e o valor dele é outro
           + (s.anterior
@@ -1314,6 +1328,17 @@ class Component extends DCLogic {
         temMinhaConta: !ehFolha && !lancada && !!contraparte,
         onMinhaConta: () => {
           CRM.addContaPropria(contraparte);
+          // dinheiro saindo da escola para uma conta sua não é despesa —
+          // não muda o lucro —, mas saiu do caixa e precisa aparecer.
+          // Sem registro, ele simplesmente sumia da tela.
+          if (saida) {
+            const d = (x.trans.data || "").split("/");
+            CRM.addLancamento({ tipo: "retirada", categoria: "retirada",
+              descricao: contraparte,
+              moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+              conta: this.contaAtual(),
+              data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          }
           CRM.registrarTransacao(x.trans, "conta própria");
           marcar("int");
         },
