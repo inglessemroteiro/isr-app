@@ -9912,6 +9912,51 @@
       resultadoRealizado: recReal - realDespesa };
   }
 
+  // Receita contada duas vezes no mesmo mês. São duas formas:
+  //
+  //   a mesma pessoa com assinatura E acompanhamento do mesmo valor —
+  //   o produto foi cadastrado duas vezes e cobra dobrado no Caixa;
+  //
+  //   dois lançamentos de mesmo valor no mês — o mesmo dinheiro digitado
+  //   e depois lançado a partir do extrato.
+  //
+  // Nenhuma das duas o sistema pode desfazer por conta própria: dois
+  // pagamentos iguais no mesmo mês existem. Ele aponta, quem decide é
+  // quem conhece o caso.
+  function duplicidadesDeReceita(key) {
+    var k = key || mesAtualKey();
+    var fin = financeiroMes(k);
+    var recorrentes = [], lancamentos = [];
+    var porPessoa = {};
+    fin.entradas.forEach(function (e) {
+      if (!e.recorrente || !e.pessoaId) return;
+      var kk = e.pessoaId + "|" + e.moeda + "|" + e.valor.toFixed(2);
+      (porPessoa[kk] = porPessoa[kk] || []).push(e);
+    });
+    Object.keys(porPessoa).forEach(function (kk) {
+      var l = porPessoa[kk];
+      if (l.length < 2) return;
+      recorrentes.push({ pessoaId: l[0].pessoaId, nome: l[0].nome, moeda: l[0].moeda,
+        valor: l[0].valor, quantas: l.length,
+        produtos: l.map(function (x) { return x.categoria; }) });
+    });
+    var porValor = {};
+    fin.entradas.forEach(function (e) {
+      if (!e.lancId) return;
+      var kk = e.moeda + "|" + e.valor.toFixed(2);
+      (porValor[kk] = porValor[kk] || []).push(e);
+    });
+    Object.keys(porValor).forEach(function (kk) {
+      var l = porValor[kk];
+      if (l.length < 2) return;
+      lancamentos.push({ moeda: l[0].moeda, valor: l[0].valor, quantas: l.length,
+        nomes: l.map(function (x) { return x.nome; }),
+        ids: l.map(function (x) { return x.lancId; }) });
+    });
+    return { recorrentes: recorrentes, lancamentos: lancamentos,
+      total: recorrentes.length + lancamentos.length };
+  }
+
   // ── CONFERÊNCIA FINANCEIRA ────────────────────────────────────
   //
   // Um número na tela não vale nada se ninguém sabe de onde ele veio.
@@ -10066,6 +10111,23 @@
           + (fin.totalReais.resultadoConfirmado >= 0 ? "lucro de " : "prejuízo de ")
           + fmtMoney("R$", Math.abs(fin.totalReais.resultadoConfirmado)) + ".",
       true);
+
+    // 7d. Receita contada duas vezes: a mesma pessoa com dois produtos
+    //     recorrentes do mesmo valor, ou o mesmo valor lançado duas vezes
+    //     no mês. Infla o resultado sem ninguém perceber.
+    var dup = duplicidadesDeReceita(k);
+    var textoDup = dup.recorrentes.map(function (d) {
+      return d.nome + " (" + fmtMoney(d.moeda, d.valor) + " em "
+        + d.quantas + " cobranças recorrentes)";
+    }).concat(dup.lancamentos.map(function (d) {
+      return d.quantas + " lançamentos de " + fmtMoney(d.moeda, d.valor)
+        + ": " + d.nomes.join(" e ");
+    }));
+    add("receita_sem_duplicidade", "Nenhuma receita contada duas vezes no mês",
+      dup.total === 0, "0 suspeitas", dup.total + " suspeitas",
+      textoDup.length
+        ? textoDup.join(" · ") + ". Confira se são dois pagamentos ou o mesmo contado duas vezes."
+        : "");
 
     // 8. Aluna ativa sem contrato é receita que ninguém vai cobrar.
     var semContrato = loadPessoas().filter(function (p) {
@@ -10688,6 +10750,7 @@
     recorrentesDoMes: recorrentesDoMes,
     parcelasPagasSemExtrato: parcelasPagasSemExtrato,
     situacaoDasParcelas: situacaoDasParcelas,
+    duplicidadesDeReceita: duplicidadesDeReceita,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil

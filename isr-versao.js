@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-y",
+  numero: "2026.08.21-z",
   data: "21/08/2026",
-  nota: "Conciliação: pagamento de parcela marcada na mão é reconhecido como a confirmação dela, não como pagamento novo do mês seguinte; e a tela diz por que uma aluna matriculada não tem parcela em aberto (moeda do contrato, parcelas já pagas)"
+  nota: "Caixa: o número grande do mês passa a ser o do extrato, o único que pode ser conferido no banco; e a tela aponta receita contada duas vezes (pessoa com dois produtos recorrentes de mesmo valor, lançamento repetido)"
 };
