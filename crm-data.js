@@ -9957,6 +9957,217 @@
       total: recorrentes.length + lancamentos.length };
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  AUDITORIA DOS DADOS
+  //
+  //  A conferência diz que um número não fecha. Isto vai atrás do
+  //  MOTIVO, em toda a base, e conserta o que dá para consertar sem
+  //  perguntar. O que sobra vem agrupado por tipo, com a evidência —
+  //  não uma linha de cada vez.
+  //
+  //  A régua para "corrigir sozinho": só quando existe evidência no
+  //  próprio dado de qual dos dois lados é o certo. Onde a evidência
+  //  não decide, o problema é listado e fica esperando — inventar o
+  //  dado da escola é pior do que apontar o conflito.
+  // ══════════════════════════════════════════════════════════════
+  function auditoriaDados() {
+    var problemas = [];
+    var pessoas = loadPessoas();
+    var mesesOlhados = mesesFinanceiro(3, 1).map(function (m) { return m.key; });
+
+    // 1. A mesma pessoa com assinatura E acompanhamento do mesmo valor.
+    //    Cobra dobrado no Caixa todo mês. Fica o produto que já foi
+    //    visto no extrato; se nenhum foi, fica o que mais gente tem —
+    //    produto coletivo é o real, o solitário é o cadastro repetido.
+    var quantosTem = { assinatura: 0, programa: 0 };
+    pessoas.forEach(function (p) {
+      if (p.assinatura && p.assinatura.valor && !p.assinatura.encerrada) quantosTem.assinatura++;
+      if (p.programa && p.programa.valor && !p.programa.encerrado) quantosTem.programa++;
+    });
+    pessoas.forEach(function (p) {
+      var a = p.assinatura, g = p.programa;
+      if (!a || !g || !a.valor || !g.valor) return;
+      if (a.encerrada || g.encerrado) return;
+      if (Math.abs(parseMoney(a.valor) - parseMoney(g.valor)) > 0.01) return;
+      if ((a.moeda || p.moeda) !== (g.moeda || p.moeda)) return;
+      var confA = Object.keys(a.confirmados || {}).length;
+      var confG = Object.keys(g.confirmados || {}).length;
+      var remover = "";
+      if (confA && !confG) remover = "programa";
+      else if (confG && !confA) remover = "assinatura";
+      else if (!confA && !confG)
+        remover = quantosTem.programa > quantosTem.assinatura ? "assinatura" : "programa";
+      problemas.push({
+        id: "dup_rec|" + p.id, tipo: "recorrente_duplicado", gravidade: "alta",
+        pessoaId: p.id, nome: p.nome, alvo: remover,
+        titulo: p.nome + " tem duas cobranças recorrentes de "
+          + fmtMoney(a.moeda || p.moeda || "€", parseMoney(a.valor)),
+        detalhe: "Assinatura e " + (g.nome || "Acompanhamento")
+          + " com o mesmo valor: o Caixa conta os dois todo mês."
+          + (remover
+              ? " " + (confA || confG
+                  ? "O extrato confirma " + (remover === "assinatura" ? (g.nome || "o acompanhamento") : "a assinatura")
+                    + ", então o outro sai."
+                  : "Nenhum dos dois foi visto no extrato; "
+                    + quantosTem[remover === "assinatura" ? "programa" : "assinatura"]
+                    + " pessoas têm o que fica e este é o repetido.")
+              : ""),
+        seguro: !!remover && !(confA && confG),
+        rotuloCorrecao: remover === "assinatura" ? "Remover a assinatura"
+          : (remover === "programa" ? "Remover o acompanhamento" : "")
+      });
+    });
+
+    // 2. Dois lançamentos de entrada iguais no mesmo mês: o mesmo
+    //    dinheiro digitado à mão e depois lançado do extrato. Fica o do
+    //    extrato — ele tem conta e prova; o digitado sai.
+    mesesOlhados.forEach(function (k) {
+      var porValor = {};
+      lancamentosDoMes(k).forEach(function (l) {
+        if (l.tipo !== "entrada") return;
+        var kk = l.moeda + "|" + Number(l.valor).toFixed(2);
+        (porValor[kk] = porValor[kk] || []).push(l);
+      });
+      Object.keys(porValor).forEach(function (kk) {
+        var l = porValor[kk];
+        if (l.length < 2) return;
+        var comConta = l.filter(function (x) { return !!x.conta; });
+        var semConta = l.filter(function (x) { return !x.conta; });
+        problemas.push({
+          id: "dup_lanc|" + k + "|" + kk, tipo: "lancamento_duplicado", gravidade: "alta",
+          alvo: (comConta.length && semConta.length) ? semConta[0].id : "",
+          titulo: l.length + " lançamentos de " + fmtMoney(l[0].moeda, l[0].valor)
+            + " em " + mesLabelDe(k),
+          detalhe: l.map(function (x) { return x.descricao; }).join(" · ")
+            + ". " + (comConta.length && semConta.length
+                ? "Um veio do extrato e o outro foi digitado: o digitado sai."
+                : "Nenhum tem conta de origem: confira qual é o repetido."),
+          seguro: !!(comConta.length && semConta.length),
+          rotuloCorrecao: "Remover o lançamento digitado"
+        });
+      });
+    });
+
+    // 3. Contrato numa moeda, dinheiro chegando em outra. Não dá para
+    //    corrigir sozinho: trocar R$ 400 por € 400 inventa preço. Fica
+    //    apontado, com os dois números na frente.
+    pessoas.forEach(function (p) {
+      var moedaPaga = {};
+      (p.contratos || []).forEach(function (c) {
+        (c.meses || []).forEach(function (m) {
+          if (m.pagoEm && m.valorRecebido && m.conta) {
+            var mo = c.moeda || p.moeda || "R$";
+            moedaPaga[mo] = (moedaPaga[mo] || 0) + 1;
+          }
+        });
+      });
+      var vig = contratoVigente(p);
+      if (!vig) return;
+      var mc = vig.moeda || p.moeda || "R$";
+      if (p.moeda && p.moeda !== mc) {
+        problemas.push({
+          id: "moeda|" + p.id, tipo: "moeda_do_contrato", gravidade: "media",
+          pessoaId: p.id, nome: p.nome,
+          titulo: p.nome + " tem ficha em " + p.moeda + " e contrato em " + mc,
+          detalhe: "Vale a moeda do contrato nas cobranças. Se o dinheiro dela chega na outra, "
+            + "o valor das parcelas precisa ser refeito no perfil — trocar só o símbolo mudaria o preço.",
+          seguro: false, rotuloCorrecao: ""
+        });
+      }
+    });
+
+    // 4. Duas fichas para a mesma pessoa: mesmo e-mail, ou nome igual.
+    //    Juntar cadastro é risco (histórico, contrato, acesso): aqui só
+    //    aponta, com os dois nomes.
+    var porEmail = {}, porNome = {};
+    pessoas.forEach(function (p) {
+      var e = String(p.email || "").trim().toLowerCase();
+      if (e) (porEmail[e] = porEmail[e] || []).push(p);
+      var n = semAcento(p.nome || "");
+      if (n) (porNome[n] = porNome[n] || []).push(p);
+    });
+    var jaVisto = {};
+    [porEmail, porNome].forEach(function (mapa, idx) {
+      Object.keys(mapa).forEach(function (k) {
+        var l = mapa[k];
+        if (l.length < 2) return;
+        var chave = l.map(function (x) { return x.id; }).sort().join("+");
+        if (jaVisto[chave]) return;
+        jaVisto[chave] = 1;
+        problemas.push({
+          id: "dup_pessoa|" + chave, tipo: "pessoa_duplicada", gravidade: "media",
+          pessoaId: l[0].id, nome: l[0].nome,
+          titulo: l.length + " fichas para " + l[0].nome,
+          detalhe: (idx === 0 ? "Mesmo e-mail: " : "Mesmo nome: ")
+            + l.map(function (x) { return x.nome + " (" + (x.status || "sem status") + ")"; }).join(" · ")
+            + ". Cada ficha cobra por conta, então a receita pode estar contada duas vezes.",
+          seguro: false, rotuloCorrecao: ""
+        });
+      });
+    });
+
+    // 5. Parcela marcada como paga que nunca apareceu em conta nenhuma.
+    //    Não é erro por si — é o que sustenta o "presumido" do Caixa.
+    //    Vem agrupado por mês, para virar uma tarefa e não trinta.
+    var porMes = {};
+    mesesOlhados.forEach(function (k) {
+      var l = parcelasPagasSemExtrato().filter(function (a) { return a.mesKey === k; });
+      if (l.length) porMes[k] = l;
+    });
+    Object.keys(porMes).forEach(function (k) {
+      var l = porMes[k];
+      var total = {};
+      l.forEach(function (a) { total[a.moeda] = (total[a.moeda] || 0) + a.valor; });
+      problemas.push({
+        id: "sem_extrato|" + k, tipo: "pago_sem_extrato", gravidade: "media",
+        titulo: l.length + " parcelas de " + mesLabelDe(k) + " marcadas como pagas sem linha de banco",
+        detalhe: Object.keys(total).map(function (m) { return fmtMoney(m, total[m]); }).join(" + ")
+          + " · " + unicos(l.map(function (a) { return firstName(a.nome); })).slice(0, 8).join(", ")
+          + ". Importe o extrato do mês: cada uma que aparecer vira confirmada.",
+        seguro: false, rotuloCorrecao: ""
+      });
+    });
+
+    var seguros = problemas.filter(function (x) { return x.seguro; });
+    return { problemas: problemas, total: problemas.length,
+      seguras: seguros.length, revisar: problemas.length - seguros.length };
+  }
+
+  // Aplica UMA correção. Só as marcadas como seguras têm o que aplicar:
+  // as outras dependem de informação que só a escola tem.
+  function aplicarCorrecao(prob) {
+    if (!prob || !prob.seguro) return { ok: false, msg: "Esta correção depende de uma decisão sua." };
+    if (prob.tipo === "recorrente_duplicado") {
+      var p0 = getPessoa(prob.pessoaId);
+      if (!p0) return { ok: false, msg: "Ficha não encontrada." };
+      var qual = prob.alvo;
+      mutate(prob.pessoaId, function (p) {
+        var nome = qual === "assinatura" ? "Assinatura" : ((p.programa && p.programa.nome) || "Acompanhamento");
+        if (qual === "assinatura") delete p.assinatura; else delete p.programa;
+        pushHist(p, "estagio", nome + " removida · cobrança repetida do mesmo valor");
+      });
+      return { ok: true, msg: "Cobrança repetida de " + p0.nome + " removida." };
+    }
+    if (prob.tipo === "lancamento_duplicado") {
+      if (!prob.alvo) return { ok: false, msg: "Sem lançamento identificado para remover." };
+      removeLancamento(prob.alvo);
+      return { ok: true, msg: "Lançamento repetido removido." };
+    }
+    return { ok: false, msg: "Correção desconhecida." };
+  }
+
+  // Todas as seguras de uma vez: é o que transforma trinta decisões em
+  // um clique.
+  function aplicarCorrecoesSeguras() {
+    var feitas = 0, msgs = [];
+    auditoriaDados().problemas.forEach(function (prob) {
+      if (!prob.seguro) return;
+      var r = aplicarCorrecao(prob);
+      if (r.ok) { feitas++; msgs.push(r.msg); }
+    });
+    return { feitas: feitas, msgs: msgs };
+  }
+
   // ── CONFERÊNCIA FINANCEIRA ────────────────────────────────────
   //
   // Um número na tela não vale nada se ninguém sabe de onde ele veio.
@@ -10751,6 +10962,8 @@
     parcelasPagasSemExtrato: parcelasPagasSemExtrato,
     situacaoDasParcelas: situacaoDasParcelas,
     duplicidadesDeReceita: duplicidadesDeReceita,
+    auditoriaDados: auditoriaDados, aplicarCorrecao: aplicarCorrecao,
+    aplicarCorrecoesSeguras: aplicarCorrecoesSeguras,
     parseExtrato: parseExtrato, sugerirConciliacao: sugerirConciliacao, conciliar: conciliar,
     parcelasAbertasTodas: parcelasAbertasTodas,
     // perfil

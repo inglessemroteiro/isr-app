@@ -565,6 +565,38 @@
       </sc-if>
     </div>
 
+    <!-- REVISÃO DOS DADOS — o que está errado na base, e o que dá para
+         consertar sem perguntar nada -->
+    <sc-if value="{{ temAuditoria }}">
+      <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid #c98a3a; border-radius: 12px; padding: 16px 18px;">
+        <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
+          <span style="font-size: 13px; font-weight: 700; color: #164951;">Revisão dos dados</span>
+          <span style="flex: 1; font-size: 11.5px; color: #8a7c6b;">{{ audResumo }}</span>
+          <sc-if value="{{ temSeguras }}">
+            <button onclick="{{ onCorrigirTudo }}" title="Aplica de uma vez as correções em que o próprio dado diz qual lado é o certo." style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ corrigirLabel }}</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ audFeito }}">
+          <div style="margin-top: 10px; font-size: 11.5px; color: #5a9e4b; font-weight: 700;">{{ audFeito }}</div>
+        </sc-if>
+        <sc-for list="{{ auditoria }}" as="ad" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px solid #f0ede8;">
+            <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ ad.cor }}; margin-top: 6px;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ ad.titulo }}</div>
+              <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ ad.detalhe }}</div>
+            </div>
+            <sc-if value="{{ ad.corrigivel }}">
+              <button onclick="{{ ad.onCorrigir }}" style="flex: none; border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ad.rotulo }}</button>
+            </sc-if>
+            <sc-if value="{{ ad.temPerfil }}">
+              <a href="{{ ad.perfilHref }}" style="flex: none; font-size: 11px; font-weight: 700; color: #8a7c6b; text-decoration: none; padding: 7px 4px;">abrir ficha</a>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
     <!-- CÂMBIO -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 220px;">
@@ -1446,6 +1478,40 @@ class Component extends DCLogic {
           : ("esperado " + c.esperado + " · encontrado " + c.obtido
              + (c.detalhe ? " · " + c.detalhe : ""))
       })),
+
+      ...(function () {
+        const aud = CRM.auditoriaDados ? CRM.auditoriaDados() : { problemas: [], seguras: 0, revisar: 0 };
+        return {
+          temAuditoria: aud.problemas.length > 0,
+          temSeguras: aud.seguras > 0,
+          corrigirLabel: "Corrigir " + aud.seguras + (aud.seguras === 1 ? " problema" : " problemas"),
+          audResumo: aud.seguras
+            ? aud.seguras + (aud.seguras === 1 ? " problema pode" : " problemas podem")
+              + " ser corrigido" + (aud.seguras === 1 ? "" : "s") + " agora"
+              + (aud.revisar ? " · " + aud.revisar + " precisa" + (aud.revisar === 1 ? "" : "m") + " de uma decisão sua" : "")
+            : aud.revisar + (aud.revisar === 1 ? " ponto precisa" : " pontos precisam") + " de uma decisão sua",
+          audFeito: this.state.audFeito || "",
+          auditoria: aud.problemas.map(x => ({
+            titulo: x.titulo, detalhe: x.detalhe,
+            cor: x.gravidade === "alta" ? "#cf6b5c" : "#d4a574",
+            corrigivel: !!x.seguro, rotulo: x.rotuloCorrecao,
+            temPerfil: !!x.pessoaId,
+            perfilHref: "ISR%20-%20Perfil.dc.html?id=" + (x.pessoaId || ""),
+            onCorrigir: () => {
+              const r = CRM.aplicarCorrecao(x);
+              this.setState({ audFeito: r.msg });
+              this.bump();
+            }
+          })),
+          onCorrigirTudo: () => {
+            const r = CRM.aplicarCorrecoesSeguras();
+            this.setState({ audFeito: r.feitas
+              ? r.feitas + (r.feitas === 1 ? " problema corrigido" : " problemas corrigidos") + "."
+              : "Nada foi alterado." });
+            this.bump();
+          }
+        };
+      }).call(this),
 
       resTitulo, resValor, resCor, resFrase, resColunas, resPendente,
       resConfirma, resConfirmaCor,

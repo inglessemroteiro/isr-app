@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-a",
+  numero: "2026.08.28-b",
   data: "28/08/2026",
-  nota: "Conciliação: parcela de contrato em outra moeda volta a aparecer na lista, para o pagamento ter onde ser dado baixa mesmo com a moeda do cadastro errada"
+  nota: "Revisão dos dados: o Caixa varre a base, corrige de uma vez o que tem evidência de qual lado é o certo (cobrança recorrente repetida, lançamento em dobro) e agrupa o resto por tipo, com o motivo"
 };
