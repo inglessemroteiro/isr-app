@@ -10,7 +10,9 @@
 // variables), nunca no navegador nem no repositório:
 //
 //   STRIPE_API_KEY      chave restrita, SÓ LEITURA (rk_live_...)
+//                       também aceita: API_ISR_SYSTEM
 //   ASAAS_API_KEY       chave da conta Asaas
+//                       também aceita: API_ISR_ASAAS_SISTEMA
 //   ISR_EXTRATO_CHAVE   senha que autoriza a chamada
 //
 // A ISR_EXTRATO_CHAVE é digitada uma vez no Caixa e fica guardada só
@@ -23,8 +25,11 @@
 // ════════════════════════════════════════════════════════════════
 
 const CHAVE = process.env.ISR_EXTRATO_CHAVE;
-const STRIPE = process.env.STRIPE_API_KEY;
-const ASAAS = process.env.ASAAS_API_KEY;
+// Os nomes de cada escola são os nomes dela. Aqui valem os canônicos e
+// também os que já estavam no painel do Netlify — trocar o nome de uma
+// variável que funciona não é trabalho de ninguém.
+const STRIPE = process.env.STRIPE_API_KEY || process.env.API_ISR_SYSTEM;
+const ASAAS = process.env.ASAAS_API_KEY || process.env.API_ISR_ASAAS_SISTEMA;
 
 const MOEDA = { brl: "R$", eur: "€", usd: "US$" };
 const ddmmaaaa = (iso) => {
@@ -37,7 +42,7 @@ const ddmmaaaa = (iso) => {
 // cobrança, taxa, estorno e o repasse para o banco. É o extrato, não a
 // lista de vendas.
 async function stripe(de, ate) {
-  if (!STRIPE) throw new Error("STRIPE_API_KEY não está configurada no Netlify");
+  if (!STRIPE) throw new Error("A chave do Stripe não está no Netlify. Crie STRIPE_API_KEY (ou API_ISR_SYSTEM) e faça um Trigger deploy.");
   const linhas = [];
   let starting_after = null;
   for (let pagina = 0; pagina < 10; pagina++) {
@@ -86,7 +91,7 @@ async function stripe(de, ate) {
 // ── Asaas ─────────────────────────────────────────────────────
 // os pagamentos recebidos no período, com o nome de quem pagou
 async function asaas(de, ate) {
-  if (!ASAAS) throw new Error("ASAAS_API_KEY não está configurada no Netlify");
+  if (!ASAAS) throw new Error("A chave do Asaas não está no Netlify. Crie ASAAS_API_KEY (ou API_ISR_ASAAS_SISTEMA) e faça um Trigger deploy.");
   const linhas = [];
   const clientes = {};
   for (let pagina = 0; pagina < 10; pagina++) {
