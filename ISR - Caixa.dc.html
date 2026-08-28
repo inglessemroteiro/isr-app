@@ -1042,6 +1042,18 @@ class Component extends DCLogic {
           label: a.nome + " · " + a.mesLabel + " · " + CRM.fmtMoney(this.state.moedaExtrato, a.valor)
             + (a.encerrada ? " · encerrada" : "") });
       });
+      // Contrato cadastrado numa moeda e pagamento recebido em outra
+      // acontece — e a parcela sumia da lista, deixando a linha sem
+      // saída nenhuma. Ela aparece com a moeda dita, para a baixa ser
+      // possível antes de arrumar o cadastro.
+      const outra = this.state.moedaExtrato === "€" ? "R$" : "€";
+      CRM.parcelasAbertasTodas(outra)
+        .sort((a, b) => (a.nome < b.nome ? -1 : 1))
+        .forEach(a => {
+          l.push({ v: a.pessoaId + "|" + a.mesKey + "|" + a.contratoIdx,
+            label: a.nome + " · " + a.mesLabel + " · " + CRM.fmtMoney(outra, a.valor)
+              + " · contrato em " + outra });
+        });
       // pagamento do acompanhamento (o programa no WhatsApp) pendente
       (CRM.pagamentosPendentesPrograma ? CRM.pagamentosPendentesPrograma(this.state.moedaExtrato) : [])
         .forEach(pr => {
@@ -1187,7 +1199,7 @@ class Component extends DCLogic {
       if (st.abertasOutraMoeda && !st.abertasNaMoeda)
         return "as parcelas dela estão em " + st.moedasOutras.join(" e ")
           + " e esta linha é em " + this.state.moedaExtrato
-          + ". Corrija a moeda do contrato no perfil dela, ou escolha abaixo o que este pagamento quita.";
+          + ". As parcelas dela aparecem na lista ao lado, com a moeda: escolha o mês e concilie.";
       if (st.pagasNoMes)
         return "a parcela do mês já está marcada como paga e com o pagamento conferido. "
           + "Se este crédito é outro dinheiro, escolha abaixo o que ele quita.";

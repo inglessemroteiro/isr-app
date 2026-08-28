@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-z",
-  data: "21/08/2026",
-  nota: "Caixa: o número grande do mês passa a ser o do extrato, o único que pode ser conferido no banco; e a tela aponta receita contada duas vezes (pessoa com dois produtos recorrentes de mesmo valor, lançamento repetido)"
+  numero: "2026.08.28-a",
+  data: "28/08/2026",
+  nota: "Conciliação: parcela de contrato em outra moeda volta a aparecer na lista, para o pagamento ter onde ser dado baixa mesmo com a moeda do cadastro errada"
 };
