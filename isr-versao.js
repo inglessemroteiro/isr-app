@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-v",
+  numero: "2026.08.21-w",
   data: "21/08/2026",
-  nota: "Caixa: o mês fecha pelo extrato dos dois lados — entrada e despesa separam o que passou pelo banco do que entra por cadastro; cobrança de assinatura no Stripe chega com o nome e o e-mail de quem pagou; saldo liberado pelo gateway não é receita"
+  nota: "Conciliação: assinante tem onde dar baixa (a cobrança do mês entra no \"trocar para\"), nome forte na linha manda na escolha da pessoa, mês vencido ganha do contrato novo e a linha avisa quando sobra mês mais antigo em aberto"
 };
