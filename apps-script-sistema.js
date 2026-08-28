@@ -50,8 +50,17 @@ function doPost(e) {
       return json_(novaAtividade_(body.action ? body : (e.parameter || {})));
     if (action === "atividadeProcessada")
       return json_(atividadeProcessada_(body.id || (e.parameter && e.parameter.id)));
-    if (action === "assinaturaEvento")
-      return json_(assinaturaEvento_(body.action ? body : (e.parameter || {})));
+    if (action === "assinaturaEvento") {
+      // O systeme manda o corpo DELE, sem os nossos campos: o que a
+      // escola controla é a URL. Então o que vier na URL manda, o corpo
+      // completa, e o e-mail é procurado no corpo se não vier nomeado.
+      var dados = {};
+      if (e && e.parameter) for (var kp in e.parameter) dados[kp] = e.parameter[kp];
+      for (var kb in body) if (dados[kb] === undefined) dados[kb] = body[kb];
+      if (!dados.email) dados.email = acharEmail_(body);
+      if (!dados.nome) dados.nome = acharNome_(body);
+      return json_(assinaturaEvento_(dados));
+    }
     if (action === "assinaturaProcessada")
       return json_(assinaturaProcessada_(body.id || (e.parameter && e.parameter.id)));
     return json_({ ok: false, error: "ação desconhecida" });
@@ -84,6 +93,51 @@ function assinSheet_() {
     sh.getRange(1, 1, 1, ASSIN_HEAD.length).setValues([ASSIN_HEAD]).setFontWeight("bold");
   }
   return sh;
+}
+
+// O corpo do webhook muda de plataforma para plataforma e de versão
+// para versão. Em vez de exigir um formato, o e-mail é procurado onde
+// ele estiver: primeiro nas chaves óbvias, depois no que houver dentro.
+function acharEmail_(o, prof) {
+  prof = prof || 0;
+  if (!o || prof > 6) return "";
+  if (typeof o === "string") {
+    var m = o.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    return m ? m[0].toLowerCase() : "";
+  }
+  if (typeof o !== "object") return "";
+  var obvias = ["email", "e-mail", "mail", "customer_email", "contact_email",
+    "customerEmail", "contactEmail"];
+  for (var i = 0; i < obvias.length; i++) {
+    var v = o[obvias[i]];
+    if (typeof v === "string") {
+      var mm = v.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (mm) return mm[0].toLowerCase();
+    }
+  }
+  for (var k in o) {
+    if (!o.hasOwnProperty(k)) continue;
+    var r = acharEmail_(o[k], prof + 1);
+    if (r) return r;
+  }
+  return "";
+}
+function acharNome_(o, prof) {
+  prof = prof || 0;
+  if (!o || typeof o !== "object" || prof > 4) return "";
+  var inteiro = o.name || o.nome || o.full_name || o.fullName || o.customer_name;
+  if (typeof inteiro === "string" && inteiro.trim()) return inteiro.trim();
+  var pri = o.first_name || o.firstName || o.primeiro_nome;
+  var ult = o.last_name || o.lastName || o.sobrenome;
+  if (typeof pri === "string" && pri.trim()) {
+    return (pri + " " + (typeof ult === "string" ? ult : "")).trim();
+  }
+  for (var k in o) {
+    if (!o.hasOwnProperty(k)) continue;
+    var r = acharNome_(o[k], prof + 1);
+    if (r) return r;
+  }
+  return "";
 }
 
 function assinaturaEvento_(p) {
