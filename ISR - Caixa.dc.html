@@ -957,6 +957,17 @@ class Component extends DCLogic {
       && (s.porEmail
         || (!s.porNome && (s.trans.descricao || "").toLowerCase()
               .indexOf(CRM.firstName(s.nome).toLowerCase()) >= 0));
+    // Quando o valor que caiu não é o valor da parcela, o rótulo precisa
+    // dizer os dois números. "Entrou € 20,00 a menos" obriga a fazer a
+    // conta de cabeça para saber de quanto era a parcela e quanto falta.
+    const difDaParcela = (s) => {
+      if (Math.abs(s.diferenca) < 0.01) return "";
+      const M = (v) => CRM.fmtMoney(this.state.moedaExtrato, v);
+      return " · parcela de " + M(s.valor)
+        + (s.diferenca < 0
+            ? " · faltam " + M(Math.abs(s.diferenca))
+            : " · " + M(s.diferenca) + " além da parcela");
+    };
     // toda parcela em aberto na moeda do extrato — inclusive de contrato
     // encerrado, porque o Asaas paga retroativo — mais a saída "outro",
     // para dinheiro que não é parcela de ninguém
@@ -1028,19 +1039,15 @@ class Component extends DCLogic {
         // o e-mail é a identificação mais forte: vale mais do que o
         // valor bater, porque a taxa do gateway muda o valor
         confLabel: (s.porEmail
-          ? "E-mail confere · " + s.email
-            + (Math.abs(s.diferenca) >= 0.01
-                ? (s.diferenca < 0
-                    ? " · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
-                    : " · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
-                : "")
-          : (s.porNome
-            ? (s.diferenca < 0
-                ? "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, Math.abs(s.diferenca)) + " a menos"
-                : "Nome confere · entrou " + CRM.fmtMoney(this.state.moedaExtrato, s.diferenca) + " a mais")
-            : (cert ? "Nome e valor conferem" : "Requer verificação")))
+          ? "E-mail confere · " + s.email + difDaParcela(s)
+          : (s.porIdent
+            ? "Conta já identificada · " + s.porIdent + difDaParcela(s)
+            : (s.porNome
+              ? "Nome confere" + difDaParcela(s)
+              : (cert ? "Nome e valor conferem"
+                : (s.assinatura ? "Cobrança de assinatura · valor confere" : "Requer verificação")))))
           + (s.encerrada ? " · contrato encerrado (pagamento retroativo)" : ""),
-        confCor: s.porEmail ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
+        confCor: (s.porEmail || s.porIdent) ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
           : (feita === "avu" ? "Recebimento avulso"
@@ -1082,6 +1089,9 @@ class Component extends DCLogic {
         .replace(/^sent money to |^received money from |^pix (para|de) /i, "")
         .replace(/ with reference.*$/i, "")
         .replace(/^[\d.\/-]+\s+/, "").trim().slice(0, 50);
+      // "NL29BUNQ2193982112" não é nome de gente: cadastrar isso criaria
+      // uma aluna chamada assim. Aqui a linha pede o dono do número.
+      const soNumero = CRM.ehSoIdentificador ? CRM.ehSoIdentificador(x.trans.descricao) : false;
       const marcar = (rotulo) =>
         this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, { [i]: rotulo }) }));
       return {
@@ -1098,7 +1108,9 @@ class Component extends DCLogic {
                   ? "É de " + x.nome + " (" + x.email + ") · " + x.recorrente
                     + " já contada no Caixa deste mês. Marque como conferida para ela não voltar."
                   : "É de " + x.nome + " (" + x.email + "), mas ela não tem parcela em aberto. Escolha abaixo o que este pagamento quita.")
-              : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição"),
+              : (soNumero
+                  ? "A linha traz só o número da conta que enviou. Escolha em \"trocar para\" de quem é: as próximas transferências desse número já entram identificadas."
+                  : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição")),
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "nova" ? "Aluna cadastrada"
@@ -1135,7 +1147,7 @@ class Component extends DCLogic {
         },
         // crédito de quem ainda não está na base: em vez de virar
         // recebimento sem dono, a aluna nasce do extrato
-        temNovaAluna: !saida && !lancada && !!contraparte && x.tipo !== "sem_parcela",
+        temNovaAluna: !saida && !lancada && !!contraparte && !soNumero && x.tipo !== "sem_parcela",
         novaAlunaLabel: "Cadastrar " + contraparte.split(/\s+/).slice(0, 2).join(" "),
         onNovaAluna: () => {
           CRM.novaAlunaDoExtrato(contraparte, x.trans, this.contaAtual());
@@ -1480,18 +1492,32 @@ class Component extends DCLogic {
                : "")
            + ((analise.internas || []).length
                ? (() => {
-                   const n = analise.internas.length;
-                   // de qual conta veio cada repasse: é o que separa
-                   // "dinheiro novo" de "dinheiro que já foi contado"
+                   // três coisas diferentes saem da fila e cada uma tem o
+                   // seu motivo: repasse entre contas, saldo que o gateway
+                   // segura, e o resto
+                   const retidas = analise.internas.filter(x => x.sistema === "retencao");
+                   const outras = analise.internas.filter(x => x.sistema !== "retencao");
                    const de = [];
-                   analise.internas.forEach(x => {
+                   outras.forEach(x => {
                      if (x.deContaNome && de.indexOf(x.deContaNome) < 0) de.push(x.deContaNome);
                    });
-                   return " " + n + (n === 1 ? " linha é repasse" : " linhas são repasse")
-                     + (de.length ? " de " + de.join(" e ") : " entre as suas próprias contas")
-                     + ": esse dinheiro já foi contado na conta de origem e não "
-                     + (n === 1 ? "entra" : "entram") + " de novo.";
+                   const n = outras.length, k = retidas.length;
+                   return (n
+                     ? " " + n + (n === 1 ? " linha é repasse" : " linhas são repasse")
+                       + (de.length ? " de " + de.join(" e ") : " entre as suas próprias contas")
+                       + ": esse dinheiro já foi contado na conta de origem e não "
+                       + (n === 1 ? "entra" : "entram") + " de novo."
+                     : "")
+                     + (k
+                       ? " " + k + (k === 1 ? " linha é saldo retido" : " linhas são saldo retido")
+                         + " pelo gateway: o valor continua na conta dele e não é despesa."
+                       : "");
                  })()
+               : "")
+           + ((analise.semValor || []).length
+               ? " " + analise.semValor.length
+                 + (analise.semValor.length === 1 ? " linha tem valor zero e ficou" : " linhas têm valor zero e ficaram")
+                 + " de fora."
                : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),

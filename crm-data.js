@@ -3544,9 +3544,134 @@
     return m ? m[0].toLowerCase() : "";
   }
 
+  // Parte do extrato chega sem nome nenhum: a linha traz só o número da
+  // conta que mandou o dinheiro ("NL29BUNQ2193982112"). Cadastrar isso
+  // como aluna criaria uma pessoa chamada NL29BUNQ2193982112; ignorar
+  // faria o mesmo número voltar todo mês.
+  //
+  // O caminho é dizer uma vez de quem é a conta. A partir daí o número
+  // identifica a pessoa como um e-mail identificaria.
+  var IDENT_KEY = "isr_ident_extrato_v1";
+  function identDaTransacao(t) {
+    var d = String((t && t.descricao) || "").trim();
+    var iban = d.match(/\b[A-Z]{2}\d{2}[A-Z0-9]{8,26}\b/i);
+    if (iban) return iban[0].toUpperCase();
+    // uma descrição que é só número (conta, agência, id do banco)
+    var so = d.replace(/[\s.\/-]/g, "");
+    if (so.length >= 8 && /^\d+$/.test(so)) return so;
+    return "";
+  }
+  // A descrição não tem nome de gente: é número de conta, sem letra que
+  // forme palavra. Serve para a tela não oferecer "cadastrar" um IBAN.
+  function ehSoIdentificador(descricao) {
+    var d = String(descricao || "").trim();
+    if (!d) return false;
+    if (!identDaTransacao({ descricao: d })) return false;
+    return !/[A-Za-zÀ-ú]{4,}/.test(d.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{8,26}\b/gi, " "));
+  }
+  function identsAll() {
+    try { return JSON.parse(localStorage.getItem(IDENT_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function donoDoIdentificador(ident) {
+    if (!ident) return null;
+    var r = identsAll()[String(ident).toUpperCase()];
+    return r && r.pessoaId ? (getPessoa(r.pessoaId) || null) : null;
+  }
+  function lembrarIdentificador(ident, pessoaId) {
+    var k = String(ident || "").toUpperCase();
+    if (!k || !pessoaId) return null;
+    var all = identsAll();
+    all[k] = { pessoaId: pessoaId, em: iso(today()) };
+    try { localStorage.setItem(IDENT_KEY, JSON.stringify(all)); } catch (e) {}
+    agendarSync();
+    return all;
+  }
+  function esquecerIdentificador(ident) {
+    var all = identsAll();
+    delete all[String(ident || "").toUpperCase()];
+    try { localStorage.setItem(IDENT_KEY, JSON.stringify(all)); } catch (e) {}
+    agendarSync();
+    return all;
+  }
+
+  // O repasse aparece duas vezes, uma em cada extrato: sai do Stripe
+  // como "STRIPE PAYOUT (€ -143,51)" e entra no bunq como um crédito de
+  // € 143,51 vindo de um IBAN que não diz nada ("NL41CITI…"). São o
+  // mesmo dinheiro. Sem cruzar os dois, o crédito do banco vira receita
+  // nova e o mês fecha com dinheiro que não existe.
+  //
+  // Cada repasse visto num extrato fica guardado; ao analisar o outro
+  // extrato, o crédito de mesmo valor e data próxima é reconhecido.
+  var REPASSES_KEY = "isr_repasses_v1";
+  function repassesAll() {
+    try { return JSON.parse(localStorage.getItem(REPASSES_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function registrarRepasse(t, conta, moeda) {
+    if (!t || !conta) return null;
+    var all = repassesAll();
+    all[chaveTransacao(t)] = { conta: conta, valor: Math.abs(t.valor || 0),
+      moeda: moeda || t.moeda || "", data: dataDoExtrato(t), em: iso(today()) };
+    try { localStorage.setItem(REPASSES_KEY, JSON.stringify(all)); } catch (e) {}
+    return all;
+  }
+  function dataDoExtrato(t) {
+    var d = String((t && t.data) || "").match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    return d ? (d[3] + "-" + d[2] + "-" + d[1]) : "";
+  }
+  // Crédito que corresponde a um repasse já visto no extrato da outra
+  // conta. A janela de dias existe porque o dinheiro sai num dia e cai no
+  // banco no outro.
+  // Um crédito com nome de gente na descrição NÃO entra aqui, mesmo que
+  // o valor bata: seria tirar da fila o pagamento de uma aluna. O repasse
+  // chega sem nome — um IBAN, "STRIPE PAYOUT", nada.
+  function repasseCasando(t, contaAtual, moeda, usados) {
+    if (!t || (t.valor || 0) <= 0) return null;
+    if (!ehSoIdentificador(t.descricao) && !linhaDeSistema(t.descricao)) return null;
+    var quando = dataDoExtrato(t);
+    var all = repassesAll(), achado = null;
+    Object.keys(all).forEach(function (k) {
+      if (achado) return;
+      var r = all[k];
+      if (r.conta === contaAtual) return;
+      // um repasse casa com uma linha só
+      if (usados && usados[k]) return;
+      if (moeda && r.moeda && r.moeda !== moeda) return;
+      if (Math.abs(r.valor - t.valor) > 0.02) return;
+      if (quando && r.data) {
+        var dias = Math.abs(new Date(quando) - new Date(r.data)) / 86400000;
+        if (dias > 7) return;
+      }
+      achado = r;
+      if (usados) usados[k] = true;
+    });
+    return achado;
+  }
+
   function ehContaPropria(descricao) {
     var d = semAcento(descricao || "");
     return contasProprias().some(function (n) { return n.length >= 3 && d.indexOf(n) >= 0; });
+  }
+  // O extrato do gateway vem cheio de linhas que não são despesa da
+  // escola, e perguntar sobre cada uma enche a tela de decisão que não
+  // existe:
+  //
+  //   "STRIPE PAYOUT"                        o repasse para o banco — é o
+  //                                          mesmo dinheiro que chega no
+  //                                          bunq, contar aqui seria contar
+  //                                          duas vezes
+  //   "Minimum balance held from a payout"   saldo que a Stripe segura na
+  //                                          conta; continua sendo dela
+  //   "Billing - Usage Fee"                  essa sim é despesa: a taxa de
+  //                                          uso do gateway
+  //
+  // Só vale para débito: um crédito com essas palavras é outra coisa.
+  function linhaDeSistema(descricao) {
+    var d = semAcento(descricao || "");
+    if (!d) return "";
+    if (/minimum balance|balance held|saldo minimo|reserva|reserve/.test(d)) return "retencao";
+    if (/payout|repasse ao banco|transfer to bank/.test(d)) return "repasse";
+    if (/usage fee|application fee|billing|invoice fee|stripe fee/.test(d)) return "taxa";
+    return "";
   }
   // Repasse de uma conta da escola para outra: no extrato do bunq, o
   // dinheiro do Stripe chega como "STRIPE PAYMENTS". Devolve a conta de
@@ -3653,14 +3778,34 @@
     // troca de moeda e transferência para conta própria (a empresa dela,
     // ela mesma) não são receita nem despesa — saem da fila antes de
     // qualquer sugestão
-    var internas = [];
+    var internas = [], semValor = [], repassesUsados = {};
     transacoes = transacoes.filter(function (t) {
+      // linha de € 0,00 não move dinheiro e não tem decisão a tomar
+      if (Math.abs(t.valor || 0) < 0.005) { semValor.push(t); return false; }
       var outra = contaDaDescricao(t.descricao, contaAtual);
       if (outra) {
         internas.push(Object.assign({}, t, { deConta: outra.id, deContaNome: outra.nome }));
         return false;
       }
       if (t.interna || ehContaPropria(t.descricao)) { internas.push(t); return false; }
+      // repasse do gateway para o banco e saldo retido por ele: dinheiro
+      // que continua sendo da escola, não despesa
+      if ((t.valor || 0) < 0) {
+        var sis = linhaDeSistema(t.descricao);
+        if (sis === "repasse") registrarRepasse(t, contaAtual, moeda);
+        if (sis === "repasse" || sis === "retencao") {
+          internas.push(Object.assign({}, t, { sistema: sis }));
+          return false;
+        }
+      }
+      // o outro lado do repasse: crédito de mesmo valor que já saiu do
+      // gateway, chegando aqui com um IBAN no lugar do nome
+      var vindo = repasseCasando(t, contaAtual, moeda, repassesUsados);
+      if (vindo) {
+        internas.push(Object.assign({}, t, { sistema: "repasse", deConta: vindo.conta,
+          deContaNome: contaLabel(vindo.conta) }));
+        return false;
+      }
       return true;
     });
     // todas as parcelas em aberto — inclusive de contrato encerrado, que é
@@ -3704,6 +3849,14 @@
       if (t.valor <= 0) { restam.push(t); return; }
       var e = emailDaTransacao(t);
       var pes = e ? idPorEmail[e] : null;
+      var ident = "";
+      // sem e-mail na linha, vale o número de conta que você já apontou
+      // numa conciliação anterior
+      if (!pes) {
+        ident = identDaTransacao(t);
+        pes = ident ? donoDoIdentificador(ident) : null;
+        if (!pes) ident = "";
+      }
       if (!pes) { restam.push(t); return; }
       var cands = abertas.filter(function (a) {
         return a.pessoaId === pes.id && !usadas[chaveAberta(a)];
@@ -3718,7 +3871,7 @@
         var recorrente = assinaturaAtiva(pes) ? "assinatura"
           : ((pes.programa && !pes.programa.encerrado) ? "acompanhamento" : "");
         semMatch.push({ trans: t, tipo: "sem_parcela", pessoaId: pes.id,
-          nome: pes.nome, email: e, recorrente: recorrente });
+          nome: pes.nome, email: e || ident, recorrente: recorrente });
         return;
       }
       var perto = porProximidade(t);
@@ -3733,7 +3886,7 @@
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor,
         diferenca: Math.round((t.valor - alvo.valor) * 100) / 100,
-        porEmail: true, email: e,
+        porEmail: !!e, email: e || ident, porIdent: ident || undefined,
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
     transacoes = restam;
@@ -3775,6 +3928,10 @@
       usadas[chaveAberta(alvo)] = true;
       sugestoes.push({ trans: t, pessoaId: alvo.pessoaId, nome: alvo.nome,
         mesKey: alvo.mesKey, mesLabel: alvo.mesLabel, valor: alvo.valor, diferenca: 0,
+        // a cobrança recorrente do gateway não traz o nome de quem pagou,
+        // só o nome da oferta: dizer isso é melhor do que deixar a linha
+        // sem explicação
+        assinatura: /subscription payment|assinatura|recurring/.test(desc) || undefined,
         contratoIdx: alvo.contratoIdx, encerrada: alvo.encerrada });
     });
 
@@ -3817,12 +3974,15 @@
           && partesNaDescricao(n, x.trans.descricao) >= Math.min(2, partes.length);
       })[0];
       if (quem) { x.categoria = "equipe"; x.pessoaEquipe = quem; }
+      else if (linhaDeSistema(x.trans.descricao) === "taxa") {
+        x.categoria = "impostos"; x.taxaGateway = true;
+      }
       else if (/taxa|tarifa|mensageria|notificacao|boleto|pix/.test(desc)) x.categoria = "impostos";
       else x.categoria = "outros";
     });
 
     return { sugestoes: sugestoes, semMatch: semMatch,
-      jaRegistradas: jaRegistradas, internas: internas,
+      jaRegistradas: jaRegistradas, internas: internas, semValor: semValor,
       porNome: sugestoes.filter(function (s) { return s.porNome; }).length,
       porEmail: sugestoes.filter(function (s) { return s.porEmail; }).length,
       semParcela: semMatch.filter(function (s) { return s.tipo === "sem_parcela"; }).length };
@@ -3884,6 +4044,17 @@
       });
       registrarTransacao(trans, "parcela de " + mesKey
         + (conta || trans.conta ? " \u00b7 " + contaLabel(conta || trans.conta) : ""));
+      // a linha vinha s\u00f3 com o n\u00famero da conta: agora esse n\u00famero tem
+      // dono e as pr\u00f3ximas dele j\u00e1 chegam identificadas
+      var ident = identDaTransacao(trans);
+      if (ident && ehSoIdentificador(trans.descricao)) lembrarIdentificador(ident, pessoaId);
+    }
+    // a cobran\u00e7a do m\u00eas tinha falhado e o dinheiro apareceu no extrato:
+    // o m\u00eas deixa de estar em atraso
+    var pago = getPessoa(pessoaId);
+    if (pago && pago.assinatura && pago.assinatura.falhou
+        && pago.assinatura.falhou.slice(0, 7) === String(mesKey || "").slice(0, 7)) {
+      registrarPagamentoAssinatura(pessoaId);
     }
     addHistory(pessoaId, "pagamento", "Pagamento conciliado com o extrato" + (descricao ? " · " + descricao.slice(0, 60) : ""));
   }
@@ -10103,6 +10274,10 @@
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
     contasLista: contasLista, contaMeta: contaMeta, contaLabel: contaLabel,
     contaDaDescricao: contaDaDescricao, emailDaTransacao: emailDaTransacao,
+    linhaDeSistema: linhaDeSistema, identDaTransacao: identDaTransacao,
+    registrarRepasse: registrarRepasse, repasseCasando: repasseCasando,
+    ehSoIdentificador: ehSoIdentificador, donoDoIdentificador: donoDoIdentificador,
+    lembrarIdentificador: lembrarIdentificador, esquecerIdentificador: esquecerIdentificador,
     partesNaDescricao: partesNaDescricao, novaAlunaDoExtrato: novaAlunaDoExtrato,
     addConta: addConta, removeConta: removeConta,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
