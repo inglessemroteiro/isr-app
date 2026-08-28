@@ -521,6 +521,9 @@
               <sc-if value="{{ x.temMinhaConta }}">
                 <button onclick="{{ x.onMinhaConta }}" title="Transferência para empresa ou conta própria. Não é registrada como despesa e passa a ser reconhecida automaticamente nas próximas importações." style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Transferência entre contas próprias</button>
               </sc-if>
+              <sc-if value="{{ x.temNovaAssinatura }}">
+                <button onclick="{{ x.onNovaAssinatura }}" title="O dinheiro chega todo mês pelo gateway e o sistema não sabe que este produto existe. Registrar a assinatura faz a receita dela aparecer no Caixa daqui para a frente." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.novaAssinaturaLabel }}</button>
+              </sc-if>
               <sc-if value="{{ x.conferivel }}">
                 <button onclick="{{ x.onConferir }}" title="O valor já está no Caixa como cobrança automática. Marcar como conferida evita que a linha volte na próxima análise." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conferida</button>
               </sc-if>
@@ -1106,7 +1109,12 @@ class Component extends DCLogic {
           + (s.anterior
               ? " · " + CRM.firstName(s.nome) + " continua com " + s.anterior.mesLabel
                 + " em aberto (" + CRM.fmtMoney(this.state.moedaExtrato, s.anterior.valor) + ")"
-              : ""),
+              // pagou em agosto e casou com setembro porque agosto já
+              // está quitado: sem essa frase, parece mês errado
+              : (s.adianta
+                  ? " · nada em aberto em " + CRM.mesLabelDe(s.adianta)
+                    + ", esta linha adianta o mês seguinte"
+                  : "")),
         confCor: (s.porEmail || s.porIdent) ? "#5a9e4b" : (s.porNome ? "#c98a3a" : (cert ? "#5a9e4b" : "#c98a3a")),
         pendente: !feita, feita: !!feita,
         feitaLabel: feita === "ign" ? "Ignorada"
@@ -1164,21 +1172,24 @@ class Component extends DCLogic {
                   : "Pagamento para " + x.pessoaEquipe + " · a folha já consta como despesa calculada. Este débito quita a folha do mês e não gera nova despesa.")
               : "Débito bancário · lançar como despesa do mês")
           : (x.tipo === "sem_parcela"
+              // sem e-mail no cadastro, o parêntese vazio só polui
               ? (x.recorrente
-                  ? "É de " + x.nome + " (" + x.email + ") · " + x.recorrente
+                  ? "É de " + x.nome + (x.email ? " (" + x.email + ")" : "") + " · " + x.recorrente
                     + " já contada no Caixa deste mês. Marque como conferida para ela não voltar."
-                  : "É de " + x.nome + " (" + x.email + "), mas ela não tem parcela em aberto. Escolha abaixo o que este pagamento quita.")
+                  : "É de " + x.nome + (x.email ? " (" + x.email + ")" : "")
+                    + ", e não há parcela em aberto no nome dela. Se o pagamento é de assinatura, registre abaixo; se quita outra coisa, escolha na lista.")
               : (soNumero
                   ? "A linha traz só o número da conta que enviou. Escolha em \"trocar para\" de quem é: as próximas transferências desse número já entram identificadas."
                   : "Nenhuma parcela em aberto com esse valor, e o nome não aparece na descrição")),
         lancavel: saida && !lancada && !folhaJaPaga, lancada: !!lancada || folhaJaPaga,
         feitoLabel: lancada === "int" ? "Entre suas contas"
           : (lancada === "nova" ? "Aluna cadastrada"
+          : (lancada === "asn" ? "Assinatura registrada"
           : (lancada === "conf" ? "Conferida"
           : (lancada === "ign" ? "Ignorada"
           : (lancada === "conc" ? "Conciliada"
           : (lancada === "avu" ? "Recebimento avulso"
-          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada")))))),
+          : (lancada === "prog" ? "Acompanhamento pago" : "Lançada"))))))),
         lancarLabel: ehFolha ? "Quitar a folha de " + CRM.firstName(x.pessoaEquipe) : "Lançar como despesa",
         // pagamento à equipe além da folha calculada (um extra, um
         // acerto): quitar a folha esconderia essa despesa
@@ -1223,6 +1234,28 @@ class Component extends DCLogic {
           const feito = aplicarTroca(t, x.trans);
           marcar(feito === true ? "conc" : feito);
         },
+        // dinheiro que chega todo mês de alguém sem produto recorrente
+        // no cadastro: o sistema não sabe que a assinatura existe, e por
+        // isso ela não entra no Caixa nem nos meses seguintes. O valor
+        // cheio é o que a aluna paga; o líquido é o que sobra da taxa.
+        ...(function () {
+          const bruto = Math.round((Math.abs(x.trans.valor) + (x.trans.taxa || 0)) * 100) / 100;
+          return {
+            temNovaAssinatura: !saida && !lancada && x.tipo === "sem_parcela"
+              && !x.recorrente && !!x.pessoaId,
+            novaAssinaturaLabel: "Registrar assinatura de "
+              + CRM.fmtMoney(this.state.moedaExtrato, bruto),
+            onNovaAssinatura: () => {
+              CRM.ativarAssinatura(x.pessoaId, {
+                valor: bruto.toFixed(2).replace(".", ","),
+                moeda: this.state.moedaExtrato,
+                inicio: (x.trans.data || "").split("/").reverse().join("-") || undefined });
+              CRM.confirmarRecorrente(x.pessoaId, mesTrans, "assinatura", x.trans);
+              CRM.registrarTransacao(x.trans, "assinatura registrada pelo extrato");
+              marcar("asn");
+            }
+          };
+        }).call(this),
         conferivel: !lancada && x.tipo === "sem_parcela" && !!x.recorrente,
         onConferir: () => {
           CRM.registrarTransacao(x.trans, x.recorrente + " de " + x.nome);
