@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-m",
+  numero: "2026.08.21-n",
   data: "21/08/2026",
-  nota: "Cancelar deixa de cortar o acesso na hora: como no systeme, a assinatura vale até o fim do período já pago, e só então o app fecha. A receita para no mês do cancelamento"
+  nota: "O aviso de cancelamento pode trazer a data em que o acesso acaba; sem ela, o sistema calcula pelo dia da cobrança. O Zap 2 passa a ser disparado pelo Stripe, já que o systeme não tem esse gatilho"
 };
