@@ -93,7 +93,14 @@ function assinaturaEvento_(p) {
   // "assinou" é o padrão: um Zap mal configurado não deve cancelar
   // ninguém por omissão do campo
   var ev = String(p.evento || "assinou").toLowerCase();
-  ev = (ev.indexOf("cancel") >= 0 || ev.indexOf("encerr") >= 0) ? "cancelou" : "assinou";
+  // quatro notícias possíveis. "assinou" é o padrão: um Zap mal
+  // configurado não deve cancelar ninguém por omissão do campo.
+  if (ev.indexOf("cancel") >= 0 || ev.indexOf("encerr") >= 0) ev = "cancelou";
+  else if (ev.indexOf("falh") >= 0 || ev.indexOf("venc") >= 0
+    || ev.indexOf("fail") >= 0 || ev.indexOf("past_due") >= 0) ev = "falhou";
+  else if (ev.indexOf("pagou") >= 0 || ev.indexOf("paid") >= 0
+    || ev.indexOf("recuper") >= 0) ev = "pagou";
+  else ev = "assinou";
   var id = "asn" + new Date().getTime() + Math.floor(Math.random() * 1000);
   assinSheet_().appendRow([id, new Date().toISOString(), ev,
     String(p.nome || ""), email, String(p.valor || ""), String(p.moeda || ""),

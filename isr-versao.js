@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.21-n",
+  numero: "2026.08.21-o",
   data: "21/08/2026",
-  nota: "O aviso de cancelamento pode trazer a data em que o acesso acaba; sem ela, o sistema calcula pelo dia da cobrança. O Zap 2 passa a ser disparado pelo Stripe, já que o systeme não tem esse gatilho"
+  nota: "Cobrança de assinatura que não passa deixa de ser contada como recebida: o mês vira atraso e fica a tarefa de falar com a aluna antes de o systeme desistir. O aviso vem da automação do próprio systeme"
 };

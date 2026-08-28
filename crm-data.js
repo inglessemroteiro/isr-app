@@ -4587,6 +4587,16 @@
                   /^\d{4}-\d{2}-\d{2}$/.test(ateEv) ? ateEv : undefined);
                 mexeu++;
               }
+            } else if (ev.evento === "falhou") {
+              if (pes && pes.assinatura) {
+                registrarFalhaAssinatura(pes.id, ev.ate || ev.recebidoEm);
+                mexeu++;
+              }
+            } else if (ev.evento === "pagou") {
+              if (pes && assinaturaFalhando(pes)) {
+                registrarPagamentoAssinatura(pes.id);
+                mexeu++;
+              }
             } else {
               if (!pes) {
                 pes = novaPessoa({ nome: ev.nome || email.split("@")[0], email: email,
@@ -6796,6 +6806,38 @@
     }
     return r;
   }
+  // A cobrança automática pode falhar: cartão vencido, limite, Klarna
+  // recusada. O systeme fica tentando de novo e a assinatura entra em
+  // "vencida". Enquanto isso, aquele mês NÃO entrou — e o Caixa não pode
+  // contar como se tivesse entrado.
+  function registrarFalhaAssinatura(pessoaId, dataIso) {
+    var p0 = getPessoa(pessoaId);
+    if (!p0 || !p0.assinatura) return null;
+    var quando = String(dataIso || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(quando)) quando = iso(today());
+    if (p0.assinatura.falhou === quando) return p0;
+    var r = mutate(pessoaId, function (p) {
+      p.assinatura.falhou = quando;
+      pushHist(p, "pagamento", "Cobran\u00e7a da assinatura n\u00e3o passou \u00b7 " + ddmm(quando));
+    });
+    addTarefa({ titulo: "Cobran\u00e7a de " + p0.nome + " n\u00e3o passou",
+      detalhe: "A assinatura dela est\u00e1 vencida no systeme. Falar com ela antes de o systeme desistir e cancelar.",
+      dono: donoDaIntegracao(), por: "sistema" });
+    return r;
+  }
+  // A cobrança voltou a passar: o mês deixa de estar em aberto.
+  function registrarPagamentoAssinatura(pessoaId) {
+    var p0 = getPessoa(pessoaId);
+    if (!p0 || !p0.assinatura || !p0.assinatura.falhou) return p0;
+    return mutate(pessoaId, function (p) {
+      delete p.assinatura.falhou;
+      pushHist(p, "pagamento", "Cobran\u00e7a da assinatura voltou a passar");
+    });
+  }
+  function assinaturaFalhando(p) {
+    return !!(p && p.assinatura && p.assinatura.falhou && !p.assinatura.encerrada);
+  }
+
   // Ativa é quem não cancelou — e também quem cancelou mas ainda está
   // dentro do que pagou. Cortar o acesso no dia do pedido seria tirar
   // dela um período que já foi cobrado.
@@ -6990,6 +7032,7 @@
         ? ("desde " + ddmm(asn.inicio)
           + (asn.valor ? " \u00b7 " + asn.valor + "/m\u00eas" : "")
           + (assinaturaNoAviso(p) ? " \u00b7 CANCELADA \u00b7 acesso at\u00e9 " + ddmm(asn.ate) : "")
+          + (assinaturaFalhando(p) ? " \u00b7 COBRAN\u00c7A N\u00c3O PASSOU em " + ddmm(asn.falhou) : "")
           + (asn.pedidoCancelamento && !asn.encerrada
               ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
         : "",
@@ -8155,9 +8198,12 @@
           detalhe: r.rotulo + " · cobrança automática",
           moeda: o.moeda || p.moeda || "€",
           valor: parseMoney(o.valor), valorLabel: o.valor,
-          // cobrança automática: passou o dia, entrou. Não existe
-          // "atrasada" aqui — ou já rodou, ou ainda vai rodar.
-          pago: venc <= hoje, venc: venc, atrasada: false, recorrente: true });
+          // cobrança automática: passou o dia, entrou — a não ser que o
+          // gateway tenha avisado que ela não passou naquele mês
+          pago: venc <= hoje && !(o.falhou && o.falhou.slice(0, 7) === key),
+          venc: venc,
+          atrasada: !!(o.falhou && o.falhou.slice(0, 7) === key && venc <= hoje),
+          recorrente: true });
       });
     });
 
@@ -9946,6 +9992,9 @@
     // assinatura
     ativarAssinatura: ativarAssinatura, encerrarAssinatura: encerrarAssinatura,
     assinaturaNoAviso: assinaturaNoAviso, fimDoCicloPago: fimDoCicloPago,
+    registrarFalhaAssinatura: registrarFalhaAssinatura,
+    registrarPagamentoAssinatura: registrarPagamentoAssinatura,
+    assinaturaFalhando: assinaturaFalhando,
     assinaturaAtiva: assinaturaAtiva, pedirCancelamentoAssinatura: pedirCancelamentoAssinatura,
     updatePerfilAluna: updatePerfilAluna,
     assinaturaCfg: assinaturaCfg, setAssinaturaCfg: setAssinaturaCfg,
