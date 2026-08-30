@@ -4494,7 +4494,10 @@
           (c.meses || []).forEach(function (m) {
             if (m.key === mesKey && m.pago) {
               if (trans.data) m.pagoEm = trans.data.split("/").reverse().join("-");
+              // quanto e em que moeda caiu de fato: uma mensalidade em real
+              // que entra em euro pelo Stripe só é contada certo com os dois
               if (trans.valor) m.valorRecebido = trans.valor;
+              if (trans.moeda) m.moedaRecebida = trans.moeda;
               if (trans.idExterno) m.idExterno = trans.idExterno;
               // por onde o dinheiro caiu: é o que permite conferir a
               // parcela com o extrato certo depois
@@ -8919,10 +8922,25 @@
           var dia = parseInt(c.vencDia, 10); if (isNaN(dia)) dia = 10;
           var venc = key + "-" + (dia < 10 ? "0" : "") + dia;
           if (futuroDeQuemSaiu(m.pago, venc)) return;
+          // O combinado e o que caiu na conta são coisas diferentes. O
+          // gateway desconta a taxa dele e, no Stripe, ainda converte a
+          // mensalidade em real para euro. Enquanto ninguém conciliou, o
+          // combinado é a melhor estimativa que existe. Depois de
+          // conciliada, manda o extrato: contar o valor de face de uma
+          // parcela que caiu menor é contar dinheiro que a escola não tem.
+          var vFace = parseMoney(m.valor), vReal = vFace, mReal = moeda, taxa = 0;
+          if (m.pago && m.valorRecebido > 0) {
+            vReal = m.valorRecebido;
+            mReal = m.moedaRecebida || moeda;
+            // só dá para chamar de taxa o que sumiu dentro da mesma moeda;
+            // entre moedas a diferença é câmbio do gateway, não taxa
+            if (mReal === moeda) taxa = Math.max(0, vFace - vReal);
+          }
           entradas.push({ pessoaId: p.id, nome: p.nome,
             categoria: catPessoa,
             detalhe: p.turma || (c.tipo || ""),
-            moeda: moeda, valor: parseMoney(m.valor), valorLabel: m.valor,
+            moeda: mReal, valor: vReal, valorLabel: fmtMoney(mReal, vReal),
+            combinado: vFace, moedaCombinada: moeda, taxa: taxa,
             pago: !!m.pago, venc: venc, atrasada: !m.pago && venc < hoje,
             // "pago" e "visto no extrato" são coisas diferentes. Só a
             // conciliação escreve pagoEm/idExterno: marcar na mão não
@@ -9043,9 +9061,14 @@
     // automática que ninguém conferiu. Somar os dois num número só é o
     // que faz o mês fechar com lucro que não existe.
     var confirmado = zero(), presumido = zero();
+    // o que o gateway ficou pelo caminho: a diferença entre o combinado e o
+    // que caiu, nas parcelas já conciliadas. Não é despesa lançada — já está
+    // descontada da entrada —, é o custo de receber, que ninguém via.
+    var taxasGateway = zero();
     entradas.forEach(function (e) {
       if (e.pago) {
         recebido[e.moeda] += e.valor; acumula(porCatEntrada, e.categoria, e.moeda, e.valor);
+        if (e.taxa > 0) taxasGateway[e.moeda] += e.taxa;
         if (e.confirmado) confirmado[e.moeda] += e.valor;
         else presumido[e.moeda] += e.valor;
       }
@@ -9071,7 +9094,7 @@
       recebido: recebido, aReceber: aReceber, atrasado: atrasado, saiu: saiu,
       confirmado: confirmado, presumido: presumido,
       saiuConfirmado: saiuConfirmado, saiuPresumido: saiuPresumido,
-      retiradas: retiradas,
+      retiradas: retiradas, taxasGateway: taxasGateway,
       previsto: previsto,
       // sobra de verdade (o que entrou menos o que saiu) e sobra se tudo cair
       resultado: { "R$": recebido["R$"] - saiu["R$"], "€": recebido["€"] - saiu["€"] },
@@ -9086,7 +9109,7 @@
         atrasado: emReais(atrasado), saiu: emReais(saiu), meta: emReais(meta),
         confirmado: emReais(confirmado), presumido: emReais(presumido),
         saiuConfirmado: emReais(saiuConfirmado), saiuPresumido: emReais(saiuPresumido),
-        retiradas: emReais(retiradas),
+        retiradas: emReais(retiradas), taxasGateway: emReais(taxasGateway),
         resultado: emReais(recebido) - emReais(saiu),
         // O número que não pode enganar: só o dinheiro que entrou de
         // verdade, menos TUDO que a escola já sabe que paga no mês —
