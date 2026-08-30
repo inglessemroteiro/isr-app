@@ -67,11 +67,14 @@
         </sc-for>
       </div>
 
-      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ resFrase }}</div>
-
-      <div style="margin-top: 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
-      <div style="margin-top: 6px; font-size: 11.5px; color: {{ resConfirmaCor }}; line-height: 1.6;">{{ resConfirma }}</div>
-      <div style="margin-top: 6px; font-size: 11.5px; color: #9c6f56; line-height: 1.6;">{{ resTaxas }}</div>
+      <div style="display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
+        <sc-for list="{{ notas }}" as="nt" hint-placeholder-count="4">
+          <div>
+            <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f;">{{ nt.label }}</div>
+            <div style="font-size: 14px; font-weight: 700; color: {{ nt.cor }};">{{ nt.valor }}</div>
+          </div>
+        </sc-for>
+      </div>
 
       <!-- por onde o dinheiro passou: o total só faz sentido se der para
            conferir com o extrato de cada banco -->
@@ -779,7 +782,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
+    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -851,23 +854,9 @@ class Component extends DCLogic {
           saiu: CRM.fmtMoney(m, f.saiu[m]) };
       });
 
-    const resFrase = ("Somando as duas moedas a " + CRM.fmtMoney("R$", cambio)
-          + " por euro, o mês está " + (res >= 0 ? "positivo em " : "negativo em ")
-          + CRM.fmtMoney("R$", Math.abs(res))
-          + ". A saída conta tudo que a escola paga no mês, folha e custo fixo inclusive.")
-      + ((f.totalReais.retiradas || 0) > 0
-          ? " Além disso, " + CRM.fmtMoney("R$", f.totalReais.retiradas)
-            + " saíram para contas suas — não é despesa e não muda este número."
-          : "")
-      // a metade vermelha não pode se perder no total: as colunas por moeda
-      // já mostram cada lado, e aqui se diz o que isso quer dizer
-      + ((f.resultado["R$"] < 0) !== (f.resultado["\u20ac"] < 0)
-          && f.resultado["R$"] !== 0 && f.resultado["\u20ac"] !== 0
-        ? (f.resultado["R$"] < 0
-            ? " O que a escola paga em real é maior do que ela recebe em real; é o euro que fecha a conta."
-            : " O que a escola paga em euro é maior do que ela recebe em euro; é o real que fecha a conta.")
-        : "")
-      + (ehAtual ? " O mês ainda não acabou." : "");
+    // As duas moedas juntas, para quem quiser um número só. É nota de
+    // rodapé, não manchete: somar real e euro depende do câmbio do dia.
+    const resFrase = "Juntas, a " + CRM.fmtMoney("R$", cambio) + " por euro";
     // por onde o dinheiro passou. Sem conta marcada, o movimento cai em
     // "não informada" — que é um aviso, não uma conta.
     const contasCad = CRM.contasLista ? CRM.contasLista() : [];
@@ -883,49 +872,30 @@ class Component extends DCLogic {
     if (temSemConta) resContas.push({ id: "sem_conta", nome: "Não informada", corNome: "#9c6f56",
       entrou: duo(semC.entrou), saiu: (semC.saiu["R$"] || semC.saiu["\u20ac"]) ? "\u2212 " + duo(semC.saiu) : "" });
 
-    const pend = [];
-    if (CRM.emReais(f.aReceber) > 0) pend.push(duo(f.aReceber) + " ainda a receber");
-    if (CRM.emReais(f.atrasado) > 0) pend.push(duo(f.atrasado) + " em atraso");
-    const resPendente = pend.length
-      ? "Fora desta conta: " + pend.join(" e ") + ". Só entra aqui o que já caiu."
-      : "Nada em aberto neste mês.";
-
-    // ── quanto desse número tem extrato atrás ──
-    // "Recebido" vem de duas origens: parcela conciliada com o banco e
-    // parcela marcada na mão ou cobrada automaticamente. As duas somam no
-    // resultado; aqui se diz qual fatia já pode ser conferida.
+    // ── a faixa de dados ──
+    // Cada coisa em uma palavra e um número. Antes eram quatro parágrafos
+    // explicando o que os números já dizem sozinhos.
     const tr = f.totalReais;
     const presum = tr.presumido || 0;
-    // o número de cima é o resultado do mês; esta linha diz o quanto dele
-    // já pode ser conferido no banco. Conciliar não muda o resultado —
-    // confirma. Por isso isto é uma medida de confiança, não outro total.
     const pctConf = tr.recebido > 0
       ? Math.round(((tr.confirmado || 0) / tr.recebido) * 100) : 100;
-    const resConfirma = presum < 0.01
-      ? (tr.recebido > 0 || tr.saiu > 0
-          ? "Toda a receita deste mês tem linha de extrato atrás."
-          : "Nenhum movimento neste mês ainda.")
-      : "Conferido no extrato: " + pctConf + "% da receita ("
-        + CRM.fmtMoney("R$", tr.confirmado || 0) + " de "
-        + CRM.fmtMoney("R$", tr.recebido) + "). Os outros "
-        + CRM.fmtMoney("R$", presum)
-        + " são cobrança automática e parcela marcada na mão, que o banco ainda não confirmou. "
-        + "Conciliar não muda o resultado acima — confirma. Só com o que já bateu, o mês daria "
-        + (rConf >= 0 ? "lucro de " + CRM.fmtMoney("R$", rConf)
-                      : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(rConf)))
-        + ".";
-    const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
-
-    // ── o custo de receber ──
-    // A parcela combinada e o dinheiro que cai são valores diferentes: o
-    // gateway tira a parte dele antes. Enquanto a parcela é marcada na mão,
-    // ninguém vê isso; ao conciliar, a diferença aparece — e é dinheiro que
-    // a escola nunca teve, ainda que a aluna tenha pagado o combinado.
     const taxas = tr.taxasGateway || 0;
-    const resTaxas = taxas < 0.01 ? ""
-      : "As plataformas ficaram com " + CRM.fmtMoney("R$", taxas)
-        + " deste mês — já descontados do que entrou acima. A aluna pagou o combinado; "
-        + "a escola recebeu esse tanto a menos.";
+    const notas = [];
+    if (f.recebido["\u20ac"] > 0 && f.recebido["R$"] > 0)
+      notas.push({ label: resFrase, cor: corDe(res),
+        valor: (res < 0 ? "\u2212 " : "+ ") + CRM.fmtMoney("R$", Math.abs(res)) });
+    if (CRM.emReais(f.atrasado) > 0)
+      notas.push({ label: "Em atraso", cor: "#cf6b5c", valor: duo(f.atrasado) });
+    if (CRM.emReais(f.aReceber) > 0)
+      notas.push({ label: "Ainda a receber", cor: "#8a7c6b", valor: duo(f.aReceber) });
+    if (tr.recebido > 0)
+      notas.push({ label: "Conferido no extrato", cor: pctConf >= 100 ? "#5a9e4b" : "#9c6f56",
+        valor: pctConf + "%" });
+    if (taxas >= 0.01)
+      notas.push({ label: "Taxas das plataformas", cor: "#9c6f56", valor: CRM.fmtMoney("R$", taxas) });
+    if ((tr.retiradas || 0) > 0)
+      notas.push({ label: "Retiradas para contas suas", cor: "#6b5b95",
+        valor: CRM.fmtMoney("R$", tr.retiradas) });
 
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
@@ -1690,8 +1660,7 @@ class Component extends DCLogic {
         };
       }).call(this),
 
-      resTitulo, resValor, resCor, resFrase, porMoeda, resPendente, resTaxas,
-      resConfirma, resConfirmaCor,
+      resTitulo, resValor, resCor, porMoeda, notas,
       resContas, semConta: temSemConta,
       semContaFrase: "Movimento sem conta marcada. Ao lançar ou conciliar, escolha por onde o dinheiro passou — é o que permite bater com o extrato de cada banco.",
       contasOpts: contasCad.map(c => ({ id: c.id, sel: c.id === this.contaAtual(),

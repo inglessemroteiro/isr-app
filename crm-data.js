@@ -9142,28 +9142,48 @@
     var f = folhaPagamento(k);
     var out = [];
 
-    f.linhas.forEach(function (l) {
-      out.push({ nome: l.nome + " · aulas do mês", categoria: "equipe",
-        moeda: moeda, valor: Math.round(l.total * 100) / 100,
+    // A folha é calculada numa moeda só, mas não é paga numa moeda só:
+    // quem recebe em euro sai de uma conta em euro. Lançar tudo em real
+    // inflava a saída em real e escondia a saída em euro — o cadastro da
+    // Equipe já guarda a moeda de cada pessoa, e é ela que manda aqui.
+    var equipe = equipeLista();
+    var moedaDe = function (nome) {
+      var m = equipe.filter(function (x) { return x.nome === nome; })[0];
+      return (m && m.moeda) || moeda;
+    };
+    var converter = function (valor, para) {
+      if (para === moeda) return valor;
+      var c = cfg.cambioEur || 0;
+      if (!c) return valor;
+      return para === "€" ? valor / c : valor * c;
+    };
+    // quando a folha já sabe o valor combinado na moeda da pessoa — é o caso
+    // de quem tem valor mensal —, usa-se ele; converter de ida e volta só
+    // acrescentaria centavo de arredondamento
+    var linha = function (nome, sufixo, total, origem, pessoa, bruto) {
+      var m = moedaDe(nome);
+      return { nome: nome + sufixo, categoria: "equipe", moeda: m,
+        valor: Math.round((bruto !== undefined && bruto !== null ? bruto
+                                                                 : converter(total, m)) * 100) / 100,
+        // o valor na moeda em que a folha foi calculada, para conferir a conta
+        calculadoEm: moeda, valorCalculado: Math.round(total * 100) / 100,
         // o nome puro, para saber depois se essa folha já foi vista
         // saindo no extrato
-        pessoa: l.nome,
-        fixo: true, calculado: true, origem: "folha" });
-    });
+        pessoa: pessoa === undefined ? nome : pessoa,
+        fixo: true, calculado: true, origem: origem };
+    };
+
+    f.linhas.forEach(function (l) { out.push(linha(l.nome, " · aulas do mês", l.total, "folha")); });
     (f.fixos || []).forEach(function (x) {
-      out.push({ nome: x.nome + " · valor mensal", categoria: "equipe",
-        moeda: moeda, valor: Math.round(x.total * 100) / 100,
-        pessoa: x.nome,
-        fixo: true, calculado: true, origem: "folha_fixo" });
+      out.push(linha(x.nome, " · valor mensal", x.total, "folha_fixo", undefined,
+        (x.moeda || moeda) === moedaDe(x.nome) ? x.bruto : undefined));
     });
 
     // Comissão segue a parcela: só sai o que a aluna já pagou.
     var com = comissaoAPagar(k);
     if (com && com.total > 0) {
-      out.push({ nome: (comercialDaEquipe() || "Comercial") + " · comissão",
-        categoria: "equipe", moeda: moeda,
-        valor: Math.round(com.total * 100) / 100,
-        fixo: true, calculado: true, origem: "comissao" });
+      var quem = comercialDaEquipe() || "Comercial";
+      out.push(linha(quem, " · comissão", com.total, "comissao", null));
     }
     return out;
   }
