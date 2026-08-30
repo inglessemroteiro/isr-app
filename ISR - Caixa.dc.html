@@ -813,32 +813,28 @@ class Component extends DCLogic {
     const ehAtual = mes.key === atualKey;
     const res = f.totalReais.resultado;
     const cambio = CRM.configPagamento().cambioEur || 0;
-    // O número grande é o do extrato quando existe extrato: é o único que
-    // pode ser conferido no banco. O outro — que soma cobrança automática
-    // e parcela marcada na mão — vem logo abaixo, com nome.
+    // O número grande é o resultado do mês: tudo que entrou menos tudo que
+    // saiu. Já foi o "prudente" — receita só conciliada contra despesa
+    // inteira — e isso media os dois lados com réguas diferentes: como a
+    // despesa está toda cadastrada e a receita só é conciliada quando sobra
+    // tempo, o mês aparecia como prejuízo mesmo faturando. O quanto disso
+    // já tem extrato atrás é informação importante, mas é outra pergunta, e
+    // está logo abaixo.
     const rConf = f.totalReais.resultadoPrudente || 0;
-    const foraDoExtrato = (f.totalReais.presumido || 0) + (f.totalReais.saiuPresumido || 0);
-    // basta haver receita ainda não vista no banco para o número de cima
-    // ser o prudente: a despesa já entra inteira nos dois casos
-    const mandaExtrato = !ehFuturo && (f.totalReais.presumido || 0) >= 0.01;
     const resTitulo = ehFuturo ? ("Previsão · " + mes.label)
-      : (mandaExtrato ? ("Pelo extrato · " + mes.label)
-        : ((ehAtual ? "Até hoje · " : "Fechado · ") + mes.label));
+      : ((ehAtual ? "Até hoje · " : "Fechado · ") + mes.label);
     const frasear = (v) => v > 0 ? "Lucro de " + CRM.fmtMoney("R$", v)
       : (v < 0 ? "Prejuízo de " + CRM.fmtMoney("R$", Math.abs(v)) : "Entrou o mesmo que saiu");
     const resValor = ehFuturo
       ? (f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu >= 0
           ? "Deve sobrar " + CRM.fmtMoney("R$", f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)
           : "Deve faltar " + CRM.fmtMoney("R$", Math.abs(f.totalReais.recebido + CRM.emReais(f.aReceber) - f.totalReais.saiu)))
-      : frasear(mandaExtrato ? rConf : res);
+      : frasear(res);
     const corDe = (v) => v > 0 ? "#5a9e4b" : (v < 0 ? "#cf6b5c" : "#8a7c6b");
-    const resCor = ehFuturo ? "#d4a574" : corDe(mandaExtrato ? rConf : res);
-    const resFrase = (mandaExtrato
-        ? "Entrou " + CRM.fmtMoney("R$", f.totalReais.confirmado || 0)
-          + ", só o que apareceu no extrato. Saiu " + CRM.fmtMoney("R$", f.totalReais.saiu)
-          + ", contando tudo que a escola paga no mês, folha e custo fixo inclusive."
-        : "Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
-          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu) + ".")
+    const resCor = ehFuturo ? "#d4a574" : corDe(res);
+    const resFrase = ("Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
+          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu)
+          + ", contando tudo que a escola paga no mês, folha e custo fixo inclusive.")
       + ((f.totalReais.retiradas || 0) > 0
           ? " Além disso, " + CRM.fmtMoney("R$", f.totalReais.retiradas)
             + " saíram para contas suas — não é despesa e não muda este número."
@@ -889,30 +885,29 @@ class Component extends DCLogic {
       : "Nada em aberto neste mês.";
 
     // ── quanto desse número tem extrato atrás ──
-    // "Recebido" vinha de duas origens misturadas: parcela conciliada com
-    // o banco e parcela marcada na mão, mais a cobrança automática que
-    // entra só porque o dia passou. Somadas, produzem um lucro que
-    // ninguém consegue conferir. Aqui as duas aparecem separadas.
+    // "Recebido" vem de duas origens: parcela conciliada com o banco e
+    // parcela marcada na mão ou cobrada automaticamente. As duas somam no
+    // resultado; aqui se diz qual fatia já pode ser conferida.
     const tr = f.totalReais;
     const presum = tr.presumido || 0;
-    const presumSaiu = tr.saiuPresumido || 0;
-    const rc = tr.resultadoConfirmado || 0;
-    const semExtratoFrase = [
-      presum >= 0.01 ? CRM.fmtMoney("R$", presum) + " de entrada" : "",
-      presumSaiu >= 0.01 ? CRM.fmtMoney("R$", presumSaiu) + " de despesa" : ""
-    ].filter(Boolean).join(" e ");
-    // a despesa já entra inteira no número de cima, então o que sobra
-    // para dizer aqui é o que ainda não entrou: a receita presumida
+    // o número de cima é o resultado do mês; esta linha diz o quanto dele
+    // já pode ser conferido no banco. Conciliar não muda o resultado —
+    // confirma. Por isso isto é uma medida de confiança, não outro total.
+    const pctConf = tr.recebido > 0
+      ? Math.round(((tr.confirmado || 0) / tr.recebido) * 100) : 100;
     const resConfirma = presum < 0.01
       ? (tr.recebido > 0 || tr.saiu > 0
           ? "Toda a receita deste mês tem linha de extrato atrás."
           : "Nenhum movimento neste mês ainda.")
-      : "Contando também as entradas que ainda não apareceram em conta nenhuma — "
-        + CRM.fmtMoney("R$", tr.presumido || 0)
-        + " de cobrança automática e parcela marcada na mão — o mês daria "
-        + (res >= 0 ? "lucro de " + CRM.fmtMoney("R$", res)
-                    : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(res)))
-        + ". Enquanto esse dinheiro não aparece no extrato, ele é estimativa.";
+      : "Conferido no extrato: " + pctConf + "% da receita ("
+        + CRM.fmtMoney("R$", tr.confirmado || 0) + " de "
+        + CRM.fmtMoney("R$", tr.recebido) + "). Os outros "
+        + CRM.fmtMoney("R$", presum)
+        + " são cobrança automática e parcela marcada na mão, que o banco ainda não confirmou. "
+        + "Conciliar não muda o resultado acima — confirma. Só com o que já bateu, o mês daria "
+        + (rConf >= 0 ? "lucro de " + CRM.fmtMoney("R$", rConf)
+                      : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(rConf)))
+        + ".";
     const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
 
     // ── meta por moeda ──

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.30-a",
+  numero: "2026.08.30-b",
   data: "30/08/2026",
-  nota: "Caixa invertido: a conciliação do extrato e a revisão dos dados passam para o início da tela — antes estavam a 4.491px, cinco telas de rolagem — e meta, previsto × realizado, custos fixos, evolução mensal e câmbio vão para a aba Planejamento"
+  nota: "Correção do resultado do mês: o número grande volta a ser entrou menos saiu, medido com a mesma régua dos dois lados — antes comparava receita só conciliada com despesa inteira e mostrava prejuízo em mês de lucro. A despesa realizada por categoria passa a incluir custo fixo e folha, fechando com o topo da tela, e uma verificação nova acusa se as duas contas voltarem a divergir"
 };
