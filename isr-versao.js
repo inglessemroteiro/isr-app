@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-f",
+  numero: "2026.08.28-g",
   data: "28/08/2026",
-  nota: "Extrato com duas moedas na mesma busca (Stripe cobra em real e em euro) passa a ser analisado por moeda; e as linhas já tratadas numa análise anterior podem ser vistas e desfeitas"
+  nota: "Menu reorganizado em sete módulos — Central, CRM, Alunas, Pedagógico, Financeiro, Marketing e Configurações — com porta de entrada para toda tela de trabalho e o Pedagógico aberto para a operação"
 };
