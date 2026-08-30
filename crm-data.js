@@ -1888,6 +1888,129 @@
       indice: indice, nivel: nivel };
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  ALERTAS E PENDÊNCIAS
+  //
+  //  A Central abria com quatro cartões de área — Comercial, Gestão,
+  //  Pedagógico, Marketing — e quem trabalha não trabalha por área:
+  //  trabalha pelo que está parado. Estas duas funções separam as duas
+  //  naturezas do que espera alguém.
+  //
+  //  ALERTA é coisa errada com nome: uma aluna faltando, uma cobrança
+  //  que não passou, uma turma que não fecha. Tem pessoa, tem urgência,
+  //  e alguém precisa decidir.
+  //
+  //  PENDÊNCIA é rotina não feita: chamada não lançada, extrato não
+  //  conciliado, cadastro por arrumar. Não tem urgência de hoje, mas
+  //  enquanto não for feita todo número da escola fica pela metade.
+  // ══════════════════════════════════════════════════════════════
+  var ALERTA_PESO = {
+    cobranca_falhou: 100, atraso: 90, falta: 80, onboarding_travado: 70,
+    avaliacao_baixa: 60, avaliacao_caiu: 50, turma_vazia: 40
+  };
+  function alertasDaEscola() {
+    var out = [];
+    var perfil = function (id) { return "ISR - Perfil.dc.html?id=" + id; };
+
+    // ── quem está sumindo ou insatisfeita ──
+    var interessa = { falta_recente: "falta", avaliacao_baixa: "avaliacao_baixa",
+      avaliacao_caiu: "avaliacao_caiu", onboarding_travado: "onboarding_travado" };
+    filaAcompanhamento().forEach(function (f) {
+      (f.sinais || []).forEach(function (s) {
+        var tipo = interessa[s.id];
+        if (!tipo) return;
+        out.push({ id: tipo + "|" + f.pessoaId, tipo: tipo, area: "pedagogico",
+          quem: f.nome, pessoaId: f.pessoaId, href: perfil(f.pessoaId),
+          texto: s.label || s.toque || "", peso: ALERTA_PESO[tipo] || 10 });
+      });
+    });
+
+    // ── dinheiro que não entrou ──
+    loadPessoas().forEach(function (p) {
+      if (assinaturaFalhando(p)) {
+        out.push({ id: "cobranca_falhou|" + p.id, tipo: "cobranca_falhou", area: "financeiro",
+          quem: p.nome, pessoaId: p.id, href: perfil(p.id),
+          texto: "Cobrança da assinatura não passou em " + ddmm(p.assinatura.falhou),
+          peso: ALERTA_PESO.cobranca_falhou });
+      }
+    });
+    var hoje = iso(today());
+    getCobranca().forEach(function (cb) {
+      var dia = parseInt(cb.vencDia, 10);
+      if (isNaN(dia)) dia = 10;
+      var vencidas = (cb.meses || []).filter(function (m) {
+        if (m.pago || m.cancelada || !m.valor) return false;
+        var venc = m.key + "-" + (dia < 10 ? "0" : "") + dia;
+        return venc < hoje;
+      });
+      if (!vencidas.length) return;
+      var soma = vencidas.reduce(function (s, m) { return s + parseMoney(m.valor); }, 0);
+      out.push({ id: "atraso|" + cb.id, tipo: "atraso", area: "financeiro",
+        quem: cb.nome, pessoaId: cb.id, href: perfil(cb.id),
+        texto: vencidas.length + (vencidas.length === 1 ? " parcela vencida" : " parcelas vencidas")
+          + " · " + fmtMoney(cb.moeda || "R$", soma),
+        peso: ALERTA_PESO.atraso });
+    });
+
+    // ── turma que não fecha ──
+    turmasAbaixoDoMinimo().forEach(function (t) {
+      out.push({ id: "turma_vazia|" + t.id, tipo: "turma_vazia", area: "pedagogico",
+        quem: t.label, href: "ISR - Turmas e Projetos.dc.html",
+        texto: t.alunas + (t.alunas === 1 ? " aluna" : " alunas")
+          + " · faltam " + t.faltam + " para o mínimo",
+        peso: ALERTA_PESO.turma_vazia });
+    });
+
+    return out.sort(function (a, b) { return b.peso - a.peso || a.quem.localeCompare(b.quem); });
+  }
+
+  // Rotina esperando. Cada uma diz o tamanho do que falta e leva para
+  // a tela onde se resolve.
+  function pendenciasDaEscola() {
+    var out = [], k = mesAtualKey();
+
+    var fin = financeiroMes(k).totalReais;
+    if ((fin.presumido || 0) >= 0.01) {
+      out.push({ id: "conciliar", area: "financeiro", titulo: "Conciliar o extrato do mês",
+        texto: fmtMoney("R$", fin.presumido) + " ainda não apareceu em conta nenhuma",
+        href: "ISR - Caixa.dc.html" });
+    }
+
+    // turma com aula dada e chamada em branco: sete dias sem registro
+    var atrasadas = [];
+    turmasLista().forEach(function (u) {
+      var label = u.nivel + " · " + u.turma;
+      var ultima = chamadasDaTurma(label)[0];
+      var dias = ultima && ultima.data ? daysBetween(parseISO(ultima.data), today()) : null;
+      if (dias === null || dias > 7) atrasadas.push(label);
+    });
+    if (atrasadas.length) {
+      out.push({ id: "chamada", area: "pedagogico", titulo: "Lançar chamada",
+        texto: atrasadas.length + (atrasadas.length === 1 ? " turma sem registro" : " turmas sem registro")
+          + " há mais de uma semana: " + atrasadas.slice(0, 3).join(", ")
+          + (atrasadas.length > 3 ? "…" : ""),
+        href: "ISR - Painel do Professor.dc.html" });
+    }
+
+    var aud = auditoriaDados();
+    if (aud.seguras) {
+      out.push({ id: "revisao", area: "config", titulo: "Corrigir dados repetidos",
+        texto: aud.seguras + (aud.seguras === 1 ? " problema pode" : " problemas podem")
+          + " ser corrigido de uma vez",
+        href: "ISR - Caixa.dc.html" });
+    }
+
+    var semPlano = alunasSemPlano();
+    if (semPlano.length) {
+      out.push({ id: "sem_plano", area: "alunas", titulo: "Completar plano de aluna",
+        texto: semPlano.length + (semPlano.length === 1 ? " aluna sem" : " alunas sem")
+          + " turma, valor ou parcelas: " + semPlano.slice(0, 3).map(function (a) { return firstName(a.nome); }).join(", "),
+        href: "ISR - Alunas.dc.html" });
+    }
+
+    return out;
+  }
+
   function filaAcompanhamento() {
     return loadPessoas()
       .filter(function (p) { return p.status === "aluna" || p.status === "mvs"; })
@@ -11073,6 +11196,7 @@
     registrarPulso: registrarPulso, pulsosDe: pulsosDe, ultimoPulso: ultimoPulso,
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
+    alertasDaEscola: alertasDaEscola, pendenciasDaEscola: pendenciasDaEscola,
     carteiraProfessoras: carteiraProfessoras, professoraEfetiva: professoraEfetiva,
     professorasDeAula: professorasDeAula, equipeDocente: equipeDocente,
     capacidades: capacidades, setCapacidade: setCapacidade,

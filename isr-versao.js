@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-g",
+  numero: "2026.08.28-h",
   data: "28/08/2026",
-  nota: "Menu reorganizado em sete módulos — Central, CRM, Alunas, Pedagógico, Financeiro, Marketing e Configurações — com porta de entrada para toda tela de trabalho e o Pedagógico aberto para a operação"
+  nota: "Central passa a listar trabalho em vez de departamentos: alertas com nome e link (cobrança que não passou, parcela vencida, faltas, avaliação em queda, onboarding parado, turma abaixo do mínimo), pendências de rotina e modelos de mensagem, filtrados pelo perfil de quem abre"
 };
