@@ -25,7 +25,7 @@
         <a href="ISR%20-%20Cobran%C3%A7a.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">Cobrança</a>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>O dinheiro do mês.</strong> O que entrou, o que saiu e o que sobrou — por origem e por categoria, com a meta e o ponto de equilíbrio. Real e euro aparecem separados; onde os dois são somados, a taxa de conversão está escrita.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 720px;"><strong>O dinheiro do mês.</strong> A aba <em>O mês</em> abre no que precisa de decisão: conciliar o extrato, revisar o que está inconsistente e lançar o que faltou. A aba <em>Planejamento</em> guarda o que se ajusta de vez em quando — meta, custos fixos e câmbio. Real e euro aparecem separados; onde os dois são somados, a taxa de conversão está escrita.</p>
 
     <!-- NAVEGADOR DE MÊS -->
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -40,6 +40,17 @@
       </sc-if>
     </div>
 
+
+    <!-- ABAS — o que se faz toda semana fica na frente; o que se ajusta uma
+         vez por ano fica atrás. A conciliação era a quinta tela de rolagem. -->
+    <div style="display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;">
+      <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="2">
+        <button onclick="{{ ab.onClick }}" style="border: 1px solid {{ ab.borda }}; background: {{ ab.bg }}; color: {{ ab.fg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ab.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ abaMes }}">
+      <div>
     <!-- O MÊS EM UMA FRASE — a pergunta que a tela precisa responder -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid {{ resCor }}; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;">
       <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">{{ resTitulo }}</div>
@@ -73,338 +84,6 @@
         <sc-if value="{{ semConta }}">
           <p style="margin: 6px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">{{ semContaFrase }}</p>
         </sc-if>
-      </div>
-    </div>
-
-
-    <!-- OS NÚMEROS DO MÊS -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 8px;">
-      <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="5">
-        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ n.cor }}; border-radius: 10px; padding: 13px 15px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; font-weight: 700; margin-bottom: 7px;">{{ n.label }}</div>
-          <div style="font-size: 17px; font-weight: 700; color: {{ n.corBrl }}; line-height: 1.35;">{{ n.brl }}</div>
-          <div style="font-size: 13.5px; font-weight: 700; color: {{ n.corEur }}; opacity: 0.8; line-height: 1.35;">{{ n.eur }}</div>
-          <div style="font-size: 10.5px; color: #a2957f; margin-top: 5px; line-height: 1.4;">{{ n.nota }}</div>
-        </div>
-      </sc-for>
-    </div>
-
-    <!-- PREVISTO × REALIZADO -->
-    <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Previsto × Realizado</span>
-        <button onclick="{{ onOrcEditar }}" style="border: 1px solid #e5dccf; background: {{ orcBtnBg }}; color: {{ orcBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ orcBtnLabel }}</button>
-      </div>
-      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto vem dos contratos e das cobranças automáticas (receita) e dos custos fixos e da folha (despesa), e pode ser ajustado linha a linha neste mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
-
-      <div style="overflow-x: auto;"><div style="min-width: 540px;">
-      <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #eee3d6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693;">
-        <span style="flex: 1;"></span>
-        <span style="flex: none; width: 104px; text-align: right;">Previsto</span>
-        <span style="flex: none; width: 104px; text-align: right;">Realizado</span>
-        <span style="flex: none; width: 92px; text-align: right;">Diferença</span>
-      </div>
-      <sc-for list="{{ orcLinhas }}" as="ol" hint-placeholder-count="6">
-        <div style="display: flex; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid #f4f1ec;">
-          <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ ol.cor }};"></span>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ ol.label }}</div>
-            <div style="font-size: 10px; color: #b3a693;">{{ ol.nota }}</div>
-          </div>
-          <sc-if value="{{ ol.editando }}">
-            <input ref="{{ ol.ref }}" placeholder="{{ ol.previstoNum }}" inputmode="decimal" style="flex: none; width: 104px; text-align: right; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 7px; background: #fdfbf8;" />
-          </sc-if>
-          <sc-if value="{{ ol.mostrando }}">
-            <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 600; color: #6b6155;">{{ ol.previsto }}</span>
-          </sc-if>
-          <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: #164951;">{{ ol.realizado }}</span>
-          <span style="flex: none; width: 92px; text-align: right; font-size: 11.5px; font-weight: 700; color: {{ ol.difCor }};">{{ ol.dif }}</span>
-        </div>
-      </sc-for>
-      <div style="display: flex; gap: 12px; align-items: center; padding: 11px 0 2px;">
-        <span style="flex: 1; font-size: 12.5px; font-weight: 700; color: #164951;">Resultado do mês</span>
-        <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: {{ orcResPrevCor }};">{{ orcResPrev }}</span>
-        <span style="flex: none; width: 104px; text-align: right; font-size: 13px; font-weight: 700; color: {{ orcResRealCor }};">{{ orcResReal }}</span>
-        <span style="flex: none; width: 92px;"></span>
-      </div>
-      </div></div>
-      <sc-if value="{{ orcEditando }}">
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-          <button onclick="{{ onOrcSalvar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar previstos</button>
-          <span style="font-size: 11px; color: #b3a693; align-self: center;">Deixar em branco volta ao valor calculado.</span>
-        </div>
-      </sc-if>
-    </div>
-
-    <!-- META E PONTO DE EQUILÍBRIO -->
-    <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970;">Meta de faturamento e ponto de equilíbrio</span>
-        <button onclick="{{ onToggleMeta }}" style="border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.8); font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelEditarMeta }}</button>
-      </div>
-      <sc-for list="{{ metas }}" as="mt" hint-placeholder-count="2">
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">{{ mt.moeda }} · {{ mt.recebido }} <span style="color: rgba(255,255,255,0.5); font-weight: 400;">de {{ mt.meta }}</span></span>
-            <span style="font-size: 12px; font-weight: 700; color: {{ mt.corPct }};">{{ mt.pct }}%</span>
-          </div>
-          <div style="position: relative; height: 14px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden;">
-            <span style="display: block; height: 100%; width: {{ mt.larguraBar }}; background: {{ mt.corBar }};"></span>
-            <sc-if value="{{ mt.temEquilibrio }}">
-              <span title="Ponto de equilíbrio" style="position: absolute; top: -2px; bottom: -2px; left: {{ mt.posEquilibrio }}; width: 2px; background: #f4a099;"></span>
-            </sc-if>
-          </div>
-          <div style="font-size: 11px; color: rgba(255,255,255,0.68); margin-top: 5px; line-height: 1.5;">{{ mt.frase }}</div>
-        </div>
-      </sc-for>
-      <sc-if value="{{ editandoMeta }}">
-        <div style="border-top: 1px solid rgba(255,255,255,0.14); padding-top: 12px; margin-top: 4px;">
-          <p style="margin: 0 0 9px; font-size: 11.5px; color: rgba(255,255,255,0.7); line-height: 1.6;">Meta aplicável somente a este mês. Em branco, vale a meta padrão definida em Marketing.</p>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <input ref="{{ metaBrlRef }}" placeholder="Meta R$ · {{ metaPadraoBRL }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
-            <input ref="{{ metaEurRef }}" placeholder="Meta € · {{ metaPadraoEUR }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
-            <button onclick="{{ onSalvarMeta }}" style="border: none; background: #9ec970; color: #0f333a; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar meta de {{ mesCurto }}</button>
-          </div>
-        </div>
-      </sc-if>
-    </div>
-
-    <!-- LINHA DO TEMPO -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Evolução mensal <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· barra em destaque: receitas recebidas · barra clara: despesas · selecione um mês para detalhar</span></div>
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 16px 14px 10px; margin-bottom: 24px; overflow-x: auto;">
-      <div style="display: flex; align-items: flex-end; gap: 5px; min-width: 640px; height: 130px;">
-        <sc-for list="{{ serie }}" as="s" hint-placeholder-count="12">
-          <div onclick="{{ s.onClick }}" title="{{ s.titulo }}" style="flex: 1; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 3px;">
-            <span style="font-size: 8.5px; font-weight: 700; color: {{ s.corValor }};">{{ s.topo }}</span>
-            <div style="position: relative; width: 100%; flex: 1; min-height: 0;">
-              <span title="Despesas do mês" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{ s.alturaCusto }}; border-radius: 4px 4px 0 0; background: #f0ddd7;"></span>
-              <span style="position: absolute; left: 22%; right: 22%; bottom: 0; height: {{ s.alturaBar }}; min-height: 2px; border-radius: 4px 4px 0 0; background: {{ s.cor }};"></span>
-            </div>
-            <span style="font-size: 9px; font-weight: 700; color: {{ s.corLabel }}; white-space: nowrap;">{{ s.curto }}</span>
-          </div>
-        </sc-for>
-      </div>
-      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} apenas para leitura consolidada. Valores estimados, sem finalidade contábil. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
-    </div>
-
-    <!-- DE ONDE ENTROU / PARA ONDE FOI -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
-
-      <!-- ENTROU -->
-      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 12px;">Origem das receitas · {{ totalEntrouLabel }}</div>
-        <sc-for list="{{ catsEntrada }}" as="c" hint-placeholder-count="3">
-          <div style="margin-bottom: 11px;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
-              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
-            </div>
-            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
-              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
-            </div>
-          </div>
-        </sc-for>
-        <sc-if value="{{ semEntradas }}">
-          <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nenhuma receita registrada neste mês.</p>
-        </sc-if>
-
-        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Cada entrada do mês</div>
-        <sc-for list="{{ entradas }}" as="e" hint-placeholder-count="5">
-          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ e.cor }}; flex: none;"></span>
-            <div style="flex: 1; min-width: 0;">
-              <a href="{{ e.href }}" style="color: #164951; font-weight: 700; text-decoration: none;">{{ e.nome }}</a>
-              <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ e.detalhe }}</div>
-            </div>
-            <div style="flex: none; text-align: right;">
-              <div style="font-size: 12px; font-weight: 700; color: {{ e.corValor }};">{{ e.valor }}</div>
-              <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: {{ e.cor }};">{{ e.status }}</div>
-            </div>
-            <sc-if value="{{ e.removivel }}">
-              <button onclick="{{ e.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
-            </sc-if>
-          </div>
-        </sc-for>
-
-        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
-          <input ref="{{ entDescRef }}" placeholder="Descrição da receita (ex. workshop)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <select ref="{{ entContaRef }}" title="Em qual conta entrou" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <sc-for list="{{ contasSimples }}" as="cs" hint-placeholder-count="4"><option value="{{ cs.id }}">{{ cs.nome }}</option></sc-for>
-          </select>
-          <select ref="{{ entMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
-          <input ref="{{ entValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <button onclick="{{ onAddEntrada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar receita</button>
-        </div>
-      </div>
-
-      <!-- SAIU -->
-      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
-        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #cf6b5c; margin-bottom: 12px;">Destino das despesas · {{ totalSaiuLabel }}</div>
-        <sc-for list="{{ catsSaida }}" as="c" hint-placeholder-count="4">
-          <div style="margin-bottom: 11px;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
-              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
-            </div>
-            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
-              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
-            </div>
-          </div>
-        </sc-for>
-
-        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Detalhamento por item</div>
-        <sc-for list="{{ saidas }}" as="s" hint-placeholder-count="6">
-          <div style="border-bottom: 1px solid #f2e9dd;">
-            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 12px;">
-              <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ s.cor }}; flex: none;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <span style="color: #3d3529; font-weight: 600;">{{ s.nome }}</span>
-                <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
-              </div>
-              <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
-              <sc-if value="{{ s.temFatura }}">
-                <a href="{{ s.faturaHref }}" target="_blank" rel="noopener" title="Abrir a fatura anexada" style="flex: none; font-size: 10.5px; font-weight: 700; color: #348a8e; text-decoration: none; border: 1px solid #c9dede; padding: 3px 9px; border-radius: 999px;">fatura</a>
-              </sc-if>
-              <sc-if value="{{ s.editavel }}">
-                <button onclick="{{ s.onEditar }}" title="Editar este lançamento: valor, categoria, moeda e data" style="border: none; background: transparent; color: #b3a693; font-size: 10.5px; font-weight: 700; cursor: pointer; padding: 2px 4px; font-family: inherit;">editar</button>
-              </sc-if>
-              <sc-if value="{{ s.removivel }}">
-                <button onclick="{{ s.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
-              </sc-if>
-            </div>
-            <sc-if value="{{ s.editando }}">
-              <div style="background: #faf8f3; border-radius: 9px; padding: 10px; margin: 0 0 9px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <input ref="{{ s.leDescRef }}" placeholder="{{ s.edDescAtual }}" style="flex: 2; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <input ref="{{ s.leValorRef }}" inputmode="decimal" placeholder="{{ s.edValorAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <select ref="{{ s.leMoedaRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                  <sc-for list="{{ s.edMoedaOpts }}" as="mo" hint-placeholder-count="3"><option value="{{ mo.id }}">{{ mo.label }}</option></sc-for>
-                </select>
-                <select ref="{{ s.leCatRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-                  <sc-for list="{{ s.edCatOpts }}" as="co" hint-placeholder-count="6"><option value="{{ co.id }}">{{ co.label }}</option></sc-for>
-                </select>
-                <input ref="{{ s.leDataRef }}" placeholder="{{ s.edDataAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <input ref="{{ s.leFatRef }}" placeholder="{{ s.edFaturaAtual }}" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-                <button onclick="{{ s.onSalvarLanc }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
-              </div>
-            </sc-if>
-          </div>
-        </sc-for>
-
-        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
-          <input ref="{{ saiDescRef }}" placeholder="Descrição da despesa (ex. contabilidade)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <select ref="{{ saiCatRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
-          </select>
-          <select ref="{{ saiContaRef }}" title="De qual conta saiu" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-            <sc-for list="{{ contasSimples }}" as="cs2" hint-placeholder-count="4"><option value="{{ cs2.id }}">{{ cs2.nome }}</option></sc-for>
-          </select>
-          <select ref="{{ saiMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
-          <input ref="{{ saiValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <input ref="{{ saiFatRef }}" placeholder="Link da fatura no Drive (opcional)" style="flex-basis: 100%; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-          <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar despesa</button>
-        </div>
-        <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês. Para anexar a fatura (PDF), guarde o arquivo no Drive e cole o link: o lançamento ganha o botão "fatura".</p>
-
-        <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b;">Categorias de despesa</span>
-            <button onclick="{{ onToggleCats }}" style="border: 1px solid #e5dccf; background: {{ catsBg }}; color: {{ catsFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ catsLabel }}</button>
-          </div>
-          <sc-if value="{{ catsAberto }}">
-            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
-              <sc-for list="{{ catsLista }}" as="ct" hint-placeholder-count="6">
-                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #eee3d6; border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 11.5px; color: #3d3529;">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ ct.cor }};"></span>{{ ct.label }}
-                  <sc-if value="{{ ct.removivel }}">
-                    <button onclick="{{ ct.onRemove }}" title="Apagar categoria" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 0 4px; line-height: 1;">×</button>
-                  </sc-if>
-                  <sc-if value="{{ ct.fixa }}">
-                    <span style="width: 4px;"></span>
-                  </sc-if>
-                </span>
-              </sc-for>
-            </div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-              <input ref="{{ novaCatRef }}" onkeydown="{{ onNovaCatKey }}" placeholder="Nova categoria (ex. Aluguel, Contabilidade)" style="flex: 1; min-width: 170px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-              <button onclick="{{ onAddCat }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar categoria</button>
-            </div>
-            <sc-if value="{{ temErroCat }}">
-              <p style="margin: 7px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroCat }}</p>
-            </sc-if>
-            <p style="margin: 7px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As cinco primeiras categorias são fixas. Categorias criadas só podem ser excluídas sem custo ou lançamento vinculado.</p>
-          </sc-if>
-        </div>
-      </div>
-    </div>
-
-    <!-- EXPECTATIVA -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Previsão de recebimento · {{ mesCurto }}</div>
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
-      <sc-for list="{{ camadas }}" as="cm" hint-placeholder-count="4">
-        <div style="display: flex; align-items: flex-start; gap: 11px; padding: 9px 0; border-bottom: 1px solid #f2e9dd;">
-          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ cm.cor }}; flex: none; margin-top: 5px;"></span>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ cm.label }}</div>
-            <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">{{ cm.explica }}</div>
-          </div>
-          <span style="flex: none; font-size: 13px; font-weight: 700; color: {{ cm.cor }}; text-align: right;">{{ cm.valor }}</span>
-        </div>
-      </sc-for>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
-        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário conservador</div>
-          <div style="font-size: 15px; font-weight: 700; color: #164951;">{{ conservador }}</div>
-          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">Apenas valores recebidos e contratos vigentes em dia</div>
-        </div>
-        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
-          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário otimista</div>
-          <div style="font-size: 15px; font-weight: 700; color: #348a8e;">{{ otimista }}</div>
-          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">Inclui a liquidação dos atrasos e a conversão do pipeline</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CUSTOS FIXOS -->
-    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos recorrentes <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· cada um pode ter data de início e término</span></div>
-    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; overflow: hidden; margin-bottom: 24px;">
-      <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #f2e9dd;">
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ c.cor }}; flex: none;"></span>
-          <div style="flex: 1; min-width: 0;">
-            <span style="font-size: 13px; color: #3d3529;">{{ c.nome }}</span>
-            <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ c.vigencia }}</div>
-          </div>
-          <select onchange="{{ c.onCategoria }}" style="padding: 5px 8px; font-size: 10.5px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
-            <sc-for list="{{ c.opcoes }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
-          </select>
-          <span style="font-size: 13px; font-weight: 700; color: {{ c.corValor }}; min-width: 84px; text-align: right;">− {{ c.valor }}</span>
-          <button onclick="{{ c.onVigencia }}" title="Definir período de vigência do custo" style="border: 1px solid #eee3d6; background: #fff; color: #8a7c6b; font-size: 10px; font-weight: 700; padding: 5px 9px; border-radius: 999px; cursor: pointer; font-family: inherit;">Vigência</button>
-          <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
-        </div>
-        <sc-if value="{{ c.editando }}">
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 18px 14px; background: #fbf6ef; border-bottom: 1px solid #f2e9dd;">
-            <span style="font-size: 11.5px; color: #6b6155;">Vigência</span>
-            <label style="font-size: 11px; color: #8a7c6b;">de <input ref="{{ c.inicioRef }}" type="month" value="{{ c.inicio }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
-            <label style="font-size: 11px; color: #8a7c6b;">até <input ref="{{ c.fimRef }}" type="month" value="{{ c.fim }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
-            <button onclick="{{ c.onSalvarVigencia }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar vigência</button>
-            <span style="font-size: 10.5px; color: #b3a693;">Em branco: vigência permanente.</span>
-          </div>
-        </sc-if>
-      </sc-for>
-      <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef; flex-wrap: wrap;">
-        <input ref="{{ custoNomeRef }}" placeholder="Novo custo fixo (ex. Canva Pro)" style="flex: 1; min-width: 140px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-        <select ref="{{ custoCatRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-          <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
-        </select>
-        <select ref="{{ custoMoedaRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
-          <option value="R$">R$</option><option value="€">€</option>
-        </select>
-        <input ref="{{ custoValorRef }}" placeholder="Valor" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
-        <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Adicionar</button>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: #f6eee4; flex-wrap: wrap;">
-        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Ponto de equilíbrio · {{ mesCurto }}</span>
-        <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
       </div>
     </div>
 
@@ -582,32 +261,6 @@
       </sc-if>
     </div>
 
-    <!-- CONFERÊNCIA — a conta refeita por outro caminho -->
-    <div style="background: {{ confBg }}; border: 1px solid {{ confBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
-      <button onclick="{{ onConf }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; text-align: left;">
-        <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
-          <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ confCor }};"></span>
-          <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ confTitulo }}</span>
-          <span style="font-size: 11.5px; color: #8a7c6b;">{{ confResumo }}</span>
-        </span>
-        <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ confLabel }}</span>
-      </button>
-      <sc-if value="{{ confAberta }}">
-        <div style="margin-top: 12px;">
-          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada verificação recalcula um valor por um método independente e o compara ao exibido na tela; divergências aparecem abaixo. A verificação avalia a consistência dos dados, não o resultado do mês.</p>
-          <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
-            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
-              <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ cf.titulo }}</div>
-                <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ cf.linha }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-      </sc-if>
-    </div>
-
     <!-- REVISÃO DOS DADOS — o que está errado na base, e o que dá para
          consertar sem perguntar nada -->
     <sc-if value="{{ temAuditoria }}">
@@ -640,6 +293,368 @@
       </div>
     </sc-if>
 
+    <!-- OS NÚMEROS DO MÊS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 8px;">
+      <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="5">
+        <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-top: 4px solid {{ n.cor }}; border-radius: 10px; padding: 13px 15px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; font-weight: 700; margin-bottom: 7px;">{{ n.label }}</div>
+          <div style="font-size: 17px; font-weight: 700; color: {{ n.corBrl }}; line-height: 1.35;">{{ n.brl }}</div>
+          <div style="font-size: 13.5px; font-weight: 700; color: {{ n.corEur }}; opacity: 0.8; line-height: 1.35;">{{ n.eur }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 5px; line-height: 1.4;">{{ n.nota }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- DE ONDE ENTROU / PARA ONDE FOI -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
+
+      <!-- ENTROU -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 12px;">Origem das receitas · {{ totalEntrouLabel }}</div>
+        <sc-for list="{{ catsEntrada }}" as="c" hint-placeholder-count="3">
+          <div style="margin-bottom: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
+              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
+              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ semEntradas }}">
+          <p style="margin: 0 0 12px; font-size: 12px; color: #a2957f;">Nenhuma receita registrada neste mês.</p>
+        </sc-if>
+
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Cada entrada do mês</div>
+        <sc-for list="{{ entradas }}" as="e" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f2e9dd; font-size: 12px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ e.cor }}; flex: none;"></span>
+            <div style="flex: 1; min-width: 0;">
+              <a href="{{ e.href }}" style="color: #164951; font-weight: 700; text-decoration: none;">{{ e.nome }}</a>
+              <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ e.detalhe }}</div>
+            </div>
+            <div style="flex: none; text-align: right;">
+              <div style="font-size: 12px; font-weight: 700; color: {{ e.corValor }};">{{ e.valor }}</div>
+              <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: {{ e.cor }};">{{ e.status }}</div>
+            </div>
+            <sc-if value="{{ e.removivel }}">
+              <button onclick="{{ e.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+          <input ref="{{ entDescRef }}" placeholder="Descrição da receita (ex. workshop)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ entContaRef }}" title="Em qual conta entrou" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ contasSimples }}" as="cs" hint-placeholder-count="4"><option value="{{ cs.id }}">{{ cs.nome }}</option></sc-for>
+          </select>
+          <select ref="{{ entMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
+          <input ref="{{ entValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <button onclick="{{ onAddEntrada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar receita</button>
+        </div>
+      </div>
+
+      <!-- SAIU -->
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #cf6b5c; margin-bottom: 12px;">Destino das despesas · {{ totalSaiuLabel }}</div>
+        <sc-for list="{{ catsSaida }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: #3d3529;">{{ c.label }}</span>
+              <span style="font-size: 12px; font-weight: 700; color: {{ c.cor }};">{{ c.valor }}</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: #f0e7db; overflow: hidden;">
+              <span style="display: block; height: 100%; width: {{ c.largura }}; background: {{ c.cor }};"></span>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin: 16px 0 6px;">Detalhamento por item</div>
+        <sc-for list="{{ saidas }}" as="s" hint-placeholder-count="6">
+          <div style="border-bottom: 1px solid #f2e9dd;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: 12px;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ s.cor }}; flex: none;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <span style="color: #3d3529; font-weight: 600;">{{ s.nome }}</span>
+                <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ s.detalhe }}</div>
+              </div>
+              <span style="flex: none; font-size: 12px; font-weight: 700; color: #9c6f56;">− {{ s.valor }}</span>
+              <sc-if value="{{ s.temFatura }}">
+                <a href="{{ s.faturaHref }}" target="_blank" rel="noopener" title="Abrir a fatura anexada" style="flex: none; font-size: 10.5px; font-weight: 700; color: #348a8e; text-decoration: none; border: 1px solid #c9dede; padding: 3px 9px; border-radius: 999px;">fatura</a>
+              </sc-if>
+              <sc-if value="{{ s.editavel }}">
+                <button onclick="{{ s.onEditar }}" title="Editar este lançamento: valor, categoria, moeda e data" style="border: none; background: transparent; color: #b3a693; font-size: 10.5px; font-weight: 700; cursor: pointer; padding: 2px 4px; font-family: inherit;">editar</button>
+              </sc-if>
+              <sc-if value="{{ s.removivel }}">
+                <button onclick="{{ s.onRemove }}" title="Apagar lançamento" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+              </sc-if>
+            </div>
+            <sc-if value="{{ s.editando }}">
+              <div style="background: #faf8f3; border-radius: 9px; padding: 10px; margin: 0 0 9px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <input ref="{{ s.leDescRef }}" placeholder="{{ s.edDescAtual }}" style="flex: 2; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ s.leValorRef }}" inputmode="decimal" placeholder="{{ s.edValorAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <select ref="{{ s.leMoedaRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ s.edMoedaOpts }}" as="mo" hint-placeholder-count="3"><option value="{{ mo.id }}">{{ mo.label }}</option></sc-for>
+                </select>
+                <select ref="{{ s.leCatRef }}" style="padding: 8px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+                  <sc-for list="{{ s.edCatOpts }}" as="co" hint-placeholder-count="6"><option value="{{ co.id }}">{{ co.label }}</option></sc-for>
+                </select>
+                <input ref="{{ s.leDataRef }}" placeholder="{{ s.edDataAtual }}" style="width: 90px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <input ref="{{ s.leFatRef }}" placeholder="{{ s.edFaturaAtual }}" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                <button onclick="{{ s.onSalvarLanc }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+          <input ref="{{ saiDescRef }}" placeholder="Descrição da despesa (ex. contabilidade)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <select ref="{{ saiCatRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+          </select>
+          <select ref="{{ saiContaRef }}" title="De qual conta saiu" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ contasSimples }}" as="cs2" hint-placeholder-count="4"><option value="{{ cs2.id }}">{{ cs2.nome }}</option></sc-for>
+          </select>
+          <select ref="{{ saiMoedaRef }}" style="padding: 8px 9px; font-size: 11.5px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;"><option value="R$">R$</option><option value="€">€</option></select>
+          <input ref="{{ saiValorRef }}" placeholder="Valor" style="width: 78px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <input ref="{{ saiFatRef }}" placeholder="Link da fatura no Drive (opcional)" style="flex-basis: 100%; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar despesa</button>
+        </div>
+        <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês. Para anexar a fatura (PDF), guarde o arquivo no Drive e cole o link: o lançamento ganha o botão "fatura".</p>
+
+        <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b;">Categorias de despesa</span>
+            <button onclick="{{ onToggleCats }}" style="border: 1px solid #e5dccf; background: {{ catsBg }}; color: {{ catsFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ catsLabel }}</button>
+          </div>
+          <sc-if value="{{ catsAberto }}">
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
+              <sc-for list="{{ catsLista }}" as="ct" hint-placeholder-count="6">
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #eee3d6; border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 11.5px; color: #3d3529;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ ct.cor }};"></span>{{ ct.label }}
+                  <sc-if value="{{ ct.removivel }}">
+                    <button onclick="{{ ct.onRemove }}" title="Apagar categoria" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 0 4px; line-height: 1;">×</button>
+                  </sc-if>
+                  <sc-if value="{{ ct.fixa }}">
+                    <span style="width: 4px;"></span>
+                  </sc-if>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <input ref="{{ novaCatRef }}" onkeydown="{{ onNovaCatKey }}" placeholder="Nova categoria (ex. Aluguel, Contabilidade)" style="flex: 1; min-width: 170px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <button onclick="{{ onAddCat }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar categoria</button>
+            </div>
+            <sc-if value="{{ temErroCat }}">
+              <p style="margin: 7px 0 0; font-size: 11px; color: #cf6b5c; line-height: 1.5;">{{ erroCat }}</p>
+            </sc-if>
+            <p style="margin: 7px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">As cinco primeiras categorias são fixas. Categorias criadas só podem ser excluídas sem custo ou lançamento vinculado.</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFERÊNCIA — a conta refeita por outro caminho -->
+    <div style="background: {{ confBg }}; border: 1px solid {{ confBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+      <button onclick="{{ onConf }}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit; text-align: left;">
+        <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+          <span style="flex: none; width: 9px; height: 9px; border-radius: 50%; background: {{ confCor }};"></span>
+          <span style="font-size: 13px; font-weight: 700; color: #164951;">{{ confTitulo }}</span>
+          <span style="font-size: 11.5px; color: #8a7c6b;">{{ confResumo }}</span>
+        </span>
+        <span style="flex: none; font-size: 11px; font-weight: 700; color: #348a8e;">{{ confLabel }}</span>
+      </button>
+      <sc-if value="{{ confAberta }}">
+        <div style="margin-top: 12px;">
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #6b6155; line-height: 1.6;">Cada verificação recalcula um valor por um método independente e o compara ao exibido na tela; divergências aparecem abaixo. A verificação avalia a consistência dos dados, não o resultado do mês.</p>
+          <sc-for list="{{ conferencia }}" as="cf" hint-placeholder-count="10">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-top: 1px solid #f0ede8;">
+              <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ cf.cor }}; margin-top: 6px;"></span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ cf.titulo }}</div>
+                <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px; line-height: 1.5;">{{ cf.linha }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ abaPlano }}">
+      <div>
+        <p style="margin: 0 0 16px; font-size: 12px; color: #8a7c6b; line-height: 1.6; max-width: 720px;">O que sustenta o número do mês e muda pouco: quanto era esperado, a meta, os custos fixos e a taxa de conversão. Ajuste aqui e o resultado no mês reflete.</p>
+    <!-- PREVISTO × REALIZADO -->
+    <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #164951;">Previsto × Realizado</span>
+        <button onclick="{{ onOrcEditar }}" style="border: 1px solid #e5dccf; background: {{ orcBtnBg }}; color: {{ orcBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ orcBtnLabel }}</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">O previsto vem dos contratos e das cobranças automáticas (receita) e dos custos fixos e da folha (despesa), e pode ser ajustado linha a linha neste mês. O realizado é o que os extratos confirmaram: parcelas conciliadas, folha quitada e despesas lançadas. {{ orcCambioNota }}</p>
+
+      <div style="overflow-x: auto;"><div style="min-width: 540px;">
+      <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #eee3d6; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693;">
+        <span style="flex: 1;"></span>
+        <span style="flex: none; width: 104px; text-align: right;">Previsto</span>
+        <span style="flex: none; width: 104px; text-align: right;">Realizado</span>
+        <span style="flex: none; width: 92px; text-align: right;">Diferença</span>
+      </div>
+      <sc-for list="{{ orcLinhas }}" as="ol" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid #f4f1ec;">
+          <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ ol.cor }};"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ ol.label }}</div>
+            <div style="font-size: 10px; color: #b3a693;">{{ ol.nota }}</div>
+          </div>
+          <sc-if value="{{ ol.editando }}">
+            <input ref="{{ ol.ref }}" placeholder="{{ ol.previstoNum }}" inputmode="decimal" style="flex: none; width: 104px; text-align: right; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 7px; background: #fdfbf8;" />
+          </sc-if>
+          <sc-if value="{{ ol.mostrando }}">
+            <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 600; color: #6b6155;">{{ ol.previsto }}</span>
+          </sc-if>
+          <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: #164951;">{{ ol.realizado }}</span>
+          <span style="flex: none; width: 92px; text-align: right; font-size: 11.5px; font-weight: 700; color: {{ ol.difCor }};">{{ ol.dif }}</span>
+        </div>
+      </sc-for>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 11px 0 2px;">
+        <span style="flex: 1; font-size: 12.5px; font-weight: 700; color: #164951;">Resultado do mês</span>
+        <span style="flex: none; width: 104px; text-align: right; font-size: 12.5px; font-weight: 700; color: {{ orcResPrevCor }};">{{ orcResPrev }}</span>
+        <span style="flex: none; width: 104px; text-align: right; font-size: 13px; font-weight: 700; color: {{ orcResRealCor }};">{{ orcResReal }}</span>
+        <span style="flex: none; width: 92px;"></span>
+      </div>
+      </div></div>
+      <sc-if value="{{ orcEditando }}">
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button onclick="{{ onOrcSalvar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar previstos</button>
+          <span style="font-size: 11px; color: #b3a693; align-self: center;">Deixar em branco volta ao valor calculado.</span>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- META E PONTO DE EQUILÍBRIO -->
+    <div style="background: #164951; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970;">Meta de faturamento e ponto de equilíbrio</span>
+        <button onclick="{{ onToggleMeta }}" style="border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.8); font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ labelEditarMeta }}</button>
+      </div>
+      <sc-for list="{{ metas }}" as="mt" hint-placeholder-count="2">
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">{{ mt.moeda }} · {{ mt.recebido }} <span style="color: rgba(255,255,255,0.5); font-weight: 400;">de {{ mt.meta }}</span></span>
+            <span style="font-size: 12px; font-weight: 700; color: {{ mt.corPct }};">{{ mt.pct }}%</span>
+          </div>
+          <div style="position: relative; height: 14px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden;">
+            <span style="display: block; height: 100%; width: {{ mt.larguraBar }}; background: {{ mt.corBar }};"></span>
+            <sc-if value="{{ mt.temEquilibrio }}">
+              <span title="Ponto de equilíbrio" style="position: absolute; top: -2px; bottom: -2px; left: {{ mt.posEquilibrio }}; width: 2px; background: #f4a099;"></span>
+            </sc-if>
+          </div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.68); margin-top: 5px; line-height: 1.5;">{{ mt.frase }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ editandoMeta }}">
+        <div style="border-top: 1px solid rgba(255,255,255,0.14); padding-top: 12px; margin-top: 4px;">
+          <p style="margin: 0 0 9px; font-size: 11.5px; color: rgba(255,255,255,0.7); line-height: 1.6;">Meta aplicável somente a este mês. Em branco, vale a meta padrão definida em Marketing.</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <input ref="{{ metaBrlRef }}" placeholder="Meta R$ · {{ metaPadraoBRL }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
+            <input ref="{{ metaEurRef }}" placeholder="Meta € · {{ metaPadraoEUR }}" style="width: 150px; padding: 9px 12px; font-size: 12px; font-family: inherit; border: none; border-radius: 8px;" />
+            <button onclick="{{ onSalvarMeta }}" style="border: none; background: #9ec970; color: #0f333a; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar meta de {{ mesCurto }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- LINHA DO TEMPO -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Evolução mensal <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· barra em destaque: receitas recebidas · barra clara: despesas · selecione um mês para detalhar</span></div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 16px 14px 10px; margin-bottom: 24px; overflow-x: auto;">
+      <div style="display: flex; align-items: flex-end; gap: 5px; min-width: 640px; height: 130px;">
+        <sc-for list="{{ serie }}" as="s" hint-placeholder-count="12">
+          <div onclick="{{ s.onClick }}" title="{{ s.titulo }}" style="flex: 1; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 3px;">
+            <span style="font-size: 8.5px; font-weight: 700; color: {{ s.corValor }};">{{ s.topo }}</span>
+            <div style="position: relative; width: 100%; flex: 1; min-height: 0;">
+              <span title="Despesas do mês" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{ s.alturaCusto }}; border-radius: 4px 4px 0 0; background: #f0ddd7;"></span>
+              <span style="position: absolute; left: 22%; right: 22%; bottom: 0; height: {{ s.alturaBar }}; min-height: 2px; border-radius: 4px 4px 0 0; background: {{ s.cor }};"></span>
+            </div>
+            <span style="font-size: 9px; font-weight: 700; color: {{ s.corLabel }}; white-space: nowrap;">{{ s.curto }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} apenas para leitura consolidada. Valores estimados, sem finalidade contábil. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
+    </div>
+
+    <!-- EXPECTATIVA -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Previsão de recebimento · {{ mesCurto }}</div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
+      <sc-for list="{{ camadas }}" as="cm" hint-placeholder-count="4">
+        <div style="display: flex; align-items: flex-start; gap: 11px; padding: 9px 0; border-bottom: 1px solid #f2e9dd;">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ cm.cor }}; flex: none; margin-top: 5px;"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ cm.label }}</div>
+            <div style="font-size: 11px; color: #8a7c6b; line-height: 1.5;">{{ cm.explica }}</div>
+          </div>
+          <span style="flex: none; font-size: 13px; font-weight: 700; color: {{ cm.cor }}; text-align: right;">{{ cm.valor }}</span>
+        </div>
+      </sc-for>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
+        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário conservador</div>
+          <div style="font-size: 15px; font-weight: 700; color: #164951;">{{ conservador }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">Apenas valores recebidos e contratos vigentes em dia</div>
+        </div>
+        <div style="background: #f6f2ea; border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #8a7c6b; margin-bottom: 4px;">Cenário otimista</div>
+          <div style="font-size: 15px; font-weight: 700; color: #348a8e;">{{ otimista }}</div>
+          <div style="font-size: 10.5px; color: #a2957f; margin-top: 3px;">Inclui a liquidação dos atrasos e a conversão do pipeline</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOS FIXOS -->
+    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Custos fixos recorrentes <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· cada um pode ter data de início e término</span></div>
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; overflow: hidden; margin-bottom: 24px;">
+      <sc-for list="{{ custos }}" as="c" hint-placeholder-count="6">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #f2e9dd;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ c.cor }}; flex: none;"></span>
+          <div style="flex: 1; min-width: 0;">
+            <span style="font-size: 13px; color: #3d3529;">{{ c.nome }}</span>
+            <div style="font-size: 10px; color: #a2957f; line-height: 1.4;">{{ c.vigencia }}</div>
+          </div>
+          <select onchange="{{ c.onCategoria }}" style="padding: 5px 8px; font-size: 10.5px; font-family: inherit; color: #6b6155; border: 1px solid #eee3d6; border-radius: 8px; background: #fff;">
+            <sc-for list="{{ c.opcoes }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}" selected="{{ o.sel }}">{{ o.label }}</option></sc-for>
+          </select>
+          <span style="font-size: 13px; font-weight: 700; color: {{ c.corValor }}; min-width: 84px; text-align: right;">− {{ c.valor }}</span>
+          <button onclick="{{ c.onVigencia }}" title="Definir período de vigência do custo" style="border: 1px solid #eee3d6; background: #fff; color: #8a7c6b; font-size: 10px; font-weight: 700; padding: 5px 9px; border-radius: 999px; cursor: pointer; font-family: inherit;">Vigência</button>
+          <button onclick="{{ c.onRemove }}" title="Remover custo" style="border: none; background: transparent; color: #c9b9a6; font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
+        </div>
+        <sc-if value="{{ c.editando }}">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 18px 14px; background: #fbf6ef; border-bottom: 1px solid #f2e9dd;">
+            <span style="font-size: 11.5px; color: #6b6155;">Vigência</span>
+            <label style="font-size: 11px; color: #8a7c6b;">de <input ref="{{ c.inicioRef }}" type="month" value="{{ c.inicio }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
+            <label style="font-size: 11px; color: #8a7c6b;">até <input ref="{{ c.fimRef }}" type="month" value="{{ c.fim }}" style="padding: 7px 9px; font-size: 12px; font-family: inherit; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></label>
+            <button onclick="{{ c.onSalvarVigencia }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar vigência</button>
+            <span style="font-size: 10.5px; color: #b3a693;">Em branco: vigência permanente.</span>
+          </div>
+        </sc-if>
+      </sc-for>
+      <div style="display: flex; gap: 8px; align-items: center; padding: 12px 18px; border-bottom: 1px solid #f2e9dd; background: #fbf6ef; flex-wrap: wrap;">
+        <input ref="{{ custoNomeRef }}" placeholder="Novo custo fixo (ex. Canva Pro)" style="flex: 1; min-width: 140px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <select ref="{{ custoCatRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <sc-for list="{{ opcoesCatSaida }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+        </select>
+        <select ref="{{ custoMoedaRef }}" style="padding: 9px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;">
+          <option value="R$">R$</option><option value="€">€</option>
+        </select>
+        <input ref="{{ custoValorRef }}" placeholder="Valor" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <button onclick="{{ onAddCusto }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">+ Adicionar</button>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: #f6eee4; flex-wrap: wrap;">
+        <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b;">Ponto de equilíbrio · {{ mesCurto }}</span>
+        <span style="font-size: 14px; font-weight: 700; color: #164951;">{{ custosTotalBRL }} <span style="color: #6b5b95;">+ {{ custosTotalEUR }}</span></span>
+      </div>
+    </div>
+
     <!-- CÂMBIO -->
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 220px;">
@@ -649,6 +664,8 @@
       <input ref="{{ cambioRef }}" placeholder="{{ cambioValor }}" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
       <button onclick="{{ onSalvarCambio }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
     </div>
+      </div>
+    </sc-if>
 
   </div>
 </main>
@@ -660,7 +677,7 @@ class Component extends DCLogic {
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "",
-            regAbertas: false };
+            regAbertas: false, aba: "mes" };
   orcRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
@@ -759,7 +776,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
+    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -1525,7 +1542,22 @@ class Component extends DCLogic {
     const metaPadrao = CRM.METAS.faturamento || { "R$": 0, "€": 0 };
     const totalEntrou = duo(f.recebido);
 
+    const aba = this.state.aba || "mes";
+    const umaAba = (id, label) => ({
+      label, onClick: () => this.setState({ aba: id }),
+      bg: aba === id ? "#164951" : "#fff",
+      fg: aba === id ? "#fff" : "#6b6155",
+      borda: aba === id ? "#164951" : "#e5dccf"
+    });
+
     return {
+      // ── abas ──
+      // o mês abre no que precisa de decisão; o que se ajusta uma vez por ano
+      // fica na segunda aba, e não mais no caminho
+      abas: [umaAba("mes", "O mês"), umaAba("plano", "Planejamento")],
+      abaMes: aba === "mes",
+      abaPlano: aba === "plano",
+
       // navegação
       mesLabel: mes.label, mesCurto: mes.curto,
       quandoLabel: mes.key === atualKey ? "Mês corrente" : (mes.key < atualKey ? "Mês encerrado" : "Competência futura"),
