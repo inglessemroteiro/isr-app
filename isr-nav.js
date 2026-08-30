@@ -5,14 +5,19 @@
    pra tudo parecer UM app só. Aparece apenas para a equipe logada
    na gestão (isr_gestao_user).
 
-   A navegação é organizada pelas áreas da escola, não por telas
-   soltas — cada área abre um menu com as telas dela:
+   A navegação é organizada por assunto, não por departamento nem por
+   telas soltas — cada módulo abre um menu com as telas dele:
 
-     Hoje        → Central · Agenda
-     Comercial   → CRM · Mensagens · Calculadora · Marketing · Agenda
-     Financeiro  → Cobrança · Caixa
-     Pedagógico  → Acompanhamento · Programa · Alunas · Turmas · Painel · App
-     Escola      → Pagamentos · Equipe · Conexão
+     Central       → Central · Mural · Mensagens
+     CRM           → Leads · Matrícula · Calculadora · Importar leads
+     Alunas        → Alunas · Perfil · Acompanhamento · Certificados · App
+     Pedagógico    → Turmas · Painel · Agenda · Programa
+     Financeiro    → Caixa · Contas a receber · Folha · Importar
+     Marketing     → Marketing
+     Configurações → Equipe · Conexão · Dados
+
+   Toda tela de trabalho tem porta de entrada aqui. Se uma tela não
+   está nesta lista, ela não existe para quem usa o sistema.
 
    Cada tela declara quais perfis a enxergam; uma área só aparece
    se sobrar pelo menos uma tela nela.
@@ -27,60 +32,66 @@
 
   var AREAS = [
     {
-      id: "hoje", label: "Hoje", cor: "#9ec970",
+      // A tela que se abre primeiro: o que está esperando alguém.
+      id: "central", label: "Central", cor: "#9ec970",
       itens: [
-        { label: "Central", desc: "Pendências consolidadas por prioridade", href: "ISR - Central.dc.html", perfis: null },
-        { label: "Agenda", desc: "Compromissos operacionais, comerciais e pedagógicos", href: "ISR - Agenda.dc.html", perfis: null },
-        { label: "Mural da equipe", desc: "Mensagens da equipe por assunto, conversíveis em pendência", href: "ISR - Mural.dc.html", perfis: null }
+        { label: "Central", desc: "Tarefas, alertas e pendências de quem abriu", href: "ISR - Central.dc.html", perfis: null },
+        { label: "Mural da equipe", desc: "Recados da equipe por assunto, conversíveis em tarefa", href: "ISR - Mural.dc.html", perfis: null },
+        { label: "Mensagens", desc: "Modelos de WhatsApp por situação", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] }
       ]
     },
     {
-      id: "comercial", label: "Comercial", cor: "#e07856",
+      // Quem quer entrar: do primeiro contato até a matrícula.
+      id: "crm", label: "CRM", cor: "#e07856",
       itens: [
-        // operação também trabalha o funil (a Érika registra e responde
-        // leads), por isso vê o CRM e a importação — Calculadora e
-        // Marketing seguem só do comercial
-        { label: "CRM", desc: "Funil de leads, do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
-        { label: "Importar leads", desc: "Importar leads da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] },
-        { label: "Mensagens", desc: "Mensagens padronizadas por etapa", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-        { label: "Calculadora", desc: "Precificação e simulação comercial", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
+        { label: "Leads", desc: "Funil do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Matrícula", desc: "Contrato, turma, primeira cobrança e acesso ao app", href: "ISR - Matrícula.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Calculadora de preços", desc: "Simulação de parcelas, desconto e sinal", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
+        { label: "Importar leads", desc: "Da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] }
+      ]
+    },
+    {
+      // Tudo sobre as pessoas que estudam aqui.
+      id: "alunas", label: "Alunas", cor: "#fc9082",
+      itens: [
+        { label: "Alunas", desc: "Por turma, nível, produto e situação", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Perfil", desc: "A página de uma pessoa, com contrato, pagamentos e histórico", href: "ISR - Perfil.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Certificados", desc: "Com horas cursadas e frequência, para imprimir ou salvar", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora", "operacao"] },
+        { label: "App da aluna", desc: "O que a aluna vê", href: "ISR - Aluna.dc.html", perfis: null }
+      ]
+    },
+    {
+      // Tudo que a escola entrega: grupo, particular, programa, book club.
+      // A Érika (operacao) também vê — ela dá suporte a aluna e professora.
+      id: "pedagogico", label: "Pedagógico", cor: "#348a8e",
+      itens: [
+        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Painel do Professor", desc: "Aulas da semana, chamada e diário de classe", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
+        { label: "Agenda", desc: "Calendário da escola, aulas extras e Book Club", href: "ISR - Agenda.dc.html", perfis: null },
+        { label: "Programa no WhatsApp", desc: "MVS e acompanhamento, semana a semana", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora", "operacao"] }
+      ]
+    },
+    {
+      // Todo o dinheiro num lugar só.
+      id: "financeiro", label: "Financeiro", cor: "#d4a574",
+      itens: [
+        { label: "Caixa", desc: "Resultado do mês, conciliação e conferência", href: "ISR - Caixa.dc.html", perfis: ["gestora", "operacao"] },
+        { label: "Contas a receber", desc: "Quem deve, há quanto tempo e o que vence", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+        { label: "Folha", desc: "Pagamento da equipe no mês e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
+        { label: "Importar pagamentos", desc: "Importar o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
+      ]
+    },
+    {
+      // De onde vem gente nova.
+      id: "marketing", label: "Marketing", cor: "#6b5b95",
+      itens: [
         { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
       ]
     },
     {
-      // O que acontece com as alunas: quem são, como estão e o que recebem.
-      id: "alunas", label: "Alunas", cor: "#fc9082",
-      itens: [
-        { label: "Alunas", desc: "Matrículas ativas e indicadores por aluna", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Certificado", desc: "Certificado de conclusão, para imprimir ou salvar em PDF", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora"] },
-        { label: "App da aluna", desc: "Visualização da área da aluna", href: "ISR - Aluna.dc.html", perfis: null }
-      ]
-    },
-    {
-      // O que acontece na aula: onde ela é dada, por quem e com que material.
-      id: "ensino", label: "Ensino", cor: "#348a8e",
-      itens: [
-        // professora de aulas extras e shadow também dão/acompanham aula:
-        // o Painel é a tela de trabalho delas
-        { label: "Painel do Professor", desc: "Aulas da semana e diário de classe", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora", "extra", "shadow"] },
-        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora"] },
-        { label: "Programa no WhatsApp", desc: "Controle semanal do programa assíncrono", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora"] }
-      ]
-    },
-    {
-      // Todo o dinheiro num lugar só: o que entra, o resumo e o que sai.
-      id: "financeiro", label: "Financeiro", cor: "#d4a574",
-      itens: [
-        { label: "Cobrança", desc: "Recebíveis por situação e ações de cobrança", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
-        { label: "Pagamentos", desc: "Folha do mês da equipe e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
-        { label: "Caixa", desc: "Demonstrativo financeiro mensal", href: "ISR - Caixa.dc.html", perfis: ["gestora"] },
-        { label: "Importar", desc: "Importar o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
-      ]
-    },
-    {
-      // As pessoas que fazem a escola e a configuração do sistema.
-      id: "escola", label: "Escola", cor: "#9c6f56",
+      // O que se mexe uma vez por mês, fora da tela do dia a dia.
+      id: "config", label: "Configurações", cor: "#9c6f56",
       itens: [
         { label: "Equipe", desc: "Integrantes, funções, acessos e remuneração", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
         { label: "Conexão", desc: "Configuração da base de dados central", href: "gestao.html?config", perfis: ["gestora"] },
