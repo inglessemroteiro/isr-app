@@ -10149,19 +10149,16 @@
       prev.equipe = (prev.equipe || 0) + umReal(c.valor, c.moeda);
     });
 
-    // ── despesa realizada: o que os extratos confirmaram ──
-    // lançamentos (cada um nasceu de uma linha de extrato ou de digitação
-    // consciente) + folha quitada com o valor que de fato saiu
+    // ── despesa realizada ──
+    // Contava só lançamento e folha quitada, enquanto a receita realizada
+    // contava tudo que entrou. Com duas réguas diferentes, o quadro dava
+    // despesa zero e resultado igual à receita, contradizendo o topo da
+    // tela. Agora sai da mesma lista que o resultado do mês usa — custo
+    // fixo, folha e lançamento — para que as duas contas fechem.
     var real = {};
-    lancamentosDoMes(k).filter(function (l) { return l.tipo === "saida"; })
-      .forEach(function (l) {
-        var cat = l.categoria || "outros";
-        real[cat] = (real[cat] || 0) + umReal(l.valor, l.moeda);
-      });
-    var fp = folhaPagaAll();
-    Object.keys(fp).forEach(function (ch) {
-      var pg = fp[ch];
-      if (pg.mes === k && pg.valor > 0) real.equipe = (real.equipe || 0) + pg.valor;
+    fin.saidas.forEach(function (s) {
+      var cat = s.categoria || "outros";
+      real[cat] = (real[cat] || 0) + umReal(s.valor, s.moeda);
     });
 
     var linhas = [{
@@ -10564,6 +10561,26 @@
         ? "Mesmo valor digitado como custo fixo e lançado do extrato: " + fixoDobrado.join(", ")
           + ". Mantenha um dos dois."
         : "");
+
+    // 7b-bis. As duas contas do mês têm que fechar entre si. O topo da tela
+    //     diz "entrou menos saiu"; o quadro Previsto × Realizado refaz a
+    //     mesma conta por categoria. Se divergirem, uma das duas está
+    //     medindo com régua diferente — foi o que aconteceu quando a
+    //     despesa realizada contava só o que já tinha saído do banco e a
+    //     receita realizada contava tudo. Quem lê não tem como saber qual
+    //     acreditar, então a divergência precisa aparecer aqui.
+    var orcCoer = orcamentoDoMes(k);
+    var difReceita = Math.abs(orcCoer.realReceita - fin.totalReais.recebido);
+    var difDespesa = Math.abs(orcCoer.realDespesa - fin.totalReais.saiu);
+    var fecha = cent(difReceita) <= 1 && cent(difDespesa) <= 1;
+    add("orcamento_fecha_com_o_mes", "O quadro por categoria fecha com o resultado do mês",
+      fecha, "as duas contas batem", "as contas divergem",
+      fecha ? "Receita e despesa realizadas somam o mesmo dos dois lados da tela"
+        : "O resultado do mês usa " + fmtMoney("R$", fin.totalReais.recebido) + " de entrada e "
+          + fmtMoney("R$", fin.totalReais.saiu) + " de saída; o quadro por categoria usa "
+          + fmtMoney("R$", orcCoer.realReceita) + " e " + fmtMoney("R$", orcCoer.realDespesa)
+          + ". Alguma despesa não está caindo em categoria nenhuma.",
+      true);
 
     // 7c. Quanto do mês pode ser conferido no banco. Com tudo passando
     //     pelas contas, o que não tem linha de extrato atrás é estimativa
