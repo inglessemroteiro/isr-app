@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.30-c",
+  numero: "2026.08.30-d",
   data: "30/08/2026",
-  nota: "O Caixa passa a mostrar o mês moeda por moeda, cada uma com o próprio resultado, e o total convertido vira nota de rodapé. A parcela conciliada passa a valer o que caiu na conta, na moeda em que caiu — antes contava o valor combinado e ignorava a taxa que o gateway desconta, mostrando mais dinheiro do que a escola tem. Quanto as plataformas levaram no mês aparece com nome"
+  nota: "A folha passa a sair na moeda de cada pessoa — quem recebe em euro deixa de inflar a saída em real — e o topo do Caixa troca os parágrafos por uma faixa de dados: juntas, em atraso, conferido no extrato, taxas e retiradas"
 };
