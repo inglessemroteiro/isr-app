@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.30-b",
+  numero: "2026.08.30-c",
   data: "30/08/2026",
-  nota: "Correção do resultado do mês: o número grande volta a ser entrou menos saiu, medido com a mesma régua dos dois lados — antes comparava receita só conciliada com despesa inteira e mostrava prejuízo em mês de lucro. A despesa realizada por categoria passa a incluir custo fixo e folha, fechando com o topo da tela, e uma verificação nova acusa se as duas contas voltarem a divergir"
+  nota: "O Caixa passa a mostrar o mês moeda por moeda, cada uma com o próprio resultado, e o total convertido vira nota de rodapé. A parcela conciliada passa a valer o que caiu na conta, na moeda em que caiu — antes contava o valor combinado e ignorava a taxa que o gateway desconta, mostrando mais dinheiro do que a escola tem. Quanto as plataformas levaram no mês aparece com nome"
 };

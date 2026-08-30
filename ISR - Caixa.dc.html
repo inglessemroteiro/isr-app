@@ -51,24 +51,27 @@
 
     <sc-if value="{{ abaMes }}">
       <div>
-    <!-- O MÊS EM UMA FRASE — a pergunta que a tela precisa responder -->
+    <!-- O MÊS, MOEDA POR MOEDA — somar real e euro num número só escondia o
+         que importa: a operação em real pode estar no vermelho enquanto o
+         euro do gateway cobre o buraco. Cada moeda responde por si. -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid {{ resCor }}; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;">
       <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">{{ resTitulo }}</div>
-      <div style="font-size: 27px; font-weight: 700; letter-spacing: -0.6px; color: {{ resCor }}; margin: 4px 0 2px;">{{ resValor }}</div>
-      <div style="font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ resFrase }}</div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f4f1ec;">
-        <sc-for list="{{ resColunas }}" as="rc" hint-placeholder-count="3">
-          <div>
-            <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f; margin-bottom: 4px;">{{ rc.label }}</div>
-            <div style="font-size: 15px; font-weight: 700; color: {{ rc.cor }};">{{ rc.brl }}</div>
-            <div style="font-size: 12px; font-weight: 700; color: {{ rc.corEur }};">{{ rc.eur }}</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 10px;">
+        <sc-for list="{{ porMoeda }}" as="pm" hint-placeholder-count="2">
+          <div style="border-left: 3px solid {{ pm.cor }}; padding-left: 14px;">
+            <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #a2957f;">{{ pm.titulo }}</div>
+            <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.6px; color: {{ pm.cor }}; margin: 2px 0 6px;">{{ pm.resultado }}</div>
+            <div style="font-size: 12px; color: #6b6155; line-height: 1.7;">entrou {{ pm.entrou }}<br>saiu {{ pm.saiu }}</div>
           </div>
         </sc-for>
       </div>
 
-      <div style="margin-top: 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ resFrase }}</div>
+
+      <div style="margin-top: 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ resPendente }}</div>
       <div style="margin-top: 6px; font-size: 11.5px; color: {{ resConfirmaCor }}; line-height: 1.6;">{{ resConfirma }}</div>
+      <div style="margin-top: 6px; font-size: 11.5px; color: #9c6f56; line-height: 1.6;">{{ resTaxas }}</div>
 
       <!-- por onde o dinheiro passou: o total só faz sentido se der para
            conferir com o extrato de cada banco -->
@@ -776,7 +779,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], resColunas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
+    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -832,36 +835,39 @@ class Component extends DCLogic {
       : frasear(res);
     const corDe = (v) => v > 0 ? "#5a9e4b" : (v < 0 ? "#cf6b5c" : "#8a7c6b");
     const resCor = ehFuturo ? "#d4a574" : corDe(res);
-    const resFrase = ("Entrou " + CRM.fmtMoney("R$", f.totalReais.recebido)
-          + " e saiu " + CRM.fmtMoney("R$", f.totalReais.saiu)
-          + ", contando tudo que a escola paga no mês, folha e custo fixo inclusive.")
+
+    // ── uma coluna por moeda ──
+    // O número somado escondia o essencial: a operação em real fecha no
+    // vermelho e o euro que entra pelo gateway cobre. Quem lê precisa ver
+    // as duas contas de pé, não a média delas.
+    const porMoeda = ["R$", "€"]
+      .filter(m => f.recebido[m] > 0 || f.saiu[m] > 0)
+      .map(m => {
+        const r = f.resultado[m];
+        return { titulo: m === "R$" ? "Em real" : "Em euro",
+          cor: corDe(r),
+          resultado: (r < 0 ? "− " : "+ ") + CRM.fmtMoney(m, Math.abs(r)),
+          entrou: CRM.fmtMoney(m, f.recebido[m]),
+          saiu: CRM.fmtMoney(m, f.saiu[m]) };
+      });
+
+    const resFrase = ("Somando as duas moedas a " + CRM.fmtMoney("R$", cambio)
+          + " por euro, o mês está " + (res >= 0 ? "positivo em " : "negativo em ")
+          + CRM.fmtMoney("R$", Math.abs(res))
+          + ". A saída conta tudo que a escola paga no mês, folha e custo fixo inclusive.")
       + ((f.totalReais.retiradas || 0) > 0
           ? " Além disso, " + CRM.fmtMoney("R$", f.totalReais.retiradas)
             + " saíram para contas suas — não é despesa e não muda este número."
           : "")
-      + (f.recebido["\u20ac"] > 0 ? " Euro convertido a " + CRM.fmtMoney("R$", cambio) + " para somar com o real." : "")
-      + (ehAtual ? " O mês ainda não acabou." : "")
-      // real negativo e euro positivo (ou o contrário) é o caso mais fácil
-      // de ler errado: o total verde esconde a metade vermelha
+      // a metade vermelha não pode se perder no total: as colunas por moeda
+      // já mostram cada lado, e aqui se diz o que isso quer dizer
       + ((f.resultado["R$"] < 0) !== (f.resultado["\u20ac"] < 0)
           && f.resultado["R$"] !== 0 && f.resultado["\u20ac"] !== 0
-        ? " Atenção: em real o mês está " + (f.resultado["R$"] < 0 ? "negativo" : "positivo")
-          + " e em euro, " + (f.resultado["\u20ac"] < 0 ? "negativo" : "positivo")
-          + ". O valor acima junta as duas moedas pelo câmbio."
-        : "");
-    const corSinal = v => v < 0 ? "#cf6b5c" : "#5a9e4b";
-    const resColunas = [
-      { label: "Entrou", cor: "#348a8e", corEur: "#a2957f",
-        brl: CRM.fmtMoney("R$", f.recebido["R$"]), eur: CRM.fmtMoney("\u20ac", f.recebido["\u20ac"]) },
-      { label: "Saiu", cor: "#cf6b5c", corEur: "#a2957f",
-        brl: CRM.fmtMoney("R$", f.saiu["R$"]), eur: CRM.fmtMoney("\u20ac", f.saiu["\u20ac"]) },
-      // aqui cada moeda pinta o próprio sinal: o verde do total não pode
-      // esconder um real negativo
-      { label: res >= 0 ? "Sobrou" : "Faltou",
-        cor: corSinal(f.resultado["R$"]), corEur: corSinal(f.resultado["\u20ac"]),
-        brl: (f.resultado["R$"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("R$", Math.abs(f.resultado["R$"])),
-        eur: (f.resultado["\u20ac"] < 0 ? "\u2212 " : "") + CRM.fmtMoney("\u20ac", Math.abs(f.resultado["\u20ac"])) }
-    ];
+        ? (f.resultado["R$"] < 0
+            ? " O que a escola paga em real é maior do que ela recebe em real; é o euro que fecha a conta."
+            : " O que a escola paga em euro é maior do que ela recebe em euro; é o real que fecha a conta.")
+        : "")
+      + (ehAtual ? " O mês ainda não acabou." : "");
     // por onde o dinheiro passou. Sem conta marcada, o movimento cai em
     // "não informada" — que é um aviso, não uma conta.
     const contasCad = CRM.contasLista ? CRM.contasLista() : [];
@@ -909,6 +915,17 @@ class Component extends DCLogic {
                       : "prejuízo de " + CRM.fmtMoney("R$", Math.abs(rConf)))
         + ".";
     const resConfirmaCor = presum < 0.01 ? "#8a7c6b" : "#9c6f56";
+
+    // ── o custo de receber ──
+    // A parcela combinada e o dinheiro que cai são valores diferentes: o
+    // gateway tira a parte dele antes. Enquanto a parcela é marcada na mão,
+    // ninguém vê isso; ao conciliar, a diferença aparece — e é dinheiro que
+    // a escola nunca teve, ainda que a aluna tenha pagado o combinado.
+    const taxas = tr.taxasGateway || 0;
+    const resTaxas = taxas < 0.01 ? ""
+      : "As plataformas ficaram com " + CRM.fmtMoney("R$", taxas)
+        + " deste mês — já descontados do que entrou acima. A aluna pagou o combinado; "
+        + "a escola recebeu esse tanto a menos.";
 
     // ── meta por moeda ──
     const metas = ["R$", "€"].filter(m => f.meta[m] > 0 || f.recebido[m] > 0).map(m => {
@@ -1673,7 +1690,7 @@ class Component extends DCLogic {
         };
       }).call(this),
 
-      resTitulo, resValor, resCor, resFrase, resColunas, resPendente,
+      resTitulo, resValor, resCor, resFrase, porMoeda, resPendente, resTaxas,
       resConfirma, resConfirmaCor,
       resContas, semConta: temSemConta,
       semContaFrase: "Movimento sem conta marcada. Ao lançar ou conciliar, escolha por onde o dinheiro passou — é o que permite bater com o extrato de cada banco.",
