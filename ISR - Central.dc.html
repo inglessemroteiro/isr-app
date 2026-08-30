@@ -228,36 +228,54 @@
       </div>
     </a>
 
-    <!-- 4 CARDS DE ÁREA -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;">
-      <sc-for list="{{ areas }}" as="ar" hint-placeholder-count="4">
-        <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; overflow: hidden;">
-          <div style="background: {{ ar.cor }}; padding: 12px 16px;">
-            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.9);">{{ ar.nome }}</div>
+    <!-- ALERTAS · coisa errada com nome e dono -->
+    <sc-if value="{{ temAlertas }}">
+      <section style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid #cf6b5c; border-radius: 12px; padding: 16px 18px;">
+        <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #cf6b5c;">Alertas</span>
+          <span style="flex: 1; font-size: 12px; color: #8a7c6b;">{{ alertaResumo }}</span>
+        </div>
+        <sc-for list="{{ alertas }}" as="al" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid #f4f1ec; flex-wrap: wrap;">
+            <span style="flex: none; width: 7px; height: 7px; border-radius: 50%; background: {{ al.cor }};"></span>
+            <a href="{{ al.href }}" style="flex: none; font-size: 13px; font-weight: 700; color: #164951; text-decoration: none;">{{ al.quem }}</a>
+            <span style="flex: 1; min-width: 140px; font-size: 12.5px; color: #6b6155;">{{ al.texto }}</span>
+            <span style="flex: none; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: {{ al.cor }};">{{ al.rotulo }}</span>
           </div>
-          <div style="padding: 14px 16px;">
-            <div style="display: flex; gap: 16px; margin-bottom: 12px;">
-              <div>
-                <div style="font-size: 19px; font-weight: 700; color: #164951;">{{ ar.stat1 }}</div>
-                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e;">{{ ar.stat1Label }}</div>
-              </div>
-              <div>
-                <div style="font-size: 19px; font-weight: 700; color: {{ ar.stat2Cor }};">{{ ar.stat2 }}</div>
-                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e;">{{ ar.stat2Label }}</div>
-              </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <sc-for list="{{ ar.links }}" as="lk" hint-placeholder-count="2">
-                <a href="{{ lk.href }}" style="text-decoration: none; display: flex; justify-content: space-between; align-items: center; background: #faf8f3; border: 1px solid #eee8e0; border-radius: 8px; padding: 8px 12px;">
-                  <span style="font-size: 12px; font-weight: 700; color: #164951;">{{ lk.label }}</span>
-                  <span style="font-size: 12px; color: #c9c1b6;">→</span>
-                </a>
-              </sc-for>
-            </div>
-          </div>
-        </section>
-      </sc-for>
-    </div>
+        </sc-for>
+        <sc-if value="{{ temMaisAlertas }}">
+          <button onclick="{{ onVerAlertas }}" style="margin-top: 8px; border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 4px 0; cursor: pointer; font-family: inherit;">{{ verAlertasLabel }}</button>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <!-- PENDÊNCIAS · rotina esperando -->
+    <sc-if value="{{ temPendencias }}">
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9c6f56; margin-bottom: 4px;">Pendências</div>
+        <sc-for list="{{ pendencias }}" as="pd" hint-placeholder-count="3">
+          <a href="{{ pd.href }}" style="display: flex; gap: 10px; align-items: baseline; padding: 10px 0; border-top: 1px solid #f4f1ec; text-decoration: none; flex-wrap: wrap;">
+            <span style="flex: none; font-size: 13px; font-weight: 700; color: #164951;">{{ pd.titulo }}</span>
+            <span style="flex: 1; min-width: 160px; font-size: 12.5px; color: #8a7c6b;">{{ pd.texto }}</span>
+            <span style="flex: none; font-size: 12px; color: #c9c1b6;">&rarr;</span>
+          </a>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <!-- MENSAGENS · o texto pronto, onde a pendência está sendo resolvida -->
+    <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px;">
+      <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e;">Mensagens</span>
+        <span style="flex: 1; font-size: 12px; color: #8a7c6b;">Modelos por situação, para copiar e mandar.</span>
+        <a href="ISR%20-%20Mensagens%20WhatsApp.dc.html" style="flex: none; font-size: 11.5px; font-weight: 700; color: #348a8e; text-decoration: none;">ver todos</a>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-for list="{{ modelos }}" as="md" hint-placeholder-count="4">
+          <a href="{{ md.href }}" style="text-decoration: none; border: 1px solid #e5dccf; background: #fff; border-radius: 999px; padding: 7px 14px; font-size: 11.5px; font-weight: 700; color: #164951;">{{ md.label }}</a>
+        </sc-for>
+      </div>
+    </section>
 
     <!-- RODAPÉ DE LINKS FIXOS -->
     <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 24px;">
@@ -272,7 +290,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false, janela: "abertas" };
+  state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false, janela: "abertas", verAlertas: false };
   // cadastro novo puxado em segundo plano redesenha a Central na hora
   _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
   tfTituloRef = React.createRef();
@@ -285,7 +303,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { perfis: [], fila: [], areas: [], filaVazia: true, filaCount: "", saudacao: "", ciclo: "", matriculas: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%", temMais: false, filaBadgeBg: "#f2ebe3", filaBadgeFg: "#9b8b7e" };
+    if (!CRM) return { perfis: [], fila: [], alertas: [], pendencias: [], modelos: [], filaVazia: true, filaCount: "", saudacao: "", ciclo: "", matriculas: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%", temMais: false, filaBadgeBg: "#f2ebe3", filaBadgeFg: "#9b8b7e" };
 
     const user = CRM.gestaoUser();
     const ehGestora = !user || user.perfil === "gestora";
@@ -407,47 +425,51 @@ class Component extends DCLogic {
     };
 
     const metas = CRM.progressoMetas();
-    const resumo = CRM.cobrancaResumo();
-    const filaCom = CRM.filaParaHoje("comercial").length;
-    const stats = CRM.leadStatsByCanal();
-    const totalMat = stats.reduce((a, s) => a + s.matriculados, 0);
-    const totalPerd = stats.reduce((a, s) => a + s.perdidos, 0);
-    const fechados = totalMat + totalPerd;
-    const ocup = CRM.ocupacaoTurmas();
-    const vagas = ocup.reduce((a, t) => a + Math.max(0, t.vagas), 0);
-    const leadsSemana = CRM.getPessoas().filter(p => p.status === "lead" && p.entrouEm && CRM.relativeDays(p.entrouEm) !== "—" && !CRM.isStale(p.entrouEm) && (new Date() - new Date(p.entrouEm)) / 86400000 <= 7).length;
 
-    const areas = [
-      { nome: "Comercial", cor: "#e07856",
-        stat1: filaCom, stat1Label: "para hoje", stat2: metas.matriculas + "/" + metas.metaMatriculas, stat2Label: "matrículas no ciclo", stat2Cor: "#5a9e4b",
-        links: [
-          { label: "CRM · Funil de leads", href: "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" },
-          { label: "Mensagens WhatsApp", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html" }] },
-      { nome: "Gestão", cor: "#2a9d8f",
-        stat1: resumo.atrasadas, stat1Label: "atrasadas", stat2: CRM.fmtMoney("R$", resumo.receber["R$"]), stat2Label: "a receber (R$)", stat2Cor: "#164951",
-        links: [
-          { label: "Cobrança & renovações", href: "ISR%20-%20Cobran%C3%A7a.dc.html" },
-          { label: "Caixa 90 dias", href: "ISR%20-%20Caixa.dc.html" }] },
-      { nome: "Pedagógico", cor: "#6b5b95",
-        stat1: vagas, stat1Label: "vagas abertas", stat2: "—", stat2Label: "em risco", stat2Cor: "#9b8b7e",
-        links: [
-          { label: "Turmas & projetos", href: "ISR%20-%20Turmas%20e%20Projetos.dc.html" },
-          { label: "Agenda da escola", href: "ISR%20-%20Agenda.dc.html" },
-          { label: "Painel do professor", href: "ISR%20-%20Painel%20do%20Professor.dc.html" }] },
-      { nome: "Marketing", cor: "#d4a574",
-        stat1: leadsSemana, stat1Label: "leads na semana", stat2: fechados > 0 ? Math.round(100 * totalMat / fechados) + "%" : "—", stat2Label: "conversão", stat2Cor: "#2a9d8f",
-        links: [
-          { label: "Origens & conversão", href: "ISR%20-%20Marketing.dc.html" },
-          { label: "Perfis (demo)", href: "ISR%20-%20Perfil.dc.html" }] }
-    ];
-
-    // perfis não-gestora: só os cards da sua área (spec: experiência inteira menor)
-    const areasPorPerfil = {
-      gestora: areas,
-      comercial: [areas[0], areas[3]],
-      operacao: [areas[1]],
-      professora: [areas[2]]
+    // ── ALERTAS ──────────────────────────────────────────────
+    // Coisa errada com nome e dono. Cada perfil vê o que é dele: a
+    // professora não precisa saber de parcela vencida, e o comercial
+    // não trabalha aluna faltando.
+    const AREA_POR_PERFIL = {
+      gestora: null,
+      comercial: ["financeiro"],
+      operacao: ["financeiro", "pedagogico", "alunas", "config"],
+      professora: ["pedagogico"]
     };
+    const filtroArea = AREA_POR_PERFIL[perfilAtivo] || null;
+    const cabeNoPerfil = (x) => !filtroArea || filtroArea.indexOf(x.area) >= 0;
+
+    const ALERTA_META = {
+      cobranca_falhou: { rotulo: "cobrança", cor: "#cf6b5c" },
+      atraso: { rotulo: "atraso", cor: "#cf6b5c" },
+      falta: { rotulo: "faltas", cor: "#c98a3a" },
+      onboarding_travado: { rotulo: "integração", cor: "#c98a3a" },
+      avaliacao_baixa: { rotulo: "avaliação", cor: "#9c6f56" },
+      avaliacao_caiu: { rotulo: "avaliação", cor: "#9c6f56" },
+      turma_vazia: { rotulo: "turma", cor: "#9c6f56" }
+    };
+    const alertasAll = (CRM.alertasDaEscola ? CRM.alertasDaEscola() : []).filter(cabeNoPerfil);
+    const alertasMostra = this.state.verAlertas ? alertasAll : alertasAll.slice(0, 6);
+    const alertas = alertasMostra.map(a => {
+      const m = ALERTA_META[a.tipo] || { rotulo: a.tipo, cor: "#8a7c6b" };
+      return { quem: a.quem, texto: a.texto, href: encodeURI(a.href),
+        rotulo: m.rotulo, cor: m.cor };
+    });
+    const nUrgentes = alertasAll.filter(a => a.peso >= 80).length;
+
+    // ── PENDÊNCIAS ───────────────────────────────────────────
+    const pendenciasAll = (CRM.pendenciasDaEscola ? CRM.pendenciasDaEscola() : []).filter(cabeNoPerfil);
+    const pendencias = pendenciasAll.map(x => ({
+      titulo: x.titulo, texto: x.texto, href: encodeURI(x.href) }));
+
+    // ── MENSAGENS ────────────────────────────────────────────
+    // atalho para os modelos mais usados na resolução do dia
+    const modelos = [
+      { label: "Cobrança atrasada", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?situacao=cobranca" },
+      { label: "Aluna faltando", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?situacao=falta" },
+      { label: "Boas-vindas", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?situacao=boasvindas" },
+      { label: "Renovação", href: "ISR%20-%20Mensagens%20WhatsApp.dc.html?situacao=renovacao" }
+    ];
 
     return {
       saudacao: nomes[perfilAtivo], perfis,
@@ -562,7 +584,17 @@ class Component extends DCLogic {
       renovacoesMeta: metas.renovacoes + "/" + metas.metaRenovacoes,
       pMatriculas: Math.min(100, Math.round(100 * metas.matriculas / metas.metaMatriculas)) + "%",
       pRenovacoes: Math.min(100, Math.round(100 * metas.renovacoes / metas.metaRenovacoes)) + "%",
-      areas: areasPorPerfil[perfilAtivo] || areas,
+      alertas: alertas, temAlertas: alertasAll.length > 0,
+      alertaResumo: alertasAll.length
+        + (alertasAll.length === 1 ? " situação" : " situações")
+        + (nUrgentes ? " · " + nUrgentes + " para hoje" : ""),
+      temMaisAlertas: alertasAll.length > 6,
+      verAlertasLabel: this.state.verAlertas
+        ? "mostrar só os primeiros"
+        : "ver os " + alertasAll.length + " alertas",
+      onVerAlertas: () => this.setState(st => ({ verAlertas: !st.verAlertas })),
+      pendencias: pendencias, temPendencias: pendenciasAll.length > 0,
+      modelos: modelos,
 
       // CRM em destaque no topo para quem vive do funil
       ...((() => {
