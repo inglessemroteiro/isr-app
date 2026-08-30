@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.28-h",
-  data: "28/08/2026",
-  nota: "Central passa a listar trabalho em vez de departamentos: alertas com nome e link (cobrança que não passou, parcela vencida, faltas, avaliação em queda, onboarding parado, turma abaixo do mínimo), pendências de rotina e modelos de mensagem, filtrados pelo perfil de quem abre"
+  numero: "2026.08.30-a",
+  data: "30/08/2026",
+  nota: "Caixa invertido: a conciliação do extrato e a revisão dos dados passam para o início da tela — antes estavam a 4.491px, cinco telas de rolagem — e meta, previsto × realizado, custos fixos, evolução mensal e câmbio vão para a aba Planejamento"
 };
