@@ -3631,7 +3631,14 @@
         moeda: colunaPorTitulo(cab, ["moeda", "currency"]),
         // o id que o gateway dá à transação é a identidade dela: é o que
         // permite importar o mesmo extrato duas vezes sem duplicar nada
-        id: colunaPorTitulo(cab, ["transacao", "id"])
+        id: colunaPorTitulo(cab, ["transacao", "id"]),
+        // O relatório do Stripe traz o e-mail de quem pagou numa coluna
+        // própria. É o dado que casa com a aluna sem depender de nome
+        // escrito igual nem de valor exato — e estava sendo descartado.
+        email: colunaPorTitulo(cab, ["customer email", "e-mail do cliente", "email", "e-mail"]),
+        // Cobrança que falhou aparece no mesmo relatório da que foi paga.
+        // Sem olhar o status, a tentativa recusada entra como receita.
+        status: colunaPorTitulo(cab, ["status", "situacao"])
       };
       if (col.valor >= 0) {
         var MOEDA_COD = { brl: "R$", eur: "€", "r$": "R$", "€": "€" };
@@ -3650,6 +3657,14 @@
           if (col.desc >= 0 && (c[col.desc] || "").trim()) partes.push((c[col.desc] || "").trim());
           var junta = partes.length === 2 && semAcento(partes[1]).indexOf(semAcento(partes[0])) === 0
             ? partes[1] : partes.join(" · ");
+          // o e-mail vai junto da descrição: é por ele que a primeira
+          // passada da conciliação encontra a aluna
+          var mail = col.email >= 0 ? (c[col.email] || "").trim() : "";
+          if (mail && junta.indexOf(mail) < 0) junta = (junta ? junta + " · " : "") + mail;
+          // cobrança recusada, estornada ou pendente não é dinheiro que
+          // entrou: fica fora do extrato lido
+          var st = col.status >= 0 ? semAcento(c[col.status] || "") : "";
+          if (/^(failed|refunded|canceled|cancelled|requires_|pending|incomplete|expirad|falh|recusad|estornad)/.test(st)) return;
           linhas.push({ dt: dt, bruto: bruto,
             desc: junta,
             tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "",
