@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-h",
+  numero: "2026.08.31-i",
   data: "31/08/2026",
-  nota: "Competência e caixa deixam de ser o mesmo número: o Caixa passa a ter os dois regimes, um botão para cada. Competência conta tudo que pertence ao mês, com folha e custo fixo calculados; caixa conta só o que passou pelo banco e se confere no extrato linha a linha"
+  nota: "O Caixa abre em regime de caixa: o número do mês passa a ser o que passou pelo banco, e a competência fica a um clique. Enquanto o mês não estiver conciliado o número aparece baixo — é a leitura correta de um mês que ainda não foi conferido"
 };
