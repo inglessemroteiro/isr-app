@@ -6513,6 +6513,12 @@
     var k = chavePagamento(nome, mesKey || mesAtualKey());
     m[k] = { nome: nome, mes: mesKey || mesAtualKey(),
       valor: (dados && dados.valor) || 0,
+      // de onde saiu de fato. Sem isto, folha marcada na mão e folha vista
+      // no extrato ficam indistinguíveis — e a segunda é a única que prova
+      // quanto e em que moeda a escola pagou.
+      moeda: (dados && dados.moeda) || "",
+      conta: (dados && dados.conta) || "",
+      idExterno: (dados && dados.idExterno) || "",
       em: (dados && dados.em) || iso(today()),
       obs: (dados && dados.obs) || "" };
     try { localStorage.setItem(FOLHA_PAGA_KEY, JSON.stringify(m)); } catch (e) {}
@@ -9023,8 +9029,11 @@
       return { nome: c.nome, categoria: c.categoria || "outros", moeda: c.moeda,
         valor: c.valor, fixo: true, confirmado: false };
     }).concat(folhaNoCaixa(key).map(function (x) {
-      return Object.assign({}, x, {
-        confirmado: !!(x.pessoa && pagamentoFeito(x.pessoa, key)) });
+      // a mesma régua da receita: "conferido" é ter linha de banco atrás.
+      // Marcar a folha como paga na tela de Pagamentos registra a intenção,
+      // não o extrato — e antes isso já contava como conferido, deixando a
+      // despesa mais provada que a receita sem nenhum motivo.
+      return Object.assign({}, x, { confirmado: !!x.vistoNoExtrato });
     })).concat(lancs.filter(function (l) { return l.tipo === "saida"; }).map(function (l) {
       return { nome: l.descricao, categoria: l.categoria || "outros", moeda: l.moeda,
         valor: l.valor, fixo: false, data: l.data, lancId: l.id, fatura: l.fatura || "",
@@ -9162,9 +9171,19 @@
     // acrescentaria centavo de arredondamento
     var linha = function (nome, sufixo, total, origem, pessoa, bruto) {
       var m = moedaDe(nome);
+      var v = (bruto !== undefined && bruto !== null) ? bruto : converter(total, m);
+      // Se a folha dessa pessoa já foi vista saindo no extrato, é o extrato
+      // que manda: o cadastro diz quanto era para pagar, o banco diz quanto
+      // foi pago. Enquanto ninguém viu no extrato, o cadastro é estimativa.
+      var pg = pagamentoFeito(nome, k);
+      var doBanco = !!(pg && pg.valor > 0 && (pg.conta || pg.idExterno));
+      if (doBanco) { v = pg.valor; if (pg.moeda) m = pg.moeda; }
       return { nome: nome + sufixo, categoria: "equipe", moeda: m,
-        valor: Math.round((bruto !== undefined && bruto !== null ? bruto
-                                                                 : converter(total, m)) * 100) / 100,
+        valor: Math.round(v * 100) / 100,
+        vistoNoExtrato: doBanco,
+        combinado: Math.round(((bruto !== undefined && bruto !== null) ? bruto
+                                                                      : converter(total, moedaDe(nome))) * 100) / 100,
+        moedaCombinada: moedaDe(nome),
         // o valor na moeda em que a folha foi calculada, para conferir a conta
         calculadoEm: moeda, valorCalculado: Math.round(total * 100) / 100,
         // o nome puro, para saber depois se essa folha já foi vista
