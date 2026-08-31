@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-b",
+  numero: "2026.08.31-c",
   data: "31/08/2026",
-  nota: "O Caixa passa a responder também quanto a escola tem, e não só quanto o mês gerou: saldo por conta no fechamento, o que está guardado separado do que dá para usar, a curva mês a mês da reserva e uma meta de quanto guardar, em Planejamento"
+  nota: "Rótulos do Caixa com os nomes de mercado: Disponível, Reserva, Resultado do mês, Conciliado, Taxas, Pró-labore, A receber, Entradas e Saídas, Histórico de saldo — e as explicações em volta dos números viraram microcopy curto"
 };
