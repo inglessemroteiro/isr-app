@@ -774,7 +774,7 @@ class Component extends DCLogic {
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "",
-            regAbertas: false, aba: "mes", saldoAberto: false, regime: "competencia" };
+            regAbertas: false, aba: "mes", saldoAberto: false, regime: "caixa" };
   orcRefs = {};
   saldoRefs = {};
   custoRefs = {};
@@ -938,15 +938,15 @@ class Component extends DCLogic {
     // parcela marcada na mão junto com a conciliada. Um número assim não
     // responde nem "quanto a escola faturou" nem "quanto passou na conta".
     // Agora são duas leituras da mesma base, e quem lê escolhe qual.
-    const regime = this.state.regime === "caixa" ? "caixa" : "competencia";
+    const regime = this.state.regime === "competencia" ? "competencia" : "caixa";
     const ehCaixa = regime === "caixa";
     const entrouM = ehCaixa ? f.confirmado : f.recebido;
     const saiuM = ehCaixa ? f.saiuConfirmado : f.saiu;
     const resDe = (m) => (entrouM[m] || 0) - (saiuM[m] || 0);
     const resTotal = CRM.emReais(entrouM) - CRM.emReais(saiuM);
     const regimes = [
-      { id: "competencia", label: "Competência" },
-      { id: "caixa", label: "Caixa" }
+      { id: "caixa", label: "Caixa" },
+      { id: "competencia", label: "Competência" }
     ].map(x => ({ label: x.label,
       onClick: () => this.setState({ regime: x.id }),
       bg: regime === x.id ? "#164951" : "#fff",
