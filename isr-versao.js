@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-g",
+  numero: "2026.08.31-h",
   data: "31/08/2026",
-  nota: "Lote de despesas na conciliação: os débitos que não são folha nem transferência entre contas próprias entram de uma vez, com o total somado antes do clique. Num mês de cinco extratos isso é a maior parte do trabalho manual"
+  nota: "Competência e caixa deixam de ser o mesmo número: o Caixa passa a ter os dois regimes, um botão para cada. Competência conta tudo que pertence ao mês, com folha e custo fixo calculados; caixa conta só o que passou pelo banco e se confere no extrato linha a linha"
 };
