@@ -1504,8 +1504,12 @@ class Component extends DCLogic {
         onIgnorar: () => { CRM.registrarTransacao(x.trans, "ignorada"); marcar("ign"); },
         onLancar: () => {
           if (ehFolha) {
+            // guarda de onde saiu: é o que distingue folha vista no extrato
+            // de folha marcada na mão, e o que diz quanto de fato foi pago
             CRM.marcarPagamentoFeito(x.pessoaEquipe, mesTrans,
-              { valor: Math.abs(x.trans.valor), obs: x.trans.descricao.slice(0, 60) });
+              { valor: Math.abs(x.trans.valor), obs: x.trans.descricao.slice(0, 60),
+                moeda: x.trans.moeda || this.state.moedaExtrato,
+                conta: this.contaAtual(), idExterno: x.trans.idExterno || "" });
             CRM.registrarTransacao(x.trans, "folha de " + mesTrans);
           } else {
             const d = (x.trans.data || "").split("/");
