@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-c",
+  numero: "2026.08.31-d",
   data: "31/08/2026",
-  nota: "Rótulos do Caixa com os nomes de mercado: Disponível, Reserva, Resultado do mês, Conciliado, Taxas, Pró-labore, A receber, Entradas e Saídas, Histórico de saldo — e as explicações em volta dos números viraram microcopy curto"
+  nota: "Mesma passada de linguagem em nove telas: os subtítulos de relatório corporativo viraram uma frase que diz o que a tela faz, e o vocabulário interno saiu — cadência virou frequência, adimplência virou pagamento em dia, e o código de requisito parou de aparecer na interface. Um verificador novo trava o jargão no CI"
 };
