@@ -93,6 +93,70 @@
       </div>
     </div>
 
+    <!-- O QUE A ESCOLA TEM — o resultado é o que o mês gerou; isto é o que
+         ficou parado na conta. Enquanto só existia o primeiro, não dava
+         para saber se a reserva sobe ou desce. -->
+    <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid #6b5b95; border-radius: 12px; padding: 18px 20px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">O que a escola tem · {{ mesCurto }}</span>
+        <button onclick="{{ onSaldoAbrir }}" style="border: 1px solid #e5dccf; background: {{ saldoBtnBg }}; color: {{ saldoBtnFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ saldoBtnLabel }}</button>
+      </div>
+
+      <sc-if value="{{ temSaldo }}">
+        <div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-top: 12px;">
+            <div>
+              <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f;">Para operar</div>
+              <div style="font-size: 23px; font-weight: 700; color: #164951; letter-spacing: -0.4px;">{{ saldoOperar }}</div>
+            </div>
+            <div>
+              <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f;">Guardado</div>
+              <div style="font-size: 23px; font-weight: 700; color: #6b5b95; letter-spacing: -0.4px;">{{ saldoReserva }}</div>
+            </div>
+            <div>
+              <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f;">O mês gerou</div>
+              <div style="font-size: 23px; font-weight: 700; color: {{ resCor }}; letter-spacing: -0.4px;">{{ saldoGerou }}</div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ saldoNota }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ semSaldo }}">
+        <p style="margin: 8px 0 0; font-size: 12px; color: #8a7c6b; line-height: 1.6;">O saldo deste mês ainda não foi anotado. Sem ele o sistema sabe quanto o mês gerou, mas não quanto ficou em conta nem se a reserva subiu.</p>
+      </sc-if>
+
+      <sc-if value="{{ saldoAberto }}">
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
+          <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.6; margin-bottom: 10px;">O saldo de cada conta no último dia do mês, como aparece no banco.</div>
+          <sc-for list="{{ saldoCampos }}" as="sc" hint-placeholder-count="4">
+            <div style="display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
+              <span style="flex: 1; min-width: 120px; font-size: 12.5px; font-weight: 700; color: #164951;">{{ sc.nome }}</span>
+              <button onclick="{{ sc.onReserva }}" title="Conta de reserva não entra no caixa do dia a dia" style="flex: none; border: 1px solid {{ sc.resBorda }}; background: {{ sc.resBg }}; color: {{ sc.resFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ sc.resLabel }}</button>
+              <input ref="{{ sc.ref }}" placeholder="{{ sc.placeholder }}" style="flex: none; width: 110px; padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+              <span style="flex: none; font-size: 11.5px; color: #a2957f;">{{ sc.moeda }}</span>
+            </div>
+          </sc-for>
+          <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+            <button onclick="{{ onSaldoSalvar }}" style="border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar o saldo do mês</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ temCurva }}">
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f4f1ec;">
+          <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f; margin-bottom: 10px;">Mês a mês</div>
+          <sc-for list="{{ curva }}" as="cv" hint-placeholder-count="6">
+            <div style="display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f7f2ea; font-size: 12px; flex-wrap: wrap;">
+              <span style="flex: 1; min-width: 100px; font-weight: 700; color: #164951;">{{ cv.label }}</span>
+              <span style="flex: none; min-width: 96px; text-align: right; color: #6b5b95; font-weight: 700;">{{ cv.total }}</span>
+              <span style="flex: none; min-width: 88px; text-align: right; color: {{ cv.corVariou }};">{{ cv.variou }}</span>
+            </div>
+          </sc-for>
+          <div style="margin-top: 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ curvaNota }}</div>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- CONCILIAÇÃO DE EXTRATO -->
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Conciliação bancária</div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px 18px; margin-bottom: 24px;">
@@ -572,6 +636,21 @@
       </sc-if>
     </div>
 
+    <!-- META DE RESERVA — a meta de faturamento diz quanto entra e não diz
+         nada sobre sobrar. Esta diz quanto a escola quer ter guardado. -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-left: 5px solid #6b5b95; border-radius: 12px; padding: 16px 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #6b5b95;">Meta de reserva</span>
+        <span style="font-size: 12.5px; font-weight: 700; color: #164951;">{{ metaResLabel }}</span>
+      </div>
+      <p style="margin: 6px 0 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ metaResNota }}</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <input ref="{{ metaResBrlRef }}" placeholder="Guardar R$ · {{ metaResBRL }}" style="width: 160px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <input ref="{{ metaResEurRef }}" placeholder="Guardar € · {{ metaResEUR }}" style="width: 160px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+        <button onclick="{{ onSalvarMetaReserva }}" style="border: none; background: #6b5b95; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar meta de reserva</button>
+      </div>
+    </div>
+
     <!-- LINHA DO TEMPO -->
     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 8px;">Evolução mensal <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· barra em destaque: receitas recebidas · barra clara: despesas · selecione um mês para detalhar</span></div>
     <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 16px 14px 10px; margin-bottom: 24px; overflow-x: auto;">
@@ -683,8 +762,9 @@ class Component extends DCLogic {
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "",
-            regAbertas: false, aba: "mes" };
+            regAbertas: false, aba: "mes", saldoAberto: false };
   orcRefs = {};
+  saldoRefs = {};
   custoRefs = {};
   extratoRef = React.createRef();
   arquivoRef = React.createRef();
@@ -756,6 +836,7 @@ class Component extends DCLogic {
   saiDescRef = React.createRef(); saiValorRef = React.createRef();
   saiMoedaRef = React.createRef(); saiCatRef = React.createRef();
   metaBrlRef = React.createRef(); metaEurRef = React.createRef();
+  metaResBrlRef = React.createRef(); metaResEurRef = React.createRef();
   cambioRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -782,7 +863,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { abas: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
+    const vazio = { abas: [], saldoCampos: [], curva: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -871,6 +952,37 @@ class Component extends DCLogic {
     const temSemConta = !!(semC && (CRM.emReais(semC.entrou) > 0 || CRM.emReais(semC.saiu) > 0));
     if (temSemConta) resContas.push({ id: "sem_conta", nome: "Não informada", corNome: "#9c6f56",
       entrou: duo(semC.entrou), saiu: (semC.saiu["R$"] || semC.saiu["\u20ac"]) ? "\u2212 " + duo(semC.saiu) : "" });
+
+    // ── o que a escola tem ──
+    // O resultado do mês é fluxo; isto é estoque. Enquanto só existia o
+    // primeiro, dava para faturar bem e não ter dinheiro nenhum — e não
+    // dava para ver a reserva subindo, que é o que mostra se a escola está
+    // construindo alguma coisa em vez de só girar.
+    const sal = CRM.saldoDoMes ? CRM.saldoDoMes(mes.key) : { registrado: false, contas: [] };
+    const contasDoSaldo = CRM.contasLista ? CRM.contasLista() : [];
+    const saldoCampos = contasDoSaldo.map(c => {
+      if (!this.saldoRefs[c.id]) this.saldoRefs[c.id] = React.createRef();
+      const j = (sal.contas || []).filter(x => x.id === c.id)[0];
+      return { id: c.id, nome: c.nome, moeda: c.moeda, ref: this.saldoRefs[c.id],
+        placeholder: j ? CRM.fmtMoney(c.moeda, j.valor) : "sem saldo",
+        resLabel: c.reserva ? "guardado" : "do dia a dia",
+        resBg: c.reserva ? "#ece5f3" : "#fff",
+        resFg: c.reserva ? "#6b5b95" : "#a2957f",
+        resBorda: c.reserva ? "#c9bbdf" : "#e5dccf",
+        onReserva: () => { CRM.setContaReserva(c.id, !c.reserva); this.bump(); } };
+    });
+    const curvaBruta = CRM.serieDoCaixa ? CRM.serieDoCaixa(12) : [];
+    const curva = curvaBruta.map(x => ({
+      label: x.label,
+      total: CRM.fmtMoney("R$", x.total),
+      variou: x.variou === null ? "primeiro mês"
+        : (x.variou > 0 ? "+ " : (x.variou < 0 ? "− " : "")) + CRM.fmtMoney("R$", Math.abs(x.variou)),
+      corVariou: x.variou === null ? "#b3a693" : (x.variou > 0 ? "#5a9e4b" : (x.variou < 0 ? "#cf6b5c" : "#8a7c6b"))
+    }));
+    const metaRes = CRM.metaReserva ? CRM.metaReserva() : { "R$": 0, "€": 0 };
+    const metaResReais = CRM.emReais(metaRes);
+    const duoMoeda = (o) => ["R$", "€"].filter(m => o[m] > 0.005)
+      .map(m => CRM.fmtMoney(m, o[m])).join(" + ") || CRM.fmtMoney("R$", 0);
 
     // ── a faixa de dados ──
     // Cada coisa em uma palavra e um número. Antes eram quatro parágrafos
@@ -1665,6 +1777,66 @@ class Component extends DCLogic {
       }).call(this),
 
       resTitulo, resValor, resCor, porMoeda, notas,
+
+      // ── o que a escola tem ──
+      temSaldo: !!sal.registrado, semSaldo: !sal.registrado,
+      saldoOperar: duoMoeda(sal.operar || {}),
+      saldoReserva: duoMoeda(sal.reserva || {}),
+      saldoGerou: (res < 0 ? "− " : "+ ") + CRM.fmtMoney("R$", Math.abs(res)),
+      saldoNota: (sal.registrado
+        ? "Saldo anotado em " + (sal.em || "").split("-").reverse().join("/") + ". "
+        : "")
+        + "Guardado é o que está em conta de reserva; o resto fica disponível. "
+        + (metaResReais > 0
+            ? "A meta é ter " + duoMoeda(metaRes) + " guardados — "
+              + (sal.reservaReais >= metaResReais
+                  ? "já alcançada."
+                  : "faltam " + CRM.fmtMoney("R$", metaResReais - sal.reservaReais) + ".")
+            : "Sem meta de reserva definida; dá para pôr uma em Planejamento."),
+      saldoCampos, saldoAberto: !!this.state.saldoAberto,
+      saldoBtnLabel: this.state.saldoAberto ? "Fechar" : (sal.registrado ? "Corrigir saldo" : "Anotar saldo"),
+      saldoBtnBg: this.state.saldoAberto ? "#164951" : "#fff",
+      saldoBtnFg: this.state.saldoAberto ? "#fff" : "#6b6155",
+      onSaldoAbrir: () => this.setState(s => ({ saldoAberto: !s.saldoAberto })),
+      onSaldoSalvar: () => {
+        contasDoSaldo.forEach(c => {
+          const r = this.saldoRefs[c.id];
+          const v = (r && r.current && r.current.value || "").trim();
+          // campo em branco não apaga o que já estava anotado: só é
+          // ignorado. Para apagar existe o zero.
+          if (!v) return;
+          CRM.registrarSaldo(mes.key, c.id, v);
+          if (r && r.current) r.current.value = "";
+        });
+        this.setState({ saldoAberto: false });
+        this.bump();
+      },
+      // ── meta de reserva ──
+      metaResBrlRef: this.metaResBrlRef, metaResEurRef: this.metaResEurRef,
+      metaResBRL: CRM.fmtMoney("R$", metaRes["R$"] || 0),
+      metaResEUR: CRM.fmtMoney("\u20ac", metaRes["\u20ac"] || 0),
+      metaResLabel: metaResReais > 0 ? duoMoeda(metaRes) : "sem meta",
+      metaResNota: metaResReais > 0
+        ? (sal.registrado
+            ? (sal.reservaReais >= metaResReais
+                ? "Alcançada: há " + duoMoeda(sal.reserva) + " em conta de reserva."
+                : "Guardado hoje: " + duoMoeda(sal.reserva) + ". Faltam "
+                  + CRM.fmtMoney("R$", metaResReais - sal.reservaReais) + ".")
+            : "Anote o saldo do mês no Caixa para comparar com a meta.")
+        : "Quanto a escola quer ter guardado. É uma pergunta diferente de quanto ela fatura: uma escola pode bater a meta de faturamento todo mês e nunca sobrar nada.",
+      onSalvarMetaReserva: () => {
+        const b = (this.metaResBrlRef.current && this.metaResBrlRef.current.value || "").trim();
+        const e = (this.metaResEurRef.current && this.metaResEurRef.current.value || "").trim();
+        if (b) { CRM.setMetaReserva("R$", b); this.metaResBrlRef.current.value = ""; }
+        if (e) { CRM.setMetaReserva("\u20ac", e); this.metaResEurRef.current.value = ""; }
+        this.bump();
+      },
+
+      temCurva: curva.length > 1, curva,
+      curvaNota: curva.length > 1
+        ? "Quanto a escola tinha no fim de cada mês, e quanto isso mudou. É a única linha que responde se a reserva subiu."
+        : "",
+
       resContas, semConta: temSemConta,
       semContaFrase: "Movimento sem conta marcada. Ao lançar ou conciliar, escolha por onde o dinheiro passou — é o que permite bater com o extrato de cada banco.",
       contasOpts: contasCad.map(c => ({ id: c.id, sel: c.id === this.contaAtual(),

@@ -1904,6 +1904,112 @@
   //  conciliado, cadastro por arrumar. Não tem urgência de hoje, mas
   //  enquanto não for feita todo número da escola fica pela metade.
   // ══════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════
+  //  O QUE A ESCOLA TEM
+  //
+  //  Quanto o mês gerou e quanto está parado na conta são perguntas
+  //  diferentes, e o sistema só respondia a primeira — mal. O resultado
+  //  é fluxo: o que entrou menos o que saiu naquele mês. O saldo é
+  //  estoque: o que ficou, somando tudo que veio antes.
+  //
+  //  A terceira pergunta é a que interessa a quem passou três anos sem
+  //  conseguir guardar nada: a reserva está subindo? Para isso é preciso
+  //  o saldo de cada fechamento, e o sistema nunca guardou nenhum. Daqui
+  //  em diante guarda, e a curva aparece sozinha.
+  // ══════════════════════════════════════════════════════════════
+  var SALDOS_KEY = "isr_saldos_v1";
+
+  function saldosAll() {
+    try { return JSON.parse(localStorage.getItem(SALDOS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function saldosSave(o) {
+    try { localStorage.setItem(SALDOS_KEY, JSON.stringify(o)); } catch (e) {}
+    agendarSync();
+    return o;
+  }
+  // Um registro por mês: o saldo de cada conta no último dia. Guardar por
+  // conta, e não só o total, é o que permite conferir com o banco depois —
+  // e separar o que está guardado do que está para gastar.
+  function registrarSaldo(mesKey, contaId, valor, quando) {
+    var k = mesKey || mesAtualKey();
+    var o = saldosAll();
+    o[k] = o[k] || { mes: k, contas: {}, em: "" };
+    o[k].contas[contaId] = { valor: typeof valor === "number" ? valor : parseMoney(valor),
+      em: quando || iso(today()) };
+    o[k].em = quando || iso(today());
+    carimbar(o[k]);
+    saldosSave(o);
+    return o[k];
+  }
+  function esquecerSaldo(mesKey, contaId) {
+    var o = saldosAll();
+    if (o[mesKey] && o[mesKey].contas) delete o[mesKey].contas[contaId];
+    saldosSave(o);
+    return o[mesKey] || null;
+  }
+  // conta marcada como reserva não é caixa para operar: é o que foi
+  // guardado de propósito, e some do total do dia a dia
+  function ehReserva(contaId) {
+    var c = contaMeta(contaId);
+    return !!(c && c.reserva);
+  }
+  function saldoDoMes(mesKey) {
+    var k = mesKey || mesAtualKey();
+    var reg = saldosAll()[k];
+    var out = { mes: k, registrado: !!reg, em: reg ? reg.em : "",
+      operar: { "R$": 0, "€": 0 }, reserva: { "R$": 0, "€": 0 },
+      total: { "R$": 0, "€": 0 }, contas: [],
+      // zerados desde já: mês sem registro devolve o mesmo formato, e quem
+      // lê distingue "não anotei" de "está zerado" pelo campo registrado
+      totalReais: 0, operarReais: 0, reservaReais: 0 };
+    if (!reg) return out;
+    contasLista().forEach(function (c) {
+      var s = reg.contas[c.id];
+      if (!s) return;
+      var m = c.moeda || "R$";
+      var onde = c.reserva ? out.reserva : out.operar;
+      onde[m] += s.valor;
+      out.total[m] += s.valor;
+      out.contas.push({ id: c.id, nome: c.nome, moeda: m, valor: s.valor,
+        reserva: !!c.reserva, em: s.em });
+    });
+    out.totalReais = emReais(out.total);
+    out.operarReais = emReais(out.operar);
+    out.reservaReais = emReais(out.reserva);
+    return out;
+  }
+  // A curva: os últimos meses com saldo registrado, do mais antigo para o
+  // mais novo, com quanto o mês gerou ao lado. É a resposta para "estou
+  // construindo alguma coisa?" — que um mês sozinho nunca dá.
+  function serieDoCaixa(quantos) {
+    var n = quantos || 12;
+    var todos = saldosAll();
+    var chaves = Object.keys(todos).filter(function (k) { return /^\d{4}-\d{2}$/.test(k); }).sort();
+    chaves = chaves.slice(-n);
+    var ant = null;
+    return chaves.map(function (k) {
+      var s = saldoDoMes(k);
+      var f = financeiroMes(k);
+      var variou = ant === null ? null : Math.round((s.totalReais - ant) * 100) / 100;
+      ant = s.totalReais;
+      return { mes: k, label: mesLabelDe(k),
+        total: s.totalReais, operar: s.operarReais, reserva: s.reservaReais,
+        gerou: Math.round(f.totalReais.resultado * 100) / 100,
+        variou: variou };
+    });
+  }
+  // Meta de reserva: quanto a escola quer ter guardado. A meta de
+  // faturamento diz quanto entra e não diz nada sobre sobrar.
+  function metaReserva() {
+    var m = metasAtuais();
+    return m.reserva || { "R$": 0, "€": 0 };
+  }
+  function setMetaReserva(moeda, valor) {
+    var r = Object.assign({}, metasAtuais().reserva || {});
+    r[moeda] = typeof valor === "number" ? valor : parseMoney(valor);
+    return setMetas({ reserva: r });
+  }
+
   var ALERTA_PESO = {
     cobranca_falhou: 100, atraso: 90, falta: 80, onboarding_travado: 70,
     avaliacao_baixa: 60, avaliacao_caiu: 50, turma_vazia: 40
@@ -8745,6 +8851,14 @@
     contasSave(contasLista().filter(function (c) { return c.id !== id; }));
     return { removida: true };
   }
+  // Poupança não é caixa para operar. Marcada como reserva, a conta sai do
+  // total do dia a dia e entra no que a escola conseguiu guardar.
+  function setContaReserva(id, sim) {
+    var l = contasLista();
+    l.forEach(function (c) { if (c.id === id) c.reserva = !!sim; });
+    contasSave(l);
+    return contaMeta(id);
+  }
 
   var CAT_EXTRA_KEY = "isr_categorias_saida_v1";
   var CORES_CATEGORIA = ["#5a9e4b", "#c98060", "#7b8fa8", "#a4785f", "#5e8f8f",
@@ -11217,7 +11331,7 @@
     ehSoIdentificador: ehSoIdentificador, donoDoIdentificador: donoDoIdentificador,
     lembrarIdentificador: lembrarIdentificador, esquecerIdentificador: esquecerIdentificador,
     partesNaDescricao: partesNaDescricao, novaAlunaDoExtrato: novaAlunaDoExtrato,
-    addConta: addConta, removeConta: removeConta,
+    addConta: addConta, removeConta: removeConta, setContaReserva: setContaReserva,
     acessoLiberado: acessoLiberado, acessoPorEmail: acessoPorEmail,
     whatsappEscola: whatsappEscola, linkWhatsappEscola: linkWhatsappEscola,
     assinantesAtivas: assinantesAtivas,
@@ -11296,6 +11410,9 @@
     pulsosLista: pulsosLista, tendenciaPulso: tendenciaPulso, pulsoMeta: pulsoMeta,
     filaAcompanhamento: filaAcompanhamento,
     alertasDaEscola: alertasDaEscola, pendenciasDaEscola: pendenciasDaEscola,
+    registrarSaldo: registrarSaldo, esquecerSaldo: esquecerSaldo,
+    saldoDoMes: saldoDoMes, serieDoCaixa: serieDoCaixa, ehReserva: ehReserva,
+    metaReserva: metaReserva, setMetaReserva: setMetaReserva,
     carteiraProfessoras: carteiraProfessoras, professoraEfetiva: professoraEfetiva,
     professorasDeAula: professorasDeAula, equipeDocente: equipeDocente,
     capacidades: capacidades, setCapacidade: setCapacidade,

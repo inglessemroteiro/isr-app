@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-a",
+  numero: "2026.08.31-b",
   data: "31/08/2026",
-  nota: "Leitura do extrato do bunq corrigida: a data com o ano na frente era lida como 2001 e nenhuma linha casava com o mês, e a descrição vinha com o número da conta no lugar do nome de quem pagou"
+  nota: "O Caixa passa a responder também quanto a escola tem, e não só quanto o mês gerou: saldo por conta no fechamento, o que está guardado separado do que dá para usar, a curva mês a mês da reserva e uma meta de quanto guardar, em Planejamento"
 };
