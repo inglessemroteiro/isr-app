@@ -32,6 +32,23 @@ var PROIBIDOS = [
   { re: /\bdesfecho\b/i, por: "\"resultado\" ou \"o que aconteceu\"" }
 ];
 
+// A abertura da tela é um nome, não uma legenda. Corrigir o relatório
+// corporativo levou ao extremo oposto — "Quem falar com quem, e quando",
+// "Tudo que está marcado", "As suas aulas" —, que é tom de conversa com
+// outra roupa. O primeiro <strong> do cabeçalho tem que ser o nome da
+// tela ou do objeto que ela mostra.
+var ABERTURA_RUIM = /^(quem|quanto|onde|de onde|tudo|o que|como|por que|as suas|os seus|a sua|o seu)\b/i;
+function conferirAbertura(html, arquivo) {
+  var m = html.match(/<strong>([^<]{3,70})<\/strong>/);
+  if (!m) return 0;
+  var t = m[1].replace(/\s+/g, " ").trim().replace(/\.$/, "");
+  if (/\{\{/.test(t)) return 0;                       // val do template, não texto fixo
+  if (!ABERTURA_RUIM.test(t) && !/\?$/.test(t)) return 0;
+  console.log(arquivo + " · abertura \"" + t + "\" → comece pelo nome da tela"
+    + " (\"Cobrança\", \"Alunas ativas\"), não por uma frase sobre ela");
+  return 1;
+}
+
 // as mesmas exceções do verificador de linguagem: rascunho, protótipo e
 // as telas que falam com a aluna em vez de descrever o sistema
 var IGNORAR = [
@@ -64,7 +81,9 @@ var arquivos = fs.readdirSync(".").filter(function (f) {
 
 var erros = 0;
 arquivos.forEach(function (f) {
-  var texto = textoVisivel(fs.readFileSync(f, "utf8"));
+  var html = fs.readFileSync(f, "utf8");
+  var texto = textoVisivel(html);
+  erros += conferirAbertura(html, f);
   PROIBIDOS.forEach(function (p) {
     var m = texto.match(p.re);
     if (!m) return;

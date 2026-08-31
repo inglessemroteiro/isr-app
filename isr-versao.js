@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-d",
+  numero: "2026.08.31-e",
   data: "31/08/2026",
-  nota: "Mesma passada de linguagem em nove telas: os subtítulos de relatório corporativo viraram uma frase que diz o que a tela faz, e o vocabulário interno saiu — cadência virou frequência, adimplência virou pagamento em dia, e o código de requisito parou de aparecer na interface. Um verificador novo trava o jargão no CI"
+  nota: "Abertura das telas no padrão de produto: nome da tela e uma linha do que ela mostra — Cobrança, Alunas ativas, Acompanhamento, Agenda, Aquisição, Calculadora de preços, Modelos de mensagem, Painel do Professor, Backup e exportação. O verificador de jargão passa a reprovar tanto o relatório corporativo quanto a legenda em forma de pergunta"
 };
