@@ -17,7 +17,10 @@ var REGRAS = [
   ["registro da semana no sistema", "ISRDesafio.registrar"]
 ];
 
-var arquivos = fs.readdirSync(".").filter(function (f) { return /^\d{6}\.html$/.test(f); });
+// O nome pode vir com sufixo do download — "310826 (1).html" é a mesma
+// página semanal e precisa das mesmas travas. Exigindo o nome exato, uma
+// cópia sem trava de login passava pelo verificador sem ninguém ver.
+var arquivos = fs.readdirSync(".").filter(function (f) { return /^\d{6}\b.*\.html$/.test(f); });
 if (fs.existsSync("desafio-modelo.html")) arquivos.push("desafio-modelo.html");
 
 var erros = 0;
