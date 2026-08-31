@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-f",
+  numero: "2026.08.31-g",
   data: "31/08/2026",
-  nota: "Relatório do Stripe: a cobrança recusada ou estornada deixa de entrar como receita, e o e-mail de quem pagou passa a acompanhar a linha — é por ele que a conciliação encontra a aluna sem depender do nome escrito igual"
+  nota: "Lote de despesas na conciliação: os débitos que não são folha nem transferência entre contas próprias entram de uma vez, com o total somado antes do clique. Num mês de cinco extratos isso é a maior parte do trabalho manual"
 };
