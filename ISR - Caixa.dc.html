@@ -227,6 +227,9 @@
             <sc-if value="{{ temTaxas }}">
               <button onclick="{{ onLancarTaxas }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar as {{ nTaxas }} taxas como despesa ({{ totalTaxas }})</button>
             </sc-if>
+            <sc-if value="{{ temDespesas }}">
+              <button onclick="{{ onLancarDespesas }}" title="Débitos que não são folha nem transferência entre contas suas. A categoria de cada um pode ser corrigida depois, no lançamento." style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar as {{ nDespesas }} despesas ({{ totalDespesas }})</button>
+            </sc-if>
             <sc-if value="{{ temRetiradasAuto }}">
               <button onclick="{{ onLancarRetiradas }}" title="Transferências para contas suas já reconhecidas. Não são despesa e não mudam o lucro; entram no Caixa como retirada do mês." style="border: 1px solid #d8c4b2; background: #fff; color: #9c6f56; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ retiradasLabel }}</button>
             </sc-if>
@@ -1447,6 +1450,25 @@ class Component extends DCLogic {
     const idxCerteiras = analise
       ? analise.sugestoes.map((s, i) => (certeira(s) && !this.state.conciliadas[i]) ? i : -1).filter(i => i >= 0)
       : [];
+    // Despesa é o lado sem risco do lote: lançar não mexe em parcela de
+    // ninguém, e a categoria pode ser corrigida depois no próprio
+    // lançamento. Folha fica de fora — ali o lançamento marca a folha de
+    // uma pessoa como paga, e isso exige olho. Transferência entre contas
+    // e retirada também ficam, porque só quem conhece a conta sabe qual é.
+    const proprias = (CRM.contasProprias ? CRM.contasProprias() : [])
+      .map(c => String(c.nome || c).toLowerCase().trim()).filter(Boolean);
+    const idxDespesas = analise
+      ? analise.semMatch.map((x, i) => {
+          const ehSaida = x.trans && x.trans.valor < 0;
+          const folha = !!x.pessoaEquipe;
+          // toda despesa tem uma contraparte — é o fornecedor. O que não
+          // pode ir em lote é a transferência para uma conta que a escola
+          // já reconheceu como sua: ali não é despesa nenhuma.
+          const d = String((x.trans && x.trans.descricao) || "").toLowerCase();
+          const daCasa = proprias.some(n => n && d.indexOf(n) >= 0);
+          return (ehSaida && !folha && !daCasa && !this.state.lancadas[i]) ? i : -1;
+        }).filter(i => i >= 0)
+      : [];
     // Por que uma aluna matriculada não tem parcela em aberto para este
     // pagamento. Sem dizer o motivo, a tela parece estar afirmando que
     // ela não é aluna.
@@ -2078,6 +2100,31 @@ class Component extends DCLogic {
                : ""))
         : "",
       temCerteiras: idxCerteiras.length > 0, nCerteiras: String(idxCerteiras.length),
+
+      // O lote das taxas resolvia as pequenas; as outras despesas ainda
+      // saíam uma a uma. Num mês com cinco contas isso é a maior parte do
+      // trabalho da conciliação, e é o lado que não corre risco.
+      temDespesas: idxDespesas.length > 1,
+      nDespesas: String(idxDespesas.length),
+      totalDespesas: analise
+        ? CRM.fmtMoney(this.state.moedaExtrato,
+            idxDespesas.reduce((t, i) => t + Math.abs(analise.semMatch[i].trans.valor), 0))
+        : "",
+      onLancarDespesas: () => {
+        const marca = {};
+        idxDespesas.forEach(i => {
+          const x = analise.semMatch[i];
+          const d = (x.trans.data || "").split("/");
+          CRM.addLancamento({ tipo: "saida", categoria: x.categoria || "outros",
+            descricao: x.trans.descricao.slice(0, 60),
+            moeda: this.state.moedaExtrato, valor: Math.abs(x.trans.valor),
+            conta: this.contaAtual(),
+            data: d.length === 3 ? (d[2] + "-" + d[1] + "-" + d[0]) : undefined });
+          CRM.registrarTransacao(x.trans, "despesa");
+          marca[i] = true;
+        });
+        this.setState(st => ({ lancadas: Object.assign({}, st.lancadas, marca) }));
+      },
 
       // taxa de gateway vem aos montes (uma por cobrança, uma por aviso de
       // WhatsApp). Lançar uma a uma é trabalho de formiga que ninguém faz.
