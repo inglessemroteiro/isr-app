@@ -55,7 +55,14 @@
          que importa: a operação em real pode estar no vermelho enquanto o
          euro do gateway cobre o buraco. Cada moeda responde por si. -->
     <div style="background: #fff; border: 1px solid #eee3d6; border-left: 5px solid {{ resCor }}; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px;">
-      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">{{ resTitulo }}</div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">{{ resTitulo }}</div>
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+          <sc-for list="{{ regimes }}" as="rg" hint-placeholder-count="2">
+            <button onclick="{{ rg.onClick }}" style="border: 1px solid {{ rg.borda }}; background: {{ rg.bg }}; color: {{ rg.fg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ rg.label }}</button>
+          </sc-for>
+        </div>
+      </div>
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 10px;">
         <sc-for list="{{ porMoeda }}" as="pm" hint-placeholder-count="2">
@@ -67,7 +74,9 @@
         </sc-for>
       </div>
 
-      <div style="display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
+      <div style="margin-top: 12px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ regimeNota }}</div>
+
+      <div style="display: flex; gap: 22px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f4f1ec;">
         <sc-for list="{{ notas }}" as="nt" hint-placeholder-count="4">
           <div>
             <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #a2957f;">{{ nt.label }}</div>
@@ -765,7 +774,7 @@ class Component extends DCLogic {
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
             trocas: {}, buscas: {}, edLanc: null, retirouAuto: false, audFeito: "",
-            regAbertas: false, aba: "mes", saldoAberto: false };
+            regAbertas: false, aba: "mes", saldoAberto: false, regime: "competencia" };
   orcRefs = {};
   saldoRefs = {};
   custoRefs = {};
@@ -866,7 +875,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { abas: [], saldoCampos: [], curva: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
+    const vazio = { abas: [], regimes: [], saldoCampos: [], curva: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
       saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
     if (!CRM) return vazio;
 
@@ -923,6 +932,30 @@ class Component extends DCLogic {
     const corDe = (v) => v > 0 ? "#5a9e4b" : (v < 0 ? "#cf6b5c" : "#8a7c6b");
     const resCor = ehFuturo ? "#d4a574" : corDe(res);
 
+    // ── regime: caixa ou competência ──
+    // A tela misturava os dois. "Saiu" contava a folha e o custo fixo do
+    // mês inteiro, tenham passado pelo banco ou não; "entrou" contava a
+    // parcela marcada na mão junto com a conciliada. Um número assim não
+    // responde nem "quanto a escola faturou" nem "quanto passou na conta".
+    // Agora são duas leituras da mesma base, e quem lê escolhe qual.
+    const regime = this.state.regime === "caixa" ? "caixa" : "competencia";
+    const ehCaixa = regime === "caixa";
+    const entrouM = ehCaixa ? f.confirmado : f.recebido;
+    const saiuM = ehCaixa ? f.saiuConfirmado : f.saiu;
+    const resDe = (m) => (entrouM[m] || 0) - (saiuM[m] || 0);
+    const resTotal = CRM.emReais(entrouM) - CRM.emReais(saiuM);
+    const regimes = [
+      { id: "competencia", label: "Competência" },
+      { id: "caixa", label: "Caixa" }
+    ].map(x => ({ label: x.label,
+      onClick: () => this.setState({ regime: x.id }),
+      bg: regime === x.id ? "#164951" : "#fff",
+      fg: regime === x.id ? "#fff" : "#6b6155",
+      borda: regime === x.id ? "#164951" : "#e5dccf" }));
+    const regimeNota = ehCaixa
+      ? "Só o que passou pelo banco: parcela conciliada e despesa com conta marcada. É o número que se confere no extrato, linha a linha."
+      : "Tudo que pertence ao mês, tenha passado pelo banco ou não: a folha e o custo fixo entram calculados, a parcela entra quando é marcada como paga.";
+
     // ── uma coluna por moeda ──
     // O número somado escondia o essencial: a operação em real fecha no
     // vermelho e o euro que entra pelo gateway cobre. Quem lê precisa ver
@@ -930,12 +963,12 @@ class Component extends DCLogic {
     const porMoeda = ["R$", "€"]
       .filter(m => f.recebido[m] > 0 || f.saiu[m] > 0)
       .map(m => {
-        const r = f.resultado[m];
+        const r = resDe(m);
         return { titulo: m === "R$" ? "Em real" : "Em euro",
           cor: corDe(r),
           resultado: (r < 0 ? "− " : "+ ") + CRM.fmtMoney(m, Math.abs(r)),
-          entrou: CRM.fmtMoney(m, f.recebido[m]),
-          saiu: CRM.fmtMoney(m, f.saiu[m]) };
+          entrou: CRM.fmtMoney(m, entrouM[m] || 0),
+          saiu: CRM.fmtMoney(m, saiuM[m] || 0) };
       });
 
     // As duas moedas juntas, para quem quiser um número só. É nota de
@@ -997,15 +1030,20 @@ class Component extends DCLogic {
     const taxas = tr.taxasGateway || 0;
     const notas = [];
     if (f.recebido["\u20ac"] > 0 && f.recebido["R$"] > 0)
-      notas.push({ label: resFrase, cor: corDe(res),
-        valor: (res < 0 ? "\u2212 " : "+ ") + CRM.fmtMoney("R$", Math.abs(res)) });
+      notas.push({ label: resFrase, cor: corDe(resTotal),
+        valor: (resTotal < 0 ? "\u2212 " : "+ ") + CRM.fmtMoney("R$", Math.abs(resTotal)) });
     if (CRM.emReais(f.atrasado) > 0)
       notas.push({ label: "Em atraso", cor: "#cf6b5c", valor: duo(f.atrasado) });
     if (CRM.emReais(f.aReceber) > 0)
       notas.push({ label: "A receber", cor: "#8a7c6b", valor: duo(f.aReceber) });
-    if (tr.recebido > 0)
+    if (tr.recebido > 0 && !ehCaixa)
       notas.push({ label: "Conciliado", cor: pctConf >= 100 ? "#5a9e4b" : "#9c6f56",
         valor: pctConf + "%" });
+    // em caixa, o número já é só o conciliado; o que interessa dizer é
+    // quanto do mês ficou de fora por não ter passado pelo banco ainda
+    if (ehCaixa && (presum > 0.01 || (tr.saiuPresumido || 0) > 0.01))
+      notas.push({ label: "Fora do banco", cor: "#9c6f56",
+        valor: CRM.fmtMoney("R$", presum + (tr.saiuPresumido || 0)) });
     if (taxas >= 0.01)
       notas.push({ label: "Taxas", cor: "#9c6f56", valor: CRM.fmtMoney("R$", taxas) });
     if ((tr.retiradas || 0) > 0)
@@ -1798,7 +1836,7 @@ class Component extends DCLogic {
         };
       }).call(this),
 
-      resTitulo, resValor, resCor, porMoeda, notas,
+      resTitulo, resValor, resCor, porMoeda, notas, regimes, regimeNota,
 
       // ── o que a escola tem ──
       temSaldo: !!sal.registrado, semSaldo: !sal.registrado,
