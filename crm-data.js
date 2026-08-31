@@ -3404,10 +3404,14 @@
   // títulos, ler por coluna é certo; caçar números na linha é chute. O do
   // Asaas, por exemplo, tem id da transação (1925765296), valor (864.32) e
   // saldo (1628.98) na mesma linha — e usa ponto decimal.
+  // A ordem dos termos é a ordem de preferência, e ela precisa ganhar da
+  // ordem das colunas: o extrato do bunq tem "Counterparty" (o IBAN) antes
+  // de "Name" e "Description", e varrendo coluna a coluna a descrição de
+  // toda transação virava um número de conta sem dono.
   function colunaPorTitulo(cels, termos) {
-    for (var i = 0; i < cels.length; i++) {
-      var s = semAcento(cels[i]);
-      for (var j = 0; j < termos.length; j++) {
+    for (var j = 0; j < termos.length; j++) {
+      for (var i = 0; i < cels.length; i++) {
+        var s = semAcento(cels[i]);
         if (s === termos[j] || s.indexOf(termos[j]) === 0) return i;
       }
     }
@@ -3511,7 +3515,11 @@
         // "quem pagou" tem nome diferente em cada banco: descrição no
         // Asaas, omschrijving/naam no bunq, customer no Stripe
         desc: colunaPorTitulo(cab, ["descricao", "historico", "descrição", "description",
-          "omschrijving", "naam", "counterparty", "customer", "merchant", "name", "payer"]),
+          "omschrijving", "customer", "merchant", "payer"]),
+        // o nome de quem mandou ou recebeu vem em coluna separada no bunq, e
+        // muitas vezes é a única coisa que identifica a pessoa: a descrição
+        // vem vazia e sobra o IBAN
+        nome: colunaPorTitulo(cab, ["name", "naam", "counterparty"]),
         valor: colunaPorTitulo(cab, COL_VALOR),
         tipo: colunaPorTitulo(cab, ["tipo do lancamento", "tipo de lancamento", "d/c", "transaction type"]),
         moeda: colunaPorTitulo(cab, ["moeda", "currency"]),
@@ -3529,8 +3537,15 @@
           // "Saldo Inicial" e "Saldo Final" não são transações
           if (!dt || !bruto) return;
           if (!/\d{2}[\/-]\d{2}/.test(dt)) return;
+          // nome e descrição juntos, sem repetir: no bunq um dos dois quase
+          // sempre está vazio, e é o outro que diz de quem é a linha
+          var partes = [];
+          if (col.nome >= 0 && (c[col.nome] || "").trim()) partes.push((c[col.nome] || "").trim());
+          if (col.desc >= 0 && (c[col.desc] || "").trim()) partes.push((c[col.desc] || "").trim());
+          var junta = partes.length === 2 && semAcento(partes[1]).indexOf(semAcento(partes[0])) === 0
+            ? partes[1] : partes.join(" · ");
           linhas.push({ dt: dt, bruto: bruto,
-            desc: col.desc >= 0 ? (c[col.desc] || "").trim() : "",
+            desc: junta,
             tipo: col.tipo >= 0 ? semAcento(c[col.tipo] || "") : "",
             moeda: col.moeda >= 0 ? semAcento(c[col.moeda] || "") : "",
             idExterno: col.id >= 0 ? (c[col.id] || "").trim() : "" });
@@ -3543,8 +3558,13 @@
           // ("debit"/"credit" cobre débito/crédito e DEBIT/CREDIT)
           if (x.tipo.indexOf("debit") >= 0) v = -Math.abs(v);
           else if (x.tipo.indexOf("credit") >= 0) v = Math.abs(v);
-          var d = x.dt.match(/(\d{2})[\/-](\d{2})[\/-](\d{2,4})/);
-          var data = d ? (d[1] + "/" + d[2] + "/" + (d[3].length === 2 ? "20" + d[3] : d[3])) : x.dt;
+          // O bunq escreve 2026-08-01. Sem tratar o ano na frente, a busca
+          // achava "26-08-01" no meio da string e lia 26 de agosto de 2001:
+          // toda linha do bunq entrava em outro ano, e nunca casava com o mês.
+          var iso = x.dt.match(/(\d{4})-(\d{2})-(\d{2})/);
+          var d = iso ? null : x.dt.match(/(\d{2})[\/-](\d{2})[\/-](\d{2,4})/);
+          var data = iso ? (iso[3] + "/" + iso[2] + "/" + iso[1])
+            : (d ? (d[1] + "/" + d[2] + "/" + (d[3].length === 2 ? "20" + d[3] : d[3])) : x.dt);
           // Converter real em euro dentro da própria conta não é receita
           // nem despesa: o dinheiro continua da escola, só trocou de moeda.
           var interna = /^(converted|convers[aã]o)\b/i.test(x.desc);

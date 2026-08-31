@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.30-e",
-  data: "30/08/2026",
-  nota: "A folha vista no extrato passa a valer o que saiu do banco, na moeda em que saiu, guardando quanto era para pagar; marcar como paga na tela de Pagamentos deixa de contar como conferido, alinhando a régua da despesa com a da receita"
+  numero: "2026.08.31-a",
+  data: "31/08/2026",
+  nota: "Leitura do extrato do bunq corrigida: a data com o ano na frente era lida como 2001 e nenhuma linha casava com o mês, e a descrição vinha com o número da conta no lugar do nome de quem pagou"
 };
