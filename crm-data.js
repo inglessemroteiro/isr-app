@@ -1283,6 +1283,70 @@
     });
   }
 
+  // Nem todo contrato tem parcela igual. Uma renovação pode combinar seis
+  // parcelas de R$ 515 com a primeira dividida em sinal de R$ 200 e saldo
+  // de R$ 315 — e até aqui não havia como registrar isso: o valor da
+  // parcela vinha do contrato e valia para todas. Quem fechava um acordo
+  // assim não conseguia corrigir na tela, e a cobrança saía errada.
+  function setParcelaValor(pessoaId, mesKey, valor, contratoIdx) {
+    return mutate(pessoaId, function (p) {
+      var cs = p.contratos || [];
+      var idx = contratoIdx === undefined || contratoIdx === null ? 0 : parseInt(contratoIdx, 10);
+      var c = cs[idx];
+      if (!c) return;
+      var moeda = c.moeda || p.moeda || "R$";
+      var novo = /[R$€]/.test(String(valor)) ? String(valor) : fmtMoney(moeda, parseMoney(valor));
+      (c.meses || []).forEach(function (m) {
+        if (m.key !== mesKey) return;
+        var antes = m.valor;
+        m.valor = novo;
+        // o valor combinado com a pessoa mudou: o total do contrato deixa
+        // de ser parcela × número de parcelas e passa a ser a soma real
+        pushHist(p, "contrato", "Parcela de " + m.label + ": " + antes + " → " + novo);
+      });
+      c.valorTotal = fmtMoney(moeda, somaDoContrato(c));
+    });
+  }
+
+  // O total de um contrato é a soma das parcelas, não a multiplicação —
+  // basta uma parcela diferente para os dois números se separarem. O sinal
+  // soma sempre: ele é dinheiro que a pessoa paga. O que a marca "abatido"
+  // diz é que a parcela correspondente já foi reduzida no mesmo valor —
+  // seis parcelas de R$ 515 com sinal de R$ 200 abatido viram
+  // R$ 200 + R$ 315 + cinco de R$ 515, e o total continua R$ 3.090.
+  function somaDoContrato(c) {
+    var t = (c.meses || []).reduce(function (s, m) {
+      return s + (m.cancelada ? 0 : parseMoney(m.valor));
+    }, 0);
+    if (c.sinal && c.sinal.valor && !c.sinal.cancelada) t += parseMoney(c.sinal.valor);
+    return t;
+  }
+
+  // O sinal ganhou data e ganhou a pergunta que faltava: ele é um valor a
+  // mais ou é a primeira parte de uma parcela? Sem isso, o contrato de
+  // R$ 3.090 pago com sinal de R$ 200 aparecia como R$ 3.290.
+  function setSinal(pessoaId, dados, contratoIdx) {
+    return mutate(pessoaId, function (p) {
+      var cs = p.contratos || [];
+      var idx = contratoIdx === undefined || contratoIdx === null ? 0 : parseInt(contratoIdx, 10);
+      var c = cs[idx];
+      if (!c) return;
+      var moeda = c.moeda || p.moeda || "R$";
+      c.sinal = c.sinal || {};
+      if (dados.valor !== undefined) {
+        c.sinal.valor = /[R$€]/.test(String(dados.valor)) ? String(dados.valor)
+          : fmtMoney(moeda, parseMoney(dados.valor));
+      }
+      if (dados.venc !== undefined) c.sinal.venc = dados.venc;
+      if (dados.recebido !== undefined) c.sinal.recebido = !!dados.recebido;
+      if (dados.abatido !== undefined) c.sinal.abatido = !!dados.abatido;
+      c.valorTotal = fmtMoney(moeda, somaDoContrato(c));
+      pushHist(p, "contrato", "Sinal: " + (c.sinal.valor || "—")
+        + (c.sinal.venc ? " · vence " + c.sinal.venc.split("-").reverse().join("/") : "")
+        + (c.sinal.abatido ? " · abate a primeira parcela" : " · valor à parte"));
+    });
+  }
+
   // Toda parcela em aberto da pessoa, em qualquer contrato. É o que a
   // escola tem a receber dela — não só o que está no contrato vigente.
   function parcelasAbertas(pessoaOuId) {
@@ -9103,14 +9167,19 @@
             confirmado: !!(m.pagoEm || m.idExterno),
             conta: m.conta || "" });
         });
-        if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (p.desde || "").slice(0, 7) === key
-            && !futuroDeQuemSaiu(c.sinal.recebido, p.desde)) {
+        // O sinal tem data própria: o combinado pode ser recebê-lo num mês
+        // e a primeira parcela no seguinte. Sem isso ele caía sempre no mês
+        // da matrícula, mesmo vencendo depois.
+        var sinalVenc = (c.sinal && c.sinal.venc) || p.desde;
+        if (c.sinal && c.sinal.valor && !c.sinal.cancelada && (sinalVenc || "").slice(0, 7) === key
+            && !futuroDeQuemSaiu(c.sinal.recebido, sinalVenc)) {
           entradas.push({ pessoaId: p.id, nome: p.nome, categoria: "sinal",
-            detalhe: "Sinal de matrícula", moeda: moeda,
+            detalhe: c.sinal.abatido ? "Sinal · primeira parte da parcela" : "Sinal de matrícula",
+            moeda: moeda,
             valor: parseMoney(c.sinal.valor), valorLabel: c.sinal.valor,
-            pago: !!c.sinal.recebido, venc: p.desde,
+            pago: !!c.sinal.recebido, venc: sinalVenc,
             confirmado: !!c.sinal.conciliado,
-            atrasada: !c.sinal.recebido && p.desde < hoje });
+            atrasada: !c.sinal.recebido && sinalVenc < hoje });
         }
       });
 
@@ -11224,7 +11293,8 @@
     // cobrança
     getCobranca: getCobranca, alunasSemPlano: alunasSemPlano,
     cobrancaStatus: cobrancaStatus, cobrancaResumo: cobrancaResumo,
-    setParcelaPaga: setParcelaPaga, entradasPrevistas: entradasPrevistas,
+    setParcelaPaga: setParcelaPaga, setParcelaValor: setParcelaValor,
+    setSinal: setSinal, somaDoContrato: somaDoContrato, entradasPrevistas: entradasPrevistas,
     MES_NOMES: MES_NOMES, mesSeguinte: mesSeguinte, mesAnterior: mesAnterior,
     parseMoney: parseMoney, fmtMoney: fmtMoney, mesAtualKey: mesAtualKey,
     // renovações
