@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.08.31-i",
-  data: "31/08/2026",
-  nota: "O Caixa abre em regime de caixa: o número do mês passa a ser o que passou pelo banco, e a competência fica a um clique. Enquanto o mês não estiver conciliado o número aparece baixo — é a leitura correta de um mês que ainda não foi conferido"
+  numero: "2026.09.03-a",
+  data: "03/09/2026",
+  nota: "Contrato com parcelas diferentes entre si: o valor de cada parcela pode ser corrigido no perfil, e o sinal ganha data de vencimento e a opção de abater a primeira parcela em vez de somar como valor à parte. Uma renovação de 6 × R$ 515 com sinal de R$ 200 em julho e saldo de R$ 315 em agosto passa a caber no sistema"
 };

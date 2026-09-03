@@ -334,6 +334,38 @@
                   </sc-if>
                 </div>
               </sc-if>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #a2957f;">Parcelas · clique para marcar paga</span>
+                <button onclick="{{ onAjustar }}" style="border: 1px solid {{ ajusteBorda }}; background: {{ ajusteBg }}; color: {{ ajusteFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ajusteLabel }}</button>
+              </div>
+
+              <sc-if value="{{ ajustando }}">
+                <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;">
+                  <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6; margin-bottom: 12px;">Nem toda renovação tem parcelas iguais. Ajuste o valor de cada uma e, se houver sinal, a data em que ele vence e se ele abate a primeira parcela.</div>
+
+                  <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #a2957f; margin-bottom: 6px;">Sinal</div>
+                  <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                    <input ref="{{ sinalValorRef }}" placeholder="{{ sinalValorPh }}" style="width: 110px; padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                    <input ref="{{ sinalVencRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                    <button onclick="{{ onAbatido }}" title="O sinal é a primeira parte de uma parcela, e não um valor a mais" style="border: 1px solid {{ abatidoBorda }}; background: {{ abatidoBg }}; color: {{ abatidoFg }}; font-size: 10.5px; font-weight: 700; padding: 7px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ abatidoLabel }}</button>
+                    <button onclick="{{ onSalvarSinal }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar sinal</button>
+                  </div>
+
+                  <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #a2957f; margin-bottom: 6px;">Valor de cada parcela</div>
+                  <sc-for list="{{ ajusteParcelas }}" as="ap" hint-placeholder-count="6">
+                    <div style="display: flex; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid #f7f2ea; flex-wrap: wrap;">
+                      <span style="flex: 1; min-width: 96px; font-size: 12px; font-weight: 700; color: #164951;">{{ ap.label }}</span>
+                      <span style="flex: none; font-size: 11px; color: #a2957f;">{{ ap.hoje }}</span>
+                      <input ref="{{ ap.ref }}" placeholder="novo valor" style="flex: none; width: 104px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                    </div>
+                  </sc-for>
+                  <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;">
+                    <button onclick="{{ onSalvarParcelas }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar parcelas</button>
+                    <span style="font-size: 11.5px; color: #6b6155;">{{ totalContrato }}</span>
+                  </div>
+                </div>
+              </sc-if>
+
               <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <sc-for list="{{ mesesView }}" as="m" hint-placeholder-count="6">
                   <button onclick="{{ m.onClick }}" title="Clique para marcar paga/pendente" style="border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 9px; font-weight: 700; padding: 7px 8px; border-radius: 8px; cursor: pointer; min-width: 64px; text-align: center;">
@@ -810,7 +842,8 @@ class Component extends DCLogic {
             encerrando: false, tipoSaida: "saiu", renovando: false,
             abrindoProduto: "", progPago: false,
             renegAberto: false, renegMeses: 3, renegParcelas: 0, renegTick: 0, renegErro: "",
-            marcandoReuniao: false, erroReuniao: "" };
+            marcandoReuniao: false, erroReuniao: "",
+            ajustando: false, abatido: undefined };
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
@@ -823,6 +856,8 @@ class Component extends DCLogic {
   cadTurmaRef = React.createRef();
   ctrTipoRef = React.createRef(); ctrCiclosRef = React.createRef(); ctrValorRef = React.createRef();
   ctrVencRef = React.createRef(); ctrParcelasRef = React.createRef();
+  sinalValorRef = React.createRef(); sinalVencRef = React.createRef();
+  parcelaRefs = {};
   turSelRef = React.createRef(); turNivelRef = React.createRef();
   turProfRef = React.createRef();
   tagRef = React.createRef();
@@ -927,6 +962,16 @@ class Component extends DCLogic {
 
     const out = {
       ok: true, naoEncontrada: false,
+      // o painel de ajuste do contrato: sem contrato ele não aparece, mas
+      // os vals precisam existir em toda saída — é o que o framework exige
+      ajustando: false, ajusteLabel: "Ajustar contrato",
+      ajusteBg: "#fff", ajusteFg: "#6b6155", ajusteBorda: "#e5dccf",
+      onAjustar: () => {}, ajusteParcelas: [],
+      sinalValorRef: this.sinalValorRef, sinalVencRef: this.sinalVencRef,
+      sinalValorPh: "sem sinal", abatidoLabel: "valor à parte",
+      abatidoBg: "#fff", abatidoFg: "#a2957f", abatidoBorda: "#e5dccf",
+      onAbatido: () => {}, onSalvarSinal: () => {},
+      onSalvarParcelas: () => {}, totalContrato: "",
       estagioBadge: stageMeta ? stageMeta.label : "",
       estagioBg: stageMeta ? stageMeta.bg : "", estagioFg: stageMeta ? stageMeta.color : "",
       nome: p.nome, statusLabel: st.label, statusColor: st.color, statusBg: st.bg,
@@ -1246,6 +1291,59 @@ class Component extends DCLogic {
         fg: m.cancelada ? "#b3a693" : (m.pago ? "#5a9e4b" : "#6b6155"),
         onClick: m.cancelada ? () => {} : () => { CRM.setParcelaPaga(p.id, m.key, !m.pago, 0); this.bump(); }
       })));
+
+      // ── ajustar o contrato ──
+      // Uma renovação combinada em seis parcelas de R$ 515, com a primeira
+      // dividida em sinal e saldo, não tinha como ser registrada: o valor
+      // vinha do contrato e valia para todas, e o sinal não tinha data.
+      // Quem fechava o acordo não conseguia corrigir, e a cobrança saía
+      // errada até alguém reparar.
+      const sinalAtual = (c && c.sinal) || {};
+      out.ajustando = !!this.state.ajustando;
+      out.ajusteLabel = this.state.ajustando ? "Fechar" : "Ajustar contrato";
+      out.ajusteBg = this.state.ajustando ? "#164951" : "#fff";
+      out.ajusteFg = this.state.ajustando ? "#fff" : "#6b6155";
+      out.ajusteBorda = this.state.ajustando ? "#164951" : "#e5dccf";
+      out.onAjustar = () => this.setState(st => ({ ajustando: !st.ajustando }));
+
+      out.sinalValorRef = this.sinalValorRef;
+      out.sinalVencRef = this.sinalVencRef;
+      out.sinalValorPh = sinalAtual.valor || "sem sinal";
+      const abat = this.state.abatido === undefined ? !!sinalAtual.abatido : !!this.state.abatido;
+      out.abatidoLabel = abat ? "abate a 1ª parcela" : "valor à parte";
+      out.abatidoBg = abat ? "#ece5f3" : "#fff";
+      out.abatidoFg = abat ? "#6b5b95" : "#a2957f";
+      out.abatidoBorda = abat ? "#c9bbdf" : "#e5dccf";
+      out.onAbatido = () => this.setState({ abatido: !abat });
+      out.onSalvarSinal = () => {
+        const v = (this.sinalValorRef.current && this.sinalValorRef.current.value || "").trim();
+        const d = (this.sinalVencRef.current && this.sinalVencRef.current.value || "").trim();
+        const dados = { abatido: abat };
+        if (v) dados.valor = v;
+        if (d) dados.venc = d;
+        CRM.setSinal(p.id, dados, 0);
+        if (this.sinalValorRef.current) this.sinalValorRef.current.value = "";
+        this.bump();
+      };
+
+      out.ajusteParcelas = (c ? (c.meses || []) : []).filter(m => !m.cancelada).map(m => {
+        if (!this.parcelaRefs[m.key]) this.parcelaRefs[m.key] = React.createRef();
+        return { label: m.label, hoje: m.valor, ref: this.parcelaRefs[m.key], key: m.key };
+      });
+      out.onSalvarParcelas = () => {
+        (c ? (c.meses || []) : []).forEach(m => {
+          const r = this.parcelaRefs[m.key];
+          const v = (r && r.current && r.current.value || "").trim();
+          // campo em branco deixa a parcela como está
+          if (!v) return;
+          CRM.setParcelaValor(p.id, m.key, v, 0);
+          if (r && r.current) r.current.value = "";
+        });
+        this.bump();
+      };
+      out.totalContrato = c
+        ? "Total do contrato: " + CRM.fmtMoney(c.moeda || "R$", CRM.somaDoContrato(c))
+        : "";
     }
 
     // ── o que ela contratou: turma, particulares e acompanhamento ──
