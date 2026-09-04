@@ -30,6 +30,31 @@
   try { user = JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) {}
   if (!user) return;
 
+  // ── a base da escola, em qualquer aparelho ────────────────────
+  // A Érika entrou no computador dela e viu 0 alunas, 0 turmas,
+  // "nenhuma pendência" — o sistema inteiro em branco. Não era erro de
+  // permissão: o endereço da base central estava gravado só no aparelho
+  // da Gabi, e nenhuma tela puxa do servidor sozinha. Aqui, que roda em
+  // toda tela de gestão, o aparelho encontra a base e busca os dados na
+  // primeira vez.
+  // Roda de dentro do render: este arquivo é carregado antes do
+  // crm-data.js, então no topo o ISRCRM ainda não existe.
+  var puxandoBase = false;
+  function conectarEPuxar() {
+    try {
+      if (!window.ISRCRM || !window.ISRCRM.conectarPadrao) return;
+      window.ISRCRM.conectarPadrao();
+      if (!window.ISRCRM.baseVazia() || !window.ISRCRM.backendUrl()) return;
+      puxandoBase = true;
+      window.ISRCRM.carregarDoBackend(function (ok) {
+        puxandoBase = false;
+        // as telas já estão desenhadas quando os dados chegam
+        if (ok) { try { window.dispatchEvent(new Event("isr-dados")); } catch (e) {} }
+        try { pintarBase(); } catch (e) {}
+      });
+    } catch (e) { puxandoBase = false; }
+  }
+
   var AREAS = [
     {
       // A tela que se abre primeiro: o que está esperando alguém.
@@ -351,6 +376,53 @@
 
     document.body.insertBefore(gaveta, document.body.firstChild);
     document.body.insertBefore(bar, document.body.firstChild);
+    conectarEPuxar();
+    pintarBase();
+  }
+
+  // ── aviso de base vazia ───────────────────────────────────────
+  // Um sistema sem dados desenha telas que parecem corretas: "0 alunas
+  // ativas", "nenhuma pendência", "nenhuma aluna com esses filtros".
+  // Quem abre acredita. A faixa existe para que a tela em branco diga
+  // que está em branco por falta de conexão, e não por falta de aluna.
+  function pintarBase() {
+    var velha = document.getElementById("isr-nav-base");
+    if (velha) velha.remove();
+    var vazia = true;
+    try { vazia = window.ISRCRM && window.ISRCRM.baseVazia && window.ISRCRM.baseVazia(); }
+    catch (e) { vazia = false; }
+    if (!vazia) return;
+    if (!document.body) return;
+    var faixa = document.createElement("div");
+    faixa.id = "isr-nav-base";
+    faixa.style.cssText = "background:#fdece9;border-bottom:1px solid #f2c9c1;color:#a4483a;"
+      + "font-size:12px;font-family:'Helvetica Neue',Helvetica,sans-serif;padding:10px 16px;"
+      + "display:flex;align-items:center;gap:10px;flex-wrap:wrap;";
+    var txt = document.createElement("span");
+    txt.textContent = puxandoBase
+      ? "Buscando os dados da escola neste aparelho…"
+      : "Este aparelho não tem os dados da escola. Os números abaixo estão zerados por isso, não porque a escola esteja vazia.";
+    faixa.appendChild(txt);
+    if (!puxandoBase) {
+      var bt = document.createElement("button");
+      bt.textContent = "Tentar de novo";
+      bt.style.cssText = "border:1px solid #e0a79c;background:#fff;color:#a4483a;font-size:11px;"
+        + "font-weight:700;font-family:inherit;padding:5px 12px;border-radius:999px;cursor:pointer;";
+      bt.onclick = function () {
+        bt.disabled = true; txt.textContent = "Buscando os dados da escola neste aparelho…";
+        try {
+          window.ISRCRM.conectarPadrao();
+          window.ISRCRM.carregarDoBackend(function (ok) {
+            if (ok) { try { window.dispatchEvent(new Event("isr-dados")); } catch (e) {} }
+            pintarBase();
+          });
+        } catch (e) { pintarBase(); }
+      };
+      faixa.appendChild(bt);
+    }
+    var nav = document.getElementById("isr-nav");
+    if (nav && nav.parentNode) nav.parentNode.insertBefore(faixa, nav.nextSibling);
+    else document.body.insertBefore(faixa, document.body.firstChild);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);

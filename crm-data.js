@@ -4851,6 +4851,34 @@
   function setBackendUrl(u) {
     try { u ? localStorage.setItem(BACKEND_KEY, u.trim()) : localStorage.removeItem(BACKEND_KEY); } catch (e) {}
   }
+  // O endereço da base ficava só no aparelho de quem o digitou. Quem
+  // entrasse de outro navegador — a Érika no computador dela, qualquer
+  // uma no celular — caía num sistema vazio: nenhuma aluna, nenhuma
+  // turma, nenhum aviso do que tinha acontecido. Agora o endereço vem
+  // no código, igual ao app da aluna. O que estiver gravado no aparelho
+  // continua valendo por cima, para poder apontar uma cópia de teste.
+  var CONEXAO_PADRAO = "https://script.google.com/macros/s/AKfycbxZeKxCvROSNSsT-rhcbHEZ7dAW_JlF3n21N7vp_SA5ByMEPcRIzRnbMmP62DV267M0/exec";
+  function conexaoPadrao() { return CONEXAO_PADRAO; }
+  function conectarPadrao() {
+    // dado de exemplo nunca fala com a base real: quem está treinando na
+    // demonstração não pode gravar por cima da escola
+    if (exemploLigado()) return "";
+    var atual = backendUrl();
+    if (atual) return atual;
+    setBackendUrl(CONEXAO_PADRAO);
+    return CONEXAO_PADRAO;
+  }
+  // Aparelho novo: a base local está vazia e nada, em nenhuma tela,
+  // puxa do servidor por conta própria — o sync só sobe, e só depois de
+  // alguém editar alguma coisa. Sem esta pergunta a pessoa entra e vê
+  // zero em tudo.
+  function baseVazia() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PESSOAS_KEY) || "[]");
+      var t = JSON.parse(localStorage.getItem(TURMAS_KEY) || "[]");
+      return (!p || !p.length) && (!t || !t.length);
+    } catch (e) { return true; }
+  }
   var syncTimer = null;
   function agendarSync() {
     if (!backendUrl()) return;
@@ -5373,6 +5401,14 @@
   function carregarDoBackend(cb) {
     var url = backendUrl();
     if (!url) { if (cb) cb(false); return; }
+    // puxar também é sincronizar: sem carimbar o estado, a espera e a
+    // falha aconteciam sem aparecer em lugar nenhum
+    setSyncEstado({ status: "sincronizando" });
+    var carimbar = function (ok, em) {
+      setSyncEstado(ok ? { status: "ok", em: em || new Date().toISOString() }
+                       : { status: "erro", em: new Date().toISOString() });
+      if (cb) cb(ok);
+    };
     try {
       fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
         .then(function (r) { return r.json(); })
@@ -5394,10 +5430,10 @@
             });
             aplicarRemoto(resultado);
             try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
-            if (cb) cb(true);
-          } else if (cb) cb(false);
-        }).catch(function () { if (cb) cb(false); });
-    } catch (e) { if (cb) cb(false); }
+            carimbar(true, d.data.atualizadoEm);
+          } else carimbar(false);
+        }).catch(function () { carimbar(false); });
+    } catch (e) { carimbar(false); }
   }
   function processarCadastrosPendentes(cb) {
     var url = backendUrl();
@@ -11520,6 +11556,7 @@
     ticketAlvo: ticketAlvo, setTicketAlvo: setTicketAlvo,
     calcularProposta: calcularProposta, calcularPacote: calcularPacote,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
+    conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
     registrarPagamentoDePessoa: registrarPagamentoDePessoa,
