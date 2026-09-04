@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.03-a",
+  numero: "2026.09.03-b",
   data: "03/09/2026",
-  nota: "Contrato com parcelas diferentes entre si: o valor de cada parcela pode ser corrigido no perfil, e o sinal ganha data de vencimento e a opção de abater a primeira parcela em vez de somar como valor à parte. Uma renovação de 6 × R$ 515 com sinal de R$ 200 em julho e saldo de R$ 315 em agosto passa a caber no sistema"
+  nota: "O sistema abre com os dados da escola em qualquer aparelho. O endereço da base central estava gravado só no navegador de quem o digitou: quem entrava de outro computador via tudo zerado, sem nada dizendo por quê. Agora o endereço vem no código, o aparelho novo busca os dados ao abrir, e quando a busca falha a tela avisa em vez de mostrar zero"
 };
