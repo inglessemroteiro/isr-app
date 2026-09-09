@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.03-b",
-  data: "03/09/2026",
-  nota: "O sistema abre com os dados da escola em qualquer aparelho. O endereço da base central estava gravado só no navegador de quem o digitou: quem entrava de outro computador via tudo zerado, sem nada dizendo por quê. Agora o endereço vem no código, o aparelho novo busca os dados ao abrir, e quando a busca falha a tela avisa em vez de mostrar zero"
+  numero: "2026.09.09-a",
+  data: "09/09/2026",
+  nota: "Renovação passa a contar como venda: o contrato guarda o dia em que foi fechado, e a comissão corre nas parcelas daquele contrato. Antes a venda era datada pela entrada da aluna na escola, e renovação nenhuma gerava comissão. Na folha, as aulas particulares aparecem mesmo sem chamada feita, e aluna particular sem professora na ficha é apontada — a aula dela não entra na folha de ninguém"
 };

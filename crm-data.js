@@ -1101,6 +1101,12 @@
       var totalCalc = cfg.valorTotal || (cfg.valorParcela ? fmtMoney(moedaC, parseMoney(cfg.valorParcela) * n) : "");
       p.contratos.unshift({
         tipo: cfg.tipo || "Matrícula", ciclos: cfg.ciclos || "1 Ciclo " + metasAtuais().cicloLabel,
+        // O dia em que o contrato foi fechado. A comissão precisa dele:
+        // sem isso a venda era datada por p.desde, a entrada da pessoa na
+        // escola — e uma renovação, que mantém a entrada original, não
+        // contava como venda em mês nenhum. Numa matrícula retroativa a
+        // venda é do mês da entrada, não do dia em que foi digitada.
+        fechadoEm: cfg.fechadoEm || cfg.desde || iso(today()),
         moeda: moedaC, valorTotal: totalCalc,
         parcelaValor: cfg.valorParcela || "", parcelas: n, vencDia: cfg.vencDia || 10,
         fim: mesesNovos[mesesNovos.length - 1].key + "-28",
@@ -2763,7 +2769,11 @@
     var turmaAntes = p0.turma || "", profAntes = p0.professora || "";
     var formatosAntes = (p0.formatos || []).slice();
     var desdeAntes = p0.desde || "";
-    var r = matricular(id, cfg || {});
+    // renovar é fechar um contrato hoje. Sem isto, um cfg.desde herdado
+    // dataria a venda pela entrada da aluna e a comissão sumiria de novo
+    var cfgR = Object.assign({}, cfg || {});
+    if (!cfgR.fechadoEm) cfgR.fechadoEm = iso(today());
+    var r = matricular(id, cfgR);
     mutate(id, function (p) {
       var c = contratoVigente(p);
       if (!c) return;
@@ -6885,6 +6895,26 @@
     return { valor: total, alunas: alunas };
   }
 
+  // Aluna particular sem professora no cadastro. A aula dela é contada
+  // pelo nome de quem deu — sem esse nome, a aula não entra na folha de
+  // ninguém: o trabalho acontece e o pagamento não é calculado. Some da
+  // tela em vez de aparecer como erro, que foi o que aconteceu.
+  function particularesSemProfessora(mesKey) {
+    var mes = mesKey || mesAtualKey();
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      if (p.status !== "aluna") return;
+      if (!p.particular && !/particular/i.test(p.turma || "")) return;
+      if ((p.particular && p.particular.professora) || p.professora) return;
+      var dadas = (p.historico || []).filter(function (h) {
+        return mesDe(h.data) === mes
+          && String(h.texto || "").indexOf("Aula particular dada") === 0;
+      }).length;
+      out.push({ id: p.id, nome: p.nome, aulas: dadas });
+    });
+    return out;
+  }
+
   // Aulas extras dadas por uma professora no mês.
   function extrasNoMes(professora, mesKey) {
     var lista = eventosLista().filter(function (e) {
@@ -7057,24 +7087,48 @@
       faltaProxima: prox ? Math.max(0, prox.de - v) : null };
   }
 
-  // As vendas de um mês: quem virou cliente naquele mês.
+  // Quando um contrato foi fechado. Contratos criados antes do campo
+  // fechadoEm não têm a data gravada: a matrícula original vale pela
+  // entrada da pessoa, e cada renovação pela marca que deixou no
+  // histórico. Sem esta reconstrução, todo contrato antigo seria datado
+  // pela entrada e as renovações passadas sumiriam da comissão.
+  function fechamentoDoContrato(p, idx) {
+    var lista = p.contratos || [];
+    var c = lista[idx] || {};
+    if (c.fechadoEm) return c.fechadoEm;
+    if (!c.renovacao) return p.desde || "";
+    var marcas = (p.historico || [])
+      .filter(function (h) { return /^Contrato renovado/.test(h.texto || ""); })
+      .map(function (h) { return h.data; })
+      .sort();
+    // contratos vêm do mais novo para o mais antigo; as marcas, ao
+    // contrário — a renovação mais nova é a última do histórico
+    return marcas[marcas.length - 1 - idx] || p.desde || "";
+  }
+
+  // As vendas de um mês: os contratos fechados naquele mês. Uma
+  // renovação é uma venda como outra qualquer — foi trabalho de fechar,
+  // e as parcelas dela correm igual.
   function vendasDoMes(mesKey, porQuem) {
     var mes = mesKey || mesAtualKey();
-    return loadPessoas().filter(function (p) {
-      if (p.status === "lead") return false;
-      if (mesDe(p.desde) !== mes) return false;
-      if (porQuem && (p.vendidoPor || p.professora) !== porQuem) return false;
-      return true;
-    }).map(function (p) {
-      var c = contratoVigente(p) || {};
-      var meses = c.meses || [];
-      var total = meses.reduce(function (s, m) { return s + parseMoney(m.valor); }, 0);
-      if (!total && p.programa) total = parseMoney(p.programa.valor);
-      return { id: p.id, nome: p.nome, contrato: total,
-        parcelas: meses.length || 1,
-        primeiroMes: meses.length ? meses[0].key : mes,
-        moeda: c.moeda || (p.programa ? p.programa.moeda : "R$") };
+    var out = [];
+    loadPessoas().forEach(function (p) {
+      if (p.status === "lead") return;
+      if (porQuem && (p.vendidoPor || p.professora) !== porQuem) return;
+      (p.contratos || []).forEach(function (c, idx) {
+        if (mesDe(fechamentoDoContrato(p, idx)) !== mes) return;
+        var meses = c.meses || [];
+        var total = meses.reduce(function (s, m) { return s + parseMoney(m.valor); }, 0);
+        if (c.sinal && c.sinal.valor && !c.sinal.cancelada) total += parseMoney(c.sinal.valor);
+        if (!total && p.programa) total = parseMoney(p.programa.valor);
+        out.push({ id: p.id, nome: p.nome, contrato: total,
+          contratoIdx: idx, renovacao: !!c.renovacao,
+          parcelas: meses.length || 1,
+          primeiroMes: meses.length ? meses[0].key : mes,
+          moeda: c.moeda || (p.programa ? p.programa.moeda : "R$") });
+      });
     });
+    return out;
   }
 
   // O fechamento do comercial num mês: fixo, comissão e bônus.
@@ -7117,19 +7171,27 @@
   function comissaoAPagar(mesKey, porQuem) {
     var mes = mesKey || mesAtualKey();
     var liberadas = [], aguardando = [];
-    // olha 12 meses para trás procurando vendas cujas parcelas alcançam o mês
+    // olha 12 meses para trás procurando vendas cujas parcelas alcançam o
+    // mês. A contagem parte do mês perguntado, não de hoje: ancorada em
+    // hoje, o fechamento de um mês antigo perdia as vendas que o
+    // originaram assim que o calendário andava
+    var ancora = parseISO(mes + "-01") || today();
     for (var i = 0; i < 12; i++) {
-      var d = new Date(); d.setMonth(d.getMonth() - i);
+      var d = new Date(ancora); d.setMonth(d.getMonth() - i);
       var mv = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
       var fech = comissaoComercial(mv, porQuem);
       fech.vendas.forEach(function (v) {
         var p = getPessoa(v.id);
-        var c = p ? contratoVigente(p) : null;
+        // a comissão corre nas parcelas DAQUELE contrato. Olhar sempre o
+        // contrato vigente fazia a venda antiga ser paga pelas parcelas
+        // do ciclo novo, e o ciclo antigo não pagava nada
+        var c = p && (p.contratos || [])[v.contratoIdx];
         if (!c) return;
         var parcela = (c.meses || []).filter(function (m) { return m.key === mes; })[0];
         if (!parcela) return;
         var qual = (c.meses || []).map(function (m) { return m.key; }).indexOf(mes) + 1;
         var linha = { nome: v.nome, mesVenda: mv, contrato: v.contrato,
+          renovacao: !!v.renovacao,
           parcelas: v.parcelas, parcelaN: qual, pct: v.pct,
           paga: !!parcela.pago, valor: v.porParcela };
         // a comissão acompanha a parcela: só entra quando a aluna paga
@@ -7329,7 +7391,10 @@
       return s;
     });
     var totalRetido = retidas.reduce(function (s, x) { return s + x.total; }, 0);
+    var particularSemProf = particularesSemProfessora(mes);
     return { mes: mes, linhas: linhas, total: total, receitaTurmas: receita,
+      particularesSemProfessora: particularSemProf,
+      nParticularesSemProfessora: particularSemProf.length,
       receitaGerada: receitaGerada,
       semCadastro: semCadastro, nSemCadastro: semCadastro.length,
       retidas: retidas, totalRetido: totalRetido,
@@ -11485,6 +11550,8 @@
     pagamentoProfessora: pagamentoProfessora, folhaPagamento: folhaPagamento,
     aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
     particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
+    particularesSemProfessora: particularesSemProfessora,
+    fechamentoDoContrato: fechamentoDoContrato,
     encerrarPrograma: encerrarPrograma, reabrirPrograma: reabrirPrograma,
     apagarPrograma: apagarPrograma,
     programasAbertos: programasAbertos, resumoProgramas: resumoProgramas,

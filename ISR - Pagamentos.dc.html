@@ -65,6 +65,23 @@
       </div>
     </sc-if>
 
+    <!-- ALUNA PARTICULAR SEM PROFESSORA -->
+    <sc-if value="{{ temPartSemProf }}">
+      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700; margin-bottom: 5px;">Particular sem professora</div>
+        <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 720px;">{{ partSemProfFrase }}</p>
+        <sc-for list="{{ partSemProf }}" as="ps" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid #f3d4c8;">
+            <div style="flex: 1; min-width: 160px;">
+              <div style="font-size: 14px; font-weight: 700; color: #164951;">{{ ps.nome }}</div>
+              <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ ps.detalhe }}</div>
+            </div>
+            <a href="{{ ps.href }}" style="flex: none; text-decoration: none; border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px;">Abrir a ficha</a>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
     <!-- PROFESSORAS -->
     <sc-if value="{{ semLinhas }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 20px; margin-bottom: 16px; font-size: 13px; color: #8a7c6b; line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
@@ -350,14 +367,26 @@ class Component extends DCLogic {
         alertas: [], valor: $(0)
       });
 
-      if (p.particulares.aulas) itens.push({
-        cor: "#6b5b95", titulo: "Aulas particulares",
+      // A aula particular é paga por aula dada, e "dada" quer dizer
+      // registrada. Enquanto o bloco só aparecia quando havia aula
+      // registrada, uma professora com aluna particular e nenhuma
+      // chamada feita não tinha linha nenhuma na folha: a aula
+      // desaparecia junto com o bloco, e ninguém via o que faltava.
+      if (p.particulares.aulas || p.particulares.nAlunas) itens.push({
+        cor: p.particulares.aulas ? "#6b5b95" : "#d4a574",
+        titulo: "Aulas particulares",
         metricas: [
-          { label: "Aulas", valor: String(p.particulares.aulas), cor: "#164951" },
+          { label: "Aulas registradas", valor: String(p.particulares.aulas),
+            cor: p.particulares.aulas ? "#164951" : "#d4a574" },
           { label: "Por aula", valor: $(cfg.aulaParticular), cor: "#164951" },
-          { label: "Alunas", valor: p.particulares.alunas.join(", ") || "—", cor: "#164951" }
+          { label: "Alunas", valor: p.particulares.alunas.join(", ")
+            || (p.particulares.nAlunas + (p.particulares.nAlunas === 1 ? " aluna" : " alunas")),
+            cor: "#164951" }
         ],
-        alertas: [], valor: $(p.particulares.valor)
+        alertas: p.particulares.aulas ? [] : [{
+          label: "Nenhuma aula registrada no mês · a aula entra na folha pela chamada",
+          bg: "rgba(212,165,116,0.16)", fg: "#a4783a" }],
+        valor: $(p.particulares.valor)
       });
 
       if (p.extras.dadas) itens.push({
@@ -531,6 +560,23 @@ class Component extends DCLogic {
           + (s.alunas ? " · " + s.alunas + (s.alunas === 1 ? " aluna" : " alunas") : "")
           + (s.aPagar ? " · " + $(s.aPagar) + " retidos" : ""),
         onCadastrar: () => { CRM.cadastrarProfessora(s.nome); this.bump(); }
+      })),
+
+      // A aula particular entra na folha pelo nome de quem deu. Sem
+      // professora na ficha, a aula não é de ninguém: ela é dada, a
+      // aluna paga, e o valor não aparece em folha nenhuma.
+      temPartSemProf: (folha.particularesSemProfessora || []).length > 0,
+      partSemProfFrase: ((folha.particularesSemProfessora || []).length === 1
+        ? "1 aluna particular está sem professora na ficha. "
+        : (folha.particularesSemProfessora || []).length + " alunas particulares estão sem professora na ficha. ")
+        + "A aula particular é paga por aula dada, pelo nome de quem deu — sem esse nome ela não entra na folha de ninguém.",
+      partSemProf: (folha.particularesSemProfessora || []).map(s => ({
+        nome: s.nome,
+        detalhe: s.aulas
+          ? s.aulas + (s.aulas === 1 ? " aula dada no mês" : " aulas dadas no mês")
+            + " · " + $(s.aulas * cfg.aulaParticular) + " sem destino"
+          : "nenhuma aula registrada no mês",
+        href: "ISR%20-%20Perfil.dc.html?id=" + encodeURIComponent(s.id)
       })),
 
       comercialResumo: com.nVendas
