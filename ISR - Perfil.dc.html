@@ -673,11 +673,13 @@
               </div>
               <div style="font-size: 12px; color: #6b6155; margin-bottom: 10px;">Início: <strong style="color: #164951;">{{ pacoteInicio }}</strong> · restam <strong style="color: #164951;">{{ pacoteRestam }}</strong></div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <button onclick="{{ onAulaDada }}" style="border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;">+ Registrar aula realizada</button>
+                <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Dia da aula</div>
+                  <input ref="{{ aulaDataRef }}" type="date" title="O dia em que a aula aconteceu. Em branco, hoje." style="border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 7px 10px; border-radius: 8px; font-family: inherit;" /></div>
+                <button onclick="{{ onAulaDada }}" style="align-self: flex-end; border: none; background: #348a8e; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer;">+ Registrar aula realizada</button>
                 <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; border: 1px solid #eee3d6; background: #faf8f3; color: #164951; font-size: 11px; padding: 8px 10px; border-radius: 8px; font-family: inherit;" />
                 <button onclick="{{ onPacoteTotal }}" style="border: 1px solid #eee3d6; background: #fff; color: #6b6155; font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Ajustar total</button>
               </div>
-              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">Cada aula registrada entra na linha do tempo. Feriados não são contabilizados.</p>
+              <p style="margin: 9px 0 0; font-size: 10px; color: #b8ada0;">A data é a do dia da aula — é o mês dela que entra na folha de quem deu. Em branco, hoje. Feriados não são contabilizados.</p>
             </div>
 
             <!-- AULAS PARTICULARES · AGENDA DA SÉRIE -->
@@ -872,6 +874,7 @@ class Component extends DCLogic {
   docLinkRef = React.createRef();
   checkinDateRef = React.createRef();
   pacAulasRef = React.createRef();
+  aulaDataRef = React.createRef();
   serDataRef = React.createRef(); serHoraRef = React.createRef();
   serCadRef = React.createRef(); serQtdRef = React.createRef();
   reDataRef = React.createRef(); reHoraRef = React.createRef(); reMotivoRef = React.createRef();
@@ -1569,7 +1572,13 @@ class Component extends DCLogic {
       out.pacoteRestam = restam === null ? "— (defina o total)" : restam + (restam === 1 ? " aula" : " aulas");
       out.pacoteTotal = pac.aulas || 0;
       out.pacAulasRef = this.pacAulasRef;
-      out.onAulaDada = () => { CRM.registrarAulaParticular(p.id); this.bump(); };
+      out.aulaDataRef = this.aulaDataRef;
+      out.onAulaDada = () => {
+        const d = (this.aulaDataRef.current && this.aulaDataRef.current.value || "").trim();
+        CRM.registrarAulaParticular(p.id, d || undefined);
+        if (this.aulaDataRef.current) this.aulaDataRef.current.value = "";
+        this.bump();
+      };
       out.onPacoteTotal = () => {
         const v = parseInt((this.pacAulasRef.current && this.pacAulasRef.current.value) || "", 10);
         if (v > 0) { CRM.updateParticular(p.id, { aulas: v }); this.bump(); }
