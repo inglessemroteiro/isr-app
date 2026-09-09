@@ -863,9 +863,12 @@
     return g ? g.nome : "Gabi";
   }
 
-  function pushHist(p, tipo, texto, quem) {
+  // A data é o dia em que a coisa aconteceu, não o dia em que foi
+  // digitada. Sem poder informá-la, uma aula de agosto registrada em
+  // setembro entrava como aula de setembro — e era paga no mês errado.
+  function pushHist(p, tipo, texto, quem, data) {
     p.historico = p.historico || [];
-    p.historico.push({ data: iso(today()), tipo: tipo, texto: texto, quem: quem || "" });
+    p.historico.push({ data: data || iso(today()), tipo: tipo, texto: texto, quem: quem || "" });
   }
   function addHistory(id, tipo, texto, quem) { return mutate(id, function (p) { pushHist(p, tipo, texto, quem); }); }
 
@@ -5996,7 +5999,8 @@
           p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
           p.particular.feitas = (p.particular.feitas || 0) + 1;
           var tot = p.particular.aulas ? " de " + p.particular.aulas : "";
-          pushHist(p, "contato", "Aula particular dada em " + ddmm(dataIso) + " (" + p.particular.feitas + tot + ")");
+          pushHist(p, "contato", "Aula particular dada em " + ddmm(dataIso) + " (" + p.particular.feitas + tot + ")",
+            "", dataIso);
         });
         if (!da && dava) mutate(pid, function (p) {
           if (p.particular) p.particular.feitas = Math.max(0, (p.particular.feitas || 0) - 1);
@@ -6449,12 +6453,16 @@
       if (recebido) pushHist(p, "pagamento", "Sinal de " + c.sinal.valor + " recebido");
     });
   }
-  function registrarAulaParticular(id) {
+  // dataIso é o dia da aula. Aula dada em agosto e registrada em setembro
+  // é aula de agosto: é o mês dela que manda na folha da professora.
+  function registrarAulaParticular(id, dataIso) {
+    var dia = dataIso || iso(today());
     return mutate(id, function (p) {
       p.particular = p.particular || { inicio: p.desde || iso(today()), aulas: 0, feitas: 0 };
       p.particular.feitas = (p.particular.feitas || 0) + 1;
       var tot = p.particular.aulas ? " de " + p.particular.aulas : "";
-      pushHist(p, "contato", "Aula particular dada (" + p.particular.feitas + tot + ")");
+      pushHist(p, "contato", "Aula particular dada em " + ddmm(dia)
+        + " (" + p.particular.feitas + tot + ")", "", dia);
     });
   }
   function updateParticular(id, patch) {
@@ -6857,14 +6865,34 @@
   }
 
   // Aulas particulares dadas por uma professora no mês, pela linha do tempo.
+  // O dia da aula. Os registros feitos antes de a data ser gravada trazem
+  // o dia dentro do texto ("Aula particular dada em 12/08"), enquanto o
+  // carimbo é o dia da digitação — é o texto que vale, senão a aula de
+  // agosto registrada em setembro continuaria sendo paga em setembro.
+  function diaDaAulaParticular(h) {
+    var carimbo = h.data || "";
+    var m = String(h.texto || "").match(/dada em (\d{2})\/(\d{2})/);
+    if (!m) return carimbo;
+    var ano = parseInt((carimbo || iso(today())).slice(0, 4), 10);
+    var tenta = ano + "-" + m[2] + "-" + m[1];
+    // aula de dezembro digitada em janeiro: o ano do carimbo é o seguinte
+    if (carimbo && tenta > carimbo) {
+      var antes = (ano - 1) + "-" + m[2] + "-" + m[1];
+      if (daysBetween(parseISO(antes), parseISO(carimbo)) < 200) return antes;
+    }
+    return tenta;
+  }
+  function ehAulaParticular(h) {
+    return String(h.texto || "").indexOf("Aula particular dada") === 0;
+  }
   function particularesNoMes(professora, mesKey) {
     var n = 0, alunas = [];
     loadPessoas().forEach(function (p) {
       if (professora && (p.particular ? p.particular.professora : p.professora) !== professora
           && p.professora !== professora) return;
       (p.historico || []).forEach(function (h) {
-        if (mesDe(h.data) !== mesKey) return;
-        if (String(h.texto || "").indexOf("Aula particular dada") !== 0) return;
+        if (!ehAulaParticular(h)) return;
+        if (mesDe(diaDaAulaParticular(h)) !== mesKey) return;
         n++;
         if (alunas.indexOf(p.nome) < 0) alunas.push(p.nome);
       });
@@ -6907,8 +6935,7 @@
       if (!p.particular && !/particular/i.test(p.turma || "")) return;
       if ((p.particular && p.particular.professora) || p.professora) return;
       var dadas = (p.historico || []).filter(function (h) {
-        return mesDe(h.data) === mes
-          && String(h.texto || "").indexOf("Aula particular dada") === 0;
+        return ehAulaParticular(h) && mesDe(diaDaAulaParticular(h)) === mes;
       }).length;
       out.push({ id: p.id, nome: p.nome, aulas: dadas });
     });

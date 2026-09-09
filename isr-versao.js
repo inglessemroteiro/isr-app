@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.09-a",
+  numero: "2026.09.09-b",
   data: "09/09/2026",
-  nota: "Renovação passa a contar como venda: o contrato guarda o dia em que foi fechado, e a comissão corre nas parcelas daquele contrato. Antes a venda era datada pela entrada da aluna na escola, e renovação nenhuma gerava comissão. Na folha, as aulas particulares aparecem mesmo sem chamada feita, e aluna particular sem professora na ficha é apontada — a aula dela não entra na folha de ninguém"
+  nota: "A aula particular passa a ter data própria: aula dada em agosto e registrada em setembro é paga em agosto. O histórico carimbava o dia da digitação, e era esse carimbo que a folha lia. A ficha ganhou o campo do dia da aula, e os registros antigos são lidos pela data que está no texto"
 };
