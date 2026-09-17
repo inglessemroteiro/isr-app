@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.17-c",
+  numero: "2026.09.17-d",
   data: "17/09/2026",
-  nota: "Os botões da conferência do extrato dizem o que fazem. Parcela em aberto: Dar baixa. Parcela que alguém já marcou como paga: Confirmar — o dinheiro apareceu no banco, e nada é cobrado de novo. E o que não é pagamento de aluna sai por \"não é da escola\", no lugar de \"ignorar\""
+  nota: "Os botões da conferência do extrato dizem o que fazem. Parcela em aberto: Dar baixa. Parcela que alguém já marcou como paga: Confirmar — o dinheiro apareceu no banco, e nada é cobrado de novo. A linha que não vira nada sai por \"Nada a lançar\", no lugar de \"ignorar\""
 };
