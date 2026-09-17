@@ -101,6 +101,19 @@
         </sc-for>
         <button onclick="{{ onOutraData }}" style="border: 1px dashed #e5dccf; background: #fff; color: #9b8b7e; font-size: 11.5px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ outraDataLabel }}</button>
       </div>
+
+      <!-- as particulares são uma lista própria: aula individual, sem
+           horário fixo na agenda, e uma aluna por chamada -->
+      <sc-if value="{{ temParticulares }}">
+        <div style="border-top: 1px solid #f2ece3; padding-top: 10px; margin-bottom: 12px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 7px;">Particulares</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+            <sc-for list="{{ particularesChamada }}" as="pc" hint-placeholder-count="3">
+              <button onclick="{{ pc.onClick }}" style="border: 1px solid {{ pc.borda }}; background: {{ pc.bg }}; color: {{ pc.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pc.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
       <sc-if value="{{ escolhendoData }}">
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
           <select onchange="{{ onTurmaChamada }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; max-width: 100%;">
@@ -363,6 +376,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
+      particularesChamada: [], temParticulares: false,
       novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "#e5dccf", neBg: "#fff", neFg: "#164951",
       onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
       neTituloRef: this.neTituloRef, neDataRef: this.neDataRef, neHoraRef: this.neHoraRef,
@@ -459,9 +473,12 @@ class Component extends DCLogic {
     // alunas particulares desta professora: entram no seletor da chamada
     // como "Particular · Nome" — sem isso não havia como registrar a aula
     // (nem presença, nem a baixa no pacote)
-    const particularesProf = CRM.getPessoas().filter(x => x.status === "aluna"
-      && ((x.turma || "").indexOf("Particular") === 0 || !!x.particular)
-      && (!x.professora || x.professora === teacher));
+    // só as desta professora. Perguntar por x.professora ignorava o campo
+    // onde a ficha grava (particular.professora), e aceitar quem não tem
+    // professora punha a mesma aluna na chamada de todo mundo: cada uma
+    // via as particulares da escola inteira misturadas com as próprias
+    const particularesProf = CRM.getPessoas().filter(x =>
+      CRM.ehAlunaParticular(x) && CRM.professoraDaParticular(x) === teacher);
     const partSel = (!evSel && this.state.particularChamada)
       ? CRM.getPessoa(this.state.particularChamada) : null;
 
@@ -758,7 +775,8 @@ class Component extends DCLogic {
         : "Diário do ciclo. Todas começam como presentes; apenas a coluna do dia é editável.",
 
       // trocar de aula pelas aulas de verdade da semana
-      aulasChamada: (() => {
+      ...(() => {
+        const g = (() => {
         const vistos = {};
         const opcoes = [];
         CRM.agendaItens(8).filter(it => (it.tipo === "aula" || it.tipo === "aula_extra")
@@ -800,11 +818,13 @@ class Component extends DCLogic {
           const prox = CRM.proximaAulaParticular ? CRM.proximaAulaParticular(px.id) : null;
           const dia = prox ? this.diaLabel(prox.data) : null;
           return {
-            label: "Particular · " + CRM.firstName(px.nome)
-              + (dia ? " · " + dia.label : ""),
-            bg: marcada ? "#164951" : "#fff",
+            // o nome da aluna é o que identifica a aula; "Particular"
+            // repetido em cada atalho gastava o rótulo inteiro e o nome
+            // saía cortado no primeiro pedaço
+            label: px.nome + (dia ? " · " + dia.label : ""),
+            bg: marcada ? "#6b5b95" : "#fff",
             fg: marcada ? "#fff" : "#6b5b95",
-            borda: marcada ? "#164951" : "#ddd6e8",
+            borda: marcada ? "#6b5b95" : "#ddd6e8",
             onClick: () => {
               const quando = prox ? prox.data : this.hojeIso();
               this.setState({ eventoChamada: null, particularChamada: px.id,
@@ -814,7 +834,10 @@ class Component extends DCLogic {
             }
           };
         });
-        return opcoes.slice(0, 6).concat(chipsPart);
+          return { turmas: opcoes.slice(0, 6), particulares: chipsPart };
+        })();
+        return { aulasChamada: g.turmas, particularesChamada: g.particulares,
+          temParticulares: g.particulares.length > 0 };
       })(),
       // null = ainda não mexeu: vale o parâmetro ?retro=1 do link direto
       escolhendoData: this.state.escolhendoData === null ? this.retroParam() : this.state.escolhendoData,

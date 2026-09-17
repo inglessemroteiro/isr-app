@@ -6625,7 +6625,7 @@
     var noMes = antesNoMes + 1;
     var excedeu = noMes > LIMITE_REMARCACAO_MES;
     // a professora precisa saber que a aula dela mudou de dia
-    var prof = (pes.particular && pes.particular.professora) || pes.professora || "";
+    var prof = professoraDaParticular(pes);
     if (prof) {
       avisar(prof, "Aula particular de " + pes.nome + " remarcada: "
         + ddmm(dataAntiga) + " → " + ddmm(novaData)
@@ -6683,7 +6683,7 @@
     var out = [];
     loadPessoas().forEach(function (p) {
       if (!p.particular || !p.particular.agenda) return;
-      var prof = p.particular.professora || p.professora || "";
+      var prof = professoraDaParticular(p);
       if (professora && prof && prof !== professora) return;
       p.particular.agenda.forEach(function (a) {
         if (a.estado === "cancelada") return;
@@ -6885,11 +6885,23 @@
   function ehAulaParticular(h) {
     return String(h.texto || "").indexOf("Aula particular dada") === 0;
   }
+  // De quem é esta aluna particular. A resposta estava escrita de quatro
+  // jeitos diferentes pelo sistema, e cada tela lia um campo: a ficha
+  // gravava em particular.professora, o painel do professor perguntava
+  // por p.professora, e o resultado era que toda professora via as
+  // particulares de todo mundo na chamada.
+  function professoraDaParticular(p) {
+    if (!p) return "";
+    return (p.particular && p.particular.professora) || p.professora || "";
+  }
+  function ehAlunaParticular(p) {
+    return !!p && p.status === "aluna"
+      && (!!p.particular || /particular/i.test(p.turma || ""));
+  }
   function particularesNoMes(professora, mesKey) {
     var n = 0, alunas = [];
     loadPessoas().forEach(function (p) {
-      if (professora && (p.particular ? p.particular.professora : p.professora) !== professora
-          && p.professora !== professora) return;
+      if (professora && professoraDaParticular(p) !== professora) return;
       (p.historico || []).forEach(function (h) {
         if (!ehAulaParticular(h)) return;
         if (mesDe(diaDaAulaParticular(h)) !== mesKey) return;
@@ -6909,10 +6921,8 @@
     var cfg = configPagamento();
     var total = 0, alunas = 0;
     loadPessoas().forEach(function (p) {
-      if (p.status !== "aluna") return;
-      var prof = (p.particular && p.particular.professora) || p.professora;
-      if (professora && prof !== professora) return;
-      if (!p.particular && !/particular/i.test(p.turma || "")) return;
+      if (!ehAlunaParticular(p)) return;
+      if (professora && professoraDaParticular(p) !== professora) return;
       var c = contratoVigente(p);
       if (!c) return;
       var m = (c.meses || []).filter(function (x) { return x.key === mesKey; })[0];
@@ -6931,9 +6941,8 @@
     var mes = mesKey || mesAtualKey();
     var out = [];
     loadPessoas().forEach(function (p) {
-      if (p.status !== "aluna") return;
-      if (!p.particular && !/particular/i.test(p.turma || "")) return;
-      if ((p.particular && p.particular.professora) || p.professora) return;
+      if (!ehAlunaParticular(p)) return;
+      if (professoraDaParticular(p)) return;
       var dadas = (p.historico || []).filter(function (h) {
         return ehAulaParticular(h) && mesDe(diaDaAulaParticular(h)) === mes;
       }).length;
@@ -11578,6 +11587,7 @@
     aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
     particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
     particularesSemProfessora: particularesSemProfessora,
+    professoraDaParticular: professoraDaParticular, ehAlunaParticular: ehAlunaParticular,
     fechamentoDoContrato: fechamentoDoContrato,
     encerrarPrograma: encerrarPrograma, reabrirPrograma: reabrirPrograma,
     apagarPrograma: apagarPrograma,

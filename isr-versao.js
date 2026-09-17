@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.09-b",
-  data: "09/09/2026",
-  nota: "A aula particular passa a ter data própria: aula dada em agosto e registrada em setembro é paga em agosto. O histórico carimbava o dia da digitação, e era esse carimbo que a folha lia. A ficha ganhou o campo do dia da aula, e os registros antigos são lidos pela data que está no texto"
+  numero: "2026.09.17-a",
+  data: "17/09/2026",
+  nota: "Chamada das particulares: cada professora vê só as alunas dela, numa seção própria, identificadas pelo nome. O painel lia um campo e a ficha gravava em outro, então toda professora via as particulares da escola inteira misturadas às próprias turmas"
 };
