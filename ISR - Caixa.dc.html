@@ -231,7 +231,7 @@
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
             <span style="font-size: 12px; color: #6b6155;">{{ resumoAnalise }}</span>
             <sc-if value="{{ temCerteiras }}">
-              <button onclick="{{ onConciliarCerteiras }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar as {{ nCerteiras }} correspondências exatas</button>
+              <button onclick="{{ onConciliarCerteiras }}" title="Nome e valor batem exatamente. Dá baixa nas parcelas em aberto e confirma no extrato as que já estavam marcadas como pagas." style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Aplicar as {{ nCerteiras }} que batem exatamente</button>
             </sc-if>
             <sc-if value="{{ temTaxas }}">
               <button onclick="{{ onLancarTaxas }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 700; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Lançar as {{ nTaxas }} taxas como despesa ({{ totalTaxas }})</button>
@@ -282,8 +282,8 @@
                     <div style="margin-top: 4px; font-size: 10.5px; color: #a2957f;">Nenhuma aluna ou parcela com esse nome.</div>
                   </sc-if>
                 </div>
-                <button onclick="{{ s.onConciliar }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
-                <button onclick="{{ s.onIgnorar }}" title="Transação sem vínculo com parcela. Fica registrada e não retorna nas próximas análises." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
+                <button onclick="{{ s.onConciliar }}" title="{{ s.acaoAjuda }}" style="border: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ s.acaoLabel }}</button>
+                <button onclick="{{ s.onIgnorar }}" title="A linha fica marcada como analisada e não volta nas próximas conferências. Use para transferência entre contas suas, imposto, compra — o que não é pagamento de aluna." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">não é da escola</button>
               </sc-if>
               <sc-if value="{{ s.feita }}">
                 <span style="background: rgba(90,158,75,0.16); color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">{{ s.feitaLabel }}</span>
@@ -308,7 +308,7 @@
                     <div style="margin-top: 4px; font-size: 10.5px; color: #a2957f;">Nenhuma aluna ou parcela com esse nome.</div>
                   </sc-if>
                 </div>
-                <button onclick="{{ x.onConciliarManual }}" style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conciliar</button>
+                <button onclick="{{ x.onConciliarManual }}" title="Aponta esta linha do extrato para a parcela escolhida acima." style="border: 1px solid #348a8e; background: #fff; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Apontar para esta parcela</button>
               </sc-if>
               <sc-if value="{{ x.lancavel }}">
                 <button onclick="{{ x.onLancar }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ x.lancarLabel }}</button>
@@ -332,7 +332,7 @@
                 <button onclick="{{ x.onConferir }}" title="O valor já está no Caixa como cobrança automática. Marcar como conferida evita que a linha volte na próxima análise." style="border: 1px solid #5a9e4b; background: #fff; color: #5a9e4b; font-size: 11.5px; font-weight: 700; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Conferida</button>
               </sc-if>
               <sc-if value="{{ x.ignoravel }}">
-                <button onclick="{{ x.onIgnorar }}" title="Não é da escola. A transação fica registrada e não volta na próxima análise." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">ignorar</button>
+                <button onclick="{{ x.onIgnorar }}" title="A linha fica marcada como analisada e não volta nas próximas conferências. Use para transferência entre contas suas, imposto, compra — o que não é pagamento de aluna." style="border: none; background: transparent; color: #c9b9a6; font-size: 11px; font-weight: 700; padding: 6px 6px; cursor: pointer; font-family: inherit;">não é da escola</button>
               </sc-if>
               <sc-if value="{{ x.lancada }}">
                 <span style="background: rgba(207,107,92,0.14); color: #cf6b5c; font-size: 11px; font-weight: 700; padding: 6px 13px; border-radius: 999px;">{{ x.feitoLabel }}</span>
@@ -1430,8 +1430,15 @@ class Component extends DCLogic {
         // valor bater, porque a taxa do gateway muda o valor
         // a parcela já estava marcada como paga: esta linha não põe
         // dinheiro novo no mês, só prova o que já estava lá
+        // duas situações diferentes, dois botões diferentes: dar baixa numa
+        // parcela em aberto não é a mesma coisa que confirmar no banco uma
+        // que alguém já marcou como paga na mão
+        acaoLabel: s.confirmacao ? "Confirmar" : "Dar baixa",
+        acaoAjuda: s.confirmacao
+          ? "A parcela já está marcada como paga. Confirmar registra que o dinheiro apareceu no extrato — não cobra de novo."
+          : "Marca a parcela como paga, com esta linha do extrato como comprovante.",
         confLabel: s.confirmacao
-          ? (s.mesLabel + " já está marcada como paga · esta linha é o pagamento dela no extrato"
+          ? ("já marcada como paga · falta confirmar no extrato"
              + (Math.abs(s.diferenca) >= 0.01
                  ? " · caíram " + CRM.fmtMoney(this.state.moedaExtrato, s.trans.valor)
                    + " dos " + CRM.fmtMoney(this.state.moedaExtrato, s.valor)
