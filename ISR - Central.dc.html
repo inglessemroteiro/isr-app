@@ -437,13 +437,20 @@ class Component extends DCLogic {
       professora: ["pedagogico"]
     };
     const filtroArea = AREA_POR_PERFIL[perfilAtivo] || null;
-    const cabeNoPerfil = (x) => !filtroArea || filtroArea.indexOf(x.area) >= 0;
+    // Alerta com dona é da dona. A chamada atrasada da Adrielly não é
+    // assunto da Carla: sem esta linha, cada professora abriria a Central
+    // com a lista de pendências de todas as outras.
+    const vePelaEscola = perfilAtivo === "gestora" || perfilAtivo === "operacao";
+    const cabeNoPerfil = (x) =>
+      (!filtroArea || filtroArea.indexOf(x.area) >= 0)
+      && (vePelaEscola || !x.professora || x.professora === meuNome);
 
     const ALERTA_META = {
       cobranca_falhou: { rotulo: "cobrança", cor: "#cf6b5c" },
       atraso: { rotulo: "atraso", cor: "#cf6b5c" },
       falta: { rotulo: "faltas", cor: "#c98a3a" },
       onboarding_travado: { rotulo: "integração", cor: "#c98a3a" },
+      chamada_pendente: { rotulo: "chamada", cor: "#c98a3a" },
       avaliacao_baixa: { rotulo: "avaliação", cor: "#9c6f56" },
       avaliacao_caiu: { rotulo: "avaliação", cor: "#9c6f56" },
       turma_vazia: { rotulo: "turma", cor: "#9c6f56" }
