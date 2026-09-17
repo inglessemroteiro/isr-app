@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.17-a",
+  numero: "2026.09.17-b",
   data: "17/09/2026",
-  nota: "Chamada das particulares: cada professora vê só as alunas dela, numa seção própria, identificadas pelo nome. O painel lia um campo e a ficha gravava em outro, então toda professora via as particulares da escola inteira misturadas às próprias turmas"
+  nota: "A chamada das particulares vira tabela: pacote, frequência com dia e hora, próxima aula e quantas ficaram sem chamada. A ficha da aluna mostra o mesmo combinado. Entra a frequência de duas vezes por semana, e aula que aconteceu sem chamada passa a cobrar na Central de quem deu"
 };

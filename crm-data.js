@@ -2085,6 +2085,7 @@
 
   var ALERTA_PESO = {
     cobranca_falhou: 100, atraso: 90, falta: 80, onboarding_travado: 70,
+    chamada_pendente: 65,
     avaliacao_baixa: 60, avaliacao_caiu: 50, turma_vazia: 40
   };
   function alertasDaEscola() {
@@ -2129,6 +2130,20 @@
         texto: vencidas.length + (vencidas.length === 1 ? " parcela vencida" : " parcelas vencidas")
           + " · " + fmtMoney(cb.moeda || "R$", soma),
         peso: ALERTA_PESO.atraso });
+    });
+
+    // ── aula que aconteceu e ficou sem chamada ──
+    // Uma por professora, e não uma por aula: quatro aulas atrasadas da
+    // mesma pessoa são um assunto só, e quatro linhas empurrariam o resto
+    // da fila para fora da tela.
+    chamadasPendentesPorProfessora().forEach(function (g) {
+      if (!g.professora) return;
+      out.push({ id: "chamada|" + g.professora, tipo: "chamada_pendente", area: "pedagogico",
+        quem: g.professora, professora: g.professora,
+        href: "ISR - Painel do Professor.dc.html?prof=" + encodeURIComponent(g.professora),
+        texto: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
+          + " · desde " + ddmm(g.maisAntiga),
+        peso: ALERTA_PESO.chamada_pendente });
     });
 
     // ── turma que não fecha ──
@@ -6517,11 +6532,74 @@
   // Remarcação tem limite de uma por mês. O sistema não bloqueia — abrir
   // exceção é decisão da escola —, apenas contabiliza e sinaliza.
   var LIMITE_REMARCACAO_MES = 1;
+  // "dias" é o intervalo até a próxima aula. Duas vezes por semana não
+  // cabe num intervalo só: alternando 3 e 4 dias, os dois dias da semana
+  // combinados ficam de pé (segunda e quinta seguem segunda e quinta),
+  // o que um intervalo médio não faria.
   var CADENCIAS = [
     { id: "semanal", label: "Semanal", dias: 7 },
+    { id: "2x_semana", label: "2× por semana", dias: 7, passos: [3, 4] },
     { id: "quinzenal", label: "Quinzenal", dias: 14 },
     { id: "mensal", label: "Mensal", dias: 28 }
   ];
+
+  // O combinado de uma aluna particular, num objeto só: quantas aulas
+  // foram contratadas, quantas já aconteceram, quando começam, em que dia
+  // e hora, de quanto em quanto tempo. Estava tudo no dado e em lugar
+  // nenhum na tela — a chamada mostrava só o nome, e quem olhava não
+  // sabia se aquela aluna tinha aula naquele dia.
+  var DIA_SEMANA_LONGO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  function resumoParticular(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var part = p.particular || {};
+    var agenda = agendaParticular(pessoaId);
+    var vivas = agenda.filter(function (a) { return a.estado !== "cancelada"; });
+    var marcadas = vivas.filter(function (a) { return a.estado === "marcada"; });
+    var hoje = iso(today());
+    var futuras = marcadas.filter(function (a) { return a.data >= hoje; });
+    var atrasadas = marcadas.filter(function (a) { return a.data < hoje; });
+    var cad = CADENCIAS.filter(function (c) { return c.id === part.cadencia; })[0] || null;
+    var primeira = vivas[0] || null;
+    var hora = part.hora || (primeira && primeira.hora) || "";
+    // o dia da semana vem da série, que é o combinado de verdade
+    var dias = {};
+    vivas.forEach(function (a) {
+      var d = parseISO(a.data); if (d) dias[d.getDay()] = true;
+    });
+    var diasLabel = Object.keys(dias).sort()
+      .map(function (k) { return DIA_SEMANA_LONGO[parseInt(k, 10)]; }).join(" e ");
+    var contratadas = part.aulas || 0;
+    var feitas = part.feitas || 0;
+    return {
+      id: p.id, nome: p.nome, professora: professoraDaParticular(p),
+      contratadas: contratadas, feitas: feitas,
+      restam: contratadas ? Math.max(0, contratadas - feitas) : null,
+      marcadas: marcadas.length, agendadas: vivas.length,
+      cadencia: cad ? cad.id : "", cadenciaLabel: cad ? cad.label : "",
+      hora: hora, diaSemana: diasLabel,
+      contratadoEm: p.desde || part.inicio || "",
+      inicio: primeira ? primeira.data : "",
+      fim: vivas.length ? vivas[vivas.length - 1].data : "",
+      proxima: futuras[0] || null,
+      atrasadas: atrasadas.length,
+      semAgenda: vivas.length === 0
+    };
+  }
+  function resumosParticulares(professora) {
+    return loadPessoas()
+      .filter(function (p) {
+        return ehAlunaParticular(p)
+          && (!professora || professoraDaParticular(p) === professora);
+      })
+      .map(function (p) { return resumoParticular(p.id); })
+      .sort(function (a, b) {
+        // quem tem aula marcada primeiro; sem agenda, no fim
+        var ka = a.proxima ? a.proxima.data : "9999";
+        var kb = b.proxima ? b.proxima.data : "9999";
+        return ka === kb ? (a.nome < b.nome ? -1 : 1) : (ka < kb ? -1 : 1);
+      });
+  }
 
   function agendaParticular(pessoaId) {
     var p = getPessoa(pessoaId);
@@ -6549,7 +6627,11 @@
       if (a.estado === "marcada") jaMarcadas[a.data] = true;
     });
 
-    var novas = [], d = new Date(d0), guarda = 0;
+    var novas = [], d = new Date(d0), guarda = 0, passo = 0;
+    var avancar = function () {
+      var n = cad.passos ? cad.passos[passo++ % cad.passos.length] : cad.dias;
+      d.setDate(d.getDate() + n);
+    };
     while (novas.length < quantas && guarda < 400) {
       guarda++;
       var dataIso = iso(d);
@@ -6557,12 +6639,10 @@
         novas.push({ id: "ap" + Date.now() + "_" + novas.length,
           data: dataIso, hora: hora, estado: "marcada", remarcacoes: [] });
         jaMarcadas[dataIso] = true;
-        d.setDate(d.getDate() + cad.dias);
-      } else {
-        // feriado (ou dia já ocupado) empurra pela mesma cadência,
-        // preservando o dia da semana combinado
-        d.setDate(d.getDate() + cad.dias);
       }
+      // feriado (ou dia já ocupado) empurra pela mesma cadência,
+      // preservando o dia da semana combinado
+      avancar();
     }
 
     mutate(pessoaId, function (p) {
@@ -6668,6 +6748,78 @@
         a.estado = feita === false ? "marcada" : "feita";
       });
     });
+  }
+
+  // ── CHAMADA QUE FICOU PARA TRÁS ───────────────────────────────
+  //
+  // A aula acontece; a chamada é o registro de que aconteceu. Sem ela a
+  // frequência da aluna fica errada, o pacote da particular não anda e a
+  // folha da professora não conta a aula. Nada disso aparecia em lugar
+  // nenhum: a aula simplesmente passava.
+  //
+  // Aqui ficam as aulas que já aconteceram e continuam sem chamada
+  // salva — de turma, particular e extra, na mesma lista.
+  var JANELA_CHAMADA_DIAS = 21;
+  function chamadasPendentes(professora, dias) {
+    var n = dias || JANELA_CHAMADA_DIAS;
+    var hoje = iso(today());
+    var desde = addDays(-n);
+    var out = [];
+
+    // turmas: a agenda sabe em que dias elas caem
+    var porId = {};
+    turmasLista().forEach(function (u) { porId[u.id] = u; });
+    agendaItens(n, desde).forEach(function (it) {
+      if (it.tipo !== "aula" || it.data >= hoje) return;
+      var u = porId[it.turmaId];
+      if (!u) return;
+      if (professora && (u.teacher || "") !== professora) return;
+      var label = u.nivel + " · " + u.turma;
+      if (getChamada(label, it.data)) return;
+      // turma sem aluna não tem chamada a fazer
+      if (!alunasDaTurma(label).length) return;
+      out.push({ tipo: "turma", label: label, data: it.data, hora: it.hora || "",
+        professora: u.teacher || "", quem: label,
+        alunas: alunasDaTurma(label).length, turmaId: u.id });
+    });
+
+    // particulares: a série diz quando cada aula foi marcada
+    aulasParticularesAgendadas(desde, hoje, professora).forEach(function (a) {
+      if (a.data >= hoje || a.estado === "feita") return;
+      var label = "Particular · " + a.nome;
+      if (getChamada(label, a.data)) return;
+      out.push({ tipo: "particular", label: label, data: a.data, hora: a.hora || "",
+        professora: a.professora || "", quem: a.nome, alunas: 1, pessoaId: a.pessoaId });
+    });
+
+    // aulas extras
+    eventosLista().forEach(function (e) {
+      if (!e.data || e.data >= hoje || e.data < desde) return;
+      var prof = e.responsavel || e.professora || "";
+      if (professora && prof !== professora) return;
+      var label = aulaExtraLabel(e);
+      if (getChamada(label, e.data)) return;
+      out.push({ tipo: "extra", label: label, data: e.data, hora: e.hora || "",
+        professora: prof, quem: e.titulo || "Aula extra", alunas: 0, eventoId: e.id });
+    });
+
+    out.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    return out;
+  }
+
+  // O mesmo, agrupado por professora: é assim que o lembrete sai.
+  function chamadasPendentesPorProfessora(dias) {
+    var todas = chamadasPendentes("", dias);
+    var mapa = {};
+    todas.forEach(function (c) {
+      var k = c.professora || "";
+      if (!mapa[k]) mapa[k] = { professora: k, aulas: [], n: 0, maisAntiga: c.data };
+      mapa[k].aulas.push(c);
+      mapa[k].n++;
+      if (c.data < mapa[k].maisAntiga) mapa[k].maisAntiga = c.data;
+    });
+    return Object.keys(mapa).map(function (k) { return mapa[k]; })
+      .sort(function (a, b) { return b.n - a.n; });
   }
 
   function proximaAulaParticular(pessoaId) {
@@ -11612,6 +11764,9 @@
     removerAulaParticular: removerAulaParticular, remarcacoesNoMes: remarcacoesNoMes,
     proximaAulaParticular: proximaAulaParticular, marcarAulaParticularFeita: marcarAulaParticularFeita,
     aulasParticularesAgendadas: aulasParticularesAgendadas,
+    chamadasPendentes: chamadasPendentes,
+    resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
+    chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
     setParticularPago: setParticularPago, produtosDe: produtosDe,
     PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,

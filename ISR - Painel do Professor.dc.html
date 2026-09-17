@@ -107,10 +107,34 @@
       <sc-if value="{{ temParticulares }}">
         <div style="border-top: 1px solid #f2ece3; padding-top: 10px; margin-bottom: 12px;">
           <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b; margin-bottom: 7px;">Particulares</div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-            <sc-for list="{{ particularesChamada }}" as="pc" hint-placeholder-count="3">
-              <button onclick="{{ pc.onClick }}" style="border: 1px solid {{ pc.borda }}; background: {{ pc.bg }}; color: {{ pc.fg }}; font-size: 11.5px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pc.label }}</button>
-            </sc-for>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px;">
+              <thead>
+                <tr>
+                  <th style="text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693; font-weight: 700; padding: 0 10px 6px 0;">Aluna</th>
+                  <th style="text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693; font-weight: 700; padding: 0 10px 6px 0;">Pacote</th>
+                  <th style="text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693; font-weight: 700; padding: 0 10px 6px 0;">Frequência</th>
+                  <th style="text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693; font-weight: 700; padding: 0 10px 6px 0;">Próxima aula</th>
+                  <th style="padding: 0 0 6px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ particularesChamada }}" as="pc" hint-placeholder-count="4">
+                  <tr style="border-top: 1px solid #f4f1ec; background: {{ pc.linhaBg }};">
+                    <td style="padding: 8px 10px 8px 0;">
+                      <div style="font-weight: 700; color: #164951;">{{ pc.nome }}</div>
+                      <div style="font-size: 10.5px; color: {{ pc.avisoCor }};">{{ pc.aviso }}</div>
+                    </td>
+                    <td style="padding: 8px 10px 8px 0; color: #6b6155; white-space: nowrap;">{{ pc.pacote }}</td>
+                    <td style="padding: 8px 10px 8px 0; color: #6b6155; white-space: nowrap;">{{ pc.frequencia }}</td>
+                    <td style="padding: 8px 10px 8px 0; color: #6b6155; white-space: nowrap;">{{ pc.proxima }}</td>
+                    <td style="padding: 8px 0; text-align: right;">
+                      <button onclick="{{ pc.onClick }}" style="border: 1px solid {{ pc.borda }}; background: {{ pc.bg }}; color: {{ pc.fg }}; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ pc.acao }}</button>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
           </div>
         </div>
       </sc-if>
@@ -812,21 +836,39 @@ class Component extends DCLogic {
           });
         // alunas particulares sempre à mão: a aula delas não tem horário
         // na agenda, então não apareceria em nenhum atalho
+        // A particular não tem horário fixo na grade: o que diz se hoje é
+        // dia dela é o pacote e a série. Um atalho só com o nome obrigava
+        // a abrir a ficha para descobrir isso.
         const chipsPart = particularesProf.map(px => {
           const marcada = !!partSel && partSel.id === px.id;
-          // a chamada abre na aula marcada mais próxima, não em "hoje"
-          const prox = CRM.proximaAulaParticular ? CRM.proximaAulaParticular(px.id) : null;
+          const r = CRM.resumoParticular(px.id);
+          const prox = r && r.proxima;
           const dia = prox ? this.diaLabel(prox.data) : null;
+          const atrasadas = r ? r.atrasadas : 0;
           return {
-            // o nome da aluna é o que identifica a aula; "Particular"
-            // repetido em cada atalho gastava o rótulo inteiro e o nome
-            // saía cortado no primeiro pedaço
-            label: px.nome + (dia ? " · " + dia.label : ""),
+            nome: px.nome,
+            pacote: r && r.contratadas
+              ? r.feitas + " de " + r.contratadas
+              : (r && r.feitas ? r.feitas + " dadas" : "—"),
+            frequencia: r && r.cadenciaLabel
+              ? r.cadenciaLabel + (r.diaSemana ? " · " + r.diaSemana : "")
+                + (r.hora ? " · " + r.hora : "")
+              : "—",
+            proxima: dia ? dia.label + (prox.hora ? " · " + prox.hora : "") : "—",
+            aviso: atrasadas
+              ? atrasadas + (atrasadas === 1 ? " aula sem chamada" : " aulas sem chamada")
+              : (r && r.semAgenda ? "sem aulas marcadas" : ""),
+            avisoCor: atrasadas ? "#c8622f" : "#b3a693",
+            linhaBg: marcada ? "rgba(107,91,149,0.07)" : "transparent",
+            acao: marcada ? "Selecionada" : "Chamada",
             bg: marcada ? "#6b5b95" : "#fff",
             fg: marcada ? "#fff" : "#6b5b95",
             borda: marcada ? "#6b5b95" : "#ddd6e8",
             onClick: () => {
-              const quando = prox ? prox.data : this.hojeIso();
+              // abre na aula mais antiga sem chamada; não havendo, na próxima
+              const pend = (CRM.chamadasPendentes(teacher) || [])
+                .filter(c => c.tipo === "particular" && c.pessoaId === px.id)[0];
+              const quando = pend ? pend.data : (prox ? prox.data : this.hojeIso());
               this.setState({ eventoChamada: null, particularChamada: px.id,
                 turmaChamada: null, chamadaData: quando,
                 presencas: this.carregarChamada("Particular · " + px.nome, quando),
