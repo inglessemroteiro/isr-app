@@ -55,6 +55,13 @@
     } catch (e) { puxandoBase = false; }
   }
 
+  // Seis áreas, um destino por item. Três regras que mantêm o menu do
+  // tamanho de uma cabeça:
+  //   1. lugar onde alguém trabalha → item de menu;
+  //   2. outra vista do mesmo dado → aba dentro da tela dona do assunto;
+  //   3. precisa de um registro escolhido antes → não entra no menu, abre
+  //      de dentro do registro (perfil, certificado, matrícula, app da aluna).
+  // Área nova só quando a sétima realmente não couber em nenhuma das seis.
   var AREAS = [
     {
       // A tela que se abre primeiro: o que está esperando alguém.
@@ -69,9 +76,9 @@
       // Quem quer entrar: do primeiro contato até a matrícula.
       id: "crm", label: "CRM", cor: "#e07856",
       itens: [
-        { label: "Leads", desc: "Funil do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Leads", desc: "Funil do contato à matrícula · a matrícula começa no cartão da lead", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Matrículas do ciclo", desc: "Meta, ritmo, origem e valor de cada matrícula nova", href: "ISR - Matrículas do ciclo.dc.html", perfis: ["gestora", "comercial"] },
-        { label: "Matrícula", desc: "Contrato, turma, primeira cobrança e acesso ao app", href: "ISR - Matrícula.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Calculadora de preços", desc: "Simulação de parcelas, desconto e sinal", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Importar leads", desc: "Da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] }
       ]
@@ -80,11 +87,8 @@
       // Tudo sobre as pessoas que estudam aqui.
       id: "alunas", label: "Alunas", cor: "#fc9082",
       itens: [
-        { label: "Alunas", desc: "Por turma, nível, produto e situação", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Perfil", desc: "A página de uma pessoa, com contrato, pagamentos e histórico", href: "ISR - Perfil.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-        { label: "Certificados", desc: "Com horas cursadas e frequência, para imprimir ou salvar", href: "ISR - Certificado.dc.html", perfis: ["gestora", "professora", "operacao"] },
-        { label: "App da aluna", desc: "O que a aluna vê", href: "ISR - Aluna.dc.html", perfis: null }
+        { label: "Alunas", desc: "Por turma, nível e situação · o perfil, o certificado e o app da aluna abrem daqui", href: "ISR - Alunas.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] }
       ]
     },
     {
@@ -106,13 +110,6 @@
         { label: "Contas a receber", desc: "Quem deve, há quanto tempo e o que vence", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
         { label: "Folha", desc: "Pagamento da equipe no mês e comissão", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
         { label: "Importar pagamentos", desc: "Importar o Controle de Pagamento da planilha", href: "ISR - Importar.dc.html", perfis: ["gestora", "operacao"] }
-      ]
-    },
-    {
-      // De onde vem gente nova.
-      id: "marketing", label: "Marketing", cor: "#6b5b95",
-      itens: [
-        { label: "Marketing", desc: "Origem dos leads, conversão e metas", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] }
       ]
     },
     {
@@ -138,9 +135,17 @@
     return false;
   }
 
+  var busca = "";
+  try { busca = decodeURIComponent(window.location.search || ""); } catch (e) {}
+
   function ativa(item) {
     var base = item.href.split("?")[0].replace(".dc.html", "").replace(".html", "");
-    return base.length > 3 && path.indexOf(base) >= 0;
+    if (base.length <= 3 || path.indexOf(base) < 0) return false;
+    // Importar tem duas portas — leads no CRM, pagamentos no Financeiro.
+    // Sem olhar a aba da URL, o menu acendia sempre a primeira delas.
+    var aba = (item.href.split("aba=")[1] || "").split("&")[0];
+    if (!aba) return true;
+    return busca.indexOf("aba=" + aba) >= 0;
   }
 
   // só as áreas que sobraram algo pra esta pessoa

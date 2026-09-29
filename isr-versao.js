@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-i",
+  numero: "2026.09.29-j",
   data: "29/09/2026",
-  nota: "Início das aulas passa a ser editável em toda aluna já cadastrada: no card da lista de Alunas, no bloco Pedagógico do Perfil e na coluna da lista de Matrículas do ciclo. Em Alunas e em Matrículas do ciclo há ação em lote — filtre a turma, escolha a data e aplique a todas"
+  nota: "Menu arrumado: seis áreas em vez de sete, 21 itens em vez de 25. Saíram do menu as quatro telas que precisam de um registro escolhido antes (perfil, certificado, matrícula, app da aluna) — elas abrem de dentro da lista e do perfil. Cada página passa a se apresentar com o nome e a cor da área do menu em que ela está"
 };
