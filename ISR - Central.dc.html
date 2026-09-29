@@ -110,6 +110,34 @@
       </sc-if>
     </section>
 
+    <!-- AULAS SEM CHAMADA — a aula aconteceu e ninguém registrou -->
+    <sc-if value="{{ temSemChamada }}">
+      <section style="background: #fdf6ec; border: 1px solid #f0dcc0; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c98a3a;">Aulas sem chamada</div>
+          <span style="font-size: 11px; color: #9b8b7e;">{{ semChamadaResumo }}</span>
+        </div>
+        <p style="margin: 0 0 8px; font-size: 12px; color: #6b6155; line-height: 1.55;">{{ semChamadaTexto }}</p>
+        <sc-for list="{{ semChamada }}" as="sc" hint-placeholder-count="3">
+          <div style="padding: 9px 0; border-top: 1px solid #f0dcc0;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 160px;">
+                <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ sc.professora }}</div>
+                <div style="font-size: 11.5px; color: #8a7c6b; margin-top: 2px;">{{ sc.detalhe }}</div>
+              </div>
+              <a href="{{ sc.href }}" style="flex: none; text-decoration: none; border: 1px solid #e3c9a0; background: #fff; color: #a4783a; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px;">Abrir o painel</a>
+              <button onclick="{{ sc.onLembrar }}" title="Manda o aviso para a professora, com a lista das aulas" style="flex: none; border: none; background: transparent; color: #b8a394; font-size: 11px; font-weight: 700; padding: 6px 8px; cursor: pointer; font-family: inherit;">{{ sc.lembrarLabel }}</button>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px;">
+              <sc-for list="{{ sc.aulas }}" as="au" hint-placeholder-count="3">
+                <a href="{{ au.href }}" title="Abre esta aula na chamada" style="text-decoration: none; border: 1px solid #f0dcc0; background: #fff; color: #6b6155; font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 999px;">{{ au.label }}</a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- AJUSTES NO CADASTRO — furos que travam dinheiro ou deixam aluna sem dono -->
     <sc-if value="{{ temFuros }}">
       <section style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;">
@@ -290,7 +318,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false, janela: "abertas", verAlertas: false };
+  state = { perfil: "gestora", verTodos: false, tick: 0, deTodas: false, janela: "abertas", verAlertas: false, lembrou: "" };
   // cadastro novo puxado em segundo plano redesenha a Central na hora
   _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
   tfTituloRef = React.createRef();
@@ -303,7 +331,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { perfis: [], fila: [], alertas: [], pendencias: [], modelos: [], filaVazia: true, filaCount: "", saudacao: "", ciclo: "", matriculas: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%", temMais: false, filaBadgeBg: "#f2ebe3", filaBadgeFg: "#9b8b7e" };
+    if (!CRM) return { perfis: [], fila: [], alertas: [], pendencias: [], modelos: [], semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "", filaVazia: true, filaCount: "", saudacao: "", ciclo: "", matriculas: "", renovacoesMeta: "", pMatriculas: "0%", pRenovacoes: "0%", temMais: false, filaBadgeBg: "#f2ebe3", filaBadgeFg: "#9b8b7e" };
 
     const user = CRM.gestaoUser();
     const ehGestora = !user || user.perfil === "gestora";
@@ -591,6 +619,51 @@ class Component extends DCLogic {
       renovacoesMeta: metas.renovacoes + "/" + metas.metaRenovacoes,
       pMatriculas: Math.min(100, Math.round(100 * metas.matriculas / metas.metaMatriculas)) + "%",
       pRenovacoes: Math.min(100, Math.round(100 * metas.renovacoes / metas.metaRenovacoes)) + "%",
+      // ── AULAS SEM CHAMADA ────────────────────────────────────
+      // Existia só como uma linha entre os alertas, no fim da tela, e a
+      // aula sem chamada não aparecia em lugar nenhum antes disso. Aqui
+      // ela é um bloco próprio, com a aula de cada dia linkada direto
+      // para a chamada dela.
+      ...(() => {
+        const grupos = (CRM.chamadasPendentesPorProfessora
+          ? CRM.chamadasPendentesPorProfessora() : [])
+          .filter(g => g.professora)
+          .filter(g => vePelaEscola || g.professora === meuNome);
+        const nAulas = grupos.reduce((t, g) => t + g.n, 0);
+        const linkDaAula = (a) => {
+          if (a.tipo === "extra" && a.eventoId)
+            return "ISR%20-%20Painel%20do%20Professor.dc.html?evento=" + encodeURIComponent(a.eventoId);
+          return "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(a.label)
+            + "&data=" + a.data + "&retro=1";
+        };
+        return {
+          temSemChamada: grupos.length > 0,
+          semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
+            + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
+          semChamadaTexto: vePelaEscola
+            ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo, e a frequência do certificado fica menor do que a real."
+            : "Estas aulas suas aconteceram e ficaram sem chamada. Abra cada uma e registre quem estava.",
+          semChamada: grupos.map(g => ({
+            professora: g.professora,
+            detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
+              + " · a mais antiga em " + CRM.ddmm(g.maisAntiga),
+            href: "ISR%20-%20Painel%20do%20Professor.dc.html?prof=" + encodeURIComponent(g.professora),
+            lembrarLabel: this.state.lembrou === g.professora ? "Avisado" : "Avisar",
+            onLembrar: () => {
+              CRM.avisar(g.professora, g.n + (g.n === 1 ? " aula sua está" : " aulas suas estão")
+                + " sem chamada, a mais antiga em " + CRM.ddmm(g.maisAntiga)
+                + ". Abra o Painel do Professor e registre a presença.", "chamada");
+              this.setState({ lembrou: g.professora });
+            },
+            aulas: g.aulas.slice(0, 4).map(a => ({
+              label: CRM.ddmm(a.data) + " · " + (a.tipo === "particular" ? a.quem : a.label.split("·")[0].trim())
+                + (a.hora ? " · " + a.hora : ""),
+              href: linkDaAula(a)
+            }))
+          }))
+        };
+      })(),
+
       alertas: alertas, temAlertas: alertasAll.length > 0,
       alertaResumo: alertasAll.length
         + (alertasAll.length === 1 ? " situação" : " situações")
