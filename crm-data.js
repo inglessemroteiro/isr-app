@@ -8769,6 +8769,30 @@
       return { id: p.id, nome: p.nome, desde: p.desde };
     }).sort(function (a, b) { return a.desde < b.desde ? -1 : 1; });
   }
+  // A data da primeira aula de quem já está na lista. É o que decide a
+  // partir de quando a aluna aparece na chamada e em qual ciclo a matrícula
+  // conta. Não mexe nas parcelas: o contrato tem edição própria no Perfil.
+  function setInicioDasAulas(id, novoIso) {
+    if (!novoIso || !/^\d{4}-\d{2}-\d{2}$/.test(String(novoIso))) return false;
+    var mudou = false;
+    mutate(id, function (p) {
+      var antes = p.desde || "";
+      if (antes === novoIso) return;
+      p.desde = novoIso;
+      mudou = true;
+      pushHist(p, "matricula", "Início das aulas "
+        + (antes ? "mudou de " + ddmm(antes) + " para " : "definido em ") + ddmm(novoIso));
+    });
+    agendarSync();
+    return mudou;
+  }
+  // Em lote: no período de matrículas a turma nova toda começa no mesmo dia,
+  // e são dezenas de alunas. Uma por uma no perfil não é caminho.
+  function setInicioDasAulasEmLote(ids, novoIso) {
+    var n = 0;
+    (ids || []).forEach(function (id) { if (setInicioDasAulas(id, novoIso)) n++; });
+    return n;
+  }
   function chamadasDaTurma(turmaLabel) {
     var m = chamadasAll(), out = [];
     Object.keys(m).forEach(function (k) { if (m[k].turma === turmaLabel) out.push(m[k]); });
@@ -12068,6 +12092,7 @@
     aulasExtraDaAluna: aulasExtraDaAluna,
     agendaItens: agendaItens, gcalLink: gcalLink,
     getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, alunasDaTurma: alunasDaTurma, alunasQueVaoComecar: alunasQueVaoComecar,
+    setInicioDasAulas: setInicioDasAulas, setInicioDasAulasEmLote: setInicioDasAulasEmLote,
     chamadasDaTurma: chamadasDaTurma,
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
     responderMissao: responderMissao, programaDaAluna: programaDaAluna,

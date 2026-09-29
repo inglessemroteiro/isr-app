@@ -162,6 +162,17 @@
         <div style="font-size: 12.5px; color: #b3a693; line-height: 1.6;">Nenhuma aluna matriculada desde {{ inicioLabel }}. As matrículas aparecem aqui assim que o contrato é criado.</div>
       </sc-if>
       <sc-if value="{{ temLinhas }}">
+        <div style="background: #faf8f3; border: 1px solid #f0e8dc; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+          <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">Início das aulas em lote</div>
+          <p style="margin: 0 0 9px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A turma nova começa toda no mesmo dia. Escolha a data, aplique a todas e ajuste as exceções na coluna da lista. Até esse dia a aluna ocupa vaga na turma e fica fora da chamada.</p>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <input ref="{{ loteRef }}" type="date" style="padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <button onclick="{{ onLote }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ loteLabel }}</button>
+            <span style="font-size: 11.5px; font-weight: 700; color: {{ loteCor }};">{{ loteNota }}</span>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ temLinhas }}">
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 900px;">
             <thead>
@@ -183,9 +194,10 @@
                     <span style="background: {{ ln.canalBg }}; color: {{ ln.canalFg }}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap;">{{ ln.canal }}</span>
                   </td>
                   <td style="padding: 9px 10px 9px 0; color: #3d3529;">{{ ln.nivel }}</td>
-                  <td style="padding: 9px 10px 9px 0; color: #6b6155;">
-                    {{ ln.turma }}
-                    <div style="font-size: 10.5px; color: #b3a693;">{{ ln.inicioAulas }}</div>
+                  <td style="padding: 9px 10px 9px 0; color: #6b6155;">{{ ln.turma }}</td>
+                  <td style="padding: 9px 10px 9px 0; white-space: nowrap;">
+                    <input type="date" value="{{ ln.inicioIso }}" onchange="{{ ln.onInicio }}" style="padding: 6px 8px; font-size: 11.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                    <div style="font-size: 10.5px; color: {{ ln.inicioCor }};">{{ ln.inicioNota }}</div>
                   </td>
                   <td style="padding: 9px 10px 9px 0; text-align: right; font-weight: 700; color: #164951; white-space: nowrap;">{{ ln.pacote }}</td>
                   <td style="padding: 9px 10px 9px 0; text-align: right; color: #6b6155; white-space: nowrap;">{{ ln.mensalidade }}</td>
@@ -204,8 +216,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0 };
+  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0, loteFeito: 0 };
   cicloRef = React.createRef(); inicioRef = React.createRef(); fimRef = React.createRef();
+  loteRef = React.createRef();
   metaRef = React.createRef(); metaMesRef = React.createRef();
   fatRRef = React.createRef(); fatERef = React.createRef();
 
@@ -230,6 +243,8 @@ class Component extends DCLogic {
       fatRRef: this.fatRRef, fatERef: this.fatERef, onEditarMeta: () => {}, onSalvarMeta: () => {},
       temMeses: false, mesesView: [], canais: [], niveis: [], semCanais: true, semNiveis: true,
       linhas: [], colunas: [], semLinhas: true, temLinhas: false, inicioLabel: "",
+      loteRef: this.loteRef, loteLabel: "Aplicar", loteNota: "", loteCor: "#8a7c6b",
+      onLote: () => {},
       onCopiar: () => {}, copiarLabel: "Copiar lista",
       comoUsarAberto: false, comoUsarFechado: true, comoUsarLabel: "ver",
       onComoUsar: () => {}, passos: [], proximoPasso: "" };
@@ -244,6 +259,14 @@ class Component extends DCLogic {
       if (o["€"]) p.push($("€", o["€"]));
       return p.length ? p.join(" · ") : "—";
     };
+
+    // Quantas das matrículas deste ciclo já contam na chamada de hoje. No
+    // período de matrículas isso costuma ser um erro a corrigir: a aluna do
+    // ciclo novo levava falta de aula que ainda não começou.
+    const hj = new Date();
+    const hojeIso = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0")
+      + "-" + String(hj.getDate()).padStart(2, "0");
+    const naChamadaHoje = d.linhas.filter(l => !l.inicioAulas || l.inicioAulas <= hojeIso).length;
 
     const pct = d.pct === null ? 0 : d.pct;
     const noRitmo = d.projecao === null ? null : d.projecao >= d.meta;
@@ -392,11 +415,13 @@ class Component extends DCLogic {
       colunas: [
         { label: "Fechou", align: "left" }, { label: "Aluna", align: "left" },
         { label: "Veio de", align: "left" }, { label: "Nível", align: "left" },
-        { label: "Turma", align: "left" }, { label: "Pacote", align: "right" },
+        { label: "Turma", align: "left" }, { label: "Início das aulas", align: "left" },
+        { label: "Pacote", align: "right" },
         { label: "Mensalidade", align: "right" }, { label: "Parcelas", align: "right" }
       ],
       linhas: d.linhas.map(l => {
         const cor = corDoCanal(l.canal);
+        const ini = l.inicioAulas || "";
         return {
           desde: this.dm(l.desde), nome: l.nome,
           href: "ISR%20-%20Perfil.dc.html?id=" + encodeURIComponent(l.id),
@@ -405,12 +430,39 @@ class Component extends DCLogic {
                : l.diasAteFechar + (l.diasAteFechar === 1 ? " dia no funil" : " dias no funil")),
           canal: l.canal, canalBg: cor[0], canalFg: cor[1],
           nivel: l.nivel || "—", turma: l.turma,
-          inicioAulas: l.inicioAulas ? "aulas desde " + this.dm(l.inicioAulas) : "",
+          inicioIso: ini,
+          inicioNota: !ini ? "sem data · já na chamada"
+            : (ini > hojeIso ? "entra na chamada em " + this.dm(ini) : "já na chamada"),
+          inicioCor: !ini || ini <= hojeIso ? "#b3a693" : "#4f8c42",
+          onInicio: e => {
+            const v = e.target.value;
+            if (v) CRM.setInicioDasAulas(l.id, v);
+            this.bump();
+          },
           pacote: l.pacote ? $(l.moeda, l.pacote) : "—",
           mensalidade: l.mensalidade ? $(l.moeda, l.mensalidade) : "—",
           parcelas: l.parcelas ? String(l.parcelas) + "×" : "—"
         };
       }),
+
+      // ── início das aulas em lote ──
+      loteRef: this.loteRef,
+      loteLabel: "Aplicar às " + d.linhas.length
+        + (d.linhas.length === 1 ? " matrícula" : " matrículas"),
+      loteNota: this.state.loteFeito
+        ? "Gravado em " + this.state.loteFeito
+          + (this.state.loteFeito === 1 ? " matrícula" : " matrículas")
+        : (naChamadaHoje
+            ? naChamadaHoje + (naChamadaHoje === 1 ? " já entra" : " já entram") + " na chamada de hoje"
+            : "Nenhuma entra na chamada de hoje"),
+      loteCor: this.state.loteFeito ? "#4f8c42" : (naChamadaHoje ? "#c8622f" : "#8a7c6b"),
+      onLote: () => {
+        const v = (this.loteRef.current && this.loteRef.current.value) || "";
+        if (!v) return;
+        const n = CRM.setInicioDasAulasEmLote(d.linhas.map(l => l.id), v);
+        this.setState({ loteFeito: n });
+        setTimeout(() => this.setState({ loteFeito: 0 }), 6000);
+      },
       copiarLabel: this.state.copiado ? "Copiado" : "Copiar lista",
       onCopiar: () => {
         const txt = ["Fechou\tAluna\tVeio de\tNível\tTurma\tAulas desde\tPacote\tMensalidade\tParcelas"]

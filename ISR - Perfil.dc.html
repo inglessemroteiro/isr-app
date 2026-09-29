@@ -642,6 +642,14 @@
               <div><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Faltas no ciclo</div>{{ faltasCiclo }}</div>
               <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Turma</div>{{ turma }}</div>
               <div style="grid-column: 1 / -1;"><div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 2px;">Projeto do ciclo</div>{{ projetoCiclo }}</div>
+              <div style="grid-column: 1 / -1; border-top: 1px solid #f4f1ec; padding-top: 10px; margin-top: 2px;">
+                <div style="font-size: 8px; text-transform: uppercase; color: #b8ada0; margin-bottom: 4px;">Início das aulas</div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <input type="date" value="{{ inicioAulasIso }}" onchange="{{ onInicioAulas }}" style="padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <span style="font-size: 11.5px; font-weight: 700; color: #6b6155;">{{ inicioAulasNota }}</span>
+                </div>
+                <p style="margin: 6px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">A aluna aparece na chamada da turma a partir deste dia. A data é gravada na hora e não altera as parcelas do contrato.</p>
+              </div>
             </div>
           </div>
 
@@ -1526,6 +1534,24 @@ class Component extends DCLogic {
       .concat(CRM.equipeLista()
         .filter(m => (m.papeis || []).indexOf("professora") >= 0)
         .map(m => ({ id: m.nome, label: m.nome, sel: p.professora === m.nome })));
+    // Início das aulas: editável em toda aluna, não só na matrícula nova.
+    // Quem já está na lista foi cadastrada com a data do dia do cadastro, e
+    // é por essa data que a chamada e a contagem do ciclo se orientam.
+    const hj = new Date();
+    const hojeIsoP = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0")
+      + "-" + String(hj.getDate()).padStart(2, "0");
+    out.inicioAulasIso = p.desde || "";
+    out.inicioAulasNota = (() => {
+      if (!p.desde) return "sem data · a chamada conta desde já";
+      const c = CRM.cicloDaData ? CRM.cicloDaData(p.desde).label : "";
+      return (c ? c + " · " : "")
+        + (p.desde > hojeIsoP ? "entra na chamada em " + CRM.ddmm(p.desde) : "já na chamada");
+    })();
+    out.onInicioAulas = e => {
+      const v = e.target.value;
+      if (v) CRM.setInicioDasAulas(p.id, v);
+      this.bump();
+    };
     out.onSalvarTurma = () => {
       const id = this.turSelRef.current && this.turSelRef.current.value;
       if (id) CRM.mudarTurma(p.id, id);
