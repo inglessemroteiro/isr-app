@@ -363,7 +363,10 @@
 
   // ── METAS DO CICLO (Config digita 1x — spec 13; demo fixo) ────
   var METAS_PADRAO = { matriculas: 8, renovacoes: 6, cicloInicio: "2026-07-01", cicloLabel: "3.2026",
-    faturamento: { "R$": 16000, "€": 1400 }, faturamentoMes: {} };
+    faturamento: { "R$": 16000, "€": 1400 }, faturamentoMes: {},
+    // fim do ciclo e meta mensal de matrícula: sem os dois não dá para
+    // dizer se o ritmo de hoje chega no número combinado
+    cicloFim: "", matriculasMes: 0 };
   var METAS_KEY = "isr_metas_v1";
   function metasAtuais() {
     try { var m = JSON.parse(localStorage.getItem(METAS_KEY)); if (m) return Object.assign({}, METAS_PADRAO, m); } catch (e) {}
@@ -3448,6 +3451,145 @@
   }
 
   // ── METAS DO CICLO ────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  //  MATRÍCULAS DO CICLO
+  //  ------------------------------------------------------------
+  //  "Queremos 35 alunas no ciclo novo" é uma frase que só vira
+  //  gestão quando dá para responder, a qualquer dia: quantas já
+  //  entraram, de onde vieram, para que turma foram, quanto cada uma
+  //  fechou — e se o ritmo de hoje chega em 35 até o fim.
+  //
+  //  Tudo isso já estava no cadastro, espalhado: a origem na entrada
+  //  do lead, o nível na turma, o valor no contrato. Aqui vira uma
+  //  leitura só.
+  // ══════════════════════════════════════════════════════════════
+  function nivelDaTurma(turmaLabel) {
+    if (!turmaLabel) return "";
+    if (/particular/i.test(turmaLabel)) return "Particular";
+    var u = turmasLista().filter(function (t) {
+      return (t.nivel + " · " + t.turma) === turmaLabel || t.turma === turmaLabel;
+    })[0];
+    if (u) return u.nivel;
+    // turma escrita à mão costuma vir como "Nível · horário"
+    var partes = String(turmaLabel).split(" · ");
+    return partes[0] || turmaLabel;
+  }
+
+  function matriculasDoCiclo(cfg) {
+    cfg = cfg || {};
+    var M = metasAtuais();
+    var inicio = cfg.inicio || M.cicloInicio;
+    var fim = cfg.fim || M.cicloFim || "";
+    var hoje = iso(today());
+    var dIni = parseISO(inicio) || today();
+    var dFim = fim ? (parseISO(fim) || null) : null;
+
+    var dentro = function (d) {
+      if (!d) return false;
+      if (d < inicio) return false;
+      if (fim && d > fim) return false;
+      return true;
+    };
+
+    var linhas = [];
+    loadPessoas().forEach(function (p) {
+      if (p.status !== "aluna" && p.status !== "mvs") return;
+      if (!dentro(p.desde)) return;
+      // renovação não é aluna nova: o contrato novo é de quem já estava
+      var c = contratoVigente(p);
+      if (c && c.renovacao) return;
+      var moeda = (c && c.moeda) || p.moeda || "R$";
+      var pacote = c ? parseMoney(c.valorTotal) : 0;
+      var mensal = c ? parseMoney(c.parcelaValor) : 0;
+      var o = p.origem || {};
+      linhas.push({
+        id: p.id, nome: p.nome,
+        entrouEm: p.entrouEm || "", desde: p.desde || "",
+        // quanto tempo o CRM levou entre conhecer a pessoa e matricular
+        diasAteFechar: (p.entrouEm && p.desde)
+          ? Math.max(0, daysBetween(parseISO(p.entrouEm), parseISO(p.desde))) : null,
+        canal: o.canal || "—", detalhe: o.detalhe || "",
+        turma: p.turma || "—", nivel: nivelDaTurma(p.turma),
+        professora: p.professora || "",
+        moeda: moeda, pacote: pacote, mensalidade: mensal,
+        parcelas: c ? (c.parcelas || (c.meses || []).length) : 0,
+        vendidoPor: p.vendidoPor || p.professora || "",
+        status: p.status
+      });
+    });
+    linhas.sort(function (a, b) { return a.desde < b.desde ? 1 : -1; });
+
+    var zero = function () { return { "R$": 0, "€": 0 }; };
+    var soma = function (acc, moeda, v) { if (acc[moeda] === undefined) acc[moeda] = 0; acc[moeda] += v; };
+
+    var contratado = zero(), mensalidades = zero();
+    var canais = {}, niveis = {}, turmas = {}, meses = {};
+    linhas.forEach(function (l) {
+      soma(contratado, l.moeda, l.pacote);
+      soma(mensalidades, l.moeda, l.mensalidade);
+      if (!canais[l.canal]) canais[l.canal] = { canal: l.canal, n: 0, valor: zero() };
+      canais[l.canal].n++; soma(canais[l.canal].valor, l.moeda, l.pacote);
+      var nv = l.nivel || "—";
+      if (!niveis[nv]) niveis[nv] = { nivel: nv, n: 0 };
+      niveis[nv].n++;
+      if (!turmas[l.turma]) turmas[l.turma] = { turma: l.turma, n: 0 };
+      turmas[l.turma].n++;
+      var k = (l.desde || "").slice(0, 7);
+      if (k) {
+        if (!meses[k]) meses[k] = { key: k, label: mesLabelDe(k), n: 0, valor: zero() };
+        meses[k].n++; soma(meses[k].valor, l.moeda, l.pacote);
+      }
+    });
+    var ordena = function (obj) {
+      return Object.keys(obj).map(function (k) { return obj[k]; })
+        .sort(function (a, b) { return b.n - a.n; });
+    };
+
+    // ── o ritmo ──
+    // Dias corridos desde o começo do ciclo e até o fim: é o que
+    // transforma "faltam 31" em "faltam 31 em 9 semanas".
+    var meta = parseInt(cfg.meta, 10) || M.matriculas || 0;
+    var feitas = linhas.length;
+    var faltam = Math.max(0, meta - feitas);
+    var diasCorridos = Math.max(1, daysBetween(dIni, today()) + 1);
+    var diasRestantes = dFim ? Math.max(0, daysBetween(today(), dFim)) : null;
+    var porSemana = feitas / (diasCorridos / 7);
+    var precisaPorSemana = (diasRestantes && faltam)
+      ? faltam / Math.max(1, diasRestantes / 7) : null;
+    var projecao = diasRestantes !== null
+      ? Math.round(feitas + porSemana * (diasRestantes / 7)) : null;
+
+    var metaMes = parseInt(M.matriculasMes, 10) || 0;
+    if (!metaMes && dFim && meta) {
+      // sem meta mensal combinada, a do ciclo dividida pelos meses dele
+      var nMeses = Math.max(1, Math.round(daysBetween(dIni, dFim) / 30));
+      metaMes = Math.ceil(meta / nMeses);
+    }
+
+    return {
+      ciclo: M.cicloLabel, inicio: inicio, fim: fim,
+      meta: meta, metaMes: metaMes,
+      feitas: feitas, faltam: faltam,
+      pct: meta ? Math.round((feitas / meta) * 100) : null,
+      linhas: linhas,
+      porCanal: ordena(canais), porNivel: ordena(niveis), porTurma: ordena(turmas),
+      porMes: Object.keys(meses).sort().map(function (k) {
+        var m = meses[k];
+        m.meta = metaMes;
+        m.bateu = metaMes ? m.n >= metaMes : null;
+        return m;
+      }),
+      contratado: contratado, mensalidades: mensalidades,
+      metaFaturamento: M.faturamento || zero(),
+      diasCorridos: diasCorridos, diasRestantes: diasRestantes,
+      porSemana: Math.round(porSemana * 10) / 10,
+      precisaPorSemana: precisaPorSemana === null ? null : Math.round(precisaPorSemana * 10) / 10,
+      projecao: projecao,
+      // sem data de fim não há como projetar nada: a tela precisa saber
+      semFim: !fim
+    };
+  }
+
   function progressoMetas() {
     var pessoas = loadPessoas();
     var M = metasAtuais();
@@ -11590,6 +11732,7 @@
     renovacoes: renovacoes, setRenovacao: setRenovacao, taxaRenovacao: taxaRenovacao,
     // fila + metas
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
+    matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,

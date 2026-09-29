@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Matrículas do ciclo</title>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-nav.js"></script>
+<script src="./crm-data.js"></script>
+<link rel="stylesheet" href="./isr-tokens.css">
+</head>
+<body>
+<x-dc>
+<main style="background: #faf6f0; min-height: 100vh; margin: 0; padding: 0 0 48px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #3d3529; -webkit-font-smoothing: antialiased;">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 26px 20px 0;">
+
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #2a9d8f; margin-bottom: 6px;">Inglês sem Roteiro · CRM</div>
+    <h1 style="margin: 0 0 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.7px; color: #164951;">Matrículas do ciclo</h1>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;">Cada aluna que entrou no ciclo, de onde veio, para que turma foi e quanto fechou. A meta, o ritmo e o que já está contratado.</p>
+
+    <!-- PLACAR -->
+    <div style="background: #164951; border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 44px; font-weight: 700; color: #fff; letter-spacing: -1.4px; line-height: 1;">{{ feitas }}</span>
+        <span style="font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.65);">de {{ meta }}</span>
+        <span style="background: {{ pctBg }}; color: {{ pctFg }}; font-size: 12px; font-weight: 700; padding: 5px 13px; border-radius: 999px;">{{ pctLabel }}</span>
+      </div>
+      <div style="font-size: 13px; color: rgba(255,255,255,0.72); margin-bottom: 16px;">{{ cicloLinha }}</div>
+
+      <div style="height: 8px; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden; margin-bottom: 16px;">
+        <div style="height: 100%; width: {{ barraLargura }}; background: {{ barraCor }}; border-radius: 999px;"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px;">
+        <sc-for list="{{ placar }}" as="pl" hint-placeholder-count="4">
+          <div>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: rgba(255,255,255,0.5); margin-bottom: 3px;">{{ pl.label }}</div>
+            <div style="font-size: 17px; font-weight: 700; color: {{ pl.cor }};">{{ pl.valor }}</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">{{ pl.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{ semFim }}">
+      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 13px 18px; margin-bottom: 16px; font-size: 12.5px; color: #a4483a; line-height: 1.6;">Sem data de fim do ciclo, o ritmo e a projeção não são calculados. Defina abaixo, em Meta do ciclo.</div>
+    </sc-if>
+
+    <!-- META -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e;">Meta do ciclo</span>
+        <button onclick="{{ onEditarMeta }}" style="border: 1px solid #e5dccf; background: {{ metaBg }}; color: {{ metaFg }}; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ metaLabel }}</button>
+      </div>
+      <sc-if value="{{ editandoMeta }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 9px; margin-top: 10px;">
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome do ciclo</div>
+            <input ref="{{ cicloRef }}" placeholder="{{ cicloAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Começa em</div>
+            <input ref="{{ inicioRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Termina em</div>
+            <input ref="{{ fimRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Alunas no ciclo</div>
+            <input ref="{{ metaRef }}" type="number" placeholder="{{ metaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Alunas por mês</div>
+            <input ref="{{ metaMesRef }}" type="number" placeholder="{{ metaMesAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Faturamento R$</div>
+            <input ref="{{ fatRRef }}" placeholder="{{ fatRAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Faturamento €</div>
+            <input ref="{{ fatERef }}" placeholder="{{ fatEAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
+          <div style="display: flex; align-items: flex-end;">
+            <button onclick="{{ onSalvarMeta }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+          </div>
+          <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Campos em branco permanecem como estão. Sem alunas por mês, o sistema divide a meta do ciclo pelos meses dele.</p>
+        </div>
+      </sc-if>
+      <sc-if value="{{ metaResumoVisivel }}">
+        <div style="font-size: 12.5px; color: #6b6155; line-height: 1.7; margin-top: 4px;">{{ metaResumo }}</div>
+      </sc-if>
+    </div>
+
+    <!-- MÊS A MÊS -->
+    <sc-if value="{{ temMeses }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e; margin-bottom: 12px;">Mês a mês</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 12px;">
+          <sc-for list="{{ mesesView }}" as="mv" hint-placeholder-count="4">
+            <div style="border-left: 3px solid {{ mv.cor }}; padding-left: 10px;">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0;">{{ mv.label }}</div>
+              <div style="font-size: 19px; font-weight: 700; color: #164951;">{{ mv.n }}</div>
+              <div style="font-size: 11px; color: {{ mv.corTexto }};">{{ mv.nota }}</div>
+              <div style="font-size: 11px; color: #8a7c6b; margin-top: 2px;">{{ mv.valor }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- DE ONDE VIERAM -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px;">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e; margin-bottom: 12px;">De onde vieram</div>
+        <sc-if value="{{ semCanais }}">
+          <div style="font-size: 12.5px; color: #b3a693;">Nenhuma matrícula no ciclo ainda.</div>
+        </sc-if>
+        <sc-for list="{{ canais }}" as="cn" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f7f2ea;">
+            <span style="flex: none; width: 26px; font-size: 15px; font-weight: 700; color: #164951;">{{ cn.n }}</span>
+            <span style="flex: 1; min-width: 80px; font-size: 12.5px; color: #3d3529;">{{ cn.canal }}</span>
+            <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">{{ cn.valor }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px;">
+        <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e; margin-bottom: 12px;">Por nível</div>
+        <sc-if value="{{ semNiveis }}">
+          <div style="font-size: 12.5px; color: #b3a693;">Nenhuma matrícula no ciclo ainda.</div>
+        </sc-if>
+        <sc-for list="{{ niveis }}" as="nv" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f7f2ea;">
+            <span style="flex: none; width: 26px; font-size: 15px; font-weight: 700; color: #164951;">{{ nv.n }}</span>
+            <span style="flex: 1; min-width: 80px; font-size: 12.5px; color: #3d3529;">{{ nv.nivel }}</span>
+            <span style="flex: none; font-size: 11.5px; color: #8a7c6b;">{{ nv.turmas }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- A LISTA -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e;">Uma a uma</span>
+        <button onclick="{{ onCopiar }}" style="border: 1px solid #e5dccf; background: #fff; color: #164951; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ copiarLabel }}</button>
+      </div>
+      <sc-if value="{{ semLinhas }}">
+        <div style="font-size: 12.5px; color: #b3a693; line-height: 1.6;">Nenhuma aluna matriculada desde {{ inicioLabel }}. As matrículas aparecem aqui assim que o contrato é criado.</div>
+      </sc-if>
+      <sc-if value="{{ temLinhas }}">
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 900px;">
+            <thead>
+              <tr>
+                <sc-for list="{{ colunas }}" as="cl" hint-placeholder-count="8">
+                  <th style="text-align: {{ cl.align }}; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #b3a693; font-weight: 700; padding: 0 10px 7px 0; white-space: nowrap;">{{ cl.label }}</th>
+                </sc-for>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="6">
+                <tr style="border-top: 1px solid #f4f1ec;">
+                  <td style="padding: 9px 10px 9px 0; white-space: nowrap; color: #8a7c6b;">{{ ln.desde }}</td>
+                  <td style="padding: 9px 10px 9px 0;">
+                    <a href="{{ ln.href }}" style="font-weight: 700; color: #164951; text-decoration: none;">{{ ln.nome }}</a>
+                    <div style="font-size: 10.5px; color: #b3a693;">{{ ln.tempo }}</div>
+                  </td>
+                  <td style="padding: 9px 10px 9px 0;">
+                    <span style="background: {{ ln.canalBg }}; color: {{ ln.canalFg }}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap;">{{ ln.canal }}</span>
+                  </td>
+                  <td style="padding: 9px 10px 9px 0; color: #3d3529;">{{ ln.nivel }}</td>
+                  <td style="padding: 9px 10px 9px 0; color: #6b6155;">{{ ln.turma }}</td>
+                  <td style="padding: 9px 10px 9px 0; text-align: right; font-weight: 700; color: #164951; white-space: nowrap;">{{ ln.pacote }}</td>
+                  <td style="padding: 9px 10px 9px 0; text-align: right; color: #6b6155; white-space: nowrap;">{{ ln.mensalidade }}</td>
+                  <td style="padding: 9px 0; text-align: right; color: #8a7c6b; white-space: nowrap;">{{ ln.parcelas }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+    </div>
+
+    <p style="margin: 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Conta como matrícula do ciclo quem entrou como aluna a partir do começo dele. Renovação não entra: o contrato novo é de quem já estava na escola, e a renovação tem meta própria na Central.</p>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { editandoMeta: false, copiado: false, tick: 0 };
+  cicloRef = React.createRef(); inicioRef = React.createRef(); fimRef = React.createRef();
+  metaRef = React.createRef(); metaMesRef = React.createRef();
+  fatRRef = React.createRef(); fatERef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.onDados = () => this.bump();
+    window.addEventListener("isr-dados", this.onDados);
+  }
+  componentWillUnmount() { window.removeEventListener("isr-dados", this.onDados); }
+
+  dm(d) { return d ? String(d).slice(8, 10) + "/" + String(d).slice(5, 7) : "—"; }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { feitas: "0", meta: "0", pctLabel: "", pctBg: "#fff", pctFg: "#164951",
+      cicloLinha: "", barraLargura: "0%", barraCor: "#9ec970", placar: [], semFim: false,
+      editandoMeta: false, metaLabel: "Ajustar", metaBg: "#fff", metaFg: "#6b6155",
+      metaResumo: "", metaResumoVisivel: false, cicloAtual: "", metaAtual: "", metaMesAtual: "",
+      fatRAtual: "", fatEAtual: "", cicloRef: this.cicloRef, inicioRef: this.inicioRef,
+      fimRef: this.fimRef, metaRef: this.metaRef, metaMesRef: this.metaMesRef,
+      fatRRef: this.fatRRef, fatERef: this.fatERef, onEditarMeta: () => {}, onSalvarMeta: () => {},
+      temMeses: false, mesesView: [], canais: [], niveis: [], semCanais: true, semNiveis: true,
+      linhas: [], colunas: [], semLinhas: true, temLinhas: false, inicioLabel: "",
+      onCopiar: () => {}, copiarLabel: "Copiar lista" };
+
+    const d = CRM.matriculasDoCiclo();
+    const M = CRM.metasAtuais();
+    const $ = (m, v) => CRM.fmtMoney(m, v);
+    // dinheiro em duas moedas: uma soma só esconderia de qual delas veio
+    const duas = (o) => {
+      const p = [];
+      if (o["R$"]) p.push($("R$", o["R$"]));
+      if (o["€"]) p.push($("€", o["€"]));
+      return p.length ? p.join(" · ") : "—";
+    };
+
+    const pct = d.pct === null ? 0 : d.pct;
+    const noRitmo = d.projecao === null ? null : d.projecao >= d.meta;
+
+    // ── o placar ──
+    const placar = [
+      { label: "Faltam", valor: String(d.faltam),
+        sub: d.diasRestantes === null ? "sem data de fim"
+          : d.diasRestantes + (d.diasRestantes === 1 ? " dia restante" : " dias restantes"),
+        cor: "#fff" },
+      { label: "Ritmo atual", valor: d.porSemana + (d.porSemana === 1 ? " por semana" : " por semana"),
+        sub: d.feitas + " em " + d.diasCorridos + " dias", cor: "#fff" },
+      { label: "Ritmo necessário",
+        valor: d.precisaPorSemana === null ? "—" : d.precisaPorSemana + " por semana",
+        sub: d.precisaPorSemana === null ? "defina o fim do ciclo"
+          : (d.precisaPorSemana > d.porSemana ? "acima do ritmo de hoje" : "dentro do ritmo de hoje"),
+        cor: d.precisaPorSemana !== null && d.precisaPorSemana > d.porSemana ? "#f4a099" : "#9ec970" },
+      { label: "Contratado até aqui", valor: duas(d.contratado),
+        sub: "meta " + duas(d.metaFaturamento), cor: "#fff" },
+      { label: "Mensalidade somada", valor: duas(d.mensalidades),
+        sub: "por mês, das alunas do ciclo", cor: "#fff" }
+    ];
+
+    // ── canal: cor estável por nome, para a etiqueta não trocar de cor ──
+    const CANAL_COR = {
+      "Instagram": ["rgba(224,120,86,0.14)", "#c8622f"],
+      "Anúncio": ["rgba(107,91,149,0.14)", "#6b5b95"],
+      "Indicação": ["rgba(90,158,75,0.16)", "#4f8c42"],
+      "Site": ["rgba(52,138,142,0.14)", "#2a7d80"],
+      "Formulário": ["rgba(212,165,116,0.20)", "#a4783a"],
+      "Aplicação": ["rgba(212,165,116,0.20)", "#a4783a"],
+      "WhatsApp": ["rgba(90,158,75,0.16)", "#4f8c42"]
+    };
+    const corDoCanal = (c) => CANAL_COR[c] || ["#f2ece3", "#8a7c6b"];
+
+    // quantas turmas diferentes cada nível recebeu
+    const turmasPorNivel = {};
+    d.linhas.forEach(l => {
+      const k = l.nivel || "—";
+      if (!turmasPorNivel[k]) turmasPorNivel[k] = {};
+      turmasPorNivel[k][l.turma] = true;
+    });
+
+    return {
+      feitas: String(d.feitas), meta: String(d.meta),
+      pctLabel: d.pct === null ? "sem meta" : d.pct + "%",
+      pctBg: pct >= 100 ? "rgba(158,201,112,0.22)" : "rgba(255,255,255,0.12)",
+      pctFg: pct >= 100 ? "#9ec970" : "rgba(255,255,255,0.8)",
+      cicloLinha: "Ciclo " + (d.ciclo || "—") + " · de " + this.dm(d.inicio)
+        + (d.fim ? " a " + this.dm(d.fim) : " (sem data de fim)"),
+      barraLargura: Math.min(100, pct) + "%",
+      barraCor: noRitmo === false ? "#e07856" : "#9ec970",
+      placar,
+      semFim: !!d.semFim,
+
+      // ── meta ──
+      editandoMeta: this.state.editandoMeta,
+      metaLabel: this.state.editandoMeta ? "Fechar" : "Ajustar",
+      metaBg: this.state.editandoMeta ? "#164951" : "#fff",
+      metaFg: this.state.editandoMeta ? "#fff" : "#6b6155",
+      metaResumoVisivel: !this.state.editandoMeta,
+      metaResumo: d.meta + (d.meta === 1 ? " aluna" : " alunas") + " no ciclo"
+        + (d.metaMes ? " · " + d.metaMes + " por mês" : "")
+        + " · faturamento " + duas(d.metaFaturamento),
+      cicloAtual: d.ciclo || "", metaAtual: String(d.meta),
+      metaMesAtual: String(d.metaMes || 0),
+      fatRAtual: $("R$", (d.metaFaturamento || {})["R$"] || 0),
+      fatEAtual: $("€", (d.metaFaturamento || {})["€"] || 0),
+      cicloRef: this.cicloRef, inicioRef: this.inicioRef, fimRef: this.fimRef,
+      metaRef: this.metaRef, metaMesRef: this.metaMesRef,
+      fatRRef: this.fatRRef, fatERef: this.fatERef,
+      onEditarMeta: () => this.setState(s => ({ editandoMeta: !s.editandoMeta })),
+      onSalvarMeta: () => {
+        const v = (r) => (r.current && r.current.value || "").trim();
+        const patch = {};
+        if (v(this.cicloRef)) patch.cicloLabel = v(this.cicloRef);
+        if (v(this.inicioRef)) patch.cicloInicio = v(this.inicioRef);
+        if (v(this.fimRef)) patch.cicloFim = v(this.fimRef);
+        if (v(this.metaRef)) patch.matriculas = parseInt(v(this.metaRef), 10) || 0;
+        if (v(this.metaMesRef)) patch.matriculasMes = parseInt(v(this.metaMesRef), 10) || 0;
+        const fatR = v(this.fatRRef), fatE = v(this.fatERef);
+        if (fatR || fatE) {
+          patch.faturamento = Object.assign({}, M.faturamento || {});
+          if (fatR) patch.faturamento["R$"] = CRM.parseMoney(fatR);
+          if (fatE) patch.faturamento["€"] = CRM.parseMoney(fatE);
+        }
+        CRM.setMetas(patch);
+        [this.cicloRef, this.inicioRef, this.fimRef, this.metaRef, this.metaMesRef,
+         this.fatRRef, this.fatERef].forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ editandoMeta: false });
+        this.bump();
+      },
+
+      // ── mês a mês ──
+      temMeses: d.porMes.length > 0,
+      mesesView: d.porMes.map(m => ({
+        label: m.label, n: String(m.n),
+        nota: m.meta ? (m.bateu ? "meta de " + m.meta + " batida" : m.meta - m.n + " para a meta") : "sem meta mensal",
+        cor: m.meta ? (m.bateu ? "#9ec970" : "#d4a574") : "#e0dcd6",
+        corTexto: m.meta ? (m.bateu ? "#4f8c42" : "#a4783a") : "#b3a693",
+        valor: duas(m.valor)
+      })),
+
+      // ── cortes ──
+      semCanais: d.porCanal.length === 0,
+      canais: d.porCanal.map(c => ({ canal: c.canal, n: String(c.n), valor: duas(c.valor) })),
+      semNiveis: d.porNivel.length === 0,
+      niveis: d.porNivel.map(n => {
+        const t = Object.keys(turmasPorNivel[n.nivel] || {}).length;
+        return { nivel: n.nivel, n: String(n.n),
+          turmas: t + (t === 1 ? " turma" : " turmas") };
+      }),
+
+      // ── a lista ──
+      inicioLabel: this.dm(d.inicio),
+      semLinhas: d.linhas.length === 0,
+      temLinhas: d.linhas.length > 0,
+      colunas: [
+        { label: "Entrou", align: "left" }, { label: "Aluna", align: "left" },
+        { label: "Veio de", align: "left" }, { label: "Nível", align: "left" },
+        { label: "Turma", align: "left" }, { label: "Pacote", align: "right" },
+        { label: "Mensalidade", align: "right" }, { label: "Parcelas", align: "right" }
+      ],
+      linhas: d.linhas.map(l => {
+        const cor = corDoCanal(l.canal);
+        return {
+          desde: this.dm(l.desde), nome: l.nome,
+          href: "ISR%20-%20Perfil.dc.html?id=" + encodeURIComponent(l.id),
+          tempo: l.diasAteFechar === null ? "sem data de entrada no CRM"
+            : (l.diasAteFechar === 0 ? "fechou no mesmo dia"
+               : l.diasAteFechar + (l.diasAteFechar === 1 ? " dia no funil" : " dias no funil")),
+          canal: l.canal, canalBg: cor[0], canalFg: cor[1],
+          nivel: l.nivel || "—", turma: l.turma,
+          pacote: l.pacote ? $(l.moeda, l.pacote) : "—",
+          mensalidade: l.mensalidade ? $(l.moeda, l.mensalidade) : "—",
+          parcelas: l.parcelas ? String(l.parcelas) + "×" : "—"
+        };
+      }),
+      copiarLabel: this.state.copiado ? "Copiado" : "Copiar lista",
+      onCopiar: () => {
+        const txt = ["Entrou\tAluna\tVeio de\tNível\tTurma\tPacote\tMensalidade\tParcelas"]
+          .concat(d.linhas.map(l => [this.dm(l.desde), l.nome, l.canal, l.nivel || "", l.turma,
+            l.pacote ? $(l.moeda, l.pacote) : "", l.mensalidade ? $(l.moeda, l.mensalidade) : "",
+            l.parcelas || ""].join("\t"))).join("\n");
+        try { navigator.clipboard.writeText(txt); } catch (e) {
+          try {
+            const t = document.createElement("textarea");
+            t.value = txt; document.body.appendChild(t); t.select();
+            document.execCommand("copy"); t.remove();
+          } catch (e2) {}
+        }
+        this.setState({ copiado: true });
+        setTimeout(() => this.setState({ copiado: false }), 3000);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
