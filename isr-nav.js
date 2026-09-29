@@ -70,6 +70,7 @@
       id: "crm", label: "CRM", cor: "#e07856",
       itens: [
         { label: "Leads", desc: "Funil do contato à matrícula", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
+        { label: "Matrículas do ciclo", desc: "Meta, ritmo, origem e valor de cada matrícula nova", href: "ISR - Matrículas do ciclo.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Matrícula", desc: "Contrato, turma, primeira cobrança e acesso ao app", href: "ISR - Matrícula.dc.html", perfis: ["gestora", "comercial", "operacao"] },
         { label: "Calculadora de preços", desc: "Simulação de parcelas, desconto e sinal", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
         { label: "Importar leads", desc: "Da planilha, do Jotform ou do systeme", href: "ISR - Importar.dc.html?aba=leads", perfis: ["gestora", "comercial", "operacao"] }
