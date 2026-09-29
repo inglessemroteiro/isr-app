@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-e",
+  numero: "2026.09.29-f",
   data: "29/09/2026",
-  nota: "As matrículas que a Carla anuncia no canal #admin do Slack entram no sistema coladas: o bloco é lido campo a campo — nome, contato, turma, horário, início, parcelas, sinal e vencimento — mostrado para conferência e aplicado com contrato. E a tela de Matrículas do ciclo ganhou o passo a passo de como usar"
+  nota: "O ciclo passa a contar pelo dia em que o contrato foi fechado, não pelo dia em que as aulas começam. A campanha de 28/09 a 23/10 fecha contratos cujas aulas só começam em 27/10 — pela data de início, a tela mostraria zero durante a campanha inteira"
 };
