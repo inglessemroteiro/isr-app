@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-j",
+  numero: "2026.09.29-k",
   data: "29/09/2026",
-  nota: "Menu arrumado: seis áreas em vez de sete, 21 itens em vez de 25. Saíram do menu as quatro telas que precisam de um registro escolhido antes (perfil, certificado, matrícula, app da aluna) — elas abrem de dentro da lista e do perfil. Cada página passa a se apresentar com o nome e a cor da área do menu em que ela está"
+  nota: "Chamada já salva pode ser corrigida: o Painel do Professor lista as chamadas feitas e abre qualquer uma para regravar, registrando quem corrigiu e avisando a professora. E a Central passa a ter um bloco de aulas sem chamada, antes dos alertas, com cada aula linkada direto para a chamada dela e um botão para avisar a professora"
 };

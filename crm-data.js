@@ -6429,12 +6429,34 @@
   function salvarChamada(turmaLabel, dataIso, presencas, por, tarefas) {
     var m = chamadasAll();
     var key = turmaLabel + "|" + dataIso;
-    var antes = (m[key] && m[key].presencas) || {};
+    var velha = m[key] || null;
+    var antes = (velha && velha.presencas) || {};
+    // Uma chamada salva pode ser corrigida — a professora marcou falta em
+    // quem chegou atrasada, a gestão conferiu depois. Quem corrigiu e
+    // quando fica registrado, senão a correção some sem rastro.
+    var jaExistia = !!(velha && velha.salvoEm);
+    var quemAntes = (velha && (velha.criadaPor || velha.por)) || "";
+    var mudancas = 0;
+    Object.keys(presencas).forEach(function (pid) {
+      if (estadoPresenca(presencas[pid]) !== estadoPresenca(antes[pid])) mudancas++;
+    });
     m[key] = { turma: turmaLabel, data: dataIso, presencas: presencas,
       tarefas: tarefas || {},
-      salvoEm: new Date().toISOString(), por: por || "" };
+      salvoEm: new Date().toISOString(), por: por || "",
+      criadaEm: (velha && velha.criadaEm) || new Date().toISOString(),
+      criadaPor: quemAntes || por || "",
+      correcoes: (velha && velha.correcoes || 0) + (jaExistia && mudancas ? 1 : 0),
+      corrigidaEm: jaExistia && mudancas ? new Date().toISOString() : (velha && velha.corrigidaEm) || "",
+      corrigidaPor: jaExistia && mudancas ? (por || "") : (velha && velha.corrigidaPor) || "" };
     chamadasSaveLocal(m);
     agendarSync();
+    // Corrigir a chamada de outra pessoa sem avisar é mexer no trabalho
+    // dela às escondidas: a professora precisa saber o que mudou.
+    if (jaExistia && mudancas && quemAntes && quemAntes !== (por || "")) {
+      avisar(quemAntes, "A chamada de " + turmaLabel + " em " + ddmm(dataIso)
+        + " foi corrigida" + (por ? " por " + por : "") + " · "
+        + mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas"), "chamada");
+    }
     var ehParticular = turmaLabel.indexOf("Particular") === 0;
     // falta/justificada nova vai pra linha do tempo (re-salvar não duplica)
     Object.keys(presencas).forEach(function (pid) {
@@ -7246,6 +7268,57 @@
     });
 
     out.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    return out;
+  }
+
+  // As chamadas que já foram salvas. Existiam apenas dentro de cada turma,
+  // então corrigir uma exigia saber de cabeça em que turma e em que dia ela
+  // foi feita. Aqui elas vêm em ordem de data, com quem salvou e quantas
+  // presenças, prontas para reabrir.
+  function chamadasFeitas(professora, dias) {
+    var n = dias || 30;
+    var desde = addDays(-n), hoje = iso(today());
+    var porLabel = {};
+    turmasLista().forEach(function (u) { porLabel[u.nivel + " · " + u.turma] = u; });
+    var pessoas = loadPessoas();
+    var eventos = eventosLista();
+    var m = chamadasAll(), out = [];
+    Object.keys(m).forEach(function (k) {
+      var c = m[k];
+      if (!c || !c.data || c.data < desde || c.data > hoje) return;
+      var label = c.turma || "";
+      var tipo = "turma", prof = "", turmaId = "", pessoaId = "", eventoId = "";
+      var u = porLabel[label];
+      if (u) { prof = u.teacher || ""; turmaId = u.id; }
+      else if (label.indexOf("Particular") === 0) {
+        tipo = "particular";
+        var nome = label.split("·").slice(1).join("·").trim();
+        var pp = pessoas.filter(function (x) { return x.nome === nome; })[0];
+        if (pp) { pessoaId = pp.id; prof = professoraDaParticular(pp) || ""; }
+      } else {
+        tipo = "extra";
+        var ev = eventos.filter(function (e) { return aulaExtraLabel(e) === label; })[0];
+        if (ev) { eventoId = ev.id; prof = ev.responsavel || ev.professora || ""; }
+      }
+      if (professora && prof !== professora) return;
+      var pres = 0, falt = 0, just = 0, atr = 0;
+      Object.keys(c.presencas || {}).forEach(function (pid) {
+        var e = estadoPresenca(c.presencas[pid]);
+        if (e === "falta") falt++;
+        else if (e === "justificada") just++;
+        else if (e === "atraso") atr++;
+        else pres++;
+      });
+      out.push({ turma: label, data: c.data, tipo: tipo, professora: prof,
+        turmaId: turmaId, pessoaId: pessoaId, eventoId: eventoId,
+        por: c.por || "", salvoEm: c.salvoEm || "",
+        criadaPor: c.criadaPor || c.por || "",
+        corrigida: !!c.corrigidaEm, corrigidaPor: c.corrigidaPor || "",
+        correcoes: c.correcoes || 0,
+        presentes: pres + atr, faltas: falt, justificadas: just, atrasos: atr,
+        total: pres + atr + falt + just });
+    });
+    out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
     return out;
   }
 
@@ -12257,7 +12330,7 @@
     removerAulaParticular: removerAulaParticular, remarcacoesNoMes: remarcacoesNoMes,
     proximaAulaParticular: proximaAulaParticular, marcarAulaParticularFeita: marcarAulaParticularFeita,
     aulasParticularesAgendadas: aulasParticularesAgendadas,
-    chamadasPendentes: chamadasPendentes,
+    chamadasPendentes: chamadasPendentes, chamadasFeitas: chamadasFeitas,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
     setParticularPago: setParticularPago, produtosDe: produtosDe,
