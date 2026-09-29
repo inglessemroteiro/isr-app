@@ -68,7 +68,7 @@
     </div>
 
     <sc-if value="{{ semFim }}">
-      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 13px 18px; margin-bottom: 16px; font-size: 12.5px; color: #a4483a; line-height: 1.6;">Sem data de fim do ciclo, o ritmo e a projeção não são calculados. Defina abaixo, em Meta do ciclo.</div>
+      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 13px 18px; margin-bottom: 16px; font-size: 12.5px; color: #a4483a; line-height: 1.6;">Sem data de fim não há ritmo nem projeção. Defina em Meta do ciclo, abaixo.</div>
     </sc-if>
 
     <!-- META -->
@@ -296,22 +296,23 @@ class Component extends DCLogic {
       onComoUsar: () => this.setState({ comoUsar: !comoUsarAberto }),
       passos: [
         { n: "1", titulo: "Defina a meta do ciclo",
-          texto: "Em Meta do ciclo, logo abaixo, preencha o nome do ciclo, o começo, o fim e quantas alunas você quer. Sem a data de fim não há ritmo nem projeção." },
-        { n: "2", titulo: "Registre as matrículas conforme chegam",
-          texto: "Em CRM · Importar · Matrículas do Slack, cole as mensagens que a Carla posta no canal #admin. A aluna nasce com contrato, turma, parcelas e sinal." },
+          texto: "Nome, começo, fim e quantas alunas. Sem a data de fim não há ritmo nem projeção." },
+        { n: "2", titulo: "Registre as matrículas",
+          texto: "Em CRM · Importar · Matrículas do Slack, cole as mensagens do canal #admin. A aluna nasce com contrato, turma, parcelas e sinal." },
         { n: "3", titulo: "Acompanhe o ritmo necessário",
-          texto: "É o número que importa no placar. Quando ele fica vermelho, o ritmo de hoje não chega na meta até o fim do ciclo." },
-        { n: "4", titulo: "Use o corte por canal para decidir",
-          texto: "Em De onde vieram está quanto cada origem trouxe em contrato. É por aí que se vê se o tráfego pago se paga." }
+          texto: "Vermelho no placar: o ritmo atual não chega na meta até o fim do ciclo." },
+        { n: "4", titulo: "Decida pelo canal",
+          texto: "Em De onde vieram está quanto cada origem trouxe em contrato — inclusive o tráfego pago." }
       ],
       proximoPasso: precisaConfigurar
-        ? "Comece definindo a meta do ciclo abaixo."
-        : (d.faltam
-          ? "Faltam " + d.faltam + (d.faltam === 1 ? " aluna" : " alunas")
-            + (d.precisaPorSemana !== null && d.precisaPorSemana > d.porSemana
-              ? ". No ritmo de hoje a meta não é alcançada — o ritmo necessário é " + d.precisaPorSemana + " por semana."
-              : ". O ritmo de hoje chega lá.")
-          : "Meta do ciclo alcançada."),
+        ? "Defina a meta do ciclo abaixo."
+        : (!d.faltam
+          ? "Meta alcançada."
+          : "Faltam " + d.faltam + (d.faltam === 1 ? " aluna" : " alunas")
+            + (d.precisaPorSemana === null ? "."
+              : (d.precisaPorSemana > d.porSemana
+                ? " · ritmo necessário " + d.precisaPorSemana + " por semana, atual " + d.porSemana
+                : " · ritmo atual suficiente"))),
       feitas: String(d.feitas), meta: String(d.meta),
       pctLabel: d.pct === null ? "sem meta" : d.pct + "%",
       pctBg: pct >= 100 ? "rgba(158,201,112,0.22)" : "rgba(255,255,255,0.12)",
