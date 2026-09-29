@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-h",
+  numero: "2026.09.29-i",
   data: "29/09/2026",
-  nota: "A matrícula tem um passo próprio para a data da primeira aula, com atalhos para hoje e para o ciclo seguinte. A tela mostra em qual ciclo a matrícula entra e a partir de que dia a aluna aparece na chamada. A data no passado abre sozinha o bloco de aulas já começadas — não há mais a chave de matrícula retroativa"
+  nota: "Início das aulas passa a ser editável em toda aluna já cadastrada: no card da lista de Alunas, no bloco Pedagógico do Perfil e na coluna da lista de Matrículas do ciclo. Em Alunas e em Matrículas do ciclo há ação em lote — filtre a turma, escolha a data e aplique a todas"
 };

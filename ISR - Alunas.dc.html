@@ -73,6 +73,19 @@
       <span style="font-size: 11.5px; color: #8a7c6b;">{{ contagem }}</span>
     </div>
 
+    <!-- INÍCIO DAS AULAS EM LOTE · usa o que está filtrado acima -->
+    <sc-if value="{{ temAlunas }}">
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 13px 16px; margin-bottom: 14px;">
+        <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; margin-bottom: 3px;">Início das aulas em lote</div>
+        <p style="margin: 0 0 9px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Filtre a turma acima, escolha a data e aplique. Cada aluna aparece na chamada a partir do dia dela; as exceções se corrigem no campo de cada uma.</p>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <input ref="{{ loteRef }}" type="date" style="padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          <button onclick="{{ onLote }}" style="border: none; background: #164951; color: #fff; font-size: 11.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ loteLabel }}</button>
+          <span style="font-size: 11.5px; font-weight: 700; color: {{ loteCor }};">{{ loteNota }}</span>
+        </div>
+      </div>
+    </sc-if>
+
     <!-- LISTA -->
     <sc-if value="{{ vazio }}">
       <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 40px 20px; text-align: center; color: #9b8b7e; font-size: 13px;">Nenhuma aluna com esses filtros.</div>
@@ -84,6 +97,11 @@
           <div style="flex: 1; min-width: 180px;">
             <a href="{{ a.href }}" style="font-size: 15px; font-weight: 700; color: #164951; text-decoration: none;">{{ a.nome }}</a>
             <div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5;">{{ a.turmaInfo }}</div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+              <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0;">Início das aulas</span>
+              <input type="date" value="{{ a.inicioIso }}" onchange="{{ a.onInicio }}" title="A aluna aparece na chamada a partir deste dia" style="padding: 5px 7px; font-size: 11px; font-family: inherit; color: #164951; border: 1px solid #eee3d6; border-radius: 7px; background: #fff;" />
+              <span style="font-size: 10.5px; color: {{ a.inicioCor }};">{{ a.inicioNota }}</span>
+            </div>
             <sc-if value="{{ a.temTags }}">
               <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px;">
                 <sc-for list="{{ a.tags }}" as="tg" hint-placeholder-count="2">
@@ -173,15 +191,18 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { busca: "", turma: "", professora: "", risco: "", tag: "", copiado: false, tick: 0,
-            retMeses: 12, todasEx: false };
-  buscaRef = React.createRef();
+            retMeses: 12, todasEx: false, loteFeito: 0 };
+  buscaRef = React.createRef(); loteRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { termometro: [], turmaOpts: [], profOpts: [], alunas: [], vazio: true,
       contagem: "", temFiltro: false, labelCopiar: "Copiar lista", labelCopiarEmails: "Copiar e-mails",
       retNumeros: [], motivos: [], semMotivos: true, exAlunas: [], semEx: true,
-      temMaisEx: false, periodoLabel: "" };
+      temMaisEx: false, periodoLabel: "", temAlunas: false, loteRef: this.loteRef,
+      loteLabel: "Aplicar", loteNota: "", loteCor: "#8a7c6b", onLote: () => {} };
 
     const todas = CRM.alunasPainel();
 
@@ -223,6 +244,14 @@ class Component extends DCLogic {
       (!this.state.risco || a.riscos.indexOf(this.state.risco) >= 0) &&
       (!this.state.tag || (a.tags || []).indexOf(this.state.tag) >= 0));
 
+    // ── início das aulas ──
+    // Quem já está na lista foi cadastrada com a data do dia do cadastro. É
+    // essa data que decide a partir de quando a aluna entra na chamada, e é
+    // aqui, na lista, que ela se corrige — turma por turma, sem abrir perfil.
+    const hj = new Date();
+    const hojeIso = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0")
+      + "-" + String(hj.getDate()).padStart(2, "0");
+
     // ── cada aluna ──
     const alunas = filtradas.map(a => {
       const pag = a.atrasadas > 0
@@ -262,7 +291,16 @@ class Component extends DCLogic {
           { rotulo: "Integração", valor: ob.v, cor: ob.c },
           { rotulo: "Último contato", valor: cont.v, cor: cont.c },
           { rotulo: "Moedas", valor: String(a.moedas), cor: "#9c6f56" }
-        ]
+        ],
+        inicioIso: a.desde || "",
+        inicioNota: !a.desde ? "sem data · já na chamada"
+          : (a.desde > hojeIso ? "entra na chamada em " + CRM.ddmm(a.desde) : "já na chamada"),
+        inicioCor: !a.desde || a.desde <= hojeIso ? "#b3a693" : "#4f8c42",
+        onInicio: e => {
+          const v = e.target.value;
+          if (v) CRM.setInicioDasAulas(a.id, v);
+          this.bump();
+        }
       };
     });
 
@@ -336,6 +374,27 @@ class Component extends DCLogic {
       periodoLabel: nMeses === 12 ? "Últimos 12 meses" : "Últimos 6 meses",
       onPeriodo: () => this.setState(s => ({ retMeses: s.retMeses === 12 ? 6 : 12 })),
       vazio: alunas.length === 0,
+      temAlunas: alunas.length > 0,
+      loteRef: this.loteRef,
+      loteLabel: "Aplicar às " + filtradas.length
+        + (filtradas.length === 1 ? " aluna da lista" : " alunas da lista"),
+      loteNota: this.state.loteFeito
+        ? "Gravado em " + this.state.loteFeito
+          + (this.state.loteFeito === 1 ? " aluna" : " alunas")
+        : (() => {
+            const fut = filtradas.filter(a => a.desde && a.desde > hojeIso).length;
+            return fut
+              ? fut + (fut === 1 ? " começa" : " começam") + " depois de hoje"
+              : "Todas já entram na chamada";
+          })(),
+      loteCor: this.state.loteFeito ? "#4f8c42" : "#8a7c6b",
+      onLote: () => {
+        const v = (this.loteRef.current && this.loteRef.current.value) || "";
+        if (!v) return;
+        const n = CRM.setInicioDasAulasEmLote(filtradas.map(a => a.id), v);
+        this.setState({ loteFeito: n });
+        setTimeout(() => this.setState({ loteFeito: 0 }), 6000);
+      },
       contagem: filtradas.length === todas.length
         ? (precisam ? precisam + (precisam === 1 ? " aluna com pendência" : " alunas com pendências") : "Nenhuma pendência")
         : (filtradas.length + " de " + todas.length),
