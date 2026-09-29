@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-g",
+  numero: "2026.09.29-h",
   data: "29/09/2026",
-  nota: "Aluna matriculada para o ciclo seguinte não entra na chamada do ciclo que está correndo. Ela ocupa vaga na turma desde o fechamento, mas só aparece na chamada a partir do dia em que as aulas dela começam — e a professora vê quantas estão a caminho"
+  nota: "A matrícula tem um passo próprio para a data da primeira aula, com atalhos para hoje e para o ciclo seguinte. A tela mostra em qual ciclo a matrícula entra e a partir de que dia a aluna aparece na chamada. A data no passado abre sozinha o bloco de aulas já começadas — não há mais a chave de matrícula retroativa"
 };

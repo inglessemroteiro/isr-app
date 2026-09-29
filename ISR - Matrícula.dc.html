@@ -132,6 +132,35 @@
         </section>
       </sc-if>
 
+      <!-- INÍCIO DAS AULAS · define ciclo e entrada na chamada -->
+      <sc-if value="{{ temMensalidade }}">
+      <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">{{ nInicio }}Início das aulas</div>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Dia da primeira aula desta matrícula. Define em qual ciclo a aluna entra e a partir de quando ela aparece na chamada da turma. Em branco, o sistema usa hoje.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Primeira aula em</div>
+            <input ref="{{ desdeRef }}" type="date" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
+          </div>
+          <div style="display: flex; align-items: flex-end; gap: 6px; flex-wrap: wrap;">
+            <sc-for list="{{ atalhosInicio }}" as="ai" hint-placeholder-count="2">
+              <button onclick="{{ ai.on }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 11.5px; font-weight: 700; padding: 9px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ai.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border-left: 3px solid #164951; padding: 3px 0 3px 12px; margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 2px;">Ciclo da matrícula</div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #164951; line-height: 1.5;">{{ inicioCiclo }}</div>
+          </div>
+          <div>
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #9b8b7e; font-weight: 700; margin-bottom: 2px;">Entra na chamada</div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #164951; line-height: 1.5;">{{ inicioChamada }}</div>
+          </div>
+        </div>
+      </section>
+      </sc-if>
+
       <!-- PASSO 5 · PAGAMENTO DA MENSALIDADE -->
       <sc-if value="{{ temMensalidade }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
@@ -142,7 +171,7 @@
         <sc-if value="{{ temProposta }}">
           <div style="background: rgba(52,138,142,0.07); border-radius: 9px; padding: 9px 12px; margin: 8px 0 0; font-size: 11.5px; color: #2a7a7e; line-height: 1.5;">Condições combinadas em {{ propostaEm }}: {{ propostaResumo }}</div>
         </sc-if>
-        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela é lançada no mês corrente; se o dia de vencimento já passou, no mês seguinte.</p>
+        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela é lançada no mês da primeira aula. Sem data de início, no mês corrente — e no mês seguinte se o dia de vencimento já passou.</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
           <div>
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
@@ -191,29 +220,17 @@
 
       </sc-if>
 
-      <!-- MATRÍCULA RETROATIVA · só existe quando há parcelas a datar -->
-      <sc-if value="{{ temMensalidade }}">
+      <!-- MATRÍCULA RETROATIVA · aparece quando a data escolhida já passou -->
+      <sc-if value="{{ retroAberto }}">
       <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700;">Matrícula retroativa</span>
-          <button onclick="{{ onRetro }}" style="border: 1px solid #e5dccf; background: {{ retroBg }}; color: {{ retroFg }}; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ retroLabel }}</button>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 3px;">Aulas que já começaram</div>
+        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira aula é {{ retroEm }}, no passado. O contrato entra como matrícula retroativa: as parcelas começam no mês da primeira aula e as etapas de integração já vencidas entram concluídas.</p>
+        <div style="max-width: 220px;">
+          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Parcelas já pagas</div>
+          <input ref="{{ pagasRef }}" type="number" oninput="{{ onMuda }}" placeholder="0" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
         </div>
-        <p style="margin: 6px 0 0; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Para quem já estuda na escola e está sendo cadastrada agora. A data de entrada define o início do ciclo, as parcelas já quitadas e as etapas de integração vencidas.</p>
-        <sc-if value="{{ retroAberto }}">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px;">
-            <div>
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Entrou na escola em</div>
-              <input ref="{{ desdeRef }}" type="date" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-            </div>
-            <div>
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Parcelas já pagas</div>
-              <input ref="{{ pagasRef }}" type="number" oninput="{{ onMuda }}" placeholder="0" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 9px; background: #fff;" />
-            </div>
-          </div>
-          <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6; margin-top: 8px;">{{ retroResumo }}</div>
-        </sc-if>
+        <div style="font-size: 11.5px; color: #6b6155; line-height: 1.6; margin-top: 8px;">{{ retroResumo }}</div>
       </section>
-
       </sc-if>
 
       <!-- ACOMPANHAMENTO -->
@@ -291,7 +308,7 @@ class Component extends DCLogic {
               uf: React.createRef(), pais: React.createRef() };
   // null = ainda não mexeu; o padrão é turma, que é o caminho mais comum
   state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "",
-            retro: false, programaId: "", progPago: false, produtos: null };
+            programaId: "", progPago: false, produtos: null };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
   nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
   tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
@@ -309,7 +326,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { semPessoa: true, ok: false, concluida: false, turmas: [], parcelasOpts: [], efeitos: [] };
+    const vazio = { semPessoa: true, ok: false, concluida: false, turmas: [], parcelasOpts: [], efeitos: [], atalhosInicio: [] };
     if (!CRM) return vazio;
 
     const p = CRM.getPessoa(this.idParam());
@@ -320,9 +337,10 @@ class Component extends DCLogic {
       const meses = c.meses || [];
       return {
         semPessoa: false, ok: false, concluida: true,
-        nome: p.nome, turmas: [], parcelasOpts: [], efeitos: [],
+        nome: p.nome, turmas: [], parcelasOpts: [], efeitos: [], atalhosInicio: [],
         perfilHref: "ISR%20-%20Perfil.dc.html?id=" + p.id,
         resumoFinal: [p.turma, p.professora ? "com " + p.professora : "",
+          p.desde ? "aulas desde " + CRM.ddmm(p.desde) : "",
           meses.length ? meses.length + " parcelas de " + (c.parcelaValor || "") : "",
           meses.length ? "de " + meses[0].label + " a " + meses[meses.length - 1].label : ""]
           .filter(Boolean).join(" · ") + ". A integração dos primeiros 30 dias já está na fila da equipe."
@@ -348,6 +366,41 @@ class Component extends DCLogic {
     const unidade = ocup.filter(t => t.id === turmaSel)[0] || null;
     const ehParticular = turmaSel === "particular";
 
+    // ── início das aulas ──
+    // No período de matrículas o contrato é fechado semanas antes da
+    // primeira aula. Esta data é a que manda: diz em qual ciclo a aluna
+    // entra e a partir de que dia ela aparece na chamada da turma. Antes
+    // ela existia só dentro de "matrícula retroativa" e, escondida, a
+    // matrícula do ciclo seguinte nascia com a data de hoje.
+    const diaIso = dt => dt.getFullYear() + "-"
+      + String(dt.getMonth() + 1).padStart(2, "0") + "-"
+      + String(dt.getDate()).padStart(2, "0");
+    const hojeIso = diaIso(new Date());
+    const desdeEscolhido = this.val(this.desdeRef);
+    const desdeEfetivo = desdeEscolhido || hojeIso;
+    const retro = desdeEfetivo < hojeIso;
+    const metas = CRM.metasAtuais();
+    const cicloDe = CRM.cicloDaData
+      ? CRM.cicloDaData(desdeEfetivo)
+      : { label: "Ciclo " + (metas.cicloLabel || "") };
+    const setarDesde = iso => {
+      if (this.desdeRef.current) this.desdeRef.current.value = iso;
+      this.bump();
+    };
+    const atalhosInicio = [{ label: "Hoje", on: () => setarDesde(hojeIso) }];
+    if (metas.cicloInicio) atalhosInicio.push({
+      label: "Início do ciclo " + (metas.cicloLabel || "") + " · " + CRM.ddmm(metas.cicloInicio),
+      on: () => setarDesde(metas.cicloInicio)
+    });
+    if (metas.cicloFim) {
+      const dep = new Date(metas.cicloFim + "T12:00:00");
+      dep.setDate(dep.getDate() + 1);
+      atalhosInicio.push({
+        label: "Ciclo seguinte · " + CRM.ddmm(diaIso(dep)),
+        on: () => setarDesde(diaIso(dep))
+      });
+    }
+
     // ── plano de pagamento, recalculado a cada digitação ──
     const moeda = this.val(this.moedaRef) || (pr ? pr.moeda : (p.moeda || "R$"));
     const valor = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
@@ -368,10 +421,13 @@ class Component extends DCLogic {
         if (!isNaN(s)) plano += " · sinal de " + fmt(s)
           + (sinalRec ? " já recebido" : " ainda não recebido");
       }
-      // de que mês a que mês as parcelas vão cair
+      // De que mês a que mês as parcelas vão cair. A contagem começa no mês
+      // da primeira aula: quem começa em outubro não tem parcela de setembro.
       const diaVenc = parseInt(this.val(this.vencRef), 10) || (pr ? pr.vencDia : 10) || 10;
-      const hoje = new Date();
-      const primeiro = new Date(hoje.getFullYear(), hoje.getMonth() + (hoje.getDate() > diaVenc ? 1 : 0), 1);
+      const ini1 = new Date(desdeEfetivo + "T12:00:00");
+      const primeiro = desdeEscolhido
+        ? new Date(ini1.getFullYear(), ini1.getMonth(), 1)
+        : new Date(ini1.getFullYear(), ini1.getMonth() + (ini1.getDate() > diaVenc ? 1 : 0), 1);
       const M = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
       const ultimo = new Date(primeiro.getFullYear(), primeiro.getMonth() + nParc - 1, 1);
       planoMeses = "Parcelas de " + M[primeiro.getMonth()] + " a " + M[ultimo.getMonth()]
@@ -379,6 +435,7 @@ class Component extends DCLogic {
     }
 
     const nomeTurma = unidade ? unidade.nivel + " · " + unidade.turma : "Particular";
+
 
     // Programa de acompanhamento: por padrão entra no que estiver ativo.
     // Marcar de novo desmarca — quem não vai participar não é forçada.
@@ -425,7 +482,11 @@ class Component extends DCLogic {
     if (querTurma) efeitos.push.apply(efeitos, [
       { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + p.nome
         + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
-      { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e na lista de chamada da turma." },
+      { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e ocupa vaga na turma desde já."
+        + (retro || desdeEfetivo === hojeIso
+            ? " Já aparece na chamada."
+            : " Na chamada da turma ela aparece a partir de " + CRM.ddmm(desdeEfetivo) + "."
+              + " Até lá a professora a vê como aluna a caminho.") },
       { cor: "#d4a574", texto: "As parcelas entram na Cobrança e no Caixa, na categoria da turma." },
       { cor: "#9ec970", texto: "A integração dos primeiros 30 dias entra na fila da equipe: boas-vindas, confirmação da primeira aula, check-in da primeira semana e primeiro pagamento." },
       { cor: "#2a9d8f", texto: "Os materiais do ciclo da turma passam a aparecer na área da aluna." }
@@ -474,24 +535,25 @@ class Component extends DCLogic {
       onSinalRecebido: () => this.setState({ sinalRecebido: !sinalRec }),
       plano, planoMeses, efeitos,
 
-      retroAberto: this.state.retro,
-      retroLabel: this.state.retro ? "Não é retroativa" : "É uma matrícula retroativa",
-      retroBg: this.state.retro ? "#f6eee4" : "#fff",
-      retroFg: this.state.retro ? "#9c6f56" : "#164951",
-      onRetro: () => this.setState(s => ({ retro: !s.retro })),
       desdeRef: this.desdeRef, pagasRef: this.pagasRef,
+      atalhosInicio,
+      inicioCiclo: cicloDe.label,
+      inicioChamada: desdeEfetivo === hojeIso
+        ? "Hoje" + (desdeEscolhido ? "" : " · data em branco")
+        : (retro ? "Desde " + CRM.ddmm(desdeEfetivo)
+                 : "A partir de " + CRM.ddmm(desdeEfetivo)),
+
+      retroAberto: temMensalidade && retro,
+      retroEm: CRM.ddmm(desdeEfetivo),
       retroResumo: (() => {
-        if (!this.state.retro) return "";
-        const d = this.val(this.desdeRef);
-        if (!d) return "Informe a data de entrada para ver como o ciclo será montado.";
+        if (!retro) return "";
         const pagas = parseInt(this.val(this.pagasRef), 10) || 0;
         const M = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-        const ini = new Date(d + "T12:00:00");
+        const ini = new Date(desdeEfetivo + "T12:00:00");
         const fim = new Date(ini.getFullYear(), ini.getMonth() + nParc - 1, 1);
-        return "O ciclo vai de " + M[ini.getMonth()] + " a " + M[fim.getMonth()] + ". "
-          + (pagas ? pagas + (pagas === 1 ? " parcela entra" : " parcelas entram") + " como paga(s), "
-                   + Math.max(0, nParc - pagas) + " em aberto. " : "Todas as parcelas entram em aberto. ")
-          + "As etapas de integração já vencidas entram concluídas.";
+        return "Parcelas de " + M[ini.getMonth()] + " a " + M[fim.getMonth()] + ". "
+          + (pagas ? pagas + (pagas === 1 ? " parcela entra" : " parcelas entram") + " como paga, "
+                   + Math.max(0, nParc - pagas) + " em aberto." : "Todas em aberto.");
       })(),
 
       temErro: !!this.state.erro, erro: this.state.erro,
@@ -515,6 +577,7 @@ class Component extends DCLogic {
       nDados: nenhumProduto ? "" : "2 · ",
       nTurma: passo(querTurma),
       nParticular: passo(querParticular),
+      nInicio: passo(temMensalidade),
       nPagamento: passo(temMensalidade),
       nPrograma: passo(querPrograma),
       nResumo: passo(true),
@@ -605,8 +668,8 @@ class Component extends DCLogic {
             aulasContratadas: this.val(this.aulasRef) || this.val(this.partAulasRef),
             sinalValor: this.val(this.sinalRef) || (pr ? pr.sinalValor : ""),
             sinalRecebido: sinalRec,
-            desde: this.state.retro ? this.val(this.desdeRef) : "",
-            parcelasPagas: this.state.retro ? this.val(this.pagasRef) : ""
+            desde: desdeEscolhido,
+            parcelasPagas: retro ? this.val(this.pagasRef) : ""
           });
         }
         if (querParticular) {

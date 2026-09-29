@@ -380,6 +380,22 @@
     return metasAtuais();
   }
 
+  // Em qual ciclo cai uma data. No período de matrículas o contrato é
+  // fechado semanas antes da primeira aula, então quem matricula precisa
+  // ler na tela em qual ciclo a aluna entrou — sem abrir o calendário.
+  function cicloDaData(iso) {
+    var M = metasAtuais();
+    var label = M.cicloLabel || "";
+    var ini = M.cicloInicio || "";
+    var fim = M.cicloFim || "";
+    if (!iso) return { quando: "atual", ciclo: label, label: "Ciclo " + label };
+    if (ini && iso < ini) return { quando: "anterior", ciclo: label,
+      label: "Antes do ciclo " + label };
+    if (fim && iso > fim) return { quando: "proximo", ciclo: label,
+      label: "Ciclo seguinte — o " + label + " termina em " + ddmm(fim) };
+    return { quando: "atual", ciclo: label, label: "Ciclo " + label };
+  }
+
   // ══════════════════════════════════════════════════════════════
   //  SEED — Pessoa única (dados FICTÍCIOS; estrutura = spec 1.3)
   // ══════════════════════════════════════════════════════════════
@@ -1129,6 +1145,10 @@
       // etapas já vencidas entram concluídas: cobrar boas-vindas de quem está
       // na escola há seis meses só polui a fila da equipe.
       var base = parseISO(p.desde) || today();
+      // Numa matrícula cujas aulas começam mais para a frente, a integração
+      // conta de hoje: boas-vindas e confirmação da primeira aula são do dia
+      // do fechamento, não de um mês depois.
+      if (base > today()) base = today();
       var desloca = function (dias) {
         var d = new Date(base); d.setDate(d.getDate() + dias); return iso(d);
       };
@@ -1144,7 +1164,10 @@
       });
       pushHist(p, "matricula", "Matriculada · " + turmaLabel + " · contrato " + (cfg.tipo || "Matrícula")
         + " criado (" + n + " parcelas" + (jaPagas ? ", " + jaPagas + " já paga(s)" : "") + ")"
-        + (cfg.desde ? " · entrada retroativa em " + ddmm(cfg.desde) : ""));
+        + (cfg.desde
+            ? (retro ? " · entrada retroativa em " + ddmm(cfg.desde)
+                     : " · aulas a partir de " + ddmm(cfg.desde))
+            : ""));
       pushHist(p, "onboarding", "Onboarding criado (4 checkpoints: boas-vindas, 1ª aula, 1ª semana, 1º pagamento)");
       // Matrícula nova é notícia para duas pessoas: quem faz a integração
       // precisa começar, e a gestão precisa saber que entrou aluna.
@@ -12030,7 +12053,7 @@
     renovacoes: renovacoes, setRenovacao: setRenovacao, taxaRenovacao: taxaRenovacao,
     // fila + metas
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
-    matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais,
+    matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
