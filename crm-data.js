@@ -7365,6 +7365,40 @@
     return out;
   }
 
+  // A chamada das particulares era uma aula por vez: escolher a aluna,
+  // escolher o dia, marcar, salvar, escolher a próxima. Quem dá dez aulas
+  // particulares na semana percorria dez vezes esse caminho — e não fazia.
+  // Aqui vem a semana inteira em uma lista, cada aula com o que já foi
+  // marcado, para resolver tudo de uma vez.
+  function particularesDaSemana(professora, deIso, ateIso) {
+    var de = deIso || addDays(-7), ate = ateIso || iso(today());
+    return aulasParticularesAgendadas(de, ate, professora).map(function (a) {
+      var label = "Particular · " + a.nome;
+      var ch = getChamada(label, a.data);
+      var estado = "";
+      if (ch && ch.presencas && (a.pessoaId in ch.presencas))
+        estado = estadoPresenca(ch.presencas[a.pessoaId]);
+      var r = resumoParticular(a.pessoaId) || {};
+      return { pessoaId: a.pessoaId, nome: a.nome, data: a.data, hora: a.hora || "",
+        professora: a.professora || "", label: label,
+        estado: estado, feita: !!estado, remarcada: !!a.remarcada,
+        feitas: r.feitas || 0, contratadas: r.contratadas || 0 };
+    });
+  }
+  // Marcar uma aula da lista sem abrir a chamada dela: a presença de uma
+  // particular é uma informação só, e salvarChamada continua sendo quem
+  // conta a aula no pacote e escreve no histórico da aluna.
+  function marcarAulaParticular(pessoaId, dataIso, estado, por) {
+    var p = getPessoa(pessoaId);
+    if (!p || !dataIso) return null;
+    var label = "Particular · " + p.nome;
+    var ch = getChamada(label, dataIso);
+    var pres = {};
+    if (ch && ch.presencas) Object.keys(ch.presencas).forEach(function (k) { pres[k] = ch.presencas[k]; });
+    pres[pessoaId] = estado;
+    return salvarChamada(label, dataIso, pres, por || "");
+  }
+
   function registrarPagamentoParticular(id) {
     var p = getPessoa(id);
     if (!p || !p.particular || !p.particular.valor) return;
@@ -12331,6 +12365,7 @@
     proximaAulaParticular: proximaAulaParticular, marcarAulaParticularFeita: marcarAulaParticularFeita,
     aulasParticularesAgendadas: aulasParticularesAgendadas,
     chamadasPendentes: chamadasPendentes, chamadasFeitas: chamadasFeitas,
+    particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
     setParticularPago: setParticularPago, produtosDe: produtosDe,

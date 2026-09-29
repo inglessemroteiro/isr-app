@@ -139,6 +139,35 @@
               </tbody>
             </table>
           </div>
+
+          <!-- CHAMADA DA SEMANA · todas as aulas particulares de uma vez -->
+          <div style="border-top: 1px solid #f2ece3; margin-top: 10px; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Chamada da semana</span>
+              <span style="font-size: 11px; color: {{ semanaResumoCor }};">{{ semanaResumo }}</span>
+            </div>
+            <p style="margin: 4px 0 8px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">As aulas particulares dos últimos 7 dias. Marque aqui mesmo: cada clique salva a chamada daquela aula e conta a aula no pacote da aluna.</p>
+            <sc-if value="{{ semanaVazia }}">
+              <div style="font-size: 11.5px; color: #b3a693; padding: 4px 0 6px;">Nenhuma aula particular marcada nos últimos 7 dias. As aulas vêm da série de cada pacote, no perfil da aluna.</div>
+            </sc-if>
+            <sc-for list="{{ semanaParticulares }}" as="sp" hint-placeholder-count="5">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid #f7f4ef;">
+                <div style="flex: none; width: 96px;">
+                  <div style="font-size: 12px; font-weight: 700; color: #164951;">{{ sp.dia }}</div>
+                  <div style="font-size: 10.5px; color: #b3a693;">{{ sp.hora }}</div>
+                </div>
+                <div style="flex: 1; min-width: 130px;">
+                  <div style="font-size: 12.5px; font-weight: 700; color: #164951;">{{ sp.nome }}</div>
+                  <div style="font-size: 10.5px; color: {{ sp.estadoCor }};">{{ sp.estadoLabel }}</div>
+                </div>
+                <div style="flex: none; display: flex; gap: 4px; flex-wrap: wrap;">
+                  <sc-for list="{{ sp.botoes }}" as="bt" hint-placeholder-count="3">
+                    <button onclick="{{ bt.onClick }}" title="{{ bt.title }}" style="border: 1px solid {{ bt.borda }}; background: {{ bt.bg }}; color: {{ bt.fg }}; font-size: 11.5px; font-weight: 700; padding: 6px 12px; border-radius: 9px; cursor: pointer; font-family: inherit;">{{ bt.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
         </div>
       </sc-if>
       <sc-if value="{{ escolhendoData }}">
@@ -428,6 +457,7 @@ class Component extends DCLogic {
     if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada",
       temFeitas: false, feitas: [], feitasResumo: "",
+      semanaParticulares: [], semanaVazia: true, semanaResumo: "", semanaResumoCor: "#8a7c6b",
       particularesChamada: [], temParticulares: false,
       novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "#e5dccf", neBg: "#fff", neFg: "#164951",
       onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
@@ -908,6 +938,55 @@ class Component extends DCLogic {
         })();
         return { aulasChamada: g.turmas, particularesChamada: g.particulares,
           temParticulares: g.particulares.length > 0 };
+      })(),
+
+      // ── chamada da semana das particulares ──
+      // Uma aula por vez era o caminho: escolher a aluna, escolher o dia,
+      // marcar, salvar, repetir. Aqui a semana inteira é uma lista, e cada
+      // clique salva a chamada daquela aula.
+      ...(() => {
+        const sem = CRM.particularesDaSemana ? CRM.particularesDaSemana(teacher) : [];
+        const faltando = sem.filter(x => !x.feita).length;
+        const ESTADOS = [
+          { id: "presente", label: "Presente", cor: "#348a8e", title: "Aula dada — conta uma aula no pacote" },
+          { id: "falta", label: "Falta", cor: "#cf6b5c", title: "A aluna não veio — a aula não é contada no pacote" },
+          { id: "justificada", label: "Justificada", cor: "#9c6f56", title: "Ausência avisada — a aula não é contada no pacote" }
+        ];
+        return {
+          semanaVazia: sem.length === 0,
+          semanaResumo: sem.length
+            ? (faltando
+                ? faltando + (faltando === 1 ? " aula sem chamada" : " aulas sem chamada")
+                  + " de " + sem.length
+                : sem.length + (sem.length === 1 ? " aula, chamada feita" : " aulas, chamada feita"))
+            : "",
+          semanaResumoCor: faltando ? "#c8622f" : "#4f8c42",
+          semanaParticulares: sem.map(sp => {
+            const dl = this.diaLabel(sp.data);
+            const meta = { presente: ["Presente", "#348a8e"], atraso: ["Chegou atrasada", "#9c6f56"],
+              falta: ["Falta", "#cf6b5c"], justificada: ["Ausência justificada", "#9c6f56"] }[sp.estado];
+            return {
+              dia: dl.label, hora: sp.hora || "sem horário",
+              nome: sp.nome,
+              estadoLabel: meta
+                ? meta[0] + (sp.contratadas ? " · " + sp.feitas + " de " + sp.contratadas + " no pacote" : "")
+                : "sem chamada" + (sp.contratadas ? " · " + sp.feitas + " de " + sp.contratadas + " no pacote" : ""),
+              estadoCor: meta ? meta[1] : "#c8622f",
+              botoes: ESTADOS.map(e => {
+                const on = sp.estado === e.id;
+                return {
+                  label: e.label, title: e.title,
+                  bg: on ? e.cor : "#fff", fg: on ? "#fff" : e.cor,
+                  borda: on ? e.cor : "#e5dccf",
+                  onClick: () => {
+                    CRM.marcarAulaParticular(sp.pessoaId, sp.data, e.id, (user && user.nome) || "");
+                    this.bump();
+                  }
+                };
+              })
+            };
+          })
+        };
       })(),
       // null = ainda não mexeu: vale o parâmetro ?retro=1 do link direto
       escolhendoData: this.state.escolhendoData === null ? this.retroParam() : this.state.escolhendoData,

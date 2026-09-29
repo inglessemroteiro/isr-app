@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-k",
+  numero: "2026.09.29-l",
   data: "29/09/2026",
-  nota: "Chamada já salva pode ser corrigida: o Painel do Professor lista as chamadas feitas e abre qualquer uma para regravar, registrando quem corrigiu e avisando a professora. E a Central passa a ter um bloco de aulas sem chamada, antes dos alertas, com cada aula linkada direto para a chamada dela e um botão para avisar a professora"
+  nota: "Chamada da semana das particulares: todas as aulas dos últimos 7 dias em uma lista, e cada clique em Presente, Falta ou Justificada salva a chamada daquela aula e acerta o pacote. E o check-in agendado deixa de ficar preso em Para hoje — o botão Feito encerra o check-in e tira o item do dia"
 };

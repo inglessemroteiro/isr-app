@@ -93,7 +93,7 @@
           </div>
           <sc-if value="{{ item.ehMsg }}">
             <a href="{{ item.acaoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
-            <button onclick="{{ item.onFeito }}" title="Registrar que o contato foi feito — atualiza a data do último contato" style="flex: none; border: 1px solid #9ec970; background: #fff; color: #5a9e4b; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Feito</button>
+            <button onclick="{{ item.onFeito }}" title="Registra o contato, atualiza a data do último contato e tira o item da lista de hoje. Check-in agendado é encerrado; o que depende de um fato aberto (parcela, integração) volta amanhã se o fato continuar." style="flex: none; border: 1px solid #9ec970; background: #fff; color: #5a9e4b; font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;">Feito</button>
           </sc-if>
           <sc-if value="{{ item.ehLink }}">
             <a href="{{ item.destinoHref }}" style="flex: none; text-decoration: none; background: #164951; color: #fff; font-size: 11px; font-weight: 700; padding: 8px 13px; border-radius: 8px;">{{ item.acao }}</a>
@@ -387,6 +387,14 @@ class Component extends DCLogic {
           const TIPO_TOQUE = { faltou: "falta", atrasada: "cobranca", renovacao: "renovacao" };
           CRM.registrarToque(item.pessoaId, TIPO_TOQUE[item.toque] || "checkin",
             "Pela Central · " + (item.motivo || item.acao || ""));
+          // O check-in agendado só sai da fila quando alguém diz que ele
+          // aconteceu: registrar o contato não apagava a data marcada, e o
+          // item de 28/08 continuava em "Para hoje" todo dia.
+          if (item.sinal === "checkin_agendado") CRM.registrarCheckinFeito(item.pessoaId);
+          // Os outros sinais dependem de um fato que o contato não muda —
+          // a parcela continua em aberto, a integração continua parada.
+          // "Feito" tira o item do dia; amanhã ele volta se o fato ficar.
+          CRM.adiarItem(item.sinal || item.regra, item.pessoaId);
           this.bump();
         },
         onAdiar: () => { CRM.adiarItem(item.regra, item.pessoaId); this.bump(); }
