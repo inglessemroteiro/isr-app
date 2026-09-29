@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-c",
+  numero: "2026.09.29-d",
   data: "29/09/2026",
-  nota: "Linha de extrato não vira mais aluna. \"bunq Payday 2026-08-19 EUR\" e \"Cashback\" entraram no cadastro como pessoas, com ficha e cobrança: o único filtro era IBAN. Agora o teste é de nome de gente, e a tela de importar encontra e remove os cadastros que já nasceram assim"
+  nota: "As matrículas que a Carla anuncia no canal #admin do Slack entram no sistema coladas: o bloco é lido campo a campo — nome, contato, turma, horário, início, parcelas, sinal e vencimento — mostrado para conferência e aplicado com contrato. E a tela de Matrículas do ciclo ganhou o passo a passo de como usar"
 };

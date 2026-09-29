@@ -60,6 +60,7 @@
       <button onclick="{{ onAbaAlunas }}" style="border: 1px solid {{ abaAluBorda }}; background: {{ abaAluBg }}; color: {{ abaAluFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Alunas e turmas</button>
       <button onclick="{{ onAbaLeads }}" style="border: 1px solid {{ abaLedBorda }}; background: {{ abaLedBg }}; color: {{ abaLedFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Leads</button>
       <button onclick="{{ onAbaContatos }}" style="border: 1px solid {{ abaCtBorda }}; background: {{ abaCtBg }}; color: {{ abaCtFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Atualizar contatos</button>
+      <button onclick="{{ onAbaSlack }}" style="border: 1px solid {{ abaSlBorda }}; background: {{ abaSlBg }}; color: {{ abaSlFg }}; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Matrículas do Slack</button>
     </div>
 
     <!-- COMO COPIAR -->
@@ -67,6 +68,23 @@
       <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 6px;">Como copiar</div>
       <p style="margin: 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ comoCopiar }}</p>
     </div>
+
+    <!-- PASSO A PASSO DO SLACK -->
+    <sc-if value="{{ ehAbaSlack }}">
+      <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 12px;">Passo a passo</div>
+        <sc-for list="{{ passosSlack }}" as="ps" hint-placeholder-count="5">
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #f7f2ea;">
+            <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; background: #164951; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ ps.n }}</span>
+            <div style="flex: 1;">
+              <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ ps.titulo }}</div>
+              <div style="font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ ps.texto }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f7f2ea; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">Quem já está no sistema não é duplicado: recebe o que faltava na ficha. Quem já tem contrato não ganha um segundo — a mensagem completa os dados e para por aí.</p>
+      </div>
+    </sc-if>
 
     <!-- DIRETO DO JOTFORM -->
     <sc-if value="{{ ehAbaLeads }}">
@@ -265,6 +283,40 @@
       </div>
     </sc-if>
 
+    <!-- LEITURA DAS MATRÍCULAS DO SLACK -->
+    <sc-if value="{{ temLeituraSlack }}">
+      <div>
+        <div style="background: #fff; border: 1px solid #eee3d6; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">Confira antes de aplicar · {{ slResumo }}</div>
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Leia cada linha e compare com a mensagem da Carla. O que estiver marcado em laranja não foi lido — corrija no Slack e cole de novo, ou complete depois na ficha.</p>
+          <sc-for list="{{ slLinhas }}" as="sl" hint-placeholder-count="5">
+            <div style="border-top: 1px solid #f4f1ec; padding: 10px 0;">
+              <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ sl.nome }}</span>
+                <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: {{ sl.seloFg }}; background: {{ sl.seloBg }}; padding: 2px 9px; border-radius: 999px;">{{ sl.selo }}</span>
+              </div>
+              <div style="font-size: 12px; color: #6b6155; line-height: 1.6; margin-top: 3px;">{{ sl.detalhe }}</div>
+              <sc-if value="{{ sl.temAviso }}">
+                <div style="font-size: 11.5px; color: #c8622f; line-height: 1.5; margin-top: 3px;">{{ sl.aviso }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 16px;">
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ slAntesDeAplicar }}</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button onclick="{{ onAplicarSlack }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ slAplicarLabel }}</button>
+            <sc-if value="{{ slTemAviso }}">
+              <button onclick="{{ onAplicarSlackTudo }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Aplicar tudo, inclusive com aviso</button>
+            </sc-if>
+          </div>
+          <sc-if value="{{ temSlFeito }}">
+            <p style="margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #f3d4c8; font-size: 12.5px; color: #164951; font-weight: 600; line-height: 1.6;">{{ slFeito }}</p>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ temLeitura }}">
       <div>
         <!-- RESUMO DA LEITURA -->
@@ -447,6 +499,10 @@ class Component extends DCLogic {
       onAbaPagamentos: () => {}, onAbaAlunas: () => {}, onAbaLeads: () => {},
       onAbaContatos: () => {},
       temLeituraContatos: false, ctResumo: "", ctLinhas: [],
+      ehAbaSlack: false, abaSlBg: "#fff", abaSlFg: "#8a7c6b", abaSlBorda: "#e5dccf",
+      onAbaSlack: () => {}, passosSlack: [], temLeituraSlack: false, slResumo: "",
+      slLinhas: [], slAntesDeAplicar: "", slAplicarLabel: "", onAplicarSlack: () => {},
+      slTemAviso: false, onAplicarSlackTudo: () => {}, temSlFeito: false, slFeito: "",
       ctAplicarLabel: "", onAplicarContatos: () => {}, temCtFeito: false, ctFeito: "",
       temLeituraLeads: false, ldResumo: [], ldLinhas: [],
       ldAplicarLabel: "", onAplicarLeads: () => {}, temLdFeito: false, ldFeito: "",
@@ -551,10 +607,18 @@ class Component extends DCLogic {
     const abaAlunas = this.state.aba === "alunas";
     const abaLeads = this.state.aba === "leads";
     const abaContatos = this.state.aba === "contatos";
+    const abaSlack = this.state.aba === "slack";
     const ler = () => {
       const txt = (this.colaRef.current && this.colaRef.current.value) || "";
       if (!txt.trim()) {
         this.setState({ erro: "Cole a planilha antes de ler.", leitura: null, leituraAlunas: null, leituraLeads: null, leituraContatos: null });
+        return;
+      }
+      if (abaSlack) {
+        const r = CRM.lerMatriculasSlack(txt);
+        if (!r.ok) { this.setState({ erro: r.erro, leituraSlack: null }); return; }
+        this.setState({ leituraSlack: r, leitura: null, leituraAlunas: null,
+          leituraLeads: null, leituraContatos: null, erro: "", slFeito: "" });
         return;
       }
       if (abaContatos) {
@@ -596,17 +660,24 @@ class Component extends DCLogic {
     const AL = this.state.leituraAlunas;
     const LD = this.state.leituraLeads;
     const CT = this.state.leituraContatos;
+    const SL = this.state.leituraSlack;
     Object.assign(base, {
-      comoCopiar: abaContatos
+      comoCopiar: abaSlack
+        ? "Abra o canal #admin no Slack, selecione as mensagens de matrícula que ainda não entraram no sistema e copie. Pode copiar várias de uma vez — o sistema separa uma por uma."
+        : abaContatos
         ? "Cole as colunas Nome e E-mail (e WhatsApp, se houver) direto da planilha — pode selecionar as colunas no Google Sheets e copiar. Diferente da importação de leads, aqui o contato da planilha VALE: quem tinha um e-mail antigo é atualizado, e o valor anterior fica guardado na linha do tempo."
         : abaLeads
         ? "Cole a lista de leads com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), WhatsApp, E-mail, Canal (Instagram, indicação…), Estágio (a contatar, em conversa, reunião, proposta, perdido), Nível, Observação e Data. Quem já é aluna não volta a ser lead."
         : (abaAlunas
           ? "Cole a lista de alunas com uma linha de títulos. Colunas reconhecidas: Nome (obrigatória), Turma, Nível, Professora, Horário, WhatsApp e E-mail — na ordem que estiverem."
           : "No Google Sheets, abra a aba Controle de Pagamento, selecione tudo (a linha de títulos junto) e copie. Depois cole aqui. Funciona também com CSV separado por vírgula ou ponto e vírgula."),
-      abaPagBg: (abaAlunas || abaLeads || abaContatos) ? "#fff" : "#164951",
-      abaPagFg: (abaAlunas || abaLeads || abaContatos) ? "#8a7c6b" : "#fff",
-      abaPagBorda: (abaAlunas || abaLeads || abaContatos) ? "#e5dccf" : "#164951",
+      abaPagBg: (abaAlunas || abaLeads || abaContatos || abaSlack) ? "#fff" : "#164951",
+      abaPagFg: (abaAlunas || abaLeads || abaContatos || abaSlack) ? "#8a7c6b" : "#fff",
+      abaPagBorda: (abaAlunas || abaLeads || abaContatos || abaSlack) ? "#e5dccf" : "#164951",
+      abaSlBg: abaSlack ? "#164951" : "#fff", abaSlFg: abaSlack ? "#fff" : "#8a7c6b",
+      abaSlBorda: abaSlack ? "#164951" : "#e5dccf",
+      onAbaSlack: () => this.setState({ aba: "slack", erro: "" }),
+      ehAbaSlack: abaSlack,
       abaAluBg: abaAlunas ? "#164951" : "#fff", abaAluFg: abaAlunas ? "#fff" : "#8a7c6b",
       abaAluBorda: abaAlunas ? "#164951" : "#e5dccf",
       abaLedBg: abaLeads ? "#164951" : "#fff", abaLedFg: abaLeads ? "#fff" : "#8a7c6b",
@@ -790,8 +861,74 @@ class Component extends DCLogic {
         temLdFeito: !!this.state.ldFeito, ldFeito: this.state.ldFeito
       } : {}),
 
-      temLeituraContatos: !!CT,
-      ...(CT ? (() => {
+      passosSlack: [
+        { n: "1", titulo: "Abra o canal #admin no Slack",
+          texto: "É onde a Carla anuncia cada matrícula nova, no bloco que começa com [NOVA MATRÍCULA." },
+        { n: "2", titulo: "Selecione as mensagens que ainda não entraram",
+          texto: "Pode selecionar várias de uma vez. O sistema separa uma por uma pelo cabeçalho." },
+        { n: "3", titulo: "Cole no campo abaixo e toque em Ler",
+          texto: "Nada é gravado ainda. O sistema mostra o que entendeu de cada mensagem." },
+        { n: "4", titulo: "Confira linha por linha",
+          texto: "O que o sistema não conseguiu ler aparece em laranja — a moeda é o campo que mais falta, porque \"3 X 85\" não diz se é euro ou real." },
+        { n: "5", titulo: "Aplique",
+          texto: "As alunas são criadas com contrato, turma, parcelas, sinal e dia de vencimento. Depois confira em Matrículas do ciclo." }
+      ],
+
+      // ── matrículas vindas do Slack ──
+      temLeituraSlack: !!SL,
+      ...(SL ? (() => {
+        const semAviso = SL.linhas.filter(l => !l.avisos.length).length;
+        const $ = (m, v) => CRM.fmtMoney(m || "R$", v);
+        const aplicar = (tudo) => {
+          const n = tudo ? SL.linhas.length : semAviso;
+          if (!n) return;
+          if (!window.confirm("Aplicar " + n + (n === 1 ? " matrícula?" : " matrículas?"))) return;
+          const r = CRM.aplicarMatriculasSlack(SL, { somenteSemAviso: !tudo, moedaPadrao: "R$" });
+          this.setState({ slFeito: r.criadas + (r.criadas === 1 ? " aluna criada" : " alunas criadas")
+            + " · " + r.atualizadas + (r.atualizadas === 1 ? " atualizada" : " atualizadas")
+            + (r.semContrato ? " · " + r.semContrato + " sem contrato novo (já tinham, ou faltou o valor)" : "")
+            + (r.puladas ? " · " + r.puladas + " não entraram" : "")
+            + ". Confira em CRM · Matrículas do ciclo." });
+          this.bump();
+        };
+        return {
+          slResumo: SL.linhas.length + (SL.linhas.length === 1 ? " mensagem lida" : " mensagens lidas")
+            + (SL.comAviso ? " · " + SL.comAviso + " com aviso" : " · todas completas")
+            + (SL.jaNoSistema ? " · " + SL.jaNoSistema + " já no sistema" : ""),
+          slLinhas: SL.linhas.map(l => ({
+            nome: l.nome || "(sem nome)",
+            selo: l.jaExiste ? "JÁ EXISTE" : "NOVA",
+            seloFg: l.jaExiste ? "#8a7c6b" : "#4a8a3d",
+            seloBg: l.jaExiste ? "#f2ece3" : "#eef5ec",
+            detalhe: [
+              l.turma || "sem turma",
+              l.horario || "",
+              l.inicio ? "início " + l.inicio.slice(8, 10) + "/" + l.inicio.slice(5, 7) : "",
+              l.parcelas && l.valorParcela
+                ? l.parcelas + "× " + $(l.moeda, l.valorParcela) : "pagamento não lido",
+              l.sinal ? "sinal " + $(l.moeda, l.sinal) : "",
+              l.vencDia ? "vence dia " + l.vencDia : "",
+              l.email || ""
+            ].filter(Boolean).join(" · "),
+            temAviso: l.avisos.length > 0,
+            aviso: l.avisos.length ? "Falta: " + l.avisos.join(", ") + "." : ""
+          })),
+          slAntesDeAplicar: semAviso
+            ? "Aplicar cria " + semAviso + (semAviso === 1 ? " matrícula completa" : " matrículas completas")
+              + " com contrato, turma, parcelas e sinal."
+              + (SL.comAviso ? " As " + SL.comAviso + " com aviso ficam de fora." : "")
+            : "Nenhuma mensagem está completa. Corrija no Slack e cole de novo, ou aplique mesmo assim e complete na ficha.",
+          slAplicarLabel: semAviso
+            ? "Aplicar " + semAviso + (semAviso === 1 ? " matrícula" : " matrículas")
+            : "Nada completo para aplicar",
+          onAplicarSlack: () => aplicar(false),
+          slTemAviso: SL.comAviso > 0,
+          onAplicarSlackTudo: () => aplicar(true),
+          temSlFeito: !!this.state.slFeito, slFeito: this.state.slFeito
+        };
+      })() : {}),
+
+      temLeituraContatos: !!CT,      ...(CT ? (() => {
         const muda = CT.linhas.filter(l => l.acao === "atualizar");
         const SELOS = {
           "atualizar": { selo: "ATUALIZA", fg: "#4a8a3d", bg: "#eef5ec" },
