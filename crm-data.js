@@ -4165,6 +4165,191 @@
     return { removidas: lista.length, nomes: lista.map(function (x) { return x.nome; }) };
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  MATRÍCULA ANUNCIADA NO SLACK
+  //  ------------------------------------------------------------
+  //  A Carla anuncia cada matrícula nova no canal #admin, num bloco
+  //  com sempre os mesmos campos. Esse bloco é o contrato combinado:
+  //  nome, contato, turma, horário, início, pacote, forma de pagamento
+  //  e sinal. Redigitar tudo no sistema é o trabalho que some aqui.
+  //
+  //  O texto é colado, lido e MOSTRADO antes de virar dado. Quem
+  //  confere é a Gabi, não o leitor: onde a mensagem é ambígua — a
+  //  moeda, principalmente — a linha vem com aviso em vez de palpite.
+  // ══════════════════════════════════════════════════════════════
+  var SLACK_CABECALHO = /\[\s*nova\s+matr[ií]cula\s*[-–—:]?\s*([^\]]*)\]/i;
+
+  function slackCampo(bloco, nomes) {
+    for (var i = 0; i < nomes.length; i++) {
+      var re = new RegExp("(?:^|\\n)[\\s•·*\\-]*" + nomes[i] + "\\s*:?\\s*\\**\\s*([^\\n]+)", "i");
+      var m = bloco.match(re);
+      if (m && m[1]) {
+        var v = m[1].replace(/\*/g, "").trim();
+        if (v) return v;
+      }
+    }
+    return "";
+  }
+  // o Slack embrulha link e e-mail: <mailto:x@y|x@y>, <tel:+31|+31 6>
+  function slackLimpo(txt) {
+    return String(txt || "")
+      .replace(/<mailto:([^|>]+)(\|[^>]*)?>/gi, "$1")
+      .replace(/<tel:([^|>]+)(\|([^>]*))?>/gi, function (t, a, b, c) { return c || a; })
+      .replace(/<https?:\/\/[^|>]+(\|[^>]*)?>/gi, "");
+  }
+
+  // "3 X 497,00" · "3 X 85 euros" · "Á vista 255 euros" · "4x R$ 741,25"
+  function slackPagamento(txt) {
+    var s = slackLimpo(txt);
+    var out = { parcelas: 0, valor: 0, moeda: "", avista: false, bruto: s };
+    if (/\ba\s*vista\b|\bà\s*vista\b|\bá\s*vista\b/i.test(semAcento(s))) { out.avista = true; out.parcelas = 1; }
+    var m = s.match(/(\d+)\s*[xX]\s*(?:R\$|€|EUR|BRL)?\s*([\d.]+(?:,\d{2})?)/);
+    if (m) { out.parcelas = parseInt(m[1], 10) || 0; out.valor = parseMoney(m[2]); }
+    else {
+      var v = s.match(/([\d.]+(?:,\d{2})?)/);
+      if (v) out.valor = parseMoney(v[1]);
+    }
+    if (/€|\beur\b|\beuros?\b/i.test(s)) out.moeda = "€";
+    else if (/R\$|\breais?\b|\bbrl\b/i.test(s)) out.moeda = "R$";
+    return out;
+  }
+
+  function slackData(txt, hoje) {
+    var s = String(txt || "").trim();
+    var m = s.match(/(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?/);
+    if (!m) return "";
+    var dia = ("0" + m[1]).slice(-2), mes = ("0" + m[2]).slice(-2);
+    var ano = m[3] ? (m[3].length === 2 ? "20" + m[3] : m[3])
+      : String((hoje || today()).getFullYear());
+    return ano + "-" + mes + "-" + dia;
+  }
+
+  function slackDiaVenc(bloco) {
+    var s = semAcento(bloco);
+    var m = s.match(/vencimento[^\n]*?dia\s*(\d{1,2})/i)
+         || s.match(/melhor data para pagamento[^\n]*?dia\s*(\d{1,2})/i)
+         || s.match(/pagamento[^\n]*?todo\s*dia\s*(\d{1,2})/i);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  function lerMatriculasSlack(texto) {
+    var t = String(texto || "");
+    if (!t.trim()) return { ok: false, linhas: [], erro: "Cole as mensagens do canal antes de ler." };
+    // cada bloco começa num cabeçalho [NOVA MATRÍCULA - ...]
+    var partes = t.split(/(?=\[\s*NOVA\s+MATR[IÍ]CULA)/i).filter(function (x) {
+      return SLACK_CABECALHO.test(x);
+    });
+    if (!partes.length) return { ok: false, linhas: [],
+      erro: "Nenhuma mensagem de matrícula encontrada. Copie as mensagens que começam com [NOVA MATRÍCULA." };
+
+    var hoje = today();
+    var linhas = partes.map(function (bruto) {
+      var bloco = slackLimpo(bruto);
+      var apelido = (bloco.match(SLACK_CABECALHO) || [])[1] || "";
+      var nome = slackCampo(bloco, ["nome completo", "nome"]) || apelido.trim();
+      var email = slackCampo(bloco, ["e-?mail", "email", "endereco eletronico"]);
+      if (!email) {
+        var em = bloco.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+        email = em ? em[0] : "";
+      }
+      var pag = slackPagamento(slackCampo(bloco, ["forma de pagamento", "pagamento"]));
+      var turma = slackCampo(bloco, ["turma"]);
+      var horario = slackCampo(bloco, ["hor[aá]rio"]);
+      var inicio = slackData(slackCampo(bloco, ["data de in[ií]cio", "in[ií]cio"]), hoje);
+      var pacote = slackCampo(bloco, ["pacote"]);
+      var sinalM = bloco.match(/sinal[^\n]*?([\d.]+(?:,\d{2})?)/i);
+      var s = semAcento(bloco);
+      var tipo = /automatricula|auto matricula/.test(s) ? "automatrícula"
+        : (/matricula tradicional/.test(s) ? "tradicional" : "");
+
+      var avisos = [];
+      if (!nome) avisos.push("sem nome");
+      if (!email) avisos.push("sem e-mail");
+      if (!pag.valor) avisos.push("forma de pagamento não reconhecida");
+      // a moeda é o campo que mais engana: "3 X 85" pode ser euro ou real,
+      // e errar aqui põe o valor errado no Caixa pelo ciclo inteiro
+      if (pag.valor && !pag.moeda) avisos.push("moeda não informada na mensagem");
+      if (!turma) avisos.push("sem turma");
+      if (!inicio) avisos.push("sem data de início");
+
+      var jaExiste = (email ? pessoaPorContato(email, "") : null) || pessoaPorNome(nome);
+      return {
+        nome: nome, email: email,
+        whatsapp: slackCampo(bloco, ["telefone", "celular", "cel", "tel", "whatsapp"]),
+        endereco: slackCampo(bloco, ["endere[cç]o", "end", "rua"]),
+        cpf: slackCampo(bloco, ["cpf"]), rg: slackCampo(bloco, ["rg"]),
+        turma: turma, nivel: turma, horario: horario,
+        inicio: inicio, pacote: pacote,
+        parcelas: pag.parcelas, valorParcela: pag.valor, moeda: pag.moeda,
+        avista: pag.avista, pagamentoBruto: pag.bruto,
+        sinal: sinalM ? parseMoney(sinalM[1]) : 0,
+        vencDia: slackDiaVenc(bloco), tipo: tipo,
+        jaExiste: !!jaExiste, pessoaId: jaExiste ? jaExiste.id : "",
+        avisos: avisos, bloco: bloco.trim().slice(0, 600)
+      };
+    });
+
+    return { ok: true, linhas: linhas,
+      comAviso: linhas.filter(function (l) { return l.avisos.length; }).length,
+      jaNoSistema: linhas.filter(function (l) { return l.jaExiste; }).length };
+  }
+
+  // Aplica o que foi conferido. Quem já está no sistema não é duplicado:
+  // recebe os dados que faltavam. Linha sem nome ou sem valor não entra.
+  function aplicarMatriculasSlack(leitura, opcoes) {
+    if (!leitura || !leitura.ok) return { ok: false };
+    opcoes = opcoes || {};
+    var criadas = 0, atualizadas = 0, puladas = 0, semContrato = 0;
+    leitura.linhas.forEach(function (l) {
+      if (opcoes.somenteSemAviso && l.avisos.length) { puladas++; return; }
+      if (!l.nome) { puladas++; return; }
+      var moeda = l.moeda || opcoes.moedaPadrao || "R$";
+      var p = l.pessoaId ? getPessoa(l.pessoaId) : null;
+      if (!p) {
+        p = novaPessoa({ nome: l.nome, email: l.email, whatsapp: l.whatsapp,
+          moeda: moeda, canal: "Slack · #admin" });
+        criadas++;
+      } else {
+        mutate(p.id, function (x) {
+          if (l.email && !x.email) x.email = l.email;
+          if (l.whatsapp && !x.whatsapp) x.whatsapp = l.whatsapp;
+        });
+        atualizadas++;
+      }
+      // endereço e documento entram na ficha, que é onde o contrato os lê
+      if (l.cpf || l.rg || l.endereco) {
+        mutate(p.id, function (x) {
+          x.docs = x.docs || {};
+          if (l.cpf && !x.docs.cpf) x.docs.cpf = l.cpf;
+          if (l.rg && !x.docs.rg) x.docs.rg = l.rg;
+          if (l.endereco && !x.docs.logradouro) x.docs.logradouro = l.endereco;
+        });
+      }
+      if (!l.valorParcela || !l.parcelas) { semContrato++; return; }
+      // já tem contrato: a matrícula do Slack não cria um segundo
+      var atual = getPessoa(p.id);
+      if ((atual.contratos || []).length) { semContrato++; return; }
+      matricular(p.id, {
+        parcelas: l.parcelas, valorParcela: fmtMoney(moeda, l.valorParcela),
+        moeda: moeda, vencDia: l.vencDia || 10,
+        turmaLabel: l.turma,
+        desde: l.inicio || undefined,
+        inicioKey: l.inicio ? l.inicio.slice(0, 7) : undefined,
+        sinalValor: l.sinal ? fmtMoney(moeda, l.sinal) : "",
+        tipo: l.tipo === "automatrícula" ? "Automatrícula" : "Matrícula"
+      });
+      if (l.horario || l.pacote) {
+        mutate(p.id, function (x) {
+          x.historico = x.historico || [];
+          pushHist(x, "matricula", "Do canal #admin: " + [l.turma, l.horario, l.pacote]
+            .filter(Boolean).join(" · "));
+        });
+      }
+    });
+    return { ok: true, criadas: criadas, atualizadas: atualizadas,
+      puladas: puladas, semContrato: semContrato };
+  }
+
   function identsAll() {
     try { return JSON.parse(localStorage.getItem(IDENT_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -11919,6 +12104,7 @@
     registrarRepasse: registrarRepasse, repasseCasando: repasseCasando,
     ehSoIdentificador: ehSoIdentificador, donoDoIdentificador: donoDoIdentificador,
     pareceNomeDePessoa: pareceNomeDePessoa,
+    lerMatriculasSlack: lerMatriculasSlack, aplicarMatriculasSlack: aplicarMatriculasSlack,
     pessoasQueParecemExtrato: pessoasQueParecemExtrato,
     removerPessoasQueParecemExtrato: removerPessoasQueParecemExtrato,
     lembrarIdentificador: lembrarIdentificador, esquecerIdentificador: esquecerIdentificador,

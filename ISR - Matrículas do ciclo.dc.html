@@ -19,6 +19,30 @@
     <h1 style="margin: 0 0 8px; font-size: 30px; font-weight: 700; letter-spacing: -0.7px; color: #164951;">Matrículas do ciclo</h1>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;">Cada aluna que entrou no ciclo, de onde veio, para que turma foi e quanto fechou. A meta, o ritmo e o que já está contratado.</p>
 
+    <!-- COMO USAR -->
+    <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9b8b7e;">Como usar esta tela</span>
+        <button onclick="{{ onComoUsar }}" style="border: 1px solid #e5dccf; background: #fff; color: #6b6155; font-size: 10.5px; font-weight: 700; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ comoUsarLabel }}</button>
+      </div>
+      <sc-if value="{{ comoUsarAberto }}">
+        <div style="margin-top: 12px;">
+          <sc-for list="{{ passos }}" as="pa" hint-placeholder-count="4">
+            <div style="display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #f7f2ea;">
+              <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; background: #164951; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{ pa.n }}</span>
+              <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 700; color: #164951;">{{ pa.titulo }}</div>
+                <div style="font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ pa.texto }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ comoUsarFechado }}">
+        <p style="margin: 6px 0 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ proximoPasso }}</p>
+      </sc-if>
+    </div>
+
     <!-- PLACAR -->
     <div style="background: #164951; border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;">
       <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
@@ -177,7 +201,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editandoMeta: false, copiado: false, tick: 0 };
+  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0 };
   cicloRef = React.createRef(); inicioRef = React.createRef(); fimRef = React.createRef();
   metaRef = React.createRef(); metaMesRef = React.createRef();
   fatRRef = React.createRef(); fatERef = React.createRef();
@@ -203,7 +227,9 @@ class Component extends DCLogic {
       fatRRef: this.fatRRef, fatERef: this.fatERef, onEditarMeta: () => {}, onSalvarMeta: () => {},
       temMeses: false, mesesView: [], canais: [], niveis: [], semCanais: true, semNiveis: true,
       linhas: [], colunas: [], semLinhas: true, temLinhas: false, inicioLabel: "",
-      onCopiar: () => {}, copiarLabel: "Copiar lista" };
+      onCopiar: () => {}, copiarLabel: "Copiar lista",
+      comoUsarAberto: false, comoUsarFechado: true, comoUsarLabel: "ver",
+      onComoUsar: () => {}, passos: [], proximoPasso: "" };
 
     const d = CRM.matriculasDoCiclo();
     const M = CRM.metasAtuais();
@@ -258,7 +284,34 @@ class Component extends DCLogic {
       turmasPorNivel[k][l.turma] = true;
     });
 
+    // Sem meta e sem data de fim a tela não tem o que dizer: o passo a
+    // passo fica aberto sozinho até a configuração estar de pé, e depois
+    // recolhe para não ocupar espaço todo dia.
+    const precisaConfigurar = !d.meta || d.semFim;
+    const comoUsarAberto = this.state.comoUsar === null ? precisaConfigurar : this.state.comoUsar;
+
     return {
+      comoUsarAberto, comoUsarFechado: !comoUsarAberto,
+      comoUsarLabel: comoUsarAberto ? "fechar" : "ver",
+      onComoUsar: () => this.setState({ comoUsar: !comoUsarAberto }),
+      passos: [
+        { n: "1", titulo: "Defina a meta do ciclo",
+          texto: "Em Meta do ciclo, logo abaixo, preencha o nome do ciclo, o começo, o fim e quantas alunas você quer. Sem a data de fim não há ritmo nem projeção." },
+        { n: "2", titulo: "Registre as matrículas conforme chegam",
+          texto: "Em CRM · Importar · Matrículas do Slack, cole as mensagens que a Carla posta no canal #admin. A aluna nasce com contrato, turma, parcelas e sinal." },
+        { n: "3", titulo: "Acompanhe o ritmo necessário",
+          texto: "É o número que importa no placar. Quando ele fica vermelho, o ritmo de hoje não chega na meta até o fim do ciclo." },
+        { n: "4", titulo: "Use o corte por canal para decidir",
+          texto: "Em De onde vieram está quanto cada origem trouxe em contrato. É por aí que se vê se o tráfego pago se paga." }
+      ],
+      proximoPasso: precisaConfigurar
+        ? "Comece definindo a meta do ciclo abaixo."
+        : (d.faltam
+          ? "Faltam " + d.faltam + (d.faltam === 1 ? " aluna" : " alunas")
+            + (d.precisaPorSemana !== null && d.precisaPorSemana > d.porSemana
+              ? ". No ritmo de hoje a meta não é alcançada — o ritmo necessário é " + d.precisaPorSemana + " por semana."
+              : ". O ritmo de hoje chega lá.")
+          : "Meta do ciclo alcançada."),
       feitas: String(d.feitas), meta: String(d.meta),
       pctLabel: d.pct === null ? "sem meta" : d.pct + "%",
       pctBg: pct >= 100 ? "rgba(158,201,112,0.22)" : "rgba(255,255,255,0.12)",
