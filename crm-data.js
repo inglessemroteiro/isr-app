@@ -4093,6 +4093,78 @@
     if (!identDaTransacao({ descricao: d })) return false;
     return !/[A-Za-zÀ-ú]{4,}/.test(d.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{8,26}\b/gi, " "));
   }
+  // A descrição do extrato não é nome de gente. Isso precisava ser uma
+  // pergunta com resposta boa: o único filtro era IBAN, e linhas como
+  // "bunq Payday 2026-08-19 EUR" e "Cashback" passavam — viraram alunas
+  // no cadastro, com ficha, cobrança e tudo.
+  //
+  // O teste é positivo, não uma lista de proibidos: para ser nome de
+  // pessoa, a descrição não pode ter número, não pode ser termo de
+  // banco, e precisa de pelo menos uma palavra de verdade.
+  var TERMOS_NAO_PESSOA = [
+    // o que o banco faz
+    "payday", "cashback", "invoice", "fee", "fees", "interest", "payout",
+    "refund", "chargeback", "settlement", "adjustment", "reversal",
+    "taxa", "taxas", "tarifa", "juros", "rendimento", "saldo", "estorno",
+    "reembolso", "devolucao", "mensalidade", "anuidade", "iof", "imposto",
+    "transferencia", "transfer", "pagamento", "payment", "deposito", "saque",
+    "pix", "ted", "doc", "boleto", "cobranca", "recebida", "enviada",
+    "conversao", "converted", "conversion", "cambio", "exchange",
+    "subscription", "assinatura", "credito", "debito", "lancamento",
+    // de quem ele vem
+    "bunq", "stripe", "wise", "transferwise", "gocardless", "asaas",
+    "paypal", "revolut", "nubank", "mercado pago", "mercadopago", "pagseguro",
+    "banco", "bank", "caixa economica", "sicredi", "itau", "bradesco",
+    "santander", "inter", "c6", "klarna", "adyen", "hotmart", "kiwify",
+    "eduzz", "systeme", "greenn"
+  ];
+  function pareceNomeDePessoa(descricao) {
+    var d = String(descricao || "").trim();
+    if (d.length < 3) return false;
+    // número dentro do texto quase nunca é nome: é data, valor, conta,
+    // CNPJ ou id de transação
+    if (/\d/.test(d)) return false;
+    // endereço de site e descritor de cartão ("ANTHROPIC* CLAUDE SUB"):
+    // nome de gente não tem .com nem asterisco
+    if (/\.(com|net|org|io|co|br|nl|pt|es|de|uk)\b/i.test(d)) return false;
+    if (d.indexOf("*") >= 0) return false;
+    var s = semAcento(d);
+    for (var i = 0; i < TERMOS_NAO_PESSOA.length; i++) {
+      var t = TERMOS_NAO_PESSOA[i];
+      if (t.indexOf(" ") >= 0 ? s.indexOf(t) >= 0
+                              : new RegExp("\\b" + t + "\\b").test(s)) return false;
+    }
+    // sobrou pelo menos uma palavra com cara de nome
+    return /[A-Za-zÀ-ú]{3,}/.test(d);
+  }
+
+  // Quem já entrou no cadastro vindo de uma linha de extrato. Não dá
+  // para desfazer o que foi criado antes deste filtro existir, mas dá
+  // para encontrar e oferecer a remoção: são pessoas sem contato, sem
+  // contrato e com nome que nenhum filtro de hoje aceitaria.
+  function pessoasQueParecemExtrato() {
+    return loadPessoas().filter(function (p) {
+      if (pareceNomeDePessoa(p.nome)) return false;
+      if (p.email || p.whatsapp) return false;
+      if ((p.contratos || []).length) return false;
+      return true;
+    }).map(function (p) {
+      return { id: p.id, nome: p.nome, status: p.status,
+        entrouEm: p.entrouEm || p.desde || "",
+        canal: (p.origem && p.origem.canal) || "" };
+    });
+  }
+  function removerPessoasQueParecemExtrato() {
+    var lista = pessoasQueParecemExtrato();
+    if (!lista.length) return { removidas: 0 };
+    criarBackup("antes de remover linhas de extrato viradas pessoa");
+    var ids = {};
+    lista.forEach(function (x) { ids[x.id] = true; });
+    var restam = loadPessoas().filter(function (p) { return !ids[p.id]; });
+    savePessoas(restam);
+    return { removidas: lista.length, nomes: lista.map(function (x) { return x.nome; }) };
+  }
+
   function identsAll() {
     try { return JSON.parse(localStorage.getItem(IDENT_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -11846,6 +11918,9 @@
     linhaDeSistema: linhaDeSistema, identDaTransacao: identDaTransacao,
     registrarRepasse: registrarRepasse, repasseCasando: repasseCasando,
     ehSoIdentificador: ehSoIdentificador, donoDoIdentificador: donoDoIdentificador,
+    pareceNomeDePessoa: pareceNomeDePessoa,
+    pessoasQueParecemExtrato: pessoasQueParecemExtrato,
+    removerPessoasQueParecemExtrato: removerPessoasQueParecemExtrato,
     lembrarIdentificador: lembrarIdentificador, esquecerIdentificador: esquecerIdentificador,
     partesNaDescricao: partesNaDescricao, novaAlunaDoExtrato: novaAlunaDoExtrato,
     addConta: addConta, removeConta: removeConta, setContaReserva: setContaReserva,

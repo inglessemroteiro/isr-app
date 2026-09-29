@@ -27,6 +27,16 @@
         <button onclick="{{ onZerar }}" style="border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 0; cursor: pointer; font-family: inherit;">{{ zerarLabel }}</button>
       </div>
       <p style="margin: 6px 0 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ dentroFrase }}</p>
+
+      <!-- LINHA DE EXTRATO QUE VIROU PESSOA -->
+      <sc-if value="{{ temLixo }}">
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3d4c8;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700; margin-bottom: 5px;">Cadastros que vieram do extrato</div>
+          <p style="margin: 0 0 8px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ lixoFrase }}</p>
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: #8a7c6b; line-height: 1.6;">{{ lixoNomes }}</p>
+          <button onclick="{{ onLimparLixo }}" style="border: none; background: #c8622f; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 17px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lixoLabel }}</button>
+        </div>
+      </sc-if>
       <sc-if value="{{ zerarAberto }}">
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3d4c8;">
           <p style="margin: 0 0 10px; font-size: 12.5px; color: #c8622f; font-weight: 600; line-height: 1.6;">{{ zerarAviso }}</p>
@@ -422,7 +432,8 @@ class Component extends DCLogic {
       feito: this.state.feito, anoNota: "",
       zerarAberto: false, zerarLabel: "", dentroFrase: "", temZerado: false, zerado: "",
       dentroTitulo: "", dentroBg: "#fdfbf8", dentroBorda: "#eee3d6", dentroCor: "#9b8b7e",
-      zerarAviso: "",
+      zerarAviso: "", temLixo: false, lixoFrase: "", lixoNomes: "", lixoLabel: "",
+      onLimparLixo: () => {},
       onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {},
       onExemplo: () => {}, temChute: false, chuteFrase: "", onTodasGrupo: () => {},
       temLeituraAlunas: false, alResumo: [], alLinhas: [], turmasNovas: [],
@@ -488,6 +499,33 @@ class Component extends DCLogic {
         zerarAviso: ehExemplo
           ? "Os dados de exemplo saem e a base fica pronta para os reais."
           : "Atenção: estes são os seus dados reais, não o exemplo."
+      };
+    })());
+    Object.assign(base, (() => {
+      // Linha de extrato que virou pessoa: sem contato, sem contrato e
+      // com nome que nenhum filtro de hoje aceitaria. Não dá para desfazer
+      // o que já foi criado, mas dá para achar e oferecer a remoção.
+      const lixo = CRM.pessoasQueParecemExtrato ? CRM.pessoasQueParecemExtrato() : [];
+      return {
+        temLixo: lixo.length > 0,
+        lixoFrase: lixo.length + (lixo.length === 1
+          ? " cadastro tem nome de linha de extrato, sem contato e sem contrato."
+          : " cadastros têm nome de linha de extrato, sem contato e sem contrato.")
+          + " Nasceram de um lançamento do banco cadastrado como aluna.",
+        lixoNomes: lixo.slice(0, 8).map(x => x.nome).join(" · ")
+          + (lixo.length > 8 ? " · e mais " + (lixo.length - 8) : ""),
+        lixoLabel: "Remover " + lixo.length + (lixo.length === 1 ? " cadastro" : " cadastros"),
+        onLimparLixo: () => {
+          if (!window.confirm("Remover " + lixo.length
+            + (lixo.length === 1 ? " cadastro" : " cadastros")
+            + " que vieram do extrato?\n\n" + lixo.map(x => x.nome).join("\n")
+            + "\n\nUma cópia de segurança é guardada antes.")) return;
+          const r = CRM.removerPessoasQueParecemExtrato();
+          this.setState({ zerado: r.removidas + (r.removidas === 1
+            ? " cadastro removido." : " cadastros removidos.")
+            + " A cópia de segurança fica em Escola · Dados.", leitura: null });
+          this.bump();
+        }
       };
     })());
     Object.assign(base, {
