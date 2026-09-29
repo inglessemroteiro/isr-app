@@ -8724,8 +8724,27 @@
 
     return out;
   }
-  function alunasDaTurma(turmaLabel) {
-    return loadPessoas().filter(function (p) { return p.status === "aluna" && p.turma === turmaLabel; });
+  // Quem está na turma. Com uma data, quem ainda não começou fica de
+  // fora: a matrícula do ciclo seguinte é fechada semanas antes da
+  // primeira aula, e sem este corte a aluna entrava na chamada do ciclo
+  // que está correndo — levando falta de aula que ela não tinha.
+  function alunasDaTurma(turmaLabel, ateIso) {
+    return loadPessoas().filter(function (p) {
+      if (p.status !== "aluna" || p.turma !== turmaLabel) return false;
+      if (ateIso && p.desde && p.desde > ateIso) return false;
+      return true;
+    });
+  }
+  // As que já estão matriculadas e ainda não começaram, para a tela dizer
+  // que elas existem em vez de simplesmente não mostrá-las.
+  function alunasQueVaoComecar(turmaLabel, ateIso) {
+    var limite = ateIso || iso(today());
+    return loadPessoas().filter(function (p) {
+      return p.status === "aluna" && p.turma === turmaLabel
+        && p.desde && p.desde > limite;
+    }).map(function (p) {
+      return { id: p.id, nome: p.nome, desde: p.desde };
+    }).sort(function (a, b) { return a.desde < b.desde ? -1 : 1; });
   }
   function chamadasDaTurma(turmaLabel) {
     var m = chamadasAll(), out = [];
@@ -8742,7 +8761,9 @@
   // do dia. A coluna da aula escolhida é a que se preenche.
   function diarioDaTurma(turmaLabel, dataAtualIso, nAulas) {
     var limite = nAulas || aulasPorCiclo();
-    var alunas = alunasDaTurma(turmaLabel);
+    // o diário é do ciclo que está correndo: quem começa depois não tem
+    // linha nele, e a coluna da aula de hoje não pede presença dela
+    var alunas = alunasDaTurma(turmaLabel, dataAtualIso || iso(today()));
     var salvas = chamadasDaTurma(turmaLabel);           // mais recente primeiro
 
     var datas = salvas.map(function (c) { return c.data; });
@@ -12023,7 +12044,7 @@
     textoAulaExtra: textoAulaExtra, mailtoAulaExtra: mailtoAulaExtra,
     aulasExtraDaAluna: aulasExtraDaAluna,
     agendaItens: agendaItens, gcalLink: gcalLink,
-    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, alunasDaTurma: alunasDaTurma,
+    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, alunasDaTurma: alunasDaTurma, alunasQueVaoComecar: alunasQueVaoComecar,
     chamadasDaTurma: chamadasDaTurma,
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,
     responderMissao: responderMissao, programaDaAluna: programaDaAluna,

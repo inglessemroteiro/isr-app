@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-f",
+  numero: "2026.09.29-g",
   data: "29/09/2026",
-  nota: "O ciclo passa a contar pelo dia em que o contrato foi fechado, não pelo dia em que as aulas começam. A campanha de 28/09 a 23/10 fecha contratos cujas aulas só começam em 27/10 — pela data de início, a tela mostraria zero durante a campanha inteira"
+  nota: "Aluna matriculada para o ciclo seguinte não entra na chamada do ciclo que está correndo. Ela ocupa vaga na turma desde o fechamento, mas só aparece na chamada a partir do dia em que as aulas dela começam — e a professora vê quantas estão a caminho"
 };
