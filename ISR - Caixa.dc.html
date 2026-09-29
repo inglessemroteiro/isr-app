@@ -1630,8 +1630,11 @@ class Component extends DCLogic {
           marcar("ret");
         },
         // crédito de quem ainda não está na base: em vez de virar
-        // recebimento sem dono, a aluna nasce do extrato
-        temNovaAluna: !saida && !lancada && !!contraparte && !soNumero && x.tipo !== "sem_parcela",
+        // recebimento sem dono, a aluna nasce do extrato. Mas só quando a
+        // contraparte é nome de gente — "bunq Payday 2026-08-19 EUR" e
+        // "Cashback" viravam aluna, com ficha e cobrança
+        temNovaAluna: !saida && !lancada && !!contraparte && !soNumero
+          && x.tipo !== "sem_parcela" && CRM.pareceNomeDePessoa(contraparte),
         novaAlunaLabel: "Cadastrar " + contraparte.split(/\s+/).slice(0, 2).join(" "),
         onNovaAluna: () => {
           CRM.novaAlunaDoExtrato(contraparte, x.trans, this.contaAtual());

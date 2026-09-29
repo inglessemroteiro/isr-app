@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-b",
+  numero: "2026.09.29-c",
   data: "29/09/2026",
-  nota: "A tela de importar para de devolver a pergunta: ela mesma sabe se os dados são de exemplo. Com dado real o cartão deixa de ser um alerta vermelho e passa a dizer o que a importação faz — acrescenta e atualiza, sem apagar nada. Nova tela: Matrículas do ciclo, com meta, ritmo, origem e valor de cada matrícula"
+  nota: "Linha de extrato não vira mais aluna. \"bunq Payday 2026-08-19 EUR\" e \"Cashback\" entraram no cadastro como pessoas, com ficha e cobrança: o único filtro era IBAN. Agora o teste é de nome de gente, e a tela de importar encontra e remove os cadastros que já nasceram assim"
 };
