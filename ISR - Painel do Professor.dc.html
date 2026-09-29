@@ -92,6 +92,9 @@
         <sc-if value="{{ jaSalva }}">
           <span style="background: rgba(90,158,75,0.14); color: #5a9e4b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 11px; border-radius: 999px;">salva em {{ salvaQuando }}</span>
         </sc-if>
+        <sc-if value="{{ temAComecar }}">
+          <span title="Matriculadas para o próximo ciclo. Não entram nesta chamada nem recebem falta." style="background: rgba(107,91,149,0.12); color: #6b5b95; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 4px 11px; border-radius: 999px;">{{ aComecarLabel }}</span>
+        </sc-if>
       </div>
 
       <!-- trocar de aula: as aulas de verdade, não uma lista abstrata -->
@@ -390,7 +393,8 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     const salva = CRM.getChamada(turmaLabel, dataIso);
     const pres = {};
-    const lista = eventoId ? CRM.listaChamadaExtra(eventoId) : CRM.alunasDaTurma(turmaLabel);
+    // a chamada é do dia: quem começa depois dele não entra
+    const lista = eventoId ? CRM.listaChamadaExtra(eventoId) : CRM.alunasDaTurma(turmaLabel, dataIso);
     lista.forEach(p => {
       pres[p.id] = salva ? CRM.estadoPresenca(salva.presencas[p.id]) : "presente";
     });
@@ -400,6 +404,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
+      temAComecar: false, aComecarLabel: "",
       particularesChamada: [], temParticulares: false,
       novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "#e5dccf", neBg: "#fff", neFg: "#164951",
       onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
@@ -520,7 +525,7 @@ class Component extends DCLogic {
       || (turmaSel ? this.carregarChamada(turmaSel, dataSel, evSel ? evSel.id : null) : {});
     const alunas = evSel ? CRM.listaChamadaExtra(evSel.id)
       : partSel ? [partSel]
-      : (turmaSel ? CRM.alunasDaTurma(turmaSel) : []);
+      : (turmaSel ? CRM.alunasDaTurma(turmaSel, dataSel) : []);
     const salva = turmaSel ? CRM.getChamada(turmaSel, dataSel) : null;
     const tarAtual = this.state.tarefas || ((salva && salva.tarefas) || {});
 
@@ -892,6 +897,16 @@ class Component extends DCLogic {
       onTodasFaltas: () => this.marcarTodas("falta", alunas, turmaSel, dataSel),
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
       chamadaRef: this.chamadaRef,
+      // matriculadas para o ciclo seguinte: ficam fora da chamada de hoje,
+      // mas a professora precisa saber que a turma já tem gente a caminho
+      ...(() => {
+        const vem = (turmaSel && !evSel && !partSel)
+          ? CRM.alunasQueVaoComecar(turmaSel, dataSel) : [];
+        return { temAComecar: vem.length > 0,
+          aComecarLabel: vem.length + (vem.length === 1 ? " começa em " : " começam em ")
+            + vem.map(v => v.desde.slice(8, 10) + "/" + v.desde.slice(5, 7))
+                .filter((x, i, a) => a.indexOf(x) === i).join(" · ") };
+      })(),
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
       colunas, linhas: linhasDiario, larguraGrade,
       // aula extra e aula particular são lista; turma é diário. O diário
