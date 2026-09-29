@@ -183,7 +183,10 @@
                     <span style="background: {{ ln.canalBg }}; color: {{ ln.canalFg }}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap;">{{ ln.canal }}</span>
                   </td>
                   <td style="padding: 9px 10px 9px 0; color: #3d3529;">{{ ln.nivel }}</td>
-                  <td style="padding: 9px 10px 9px 0; color: #6b6155;">{{ ln.turma }}</td>
+                  <td style="padding: 9px 10px 9px 0; color: #6b6155;">
+                    {{ ln.turma }}
+                    <div style="font-size: 10.5px; color: #b3a693;">{{ ln.inicioAulas }}</div>
+                  </td>
                   <td style="padding: 9px 10px 9px 0; text-align: right; font-weight: 700; color: #164951; white-space: nowrap;">{{ ln.pacote }}</td>
                   <td style="padding: 9px 10px 9px 0; text-align: right; color: #6b6155; white-space: nowrap;">{{ ln.mensalidade }}</td>
                   <td style="padding: 9px 0; text-align: right; color: #8a7c6b; white-space: nowrap;">{{ ln.parcelas }}</td>
@@ -387,7 +390,7 @@ class Component extends DCLogic {
       semLinhas: d.linhas.length === 0,
       temLinhas: d.linhas.length > 0,
       colunas: [
-        { label: "Entrou", align: "left" }, { label: "Aluna", align: "left" },
+        { label: "Fechou", align: "left" }, { label: "Aluna", align: "left" },
         { label: "Veio de", align: "left" }, { label: "Nível", align: "left" },
         { label: "Turma", align: "left" }, { label: "Pacote", align: "right" },
         { label: "Mensalidade", align: "right" }, { label: "Parcelas", align: "right" }
@@ -402,6 +405,7 @@ class Component extends DCLogic {
                : l.diasAteFechar + (l.diasAteFechar === 1 ? " dia no funil" : " dias no funil")),
           canal: l.canal, canalBg: cor[0], canalFg: cor[1],
           nivel: l.nivel || "—", turma: l.turma,
+          inicioAulas: l.inicioAulas ? "aulas desde " + this.dm(l.inicioAulas) : "",
           pacote: l.pacote ? $(l.moeda, l.pacote) : "—",
           mensalidade: l.mensalidade ? $(l.moeda, l.mensalidade) : "—",
           parcelas: l.parcelas ? String(l.parcelas) + "×" : "—"
@@ -409,8 +413,8 @@ class Component extends DCLogic {
       }),
       copiarLabel: this.state.copiado ? "Copiado" : "Copiar lista",
       onCopiar: () => {
-        const txt = ["Entrou\tAluna\tVeio de\tNível\tTurma\tPacote\tMensalidade\tParcelas"]
-          .concat(d.linhas.map(l => [this.dm(l.desde), l.nome, l.canal, l.nivel || "", l.turma,
+        const txt = ["Fechou\tAluna\tVeio de\tNível\tTurma\tAulas desde\tPacote\tMensalidade\tParcelas"]
+          .concat(d.linhas.map(l => [this.dm(l.desde), l.nome, l.canal, l.nivel || "", l.turma, this.dm(l.inicioAulas),
             l.pacote ? $(l.moeda, l.pacote) : "", l.mensalidade ? $(l.moeda, l.mensalidade) : "",
             l.parcelas || ""].join("\t"))).join("\n");
         try { navigator.clipboard.writeText(txt); } catch (e) {

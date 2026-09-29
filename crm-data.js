@@ -1111,8 +1111,11 @@
         // sem isso a venda era datada por p.desde, a entrada da pessoa na
         // escola — e uma renovação, que mantém a entrada original, não
         // contava como venda em mês nenhum. Numa matrícula retroativa a
-        // venda é do mês da entrada, não do dia em que foi digitada.
-        fechadoEm: cfg.fechadoEm || cfg.desde || iso(today()),
+        // venda é do mês da entrada; numa matrícula cujas aulas só
+        // começam mais para a frente, o contrato foi fechado hoje — a
+        // data de início não pode datar um fechamento no futuro.
+        fechadoEm: cfg.fechadoEm
+          || ((cfg.desde && cfg.desde < iso(today())) ? cfg.desde : iso(today())),
         moeda: moedaC, valorTotal: totalCalc,
         parcelaValor: cfg.valorParcela || "", parcelas: n, vencDia: cfg.vencDia || 10,
         fim: mesesNovos[mesesNovos.length - 1].key + "-28",
@@ -3494,20 +3497,31 @@
     var linhas = [];
     loadPessoas().forEach(function (p) {
       if (p.status !== "aluna" && p.status !== "mvs") return;
-      if (!dentro(p.desde)) return;
+      // O ciclo se conta pelo dia em que o contrato foi FECHADO, não pelo
+      // dia em que as aulas começam. A campanha de matrícula de 28/09 a
+      // 23/10 fecha contratos cujas aulas só começam em 27/10 — contando
+      // pela data de início, a tela mostraria zero durante a campanha
+      // inteira, justo quando ela precisa ser acompanhada.
+      var lista = p.contratos || [];
+      var iOriginal = lista.length - 1;
+      var original = lista[iOriginal];
+      if (!original) return;
+      if (!dentro(fechamentoDoContrato(p, iOriginal))) return;
       // renovação não é aluna nova: o contrato novo é de quem já estava
       var c = contratoVigente(p);
-      if (c && c.renovacao) return;
       var moeda = (c && c.moeda) || p.moeda || "R$";
       var pacote = c ? parseMoney(c.valorTotal) : 0;
       var mensal = c ? parseMoney(c.parcelaValor) : 0;
       var o = p.origem || {};
       linhas.push({
         id: p.id, nome: p.nome,
-        entrouEm: p.entrouEm || "", desde: p.desde || "",
+        entrouEm: p.entrouEm || "", desde: fechamentoDoContrato(p, iOriginal),
+        // o dia em que as aulas começam, que quase nunca é o do fechamento
+        inicioAulas: p.desde || "",
         // quanto tempo o CRM levou entre conhecer a pessoa e matricular
-        diasAteFechar: (p.entrouEm && p.desde)
-          ? Math.max(0, daysBetween(parseISO(p.entrouEm), parseISO(p.desde))) : null,
+        diasAteFechar: (p.entrouEm && fechamentoDoContrato(p, iOriginal))
+          ? Math.max(0, daysBetween(parseISO(p.entrouEm),
+              parseISO(fechamentoDoContrato(p, iOriginal)))) : null,
         canal: o.canal || "—", detalhe: o.detalhe || "",
         turma: p.turma || "—", nivel: nivelDaTurma(p.turma),
         professora: p.professora || "",
@@ -4329,10 +4343,16 @@
       // já tem contrato: a matrícula do Slack não cria um segundo
       var atual = getPessoa(p.id);
       if ((atual.contratos || []).length) { semContrato++; return; }
+      // O contrato foi fechado antes de as aulas começarem. Se elas ainda
+      // não começaram, o fechamento é hoje; se já começaram, foi até lá.
+      // Datar o fechamento pelo início das aulas jogaria a matrícula para
+      // o ciclo seguinte.
+      var hojeIso = iso(today());
+      var fechado = (l.inicio && l.inicio < hojeIso) ? l.inicio : hojeIso;
       matricular(p.id, {
         parcelas: l.parcelas, valorParcela: fmtMoney(moeda, l.valorParcela),
         moeda: moeda, vencDia: l.vencDia || 10,
-        turmaLabel: l.turma,
+        turmaLabel: l.turma, fechadoEm: fechado,
         desde: l.inicio || undefined,
         inicioKey: l.inicio ? l.inicio.slice(0, 7) : undefined,
         sinalValor: l.sinal ? fmtMoney(moeda, l.sinal) : "",
