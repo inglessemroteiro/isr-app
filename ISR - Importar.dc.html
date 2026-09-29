@@ -20,15 +20,16 @@
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: #6b6155; line-height: 1.6; max-width: 760px;"><strong>Importar pagamentos.</strong> Cole o Controle de Pagamento abaixo. O sistema mostra a leitura de cada linha e grava após a sua confirmação.</p>
 
-    <!-- COMEÇAR DO ZERO -->
-    <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+    <!-- O QUE JÁ ESTÁ DENTRO -->
+    <div style="background: {{ dentroBg }}; border: 1px solid {{ dentroBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
       <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #c8622f; font-weight: 700;">Antes de importar</div>
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: {{ dentroCor }}; font-weight: 700;">{{ dentroTitulo }}</div>
         <button onclick="{{ onZerar }}" style="border: none; background: transparent; color: #348a8e; font-size: 11.5px; font-weight: 700; padding: 0; cursor: pointer; font-family: inherit;">{{ zerarLabel }}</button>
       </div>
       <p style="margin: 6px 0 0; font-size: 12.5px; color: #6b6155; line-height: 1.6;">{{ dentroFrase }}</p>
       <sc-if value="{{ zerarAberto }}">
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3d4c8;">
+          <p style="margin: 0 0 10px; font-size: 12.5px; color: #c8622f; font-weight: 600; line-height: 1.6;">{{ zerarAviso }}</p>
           <p style="margin: 0 0 10px; font-size: 12.5px; color: #6b6155; line-height: 1.6;">Uma cópia de segurança é criada antes; a restauração fica em Escola · Dados.</p>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button onclick="{{ onLimparExemplo }}" style="border: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Limpar alunas, turmas e financeiro</button>
@@ -420,6 +421,8 @@ class Component extends DCLogic {
       erro: this.state.erro, resumo: [], linhas: [], porMes: [], temFeito: !!this.state.feito,
       feito: this.state.feito, anoNota: "",
       zerarAberto: false, zerarLabel: "", dentroFrase: "", temZerado: false, zerado: "",
+      dentroTitulo: "", dentroBg: "#fdfbf8", dentroBorda: "#eee3d6", dentroCor: "#9b8b7e",
+      zerarAviso: "",
       onZerar: () => {}, onLimparExemplo: () => {}, onLimparTudo: () => {},
       onExemplo: () => {}, temChute: false, chuteFrase: "", onTodasGrupo: () => {},
       temLeituraAlunas: false, alResumo: [], alLinhas: [], turmasNovas: [],
@@ -459,15 +462,35 @@ class Component extends DCLogic {
         zerarAberto: false, leitura: null });
       this.bump();
     };
+    Object.assign(base, (() => {
+      // A tela devolvia a pergunta para quem usa: "se esses ainda são os
+      // dados de exemplo, remova-os". O sistema sabe se o exemplo está
+      // carregado, e importar não apaga nada — acrescenta e atualiza. O
+      // aviso vermelho em cima de dado real assustava sem motivo, todas
+      // as vezes.
+      const ehExemplo = CRM.exemploLigado ? CRM.exemploLigado() : false;
+      const vazia = !dentro || !dentro.pessoas;
+      const quanto = vazia ? "" : dentro.pessoas + " pessoas ("
+        + dentro.alunas + (dentro.alunas === 1 ? " aluna" : " alunas") + ", "
+        + dentro.leads + (dentro.leads === 1 ? " lead" : " leads") + "), "
+        + dentro.turmas + (dentro.turmas === 1 ? " turma" : " turmas") + " e "
+        + dentro.chamadas + " chamadas";
+      return {
+        dentroTitulo: vazia ? "Base vazia" : (ehExemplo ? "Dados de exemplo" : "O que já está no sistema"),
+        dentroBg: ehExemplo ? "#fdf1ec" : "#fdfbf8",
+        dentroBorda: ehExemplo ? "#f3d4c8" : "#eee3d6",
+        dentroCor: ehExemplo ? "#c8622f" : "#9b8b7e",
+        dentroFrase: vazia
+          ? "Nada cadastrado ainda. Cole a planilha abaixo."
+          : (ehExemplo
+            ? "Base atual: " + quanto + ". Estes são os dados de exemplo — remova antes de importar os reais."
+            : "Base atual: " + quanto + ". Importar acrescenta: quem já está cadastrado é atualizado, e nada é apagado."),
+        zerarAviso: ehExemplo
+          ? "Os dados de exemplo saem e a base fica pronta para os reais."
+          : "Atenção: estes são os seus dados reais, não o exemplo."
+      };
+    })());
     Object.assign(base, {
-      dentroFrase: dentro && dentro.pessoas
-        ? "Base atual: " + dentro.pessoas + " pessoas ("
-          + dentro.alunas + (dentro.alunas === 1 ? " aluna" : " alunas") + ", "
-          + dentro.leads + (dentro.leads === 1 ? " lead" : " leads") + "), "
-          + dentro.turmas + (dentro.turmas === 1 ? " turma" : " turmas") + " e "
-          + dentro.chamadas + " chamadas. Se esses ainda são os dados de exemplo, "
-          + "remova-os antes de importar os dados reais."
-        : "A base está vazia. Cole a planilha abaixo.",
       zerarLabel: this.state.zerarAberto ? "fechar" : "Remover dados",
       zerarAberto: this.state.zerarAberto,
       onZerar: () => this.setState({ zerarAberto: !this.state.zerarAberto }),

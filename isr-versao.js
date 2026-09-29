@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-a",
+  numero: "2026.09.29-b",
   data: "29/09/2026",
-  nota: "Nova tela: Matrículas do ciclo. A meta do ciclo e a mensal, quantas já entraram, de onde vieram, para que turma e nível foram, quanto cada uma fechou de pacote e de mensalidade — e se o ritmo de hoje chega no número combinado"
+  nota: "A tela de importar para de devolver a pergunta: ela mesma sabe se os dados são de exemplo. Com dado real o cartão deixa de ser um alerta vermelho e passa a dizer o que a importação faz — acrescenta e atualiza, sem apagar nada. Nova tela: Matrículas do ciclo, com meta, ritmo, origem e valor de cada matrícula"
 };
