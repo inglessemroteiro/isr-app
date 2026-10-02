@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-l",
-  data: "29/09/2026",
-  nota: "Chamada da semana das particulares: todas as aulas dos últimos 7 dias em uma lista, e cada clique em Presente, Falta ou Justificada salva a chamada daquela aula e acerta o pacote. E o check-in agendado deixa de ficar preso em Para hoje — o botão Feito encerra o check-in e tira o item do dia"
+  numero: "2026.10.02-a",
+  data: "02/10/2026",
+  nota: "O acompanhamento de € 27 por mês deixa de ser produto: sai da matrícula, do perfil e do extrato, e o programa perde o preço. O desafio da semana fica de pé — continua chegando no app da aluna, agora como parte da escola e não como venda. Quem ainda tem assinatura ativa continua podendo encerrá-la"
 };
