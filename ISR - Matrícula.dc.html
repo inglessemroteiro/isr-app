@@ -233,25 +233,6 @@
       </section>
       </sc-if>
 
-      <!-- ACOMPANHAMENTO -->
-      <sc-if value="{{ querPrograma }}">
-        <section style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 4px;">{{ nPrograma }}Acompanhamento</div>
-          <p style="margin: 0 0 12px; font-size: 12px; color: #8a7c6b; line-height: 1.6;">Escolha o programa em que ela entra.</p>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <sc-for list="{{ programas }}" as="pgm" hint-placeholder-count="2">
-              <button onclick="{{ pgm.onPick }}" style="border: 1px solid {{ pgm.borda }}; background: {{ pgm.bg }}; color: {{ pgm.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pgm.label }}</button>
-            </sc-for>
-          </div>
-          <sc-if value="{{ programaEscolhido }}">
-            <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12.5px; color: #3d3529; cursor: pointer;">
-              <input type="checkbox" ref="{{ progPagoRef }}" onchange="{{ onProgPago }}" style="width: 16px; height: 16px; accent-color: #348a8e;" />
-              Já pagou o acompanhamento — lançar {{ precoPrograma }} no Caixa
-            </label>
-          </sc-if>
-        </section>
-      </sc-if>
-
       <!-- PASSO 4 · O QUE ACONTECE -->
       <section style="background: #f6f2ea; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e; font-weight: 700; margin-bottom: 10px;">{{ nResumo }}O que o sistema faz ao concluir</div>
@@ -300,7 +281,6 @@
 class Component extends DCLogic {
   // sinalRecebido começa nulo: enquanto não for tocado, vale o que ficou
   // combinado nas condições, senão o "recebido" se perderia no caminho
-  progPagoRef = React.createRef();
   partAulasRef = React.createRef(); partValorRef = React.createRef(); partPagoRef = React.createRef();
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
@@ -308,7 +288,7 @@ class Component extends DCLogic {
               uf: React.createRef(), pais: React.createRef() };
   // null = ainda não mexeu; o padrão é turma, que é o caminho mais comum
   state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "",
-            programaId: "", progPago: false, produtos: null };
+            produtos: null };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
   nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
   tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
@@ -437,28 +417,18 @@ class Component extends DCLogic {
     const nomeTurma = unidade ? unidade.nivel + " · " + unidade.turma : "Particular";
 
 
-    // Programa de acompanhamento: por padrão entra no que estiver ativo.
-    // Marcar de novo desmarca — quem não vai participar não é forçada.
-    // Só turmas abertas do acompanhamento entram como opção de venda.
-    const listaProgramas = CRM.programasAbertos ? CRM.programasAbertos() : CRM.programasLista();
-    const resumoPg = CRM.resumoProgramas ? CRM.resumoProgramas() : [];
-    const semanaDe = id => {
-      const r = resumoPg.filter(x => x.id === id)[0];
-      return r ? " · semana " + r.semana + " de " + r.semanas : "";
-    };
-    const programaSel = this.state.programaId || "";
-    // ── o que ela comprou ──
-    // Nada vem marcado. Vinha "turma" por padrão e clicar em
-    // Acompanhamento somava os dois, deixando o passo da turma na tela
-    // pedindo uma turma que aquele produto não tem.
-    const escolha = this.state.produtos || { turma: false, particular: false, programa: false };
+    // ── o que ela contratou ──
+    // Nada vem marcado: turma, pacote de particulares, ou os dois. O
+    // acompanhamento de € 27 por mês saiu — a escola deixou de vender, e
+    // o desafio da semana, que ficou, não é produto: quem entra nele é
+    // incluído pela tela Programa.
+    const escolha = this.state.produtos || { turma: false, particular: false };
     const querTurma = !!escolha.turma;
     const querParticular = !!escolha.particular;
-    const querPrograma = !!escolha.programa && listaProgramas.length > 0;
-    const nenhumProduto = !querTurma && !querParticular && !escolha.programa;
+    const nenhumProduto = !querTurma && !querParticular;
     const temMensalidade = querTurma || querParticular;
     const alternar = chave => this.setState(s => {
-      const base = s.produtos || { turma: false, particular: false, programa: false };
+      const base = s.produtos || { turma: false, particular: false };
       const novo = Object.assign({}, base);
       novo[chave] = !novo[chave];
       return { produtos: novo, erro: "" };
@@ -471,12 +441,6 @@ class Component extends DCLogic {
       nPasso += 1;
       return nPasso + " · ";
     };
-
-    const progAtual = listaProgramas.filter(x => x.id === programaSel)[0] || null;
-    const progNome = progAtual ? progAtual.nome : "";
-    const progPreco = progAtual
-      ? (progAtual.moeda || "€") + " " + (progAtual.preco || "27,00")
-      : "";
 
     const efeitos = [];
     if (querTurma) efeitos.push.apply(efeitos, [
@@ -493,11 +457,6 @@ class Component extends DCLogic {
     ]);
     if (querParticular) efeitos.push({ cor: "#6b5b95",
       texto: "O pacote de aulas particulares fica no perfil dela, com as aulas dadas contadas uma a uma." });
-    if (!querTurma && !querParticular && querPrograma) efeitos.push({ cor: "#e07856",
-      texto: "Cadastrada como cliente do acompanhamento: sem turma e sem contrato de mensalidade. O app dela abre no desafio da semana." });
-    if (querPrograma && progNome && (querTurma || querParticular)) efeitos.push({ cor: "#e07856",
-      texto: "Além disso, ela entra no " + progNome + " · " + progPreco
-        + (this.state.progPago ? ", já pago e lançado no Caixa." : ", a receber.") });
 
     return {
       semPessoa: false, ok: true, concluida: false,
@@ -579,19 +538,12 @@ class Component extends DCLogic {
       nParticular: passo(querParticular),
       nInicio: passo(temMensalidade),
       nPagamento: passo(temMensalidade),
-      nPrograma: passo(querPrograma),
       nResumo: passo(true),
       mostraResto: !nenhumProduto,
 
       opcoesProduto: [
         { id: "turma", nome: "Turma em grupo", sub: "Aulas semanais, contrato por ciclo", on: querTurma },
-        { id: "particular", nome: "Aulas particulares", sub: "Pacote de aulas individuais", on: querParticular },
-        { id: "programa", nome: "Acompanhamento",
-          sub: listaProgramas.length
-            ? "Desafio semanal no WhatsApp · " + ((listaProgramas[0].moeda || "€") + " " + (listaProgramas[0].preco || "27,00"))
-              + (listaProgramas.length > 1 ? " · " + listaProgramas.length + " turmas abertas" : "")
-            : "Nenhuma turma aberta do acompanhamento",
-          on: !!escolha.programa }
+        { id: "particular", nome: "Aulas particulares", sub: "Pacote de aulas individuais", on: querParticular }
       ].map(op => ({
         nome: op.nome, sub: op.sub,
         marca: op.on ? "\u2713" : "",
@@ -606,33 +558,12 @@ class Component extends DCLogic {
       semProduto: nenhumProduto, semProdutoAviso: nenhumProduto,
       concluirBg: nenhumProduto ? "#b8ada0" : "#348a8e",
       concluirLabel: nenhumProduto ? "Escolha um produto acima" : "Concluir matrícula",
-      querTurma, querParticular, querPrograma, temMensalidade,
+      querTurma, querParticular, temMensalidade,
       partAulasRef: this.partAulasRef, partValorRef: this.partValorRef, partPagoRef: this.partPagoRef,
-
-      temProgramas: listaProgramas.length > 0,
-      programaEscolhido: !!programaSel,
-      precoPrograma: progPreco,
-      progPagoRef: this.progPagoRef,
-      onProgPago: e => this.setState({ progPago: !!e.target.checked }),
-      programas: listaProgramas.map(pgm => {
-        const sel = programaSel === pgm.id;
-        const preco = (pgm.moeda || "€") + " " + (pgm.preco || "27,00");
-        return {
-          label: (sel ? "\u2713 " : "+ ") + pgm.nome + semanaDe(pgm.id) + " · " + preco,
-          bg: sel ? "#348a8e" : "#fff",
-          fg: sel ? "#fff" : "#164951",
-          borda: sel ? "#348a8e" : "#e5dccf",
-          onPick: () => this.setState({ programaId: sel ? "" : pgm.id })
-        };
-      }),
 
       onConcluir: () => {
         if (nenhumProduto) {
-          this.setState({ erro: "Escolha ao menos um produto: turma, aulas particulares ou acompanhamento." });
-          return;
-        }
-        if (escolha.programa && !listaProgramas.length) {
-          this.setState({ erro: "Não há programa de acompanhamento criado. Crie um na tela Programa antes." });
+          this.setState({ erro: "Escolha ao menos um produto: turma ou aulas particulares." });
           return;
         }
         const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
@@ -655,8 +586,7 @@ class Component extends DCLogic {
         });
         if (Object.keys(cad).length) CRM.atualizarCadastro(p.id, cad);
 
-        // Só quem tem turma ou pacote vira aluna com contrato. Quem levou
-        // apenas o acompanhamento entra por matricularNoPrograma.
+        // Turma ou pacote de particulares: os dois criam contrato.
         if (temMensalidade) {
           CRM.matricular(p.id, {
             turmaId: querTurma ? turmaSel : "particular",
@@ -678,11 +608,6 @@ class Component extends DCLogic {
             valor: this.val(this.partValorRef),
             moeda: moeda,
             pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
-          });
-        }
-        if (querPrograma && programaSel) {
-          CRM.matricularNoPrograma(p.id, {
-            programaId: programaSel, pago: !!this.state.progPago
           });
         }
         this.setState({ concluida: true, erro: "" });

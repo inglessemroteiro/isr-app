@@ -1656,19 +1656,12 @@ class Component extends DCLogic {
         ...(function () {
           const bruto = Math.round((Math.abs(x.trans.valor) + (x.trans.taxa || 0)) * 100) / 100;
           return {
-            temNovaAssinatura: !saida && !lancada && x.tipo === "sem_parcela"
-              && !x.recorrente && !!x.pessoaId,
-            novaAssinaturaLabel: "Registrar assinatura de "
-              + CRM.fmtMoney(this.state.moedaExtrato, bruto),
-            onNovaAssinatura: () => {
-              CRM.ativarAssinatura(x.pessoaId, {
-                valor: bruto.toFixed(2).replace(".", ","),
-                moeda: this.state.moedaExtrato,
-                inicio: (x.trans.data || "").split("/").reverse().join("-") || undefined });
-              CRM.confirmarRecorrente(x.pessoaId, mesTrans, "assinatura", x.trans);
-              CRM.registrarTransacao(x.trans, "assinatura registrada pelo extrato");
-              marcar("asn");
-            }
+            // A escola deixou de vender assinatura: o extrato não oferece
+            // mais abrir uma. O que restou de recorrente se confere pelo
+            // botão de conferir, que não cria contrato nenhum.
+            temNovaAssinatura: false,
+            novaAssinaturaLabel: "",
+            onNovaAssinatura: () => {}
           };
         }).call(this),
         conferivel: !lancada && x.tipo === "sem_parcela" && !!x.recorrente,

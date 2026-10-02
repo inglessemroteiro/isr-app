@@ -724,7 +724,7 @@
       { nome: "Priscila Nunes", whatsapp: "+55 41 96000-0004", email: "priscila@exemplo.com" }
     ];
     var pg = { id: "pgDemo", nome: "Programa Sem Roteiro", inicio: inicio,
-      semanas: 8, diaFeedback: 5, moeda: "€", preco: "27,00",
+      semanas: 8, diaFeedback: 5,
       missoes: MISSOES_PILOTO.slice(),
       participantes: [], progresso: {}, respostas: {},
       missoesEnviadas: { 1: inicio, 2: inicio, 3: iso(today()) },
@@ -2313,10 +2313,11 @@
     agendarSync();
     return true;
   }
-  // O acompanhamento é um produto à parte, com preço próprio. A maioria
-  // de quem participa não está em turma nenhuma — e quem está em turma
-  // pode participar também. As duas coisas são independentes.
-  var PROGRAMA_PRECO_PADRAO = { moeda: "€", valor: "27,00" };
+  // O acompanhamento era um produto vendido à parte, por € 27 ao mês.
+  // A escola deixou de vender: o que ficou é o desafio da semana, que
+  // roda para quem já é aluna e não é cobrado. Por isso o programa não
+  // tem mais preço — os registros antigos guardam o valor que foi pago
+  // na época, e continuam aparecendo no Caixa e no perfil.
 
   function addPrograma(dados) {
     var l = programasLista();
@@ -2324,21 +2325,9 @@
       inicio: dados.inicio || iso(today()),
       semanas: parseInt(dados.semanas, 10) || 8,
       diaFeedback: dados.diaFeedback || 5, // sexta
-      moeda: dados.moeda || PROGRAMA_PRECO_PADRAO.moeda,
-      preco: dados.preco || PROGRAMA_PRECO_PADRAO.valor,
       missoes: dados.missoes || MISSOES_PILOTO.slice(),
       participantes: dados.participantes || [], progresso: {}, respostas: {} };
     l.push(p); programasSave(l); return p;
-  }
-  function setPrecoPrograma(programaId, moeda, valor) {
-    var l = programasLista();
-    l.forEach(function (pg) {
-      if (pg.id !== programaId) return;
-      if (moeda) pg.moeda = moeda;
-      if (valor) pg.preco = valor;
-      carimbar(pg);
-    });
-    programasSave(l); return l;
   }
   function getPrograma(id) {
     var l = programasLista();
@@ -2370,8 +2359,6 @@
       return { id: pg.id, nome: pg.nome, semanas: pg.semanas, semana: semana,
         participantes: (pg.participantes || []).length,
         inicio: pg.inicio, encerrada: pg.encerrada || "",
-        moeda: pg.moeda || PROGRAMA_PRECO_PADRAO.moeda,
-        preco: pg.preco || PROGRAMA_PRECO_PADRAO.valor,
         terminou: !!pg.encerrada || semana >= pg.semanas };
     }).sort(function (a, b) {
       if (!!a.encerrada !== !!b.encerrada) return a.encerrada ? 1 : -1;
@@ -2408,17 +2395,13 @@
     var pessoa = getPessoa(pessoaId);
     if (!pessoa) return null;
 
-    var moeda = cfg.moeda || pg.moeda || PROGRAMA_PRECO_PADRAO.moeda;
-    var valorTxt = cfg.valor || pg.preco || PROGRAMA_PRECO_PADRAO.valor;
-    if (!/[R$€]/.test(String(valorTxt))) valorTxt = fmtMoney(moeda, parseMoney(valorTxt));
     var desde = cfg.desde || iso(today());
-    var pago = !!cfg.pago;
 
     addParticipante(pg.id, pessoaId);
 
     mutate(pessoaId, function (p) {
-      p.programa = { id: pg.id, nome: pg.nome, moeda: moeda, valor: valorTxt,
-        desde: desde, pago: pago, por: (gestaoUser() || {}).nome || "" };
+      p.programa = { id: pg.id, nome: pg.nome,
+        desde: desde, por: (gestaoUser() || {}).nome || "" };
       // Ser aluna de turma manda no status; quem só faz o acompanhamento
       // ganha um status próprio para não sumir do sistema nem virar aluna.
       if (p.status !== "aluna" && p.status !== "mvs" && p.status !== "pausada") {
@@ -2427,18 +2410,15 @@
         if (!p.desde) p.desde = desde;
       }
       concluirReuniaoPelaMatricula(p);
-      pushHist(p, "matricula", "Entrou no " + pg.nome + " · " + valorTxt
-        + (pago ? " (pago)" : " (a receber)"));
+      pushHist(p, "matricula", "Entrou no " + pg.nome);
     });
 
-    if (pago) registrarPagamentoPrograma(pessoaId, desde);
 
     var dono = donoDaIntegracao();
     avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
       + ". Envie o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
-      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual."
-        + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
+      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual.",
       dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
 
     return getPessoa(pessoaId);
@@ -2460,7 +2440,8 @@
     mutate(pessoaId, function (p) {
       if (!p.programa) return;
       p.programa.pago = !!pago;
-      pushHist(p, "pagamento", "Acompanhamento " + p.programa.valor
+      pushHist(p, "pagamento", "Acompanhamento"
+        + (p.programa.valor ? " " + p.programa.valor : "")
         + (pago ? " recebido" : " marcado como pendente"));
     });
     // dataIso: quando o pagamento veio do extrato, a receita entra no mês
@@ -8830,27 +8811,28 @@
         : "",
       pago: pa ? !!pa.pago : null });
 
+    // A assinatura de € 27 do acompanhamento deixou de ser vendida. O
+    // cartão só aparece para quem ainda tem uma ativa, e só para encerrar
+    // — sem isso, não haveria como fechar as que restaram.
     var asn = p.assinatura;
-    out.push({ id: "assinatura", nome: "Assinatura",
-      contratado: assinaturaAtiva(p),
-      detalhe: assinaturaAtiva(p)
-        ? ("desde " + ddmm(asn.inicio)
+    if (assinaturaAtiva(p)) out.push({ id: "assinatura", nome: "Assinatura",
+      contratado: true, semVenda: true,
+      detalhe: ("desde " + ddmm(asn.inicio)
           + (asn.valor ? " \u00b7 " + asn.valor + "/m\u00eas" : "")
           + (assinaturaNoAviso(p) ? " \u00b7 CANCELADA \u00b7 acesso at\u00e9 " + ddmm(asn.ate) : "")
           + (assinaturaFalhando(p) ? " \u00b7 COBRAN\u00c7A N\u00c3O PASSOU em " + ddmm(asn.falhou) : "")
           + (asn.pedidoCancelamento && !asn.encerrada
-              ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
-        : "",
+              ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : "")),
       pago: null });
 
     var pr = p.programa;
-    out.push({ id: "programa", nome: "Acompanhamento",
+    out.push({ id: "programa", nome: "Desafio da semana",
       contratado: !!(pr && !pr.encerrado),
       detalhe: pr && !pr.encerrado
-        ? pr.nome + " · " + pr.valor
+        ? pr.nome + (pr.valor ? " · " + pr.valor : "")
           + (pr.desde ? " · desde " + ddmm(pr.desde) : "")
         : "",
-      pago: pr && !pr.encerrado ? !!pr.pago : null });
+      pago: null });
 
     return out;
   }
@@ -12369,7 +12351,6 @@
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
     setParticularPago: setParticularPago, produtosDe: produtosDe,
-    PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
     setProgramaPago: setProgramaPago, participantesPrograma: participantesPrograma,
     pagamentosPendentesPrograma: pagamentosPendentesPrograma,
