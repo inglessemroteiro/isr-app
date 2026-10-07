@@ -205,3 +205,23 @@ Units of study visual: o que cada turma estuda agora.
 5. **Acessibilidade:** revisar contraste dos labels 8px uppercase e navegação por teclado nos painéis expansíveis.
 6. **Turmas & Projetos:** quando os links reais chegarem, definir hierarquia entre Syllabus / Teacher's Guide / Student's Notebook / Calendar no card.
 7. **Central:** avaliar se os indicadores dos cards são os melhores KPIs de cada área.
+
+---
+
+## Pesquisa de horários — `horarios.html` + `apps-script-horarios.js`
+
+Página pública para a turma marcar disponibilidade (livre, talvez, ocupado) em uma grade de horários, com fuso horário obrigatório. A professora cria quantas pesquisas quiser, cada uma com o próprio link (`horarios.html?p=código`).
+
+**Instalação (uma vez):** planilha nova → Extensões → Apps Script → colar `apps-script-horarios.js` → trocar `PIN_ADMIN` → Implantar como App da Web (executar como você, acesso: qualquer pessoa) → colar a URL `/exec` em `BACKEND_PADRAO` dentro de `horarios.html`.
+
+**Abas:**
+
+| Aba | O que faz |
+|---|---|
+| Minha disponibilidade | Nome, e-mail, fuso e a grade para pintar. Salva automaticamente após pintar e pelo botão. O mesmo e-mail recarrega a resposta anterior. |
+| Grupo | Mapa de calor com quantas pessoas estão livres em cada bloco, no fuso escolhido. Toque no bloco mostra quem pode. |
+| Administração (senha) | Lista de pesquisas com link para copiar, formulário da pesquisa (título, descrição, período, horas, bloco, fuso), pontos de confluência ranqueados, participantes (com remoção) e e-mail para todas (sai da conta Google do script, alunas em Cco). |
+
+**Tipos de pesquisa:** `datas` (cada dia do período vira uma coluna) e `semanal` (dias da semana repetindo durante o período, para eventos longos). Os blocos são calculados dia a dia na base de fusos do navegador, então mudanças de horário de verão em qualquer país entram na conta: no tipo semanal, a análise informa quando alguém está livre só em parte do período.
+
+**Dados:** abas `Pesquisas` e `Respostas` na planilha, uma linha por pesquisa e por resposta (coluna `json` com o registro completo).
