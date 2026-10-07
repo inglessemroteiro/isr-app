@@ -172,7 +172,7 @@ main{max-width:1200px;margin:0 auto;padding:20px 16px 56px;display:grid;gap:20px
             <button class="brush" type="button" data-brush="busy" aria-pressed="false"><i class="sw busy"></i>Ocupado</button>
           </div>
         </div>
-        <p class="hint" id="gridHint">Clique ou arraste sobre os blocos. Tudo começa como ocupado. Os horários aparecem no fuso que você escolheu.</p>
+        <p class="hint" id="gridHint">Clique ou arraste sobre os blocos. Tudo começa como ocupado. Clique duas vezes num bloco para apagar. Os horários aparecem no fuso que você escolheu.</p>
         <div class="grid-wrap" id="myGridWrap"><div class="empty" id="myEmpty"><strong>A grade aparece aqui</strong><br>quando a pesquisa carregar.</div><div class="grid" id="myGrid" hidden></div></div>
         <div class="row split">
           <div class="legend"><span><i class="sw free"></i>Livre</span><span><i class="sw maybe"></i>Talvez</span><span><i class="sw busy"></i>Ocupado</span></div>
@@ -400,8 +400,8 @@ function renderMyGrid(){
   wrap.style.setProperty('--cols',g.cols.length);
   wrap.innerHTML=gridHtml(g,function(k,hour){ return '<div class="cell'+(hour?' hour':'')+(S.free[k]?' free':S.maybe[k]?' maybe':'')+'" data-k="'+esc(k)+'"></div>'; });
   wrap.hidden=false; empty.hidden=true;
-  if(S.pesq.modo==='semanal'){ $('#gridTitle').textContent='Pinte a sua semana típica'; $('#gridHint').textContent='Marque os dias da semana e horários em que você costuma estar livre durante o período. A grade está no seu fuso. Se o horário mudar em algum país durante o período, o sistema recalcula o encontro de cada semana.'; }
-  else { $('#gridTitle').textContent='Pinte os seus horários'; $('#gridHint').textContent='Clique ou arraste sobre os blocos. Tudo começa como ocupado. Os horários aparecem no fuso que você escolheu.'; }
+  if(S.pesq.modo==='semanal'){ $('#gridTitle').textContent='Pinte a sua semana típica'; $('#gridHint').textContent='Marque os dias da semana e horários em que você costuma estar livre durante o período. Clique duas vezes num bloco para apagar. A grade está no seu fuso. Se o horário mudar em algum país durante o período, o sistema recalcula o encontro de cada semana.'; }
+  else { $('#gridTitle').textContent='Pinte os seus horários'; $('#gridHint').textContent='Clique ou arraste sobre os blocos. Tudo começa como ocupado. Clique duas vezes num bloco para apagar. Os horários aparecem no fuso que você escolheu.'; }
 }
 function applyBrush(cell){
   var k=cell.getAttribute('data-k'); if(!k) return;
@@ -415,6 +415,8 @@ var painting=false, myWrap=$('#myGridWrap');
 myWrap.addEventListener('pointerdown',function(e){ if($('#panToggle').checked&&e.pointerType==='touch') return; var c=e.target.closest('.cell:not(.none)'); if(!c) return; painting=true; applyBrush(c); e.preventDefault(); });
 myWrap.addEventListener('pointermove',function(e){ if(!painting) return; var el=document.elementFromPoint(e.clientX,e.clientY); var c=el&&el.closest('.cell:not(.none)'); if(c&&myWrap.contains(c)) applyBrush(c); });
 function stopPaint(){ if(painting){ painting=false; scheduleAutosave(); } }
+function eraseCell(cell){ var k=cell.getAttribute('data-k'); if(!k) return; if(!S.free[k]&&!S.maybe[k]) return; delete S.free[k]; delete S.maybe[k]; cell.classList.remove('free','maybe'); markDirty(); scheduleAutosave(); }
+myWrap.addEventListener('dblclick',function(e){ var c=e.target.closest('.cell:not(.none)'); if(c){ eraseCell(c); e.preventDefault(); } });
 window.addEventListener('pointerup',stopPaint); window.addEventListener('pointercancel',stopPaint);
 $('#panToggle').addEventListener('change',function(e){ myWrap.classList.toggle('pan',e.target.checked); });
 $$('.brush').forEach(function(b){ b.addEventListener('click',function(){ S.brush=b.getAttribute('data-brush'); $$('.brush').forEach(function(x){x.setAttribute('aria-pressed',x===b)}); }); });
