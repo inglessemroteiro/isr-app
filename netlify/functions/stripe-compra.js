@@ -118,8 +118,9 @@ function erroSysteme(r, oQue) {
   return new Error("systeme.io " + oQue + " respondeu " + r.status + (msg ? ": " + msg : ""));
 }
 
+// o systeme só aceita limite entre 10 e 100 (menos que isso responde 422)
 async function buscarContato(email) {
-  const r = await systeme("GET", "/contacts?" + new URLSearchParams({ email, limit: "1" }));
+  const r = await systeme("GET", "/contacts?" + new URLSearchParams({ email, limit: "10" }));
   if (!r.ok) throw erroSysteme(r, "ao buscar o contato");
   const itens = (r.data && r.data.items) || [];
   return itens.find((c) => String(c.email || "").toLowerCase() === email) || itens[0] || null;
