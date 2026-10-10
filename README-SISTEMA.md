@@ -225,3 +225,40 @@ Página pública para a turma marcar disponibilidade (livre, talvez, ocupado) em
 **Tipos de pesquisa:** `datas` (cada dia do período vira uma coluna) e `semanal` (dias da semana repetindo durante o período, para eventos longos). Os blocos são calculados dia a dia na base de fusos do navegador, então mudanças de horário de verão em qualquer país entram na conta: no tipo semanal, a análise informa quando alguém está livre só em parte do período.
 
 **Dados:** abas `Pesquisas` e `Respostas` na planilha, uma linha por pesquisa e por resposta (coluna `json` com o registro completo).
+
+---
+
+## Compra no Stripe → tag no systeme.io — `netlify/functions/stripe-compra.js`
+
+Substitui o Zap. A pessoa compra no link de checkout do Stripe (com ou sem order bump), o Stripe avisa a função, a função aplica no contato do systeme.io uma tag por produto comprado, e as regras de automação do systeme ("tag adicionada → enviar e-mail") mandam o e-mail de cada produto. Comprou dois produtos, recebe duas tags e dois e-mails. Não existe regra por combinação.
+
+**Por que o Zap não rodava:** link de pagamento com produto de compra única não gera invoice; o gatilho "New Invoice" nunca disparava. O evento certo é `checkout.session.completed`, e é ele que traz os itens da compra, order bump incluído.
+
+**Instalação (uma vez):**
+
+1. **Netlify** → Site configuration → Environment variables. Criar:
+   - `SYSTEME_API_KEY` → systeme.io → Configurações → Chave de API pública.
+   - `STRIPE_WEBHOOK_SECRET` → vem do passo 3.
+   - `STRIPE_API_KEY` já existe (é a do extrato). Se for chave restrita, ela precisa da permissão de leitura em **Checkout Sessions** (Stripe → Developers → API keys → editar a chave).
+   - `SLACK_WEBHOOK_URL` já existe; cada compra e cada problema aparecem lá.
+2. Fazer **Trigger deploy** no Netlify para as variáveis valerem.
+3. **Stripe** → Developers → Webhooks → Add endpoint:
+   - URL: `https://SEU-SITE.netlify.app/.netlify/functions/stripe-compra`
+   - Eventos: `checkout.session.completed` e `checkout.session.async_payment_succeeded`
+   - Depois de criar, copiar o **Signing secret** (`whsec_...`) para `STRIPE_WEBHOOK_SECRET` no Netlify e fazer novo Trigger deploy.
+4. **Cada produto no Stripe** → Catálogo de produtos → o produto → Metadados → chave `tag`, valor = nome da tag no systeme (ex.: `comprou-ebook`). Mais de uma tag: separar por vírgula. Vale para o produto principal e para cada order bump.
+5. **systeme.io** → para cada produto, uma regra de automação: gatilho "Tag adicionada" (a mesma tag do passo 4) → ação "Enviar e-mail" com o e-mail que entrega o produto. Se a tag não existir, a função cria na primeira compra, mas a regra precisa existir para o e-mail sair.
+
+**Produto novo no futuro:** criar no Stripe com o metadado `tag`, criar a tag e a regra no systeme. Nada muda no código.
+
+**Testar:** no Stripe, Developers → Webhooks → o endpoint → "Send test event" só testa a assinatura (o evento de teste não tem compra real, a função responde `ignorado`). O teste de verdade é uma compra no modo de teste do Stripe, com o webhook e a chave de teste, ou uma compra real de valor baixo.
+
+**Quando algo dá errado:**
+
+| Sintoma | O que é | O que fazer |
+|---|---|---|
+| Slack: "Sem tag no Stripe: Produto X" | O produto não tem o metadado `tag` | Preencher o metadado e, no Stripe → Webhooks → o endpoint → aba do evento, clicar **Resend** |
+| Slack: "não entrou no systeme" | O systeme.io recusou (chave, fora do ar) | A função responde erro e o Stripe reenvia sozinho por até 3 dias; conferir `SYSTEME_API_KEY` |
+| Stripe mostra o endpoint com erro 400 "assinatura inválida" | `STRIPE_WEBHOOK_SECRET` não bate | Copiar de novo o Signing secret do endpoint certo (teste e produção têm segredos diferentes) |
+| Stripe mostra erro 500 "Falta configurar" | Variável não existe no Netlify | Criar a variável e fazer Trigger deploy |
+| Boleto/Pix: tag só chega depois | `completed` chega com pagamento pendente | Normal: a tag entra no `async_payment_succeeded`, quando o dinheiro cai |
