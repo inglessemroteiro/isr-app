@@ -35,6 +35,16 @@
   // a coluna pesada. A fonte vem da página quando ela já a carrega; se não
   // carregar, a coluna busca sozinha e cai em Helvetica se não chegar.
   var FONTE = "Inter,'Helvetica Neue',Helvetica,sans-serif";
+  // ── a escala de peso das telas do desenho novo ──────────────
+  // Em Inter, 700 e 800 em texto pequeno sobre fundo claro cansam a
+  // leitura: a tela inteira pede atenção ao mesmo tempo. A regra é uma
+  // só — o tamanho hierarquiza, o peso apenas destaca:
+  //
+  //   800  o título da tela, e nada mais
+  //   700  nome de pessoa, título de bloco e número grande
+  //   600  valor de sinal, botão, etiqueta, rótulo
+  //   500  item do menu
+  //   400  texto corrido e ícone
   function garantirFonte() {
     try {
       if (document.querySelector('link[href*="family=Inter"]')) return;
@@ -162,7 +172,7 @@
     quem.innerHTML = "";
     var qn = document.createElement("div");
     qn.textContent = user.nome;
-    qn.style.cssText = "font-size:14px;font-weight:700;color:#fff;";
+    qn.style.cssText = "font-size:14px;font-weight:600;color:#fff;";
     var qp = document.createElement("div");
     qp.textContent = PERFIL_LABEL[user.perfil] || user.perfil || "";
     quem.appendChild(qn); quem.appendChild(qp);
@@ -175,7 +185,7 @@
       var a = document.createElement("a");
       a.href = encodeURI(it.href);
       a.style.cssText = "display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;"
-        + "font-size:14px;font-weight:600;text-decoration:none;color:#fff;"
+        + "font-size:14px;font-weight:500;text-decoration:none;color:#fff;"
         + (on ? "background:rgba(255,255,255,0.14);" : "");
       var ic = document.createElement("span");
       ic.textContent = it.icone;
@@ -190,7 +200,7 @@
       if (nums[it.id]) {
         var bd = document.createElement("span");
         bd.textContent = String(nums[it.id]);
-        bd.style.cssText = "flex:none;font-size:11px;font-weight:800;color:#fc9082;";
+        bd.style.cssText = "flex:none;font-size:11px;font-weight:700;color:#fc9082;";
         a.appendChild(bd);
       }
       a.onmouseenter = function () { if (!on) a.style.background = "rgba(255,255,255,0.08)"; };
@@ -288,7 +298,7 @@
     marca.style.cssText = "height:24px;width:auto;";
     var nomeTopo = document.createElement("span");
     nomeTopo.textContent = user.nome;
-    nomeTopo.style.cssText = "font-size:12px;font-weight:700;color:rgba(255,255,255,0.8);";
+    nomeTopo.style.cssText = "font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);";
     topo.appendChild(burger); topo.appendChild(marca); topo.appendChild(nomeTopo);
 
     function abrir() {
@@ -345,7 +355,7 @@
       var bt = document.createElement("button");
       bt.textContent = "Tentar de novo";
       bt.style.cssText = "border:1px solid #e0a79c;background:#fff;color:#a4483a;font-size:11px;"
-        + "font-weight:700;font-family:inherit;padding:5px 12px;border-radius:999px;cursor:pointer;";
+        + "font-weight:600;font-family:inherit;padding:5px 12px;border-radius:999px;cursor:pointer;";
       bt.onclick = function () {
         bt.disabled = true; txt.textContent = "Buscando os dados da escola neste aparelho…";
         try {

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-e",
+  numero: "2026.10.13-f",
   data: "13/10/2026",
-  nota: "Alunas no desenho novo, em ISR - Alunas v3 ou pelo atalho /alunas.html. A casca mudou e a lógica é a mesma: termômetro, filtros, lote de início das aulas, registros duplicados, retenção e ex-alunas, tudo no lugar"
+  nota: "As telas do desenho novo ficam mais leves de ler: uma escala de peso só, em que o tamanho hierarquiza e o peso apenas destaca. 800 fica para o título da tela, 700 para número grande, 600 para nome e valor, 500 para rótulo em caixa alta e item do menu, 400 para texto corrido"
 };
