@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-d",
+  numero: "2026.10.13-e",
   data: "13/10/2026",
-  nota: "A Central nova fica mais leve: a coluna lateral passa a usar a Inter do desenho, em vez da Helvetica, onde o peso 600 virava negrito cheio; os nomes da fila perdem o sublinhado fixo, que em uma fila só de pessoas desenhava uma grade de traços; e o título volta aos 30px do desenho"
+  nota: "Alunas no desenho novo, em ISR - Alunas v3 ou pelo atalho /alunas.html. A casca mudou e a lógica é a mesma: termômetro, filtros, lote de início das aulas, registros duplicados, retenção e ex-alunas, tudo no lugar"
 };
