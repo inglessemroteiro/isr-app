@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-c",
+  numero: "2026.10.13-d",
   data: "13/10/2026",
-  nota: "Os ícones da coluna lateral deixam de ser negrito: a 600, vinte glifos em coluna pesavam mais que os nomes ao lado deles"
+  nota: "A Central nova fica mais leve: a coluna lateral passa a usar a Inter do desenho, em vez da Helvetica, onde o peso 600 virava negrito cheio; os nomes da fila perdem o sublinhado fixo, que em uma fila só de pessoas desenhava uma grade de traços; e o título volta aos 30px do desenho"
 };
