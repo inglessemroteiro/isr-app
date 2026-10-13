@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-f",
+  numero: "2026.10.13-g",
   data: "13/10/2026",
-  nota: "As telas do desenho novo ficam mais leves de ler: uma escala de peso só, em que o tamanho hierarquiza e o peso apenas destaca. 800 fica para o título da tela, 700 para número grande, 600 para nome e valor, 500 para rótulo em caixa alta e item do menu, 400 para texto corrido"
+  nota: "Painel do professor no desenho novo, em ISR - Painel v3 ou pelo atalho /professor.html. Próximas aulas, chamada com o diário do ciclo, particulares da semana, chamadas já feitas para corrigir, turmas e horas de aula extra — tudo no lugar, com a lógica de hoje reaproveitada inteira"
 };

@@ -80,7 +80,7 @@
   // sem ajudar ninguém a achar nada.
   var ITENS = [
     { id: "central", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: null },
-    { id: "professor", icone: "✎", label: "Painel do professor", href: "ISR - Painel do Professor.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
+    { id: "professor", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
     { id: "alunas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "crm", icone: "◎", label: "CRM · Funil", href: "ISR - CRM (Funil de Leads).dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "mensagens", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
