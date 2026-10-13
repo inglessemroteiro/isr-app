@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-a",
+  numero: "2026.10.13-b",
   data: "13/10/2026",
-  nota: "Entram os dois desenhos vindos do Claude Design — ISR Gestao v3 e Student Portal v2 — como páginas de comparação, com o design system completo e os logos. Nenhuma tela do sistema mudou: os desenhos ainda não têm dado real e abrem pelo endereço direto, fora do menu"
+  nota: "A Central no desenho novo, com dado real: coluna lateral com os 20 destinos e o número de pendências ao lado de cada um, fila de hoje, aulas sem chamada, metas do ciclo e os quatro cartões por área. Abre em ISR - Central v3; a Central de hoje continua no ar, intacta"
 };
