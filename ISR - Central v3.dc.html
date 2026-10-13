@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Central</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:#164951}*{box-sizing:border-box}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; display: flex; flex-direction: column; gap: 20px; max-width: 1180px;">
+
+  <!-- CABEÇALHO -->
+  <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+    <div style="min-width: 0;">
+      <div style="font-size: 12px; font-weight: 700; color: #8a7465;">{{ eyebrow }}</div>
+      <h1 style="margin: 2px 0 0; font-size: 34px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Central</h1>
+    </div>
+    <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar pessoa…" style="background: #fff; border: 0; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-family: inherit; color: #164951; outline: none; width: 260px; max-width: 100%;" />
+  </header>
+
+  <!-- RESULTADO DA BUSCA -->
+  <sc-if value="{{ buscando }}">
+    <section style="background: #fff; border-radius: 24px; padding: 14px 22px;">
+      <div style="font-size: 12px; font-weight: 700; color: #8a7465; margin-bottom: 4px;">{{ buscaResumo }}</div>
+      <sc-for list="{{ achados }}" as="ac" hint-placeholder-count="4">
+        <a href="{{ ac.href }}" style="display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid #f2ebe3; text-decoration: none; flex-wrap: wrap;">
+          <span style="font-size: 15px; font-weight: 700; color: #348a8e; min-width: 160px;">{{ ac.nome }}</span>
+          <span style="border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; background: {{ ac.stBg }}; color: {{ ac.stFg }};">{{ ac.stLabel }}</span>
+          <span style="font-size: 13px; color: #1d5a63; flex: 1; min-width: 140px;">{{ ac.ctx }}</span>
+        </a>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- PARA HOJE -->
+  <section style="background: #fff; border-radius: 24px; padding: 20px 22px;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+      <div style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em;">Para hoje · {{ filaCount }}</div>
+      <div style="font-size: 12px; font-weight: 700; color: #8a7465;">{{ filaSub }}</div>
+    </div>
+    <sc-if value="{{ filaVazia }}">
+      <div style="padding: 24px 2px 6px; font-size: 15px; color: #1d5a63; line-height: 1.6;">Nenhum item na fila. Os itens aparecem quando uma regra é acionada: parcela vencida, follow-up do dia, chamada não feita, integração parada.</div>
+    </sc-if>
+    <sc-if value="{{ temEquipe }}">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
+        <span style="font-size: 12px; font-weight: 700; color: #8a7465;">filas da equipe</span>
+        <sc-for list="{{ equipe }}" as="eq" hint-placeholder-count="3">
+          <span style="background: #f2ebe3; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700;">{{ eq.label }}</span>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="display: flex; flex-direction: column; margin-top: 8px;">
+      <sc-for list="{{ fila }}" as="q" hint-placeholder-count="6">
+        <div style="display: flex; gap: 14px; align-items: center; padding: 14px 2px; border-top: 1px solid #f2ebe3; flex-wrap: wrap;">
+          <span style="width: 40px; height: 40px; border-radius: 12px; background: {{ q.tint }}; display: grid; place-items: center; font-size: 17px; flex: none;">{{ q.icone }}</span>
+          <div style="flex: 1; min-width: 200px;">
+            <div style="display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;">
+              <a href="{{ q.perfilHref }}" style="font-size: 15px; font-weight: 800; color: {{ q.nomeCor }}; text-decoration: {{ q.deco }};">{{ q.nome }}</a>
+              <span style="font-size: 11px; font-weight: 700; color: #8a7465;">{{ q.dono }}</span>
+            </div>
+            <div style="font-size: 14px; color: #1d5a63; margin-top: 2px;">{{ q.motivo }}</div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <span onclick="{{ q.onAdiar }}" style="font-size: 12px; font-weight: 700; color: #8a7465; cursor: pointer;">adiar</span>
+            <sc-if value="{{ q.temFeito }}">
+              <span onclick="{{ q.onFeito }}" style="font-size: 12px; font-weight: 700; color: #3d6b22; cursor: pointer;">feito</span>
+            </sc-if>
+            <a href="{{ q.acaoHref }}" style="background: #164951; color: #fff; border-radius: 999px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 3px 0 #0e3339;">{{ q.acao }}</a>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- AULAS SEM CHAMADA -->
+  <sc-if value="{{ temSemChamada }}">
+    <section style="background: #fdf6ec; border-radius: 24px; padding: 18px 22px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 800; color: #c98a3a;">Aulas sem chamada</div>
+        <span style="font-size: 12px; font-weight: 700; color: #8a7465;">{{ semChamadaResumo }}</span>
+      </div>
+      <p style="margin: 4px 0 10px; font-size: 13px; color: #1d5a63; line-height: 1.55;">{{ semChamadaTexto }}</p>
+      <sc-for list="{{ semChamada }}" as="sc" hint-placeholder-count="3">
+        <div style="padding: 10px 0; border-top: 1px solid #f0dcc0;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 160px;">
+              <div style="font-size: 14px; font-weight: 800;">{{ sc.professora }}</div>
+              <div style="font-size: 12.5px; color: #8a7465; margin-top: 2px;">{{ sc.detalhe }}</div>
+            </div>
+            <a href="{{ sc.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 800; color: #a4783a;">Abrir o painel</a>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+            <sc-for list="{{ sc.aulas }}" as="au" hint-placeholder-count="3">
+              <a href="{{ au.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #6b6155;">{{ au.label }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- METAS DO CICLO -->
+  <section style="background: #fff; border-radius: 24px; padding: 18px 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+    <sc-for list="{{ metas }}" as="m" hint-placeholder-count="2">
+      <div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;"><span>{{ m.label }}</span><span>{{ m.valor }}</span></div>
+        <div style="height: 10px; background: #f2ebe3; border-radius: 5px; margin-top: 8px; overflow: hidden;"><div style="height: 10px; border-radius: 5px; background: {{ m.cor }}; width: {{ m.pct }};"></div></div>
+        <div style="font-size: 11.5px; color: #8a7465; margin-top: 5px;">{{ m.sub }}</div>
+      </div>
+    </sc-for>
+  </section>
+
+  <!-- CARTÕES POR ÁREA -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px;">
+    <sc-for list="{{ areas }}" as="a" hint-placeholder-count="4">
+      <section style="background: #fff; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="height: 8px; background: {{ a.faixa }};"></div>
+        <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1;">
+          <div style="font-size: 16px; font-weight: 800;">{{ a.titulo }}</div>
+          <sc-for list="{{ a.linhas }}" as="st">
+            <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px;"><span style="color: #1d5a63;">{{ st.k }}</span><b style="color: {{ st.cor }};">{{ st.v }}</b></div>
+          </sc-for>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 6px;">
+            <sc-for list="{{ a.links }}" as="l">
+              <a href="{{ l.href }}" style="background: #f2ebe3; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 700; text-decoration: none; color: #164951;">{{ l.label }} →</a>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+
+  <!-- RODAPÉ -->
+  <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; font-weight: 700; color: #348a8e;">
+    <a href="https://docs.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">Atas (Google Docs)</a>
+    <a href="https://drive.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">ISR Financeiro (Excel)</a>
+    <a href="ISR%20-%20Central.dc.html" style="color: #8a7465; text-decoration: none;">Central antiga</a>
+  </div>
+
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // A Central no desenho novo: a mesma fila e os mesmos números da
+  // Central de hoje, na coluna lateral e nos cartões do projeto de
+  // design. Nada aqui é dado de exemplo — tudo sai do crm-data.
+  state = { tick: 0, busca: "" };
+  buscaRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.onDados = () => this.bump();
+    window.addEventListener("isr-dados", this.onDados);
+    window.addEventListener("isr-dados-novos", this.onDados);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.onDados);
+    window.removeEventListener("isr-dados-novos", this.onDados);
+  }
+
+  hojeIso() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
+      + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { eyebrow: "", fila: [], filaCount: "0", filaVazia: true, filaSub: "",
+      equipe: [], temEquipe: false, metas: [], areas: [], achados: [], buscando: false,
+      buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {},
+      semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "" };
+    if (!CRM) return vazio;
+
+    let user = {};
+    try { user = CRM.gestaoUser() || {}; } catch (e) {}
+    const perfil = user.perfil || "gestora";
+    const meuNome = user.nome || "";
+    const vePelaEscola = perfil === "gestora" || perfil === "operacao";
+
+    const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+    const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+    const hoje = new Date();
+
+    // ── a fila de hoje ────────────────────────────────────────
+    // A mesma de sempre: filaParaHoje devolve o que cada regra acendeu.
+    // Aqui ela ganha o ícone e o tom de fundo do desenho novo.
+    const TOM = {
+      parcela_atrasada: ["#fde4df", "€"], parcela_a_vencer: ["#fdf3d6", "€"],
+      cobranca_falhou: ["#fde4df", "€"], falta_recente: ["#fdf3d6", "◷"],
+      checkin_agendado: ["#e5f2f6", "○"], onboarding_pendente: ["#e8f5dd", "✓"],
+      onboarding_travado: ["#fde4df", "✓"], renovacao_aberta: ["#ede6df", "↻"],
+      avaliacao_baixa: ["#fde4df", "☆"], sem_contato: ["#e5f2f6", "✉︎"],
+      followup_lead: ["#e5f2f6", "◎"], folha_dia15: ["#ede6df", "≡"],
+      reativar: ["#ede6df", "↺"], chamada_pendente: ["#fdf3d6", "✎"]
+    };
+    const filaAll = (CRM.filaParaHoje(perfil, meuNome) || [])
+      .filter(x => vePelaEscola || !x.dono || x.dono === meuNome);
+    const fila = filaAll.slice(0, 12).map(item => {
+      const tom = TOM[item.sinal] || ["#f2ebe3", "•"];
+      const ehPessoa = item.pessoaId && String(item.pessoaId).indexOf(":") < 0;
+      return {
+        nome: item.nome, motivo: item.motivo,
+        dono: perfil === "gestora" && item.dono ? item.dono : "",
+        tint: tom[0], icone: tom[1],
+        nomeCor: ehPessoa ? "#348a8e" : "#164951",
+        deco: ehPessoa ? "underline" : "none",
+        perfilHref: ehPessoa ? "ISR%20-%20Perfil.dc.html?id=" + item.pessoaId : "#",
+        acao: item.acao || "Abrir",
+        acaoHref: item.href ? encodeURI(item.href)
+          : (ehPessoa ? "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId
+              + (item.tpl ? "&tpl=" + item.tpl : "") : "#"),
+        temFeito: !!ehPessoa && item.regra !== "RT",
+        onFeito: () => {
+          const TIPO = { faltou: "falta", atrasada: "cobranca", renovacao: "renovacao" };
+          CRM.registrarToque(item.pessoaId, TIPO[item.toque] || "checkin",
+            "Pela Central · " + (item.motivo || ""));
+          if (item.sinal === "checkin_agendado") CRM.registrarCheckinFeito(item.pessoaId);
+          CRM.adiarItem(item.sinal || item.regra, item.pessoaId);
+          this.bump();
+        },
+        onAdiar: () => { CRM.adiarItem(item.sinal || item.regra, item.pessoaId); this.bump(); }
+      };
+    });
+
+    // filas da equipe: quem vê a escola inteira precisa saber se a fila
+    // de alguém está crescendo sem ninguém olhar
+    const equipe = [];
+    if (vePelaEscola) {
+      const porDono = {};
+      (CRM.filaParaHoje("gestora", meuNome) || []).forEach(x => {
+        if (!x.dono || x.dono === meuNome) return;
+        porDono[x.dono] = (porDono[x.dono] || 0) + 1;
+      });
+      Object.keys(porDono).sort().forEach(d => {
+        equipe.push({ label: d + " · " + porDono[d] + " na fila" });
+      });
+    }
+
+    // ── aulas sem chamada ─────────────────────────────────────
+    const grupos = (CRM.chamadasPendentesPorProfessora ? CRM.chamadasPendentesPorProfessora() : [])
+      .filter(g => g.professora)
+      .filter(g => vePelaEscola || g.professora === meuNome);
+    const nAulas = grupos.reduce((t, g) => t + g.n, 0);
+    const linkDaAula = (a) => a.tipo === "extra" && a.eventoId
+      ? "ISR%20-%20Painel%20do%20Professor.dc.html?evento=" + encodeURIComponent(a.eventoId)
+      : "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(a.label)
+        + "&data=" + a.data + "&retro=1";
+
+    // ── metas do ciclo ────────────────────────────────────────
+    // As matrículas contam pelo fechamento do contrato, como em
+    // Matrículas do ciclo — não pela data em que as aulas começam.
+    const mc = CRM.matriculasDoCiclo ? CRM.matriculasDoCiclo() : { feitas: 0, meta: 0 };
+    const pm = CRM.progressoMetas();
+    const pct = (a, b) => (b > 0 ? Math.min(100, Math.round(100 * a / b)) : 0) + "%";
+
+    // ── números dos cartões ───────────────────────────────────
+    const alunas = CRM.alunasPainel() || [];
+    const emRisco = alunas.filter(a => (a.riscos || []).length).length;
+    const ocup = CRM.ocupacaoTurmas() || [];
+    const vagas = ocup.reduce((t, u) => t + Math.max(0, u.vagas || 0), 0);
+    const cob = CRM.cobrancaResumo ? CRM.cobrancaResumo() : { atrasadas: 0, receber: {} };
+    const ret = CRM.retencao ? CRM.retencao(12) : { taxa: null };
+    const $ = (m, v) => CRM.fmtMoney(m, v);
+    const duas = (o) => {
+      const p = [];
+      if (o && o["R$"]) p.push($("R$", o["R$"]));
+      if (o && o["€"]) p.push($("€", o["€"]));
+      return p.length ? p.join(" · ") : "—";
+    };
+    const mkt = CRM.funilResumo ? CRM.funilResumo() : null;
+    const leads = CRM.getLeads ? CRM.getLeads() : [];
+    const leadsSemana = leads.filter(l => {
+      const d = CRM.relativeDays ? CRM.relativeDays(l.entrouEm) : "";
+      return d === "Hoje" || d === "Ontem" || /^[1-7] dias/.test(String(d));
+    }).length;
+
+    const AREAS = [
+      { titulo: "Comercial", faixa: "#fc9082", perfis: ["gestora", "comercial"],
+        linhas: [
+          { k: "matrículas no ciclo", v: mc.feitas + " / " + mc.meta, cor: "#164951" },
+          { k: "leads no funil", v: String(leads.filter(l => l.estagio !== "matriculado" && l.estagio !== "perdido").length), cor: "#164951" }
+        ],
+        links: [{ label: "CRM", href: "ISR%20-%20CRM%20(Funil%20de%20Leads).dc.html" },
+                { label: "Matrículas do ciclo", href: "ISR%20-%20Matr%C3%ADculas%20do%20ciclo.dc.html" }] },
+      { titulo: "Gestão", faixa: "#7fb8be", perfis: ["gestora", "operacao", "comercial"],
+        linhas: [
+          { k: "parcelas atrasadas", v: String(cob.atrasadas || 0), cor: cob.atrasadas ? "#a3392c" : "#3d6b22" },
+          { k: "a receber neste mês", v: duas(cob.receber), cor: "#164951" }
+        ],
+        links: [{ label: "Contas a receber", href: "ISR%20-%20Cobran%C3%A7a.dc.html" }]
+          .concat(perfil === "gestora" || perfil === "operacao"
+            ? [{ label: "Caixa", href: "ISR%20-%20Caixa.dc.html" }] : []) },
+      { titulo: "Pedagógico", faixa: "#9ec970", perfis: ["gestora", "professora", "operacao"],
+        linhas: [
+          { k: "alunas em risco", v: String(emRisco), cor: emRisco ? "#a3392c" : "#3d6b22" },
+          { k: "aulas sem chamada", v: String(nAulas), cor: nAulas ? "#a3392c" : "#3d6b22" },
+          { k: "vagas abertas", v: String(vagas), cor: "#164951" }
+        ],
+        links: [{ label: "Turmas", href: "ISR%20-%20Turmas%20e%20Projetos.dc.html" },
+                { label: "Painel do professor", href: "ISR%20-%20Painel%20do%20Professor.dc.html" }] },
+      { titulo: "Marketing", faixa: "#e2c8b5", perfis: ["gestora", "comercial"],
+        linhas: [
+          { k: "leads na semana", v: String(leadsSemana), cor: "#164951" },
+          { k: "renovação no ano", v: ret.taxa === null ? "—" : ret.taxa + "%", cor: "#164951" }
+        ],
+        links: [{ label: "Marketing", href: "ISR%20-%20Marketing.dc.html" }] }
+    ].filter(a => a.perfis.indexOf(perfil) >= 0 || (user.papeis || []).some(pp => a.perfis.indexOf(pp) >= 0));
+
+    // ── busca de pessoa ───────────────────────────────────────
+    const bq = (this.state.busca || "").trim().toLowerCase();
+    const ST = { lead: ["lead", "#e5f2f6", "#164951"], aluna: ["aluna", "#e8f5dd", "#3d6b22"],
+      mvs: ["MVS", "#e8f5dd", "#3d6b22"], pausada: ["pausada", "#fdf3d6", "#7a5c00"],
+      programa: ["desafio", "#e5f2f6", "#164951"], "ex-aluna": ["ex-aluna", "#ede6df", "#8a7465"] };
+    const achados = bq.length >= 2
+      ? (CRM.getPessoas() || []).filter(p => (p.nome || "").toLowerCase().indexOf(bq) >= 0)
+          .slice(0, 8).map(p => {
+            const st = ST[p.status] || [p.status || "—", "#f2ebe3", "#8a7465"];
+            return { nome: p.nome, href: "ISR%20-%20Perfil.dc.html?id=" + p.id,
+              stLabel: st[0], stBg: st[1], stFg: st[2],
+              ctx: [p.turma, p.nivel, p.whatsapp].filter(Boolean).join(" · ") || "sem turma" };
+          })
+      : [];
+
+    return {
+      eyebrow: "central · " + DIAS[hoje.getDay()] + ", " + hoje.getDate() + " "
+        + MES[hoje.getMonth()] + " · " + (meuNome || "equipe"),
+
+      buscaRef: this.buscaRef,
+      onBusca: e => this.setState({ busca: e.target.value }),
+      buscando: bq.length >= 2,
+      buscaResumo: achados.length
+        ? achados.length + (achados.length === 1 ? " pessoa encontrada" : " pessoas encontradas")
+        : "Nenhuma pessoa com esse nome",
+      achados,
+
+      fila, filaCount: String(filaAll.length), filaVazia: filaAll.length === 0,
+      filaSub: vePelaEscola ? "o que está esperando você hoje" : "sua fila de hoje",
+      equipe, temEquipe: equipe.length > 0,
+
+      temSemChamada: grupos.length > 0,
+      semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
+        + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
+      semChamadaTexto: vePelaEscola
+        ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo."
+        : "Estas aulas suas aconteceram e ficaram sem chamada.",
+      semChamada: grupos.map(g => ({
+        professora: g.professora,
+        detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
+          + " · a mais antiga em " + CRM.ddmm(g.maisAntiga),
+        href: "ISR%20-%20Painel%20do%20Professor.dc.html?prof=" + encodeURIComponent(g.professora),
+        aulas: g.aulas.slice(0, 4).map(a => ({
+          label: CRM.ddmm(a.data) + " · " + (a.tipo === "particular" ? a.quem : String(a.label).split("·")[0].trim()),
+          href: linkDaAula(a)
+        }))
+      })),
+
+      metas: [
+        { label: "Matrículas do ciclo " + (mc.ciclo || ""), valor: mc.feitas + " / " + mc.meta,
+          pct: pct(mc.feitas, mc.meta), cor: "#fc9082",
+          sub: mc.faltam ? "faltam " + mc.faltam : "meta alcançada" },
+        { label: "Renovações", valor: pm.renovacoes + " / " + pm.metaRenovacoes,
+          pct: pct(pm.renovacoes, pm.metaRenovacoes), cor: "#9ec970",
+          sub: Math.max(0, pm.metaRenovacoes - pm.renovacoes) + " em aberto" }
+      ],
+      areas: AREAS
+    };
+  }
+}
+</script>
+</body>
+</html>
