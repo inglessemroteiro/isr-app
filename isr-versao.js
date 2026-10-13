@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-b",
+  numero: "2026.10.13-c",
   data: "13/10/2026",
-  nota: "A Central no desenho novo, com dado real: coluna lateral com os 20 destinos e o número de pendências ao lado de cada um, fila de hoje, aulas sem chamada, metas do ciclo e os quatro cartões por área. Abre em ISR - Central v3; a Central de hoje continua no ar, intacta"
+  nota: "Os ícones da coluna lateral deixam de ser negrito: a 600, vinte glifos em coluna pesavam mais que os nomes ao lado deles"
 };

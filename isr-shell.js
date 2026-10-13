@@ -164,7 +164,10 @@
         + (on ? "background:rgba(255,255,255,0.14);" : "");
       var ic = document.createElement("span");
       ic.textContent = it.icone;
-      ic.style.cssText = "width:18px;text-align:center;flex:none;opacity:.8;";
+      // O ícone não herda o peso do rótulo: a 600, vinte glifos geométricos
+      // em coluna pesam mais que os vinte nomes ao lado deles, e a coluna
+      // inteira fica carregada.
+      ic.style.cssText = "width:18px;text-align:center;flex:none;font-weight:400;opacity:.7;";
       var lb = document.createElement("span");
       lb.textContent = it.label;
       lb.style.cssText = "flex:1;min-width:0;";
