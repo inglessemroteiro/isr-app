@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.02-a",
-  data: "02/10/2026",
-  nota: "O acompanhamento de € 27 por mês deixa de ser produto: sai da matrícula, do perfil e do extrato, e o programa perde o preço. O desafio da semana fica de pé — continua chegando no app da aluna, agora como parte da escola e não como venda. Quem ainda tem assinatura ativa continua podendo encerrá-la"
+  numero: "2026.10.13-a",
+  data: "13/10/2026",
+  nota: "Entram os dois desenhos vindos do Claude Design — ISR Gestao v3 e Student Portal v2 — como páginas de comparação, com o design system completo e os logos. Nenhuma tela do sistema mudou: os desenhos ainda não têm dado real e abrem pelo endereço direto, fora do menu"
 };

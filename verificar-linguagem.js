@@ -39,7 +39,11 @@ var IGNORAR_ARQUIVOS = [
   "Home Redesenhada", "Home v", "Implementacao", "Login (Magic Link)",
   "Visão Geral (Launcher)", "Tela de Aula", "Flin (IA)", "Comunidade",
   "Onboarding.dc.html", "Notificações & Renovação", "Aulas.dc.html",
-  "Importar Caderno", "App (Conectado)", "App-Conectado", "Certificado.dc.html"
+  "Importar Caderno", "App (Conectado)", "App-Conectado", "Certificado.dc.html",
+  // Protótipos vindos do Claude Design: desenho para comparar com as
+  // telas de hoje, ainda sem dado real. Quando um deles virar tela do
+  // sistema, sai desta lista e passa pela regra como as outras.
+  "ISR Gestao v3.dc.html", "Student Portal v2.dc.html"
 ];
 
 function ignorado(arquivo) {
