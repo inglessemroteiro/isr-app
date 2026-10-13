@@ -30,6 +30,20 @@
 
   var LARGURA = 252;
   var ESTREITO = 860;
+  // A coluna é desenhada em Inter. Em Helvetica não existe peso 600: o
+  // navegador sobe para o negrito cheio, e vinte linhas em negrito deixam
+  // a coluna pesada. A fonte vem da página quando ela já a carrega; se não
+  // carregar, a coluna busca sozinha e cai em Helvetica se não chegar.
+  var FONTE = "Inter,'Helvetica Neue',Helvetica,sans-serif";
+  function garantirFonte() {
+    try {
+      if (document.querySelector('link[href*="family=Inter"]')) return;
+      var l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
 
   // ── a base da escola, em qualquer aparelho ────────────────────
   // Mesmo motivo da barra de cima: o endereço da base fica gravado no
@@ -120,6 +134,7 @@
   function render() {
     if (document.getElementById("isr-shell")) return;
     if (!document.body) return;
+    garantirFonte();
 
     var nums = contagens();
     var estreito = window.innerWidth <= ESTREITO;
@@ -134,7 +149,7 @@
     aside.style.cssText = "position:fixed;left:0;top:0;width:" + LARGURA + "px;height:100vh;"
       + "background:#164951;color:#fff;padding:22px 14px;box-sizing:border-box;z-index:9998;"
       + "display:flex;flex-direction:column;gap:16px;overflow-y:auto;"
-      + "font-family:'Helvetica Neue',Helvetica,sans-serif;";
+      + "font-family:" + FONTE + ";";
 
     var logo = document.createElement("img");
     logo.src = "assets/ISR_logo_white.png";
@@ -160,7 +175,7 @@
       var a = document.createElement("a");
       a.href = encodeURI(it.href);
       a.style.cssText = "display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;"
-        + "font-size:13.5px;font-weight:600;text-decoration:none;color:#fff;"
+        + "font-size:14px;font-weight:600;text-decoration:none;color:#fff;"
         + (on ? "background:rgba(255,255,255,0.14);" : "");
       var ic = document.createElement("span");
       ic.textContent = it.icone;
@@ -260,7 +275,7 @@
     topo.id = "isr-shell-topo";
     topo.style.cssText = "display:none;position:sticky;top:0;z-index:9996;background:#164951;"
       + "padding:10px 14px;align-items:center;justify-content:space-between;gap:10px;"
-      + "font-family:'Helvetica Neue',Helvetica,sans-serif;";
+      + "font-family:" + FONTE + ";";
     var burger = document.createElement("button");
     burger.textContent = "☰";
     burger.setAttribute("aria-label", "Abrir o menu");
@@ -319,7 +334,7 @@
     var faixa = document.createElement("div");
     faixa.id = "isr-shell-base";
     faixa.style.cssText = "background:#fdece9;border-bottom:1px solid #f2c9c1;color:#a4483a;"
-      + "font-size:12px;font-family:'Helvetica Neue',Helvetica,sans-serif;padding:10px 16px;"
+      + "font-size:12px;font-family:" + FONTE + ";padding:10px 16px;"
       + "display:flex;align-items:center;gap:10px;flex-wrap:wrap;";
     var txt = document.createElement("span");
     txt.textContent = puxandoBase
