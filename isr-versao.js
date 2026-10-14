@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-c",
+  numero: "2026.10.14-d",
   data: "14/10/2026",
-  nota: "Caixa no desenho novo, em ISR - Caixa v3 ou pelo atalho /caixa.html. O mês com conciliação, revisão e lançamentos; Planejamento com previsto × realizado, metas, custos fixos e câmbio. Sete das vinte telas já estão no desenho novo"
+  nota: "Perfil no desenho novo, em ISR - Perfil v3 ou pelo atalho /perfil.html?id=. Clicar no nome de uma aluna em qualquer tela nova abre a ficha nova — as quatro abas, a linha do tempo, o contrato, as presenças e o cadastro. O WhatsApp saiu da faixa solta e entrou no cartão da pessoa"
 };
