@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.13-g",
-  data: "13/10/2026",
-  nota: "Painel do professor no desenho novo, em ISR - Painel v3 ou pelo atalho /professor.html. Próximas aulas, chamada com o diário do ciclo, particulares da semana, chamadas já feitas para corrigir, turmas e horas de aula extra — tudo no lugar, com a lógica de hoje reaproveitada inteira"
+  numero: "2026.10.14-a",
+  data: "14/10/2026",
+  nota: "CRM no desenho novo, em ISR - CRM v3 ou pelo atalho /crm.html. Funil, vista Atividade, cartão do lead com histórico e nota, conversa de matrícula, condições de pagamento e reativação — a lógica de hoje inteira, só a pintura mudou"
 };
