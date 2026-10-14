@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-b",
+  numero: "2026.10.14-c",
   data: "14/10/2026",
-  nota: "Cobrança no desenho novo, em ISR - Cobrança v3 ou pelo atalho /cobranca.html. Resumo do mês, previsão de recebimentos, filtros por período, parcelas do contrato para marcar paga ou pendente e a aba de renovações. Destaque dentro de texto passa a 600 em todas as telas novas, que era o que deixava a leitura grossa"
+  nota: "Caixa no desenho novo, em ISR - Caixa v3 ou pelo atalho /caixa.html. O mês com conciliação, revisão e lançamentos; Planejamento com previsto × realizado, metas, custos fixos e câmbio. Sete das vinte telas já estão no desenho novo"
 };
