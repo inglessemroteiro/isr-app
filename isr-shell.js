@@ -101,7 +101,7 @@
     { id: "cobranca", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "caixa", icone: "⇅", label: "Caixa", href: "ISR - Caixa v3.dc.html", perfis: ["gestora", "operacao"] },
     { id: "folha", icone: "≡", label: "Folha", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
-    { id: "turmas", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    { id: "turmas", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "programa", icone: "◇", label: "Desafio da semana", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora", "operacao"] },
     { id: "agenda", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
     { id: "marketing", icone: "◈", label: "Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
