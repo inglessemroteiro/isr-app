@@ -294,6 +294,30 @@ recusam tudo — não existe modo aberto, de propósito.
 Quem chama de fora manda a chave no cabeçalho `x-isr-chave` ou no
 campo `chave` do corpo.
 
+### O portão da equipe
+
+Quem confere a senha é o **Netlify Identity** — o mesmo serviço que as
+alunas já usam no app. A tela manda e-mail e senha, o servidor devolve
+um token assinado, e o token fica guardado no aparelho (`isr_gestao_token`,
+renovado sozinho antes de vencer). É esse token que as funções vão
+exigir. Entrar pelo console do navegador deixa de valer.
+
+Quem o Identity autentica ainda precisa estar na equipe da escola: o
+e-mail passa pelo `liberarGestao`, e quem não está não entra, mesmo
+com a senha certa.
+
+**Criar as contas** (uma vez, por pessoa): Netlify → Identity → Invite
+users → o e-mail. A pessoa recebe um convite, abre, define a senha, e
+daí em diante entra por `gestao.html`. Esqueceu a senha: "Esqueci
+minha senha" na própria tela.
+
+**Enquanto uma conta não existir**, aquela pessoa continua entrando só
+com o e-mail, como antes, e a tela avisa que a conta está faltando. É
+transição, não é para ficar: senha errada nunca abre essa porta, mas
+quem souber um e-mail da equipe ainda entra. Assim que as quatro
+contas existirem, o bloco marcado `PORTA DE TRANSIÇÃO` em `gestao.html`
+sai do código.
+
 ### O que ainda está aberto
 
 1. **A base.** O endereço do Web App do Apps Script está escrito em

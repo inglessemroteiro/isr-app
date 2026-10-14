@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-a",
+  numero: "2026.10.15-b",
   data: "15/10/2026",
-  nota: "Seis funções do Netlify que estavam abertas na internet passam a exigir chave: chat, data, get-confirmations, onboarding-notify, send-certificate e send-push. Criar a ISR_FUNCOES_CHAVE no painel do Netlify e fazer Trigger deploy. A guarda das telas deixou de ser lista escrita à mão"
+  nota: "O portão da gestão passa a ter senha de verdade, conferida pelo Netlify Identity — o mesmo serviço que as alunas já usam. Criar as contas da equipe em Netlify → Identity → Invite users. Enquanto uma conta não existir, aquela pessoa entra como antes e a tela avisa"
 };
