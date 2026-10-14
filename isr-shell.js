@@ -103,7 +103,7 @@
     { id: "folha", icone: "≡", label: "Folha", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
     { id: "turmas", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "programa", icone: "◇", label: "Desafio da semana", href: "ISR - Programa.dc.html", perfis: ["gestora", "professora", "operacao"] },
-    { id: "agenda", icone: "◷", label: "Agenda", href: "ISR - Agenda.dc.html", perfis: null },
+    { id: "agenda", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
     { id: "marketing", icone: "◈", label: "Marketing", href: "ISR - Marketing.dc.html", perfis: ["gestora", "comercial"] },
     { id: "importar", icone: "↧", label: "Importar", href: "ISR - Importar.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "equipe", icone: "◍", label: "Equipe", href: "ISR - Equipe.dc.html", perfis: ["gestora"] },
