@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-g",
+  numero: "2026.10.14-h",
   data: "14/10/2026",
-  nota: "Agenda no desenho novo, em ISR - Agenda v3 ou pelo atalho /agenda.html. Lista e semana, filtros, aula extra e feriados. A agenda passa a dizer quando a semana está vazia porque o ciclo acabou, em vez de deixar a dúvida. Dez das vinte telas estão no desenho novo"
+  nota: "Turmas e projetos no desenho novo, em ISR - Turmas v3 ou pelo atalho /turmas.html. A tela passa a dizer quando as aulas destas turmas acontecem — é o horário daqui que gera a aula na Agenda, mas só dentro do ciclo. Onze das vinte telas estão no desenho novo"
 };
