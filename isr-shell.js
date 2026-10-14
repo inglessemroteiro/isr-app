@@ -283,7 +283,11 @@
     sair.style.cssText = "border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.7);"
       + "font-size:10.5px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;font-family:inherit;";
     sair.onclick = function () {
-      localStorage.removeItem("isr_gestao_user");
+      // pelo sairGestao, e não na mão: além da sessão, ele apaga o
+      // token do Identity. Apagar só a sessão deixaria o token do
+      // aparelho válido para quem viesse depois
+      try { window.ISRCRM.sairGestao(); }
+      catch (e) { try { localStorage.removeItem("isr_gestao_user"); } catch (e2) {} }
       window.location.href = "gestao.html";
     };
     linha.appendChild(ver); linha.appendChild(sair);

@@ -6272,7 +6272,71 @@
     localStorage.setItem("isr_gestao_user", JSON.stringify(u));
     return u;
   }
-  function sairGestao() { localStorage.removeItem("isr_gestao_user"); }
+  function sairGestao() {
+    localStorage.removeItem("isr_gestao_user");
+    guardarTokenGestao(null);
+  }
+
+  // ── O TOKEN DA EQUIPE ─────────────────────────────────────────
+  //
+  // Quem diz que a pessoa é quem diz ser é o Netlify Identity, não
+  // esta tela. O que ele devolve no login fica guardado aqui, e é o
+  // que vai no cabeçalho das chamadas às funções — é assim que o
+  // servidor confere sem acreditar no navegador.
+  //
+  // O token vale cerca de uma hora. Junto vem um refresh_token, que
+  // serve para pedir outro sem fazer a pessoa digitar a senha de novo;
+  // sem ele, a equipe cairia do sistema de hora em hora.
+  var TOKEN_KEY = "isr_gestao_token";
+  function guardarTokenGestao(tokens) {
+    try {
+      if (!tokens || !tokens.access_token) { localStorage.removeItem(TOKEN_KEY); return; }
+      localStorage.setItem(TOKEN_KEY, JSON.stringify({
+        access: tokens.access_token,
+        refresh: tokens.refresh_token || "",
+        // o expires_in vem em segundos; guardamos o instante, que é o
+        // que dá para comparar depois sem saber quando foi emitido
+        vence: Date.now() + ((tokens.expires_in || 3600) * 1000)
+      }));
+    } catch (e) {}
+  }
+  function tokenGestaoGuardado() {
+    try { return JSON.parse(localStorage.getItem(TOKEN_KEY)) || null; } catch (e) { return null; }
+  }
+  // Devolve um token válido, renovando se estiver perto de vencer.
+  // Sem conta criada ainda (transição), devolve vazio e quem chamar
+  // decide o que fazer.
+  function tokenGestao() {
+    var t = tokenGestaoGuardado();
+    if (!t || !t.access) return Promise.resolve("");
+    // um minuto de folga: token que vence no meio da chamada é erro
+    if (t.vence - Date.now() > 60000) return Promise.resolve(t.access);
+    if (!t.refresh) { guardarTokenGestao(null); return Promise.resolve(""); }
+    return fetch(window.location.origin + "/.netlify/identity/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(t.refresh)
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.access_token) { guardarTokenGestao(null); return ""; }
+        guardarTokenGestao(d);
+        return d.access_token;
+      })
+      .catch(function () { return ""; });
+  }
+  // Chamada a uma função do Netlify já com o token da pessoa.
+  function chamarFuncao(nome, opcoes) {
+    var o = opcoes || {};
+    return tokenGestao().then(function (tk) {
+      var h = Object.assign({ "Content-Type": "application/json" }, o.headers || {});
+      if (tk) h.Authorization = "Bearer " + tk;
+      return fetch("/.netlify/functions/" + nome, {
+        method: o.method || "POST",
+        headers: h,
+        body: o.body ? (typeof o.body === "string" ? o.body : JSON.stringify(o.body)) : undefined
+      });
+    });
+  }
 
   // Guard automático: telas de gestão redirecionam pro portão se não
   // houver sessão. Iframes (miniaturas do launcher) ficam de fora.
@@ -12225,6 +12289,8 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    guardarTokenGestao: guardarTokenGestao, tokenGestao: tokenGestao,
+    temTokenGestao: function () { return !!tokenGestaoGuardado(); }, chamarFuncao: chamarFuncao,
     categorias: function () { var seen = {}, out = []; templatesMerged().forEach(function (t) { if (!seen[t.categoria]) { seen[t.categoria] = 1; out.push(t.categoria); } }); return out; },
     // ações
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,

@@ -1,69 +1,282 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ISR — Acesso à Gestão</title>
+<!--
+  O portão da gestão.
+
+  Antes: digitava um e-mail autorizado e entrava. Sem senha. E mesmo
+  com senha não adiantaria, porque a confirmação acontecia aqui no
+  navegador — duas linhas no console entravam do mesmo jeito.
+
+  Agora quem confere é o Netlify Identity, o mesmo serviço que as
+  alunas já usam no app. O navegador manda e-mail e senha, o servidor
+  devolve um token assinado, e é esse token que as funções vão exigir.
+  Não há como forjar do lado de cá.
+
+  TRANSIÇÃO: enquanto alguém da equipe ainda não tiver conta criada, o
+  portão antigo continua valendo PARA ESSA PESSOA — senão o sistema
+  trancaria a equipe inteira no dia da mudança. A porta antiga só abre
+  quando o Identity responde que o e-mail não existe; senha errada
+  nunca abre. Assim que as quatro contas existirem, essa porta sai do
+  código (é o bloco marcado com PORTA DE TRANSIÇÃO).
+-->
 <script src="./crm-data.js"></script>
 <style>
-  body { margin: 0; font-family: 'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-  .card { background: #fdfbf8; border-radius: 16px; padding: 34px 30px; max-width: 380px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
-  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 8px; }
+  body { margin: 0; font-family: Inter,'Helvetica Neue','Helvetica',sans-serif; background: #164951; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; border-radius: 24px; padding: 34px 30px; max-width: 390px; width: calc(100% - 40px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); text-align: center; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #2a9d8f; margin: 0 0 8px; }
   h1 { font-size: 22px; font-weight: 700; color: #164951; letter-spacing: -0.4px; margin: 0 0 8px; }
-  p { font-size: 13px; color: #6b6155; line-height: 1.6; margin: 0 0 20px; }
-  input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; outline: none; margin-bottom: 10px; }
-  button { width: 100%; border: none; background: #164951; color: #fff; padding: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; border-radius: 999px; cursor: pointer; }
-  .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
+  p { font-size: 13px; color: #1d5a63; line-height: 1.6; margin: 0 0 18px; }
+  input { width: 100%; box-sizing: border-box; padding: 13px 15px; font-size: 14px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3; outline: none; margin-bottom: 10px; }
+  button { width: 100%; border: none; background: #164951; color: #fff; padding: 13px; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; border-radius: 999px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 #0e3339; }
+  button:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
+  button.quieto { background: #f2ebe3; color: #164951; box-shadow: none; }
+  .erro { display: none; font-size: 12.5px; color: #a3392c; font-weight: 600; margin: 10px 0 0; line-height: 1.5; }
+  .info { display: none; font-size: 12.5px; color: #2a9d8f; font-weight: 600; margin: 10px 0 0; line-height: 1.5; }
   .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
+  .link { background: none; border: none; color: #8a7465; font-size: 11.5px; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 6px; width: auto; box-shadow: none; font-family: inherit; }
+  .aviso { background: #fdf1e8; border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; font-size: 12.5px; color: #c98a3a; line-height: 1.55; text-align: left; }
+  .tela { display: none; }
+  .tela.ativa { display: block; }
 </style>
 </head>
 <body>
 <div class="card">
   <p class="eyebrow">Inglês sem Roteiro</p>
-  <h1>Acesso à Gestão</h1>
-  <p>Área restrita da equipe. Entre com seu e-mail de trabalho.</p>
-  <input id="email" type="email" placeholder="voce@email.com" autofocus />
-  <button onclick="entrar()">Entrar →</button>
-  <p class="erro" id="erro">E-mail não autorizado. Fale com a Gabi para liberar seu acesso.</p>
-  <p class="nota">Aluna? Sua área é o <a href="index.html" style="color: #2a9d8f; font-weight: 700;">app do Inglês sem Roteiro</a></p>
-  <p class="nota"><a href="#" onclick="document.getElementById('conexao').style.display='block';return false;" style="color: #b3a693;">Configurar banco central</a></p>
+
+  <!-- ENTRAR -->
+  <div class="tela ativa" id="telaLogin">
+    <h1>Acesso à Gestão</h1>
+    <p>Área restrita da equipe.</p>
+    <input id="email" type="email" placeholder="voce@email.com" autocomplete="username" autofocus />
+    <input id="senha" type="password" placeholder="Senha" autocomplete="current-password" />
+    <button id="btEntrar" onclick="entrar()">Entrar</button>
+    <p class="erro" id="erro"></p>
+    <button class="link" onclick="verTela('telaEsqueci')">Esqueci minha senha</button>
+  </div>
+
+  <!-- CONTA AINDA SEM SENHA (porta de transição) -->
+  <div class="tela" id="telaSemConta">
+    <h1>Esta conta ainda não tem senha</h1>
+    <div class="aviso">O acesso com senha está sendo criado para a equipe. Enquanto a sua conta não existir, você entra como antes — só com o e-mail. Peça para a Gabi criar a sua conta no Netlify.</div>
+    <button onclick="entrarSemSenha()">Entrar só com o e-mail</button>
+    <p class="erro" id="erroSemConta"></p>
+    <button class="link" onclick="verTela('telaLogin')">Voltar</button>
+  </div>
+
+  <!-- PRIMEIRA SENHA (veio de um convite) -->
+  <div class="tela" id="telaConvite">
+    <h1>Criar sua senha</h1>
+    <p>Esta é a senha que você vai usar para entrar na gestão daqui em diante.</p>
+    <input id="conviteSenha" type="password" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password" />
+    <button id="btConvite" onclick="aceitarConvite()">Criar senha e entrar</button>
+    <p class="erro" id="conviteErro"></p>
+  </div>
+
+  <!-- NOVA SENHA (veio do link de recuperação) -->
+  <div class="tela" id="telaRecovery">
+    <h1>Nova senha</h1>
+    <input id="recoverySenha" type="password" placeholder="Nova senha (mínimo 8 caracteres)" autocomplete="new-password" />
+    <button id="btRecovery" onclick="salvarNovaSenha()">Salvar e entrar</button>
+    <p class="erro" id="recoveryErro"></p>
+  </div>
+
+  <!-- ESQUECI -->
+  <div class="tela" id="telaEsqueci">
+    <h1>Esqueci minha senha</h1>
+    <p>Informe o e-mail. Se houver conta, chega um link para redefinir.</p>
+    <input id="esqueciEmail" type="email" placeholder="voce@email.com" autocomplete="username" />
+    <button id="btEsqueci" onclick="pedirRecuperacao()">Enviar link</button>
+    <p class="info" id="esqueciInfo"></p>
+    <p class="erro" id="esqueciErro"></p>
+    <button class="link" onclick="verTela('telaLogin')">Voltar</button>
+  </div>
+
+  <p class="nota">Aluna? Sua área é o <a href="index.html" style="color: #2a9d8f; font-weight: 600;">app do Inglês sem Roteiro</a></p>
+  <p class="nota"><button class="link" style="color:#b3a693;text-decoration:none;" onclick="document.getElementById('conexao').style.display='block';">Configurar banco central</button></p>
   <div id="conexao" style="display: none; margin-top: 12px; text-align: left;">
-    <p style="font-size: 11px; color: #6b6155; margin: 0 0 6px;">Endereço da Conexão (Web App do Apps Script). Se este aparelho já mostra "Conectado", não precisa mudar nada.</p>
-    <p style="font-size: 11px; color: #9b8b7e; margin: 0 0 6px; line-height: 1.6;">Para encontrar o endereço: abra <strong>script.google.com</strong>, entre no projeto do sistema, toque em <strong>Implantar → Gerenciar implantações</strong> e copie o endereço do Web App — ele termina em <strong>/exec</strong>. Cole aqui:</p>
+    <p style="font-size: 11px; color: #1d5a63; margin: 0 0 6px;">Endereço da Conexão (Web App do Apps Script). Se este aparelho já mostra "Conectado", não precisa mudar nada.</p>
+    <p style="font-size: 11px; color: #8a7465; margin: 0 0 6px; line-height: 1.6;">Para encontrar o endereço: abra <strong>script.google.com</strong>, entre no projeto do sistema, toque em <strong>Implantar → Gerenciar implantações</strong> e copie o endereço do Web App — ele termina em <strong>/exec</strong>. Cole aqui:</p>
     <input id="backend" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom: 6px; font-size: 12px;" />
-    <button onclick="salvarBackend()" style="font-size: 11px; padding: 10px;">Salvar conexão</button>
+    <button class="quieto" onclick="salvarBackend()" style="font-size: 11px; padding: 10px;">Salvar conexão</button>
     <p class="nota" id="statusConexao" style="margin-top: 8px;"></p>
   </div>
 </div>
+
 <script>
-  // já logada → direto pra Central (exceto ?config, pra ajustar a conexão)
-  if (window.ISRCRM && window.ISRCRM.gestaoUser() && window.location.search.indexOf('config') < 0) {
-    window.location.replace('ISR%20-%20Central.dc.html');
+  var API = window.location.origin + "/.netlify/identity";
+  var DESTINO = "central.html";
+  var hashToken = (window.location.hash || "").match(/(invite_token|recovery_token)=([^&]+)/);
+
+  function v(id) { return (document.getElementById(id).value || "").trim(); }
+  function msg(id, t) { var e = document.getElementById(id); e.textContent = t || ""; e.style.display = t ? "block" : "none"; }
+  function verTela(id) {
+    ["telaLogin", "telaSemConta", "telaConvite", "telaRecovery", "telaEsqueci"].forEach(function (t) {
+      document.getElementById(t).classList.toggle("ativa", t === id);
+    });
   }
-  if (window.location.search.indexOf('config') >= 0) {
-    document.getElementById('conexao').style.display = 'block';
-  }
-  function entrar() {
-    var email = document.getElementById('email').value;
-    // quem entra num aparelho novo consulta a base da escola para saber
-    // se está autorizado; sem conexão, todo e-mail dava "não autorizado"
+
+  // ── a sessão da gestão ──────────────────────────────────────────
+  // O Identity diz QUEM é a pessoa. Quem diz se ela trabalha aqui, e
+  // com qual perfil, continua sendo a base da escola: o e-mail
+  // autenticado tem de estar na equipe, senão não entra.
+  function abrirSessao(email, tokens) {
     try { window.ISRCRM.conectarPadrao(); } catch (e) {}
     var u = window.ISRCRM && window.ISRCRM.liberarGestao(email);
-    if (u) window.location.replace('ISR%20-%20Central.dc.html');
-    else document.getElementById('erro').style.display = 'block';
+    if (!u) {
+      try { window.ISRCRM.guardarTokenGestao(null); } catch (e) {}
+      return false;
+    }
+    if (tokens) { try { window.ISRCRM.guardarTokenGestao(tokens); } catch (e) {} }
+    window.location.replace(DESTINO);
+    return true;
   }
+  function naoAutorizada(idErro) {
+    msg(idErro, "Este e-mail não está na equipe da escola. Fale com a Gabi para liberar o acesso.");
+  }
+
+  function entrar() {
+    var email = v("email"), senha = v("senha");
+    msg("erro", "");
+    if (!email) { msg("erro", "Informe o e-mail."); return; }
+    if (!senha) { msg("erro", "Informe a senha."); return; }
+    document.getElementById("btEntrar").disabled = true;
+    fetch(API + "/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=password&username=" + encodeURIComponent(email) + "&password=" + encodeURIComponent(senha)
+    }).then(function (r) {
+      return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+    }).then(function (res) {
+      document.getElementById("btEntrar").disabled = false;
+      if (res.ok && res.d.access_token) {
+        if (!abrirSessao(email, res.d)) naoAutorizada("erro");
+        return;
+      }
+      // PORTA DE TRANSIÇÃO — sai daqui quando as contas existirem.
+      // Só abre quando o Identity diz que o e-mail não existe. Senha
+      // errada cai no "senha incorreta", nunca aqui.
+      var desc = String((res.d && res.d.error_description) || "");
+      if (/no user found/i.test(desc)) { verTela("telaSemConta"); return; }
+      msg("erro", /invalid password/i.test(desc)
+        ? "Senha incorreta."
+        : "Não foi possível entrar. Tente de novo em alguns instantes.");
+    }).catch(function () {
+      document.getElementById("btEntrar").disabled = false;
+      msg("erro", "Falha de conexão. Tente novamente.");
+    });
+  }
+
+  // PORTA DE TRANSIÇÃO — remover junto com o bloco acima.
+  function entrarSemSenha() {
+    msg("erroSemConta", "");
+    if (!abrirSessao(v("email"), null)) naoAutorizada("erroSemConta");
+  }
+
+  function aceitarConvite() {
+    var senha = v("conviteSenha");
+    msg("conviteErro", "");
+    if (senha.length < 8) { msg("conviteErro", "A senha precisa ter pelo menos 8 caracteres."); return; }
+    document.getElementById("btConvite").disabled = true;
+    var tokens = null;
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "signup", password: senha })
+    }).then(function (r) { if (!r.ok) throw new Error("convite"); return r.json(); })
+      .then(function (d) { tokens = d; return emailDoToken(d.access_token); })
+      .then(function (email) { if (!abrirSessao(email, tokens)) naoAutorizada("conviteErro"); })
+      .catch(function (e) {
+        document.getElementById("btConvite").disabled = false;
+        msg("conviteErro", String(e.message) === "convite"
+          ? "Link expirado ou já usado. Peça um novo convite à Gabi."
+          : "Falha de conexão. Tente novamente.");
+      });
+  }
+
+  function salvarNovaSenha() {
+    var senha = v("recoverySenha");
+    msg("recoveryErro", "");
+    if (senha.length < 8) { msg("recoveryErro", "A senha precisa ter pelo menos 8 caracteres."); return; }
+    document.getElementById("btRecovery").disabled = true;
+    var tokens = null;
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "recovery" })
+    }).then(function (r) { if (!r.ok) throw new Error("link"); return r.json(); })
+      .then(function (d) {
+        tokens = d;
+        return fetch(API + "/user", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + d.access_token },
+          body: JSON.stringify({ password: senha })
+        });
+      })
+      .then(function (r) { if (!r.ok) throw new Error("senha"); return emailDoToken(tokens.access_token); })
+      .then(function (email) { if (!abrirSessao(email, tokens)) naoAutorizada("recoveryErro"); })
+      .catch(function (e) {
+        document.getElementById("btRecovery").disabled = false;
+        msg("recoveryErro", String(e.message) === "link"
+          ? "Link expirado. Peça um novo em Esqueci minha senha."
+          : "Falha de conexão. Tente novamente.");
+      });
+  }
+
+  function pedirRecuperacao() {
+    var email = v("esqueciEmail");
+    msg("esqueciErro", ""); msg("esqueciInfo", "");
+    if (!email) { msg("esqueciErro", "Informe o e-mail."); return; }
+    document.getElementById("btEsqueci").disabled = true;
+    fetch(API + "/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email })
+    }).then(function () {
+      // a resposta é a mesma exista ou não a conta: dizer qual e-mail
+      // tem conta na escola é informação que não cabe nesta tela
+      msg("esqueciInfo", "Se houver conta com este e-mail, o link acabou de sair.");
+    }).catch(function () {
+      document.getElementById("btEsqueci").disabled = false;
+      msg("esqueciErro", "Falha de conexão. Tente novamente.");
+    });
+  }
+
+  function emailDoToken(accessToken) {
+    return fetch(API + "/user", { headers: { Authorization: "Bearer " + accessToken } })
+      .then(function (r) { if (!r.ok) throw new Error("user"); return r.json(); })
+      .then(function (u) { return u.email; });
+  }
+
   function salvarBackend() {
-    var u = document.getElementById('backend').value.trim();
+    var u = document.getElementById("backend").value.trim();
     window.ISRCRM.setBackendUrl(u);
-    document.getElementById('statusConexao').textContent = u ? '✓ Banco central conectado — o sistema salva e carimba na planilha de backup.' : 'Conexão removida (modo local).';
+    document.getElementById("statusConexao").textContent = u
+      ? "✓ Banco central conectado — o sistema salva e carimba na planilha de backup."
+      : "Conexão removida (modo local).";
   }
-  (function () {
+
+  (function iniciar() {
+    // já logada → direto para a Central (exceto ?config)
+    var jaEntrou = window.ISRCRM && window.ISRCRM.gestaoUser();
+    if (jaEntrou && window.location.search.indexOf("config") < 0 && !hashToken) {
+      window.location.replace(DESTINO);
+      return;
+    }
+    if (window.location.search.indexOf("config") >= 0) document.getElementById("conexao").style.display = "block";
+    if (hashToken && hashToken[1] === "invite_token") verTela("telaConvite");
+    else if (hashToken && hashToken[1] === "recovery_token") verTela("telaRecovery");
+
     var u = window.ISRCRM && window.ISRCRM.backendUrl();
-    if (u) { document.getElementById('backend').value = u; document.getElementById('statusConexao').textContent = '✓ Conectado.'; }
+    if (u) { document.getElementById("backend").value = u; document.getElementById("statusConexao").textContent = "✓ Conectado."; }
+
+    ["email", "senha"].forEach(function (id) {
+      document.getElementById(id).addEventListener("keydown", function (e) { if (e.key === "Enter") entrar(); });
+    });
   })();
-  document.getElementById('email').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') entrar();
-  });
 </script>
 </body>
 </html>
