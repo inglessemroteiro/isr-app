@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-a",
+  numero: "2026.10.14-b",
   data: "14/10/2026",
-  nota: "CRM no desenho novo, em ISR - CRM v3 ou pelo atalho /crm.html. Funil, vista Atividade, cartão do lead com histórico e nota, conversa de matrícula, condições de pagamento e reativação — a lógica de hoje inteira, só a pintura mudou"
+  nota: "Cobrança no desenho novo, em ISR - Cobrança v3 ou pelo atalho /cobranca.html. Resumo do mês, previsão de recebimentos, filtros por período, parcelas do contrato para marcar paga ou pendente e a aba de renovações. Destaque dentro de texto passa a 600 em todas as telas novas, que era o que deixava a leitura grossa"
 };

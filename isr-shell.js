@@ -47,12 +47,22 @@
   //   400  texto corrido e ícone
   function garantirFonte() {
     try {
-      if (document.querySelector('link[href*="family=Inter"]')) return;
-      var l = document.createElement("link");
-      l.rel = "stylesheet";
-      l.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
-      document.head.appendChild(l);
-    } catch (e) {}
+      if (!document.querySelector('link[href*="family=Inter"]')) {
+        var l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+        document.head.appendChild(l);
+      }
+      // <strong> e <b> nascem em 700 no navegador, e 700 em texto de 13px
+      // é exatamente o que fica grosso demais para ler. Na escala desta
+      // casa, destaque dentro de texto é 600.
+      if (!document.getElementById("isr-escala-peso")) {
+        var e = document.createElement("style");
+        e.id = "isr-escala-peso";
+        e.textContent = "strong,b{font-weight:600}";
+        document.head.appendChild(e);
+      }
+    } catch (err) {}
   }
 
   // ── a base da escola, em qualquer aparelho ────────────────────
@@ -88,7 +98,7 @@
     { id: "mciclo", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matrículas do ciclo.dc.html", perfis: ["gestora", "comercial"] },
     { id: "calc", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
     { id: "acomp", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "cobranca", icone: "€", label: "Contas a receber", href: "ISR - Cobrança.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+    { id: "cobranca", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "caixa", icone: "⇅", label: "Caixa", href: "ISR - Caixa.dc.html", perfis: ["gestora", "operacao"] },
     { id: "folha", icone: "≡", label: "Folha", href: "ISR - Pagamentos.dc.html", perfis: ["gestora"] },
     { id: "turmas", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas e Projetos.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
