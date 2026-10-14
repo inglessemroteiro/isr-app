@@ -262,3 +262,48 @@ Substitui o Zap. A pessoa compra no link de checkout do Stripe (com ou sem order
 | Stripe mostra o endpoint com erro 400 "assinatura inválida" | `STRIPE_WEBHOOK_SECRET` não bate | Copiar de novo o Signing secret do endpoint certo (teste e produção têm segredos diferentes) |
 | Stripe mostra erro 500 "Falta configurar" | Variável não existe no Netlify | Criar a variável e fazer Trigger deploy |
 | Boleto/Pix: tag só chega depois | `completed` chega com pagamento pendente | Normal: a tag entra no `async_payment_succeeded`, quando o dinheiro cai |
+
+---
+
+## As portas do sistema
+
+O site é estático: qualquer pessoa lê o JavaScript dele e descobre
+todos os endereços que ele chama. Por isso quem fecha a porta é o
+servidor, nunca a tela.
+
+### Funções do Netlify
+
+| Função | Quem chama | Como está fechada |
+|---|---|---|
+| `convidar-aluna` | Zapier | `ISR_CONVITE_CHAVE` |
+| `extrato-conta` | Caixa | `ISR_EXTRATO_CHAVE`, digitada uma vez por aparelho |
+| `stripe-compra` | Stripe | assinatura do webhook (`STRIPE_WEBHOOK_SECRET`) |
+| `chat` | máquina | `ISR_FUNCOES_CHAVE` |
+| `data` | máquina | `ISR_FUNCOES_CHAVE` |
+| `get-confirmations` | máquina | `ISR_FUNCOES_CHAVE` |
+| `onboarding-notify` | máquina | `ISR_FUNCOES_CHAVE` |
+| `send-certificate` | máquina | `ISR_FUNCOES_CHAVE` |
+| `send-push` | máquina | `ISR_FUNCOES_CHAVE` |
+| `bc-proxy`, `save-chamada`, `save-confirmation`, `save-feedback`, `save-interest`, `subscribe-push` | app da aluna | **ainda abertas** |
+
+**Para valer:** Netlify → Site configuration → Environment variables →
+criar `ISR_FUNCOES_CHAVE` com uma senha longa inventada na hora, e
+fazer **Trigger deploy**. Enquanto a variável não existir, as seis
+recusam tudo — não existe modo aberto, de propósito.
+
+Quem chama de fora manda a chave no cabeçalho `x-isr-chave` ou no
+campo `chave` do corpo.
+
+### O que ainda está aberto
+
+1. **A base.** O endereço do Web App do Apps Script está escrito em
+   `crm-data.js`, e o navegador fala com ele direto, sem credencial
+   nenhuma. Quem abrir o JavaScript do site lê e escreve a escola
+   inteira. O conserto é o navegador parar de falar com o Apps Script:
+   fala com uma função, e a função fala com o Apps Script usando uma
+   chave que só o servidor conhece.
+2. **As seis funções do app da aluna.** Precisam do token da aluna
+   (Netlify Identity), não de uma chave fixa.
+3. **A guarda das telas** (`guardGestao`, em `crm-data.js`) roda no
+   navegador. Serve para ninguém cair numa tela por engano. Não é
+   proteção.

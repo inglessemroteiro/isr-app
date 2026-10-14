@@ -6276,13 +6276,28 @@
 
   // Guard automático: telas de gestão redirecionam pro portão se não
   // houver sessão. Iframes (miniaturas do launcher) ficam de fora.
+  //
+  // ATENÇÃO, para não confundir uma coisa com a outra: isto evita que
+  // alguém caia numa tela de gestão por engano — um link mandado no
+  // grupo errado, uma aluna seguindo um endereço. NÃO é proteção: roda
+  // no navegador e qualquer pessoa contorna. O que protege de verdade é
+  // o servidor, e isso é trabalho à parte.
+  //
+  // A lista era escrita à mão e ficava para trás a cada tela nova: as
+  // telas v3 do Painel e da Matrícula nasceram fora dela. Agora a regra
+  // é a inversa — toda tela "ISR - ..." é de gestão, menos as que a
+  // aluna precisa abrir.
+  var ABERTAS = ["ISR - Aluna.", "ISR - Certificado", "ISR - Login",
+                 "ISR - Comunidade", "ISR - Tela de Aula", "ISR - Aulas."];
+  function telaDeGestao(path) {
+    if (path.indexOf("ISR - ") < 0) return false;
+    return !ABERTAS.some(function (a) { return path.indexOf(a) >= 0; });
+  }
   (function guardGestao() {
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Alunas", "ISR - Acompanhamento", "ISR - Programa", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
-      var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
-      if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
+      if (telaDeGestao(path) && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
   })();
 

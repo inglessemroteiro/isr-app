@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-i",
-  data: "14/10/2026",
-  nota: "Matrículas do ciclo no desenho novo, em ISR - Matriculas ciclo v3 ou pelo atalho /ciclo.html. É o formulário onde o ciclo ganha nome, começo e fim — e agora o que se grava ali decide se há aula na agenda. Doze das vinte telas estão no desenho novo"
+  numero: "2026.10.15-a",
+  data: "15/10/2026",
+  nota: "Seis funções do Netlify que estavam abertas na internet passam a exigir chave: chat, data, get-confirmations, onboarding-notify, send-certificate e send-push. Criar a ISR_FUNCOES_CHAVE no painel do Netlify e fazer Trigger deploy. A guarda das telas deixou de ser lista escrita à mão"
 };
