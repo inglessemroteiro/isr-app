@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-e",
+  numero: "2026.10.14-f",
   data: "14/10/2026",
-  nota: "O ciclo passa a ter início e fim de verdade. A agenda gerava aula toda semana para sempre, e por isso a escola continuava pedindo chamada depois do ciclo acabar. Agora a aula só existe dentro da janela do ciclo, e a Central tem o lugar de fechar um ciclo e abrir o próximo"
+  nota: "Matrícula no desenho novo, em ISR - Matrícula v3 ou pelo atalho /matricula.html?id=. O botão Matricular do CRM e do Perfil já abre a tela nova. Nove das vinte telas estão no desenho novo"
 };
