@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-h",
+  numero: "2026.10.14-i",
   data: "14/10/2026",
-  nota: "Turmas e projetos no desenho novo, em ISR - Turmas v3 ou pelo atalho /turmas.html. A tela passa a dizer quando as aulas destas turmas acontecem — é o horário daqui que gera a aula na Agenda, mas só dentro do ciclo. Onze das vinte telas estão no desenho novo"
+  nota: "Matrículas do ciclo no desenho novo, em ISR - Matriculas ciclo v3 ou pelo atalho /ciclo.html. É o formulário onde o ciclo ganha nome, começo e fim — e agora o que se grava ali decide se há aula na agenda. Doze das vinte telas estão no desenho novo"
 };
