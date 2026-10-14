@@ -95,7 +95,7 @@
     { id: "crm", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "mensagens", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens WhatsApp.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "mural", icone: "▭", label: "Mural da equipe", href: "ISR - Mural.dc.html", perfis: null },
-    { id: "mciclo", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matrículas do ciclo.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "mciclo", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matriculas ciclo v3.dc.html", perfis: ["gestora", "comercial"] },
     { id: "calc", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora.dc.html", perfis: ["gestora", "comercial"] },
     { id: "acomp", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "cobranca", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
