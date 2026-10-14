@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-d",
+  numero: "2026.10.14-e",
   data: "14/10/2026",
-  nota: "Perfil no desenho novo, em ISR - Perfil v3 ou pelo atalho /perfil.html?id=. Clicar no nome de uma aluna em qualquer tela nova abre a ficha nova — as quatro abas, a linha do tempo, o contrato, as presenças e o cadastro. O WhatsApp saiu da faixa solta e entrou no cartão da pessoa"
+  nota: "O ciclo passa a ter início e fim de verdade. A agenda gerava aula toda semana para sempre, e por isso a escola continuava pedindo chamada depois do ciclo acabar. Agora a aula só existe dentro da janela do ciclo, e a Central tem o lugar de fechar um ciclo e abrir o próximo"
 };

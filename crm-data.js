@@ -396,6 +396,66 @@
     return { quando: "atual", ciclo: label, label: "Ciclo " + label };
   }
 
+  // ── A JANELA DO CICLO ─────────────────────────────────────────
+  //
+  // A escola vende ciclo, mas a agenda gerava aula pelo dia da semana
+  // escrito no nome da turma — "TUE 13h" virava terça-feira para
+  // sempre. Quando o ciclo acabava, a agenda continuava inventando
+  // aula toda semana e a escola continuava pedindo chamada de aula
+  // que não existiu. Daqui em diante a aula só existe dentro da
+  // janela: do início do ciclo ao fim dele.
+  //
+  // Sem data de fim gravada nada muda — é o estado "sem_fim", e a
+  // Central avisa. Isso evita que a agenda de quem ainda não
+  // configurou o ciclo esvazie de uma hora para outra.
+  function cicloJanela() {
+    var M = metasAtuais();
+    var hoje = iso(today());
+    var ini = M.cicloInicio || "";
+    var fim = M.cicloFim || "";
+    var estado = !fim ? "sem_fim"
+      : (hoje > fim ? "terminado"
+      : (ini && hoje < ini ? "por_comecar" : "aberto"));
+    var dFim = fim ? parseISO(fim) : null;
+    return {
+      label: M.cicloLabel || "", inicio: ini, fim: fim, estado: estado,
+      diasAteOFim: dFim ? daysBetween(today(), dFim) : null
+    };
+  }
+
+  // Há aula nesta data? É o filtro que a agenda consulta.
+  function temAulaEm(data) {
+    var M = metasAtuais();
+    if (!data) return false;
+    if (M.cicloInicio && data < M.cicloInicio) return false;
+    if (M.cicloFim && data > M.cicloFim) return false;
+    return true;
+  }
+
+  // Abrir o próximo ciclo: nome, início e fim de uma vez. Enquanto o
+  // próximo não for aberto a agenda fica sem aula, e é por isso que
+  // isto precisa de um lugar na tela — não de um campo escondido.
+  function abrirCiclo(cfg) {
+    cfg = cfg || {};
+    var dia = /^\d{4}-\d{2}-\d{2}$/;
+    var label = String(cfg.label || "").trim();
+    if (!label || !dia.test(cfg.inicio || "") || !dia.test(cfg.fim || "")) return false;
+    if (cfg.fim < cfg.inicio) return false;
+    var antes = metasAtuais();
+    var patch = { cicloLabel: label, cicloInicio: cfg.inicio, cicloFim: cfg.fim };
+    if (cfg.meta != null && cfg.meta !== "") patch.matriculas = parseInt(cfg.meta, 10) || 0;
+    setMetas(patch);
+    // a equipe precisa saber que a agenda mudou de janela
+    try {
+      muralPost("Ciclo " + label + " aberto · aulas de "
+        + ddmm(cfg.inicio) + " a " + ddmm(cfg.fim)
+        + (antes.cicloLabel && antes.cicloLabel !== label
+            ? " · o ciclo " + antes.cicloLabel + " fica fechado" : ""),
+        "Pedagógico", (gestaoUser() || {}).nome || "");
+    } catch (e) {}
+    return true;
+  }
+
   // ══════════════════════════════════════════════════════════════
   //  SEED — Pessoa única (dados FICTÍCIOS; estrutura = spec 1.3)
   // ══════════════════════════════════════════════════════════════
@@ -9536,7 +9596,9 @@
       var hora = ((u.turma || "").match(/(\d{1,2})H/i) || [])[1];
       for (var i = 0; i < nDias; i++) {
         var d = new Date(t0); d.setDate(d.getDate() + i);
-        if (d.getDay() === alvo && !ehFeriado(iso(d))) {
+        // fora da janela do ciclo não há aula: é o que impede a agenda
+        // de inventar terça-feira para sempre depois do ciclo acabar
+        if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d))) {
           itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula", turmaId: u.id,
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
@@ -12167,6 +12229,7 @@
     // fila + metas
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
+    cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
