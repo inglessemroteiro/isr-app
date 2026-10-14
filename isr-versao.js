@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.14-f",
+  numero: "2026.10.14-g",
   data: "14/10/2026",
-  nota: "Matrícula no desenho novo, em ISR - Matrícula v3 ou pelo atalho /matricula.html?id=. O botão Matricular do CRM e do Perfil já abre a tela nova. Nove das vinte telas estão no desenho novo"
+  nota: "Agenda no desenho novo, em ISR - Agenda v3 ou pelo atalho /agenda.html. Lista e semana, filtros, aula extra e feriados. A agenda passa a dizer quando a semana está vazia porque o ciclo acabou, em vez de deixar a dúvida. Dez das vinte telas estão no desenho novo"
 };
