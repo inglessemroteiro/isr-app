@@ -178,13 +178,93 @@
       <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Aulas de particulares não têm horário fixo de turma: registre cada aula (ou pacote) na <strong>Agenda da escola</strong> como aula extra.</p>
     </div>
 
+    <!-- CLUBES DO CICLO · o que a aluna vê em clubes.html (Clubs Hub).
+         Cada aluna entra em até 2 por ciclo; o fórum de cada clube é só
+         de quem está nele. -->
+    <div style="margin-top: 30px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <h2 style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: #164951;">Clubes do ciclo</h2>
+          <span style="font-size: 12px; color: #a2957f;">{{ clubesCount }}</span>
+        </div>
+        <button onclick="{{ onToggleNovoClube }}" style="border: none; background: {{ novoClubeBg }}; color: {{ novoClubeFg }}; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ novoClubeLabel }}</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 12.5px; color: #6b6155; line-height: 1.6; max-width: 680px;">O que a aluna vê em <strong>Clubes</strong> no app. Cada aluna escolhe até {{ clubesLimite }} por ciclo; trocar no meio do ciclo custa miles. O ciclo atual é <strong>{{ cicloAtual }}</strong> (vem das metas); clubes de outros ciclos ficam guardados e saem da tela da aluna.</p>
+
+      <sc-if value="{{ novoClubeAberto }}">
+        <div style="background: #fdfbf8; border: 1px solid #c9dede; border-left: 4px solid #9ec970; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;">
+          <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 10px;">Novo clube</div>
+          <div style="display: grid; grid-template-columns: 70px 1fr 110px; gap: 8px; margin-bottom: 8px;">
+            <input ref="{{ ncEmojiRef }}" placeholder="📚" maxlength="4" style="padding: 10px 12px; font-size: 16px; text-align: center; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ ncNomeRef }}" placeholder="Nome do clube (ex. Book Club)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+            <input ref="{{ ncCicloRef }}" placeholder="Ciclo: {{ cicloAtual }}" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+          </div>
+          <textarea ref="{{ ncDescRef }}" placeholder="Descrição curta: do que o clube trata e o que acontece lá (a aluna lê isto antes de entrar)" style="width: 100%; box-sizing: border-box; min-height: 56px; padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; resize: vertical; margin-bottom: 8px;"></textarea>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="{{ onCriarClube }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar clube</button>
+            <span style="font-size: 11px; color: #b3a693;">Deixe o ciclo em branco para usar o atual.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="background: #fdfbf8; border: 1px solid #eee3d6; border-radius: 8px; overflow-x: auto;">
+        <div style="display: grid; grid-template-columns: 44px 1.4fr 0.6fr 0.6fr 1.1fr; gap: 12px; align-items: center; padding: 11px 18px; background: #f6eee4; min-width: 620px;">
+          <span></span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Clube</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Ciclo</span>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a7c6b;">Inscritas</span>
+          <span></span>
+        </div>
+        <sc-if value="{{ clubesVazio }}">
+          <div style="text-align: center; padding: 30px 20px; color: #9b8b7e; font-size: 13px;">Nenhum clube cadastrado. Crie o primeiro: a tela da aluna mostra os clubes do ciclo atual.</div>
+        </sc-if>
+        <sc-for list="{{ clubes }}" as="cb" hint-placeholder-count="3">
+          <div style="border-top: 1px solid #f2e9dd;">
+            <div style="display: grid; grid-template-columns: 44px 1.4fr 0.6fr 0.6fr 1.1fr; gap: 12px; align-items: center; padding: 13px 18px; min-width: 620px;">
+              <span style="font-size: 22px; text-align: center;">{{ cb.emoji }}</span>
+              <div style="min-width: 0;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #164951;">{{ cb.nome }}</div>
+                <sc-if value="{{ cb.temDesc }}"><div style="font-size: 11.5px; color: #8a7c6b; line-height: 1.5; margin-top: 2px;">{{ cb.descricao }}</div></sc-if>
+              </div>
+              <span style="font-size: 12.5px; font-weight: 700; color: {{ cb.cicloCor }};">{{ cb.cicloLabel }}</span>
+              <span style="font-size: 12.5px; color: #6b6155;">{{ cb.inscritas }}</span>
+              <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                <a href="{{ cb.forumHref }}" style="text-decoration: none; border: 1px solid #c9dede; background: #fff; color: #348a8e; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">abrir fórum</a>
+                <button onclick="{{ cb.onEditar }}" style="border: 1px solid #e5dccf; background: {{ cb.editBg }}; color: {{ cb.editFg }}; font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cb.editLabel }}</button>
+                <button onclick="{{ cb.onExcluir }}" style="border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px 7px; cursor: pointer; font-family: inherit;">{{ cb.excluirLabel }}</button>
+              </div>
+            </div>
+            <sc-if value="{{ cb.editando }}">
+              <div style="background: #f6f2ea; border-top: 1px dashed #e5dccf; padding: 14px 18px;">
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7c6b; margin-bottom: 10px;">Editar · deixe em branco o que não muda</div>
+                <div style="display: grid; grid-template-columns: 70px 1fr 110px; gap: 8px; margin-bottom: 8px;">
+                  <input ref="{{ edEmojiRef }}" placeholder="{{ cb.emoji }}" maxlength="4" style="padding: 9px 11px; font-size: 16px; text-align: center; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ edNomeRef }}" placeholder="Nome: {{ cb.nome }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                  <input ref="{{ edCicloRef }}" placeholder="Ciclo: {{ cb.cicloLabel }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" />
+                </div>
+                <textarea ref="{{ edDescRef }}" placeholder="Descrição: {{ cb.descricaoOuVazia }}" style="width: 100%; box-sizing: border-box; min-height: 56px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: #3d3529; border: 1px solid #e5dccf; border-radius: 8px; background: #fff; resize: vertical; margin-bottom: 8px;"></textarea>
+                <div style="display: flex; gap: 8px;">
+                  <button onclick="{{ cb.onSalvar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                  <button onclick="{{ cb.onCancelar }}" style="border: none; background: transparent; color: #9b8b7e; font-size: 12px; font-weight: 600; padding: 9px 8px; cursor: pointer; font-family: inherit;">cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Excluir um clube apaga a lista da tela da aluna, mas as inscrições e as conversas ficam guardadas no banco. Para encerrar um ciclo, basta cadastrar os clubes do próximo com o ciclo novo.</p>
+    </div>
+
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1080px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null,
-            selTurmas: {}, confirmaExcluirSel: false };
+            selTurmas: {}, confirmaExcluirSel: false,
+            novoClubeAberto: false, editClubeId: null, excluindoClubeId: null };
+  ncEmojiRef = React.createRef(); ncNomeRef = React.createRef(); ncCicloRef = React.createRef(); ncDescRef = React.createRef();
+  edEmojiRef = React.createRef(); edNomeRef = React.createRef(); edCicloRef = React.createRef(); edDescRef = React.createRef();
   ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
   edTeacherRef = React.createRef();
@@ -203,7 +283,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "#164951", novaFg: "#fff", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef };
+    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "#164951", novaFg: "#fff", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef, clubes: [], clubesVazio: true, clubesCount: "", ncEmojiRef: this.ncEmojiRef, ncNomeRef: this.ncNomeRef, ncCicloRef: this.ncCicloRef, ncDescRef: this.ncDescRef, edEmojiRef: this.edEmojiRef, edNomeRef: this.edNomeRef, edCicloRef: this.edCicloRef, edDescRef: this.edDescRef };
 
     const ocup = CRM.ocupacaoTurmas();
     const names = ["Todas"];
@@ -320,8 +400,61 @@ class Component extends DCLogic {
         };
       });
 
+    // clubes do ciclo (Clubs Hub): cadastro e edição inline
+    const cicloAtual = CRM.cicloDosClubes ? CRM.cicloDosClubes() : "";
+    const clubes = (CRM.clubesTodos ? CRM.clubesTodos() : []).map(c => {
+      const editando = this.state.editClubeId === c.id;
+      const excluindo = this.state.excluindoClubeId === c.id;
+      const doCiclo = !c.ciclo || c.ciclo === cicloAtual;
+      return {
+        id: c.id, emoji: c.emoji || "💬", nome: c.nome, descricao: c.descricao || "",
+        temDesc: !!c.descricao, descricaoOuVazia: c.descricao || "—",
+        cicloLabel: c.ciclo || "todos", cicloCor: doCiclo ? "#348a8e" : "#b3a693",
+        inscritas: c.membros === 1 ? "1 aluna" : c.membros + " alunas",
+        forumHref: "clubes.html?clube=" + encodeURIComponent(c.id),
+        editando, editLabel: editando ? "fechar" : "editar",
+        editBg: editando ? "#164951" : "#fff", editFg: editando ? "#fff" : "#6b6155",
+        excluirLabel: excluindo ? "confirmar exclusão" : "excluir",
+        onEditar: () => this.setState({ editClubeId: editando ? null : c.id, excluindoClubeId: null }),
+        onCancelar: () => this.setState({ editClubeId: null }),
+        onSalvar: () => {
+          const patch = { id: c.id, nome: c.nome, emoji: c.emoji, descricao: c.descricao, ciclo: c.ciclo };
+          const em = this.val(this.edEmojiRef); if (em) patch.emoji = em;
+          const nm = this.val(this.edNomeRef); if (nm) patch.nome = nm;
+          const ci = this.val(this.edCicloRef); if (ci) patch.ciclo = ci;
+          const ds = this.val(this.edDescRef); if (ds) patch.descricao = ds;
+          CRM.clubeSalvar(patch);
+          [this.edEmojiRef, this.edNomeRef, this.edCicloRef, this.edDescRef].forEach(r => { if (r.current) r.current.value = ""; });
+          this.setState({ editClubeId: null });
+        },
+        onExcluir: () => {
+          if (!excluindo) { this.setState({ excluindoClubeId: c.id }); return; }
+          CRM.clubeRemover(c.id);
+          this.setState({ excluindoClubeId: null, editClubeId: null });
+        }
+      };
+    });
+
     const selIds = Object.keys(this.state.selTurmas);
     return {
+      clubes, clubesVazio: clubes.length === 0,
+      clubesCount: clubes.length ? clubes.length + (clubes.length === 1 ? " clube" : " clubes") : "",
+      clubesLimite: CRM.CLUBES_POR_CICLO || 2, cicloAtual: cicloAtual || "—",
+      novoClubeAberto: this.state.novoClubeAberto,
+      novoClubeLabel: this.state.novoClubeAberto ? "fechar" : "+ Novo clube",
+      novoClubeBg: this.state.novoClubeAberto ? "#e5dccf" : "#164951",
+      novoClubeFg: this.state.novoClubeAberto ? "#6b6155" : "#fff",
+      onToggleNovoClube: () => this.setState({ novoClubeAberto: !this.state.novoClubeAberto, editClubeId: null }),
+      ncEmojiRef: this.ncEmojiRef, ncNomeRef: this.ncNomeRef, ncCicloRef: this.ncCicloRef, ncDescRef: this.ncDescRef,
+      edEmojiRef: this.edEmojiRef, edNomeRef: this.edNomeRef, edCicloRef: this.edCicloRef, edDescRef: this.edDescRef,
+      onCriarClube: () => {
+        const nome = this.val(this.ncNomeRef);
+        if (!nome) { window.alert("Dê um nome ao clube."); return; }
+        CRM.clubeSalvar({ nome, emoji: this.val(this.ncEmojiRef), descricao: this.val(this.ncDescRef),
+          ciclo: this.val(this.ncCicloRef) || cicloAtual });
+        [this.ncEmojiRef, this.ncNomeRef, this.ncCicloRef, this.ncDescRef].forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ novoClubeAberto: false });
+      },
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
       onTeacher: (e) => this.setState({ teacher: e.target.value }),
       // barra de seleção: excluir várias turmas de uma vez, em dois cliques

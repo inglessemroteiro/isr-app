@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Comunidade</title>
+<meta name="theme-color" content="#f2ebe3">
+<link rel="manifest" href="manifest.json">
+<!--
+  Comunidade das alunas — tela independente, no design system da escola
+  (fundo creme, cartões brancos, Inter 800, coral com degrau).
+  Abre por link (botão no systeme), dentro do app da aluna (botão Turma)
+  e como aplicativo instalado. Não depende do menu de gestão: só do
+  login da aluna (isr-trava.js) e do banco (crm-data.js).
+
+    comunidade.html              mural da escola, colegas e o que espera você
+    comunidade.html?perfil=ID    o perfil aberto de uma colega (ou o seu)
+
+  Quem está na equipe e abre pelo sistema assina como equipe.
+-->
+<script src="./isr-trava.js"></script>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./crm-data.js"></script>
+<link rel="stylesheet" href="./isr-tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── tokens do kit (web) ─────────────────────────────────────────
+     fundo #f2ebe3 · títulos/texto #164951 · apoio #1d5a63 · teal #348a8e
+     coral #fc9082 (ação) · verde #9ec970 (positivo) · marrom #8a7465 (rótulos)
+     cantos: 8 papel · 20–32 cartões · 48 seções escuras · 999 botões */
+  html, body { margin: 0; background: #f2ebe3; }
+  .com { min-height: 100vh; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #164951; -webkit-font-smoothing: antialiased; background: #f2ebe3; }
+  .com * { box-sizing: border-box; }
+  .com a { color: #348a8e; }
+  .com a:hover { color: #164951; }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px 56px; }
+  @media (min-width: 640px) { .wrap { padding: 28px 24px 72px; } }
+
+  /* topo: wordmark + eyebrow, e o botão de voltar */
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .marca { display: flex; flex-direction: column; gap: 5px; text-decoration: none; }
+  .marca img { height: 13px; width: auto; display: block; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase; }
+  .volta { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #164951; text-decoration: none; background: #fff; padding: 9px 14px; border-radius: 999px; box-shadow: 0 3px 0 #e2d8ca; white-space: nowrap; transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .volta:hover { transform: translateY(-3px); box-shadow: 0 6px 0 #e2d8ca; color: #164951; }
+  .volta:active { transform: translateY(1px); box-shadow: 0 2px 0 #e2d8ca; }
+  .volta svg { width: 16px; height: 16px; }
+
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin: 0 0 8px; color: #164951; }
+  h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; margin: 0; color: #164951; }
+  h3.eyebrow { margin: 0; font-size: 13px; }
+  .ico { display: inline-block; margin-right: 9px; font-size: 14px; }
+  .sub { margin: 0; font-size: 16px; line-height: 1.5; color: #1d5a63; }
+  .secao { margin: 0 0 28px; }
+  .cabeca { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px 4px; }
+  .cabeca .conta { font-size: 12px; font-weight: 700; color: #348a8e; white-space: nowrap; }
+
+  /* seção escura de boas-vindas */
+  .hero { background: #164951; color: #f2ebe3; border-radius: 32px; padding: 26px 24px 28px; margin-bottom: 28px; }
+  @media (min-width: 640px) { .hero { border-radius: 48px; padding: 36px 36px 38px; } }
+  .hero .eyebrow { color: #9ec970; }
+  .hero h1 { color: #fff; margin-top: 6px; }
+  .hero .sub { color: rgba(242,235,227,0.8); }
+  .hero .novidade { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; background: #fc9082; color: #164951; font-size: 13px; font-weight: 800; padding: 8px 14px; border-radius: 999px; }
+
+  /* cartões brancos sobre o creme, sem borda, sombra baixa */
+  .card { background: #fff; border-radius: 20px; padding: 18px 20px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); }
+  .card.tint-coral { background: #fff1ee; }
+  .card.tint-verde { background: #f1f7e9; }
+  .card.papel { border-radius: 8px; background: #fffdf8; box-shadow: 0 1px 4px rgba(22,73,81,0.06); }
+  .vazio { font-size: 15px; line-height: 1.5; color: #1d5a63; margin: 0; }
+
+  .linha { display: flex; gap: 12px; align-items: flex-start; }
+  .linha .corpo { flex: 1; min-width: 0; }
+  .quem { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #164951; }
+  .quem .eq { display: inline-block; margin-left: 6px; background: #9ec970; color: #164951; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
+  .quando { font-size: 12px; font-weight: 600; color: #8a7465; margin-top: 2px; }
+  .texto { margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #164951; white-space: pre-wrap; word-wrap: break-word; }
+
+  .avatar { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; color: #164951; overflow: hidden; background: #e8f5dd; }
+  .avatar .foto { display: block; width: 100%; height: 100%; background-size: cover; background-position: center; }
+  .avatar.g { width: 72px; height: 72px; font-size: 28px; }
+
+  /* botões: 999px, primeira pessoa quando couber, degrau sólido embaixo;
+     hover sobe 3px e a sombra cresce; clique afunda */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; padding: 12px 20px; cursor: pointer; text-decoration: none; transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .btn.coral { background: #fc9082; color: #164951; box-shadow: 0 4px 0 #d9705f; }
+  .btn.coral:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #d9705f; color: #164951; }
+  .btn.coral:active { transform: translateY(1px); box-shadow: 0 1px 0 #d9705f; }
+  .btn.verde { background: #9ec970; color: #164951; box-shadow: 0 4px 0 #7ca954; }
+  .btn.verde:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #7ca954; color: #164951; }
+  .btn.verde:active { transform: translateY(1px); box-shadow: 0 1px 0 #7ca954; }
+  .btn.creme { background: #f2ebe3; color: #164951; box-shadow: 0 4px 0 #d9cdbd; }
+  .btn.creme:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #d9cdbd; color: #164951; }
+  .btn.creme:active { transform: translateY(1px); box-shadow: 0 1px 0 #d9cdbd; }
+  .btn.mini { font-size: 13px; padding: 10px 16px; }
+  .link-btn { background: none; border: none; padding: 0; font-family: inherit; font-size: 13px; font-weight: 700; color: #8a7465; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { color: #164951; }
+  .acoes { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+
+  textarea.campo { width: 100%; min-height: 72px; border: 1.5px solid #e2d8ca; background: #fffdf8; color: #164951; font-family: inherit; font-size: 16px; line-height: 1.5; padding: 13px 15px; border-radius: 14px; resize: vertical; outline: none; transition: border-color .15s; }
+  textarea.campo::placeholder { color: #9b8b7e; }
+  textarea.campo:focus { border-color: #348a8e; }
+  .nota { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: #8a7465; }
+  .nota strong { color: #164951; }
+  .ok { font-size: 14px; font-weight: 800; color: #348a8e; }
+
+  /* colegas: grade de avatares com o primeiro nome */
+  .grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (min-width: 480px) { .grade { grid-template-columns: repeat(5, 1fr); } }
+  .pessoa { background: #fff; border-radius: 20px; padding: 14px 6px 12px; cursor: pointer; font-family: inherit; color: #164951; text-align: center; text-decoration: none; display: block; box-shadow: 0 2px 10px rgba(22,73,81,0.06); transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .pessoa:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(22,73,81,0.1); color: #164951; }
+  .pessoa .avatar { margin: 0 auto 8px; width: 48px; height: 48px; font-size: 18px; }
+  .pessoa .nome { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turma-titulo { font-size: 13px; font-weight: 700; color: #8a7465; margin: 16px 0 8px 4px; text-transform: lowercase; }
+
+  /* atributos: barra por atributo e estrelas para votar */
+  .atrib { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #f0ebe3; }
+  .atrib:first-child { border-top: none; padding-top: 0; }
+  .atrib:last-child { padding-bottom: 0; }
+  .atrib .emoji { flex: none; font-size: 22px; width: 30px; text-align: center; }
+  .atrib .meio { flex: 1; min-width: 0; }
+  .atrib .rotulo { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #164951; }
+  .atrib .rotulo small { font-weight: 600; font-size: 12px; color: #8a7465; white-space: nowrap; }
+  .barra { height: 8px; background: #f2ebe3; border-radius: 999px; overflow: hidden; margin-top: 7px; }
+  .barra i { display: block; height: 100%; background: #9ec970; border-radius: 999px; transition: width .3s cubic-bezier(.4,0,.2,1); }
+  .estrelas { display: flex; gap: 0; flex: none; }
+  .estrela { background: none; border: none; padding: 4px 2px; font-size: 22px; line-height: 1; cursor: pointer; color: #e2d8ca; font-family: inherit; transition: transform .15s, color .15s; }
+  .estrela.on { color: #fc9082; }
+  .estrela:hover { transform: scale(1.15); color: #fc9082; }
+
+  .perfil-topo { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
+  .perfil-topo .corpo { flex: 1; min-width: 0; }
+  .perfil-topo h1 { margin: 0; font-size: 28px; }
+  .perfil-topo .turma { font-size: 13px; font-weight: 700; color: #8a7465; margin-top: 4px; text-transform: lowercase; }
+  .perfil-topo .bio { font-size: 15px; line-height: 1.5; color: #1d5a63; margin: 8px 0 0; }
+
+  .pill { display: inline-block; background: #fc9082; color: #164951; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; vertical-align: middle; }
+  .pill.verde { background: #9ec970; }
+  .pill.neutra { background: #f2ebe3; color: #164951; }
+
+  @media (prefers-reduced-motion: reduce) { .com * { transition: none !important; } .com .btn:hover, .com .pessoa:hover, .com .volta:hover { transform: none; } }
+</style>
+</head>
+<body>
+<x-dc>
+<main class="com">
+  <div class="wrap">
+
+    <!-- sem sessão válida: a trava já mandou para o login; isto cobre o
+         caso de um id que não existe mais no banco -->
+    <sc-if value="{{ semPessoa }}">
+      <div class="topo"><a class="marca" href="comunidade.html"><img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" /><span class="eyebrow">comunidade</span></a></div>
+      <div class="card">
+        <p class="vazio">Não encontramos sua matrícula neste aparelho. <a href="aluna.html?trocar">Entrar de novo →</a></p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+
+    <div class="topo">
+      <a class="marca" href="comunidade.html"><img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" /><span class="eyebrow">comunidade</span></a>
+      <sc-if value="{{ vistaInicio }}">
+        <a class="volta" href="{{ linkApp }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Meu app</a>
+      </sc-if>
+      <sc-if value="{{ vistaPerfil }}">
+        <a class="volta" href="comunidade.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>Comunidade</a>
+      </sc-if>
+    </div>
+
+    <!-- ══════════ INÍCIO: o que espera você, mural e colegas ══════════ -->
+    <sc-if value="{{ vistaInicio }}">
+      <section class="hero">
+        <span class="eyebrow">{{ heroEyebrow }}</span>
+        <h1>{{ saudacao }}</h1>
+        <p class="sub">{{ subInicio }}</p>
+        <sc-if value="{{ temPendentes }}"><span class="novidade">✳ {{ pendentesContagem }} esperando você</span></sc-if>
+      </section>
+
+      <!-- depoimentos esperando a dona aceitar -->
+      <sc-if value="{{ temPendentes }}">
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow">esperando você</h3><span class="conta">{{ pendentesContagem }}</span></div>
+          <sc-for list="{{ pendentes }}" as="pd" hint-placeholder-count="2">
+            <div class="card tint-coral">
+              <div class="quem">{{ pd.deNome }} escreveu sobre você</div>
+              <div class="quando">{{ pd.quando }}</div>
+              <p class="texto">{{ pd.texto }}</p>
+              <div class="acoes">
+                <button class="btn coral mini" onclick="{{ pd.onAceitar }}">Quero no meu perfil →</button>
+                <button class="link-btn" onclick="{{ pd.onRecusar }}">agora não</button>
+              </div>
+              <p class="nota">Aceitar vale <strong>+{{ milesDepoimento }} miles</strong> para você e para quem escreveu.</p>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <!-- mural da escola -->
+      <section class="secao">
+        <div class="cabeca"><h3 class="eyebrow"><span class="ico">📣</span>mural da escola</h3><span class="conta">{{ feedContagem }}</span></div>
+        <sc-if value="{{ semFeed }}">
+          <div class="card"><p class="vazio">A equipe ainda não deixou recado por aqui. Avisos, eventos e a novidade da semana vão aparecer neste mural.</p></div>
+        </sc-if>
+        <sc-for list="{{ feed }}" as="f" hint-placeholder-count="3">
+          <div class="card">
+            <div class="quem">{{ f.autor }}<span class="eq">equipe</span></div>
+            <div class="quando">{{ f.quando }}</div>
+            <p class="texto">{{ f.texto }}</p>
+            <sc-if value="{{ f.temLink }}">
+              <div class="acoes"><a class="btn creme mini" href="{{ f.link }}" target="_blank" rel="noopener">Abrir o link →</a></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </section>
+
+      <!-- seu perfil -->
+      <sc-if value="{{ temMeuPerfil }}">
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow">seu perfil</h3></div>
+          <a class="card" href="{{ meuPerfilLink }}" style="display: block; text-decoration: none;">
+            <div class="linha" style="align-items: center;">
+              <div class="avatar" style="background: {{ meuAvatarCor }};">
+                <sc-if value="{{ meuTemFoto }}"><span class="foto" style="background-image: url('{{ meuFoto }}');"></span></sc-if>
+                <sc-if value="{{ meuSemFoto }}">{{ meuInicial }}</sc-if>
+              </div>
+              <div class="corpo">
+                <div class="quem">{{ meuNome }}</div>
+                <div class="quando">{{ meuResumo }}</div>
+              </div>
+              <span class="pill neutra">abrir →</span>
+            </div>
+          </a>
+        </section>
+      </sc-if>
+
+      <!-- colegas da turma -->
+      <sc-if value="{{ temMinhaTurma }}">
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow"><span class="ico">👥</span>sua turma</h3><span class="conta">{{ minhaTurmaLabel }}</span></div>
+          <sc-if value="{{ semColegas }}">
+            <div class="card"><p class="vazio">Você ainda é a única da turma por aqui. As colegas aparecem assim que entrarem no app.</p></div>
+          </sc-if>
+          <div class="grade">
+            <sc-for list="{{ colegas }}" as="c" hint-placeholder-count="4">
+              <a class="pessoa" href="{{ c.link }}">
+                <div class="avatar" style="background: {{ c.cor }};">
+                  <sc-if value="{{ c.temFoto }}"><span class="foto" style="background-image: url('{{ c.foto }}');"></span></sc-if>
+                  <sc-if value="{{ c.semFoto }}">{{ c.inicial }}</sc-if>
+                </div>
+                <div class="nome">{{ c.nome }}</div>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- toda a escola, por turma -->
+      <section class="secao">
+        <div class="cabeca"><h3 class="eyebrow">toda a escola</h3><span class="conta">{{ escolaContagem }}</span></div>
+        <sc-if value="{{ escolaFechada }}">
+          <button class="btn creme" onclick="{{ onAbrirEscola }}">Quero ver todas as alunas →</button>
+        </sc-if>
+        <sc-if value="{{ escolaAberta }}">
+          <sc-for list="{{ escola }}" as="g" hint-placeholder-count="3">
+            <div class="turma-titulo">{{ g.turma }}</div>
+            <div class="grade">
+              <sc-for list="{{ g.pessoas }}" as="c" hint-placeholder-count="4">
+                <a class="pessoa" href="{{ c.link }}">
+                  <div class="avatar" style="background: {{ c.cor }};">
+                    <sc-if value="{{ c.temFoto }}"><span class="foto" style="background-image: url('{{ c.foto }}');"></span></sc-if>
+                    <sc-if value="{{ c.semFoto }}">{{ c.inicial }}</sc-if>
+                  </div>
+                  <div class="nome">{{ c.nome }}</div>
+                </a>
+              </sc-for>
+            </div>
+          </sc-for>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <!-- ══════════ PERFIL ABERTO ══════════ -->
+    <sc-if value="{{ vistaPerfil }}">
+      <sc-if value="{{ perfilNaoExiste }}">
+        <div class="card"><p class="vazio">Este perfil não está mais na escola.</p></div>
+      </sc-if>
+      <sc-if value="{{ perfilExiste }}">
+
+        <div class="perfil-topo">
+          <div class="avatar g" style="background: {{ pf.cor }};">
+            <sc-if value="{{ pf.temFoto }}"><span class="foto" style="background-image: url('{{ pf.foto }}');"></span></sc-if>
+            <sc-if value="{{ pf.semFoto }}">{{ pf.inicial }}</sc-if>
+          </div>
+          <div class="corpo">
+            <h1>{{ pf.nome }}</h1>
+            <div class="turma">{{ pf.turmaLabel }}</div>
+            <sc-if value="{{ pf.temBio }}"><p class="bio">{{ pf.bio }}</p></sc-if>
+            <sc-if value="{{ ehMeu }}"><p class="nota" style="margin-top: 6px;">Foto e bio você edita no app, em <a href="{{ linkApp }}">Conta</a>.</p></sc-if>
+          </div>
+        </div>
+
+        <!-- atributos -->
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow">como a turma vê</h3><span class="conta">{{ pf.votosLabel }}</span></div>
+          <div class="card">
+            <sc-for list="{{ atributos }}" as="a" hint-placeholder-count="3">
+              <div class="atrib">
+                <div class="emoji">{{ a.emoji }}</div>
+                <div class="meio">
+                  <div class="rotulo"><span>{{ a.label }}</span><small>{{ a.resumo }}</small></div>
+                  <div class="barra"><i style="width: {{ a.pct }};"></i></div>
+                </div>
+                <sc-if value="{{ a.podeVotar }}">
+                  <div class="estrelas" title="Sua avaliação, anônima">
+                    <button class="estrela {{ a.s1 }}" onclick="{{ a.on1 }}" aria-label="1 estrela">★</button>
+                    <button class="estrela {{ a.s2 }}" onclick="{{ a.on2 }}" aria-label="2 estrelas">★</button>
+                    <button class="estrela {{ a.s3 }}" onclick="{{ a.on3 }}" aria-label="3 estrelas">★</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ naoEhMeu }}"><p class="nota">Toque nas estrelas para avaliar. Ninguém vê quem votou, só a média.</p></sc-if>
+          <sc-if value="{{ ehMeu }}"><p class="nota">Colegas e professoras votam anonimamente. A barra cresce com a média.</p></sc-if>
+        </section>
+
+        <!-- scraps -->
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow"><span class="ico">💬</span>scraps</h3><span class="conta">{{ scrapsContagem }}</span></div>
+          <sc-if value="{{ naoEhMeu }}">
+            <div class="card">
+              <textarea class="campo" ref="{{ scrapRef }}" placeholder="{{ scrapPlaceholder }}"></textarea>
+              <div class="acoes">
+                <button class="btn coral mini" onclick="{{ onScrap }}">Deixar o scrap →</button>
+                <sc-if value="{{ scrapEnviado }}"><span class="ok">Scrap deixado ✳</span></sc-if>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ semScraps }}">
+            <div class="card papel"><p class="vazio">{{ semScrapsTexto }}</p></div>
+          </sc-if>
+          <sc-for list="{{ scraps }}" as="s" hint-placeholder-count="4">
+            <div class="card">
+              <div class="linha">
+                <div class="avatar" style="background: {{ s.cor }}; width: 38px; height: 38px; font-size: 15px;">
+                  <sc-if value="{{ s.temFoto }}"><span class="foto" style="background-image: url('{{ s.foto }}');"></span></sc-if>
+                  <sc-if value="{{ s.semFoto }}">{{ s.inicial }}</sc-if>
+                </div>
+                <div class="corpo">
+                  <div class="quem">{{ s.deNome }}<sc-if value="{{ s.equipe }}"><span class="eq">equipe</span></sc-if></div>
+                  <div class="quando">{{ s.quando }}</div>
+                  <p class="texto">{{ s.texto }}</p>
+                  <sc-if value="{{ s.podeRemover }}">
+                    <div class="acoes" style="margin-top: 8px;"><button class="link-btn" onclick="{{ s.onRemover }}">{{ s.removerLabel }}</button></div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+
+        <!-- depoimentos -->
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow"><span class="ico">✍️</span>depoimentos</h3><span class="conta">{{ depoimentosContagem }}</span></div>
+
+          <!-- a dona decide o que entra -->
+          <sc-if value="{{ ehMeu }}">
+            <sc-for list="{{ pendentes }}" as="pd" hint-placeholder-count="2">
+              <div class="card tint-coral">
+                <div class="quem">{{ pd.deNome }} <span class="pill">esperando você</span></div>
+                <div class="quando">{{ pd.quando }}</div>
+                <p class="texto">{{ pd.texto }}</p>
+                <div class="acoes">
+                  <button class="btn coral mini" onclick="{{ pd.onAceitar }}">Quero no meu perfil →</button>
+                  <button class="link-btn" onclick="{{ pd.onRecusar }}">agora não</button>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <!-- quem visita escreve; um por pessoa, até ela responder -->
+          <sc-if value="{{ naoEhMeu }}">
+            <sc-if value="{{ depoAberto }}">
+              <div class="card">
+                <textarea class="campo" ref="{{ depoRef }}" style="min-height: 120px;" placeholder="{{ depoPlaceholder }}"></textarea>
+                <div class="acoes">
+                  <button class="btn coral mini" onclick="{{ onDepoimento }}">Enviar o depoimento →</button>
+                  <button class="link-btn" onclick="{{ onFecharDepo }}">cancelar</button>
+                </div>
+                <p class="nota">Só entra no perfil se {{ pf.primeiroNome }} aceitar. Quando aceitar, vocês duas ganham <strong>+{{ milesDepoimento }} miles</strong>.</p>
+              </div>
+            </sc-if>
+            <sc-if value="{{ depoFechado }}">
+              <sc-if value="{{ depoPodeEscrever }}">
+                <div class="card tint-verde">
+                  <h2>Viu {{ pf.primeiroNome }} evoluir?</h2>
+                  <p class="vazio" style="margin: 6px 0 14px;">Conte em algumas linhas. Depoimento é texto que fica no perfil dela.</p>
+                  <button class="btn coral mini" onclick="{{ onAbrirDepo }}">Quero escrever um depoimento →</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ depoEsperando }}">
+                <div class="card papel"><div class="quem">Seu depoimento <span class="pill">esperando {{ pf.primeiroNome }} aceitar</span></div><p class="texto">{{ depoMeuTexto }}</p></div>
+              </sc-if>
+            </sc-if>
+          </sc-if>
+
+          <sc-if value="{{ semDepoimentos }}">
+            <div class="card papel"><p class="vazio">{{ semDepoimentosTexto }}</p></div>
+          </sc-if>
+          <sc-for list="{{ depoimentos }}" as="d" hint-placeholder-count="3">
+            <div class="card tint-verde">
+              <div class="linha">
+                <div class="avatar" style="background: {{ d.cor }}; width: 38px; height: 38px; font-size: 15px;">
+                  <sc-if value="{{ d.temFoto }}"><span class="foto" style="background-image: url('{{ d.foto }}');"></span></sc-if>
+                  <sc-if value="{{ d.semFoto }}">{{ d.inicial }}</sc-if>
+                </div>
+                <div class="corpo">
+                  <div class="quem">{{ d.deNome }}<sc-if value="{{ d.equipe }}"><span class="eq">equipe</span></sc-if></div>
+                  <div class="quando">{{ d.quando }}</div>
+                  <p class="texto">{{ d.texto }}</p>
+                  <sc-if value="{{ d.podeRemover }}">
+                    <div class="acoes" style="margin-top: 8px;"><button class="link-btn" onclick="{{ d.onRemover }}">{{ d.removerLabel }}</button></div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+
+      </sc-if>
+    </sc-if>
+
+    </sc-if>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;420px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tick: 0, escolaAberta: false, scrapEnviado: false, depoAberto: false,
+            removendoId: null };
+  scrapRef = React.createRef();
+  depoRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  // o puxe do banco (a cada 5 min) traz scraps e recados novos; o
+  // redesenho periódico faz a tela refletir sem ninguém recarregar
+  componentDidMount() {
+    this.ouvinte = () => this.bump();
+    window.addEventListener("isr-dados", this.ouvinte);
+    window.addEventListener("isr-dados-novos", this.ouvinte);
+    this.timer = setInterval(() => this.bump(), 60 * 1000);
+    // marca a visita: o app usa isso para dizer "N scraps novos"
+    try {
+      const id = this.alunaId();
+      if (id) localStorage.setItem("isr_comunidade_visto_" + id, new Date().toISOString());
+    } catch (e) {}
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.ouvinte);
+    window.removeEventListener("isr-dados-novos", this.ouvinte);
+    clearInterval(this.timer);
+  }
+
+  param(n) { try { return new URLSearchParams(window.location.search).get(n) || ""; } catch (e) { return ""; } }
+  // A aluna é a sessão do aparelho. O ?id= só vale para a equipe, que
+  // abre o app de uma aluna pelo sistema para ver como ela vê.
+  alunaId() {
+    try {
+      const sessao = localStorage.getItem("isr_aluna_id") || "";
+      const q = this.param("id");
+      const equipe = !!JSON.parse(localStorage.getItem("isr_gestao_user") || "null");
+      if (q && (equipe || !sessao)) return q;
+      return sessao;
+    } catch (e) { return ""; }
+  }
+
+  quando(isoStr) {
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d)) return "";
+      const hoje = new Date();
+      const ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
+      const hora = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      if (d.toDateString() === hoje.toDateString()) return "hoje às " + hora;
+      if (d.toDateString() === ontem.toDateString()) return "ontem às " + hora;
+      const dia = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+      return dia + (d.getFullYear() !== hoje.getFullYear() ? "/" + d.getFullYear() : "");
+    } catch (e) { return ""; }
+  }
+  // cor do avatar sem foto: estável por nome, nos tons claros da paleta
+  cor(nome) {
+    const CORES = ["#e8f5dd", "#fde3de", "#cae6eb", "#f6e7d3", "#ede6df", "#e5f2f6"];
+    let h = 0; for (const ch of (nome || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return CORES[h % CORES.length];
+  }
+  avatarDe(nome, foto) {
+    return { cor: this.cor(nome), temFoto: !!foto, semFoto: !foto, foto: foto || "",
+      inicial: ((nome || "?").trim().slice(0, 1) || "?").toUpperCase() };
+  }
+  fotoDeAutor(CRM, autorId) {
+    if (!autorId || autorId.indexOf("eq:") === 0) return "";
+    const p = CRM.getPessoa(autorId);
+    return (p && p.foto) || "";
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { scrapRef: this.scrapRef, depoRef: this.depoRef };
+    const nada = Object.assign({ ok: false, semPessoa: true, pendentes: [], feed: [], colegas: [],
+      escola: [], atributos: [], scraps: [], depoimentos: [] }, refs);
+    if (!CRM) return nada;
+
+    const idAluna = this.alunaId();
+    const eu = CRM.autorComunidade(idAluna);
+    if (!eu) return nada;
+    const equipe = !!eu.equipe;
+    const minha = equipe ? null : CRM.getPessoa(eu.id);
+    const perfilId = this.param("perfil");
+    const vistaPerfil = !!perfilId;
+    const linkApp = "ISR - Aluna.dc.html" + (equipe && idAluna ? "?id=" + encodeURIComponent(idAluna) : "");
+    const milesDepoimento = CRM.MOEDAS_REGRAS.depoimentoAceito;
+    const primeiro = n => CRM.firstName(n);
+    const turmaCurta = t => (t || "").split(" · ")[0] || "";
+
+    const cartaoPendente = pd => ({
+      deNome: pd.deNome, quando: this.quando(pd.em), texto: pd.texto,
+      onAceitar: () => { CRM.depoimentoResponder(pd.id, true); this.bump(); },
+      onRecusar: () => { CRM.depoimentoResponder(pd.id, false); this.bump(); }
+    });
+    const pendentes = minha ? CRM.depoimentosPendentes(minha.id).map(cartaoPendente) : [];
+
+    const base = Object.assign({
+      ok: true, semPessoa: false, linkApp, milesDepoimento,
+      vistaInicio: !vistaPerfil, vistaPerfil
+    }, refs);
+
+    // ── INÍCIO ──
+    if (!vistaPerfil) {
+      const feed = CRM.feedEscolaLista().slice(0, 20).map(f => ({
+        autor: f.autor || "Equipe ISR", quando: this.quando(f.em), texto: f.texto,
+        temLink: !!f.link, link: f.link || ""
+      }));
+      const membros = CRM.membrosComunidade().filter(m => !minha || m.id !== minha.id);
+      const pessoaCard = m => Object.assign({ id: m.id, nome: primeiro(m.nome),
+        link: "comunidade.html?perfil=" + encodeURIComponent(m.id)
+          + (equipe && idAluna ? "&id=" + encodeURIComponent(idAluna) : "") },
+        this.avatarDe(m.nome, m.foto));
+      const minhaTurma = minha ? (minha.turma || "") : "";
+      const colegas = minhaTurma ? membros.filter(m => m.turma === minhaTurma).map(pessoaCard) : [];
+      const porTurma = {};
+      membros.forEach(m => { const k = m.turma || "Sem turma"; (porTurma[k] = porTurma[k] || []).push(m); });
+      const escola = Object.keys(porTurma).sort().map(t => ({ turma: t, pessoas: porTurma[t].map(pessoaCard) }));
+      const nov = minha ? CRM.novidadesComunidade(minha.id) : { pendentes: 0, scraps: 0 };
+      const nDepo = minha ? CRM.depoimentosDe(minha.id).length : 0;
+
+      return Object.assign(base, {
+        heroEyebrow: minha ? (turmaCurta(minhaTurma) || "inglês sem roteiro") : "equipe",
+        saudacao: minha ? "Oi, " + primeiro(minha.nome) + "!" : "Comunidade da escola",
+        subInicio: minha
+          ? "Quem estuda com você, o que a equipe avisou e o que deixaram no seu perfil."
+          : "Você está vendo como equipe: pode deixar scraps e depoimentos para qualquer aluna.",
+        temPendentes: pendentes.length > 0, pendentes,
+        pendentesContagem: pendentes.length === 1 ? "1 depoimento" : pendentes.length + " depoimentos",
+        feed, semFeed: feed.length === 0,
+        feedContagem: feed.length === 0 ? "" : (feed.length === 1 ? "1 recado" : feed.length + " recados"),
+        temMeuPerfil: !!minha,
+        meuPerfilLink: minha ? "comunidade.html?perfil=" + encodeURIComponent(minha.id) : "",
+        meuNome: minha ? minha.nome : "",
+        meuResumo: minha ? [nov.scraps ? nov.scraps + (nov.scraps === 1 ? " scrap" : " scraps") : "",
+          nDepo ? nDepo + (nDepo === 1 ? " depoimento" : " depoimentos") : ""]
+          .filter(Boolean).join(" · ") || "Seu perfil aberto para a escola" : "",
+        ...(minha ? (a => ({ meuAvatarCor: a.cor, meuTemFoto: a.temFoto, meuSemFoto: a.semFoto, meuFoto: a.foto, meuInicial: a.inicial }))(this.avatarDe(minha.nome, minha.foto)) : {}),
+        temMinhaTurma: !!minhaTurma, minhaTurmaLabel: turmaCurta(minhaTurma),
+        colegas, semColegas: colegas.length === 0,
+        escola, escolaContagem: membros.length + (membros.length === 1 ? " aluna" : " alunas"),
+        escolaAberta: this.state.escolaAberta, escolaFechada: !this.state.escolaAberta,
+        onAbrirEscola: () => this.setState({ escolaAberta: true })
+      });
+    }
+
+    // ── PERFIL ──
+    const pf = CRM.perfilPublico(perfilId);
+    if (!pf) return Object.assign(base, { perfilNaoExiste: true, perfilExiste: false, atributos: [], scraps: [], depoimentos: [], pendentes: [] });
+    const ehMeu = !!minha && minha.id === pf.id;
+    const meusVotos = ehMeu ? {} : CRM.votosDe(pf.id, eu.id);
+    const totalVotos = pf.atributos.reduce((n, a) => n + a.votos, 0);
+
+    const atributos = pf.atributos.map(a => {
+      const meu = meusVotos[a.id] || 0;
+      const vota = n => () => { CRM.votar(pf.id, eu, a.id, n); this.bump(); };
+      return {
+        emoji: a.emoji, label: a.label, pct: a.pct + "%",
+        resumo: a.votos ? a.media + " ★ · " + a.votos + (a.votos === 1 ? " voto" : " votos") : "sem votos ainda",
+        podeVotar: !ehMeu,
+        s1: meu >= 1 ? "on" : "", s2: meu >= 2 ? "on" : "", s3: meu >= 3 ? "on" : "",
+        on1: vota(1), on2: vota(2), on3: vota(3)
+      };
+    });
+
+    const removivel = (reg, k) => {
+      const removendo = this.state.removendoId === reg.id;
+      return {
+        podeRemover: ehMeu || reg.de === eu.id || equipe,
+        removerLabel: removendo ? "confirmar remoção" : "remover",
+        onRemover: () => {
+          if (!removendo) { this.setState({ removendoId: reg.id }); return; }
+          if (k === "scrap") CRM.scrapRemover(reg.id); else CRM.depoimentoRemover(reg.id);
+          this.setState({ removendoId: null });
+        }
+      };
+    };
+    const cartao = (reg, k) => Object.assign({
+      deNome: reg.deNome || "—", equipe: !!reg.equipe, quando: this.quando(reg.em), texto: reg.texto
+    }, this.avatarDe(reg.deNome, this.fotoDeAutor(CRM, reg.de)), removivel(reg, k));
+
+    const scraps = pf.scraps.map(s => cartao(s, "scrap"));
+    const depoimentos = pf.depoimentos.map(d => cartao(d, "depo"));
+    const meuDepo = ehMeu ? null : CRM.depoimentoMeuPara(pf.id, eu.id);
+    const pendentesDoPerfil = ehMeu ? pendentes : [];
+
+    return Object.assign(base, {
+      perfilNaoExiste: false, perfilExiste: true,
+      ehMeu, naoEhMeu: !ehMeu,
+      pf: Object.assign({
+        nome: pf.nome, primeiroNome: primeiro(pf.nome), bio: pf.bio, temBio: !!pf.bio,
+        turmaLabel: [pf.nivel || turmaCurta(pf.turma), pf.turma ? (pf.turma.split(" · ")[1] || "") : ""].filter(Boolean).join(" · ") || "Inglês sem Roteiro",
+        votosLabel: totalVotos ? totalVotos + (totalVotos === 1 ? " voto" : " votos") : ""
+      }, this.avatarDe(pf.nome, pf.foto)),
+      atributos,
+      // scraps
+      scraps, semScraps: scraps.length === 0,
+      scrapsContagem: scraps.length ? scraps.length + (scraps.length === 1 ? " recado" : " recados") : "",
+      semScrapsTexto: ehMeu ? "Ninguém deixou scrap ainda. Os recados das colegas e professoras aparecem aqui."
+                            : "Seja a primeira a deixar um recado para " + primeiro(pf.nome) + ".",
+      scrapPlaceholder: "Um recado rápido para " + primeiro(pf.nome) + " (em inglês vale mais!)",
+      scrapEnviado: this.state.scrapEnviado,
+      onScrap: () => {
+        const t = ((this.scrapRef.current && this.scrapRef.current.value) || "").trim();
+        if (!t) return;
+        CRM.scrapPost(pf.id, eu, t);
+        this.scrapRef.current.value = "";
+        this.setState({ scrapEnviado: true });
+        setTimeout(() => this.setState({ scrapEnviado: false }), 2500);
+      },
+      // depoimentos
+      depoimentos, semDepoimentos: depoimentos.length === 0 && pendentesDoPerfil.length === 0,
+      depoimentosContagem: depoimentos.length ? depoimentos.length + (depoimentos.length === 1 ? " aceito" : " aceitos") : "",
+      semDepoimentosTexto: ehMeu ? "Quando uma colega escrever sobre a sua evolução, você decide aqui se publica."
+                                 : primeiro(pf.nome) + " ainda não tem depoimentos publicados.",
+      pendentes: pendentesDoPerfil,
+      depoAberto: this.state.depoAberto, depoFechado: !this.state.depoAberto,
+      depoPodeEscrever: !meuDepo, depoEsperando: !!meuDepo && meuDepo.status === "pendente",
+      depoMeuTexto: meuDepo ? meuDepo.texto : "",
+      depoPlaceholder: "Como " + primeiro(pf.nome) + " evoluiu neste ciclo? O que mudou na fala dela?",
+      onAbrirDepo: () => this.setState({ depoAberto: true }),
+      onFecharDepo: () => this.setState({ depoAberto: false }),
+      onDepoimento: () => {
+        const t = ((this.depoRef.current && this.depoRef.current.value) || "").trim();
+        if (!t) return;
+        CRM.depoimentoEscrever(pf.id, eu, t);
+        this.setState({ depoAberto: false });
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>

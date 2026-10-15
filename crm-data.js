@@ -636,6 +636,7 @@
     semearChamadasDemo(lista);
     semearAulaExtraDemo(lista);
     semearContatosDemo(lista);
+    semearClubesDemo();
   }
 
   // As turmas da ISR têm de 3 a 5 alunas e a mensalidade é R$ 497. Com uma
@@ -3181,6 +3182,405 @@
     muralSaveRaw(muralRaw().map(function (m) {
       return m.id === id ? { id: m.id, apagada: true, _v: Date.now() } : m;
     }));
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  COMUNIDADE DAS ALUNAS
+  //  ------------------------------------------------------------
+  //  A área da aluna deixa de ser só "a minha ficha" e vira um lugar
+  //  onde as alunas se veem (comunidade.html). Quatro coleções, todas
+  //  com lápide (apagada) e carimbo (_v) para a mesclagem do sync, no
+  //  mesmo padrão do mural da equipe:
+  //    scraps       recado curto no perfil de alguém; público
+  //    depoimentos  texto sobre a evolução de uma colega; só entra no
+  //                 perfil depois que a dona aceita
+  //    votos        1 a 3 estrelas por atributo; na tela só aparece a
+  //                 média, nunca quem votou
+  //    feedEscola   recados da equipe para todas as alunas (mural da
+  //                 escola), escritos no Mural da equipe
+  // ══════════════════════════════════════════════════════════════
+  var SCRAPS_KEY = "isr_scraps_v1", DEPOIMENTOS_KEY = "isr_depoimentos_v1",
+      VOTOS_KEY = "isr_votos_v1", FEED_ESCOLA_KEY = "isr_feed_escola_v1";
+  var ATRIBUTOS = [
+    { id: "vocab", label: "Vocabulary Master", emoji: "📚", dica: "sempre tem a palavra certa" },
+    { id: "speaker", label: "Fearless Speaker", emoji: "🎤", dica: "fala sem medo de errar" },
+    { id: "listener", label: "Great Listener", emoji: "👂", dica: "ouve e entende as colegas" }
+  ];
+  function comLer(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch (e) { return []; } }
+  function comGravar(k, l) { carimbarLista(l); try { localStorage.setItem(k, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function comVivos(l) { return (l || []).filter(function (x) { return x && !x.apagada; }); }
+  function comId(prefixo) { return prefixo + Date.now() + Math.floor(Math.random() * 1000); }
+  // remover vira lápide: só filtrar faria o sync devolver o registro
+  function comLapidar(k, id) {
+    comGravar(k, comLer(k).map(function (x) {
+      return x && x.id === id ? { id: x.id, apagada: true, _v: Date.now() } : x;
+    }));
+  }
+  function scrapsRaw() { return comLer(SCRAPS_KEY); }
+  function depoimentosRaw() { return comLer(DEPOIMENTOS_KEY); }
+  function votosRaw() { return comLer(VOTOS_KEY); }
+  function feedEscolaRaw() { return comLer(FEED_ESCOLA_KEY); }
+  function comMaisRecente(a, b) { return (a.em || "") < (b.em || "") ? 1 : -1; }
+
+  // O que uma aluna pode ver da outra: nome, foto, bio e turma. Nada de
+  // contrato, parcela, risco ou histórico — isso é da gestão.
+  function fichaPublica(p) {
+    return { id: p.id, nome: p.nome || "", foto: p.foto || "", bio: p.bio || "",
+      turma: p.turma || "", nivel: p.nivel || "", desde: p.desde || "" };
+  }
+  function membrosComunidade() {
+    return loadPessoas().filter(function (p) { return acessoLiberado(p); })
+      .map(fichaPublica)
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+  // Quem está escrevendo. A aluna logada neste aparelho assina com a
+  // ficha dela; a equipe, no app aberto pela gestão, assina como equipe.
+  function autorComunidade(pessoaId) {
+    var alunaLogada = "";
+    try { alunaLogada = localStorage.getItem("isr_aluna_id") || ""; } catch (e) {}
+    var g = gestaoUser();
+    if (g && !alunaLogada) return { id: "eq:" + (g.email || g.nome), nome: g.nome || "Equipe ISR", equipe: true };
+    var p = getPessoa(pessoaId || alunaLogada);
+    return p ? { id: p.id, nome: p.nome, equipe: false } : null;
+  }
+
+  // ── scraps ──
+  function scrapsDe(pessoaId) {
+    return comVivos(scrapsRaw()).filter(function (s) { return s.para === pessoaId; }).sort(comMaisRecente);
+  }
+  function scrapPost(para, autor, texto) {
+    var t = (texto || "").trim();
+    if (!t || !para || !autor || !autor.id) return null;
+    var s = { id: comId("sc"), para: para, de: autor.id, deNome: autor.nome || "",
+      equipe: !!autor.equipe, texto: t.slice(0, 600), em: new Date().toISOString() };
+    var l = scrapsRaw(); l.unshift(s);
+    comGravar(SCRAPS_KEY, l.slice(0, 5000));
+    return s;
+  }
+  function scrapRemover(id) { comLapidar(SCRAPS_KEY, id); }
+
+  // ── depoimentos ──
+  function depoimentosDe(pessoaId) {
+    return comVivos(depoimentosRaw()).filter(function (d) {
+      return d.para === pessoaId && d.status === "aceito";
+    }).sort(comMaisRecente);
+  }
+  function depoimentosPendentes(pessoaId) {
+    return comVivos(depoimentosRaw()).filter(function (d) {
+      return d.para === pessoaId && d.status === "pendente";
+    }).sort(comMaisRecente);
+  }
+  // o que eu escrevi para alguém, em qualquer estado — para a tela dizer
+  // "esperando ela aceitar" em vez de deixar escrever de novo
+  function depoimentoMeuPara(para, autorId) {
+    return comVivos(depoimentosRaw()).filter(function (d) {
+      return d.para === para && d.de === autorId && d.status !== "recusado";
+    })[0] || null;
+  }
+  function depoimentoEscrever(para, autor, texto) {
+    var t = (texto || "").trim();
+    if (!t || !para || !autor || !autor.id || para === autor.id) return null;
+    var l = depoimentosRaw();
+    // um por autora por perfil: escrever de novo substitui o pendente
+    l = l.map(function (d) {
+      return d && !d.apagada && d.para === para && d.de === autor.id && d.status === "pendente"
+        ? { id: d.id, apagada: true, _v: Date.now() } : d;
+    });
+    var d = { id: comId("dp"), para: para, de: autor.id, deNome: autor.nome || "",
+      equipe: !!autor.equipe, texto: t.slice(0, 1500), em: new Date().toISOString(), status: "pendente" };
+    l.unshift(d);
+    comGravar(DEPOIMENTOS_KEY, l.slice(0, 5000));
+    return d;
+  }
+  function depoimentoResponder(id, aceitar) {
+    var l = depoimentosRaw(), achou = null;
+    l.forEach(function (d) {
+      if (!d || d.id !== id) return;
+      d.status = aceitar ? "aceito" : "recusado";
+      d.respondidoEm = new Date().toISOString();
+      d._v = Date.now();
+      achou = d;
+    });
+    comGravar(DEPOIMENTOS_KEY, l);
+    return achou;
+  }
+  function depoimentoRemover(id) { comLapidar(DEPOIMENTOS_KEY, id); }
+
+  // ── votos nos atributos ──
+  function votar(para, autor, atributoId, estrelas) {
+    var n = parseInt(estrelas, 10);
+    if (!para || !autor || !autor.id || para === autor.id) return null;
+    if (!ATRIBUTOS.some(function (a) { return a.id === atributoId; })) return null;
+    if (!(n >= 1 && n <= 3)) return null;
+    var id = "vt|" + para + "|" + autor.id + "|" + atributoId;
+    var l = votosRaw().filter(function (v) { return v && v.id !== id; });
+    var v = { id: id, para: para, de: autor.id, atributo: atributoId, estrelas: n, em: new Date().toISOString() };
+    l.push(v);
+    comGravar(VOTOS_KEY, l);
+    return v;
+  }
+  function votosDe(para, autorId) {
+    var out = {};
+    comVivos(votosRaw()).forEach(function (v) {
+      if (v.para === para && v.de === autorId) out[v.atributo] = v.estrelas;
+    });
+    return out;
+  }
+  function atributosDe(pessoaId) {
+    var soma = {}, n = {};
+    comVivos(votosRaw()).forEach(function (v) {
+      if (v.para !== pessoaId) return;
+      soma[v.atributo] = (soma[v.atributo] || 0) + (v.estrelas || 0);
+      n[v.atributo] = (n[v.atributo] || 0) + 1;
+    });
+    return ATRIBUTOS.map(function (a) {
+      var votos = n[a.id] || 0;
+      var media = votos ? soma[a.id] / votos : 0;
+      return { id: a.id, label: a.label, emoji: a.emoji, dica: a.dica,
+        votos: votos, media: Math.round(media * 10) / 10, pct: Math.round(media / 3 * 100) };
+    });
+  }
+
+  // ── mural da escola (equipe → todas as alunas) ──
+  function feedEscolaLista() { return comVivos(feedEscolaRaw()).sort(comMaisRecente); }
+  function feedEscolaPost(texto, autorNome, link) {
+    var t = (texto || "").trim();
+    if (!t) return null;
+    var f = { id: comId("fe"), texto: t.slice(0, 2000), autor: autorNome || "Equipe ISR",
+      link: (link || "").trim().slice(0, 500), em: new Date().toISOString() };
+    var l = feedEscolaRaw(); l.unshift(f);
+    comGravar(FEED_ESCOLA_KEY, l.slice(0, 500));
+    return f;
+  }
+  function feedEscolaRemover(id) { comLapidar(FEED_ESCOLA_KEY, id); }
+
+  // O perfil aberto: a ficha pública mais tudo que a comunidade deixou nela.
+  function perfilPublico(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    return Object.assign(fichaPublica(p), {
+      scraps: scrapsDe(pessoaId), depoimentos: depoimentosDe(pessoaId), atributos: atributosDe(pessoaId)
+    });
+  }
+  // O que espera a aluna na comunidade: depoimentos a aceitar e scraps
+  // recebidos desde a última visita.
+  function novidadesComunidade(pessoaId, desdeIso) {
+    var scraps = scrapsDe(pessoaId).filter(function (s) { return !desdeIso || s.em > desdeIso; }).length;
+    return { pendentes: depoimentosPendentes(pessoaId).length, scraps: scraps };
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  CLUBES (Clubs Hub)
+  //  ------------------------------------------------------------
+  //  Grupos de interesse por ciclo (clubes.html): a gestão cadastra os
+  //  clubes, a aluna entra em até CLUBES_POR_CICLO por ciclo e conversa
+  //  num fórum por tópico dentro de cada um. Quatro coleções, todas com
+  //  lápide (apagada) e carimbo (_v), no mesmo padrão da comunidade:
+  //    clubes            nome, emoji, descrição, ciclo (rótulo das metas)
+  //    clubeInscricoes   pessoaId + clubeId + ciclo; a trava conta aqui
+  //    clubeTopicos      título, texto e link opcional; um por conversa
+  //    clubePosts        respostas de um tópico (texto, link opcional)
+  //  Áudio e imagem ficam para quando houver onde guardar arquivo.
+  //  Trocar de clube no meio do ciclo só com o resgate "rgClube": ele
+  //  deixa um crédito em pessoa.trocasClube, que clubeSair consome.
+  // ══════════════════════════════════════════════════════════════
+  var CLUBES_KEY = "isr_clubes_v1", CLUBE_INSCRICOES_KEY = "isr_clube_inscricoes_v1",
+      CLUBE_TOPICOS_KEY = "isr_clube_topicos_v1", CLUBE_POSTS_KEY = "isr_clube_posts_v1";
+  var CLUBES_POR_CICLO = 2;
+  // no modo exemplo os clubes de demonstração entram na primeira leitura,
+  // mesmo em aparelho que já tinha o exemplo semeado antes desta frente
+  function clubesRaw() { if (exemploLigado()) semearClubesDemo(); return comLer(CLUBES_KEY); }
+  function clubeInscricoesRaw() { return comLer(CLUBE_INSCRICOES_KEY); }
+  function clubeTopicosRaw() { return comLer(CLUBE_TOPICOS_KEY); }
+  function clubePostsRaw() { return comLer(CLUBE_POSTS_KEY); }
+  // o ciclo corrente é o das metas (ex. "3.2026"); é o padrão de todo clube novo
+  function cicloDosClubes() { return String(metasAtuais().cicloLabel || "").trim(); }
+
+  // ── cadastro (gestão) ──
+  function clubeDe(id) {
+    return comVivos(clubesRaw()).filter(function (c) { return c.id === id; })[0] || null;
+  }
+  function clubesLista(ciclo) {
+    var alvo = ciclo === undefined ? cicloDosClubes() : String(ciclo || "").trim();
+    return comVivos(clubesRaw())
+      .filter(function (c) { return !alvo || !c.ciclo || c.ciclo === alvo; })
+      .map(function (c) { return Object.assign({}, c, { membros: membrosDoClube(c.id).length }); })
+      .sort(function (a, b) { return (a.nome || "").localeCompare(b.nome || ""); });
+  }
+  function clubesTodos() {
+    return comVivos(clubesRaw())
+      .map(function (c) { return Object.assign({}, c, { membros: membrosDoClube(c.id).length }); })
+      .sort(function (a, b) {
+        if ((a.ciclo || "") !== (b.ciclo || "")) return (a.ciclo || "") < (b.ciclo || "") ? 1 : -1;
+        return (a.nome || "").localeCompare(b.nome || "");
+      });
+  }
+  function clubeSalvar(dados) {
+    var d = dados || {};
+    var nome = String(d.nome || "").trim().slice(0, 80);
+    if (!nome) return null;
+    var l = clubesRaw(), reg = null;
+    if (d.id) reg = l.filter(function (c) { return c && c.id === d.id && !c.apagada; })[0] || null;
+    if (!reg) {
+      reg = { id: comId("cl"), criadoEm: new Date().toISOString() };
+      l.unshift(reg);
+    }
+    reg.nome = nome;
+    reg.emoji = String(d.emoji || "").trim().slice(0, 4) || "💬";
+    reg.descricao = String(d.descricao || "").trim().slice(0, 600);
+    reg.ciclo = String(d.ciclo === undefined ? (reg.ciclo || cicloDosClubes()) : d.ciclo).trim().slice(0, 20);
+    reg._v = Date.now();
+    comGravar(CLUBES_KEY, l.slice(0, 500));
+    return reg;
+  }
+  function clubeRemover(id) { comLapidar(CLUBES_KEY, id); }
+
+  // ── inscrições ──
+  function inscricoesDe(pessoaId) {
+    return comVivos(clubeInscricoesRaw()).filter(function (i) { return i.pessoaId === pessoaId; });
+  }
+  function clubesDaAluna(pessoaId) {
+    return inscricoesDe(pessoaId)
+      .map(function (i) { return clubeDe(i.clubeId); })
+      .filter(Boolean)
+      .map(function (c) { return Object.assign({}, c, { membros: membrosDoClube(c.id).length }); });
+  }
+  function estaNoClube(pessoaId, clubeId) {
+    return inscricoesDe(pessoaId).some(function (i) { return i.clubeId === clubeId; });
+  }
+  function membrosDoClube(clubeId) {
+    var ids = {};
+    comVivos(clubeInscricoesRaw()).forEach(function (i) { if (i.clubeId === clubeId) ids[i.pessoaId] = i.em; });
+    return loadPessoas()
+      .filter(function (p) { return ids[p.id] && acessoLiberado(p); })
+      .map(function (p) { return Object.assign(fichaPublica(p), { desde: ids[p.id] }); })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+  function trocasClubeDe(pessoaId) {
+    var p = getPessoa(pessoaId);
+    return p ? (p.trocasClube || 0) : 0;
+  }
+  // A trava: até CLUBES_POR_CICLO clubes no mesmo ciclo. A terceira
+  // tentativa volta recusada, com o texto pronto para a tela.
+  function clubeEntrar(pessoaId, clubeId) {
+    var c = clubeDe(clubeId), p = getPessoa(pessoaId);
+    if (!c || !p) return { ok: false, motivo: "inexistente", texto: "Este clube não existe mais." };
+    if (!acessoLiberado(p)) return { ok: false, motivo: "acesso", texto: "Sua matrícula não está ativa." };
+    if (estaNoClube(pessoaId, clubeId)) return { ok: true, ja: true };
+    var ciclo = c.ciclo || cicloDosClubes();
+    var noCiclo = inscricoesDe(pessoaId).filter(function (i) { return (i.ciclo || "") === ciclo; });
+    if (noCiclo.length >= CLUBES_POR_CICLO) {
+      var nomes = noCiclo.map(function (i) { var x = clubeDe(i.clubeId); return x ? x.nome : ""; }).filter(Boolean);
+      return { ok: false, motivo: "limite", limite: CLUBES_POR_CICLO,
+        texto: "Você já está em " + CLUBES_POR_CICLO + " clubes neste ciclo"
+          + (nomes.length ? " (" + nomes.join(" e ") + ")" : "")
+          + ". Para trocar, resgate \"Trocar de clube\" com seus miles e saia de um deles." };
+    }
+    var i = { id: comId("ci"), pessoaId: pessoaId, clubeId: clubeId, ciclo: ciclo, em: new Date().toISOString() };
+    var l = clubeInscricoesRaw(); l.unshift(i);
+    comGravar(CLUBE_INSCRICOES_KEY, l.slice(0, 5000));
+    return { ok: true, inscricao: i };
+  }
+  // Sair no meio do ciclo consome um crédito de troca (resgate rgClube).
+  // A equipe pode tirar uma aluna sem crédito (opts.equipe).
+  function clubeSair(pessoaId, clubeId, opts) {
+    var o = opts || {};
+    var insc = inscricoesDe(pessoaId).filter(function (i) { return i.clubeId === clubeId; })[0];
+    if (!insc) return { ok: false, motivo: "fora", texto: "Você não está neste clube." };
+    if (!o.equipe) {
+      if (trocasClubeDe(pessoaId) <= 0) {
+        return { ok: false, motivo: "troca",
+          texto: "Trocar de clube no meio do ciclo custa miles: resgate \"Trocar de clube\" na sua conta e volte aqui." };
+      }
+      mutate(pessoaId, function (x) {
+        x.trocasClube = Math.max(0, (x.trocasClube || 0) - 1);
+        pushHist(x, "moedas", "Saiu do clube " + ((clubeDe(clubeId) || {}).nome || "") + " · usou 1 troca de clube");
+      });
+    }
+    comLapidar(CLUBE_INSCRICOES_KEY, insc.id);
+    return { ok: true };
+  }
+
+  // ── fórum: tópicos e respostas ──
+  function clubeLinkLimpo(link) {
+    var u = String(link || "").trim().slice(0, 500);
+    if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    return u;
+  }
+  function topicosDoClube(clubeId) {
+    var posts = comVivos(clubePostsRaw());
+    return comVivos(clubeTopicosRaw())
+      .filter(function (t) { return t.clubeId === clubeId; })
+      .map(function (t) {
+        var resp = posts.filter(function (p) { return p.topicoId === t.id; });
+        var ultimo = resp.reduce(function (m, p) { return (p.em || "") > m ? p.em : m; }, t.em || "");
+        return Object.assign({}, t, { respostas: resp.length, ultimoEm: ultimo });
+      })
+      .sort(function (a, b) { return (a.ultimoEm || "") < (b.ultimoEm || "") ? 1 : -1; });
+  }
+  function topicoDe(id) {
+    var t = comVivos(clubeTopicosRaw()).filter(function (x) { return x.id === id; })[0];
+    if (!t) return null;
+    return Object.assign({}, t, { posts: postsDoTopico(id) });
+  }
+  function topicoAbrir(clubeId, autor, titulo, texto, link) {
+    var ti = String(titulo || "").trim().slice(0, 120);
+    var tx = String(texto || "").trim().slice(0, 3000);
+    if (!clubeId || !autor || !autor.id || (!ti && !tx)) return null;
+    var t = { id: comId("ct"), clubeId: clubeId, de: autor.id, deNome: autor.nome || "",
+      equipe: !!autor.equipe, titulo: ti || tx.slice(0, 80), texto: tx, link: clubeLinkLimpo(link),
+      em: new Date().toISOString() };
+    var l = clubeTopicosRaw(); l.unshift(t);
+    comGravar(CLUBE_TOPICOS_KEY, l.slice(0, 5000));
+    return t;
+  }
+  function topicoRemover(id) { comLapidar(CLUBE_TOPICOS_KEY, id); }
+  function postsDoTopico(topicoId) {
+    return comVivos(clubePostsRaw())
+      .filter(function (p) { return p.topicoId === topicoId; })
+      .sort(function (a, b) { return (a.em || "") < (b.em || "") ? -1 : 1; });
+  }
+  function postResponder(topicoId, autor, texto, link) {
+    var tx = String(texto || "").trim().slice(0, 3000);
+    if (!topicoId || !autor || !autor.id || !tx) return null;
+    var p = { id: comId("cp"), topicoId: topicoId, de: autor.id, deNome: autor.nome || "",
+      equipe: !!autor.equipe, texto: tx, link: clubeLinkLimpo(link), em: new Date().toISOString() };
+    var l = clubePostsRaw(); l.unshift(p);
+    comGravar(CLUBE_POSTS_KEY, l.slice(0, 20000));
+    return p;
+  }
+  function postRemover(id) { comLapidar(CLUBE_POSTS_KEY, id); }
+
+  // O que aconteceu nos clubes da aluna desde a última visita: tópicos
+  // e respostas de outras pessoas. O app usa para dizer "N novidades".
+  function novidadesClubes(pessoaId, desdeIso) {
+    var meus = {};
+    inscricoesDe(pessoaId).forEach(function (i) { meus[i.clubeId] = true; });
+    var topicos = comVivos(clubeTopicosRaw()).filter(function (t) { return meus[t.clubeId]; });
+    var porTopico = {};
+    topicos.forEach(function (t) { porTopico[t.id] = true; });
+    var novosT = topicos.filter(function (t) { return t.de !== pessoaId && (!desdeIso || t.em > desdeIso); }).length;
+    var novosP = comVivos(clubePostsRaw()).filter(function (p) {
+      return porTopico[p.topicoId] && p.de !== pessoaId && (!desdeIso || p.em > desdeIso);
+    }).length;
+    return { topicos: novosT, respostas: novosP, total: novosT + novosP, clubes: Object.keys(meus).length };
+  }
+
+  // Modo exemplo: três clubes para a tela não abrir vazia.
+  function semearClubesDemo() {
+    if (!exemploLigado()) return;
+    try { if ((JSON.parse(localStorage.getItem(CLUBES_KEY)) || []).length) return; } catch (e) {}
+    var ciclo = cicloDosClubes(), agora = Date.now();
+    var l = [
+      { id: "cl-demo-1", nome: "Book Club", emoji: "📚", ciclo: ciclo,
+        descricao: "Um livro por ciclo, lido em inglês. Combinamos os capítulos aqui e comentamos sem spoiler." },
+      { id: "cl-demo-2", nome: "Movie Night", emoji: "🎬", ciclo: ciclo,
+        descricao: "Filme ou série da semana, legendas em inglês. O tópico da semana traz as expressões para caçar." },
+      { id: "cl-demo-3", nome: "Travel Talk", emoji: "✈️", ciclo: ciclo,
+        descricao: "Viagem, aeroporto, hotel, restaurante: a conversa que você vai ter lá fora, treinada aqui." }
+    ].map(function (c) { return Object.assign(c, { criadoEm: new Date(agora).toISOString(), _v: agora }); });
+    try { localStorage.setItem(CLUBES_KEY, JSON.stringify(l)); } catch (e) {}
   }
 
   var AVISOS_KEY = "isr_avisos_v1";
@@ -5781,6 +6181,12 @@
       programas: programasRaw(), avisos: avisosLista(),
       // mural vai CRU (com as lápides das mensagens removidas)
       mural: muralRaw(),
+      // comunidade das alunas: cruas, com lápides, para o sync espalhar
+      // remoções e mesclar o que cada aparelho escreveu
+      scraps: scrapsRaw(), depoimentos: depoimentosRaw(), votos: votosRaw(), feedEscola: feedEscolaRaw(),
+      // clubes: cadastro, inscrições e fórum, cruas com lápides
+      clubes: clubesRaw(), clubeInscricoes: clubeInscricoesRaw(),
+      clubeTopicos: clubeTopicosRaw(), clubePosts: clubePostsRaw(),
       // configurações que o app da aluna lê: sem elas no payload, o grupo
       // da assinatura e o Book Club nunca chegavam ao aparelho da aluna
       assinaturaCfg: assinaturaCfg(), bookclub: bookclubUrl(), bookclubAula: bookclubAula(),
@@ -5800,6 +6206,10 @@
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
     grava(MURAL_KEY, d.mural); grava(CONTAS_KEY, d.contas);
+    grava(SCRAPS_KEY, d.scraps); grava(DEPOIMENTOS_KEY, d.depoimentos);
+    grava(VOTOS_KEY, d.votos); grava(FEED_ESCOLA_KEY, d.feedEscola);
+    grava(CLUBES_KEY, d.clubes); grava(CLUBE_INSCRICOES_KEY, d.clubeInscricoes);
+    grava(CLUBE_TOPICOS_KEY, d.clubeTopicos); grava(CLUBE_POSTS_KEY, d.clubePosts);
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
     if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
@@ -5837,6 +6247,10 @@
       programas: lista("programas"),
       avisos: lista("avisos"),
       mural: lista("mural"),
+      scraps: lista("scraps"), depoimentos: lista("depoimentos"),
+      votos: lista("votos"), feedEscola: lista("feedEscola"),
+      clubes: lista("clubes"), clubeInscricoes: lista("clubeInscricoes"),
+      clubeTopicos: lista("clubeTopicos"), clubePosts: lista("clubePosts"),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
@@ -8966,7 +9380,10 @@
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
   var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
   var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30,
-    avaliouAula: 5, renovouCiclo: 100 };
+    avaliouAula: 5, renovouCiclo: 100,
+    // comunidade: o depoimento só vale quando a dona do perfil aceita —
+    // para as duas, quem escreveu e quem recebeu
+    depoimentoAceito: 10, depoimentoEscrito: 10 };
   var MOEDAS_VALIDADE_DIAS = 365;
   function somaDias(isoStr, n) {
     var d = parseISO(isoStr);
@@ -9017,6 +9434,9 @@
     { id: "rg11", nome: "Abono de 1 falta", cat: "aula", nivel: "facil",
       custo: 120, porCiclo: 1,
       detalhe: "Uma ausência do ciclo deixa de contar na sua frequência." },
+    { id: "rgClube", nome: "Trocar de clube no meio do ciclo", cat: "comunidade", nivel: "facil",
+      custo: 60, porCiclo: 1,
+      detalhe: "Libera uma saída de clube neste ciclo para você entrar em outro. Sem o resgate, a escolha vale até o fim do ciclo." },
 
     // ── médio: dentro do ciclo ──
     { id: "rg2", nome: "Caderno de atividades personalizado", cat: "material", nivel: "medio", custo: 180 },
@@ -9215,6 +9635,14 @@
       });
       return { ok: true, passe: true };
     }
+    // a troca de clube vira crédito na ficha: clubes.html consome ao sair
+    if (r.id === "rgClube") {
+      mutate(pessoaId, function (x) {
+        x.trocasClube = (x.trocasClube || 0) + 1;
+        pushHist(x, "moedas", "Troca de clube resgatada · pode sair de um clube neste ciclo");
+      });
+      return { ok: true, trocaClube: true };
+    }
     addTarefa({ titulo: "Entregar resgate · " + r.nome + " · " + p.nome,
       dono: "Gabi", prazo: iso(today()), por: p.nome });
     return { ok: true };
@@ -9259,6 +9687,18 @@
       pulsosDe(pessoaId).forEach(function (pl) {
         if (pl.por !== p.nome) return;
         extrato.push({ em: pl.data, label: "Avaliou a aula", valor: MOEDAS_REGRAS.avaliouAula });
+      });
+      // depoimentos aceitos na comunidade, dos dois lados
+      comVivos(depoimentosRaw()).forEach(function (d) {
+        if (d.status !== "aceito") return;
+        var em = (d.respondidoEm || d.em || "").slice(0, 10);
+        if (d.para === pessoaId)
+          extrato.push({ em: em, label: "Aceitou o depoimento de " + firstName(d.deNome), valor: MOEDAS_REGRAS.depoimentoAceito });
+        if (d.de === pessoaId) {
+          var dona = getPessoa(d.para);
+          extrato.push({ em: em, label: "Depoimento para " + firstName(dona ? dona.nome : "uma colega") + " aceito",
+            valor: MOEDAS_REGRAS.depoimentoEscrito });
+        }
       });
       // Renovar o ciclo é o comportamento mais valioso para a escola e
       // era o único que não valia nada.
@@ -12349,6 +12789,22 @@
     gravacoesLista: gravacoesLista, addGravacao: addGravacao, removeGravacao: removeGravacao,
     gravacaoDaAula: gravacaoDaAula, setGravacaoDaAula: setGravacaoDaAula,
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
+    // comunidade das alunas
+    ATRIBUTOS: ATRIBUTOS, membrosComunidade: membrosComunidade, autorComunidade: autorComunidade,
+    perfilPublico: perfilPublico, novidadesComunidade: novidadesComunidade,
+    scrapsDe: scrapsDe, scrapPost: scrapPost, scrapRemover: scrapRemover,
+    depoimentosDe: depoimentosDe, depoimentosPendentes: depoimentosPendentes, depoimentoMeuPara: depoimentoMeuPara,
+    depoimentoEscrever: depoimentoEscrever, depoimentoResponder: depoimentoResponder, depoimentoRemover: depoimentoRemover,
+    votar: votar, votosDe: votosDe, atributosDe: atributosDe,
+    feedEscolaLista: feedEscolaLista, feedEscolaPost: feedEscolaPost, feedEscolaRemover: feedEscolaRemover,
+    // clubes
+    CLUBES_POR_CICLO: CLUBES_POR_CICLO, cicloDosClubes: cicloDosClubes,
+    clubesLista: clubesLista, clubesTodos: clubesTodos, clubeDe: clubeDe, clubeSalvar: clubeSalvar, clubeRemover: clubeRemover,
+    clubesDaAluna: clubesDaAluna, estaNoClube: estaNoClube, membrosDoClube: membrosDoClube,
+    clubeEntrar: clubeEntrar, clubeSair: clubeSair, trocasClubeDe: trocasClubeDe,
+    topicosDoClube: topicosDoClube, topicoDe: topicoDe, topicoAbrir: topicoAbrir, topicoRemover: topicoRemover,
+    postsDoTopico: postsDoTopico, postResponder: postResponder, postRemover: postRemover,
+    novidadesClubes: novidadesClubes,
     flinUrl: flinUrl, setFlinUrl: setFlinUrl, flinDaAluna: flinDaAluna, liberarFlin: liberarFlin,
     historicoDeNiveis: historicoDeNiveis,
     registrarAcessoAluna: registrarAcessoAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
