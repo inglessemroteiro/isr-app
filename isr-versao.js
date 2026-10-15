@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-h",
+  numero: "2026.10.15-i",
   data: "15/10/2026",
-  nota: "A Central volta a abrir na fila de quem entrou, e não na da escola inteira. Os chips da equipe deixam de ser enfeite e passam a filtrar: Minhas, cada pessoa, ou De todas"
+  nota: "Varredura das telas portadas. A pendência volta a fechar pela Central, a fila mostra quantos itens ficaram de fora, e voltam o formulário de pendência nova, os avisos para a equipe e os ajustes de cadastro"
 };
