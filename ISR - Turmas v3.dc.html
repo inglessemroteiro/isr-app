@@ -363,11 +363,13 @@ class Component extends DCLogic {
       ? jan.label + " · sem data de fim, então estas aulas vão aparecer na agenda semana após semana."
       : jan.estado === "terminado"
         ? jan.label + " · terminou em " + CRM.ddmm(jan.fim) + ", e não há aula destas turmas na agenda desde então."
-        : jan.label + " · aulas de " + CRM.ddmm(jan.inicio) + " a " + CRM.ddmm(jan.fim);
+        : jan.estado === "por_comecar"
+          ? jan.label + " · começa em " + CRM.ddmm(jan.inicio) + ". Até lá estas turmas não têm aula na agenda."
+          : jan.label + " · aulas de " + CRM.ddmm(jan.inicio) + " a " + CRM.ddmm(jan.fim);
 
     return {
-      cicloBg: jan.estado === "aberto" ? "#fff" : "#fdf1e8",
-      cicloCor: jan.estado === "aberto" ? "#1d5a63" : "#c98a3a",
+      cicloBg: (jan.estado === "aberto" || jan.estado === "por_comecar") ? "#fff" : "#fdf1e8",
+      cicloCor: (jan.estado === "aberto" || jan.estado === "por_comecar") ? "#1d5a63" : "#c98a3a",
       cicloTexto: cicloTexto,
       cicloAcao: "mudar as datas na Central",
 
