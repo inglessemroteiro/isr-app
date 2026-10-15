@@ -288,6 +288,23 @@
           <span style="font-size: 12.5px; color: #3d6b22; font-weight: 600;">Chamada salva. Faltas registradas na linha do tempo das alunas.</span>
         </sc-if>
       </div>
+
+      <!-- HISTÓRICO DESTA CHAMADA -->
+      <!-- Quem mexeu, quando e o quê. Os campos de cima guardam só a
+           última correção; duas seguidas e a primeira some. Numa
+           chamada que a professora e a gestão mexem alternadamente, e
+           que a escola guarda por cinco anos, a lista inteira é que
+           responde "quem mudou o quê". -->
+      <sc-if value="{{ temHistorico }}">
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f2ebe3;">
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465;">Histórico desta chamada</div>
+          <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 7px;">
+            <sc-for list="{{ historico }}" as="h" hint-placeholder-count="3">
+              <div style="font-size: 13px; color: #1d5a63;"><strong style="color: #164951;">{{ h.por }}</strong> · {{ h.quando }} · {{ h.o }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
     </sc-if>
 
     <!-- CHAMADAS JÁ FEITAS -->
@@ -456,6 +473,7 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada",
+      temHistorico: false, historico: [],
       temFeitas: false, feitas: [], feitasResumo: "",
       semanaParticulares: [], semanaVazia: true, semanaResumo: "", semanaResumoCor: "#8a7c6b",
       particularesChamada: [], temParticulares: false,
@@ -1007,6 +1025,23 @@ class Component extends DCLogic {
       onTodasPresentes: () => this.marcarTodas("presente", alunas, turmaSel, dataSel),
       onTodasFaltas: () => this.marcarTodas("falta", alunas, turmaSel, dataSel),
       jaSalva: !!salva, salvaQuando: salva ? (salva.salvoEm || "").slice(0, 10).split("-").reverse().slice(0, 2).join("/") : "",
+
+      // quem mexeu nesta chamada, da mais antiga para a mais nova
+      ...(() => {
+        const h = (CRM.chamadaHistorico && turmaSel && dataSel)
+          ? CRM.chamadaHistorico(turmaSel, dataSel) : [];
+        const qd = (iso) => {
+          if (!iso) return "";
+          const d = new Date(iso);
+          if (isNaN(d)) return "";
+          const dd = String(d.getDate()).padStart(2, "0");
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          return dd + "/" + mm + " " + String(d.getHours()).padStart(2, "0")
+            + ":" + String(d.getMinutes()).padStart(2, "0");
+        };
+        return { temHistorico: h.length > 0,
+          historico: h.map(x => ({ por: x.por || "sem nome", quando: qd(x.em), o: x.o || "" })) };
+      })(),
       // Regravar diz o que o botão faz quando já existe chamada salva: a
       // nova entra no lugar da anterior, não ao lado dela.
       salvarLabel: salva ? "Regravar chamada" : "Salvar chamada",

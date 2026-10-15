@@ -6840,14 +6840,41 @@
     Object.keys(presencas).forEach(function (pid) {
       if (estadoPresenca(presencas[pid]) !== estadoPresenca(antes[pid])) mudancas++;
     });
+    // ── o histórico desta chamada ─────────────────────────────
+    // Os campos de cima guardam só a ÚLTIMA correção: quem corrigiu
+    // e quando. Duas correções seguidas e a primeira some. Para uma
+    // chamada que a escola guarda por cinco anos, e que a professora
+    // e a gestão mexem alternadamente, isso não basta — "quem mudou
+    // o quê" precisa ser a lista inteira.
+    var agora = new Date().toISOString();
+    var hist = (velha && velha.hist) ? velha.hist.slice() : [];
+    // chamada gravada antes do histórico existir não começa vazia: o
+    // que já está registrado nela vira a primeira linha
+    if (!hist.length && velha && velha.criadaEm) {
+      hist.push({ por: velha.criadaPor || velha.por || "", em: velha.criadaEm, o: "chamada salva" });
+      if (velha.corrigidaEm) {
+        hist.push({ por: velha.corrigidaPor || "", em: velha.corrigidaEm,
+          o: "chamada corrigida" });
+      }
+    }
+    hist.push({ por: por || "", em: agora,
+      o: !jaExistia ? "chamada salva"
+        : !mudancas ? "regravada sem mudança"
+        : mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas") });
+    // uma chamada reaberta muitas vezes não pode crescer sem fim: a
+    // primeira linha é a que conta a origem, as últimas é que dizem o
+    // que mudou agora
+    if (hist.length > 20) hist = [hist[0]].concat(hist.slice(-19));
+
     m[key] = { turma: turmaLabel, data: dataIso, presencas: presencas,
       tarefas: tarefas || {},
-      salvoEm: new Date().toISOString(), por: por || "",
-      criadaEm: (velha && velha.criadaEm) || new Date().toISOString(),
+      salvoEm: agora, por: por || "",
+      criadaEm: (velha && velha.criadaEm) || agora,
       criadaPor: quemAntes || por || "",
       correcoes: (velha && velha.correcoes || 0) + (jaExistia && mudancas ? 1 : 0),
-      corrigidaEm: jaExistia && mudancas ? new Date().toISOString() : (velha && velha.corrigidaEm) || "",
-      corrigidaPor: jaExistia && mudancas ? (por || "") : (velha && velha.corrigidaPor) || "" };
+      corrigidaEm: jaExistia && mudancas ? agora : (velha && velha.corrigidaEm) || "",
+      corrigidaPor: jaExistia && mudancas ? (por || "") : (velha && velha.corrigidaPor) || "",
+      hist: hist };
     chamadasSaveLocal(m);
     agendarSync();
     // Corrigir a chamada de outra pessoa sem avisar é mexer no trabalho
@@ -7756,12 +7783,25 @@
         por: c.por || "", salvoEm: c.salvoEm || "",
         criadaPor: c.criadaPor || c.por || "",
         corrigida: !!c.corrigidaEm, corrigidaPor: c.corrigidaPor || "",
-        correcoes: c.correcoes || 0,
+        correcoes: c.correcoes || 0, hist: c.hist || [],
         presentes: pres + atr, faltas: falt, justificadas: just, atrasos: atr,
         total: pres + atr + falt + just });
     });
     out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
     return out;
+  }
+
+  // Quem mexeu nesta chamada, em ordem. A linha de cima é a origem.
+  function chamadaHistorico(turmaLabel, dataIso) {
+    var c = getChamada(turmaLabel, dataIso);
+    if (!c) return [];
+    if (c.hist && c.hist.length) return c.hist.slice();
+    // chamada gravada antes do histórico existir: o que dá para
+    // reconstruir do que está nela
+    var fora = [];
+    if (c.criadaEm) fora.push({ por: c.criadaPor || c.por || "", em: c.criadaEm, o: "chamada salva" });
+    if (c.corrigidaEm) fora.push({ por: c.corrigidaPor || "", em: c.corrigidaEm, o: "chamada corrigida" });
+    return fora;
   }
 
   // O mesmo, agrupado por professora: é assim que o lembrete sai.
@@ -12888,6 +12928,7 @@
     proximaAulaParticular: proximaAulaParticular, marcarAulaParticularFeita: marcarAulaParticularFeita,
     aulasParticularesAgendadas: aulasParticularesAgendadas,
     chamadasPendentes: chamadasPendentes, chamadasFeitas: chamadasFeitas,
+    chamadaHistorico: chamadaHistorico,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
