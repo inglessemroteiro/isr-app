@@ -81,18 +81,18 @@ index.html → Login (Magic Link) → resolve o PERFIL DE ACESSO
 ├── 🎒 Aluna  →  ISR App (Área da Aluna)                        [seção 12]
 ├── 📚 Professora  →  Painel do Professor (já existe) + Turmas (leitura)
 │
-└── Gestão (Gestora / Comercial / Operação) → ISR - Central.dc.html
-    ├── 👤 ISR - Perfil.dc.html ·························· aberto pelo nome, de qualquer tela
+└── Gestão (Gestora / Comercial / Operação) → ISR - Central v3.dc.html
+    ├── 👤 ISR - Perfil v3.dc.html ·························· aberto pelo nome, de qualquer tela
     ├── 🎯 Comercial
-    │   ├── ISR - CRM (Funil de Leads).dc.html
-    │   └── ISR - Mensagens WhatsApp.dc.html
+    │   ├── ISR - CRM v3.dc.html
+    │   └── ISR - Mensagens v3.dc.html
     ├── 💰 Gestão
-    │   ├── ISR - Cobrança.dc.html  (abas: Parcelas · Renovações)
-    │   └── ISR - Caixa.dc.html ······················· NOVA (só Gestora)
+    │   ├── ISR - Cobrança v3.dc.html  (abas: Parcelas · Renovações)
+    │   └── ISR - Caixa v3.dc.html ······················· NOVA (só Gestora)
     ├── 📚 Pedagógico
-    │   └── ISR - Turmas e Projetos.dc.html  (ocupação + capacidade de professora)
+    │   └── ISR - Turmas v3.dc.html  (ocupação + capacidade de professora)
     └── 📣 Marketing
-        └── ISR - Marketing.dc.html
+        └── ISR - Marketing v3.dc.html
 ```
 
 Todas as telas: **⌂ Central** no topo. Todo nome de pessoa: link teal sublinhado → Perfil.
@@ -136,7 +136,7 @@ Na última semana do ciclo, a Área da Aluna mostra 1 pergunta (0–10 + campo o
 
 ## PARTE 4 · TELAS DE GESTÃO
 
-### 4. CENTRAL — `ISR - Central.dc.html`
+### 4. CENTRAL — `ISR - Central v3.dc.html`
 
 Fundo teal #164951. Responde: **o que precisa de mim hoje, e estamos no ritmo da meta?** A Central é *sensível ao perfil* — abaixo, a versão da Gestora; Carla e Érika veem só sua fila + seus cards.
 
@@ -156,7 +156,7 @@ De cima para baixo:
 
 ---
 
-### 5. PERFIL DA PESSOA — `ISR - Perfil.dc.html`
+### 5. PERFIL DA PESSOA — `ISR - Perfil v3.dc.html`
 
 Toda a relação em uma tela. É o que permite Carla negociar, Érika cobrar e Gabi decidir desconto sem perguntar nada a ninguém.
 
@@ -185,7 +185,7 @@ Toda a relação em uma tela. É o que permite Carla negociar, Érika cobrar e G
 
 ---
 
-### 6. CRM — `ISR - CRM (Funil de Leads).dc.html`
+### 6. CRM — `ISR - CRM v3.dc.html`
 
 **Topo:** título + **💬 Mensagens** + **↺ Demo**. Faixa `🎯 N novas inscrições hoje` quando houver.
 **Abas** (pills roláveis, com contador): `Para hoje · A contatar · Em conversa · Reunião · Contrato · Incompletas · Matriculados · Perdidos`. "Para hoje" = R1 + R2 + R12.
@@ -208,7 +208,7 @@ Toda a relação em uma tela. É o que permite Carla negociar, Érika cobrar e G
 
 ---
 
-### 7. MENSAGENS — `ISR - Mensagens WhatsApp.dc.html`
+### 7. MENSAGENS — `ISR - Mensagens v3.dc.html`
 
 **Topo:** título + **← Voltar**. **Categorias** (pills): `Leads · Pagamento · Alunos · Check-in · Onboarding · Renovação · MVS` (as duas últimas: novas). **Para:** dropdown "Nome · status · turma" (nome → Perfil).
 
@@ -227,7 +227,7 @@ Rodapé mantém: nada é enviado automaticamente.
 
 ---
 
-### 8. COBRANÇA — `ISR - Cobrança.dc.html` · abas **Parcelas** e **Renovações**
+### 8. COBRANÇA — `ISR - Cobrança v3.dc.html` · abas **Parcelas** e **Renovações**
 
 #### Aba Parcelas (Érika vive aqui)
 
@@ -247,7 +247,7 @@ Rodapé mantém: nada é enviado automaticamente.
 
 ---
 
-### 9. CAIXA — `ISR - Caixa.dc.html` **(TELA NOVA · só Gestora)**
+### 9. CAIXA — `ISR - Caixa v3.dc.html` **(TELA NOVA · só Gestora)**
 
 Responde a pergunta que hoje não tem resposta rápida: **"setembro fecha no azul?"**
 
@@ -265,7 +265,7 @@ Responde a pergunta que hoje não tem resposta rápida: **"setembro fecha no azu
 
 ---
 
-### 10. TURMAS & PROJETOS — `ISR - Turmas e Projetos.dc.html`
+### 10. TURMAS & PROJETOS — `ISR - Turmas v3.dc.html`
 
 Mantém: seções por nível (A0 caramelo → A1 coral → A2 teal → B1 roxo), filtro por professora, projeto do ciclo e caderno no card.
 
@@ -283,7 +283,7 @@ Mantém: seções por nível (A0 caramelo → A1 coral → A2 teal → B1 roxo),
 
 ---
 
-### 11. MARKETING — `ISR - Marketing.dc.html`
+### 11. MARKETING — `ISR - Marketing v3.dc.html`
 
 1. **Meta vs. realizado do ciclo** (topo — mesma barra da Central).
 2. **Leads por semana** (barras, 8 semanas) — a agência está funcionando *antes* de outubro? **Fonte:** Pessoas (data de criação).

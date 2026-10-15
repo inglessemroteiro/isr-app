@@ -283,7 +283,6 @@
   <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: #348a8e;">
     <a href="https://docs.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">Atas (Google Docs)</a>
     <a href="https://drive.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">ISR Financeiro (Excel)</a>
-    <a href="ISR%20-%20Central.dc.html" style="color: #8a7465; text-decoration: none;">Central antiga</a>
   </div>
 
 </main>
@@ -379,27 +378,6 @@ class Component extends DCLogic {
       : quem === "todas" ? filaBruta
       : quem ? filaBruta.filter(x => x.dono === quem)
       : filaBruta.filter(minha);
-    // O crm-data aponta para os nomes antigos das telas, porque as
-    // telas antigas também o usam. Aqui o endereço é traduzido na
-    // saída: quem clica na Central nova continua na Central nova.
-    const V3 = {
-      "ISR - Painel do Professor.dc.html": "ISR - Painel v3.dc.html",
-      "ISR - Turmas e Projetos.dc.html": "ISR - Turmas v3.dc.html",
-      "ISR - Turma.dc.html": "ISR - Turma v3.dc.html",
-      "ISR - Caixa.dc.html": "ISR - Caixa v3.dc.html",
-      "ISR - Alunas.dc.html": "ISR - Alunas v3.dc.html",
-      "ISR - Perfil.dc.html": "ISR - Perfil v3.dc.html",
-      "ISR - Equipe.dc.html": "ISR - Equipe v3.dc.html",
-      "ISR - Pagamentos.dc.html": "ISR - Folha v3.dc.html",
-      "ISR%20-%20Pagamentos.dc.html": "ISR%20-%20Folha%20v3.dc.html"
-    };
-    const paraV3 = (h) => {
-      if (!h) return h;
-      let r = String(h);
-      Object.keys(V3).forEach(k => { if (r.indexOf(k) === 0) r = V3[k] + r.slice(k.length); });
-      return r;
-    };
-
     const LIMITE = 12;
     const fila = (this.state.verTodos ? filaAll : filaAll.slice(0, LIMITE)).map(item => {
       const tom = TOM[item.sinal] || ["#f2ebe3", "•"];
@@ -416,7 +394,7 @@ class Component extends DCLogic {
         temPerfil: !!ehPessoa, semPerfil: !ehPessoa,
         perfilHref: ehPessoa ? "ISR%20-%20Perfil%20v3.dc.html?id=" + item.pessoaId : "#",
         acao: ehPendencia ? "Abrir" : (item.acao || "Abrir"),
-        acaoHref: item.href ? encodeURI(paraV3(item.href))
+        acaoHref: item.href ? encodeURI(item.href)
           : (ehPessoa ? "ISR%20-%20Mensagens%20v3.dc.html?para=" + item.pessoaId
               + (item.tpl ? "&tpl=" + item.tpl : "") : "#"),
         temAcao: !!item.href || !!ehPessoa,
@@ -502,14 +480,14 @@ class Component extends DCLogic {
     const pendEscola = (vePelaEscola && CRM.pendenciasDaEscola ? CRM.pendenciasDaEscola() : []);
     const ajustes = furosBrutos.map(fu => ({
       titulo: fu.titulo, detalhe: fu.detalhe,
-      href: encodeURI(paraV3(fu.onde) || "#") + (fu.turmaId ? "?id=" + fu.turmaId
+      href: encodeURI(fu.onde || "#") + (fu.turmaId ? "?id=" + fu.turmaId
         : fu.pessoaId ? "?id=" + fu.pessoaId : ""),
       label: fu.ondeLabel || "Abrir",
       podeCiente: true,
       onCiente: () => { CRM.marcarFuroCiente(fu.chave); this.bump(); }
     })).concat(pendEscola.map(pe => ({
       titulo: pe.titulo, detalhe: pe.texto || "",
-      href: encodeURI(paraV3(pe.href) || "#"), label: "Abrir",
+      href: encodeURI(pe.href || "#"), label: "Abrir",
       podeCiente: false, onCiente: () => {}
     })));
 
