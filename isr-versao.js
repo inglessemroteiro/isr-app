@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-c",
+  numero: "2026.10.16-d",
   data: "16/10/2026",
-  nota: "A aula particular deixa de ter calendário de escola: cada uma depende da aluna, marcada numa data dentro do contrato dela. Ficam os dois calendários que são da escola — turmas online e turma presencial"
+  nota: "O menu em cinco seções, como no desenho v4, e o ver como de volta: a gestora olha o sistema pelos olhos de quem trabalha nela, sem que o nome de quem grava mude"
 };

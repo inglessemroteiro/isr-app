@@ -475,7 +475,9 @@ class Component extends DCLogic {
     });
 
     // professora inicial: a própria (se logada com nome de professora), senão a primeira
-    const user = CRM.gestaoUser();
+    // a professora que abre primeiro é a de VISÃO: com "ver como"
+    // ligado, a gestora cai no painel da pessoa que escolheu
+    const user = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
     const tp = this.turmaParam();
     const tpTurma = tp ? ocup.filter(u => u.label === tp)[0] : null;
     let teacher = this.state.teacher;

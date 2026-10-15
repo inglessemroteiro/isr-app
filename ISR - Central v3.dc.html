@@ -318,7 +318,12 @@
   </div>
 
   <!-- RODAPÉ -->
+  <!-- O Mural e o Desafio saíram do menu da barra lateral. Ficam
+       aqui: tela que ninguém alcança é tela morta, e o Mural ainda é
+       de onde saem pendências para a equipe. -->
   <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: #348a8e;">
+    <a href="ISR%20-%20Mural%20v3.dc.html" style="color: #348a8e; text-decoration: none;">Mural da equipe</a>
+    <a href="ISR%20-%20Desafio%20v3.dc.html" style="color: #348a8e; text-decoration: none;">Desafio da semana</a>
     <a href="https://docs.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">Atas (Google Docs)</a>
     <a href="https://drive.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">ISR Financeiro (Excel)</a>
   </div>
@@ -386,8 +391,14 @@ class Component extends DCLogic {
       furos: [], temFuros: false, furosCount: "0" };
     if (!CRM) return vazio;
 
-    let user = {};
-    try { user = CRM.gestaoUser() || {}; } catch (e) {}
+    // Duas identidades, e confundi-las falsifica o registro:
+    //   user — por quem a tela FILTRA. Com "ver como" ligado é a
+    //          pessoa que a gestora escolheu olhar;
+    //   eu   — quem está de fato ali. É o nome que vai em toda
+    //          gravação, sempre, mesmo olhando pelos olhos de outra.
+    let user = {}, eu = {};
+    try { eu = CRM.gestaoUser() || {}; } catch (e) {}
+    try { user = (CRM.gestaoVisao ? CRM.gestaoVisao() : eu) || {}; } catch (e) { user = eu; }
     const perfil = user.perfil || "gestora";
     const meuNome = user.nome || "";
     const vePelaEscola = perfil === "gestora" || perfil === "operacao";
@@ -749,9 +760,9 @@ class Component extends DCLogic {
         const t = ((this.npTituloRef.current || {}).value || "").trim();
         if (!t) { this.setState({ npErro: "Escreva o que precisa ser feito." }); return; }
         CRM.addTarefa({ titulo: t,
-          dono: (this.npDonoRef.current || {}).value || meuNome,
+          dono: (this.npDonoRef.current || {}).value || (eu.nome || meuNome),
           prazo: (this.npPrazoRef.current || {}).value || "",
-          por: meuNome });
+          por: eu.nome || meuNome });
         if (this.npTituloRef.current) this.npTituloRef.current.value = "";
         if (this.npPrazoRef.current) this.npPrazoRef.current.value = "";
         this.setState({ npAberta: false, npErro: "" });
