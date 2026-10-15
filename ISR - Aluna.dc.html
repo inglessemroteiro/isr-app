@@ -14,94 +14,143 @@
      carregada — o app caía na fonte do sistema -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#f2ebe3">
 </head>
 <body>
 <x-dc>
-<main class="isr-escuro" style="background: {{ fundoApp }}; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #2c3e50; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
+<main class="isr-kit" style="background: {{ fundoApp }}; min-height: 100vh; margin: 0; padding: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #164951; -webkit-font-smoothing: antialiased; overflow-x: hidden;">
 
   <style>
     /* O ponto do selo "ao vivo" pulsa; quem pediu menos movimento
        no sistema não vê a animação (regra em isr-tokens.css). */
     @keyframes isrPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
     .isr-ao-vivo { animation: isrPulse 1.6s ease-in-out infinite; }
-    .isr-btn { transition: transform .12s cubic-bezier(0.4,0,0.2,1), filter .15s cubic-bezier(0.4,0,0.2,1); }
-    /* modo desafio: o botão tem sombra sólida e afunda ao toque */
-    .isr-fisico { box-shadow: 0 5px 0 #b85f52; }
-    .isr-fisico:active { transform: translateY(2px); box-shadow: 0 3px 0 #b85f52; }
+    .isr-btn { transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+    /* modo desafio: o botão tem degrau sólido e afunda ao toque */
+    .isr-fisico { box-shadow: 0 5px 0 #d9705f; }
+    .isr-fisico:active { transform: translateY(2px); box-shadow: 0 3px 0 #d9705f; }
     @keyframes isrSpark { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
     @keyframes isrPop { 0% { transform: scale(.6) rotate(-4deg); opacity: 0; } 70% { transform: scale(1.06) rotate(1deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
     .isr-spark { animation: isrSpark 2.6s ease-in-out infinite; }
     .isr-pop { animation: isrPop .5s cubic-bezier(.2,1.4,.4,1); }
 
-    /* ══ PALETA DA ALUNA ══════════════════════════════════════════
-       O app inteiro é escuro, como o desafio. As telas de turma foram
-       escritas com estilo em cada elemento; converter uma a uma seria
-       centenas de edições e nenhuma garantia de que a próxima nasce
-       certa. Aqui a paleta é traduzida de uma vez.
+    /* ══ DESIGN SYSTEM DA ESCOLA (kit) ═══════════════════════════════
+       fundo #f2ebe3 · títulos/texto #164951 · apoio #1d5a63 · teal #348a8e
+       coral #fc9082 (ação) · verde #9ec970 (positivo) · marrom #8a7465 (rótulos)
+       cantos: 8 papel · 20–32 cartões · 48 seções escuras · 999 botões
 
-       O framework normaliza o estilo em linha para rgb(), então é por
-       esse formato que os seletores procuram — não pelo hexadecimal
-       escrito no HTML. */
-    .isr-escuro [style*="background: rgb(255, 255, 255)"],
-    .isr-escuro [style*="background: rgb(250, 249, 247)"],
-    .isr-escuro [style*="background: rgb(245, 243, 240)"],
-    .isr-escuro [style*="background: rgb(247, 245, 241)"],
-    .isr-escuro [style*="background: rgb(240, 237, 232)"],
-    .isr-escuro [style*="background: rgb(255, 253, 248)"] {
-      background: rgba(242, 235, 227, 0.07) !important;
-      border-color: rgba(242, 235, 227, 0.16) !important;
-      box-shadow: none !important;
+       As telas foram escritas com estilo em cada elemento, na paleta
+       clara antiga. Converter uma a uma seria centenas de edições; aqui
+       a paleta é traduzida de uma vez para o kit. O framework normaliza
+       o estilo em linha para rgb(), então é por esse formato que os
+       seletores procuram — não pelo hexadecimal escrito no HTML.
+       comunidade.html é a referência do visual. */
+
+    /* cartões: fundo branco, sem borda, cantos 20px, sombra baixa */
+    .isr-kit [style*="background: rgb(255, 255, 255)"] {
+      border: none !important; border-radius: 20px !important;
+      box-shadow: 0 2px 10px rgba(22,73,81,0.06) !important;
     }
-    .isr-escuro [style*="rgb(232, 229, 224)"],
-    .isr-escuro [style*="rgb(224, 220, 214)"],
-    .isr-escuro [style*="rgb(240, 237, 232)"] {
-      border-color: rgba(242, 235, 227, 0.16) !important;
+    /* blocos internos claros viram papel creme */
+    .isr-kit [style*="background: rgb(250, 249, 247)"],
+    .isr-kit [style*="background: rgb(245, 243, 240)"],
+    .isr-kit [style*="background: rgb(247, 245, 241)"],
+    .isr-kit [style*="background: rgb(240, 237, 232)"],
+    .isr-kit [style*="background: rgb(255, 253, 248)"] {
+      background: #f2ebe3 !important; border-color: transparent !important; border-radius: 14px !important;
     }
-    /* texto escuro vira creme; texto de apoio, creme apagado */
-    .isr-escuro [style*="color: rgb(44, 62, 80)"],
-    .isr-escuro [style*="color: rgb(22, 73, 81)"],
-    .isr-escuro [style*="color: rgb(61, 53, 41)"] { color: #f2ebe3 !important; }
-    .isr-escuro [style*="color: rgb(125, 109, 99)"],
-    .isr-escuro [style*="color: rgb(155, 139, 126)"],
-    .isr-escuro [style*="color: rgb(102, 102, 102)"],
-    .isr-escuro [style*="color: rgb(107, 97, 85)"],
-    .isr-escuro [style*="color: rgb(179, 166, 147)"],
-    .isr-escuro [style*="color: rgb(184, 173, 160)"] { color: rgba(242, 235, 227, 0.6) !important; }
-    /* teal e verde escuros não se leem sobre o fundo: viram o verde claro */
-    .isr-escuro [style*="color: rgb(52, 138, 142)"],
-    .isr-escuro [style*="color: rgb(90, 154, 46)"],
-    .isr-escuro [style*="color: rgb(34, 144, 144)"] { color: #9ec970 !important; }
-    .isr-escuro [style*="color: rgb(200, 98, 47)"] { color: #fc9082 !important; }
-    /* blocos que já eram escuros descem um tom, para separar do fundo */
-    .isr-escuro [style*="background: rgb(22, 73, 81)"] { background: #0e343a !important; }
-    .isr-escuro [style*="background: rgb(52, 138, 142)"] { background: #229090 !important; }
+    /* trilhos de barra de progresso continuam creme, finos */
+    .isr-kit [style*="background: rgb(240, 237, 232)"][style*="height:"] { border-radius: 999px !important; }
+    /* fundos escuros do desafio sobem para o teal da marca; cantos de seção */
+    .isr-kit [style*="background: rgb(14, 52, 58)"] { background: #164951 !important; }
+    .isr-kit [style*="background: rgb(22, 73, 81)"][style*="border-radius: 14px"],
+    .isr-kit [style*="background: rgb(22, 73, 81)"][style*="border-radius: 16px"] { border-radius: 24px !important; }
+    /* cartões translúcidos do desafio viram cartões brancos */
+    .isr-kit [style*="background: rgba(242, 235, 227, 0.06)"],
+    .isr-kit [style*="background: rgba(242, 235, 227, 0.08)"] {
+      background: #fff !important; border-color: transparent !important; border-radius: 20px !important;
+      box-shadow: 0 2px 10px rgba(22,73,81,0.06) !important;
+    }
+    /* destaques suaves */
+    .isr-kit [style*="background: rgb(238, 245, 236)"] { background: #f1f7e9 !important; }
+    .isr-kit [style*="background: rgb(253, 241, 236)"] { background: #fff1ee !important; }
+    /* divisórias */
+    .isr-kit [style*="rgb(232, 229, 224)"], .isr-kit [style*="rgb(224, 220, 214)"],
+    .isr-kit [style*="rgb(240, 237, 232)"] { border-color: #f0ebe3 !important; }
+
+    /* texto: título em teal escuro; apoio; rótulos em marrom */
+    .isr-kit [style*="color: rgb(44, 62, 80)"], .isr-kit [style*="color: rgb(61, 53, 41)"],
+    .isr-kit [style*="color: rgb(242, 235, 227)"] { color: #164951 !important; }
+    .isr-kit [style*="color: rgb(102, 102, 102)"], .isr-kit [style*="color: rgb(107, 97, 85)"] { color: #1d5a63 !important; }
+    .isr-kit [style*="color: rgb(125, 109, 99)"], .isr-kit [style*="color: rgb(155, 139, 126)"],
+    .isr-kit [style*="color: rgb(179, 166, 147)"], .isr-kit [style*="color: rgb(184, 173, 160)"],
+    .isr-kit [style*="color: rgb(179, 168, 157)"], .isr-kit [style*="color: rgb(201, 191, 178)"],
+    .isr-kit [style*="color: rgba(242, 235, 227"] { color: #8a7465 !important; }
+    /* verde claro não se lê sobre o creme: vira o teal */
+    .isr-kit [style*="color: rgb(158, 201, 112)"] { color: #348a8e !important; }
+    /* ...mas dentro das seções escuras o creme e o verde ficam */
+    .isr-kit [style*="background: rgb(22, 73, 81)"] [style*="color: rgb(158, 201, 112)"],
+    .isr-kit [style*="background: rgb(14, 52, 58)"] [style*="color: rgb(158, 201, 112)"] { color: #9ec970 !important; }
+    .isr-kit [style*="background: rgb(22, 73, 81)"] [style*="color: rgba(242, 235, 227"],
+    .isr-kit [style*="background: rgb(14, 52, 58)"] [style*="color: rgba(242, 235, 227"] { color: rgba(242,235,227,0.8) !important; }
+    .isr-kit [style*="background: rgb(22, 73, 81)"] [style*="color: rgb(242, 235, 227)"],
+    .isr-kit [style*="background: rgb(14, 52, 58)"] [style*="color: rgb(242, 235, 227)"] { color: #f2ebe3 !important; }
     /* dentro de coral e verde a leitura é sempre no teal escuro */
-    .isr-escuro [style*="background: rgb(252, 144, 130)"],
-    .isr-escuro [style*="background: rgb(158, 201, 112)"] { color: #164951 !important; }
-    .isr-escuro [style*="background: rgb(252, 144, 130)"] *,
-    .isr-escuro [style*="background: rgb(158, 201, 112)"] * { color: #164951 !important; }
-    /* fundos claros de destaque (verde e coral suaves) ganham versão escura */
-    .isr-escuro [style*="background: rgb(238, 245, 236)"] { background: rgba(158, 201, 112, 0.14) !important; }
-    .isr-escuro [style*="background: rgb(253, 241, 236)"] { background: rgba(252, 144, 130, 0.14) !important; }
-    /* Barra de abas: precisa ser opaca, senão o conteúdo passa por trás.
-       O seletor leva o [style] junto para vencer a regra dos cartões,
-       que também casa com o fundo branco do nav. */
-    .isr-escuro nav[style] {
-      background: #0e343a !important;
-      border-top-color: rgba(242, 235, 227, 0.12) !important;
-      box-shadow: none !important;
+    .isr-kit [style*="background: rgb(252, 144, 130)"], .isr-kit [style*="background: rgb(158, 201, 112)"],
+    .isr-kit [style*="background: rgb(252, 144, 130)"] *, .isr-kit [style*="background: rgb(158, 201, 112)"] * { color: #164951 !important; }
+
+    /* tipografia: só Inter. Títulos 800 com letter-spacing -0.035em;
+       rótulos de seção são eyebrows minúsculas em marrom */
+    .isr-kit h1, .isr-kit h2, .isr-kit [style*="DM Serif Display"] {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif !important;
+      font-weight: 800 !important; letter-spacing: -0.035em !important;
     }
-    /* títulos grandes na serifada do desafio */
-    .isr-escuro h1, .isr-escuro h2 {
-      font-family: 'DM Serif Display', Georgia, serif !important;
-      font-weight: 400 !important; letter-spacing: 0 !important;
+    .isr-kit h3, .isr-kit [style*="IBM Plex Mono"] {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif !important;
+      font-size: 13px !important; font-weight: 700 !important; letter-spacing: 0.02em !important;
+      text-transform: lowercase !important;
     }
-    /* rótulos de seção em caixa alta seguem a monoespaçada */
-    .isr-escuro h3 {
-      font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
-      letter-spacing: 2px !important; color: rgba(242, 235, 227, 0.6) !important;
+    .isr-kit h3 { color: #8a7465 !important; }
+    .isr-kit h4 { font-size: 15px !important; font-weight: 800 !important; letter-spacing: -0.01em !important; color: #164951 !important; }
+
+    /* botões: 999px, texto 800 sem caixa alta, degrau sólido embaixo;
+       hover sobe, clique afunda */
+    .isr-kit button[style*="border-radius"], .isr-kit a[style*="text-transform: uppercase"][style*="padding"] {
+      border-radius: 999px !important; text-transform: none !important; letter-spacing: -0.01em !important;
+      font-size: 13px !important; font-weight: 800 !important;
+      transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1);
     }
+    .isr-kit button[style*="background: rgb(252, 144, 130)"], .isr-kit a[style*="background: rgb(252, 144, 130)"],
+    .isr-kit button[style*="background: rgb(52, 138, 142)"] {
+      background: #fc9082 !important; color: #164951 !important; border: none !important; box-shadow: 0 4px 0 #d9705f !important;
+    }
+    .isr-kit button[style*="background: rgb(255, 255, 255)"], .isr-kit a[style*="background: rgb(245, 243, 240)"][style*="padding"] {
+      background: #f2ebe3 !important; color: #164951 !important; border: none !important; border-radius: 999px !important;
+      box-shadow: 0 4px 0 #d9cdbd !important;
+    }
+    .isr-kit button[style*="background: rgb(22, 73, 81)"][style*="text-transform"],
+    .isr-kit a[style*="background: rgb(22, 73, 81)"][style*="text-transform"] { box-shadow: 0 4px 0 #0e343a !important; }
+    .isr-kit button[style*="background: rgb(90, 154, 46)"] { background: #9ec970 !important; color: #164951 !important; box-shadow: 0 4px 0 #7ca954 !important; }
+    .isr-kit button[style*="box-shadow: 0 4px 0"]:hover, .isr-kit a[style*="box-shadow: 0 4px 0"]:hover,
+    .isr-kit button[style*="background: rgb(252, 144, 130)"]:hover, .isr-kit button[style*="background: rgb(52, 138, 142)"]:hover,
+    .isr-kit button[style*="background: rgb(255, 255, 255)"]:hover { transform: translateY(-3px); }
+    .isr-kit button[style*="background: rgb(252, 144, 130)"]:active, .isr-kit button[style*="background: rgb(52, 138, 142)"]:active,
+    .isr-kit button[style*="background: rgb(255, 255, 255)"]:active { transform: translateY(1px); box-shadow: 0 1px 0 #d9705f !important; }
+    /* pílulas */
+    .isr-kit span[style*="border-radius: 999px"] { font-size: 11px !important; font-weight: 800 !important; text-transform: none !important; letter-spacing: 0 !important; }
+
+    /* campos */
+    .isr-kit input, .isr-kit textarea {
+      border: 1.5px solid #e2d8ca !important; background: #fffdf8 !important; color: #164951 !important;
+      border-radius: 14px !important; font-size: 16px !important; padding: 13px 15px !important;
+    }
+    .isr-kit input:focus, .isr-kit textarea:focus { border-color: #348a8e !important; outline: none; }
+
+    /* barra de abas: branca, sem borda, sombra para cima. O seletor leva
+       o [style] junto para vencer a regra dos cartões. */
+    .isr-kit nav[style] { background: #fff !important; border-top: none !important; border-radius: 0 !important; box-shadow: 0 -2px 12px rgba(22,73,81,0.08) !important; }
+    .isr-kit nav[style*="rgb(22, 73, 81)"] { background: #164951 !important; box-shadow: none !important; }
   </style>
 
   <sc-if value="{{ naoEncontrada }}">
@@ -125,20 +174,23 @@
 
     <!-- CABEÇALHO — o selo ISR Miles fica discreto, à direita -->
     <sc-if value="{{ naoModoDesafio }}">
-    <header style="max-width: 420px; margin: 0 auto; padding: 18px 20px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-      <span style="min-width: 0;">
-        <span style="display: block; font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; letter-spacing: 0.06em; color: #f2ebe3;">ISR</span>
-        <span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #9ec970; text-transform: uppercase; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nivelCiclo }}</span>
+    <header style="max-width: 420px; margin: 0 auto; padding: 20px 16px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <span style="min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+        <img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" style="height: 13px; width: auto; display: block; align-self: flex-start;" />
+        <span style="display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ nivelCiclo }}</span>
       </span>
-      <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 5px; border: none; background: #fc9082; color: #164951; padding: 5px 12px; border-radius: 999px; font-family: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.25);">✦ {{ milesTotal }} miles</button>
+      <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 6px; border: none; background: #fc9082; color: #164951; padding: 9px 14px; border-radius: 999px; font-family: inherit; font-size: 13px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 4px 0 #d9705f;">✦ {{ milesTotal }} miles</button>
     </header>
     </sc-if>
 
     <!-- CABEÇALHO DO DESAFIO — marca, saudação e o selo de miles -->
     <sc-if value="{{ modoDesafio }}">
-      <header style="max-width: 420px; margin: 0 auto; padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-        <span style="font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; letter-spacing: 0.06em; color: #f2ebe3;">ISR</span>
-        <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 5px; border: none; background: #fc9082; color: #164951; padding: 5px 12px; border-radius: 999px; font-family: inherit; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.25);">✦ {{ milesTotal }} miles</button>
+      <header style="max-width: 420px; margin: 0 auto; padding: 20px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <span style="min-width: 0; display: flex; flex-direction: column; gap: 5px;">
+          <img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" style="height: 13px; width: auto; display: block; align-self: flex-start;" />
+          <span style="display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase;">desafio</span>
+        </span>
+        <button onclick="{{ irMiles }}" title="Seus ISR Miles" class="isr-btn" style="flex: none; display: inline-flex; align-items: center; gap: 6px; border: none; background: #fc9082; color: #164951; padding: 9px 14px; border-radius: 999px; font-family: inherit; font-size: 13px; font-weight: 800; white-space: nowrap; cursor: pointer; box-shadow: 0 4px 0 #d9705f;">✦ {{ milesTotal }} miles</button>
       </header>
     </sc-if>
 
@@ -155,13 +207,13 @@
         <!-- MODO DESAFIO · Início: capa da semana, título e sequência -->
         <sc-if value="{{ modoDesafio }}">
           <div style="padding: 0 24px 6px;">
-            <p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; color: #9ec970; text-transform: uppercase;">Bem-vinda, {{ primeiroNome }}</p>
-            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(242,235,227,0.55);">{{ dsCiclo }}</p>
+            <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase;">{{ dsCiclo }}</p>
+            <h1 style="margin: 4px 0 0; font-size: 32px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; color: #164951;">Oi, {{ primeiroNome }}!</h1>
           </div>
 
           <!-- a arte do post da semana, em moldura de foto -->
           <div style="position: relative; margin-top: 12px;">
-            <div style="position: relative; height: 250px; margin: 0 14px; transform: rotate(-1.2deg); border: 10px solid #f2ebe3; box-shadow: 0 14px 30px rgba(0,0,0,0.35); background: #0e343a; overflow: hidden;">
+            <div style="position: relative; height: 250px; margin: 0 14px; transform: rotate(-1.2deg); border: 10px solid #fff; box-shadow: 0 10px 24px rgba(22,73,81,0.18); background: #164951; overflow: hidden;">
               <sc-if value="{{ dsTemCapa }}">
                 <img src="{{ dsCapa }}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
               </sc-if>
@@ -175,14 +227,14 @@
           </div>
 
           <div style="padding: 34px 24px 0;">
-            <h1 style="margin: 0; font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 44px; line-height: 1; color: #f2ebe3;">{{ dsTitulo }}</h1>
+            <h1 style="margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; color: #164951;">{{ dsTitulo }}</h1>
             <p style="margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: {{ dsEstadoCor }};">{{ dsEstado }}</p>
-            <button onclick="{{ onIrDesafio }}" class="isr-btn isr-fisico" style="margin-top: 18px; width: 100%; background: #fc9082; color: #164951; border: none; border-radius: 14px; padding: 17px 22px; font-size: 16px; font-weight: 800; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"><span>Abrir o desafio</span><span style="font-size: 20px;">→</span></button>
+            <button onclick="{{ onIrDesafio }}" class="isr-btn isr-fisico" style="margin-top: 18px; width: 100%; background: #fc9082; color: #164951; border: none; border-radius: 999px; padding: 16px 24px; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: space-between;"><span>Quero abrir o desafio</span><span style="font-size: 20px;">→</span></button>
           </div>
 
           <!-- sequência: uma barra por semana do ciclo -->
           <sc-if value="{{ temTrilha }}">
-            <div style="margin: 26px 24px 24px; background: rgba(242,235,227,0.08); border: 1px dashed rgba(242,235,227,0.35); border-radius: 14px; padding: 14px 16px;">
+            <div style="margin: 26px 24px 24px; background: #fff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(22,73,81,0.06);">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(242,235,227,0.7); text-transform: uppercase;">Sua sequência</span>
                 <span style="font-size: 11px; font-weight: 700; color: #9ec970; white-space: nowrap;">✦ {{ dsStreakCurto }}</span>
@@ -199,16 +251,16 @@
 
         <!-- saudação: a aluna de turma também abre o app pelo nome -->
         <sc-if value="{{ naoModoDesafio }}">
-          <div style="padding: 0 0 14px;">
-            <p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; color: #9ec970; text-transform: uppercase;">Bem-vinda, {{ primeiroNome }}</p>
-            <p style="margin: 4px 0 0; font-size: 12px; color: rgba(242,235,227,0.55);">{{ turma }}</p>
+          <div style="padding: 4px 0 18px;">
+            <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase;">{{ turma }}</p>
+            <h1 style="margin: 4px 0 0; font-size: 32px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; color: #164951;">Oi, {{ primeiroNome }}!</h1>
           </div>
         </sc-if>
 
         <!-- 1. AULA DE HOJE -->
         <sc-if value="{{ temHero }}">
         <section style="margin: 12px 0 20px;">
-          <div style="position: relative; background: #164951; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
+          <div style="position: relative; background: #164951; border-radius: 32px; overflow: hidden; box-shadow: 0 8px 24px rgba(22,73,81,0.18);">
             <div style="position: relative; height: 132px; overflow: hidden;">
               <img src="uploads/downloaded-image (1).png" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" alt="" />
               <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(22,73,81,0) 30%, rgba(22,73,81,0.95));"></div>
@@ -220,20 +272,20 @@
               </sc-if>
             </div>
             <div style="padding: 0 18px 18px;">
-              <div style="font-size: 11px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">{{ aulaTitulo }}</div>
-              <h2 style="margin: 0 0 5px; font-size: 21px; font-weight: 700; letter-spacing: -0.4px; color: #fff; line-height: 1.2;">{{ aulaQuando }}</h2>
-              <p style="margin: 0 0 16px; font-size: 12px; color: rgba(255,255,255,0.72); line-height: 1.5;">{{ aulaOnde }}</p>
+              <div style="font-size: 12px; font-weight: 700; color: #9ec970; text-transform: lowercase; letter-spacing: 0.02em; margin-bottom: 5px;">{{ aulaTitulo }}</div>
+              <h2 style="margin: 0 0 5px; font-size: 24px; font-weight: 800; letter-spacing: -0.035em; color: #fff; line-height: 1.15;">{{ aulaQuando }}</h2>
+              <p style="margin: 0 0 18px; font-size: 14px; color: rgba(242,235,227,0.8); line-height: 1.5;">{{ aulaOnde }}</p>
               <div style="display: flex; gap: 8px;">
                 <sc-if value="{{ semHeroBotoes }}"></sc-if>
                 <sc-if value="{{ temMeet }}">
-                  <a href="{{ meetLink }}" target="_blank" rel="noopener" class="isr-btn isr-btn-coral" style="flex: 1; background: #fc9082; color: #164951; padding: 12px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; text-align: center; text-decoration: none; box-shadow: 0 4px 14px rgba(252,144,130,0.4);">Entrar na aula</a>
+                  <a href="{{ meetLink }}" target="_blank" rel="noopener" class="isr-btn" style="flex: 1; background: #fc9082; color: #164951; padding: 13px 18px; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; border-radius: 999px; text-align: center; text-decoration: none; box-shadow: 0 4px 0 #d9705f;">Entrar na aula →</a>
                 </sc-if>
                 <sc-if value="{{ temMateriais }}">
-                  <a href="{{ materialLink }}" target="_blank" rel="noopener" class="isr-btn" style="flex: 1; background: rgba(255,255,255,0.14); color: #fff; padding: 12px 18px; font-size: 13px; font-weight: 700; border-radius: 10px; text-align: center; text-decoration: none;">Material da aula</a>
+                  <a href="{{ materialLink }}" target="_blank" rel="noopener" class="isr-btn" style="flex: 1; background: #f2ebe3; color: #164951; padding: 13px 18px; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; border-radius: 999px; text-align: center; text-decoration: none; box-shadow: 0 4px 0 #d9cdbd;">Material da aula</a>
                 </sc-if>
               </div>
               <sc-if value="{{ semMeet }}">
-                <p style="margin: 10px 0 0; font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5;">O link da sala ainda não foi cadastrado nesta turma.</p>
+                <p style="margin: 12px 0 0; font-size: 13px; color: rgba(242,235,227,0.65); line-height: 1.5;">O link da sala ainda não foi cadastrado nesta turma.</p>
               </sc-if>
             </div>
           </div>
@@ -244,25 +296,25 @@
              e o que espera a aluna no perfil dela; o resto vive em
              comunidade.html -->
         <sc-if value="{{ naoModoDesafio }}">
-        <section style="margin: 0 0 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Comunidade</h3>
-            <a href="{{ linkComunidade }}" style="flex: none; font-size: 10px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.3px; text-decoration: none;">abrir →</a>
+        <section style="margin: 0 0 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px 4px;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase;">comunidade</h3>
+            <a href="{{ linkComunidade }}" style="flex: none; font-size: 12px; font-weight: 700; color: #348a8e; text-decoration: none;">abrir →</a>
           </div>
           <sc-if value="{{ temNovidadesCom }}">
-            <a href="{{ linkComunidade }}" style="display: block; background: #fdf1ec; border: 1px solid #e8e5e0; border-left: 4px solid #fc9082; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; text-decoration: none;">
-              <p style="margin: 0; font-size: 12.5px; font-weight: 600; color: #2c3e50; line-height: 1.5;">{{ novidadesComTexto }}</p>
+            <a href="{{ linkComunidade }}" style="display: block; background: #fff1ee; border-radius: 20px; padding: 18px 20px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); text-decoration: none;">
+              <p style="margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #164951; line-height: 1.5;">✳ {{ novidadesComTexto }}</p>
             </a>
           </sc-if>
           <sc-if value="{{ temMuralHome }}">
-            <a href="{{ linkComunidade }}" style="display: block; background: #fff; border: 1px solid #e8e5e0; border-left: 4px solid #9ec970; border-radius: 12px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;">
-              <p style="margin: 0 0 2px; font-size: 9px; color: #7d6d63; text-transform: uppercase; letter-spacing: 0.3px;">Mural da escola · {{ muralAutor }} · {{ muralQuando }}</p>
-              <p style="margin: 0; font-size: 12.5px; color: #2c3e50; line-height: 1.55; white-space: pre-wrap;">{{ muralTexto }}</p>
+            <a href="{{ linkComunidade }}" style="display: block; background: #fff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); text-decoration: none;">
+              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #8a7465;">mural da escola · {{ muralAutor }} · {{ muralQuando }}</p>
+              <p style="margin: 0; font-size: 15px; color: #164951; line-height: 1.5; white-space: pre-wrap;">{{ muralTexto }}</p>
             </a>
           </sc-if>
           <sc-if value="{{ semMuralHome }}">
-            <a href="{{ linkComunidade }}" style="display: block; background: #fff; border: 1px solid #e8e5e0; border-radius: 12px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;">
-              <p style="margin: 0; font-size: 12.5px; color: #666; line-height: 1.55;">Veja quem estuda com você, deixe um scrap no perfil de uma colega e acompanhe o mural da escola.</p>
+            <a href="{{ linkComunidade }}" style="display: block; background: #fff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); text-decoration: none;">
+              <p style="margin: 0; font-size: 15px; color: #1d5a63; line-height: 1.5;">Veja quem estuda com você, deixe um scrap no perfil de uma colega e acompanhe o mural da escola.</p>
             </a>
           </sc-if>
         </section>
@@ -271,20 +323,20 @@
         <!-- 2b. SEUS CLUBES — os clubes em que a aluna está e o que
              aconteceu nos fóruns; o resto vive em clubes.html -->
         <sc-if value="{{ naoModoDesafio }}">
-        <section style="margin: 0 0 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 10px; font-weight: 600; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.8px;">Seus clubes</h3>
-            <a href="{{ linkClubes }}" style="flex: none; font-size: 10px; font-weight: 700; color: #9ec970; text-transform: uppercase; letter-spacing: 0.3px; text-decoration: none;">abrir →</a>
+        <section style="margin: 0 0 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px 4px;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase;">seus clubes</h3>
+            <a href="{{ linkClubes }}" style="flex: none; font-size: 12px; font-weight: 700; color: #348a8e; text-decoration: none;">abrir →</a>
           </div>
           <sc-if value="{{ temClubes }}">
-            <a href="{{ linkClubes }}" style="display: block; background: #fff; border: 1px solid #e8e5e0; border-left: 4px solid {{ clubesBorda }}; border-radius: 12px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;">
-              <p style="margin: 0; font-size: 13px; font-weight: 600; color: #2c3e50; line-height: 1.5;">{{ clubesNomes }}</p>
-              <p style="margin: 3px 0 0; font-size: 11.5px; color: {{ clubesNotaCor }}; line-height: 1.5;">{{ clubesNota }}</p>
+            <a href="{{ linkClubes }}" style="display: block; background: {{ clubesBg }}; border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); text-decoration: none;">
+              <p style="margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #164951; line-height: 1.5;">{{ clubesNomes }}</p>
+              <p style="margin: 4px 0 0; font-size: 13px; font-weight: {{ clubesNotaPeso }}; color: {{ clubesNotaCor }}; line-height: 1.5;">{{ clubesNota }}</p>
             </a>
           </sc-if>
           <sc-if value="{{ semClubes }}">
-            <a href="{{ linkClubes }}" style="display: block; background: #fff; border: 1px solid #e8e5e0; border-radius: 12px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-decoration: none;">
-              <p style="margin: 0; font-size: 12.5px; color: #666; line-height: 1.55;">{{ clubesConvite }}</p>
+            <a href="{{ linkClubes }}" style="display: block; background: #fff; border-radius: 20px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); text-decoration: none;">
+              <p style="margin: 0; font-size: 15px; color: #1d5a63; line-height: 1.5;">{{ clubesConvite }}</p>
             </a>
           </sc-if>
         </section>
@@ -427,7 +479,7 @@
             </div>
 
             <!-- faixa ISR Miles -->
-            <button onclick="{{ irMiles }}" class="isr-btn" style="display: flex; width: 100%; align-items: center; gap: 11px; margin-top: 14px; background: linear-gradient(135deg, rgba(252,144,130,0.14), rgba(252,144,130,0.04)); border: 1px solid rgba(252,144,130,0.32); border-radius: 12px; padding: 11px 13px; cursor: pointer; font-family: inherit; text-align: left;">
+            <button onclick="{{ irMiles }}" class="isr-btn" style="display: flex; width: 100%; align-items: center; gap: 11px; margin-top: 14px; background: #fff1ee; border: none; border-radius: 16px; padding: 13px 14px; cursor: pointer; font-family: inherit; text-align: left;">
               <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" style="flex: none; display: block;">
                 <circle cx="16" cy="16" r="14.2" fill="none" stroke="#348a8e" stroke-width="1.4" stroke-dasharray="2.6 3.4" opacity="0.55"></circle>
                 <circle cx="13" cy="18.5" r="6.8" fill="#fc9082"></circle>
@@ -710,7 +762,7 @@
       <!-- PERFIL DO DESAFIO · carimbos do ciclo e extrato de miles -->
       <sc-if value="{{ tabPerfilDesafio }}">
         <header style="padding: 26px 24px 0; display: flex; align-items: center; gap: 16px;">
-          <span style="width: 72px; height: 72px; flex: none; border: 4px solid #f2ebe3; border-radius: 50%; background: #fc9082; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.3); font-family: 'DM Serif Display', Georgia, serif; font-size: 34px; color: #164951;">{{ dsInicial }}</span>
+          <span style="width: 72px; height: 72px; flex: none; border: 4px solid #fff; border-radius: 50%; background: #fc9082; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(22,73,81,0.18); font-size: 30px; font-weight: 800; color: #164951;">{{ dsInicial }}</span>
           <span style="min-width: 0;">
             <span style="display: block; font-family: 'DM Serif Display', Georgia, serif; font-size: 32px; color: #f2ebe3; line-height: 1.1;">{{ primeiroNome }}</span>
             <span style="display: block; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #9ec970; text-transform: uppercase; margin-top: 2px;">{{ dsCiclo }}</span>
@@ -965,7 +1017,7 @@
           </div>
         </section>
 
-        <a href="{{ waEscola }}" target="_blank" rel="noopener" style="display: block; text-align: center; background: #fff; border: 1px solid #e8e5e0; color: #2c3e50; font-size: 11px; font-weight: 600; padding: 13px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px;">Falar com a escola sobre pagamento</a>
+        <a href="{{ waEscola }}" target="_blank" rel="noopener" class="isr-btn" style="display: block; text-align: center; background: #f2ebe3; color: #164951; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; padding: 13px 20px; border-radius: 999px; text-decoration: none; box-shadow: 0 4px 0 #d9cdbd; margin-bottom: 16px;">Falar com a escola sobre pagamento →</a>
 
         <!-- DOCUMENTOS -->
         <section style="margin: 0 0 16px;">
@@ -990,22 +1042,22 @@
 
         <!-- ISR MILES -->
         <section style="margin: 12px 0 16px;">
-          <div style="background: #164951; padding: 24px 16px; text-align: center; border-radius: 16px 16px 0 0; box-shadow: 0 8px 24px rgba(22,73,81,0.22);">
+          <div style="background: #164951; padding: 28px 20px; text-align: center; border-radius: 32px 32px 0 0;">
             <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true" style="display: block; margin: 0 auto 12px;">
               <circle cx="16" cy="16" r="14.2" fill="none" stroke="#9ec970" stroke-width="1.4" stroke-dasharray="2.6 3.4" opacity="0.65"></circle>
               <circle cx="13" cy="18.5" r="6.8" fill="#fc9082"></circle>
               <path d="M22.4 7.2 L24 11.6 L28.4 13.2 L24 14.8 L22.4 19.2 L20.8 14.8 L16.4 13.2 L20.8 11.6 Z" fill="#9ec970"></path>
             </svg>
-            <div style="font-size: 40px; font-weight: 700; color: #fff; letter-spacing: -1.5px; line-height: 1;">{{ milesTotal }}</div>
-            <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.8px; color: #9ec970; margin-top: 8px; text-transform: uppercase;">ISR Miles</div>
+            <div style="font-size: 44px; font-weight: 800; color: #fff; letter-spacing: -0.035em; line-height: 1;">{{ milesTotal }}</div>
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #9ec970; margin-top: 8px; text-transform: lowercase;">isr miles</div>
             <sc-if value="{{ temProxRec }}">
-              <div style="background: rgba(255,255,255,0.15); height: 6px; overflow: hidden; margin-top: 18px;">
+              <div style="background: rgba(255,255,255,0.15); height: 8px; border-radius: 999px; overflow: hidden; margin-top: 18px;">
                 <div style="background: #9ec970; height: 100%; width: {{ proxRecPct }};"></div>
               </div>
               <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 9px; line-height: 1.5;">{{ proxRecFrase }} para <b style="font-weight: 600;">{{ proxRecNome }}</b>.</div>
             </sc-if>
           </div>
-          <div style="background: #fff; border: 1px solid #e8e5e0; border-top: none; border-radius: 0 0 14px 14px; padding: 12px 14px;">
+          <div style="background: #fff; border-radius: 0 0 20px 20px; padding: 14px 18px;">
             <p style="margin: 0; font-size: 11px; color: #7d6d63; line-height: 1.6;">{{ milesRegraFrase }}</p>
             <sc-if value="{{ temAviso }}">
               <p style="margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #f0ede8; font-size: 11px; font-weight: 600; color: #c8622f; line-height: 1.5;">{{ avisoExpira }}</p>
@@ -1103,32 +1155,32 @@
 
     <!-- NAVEGAÇÃO · ícones oficiais da escola (traço 1.8, currentColor) -->
     <sc-if value="{{ naoModoDesafio }}">
-    <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e8e5e0; z-index: 26; box-shadow: 0 -1px 6px rgba(0,0,0,0.05);">
+    <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; z-index: 26; box-shadow: 0 -2px 12px rgba(22,73,81,0.08);">
       <div style="max-width: 420px; margin: 0 auto; display: flex; height: 56px;">
           <button onclick="{{ tab0.onClick }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: {{ tab0.cor }};">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>
-            <span style="font-size: 9px; font-weight: 700; color: {{ tab0.cor }}; text-transform: uppercase; letter-spacing: 0.3px;">{{ tab0.label }}</span>
+            <span style="font-size: 10px; font-weight: 700; color: {{ tab0.cor }}; text-transform: lowercase; letter-spacing: 0.02em;">{{ tab0.label }}</span>
           </button>
           <button onclick="{{ tab1.onClick }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: {{ tab1.cor }};">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><rect x="2.8" y="4.2" width="18.4" height="12.4" rx="2.2"></rect><path d="M8.5 20.2h7"></path><path d="M12 16.6v3.6"></path></svg>
-            <span style="font-size: 9px; font-weight: 700; color: {{ tab1.cor }}; text-transform: uppercase; letter-spacing: 0.3px;">{{ tab1.label }}</span>
+            <span style="font-size: 10px; font-weight: 700; color: {{ tab1.cor }}; text-transform: lowercase; letter-spacing: 0.02em;">{{ tab1.label }}</span>
           </button>
           <button onclick="{{ tab2.onClick }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: {{ tab2.cor }};">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><rect x="5" y="4.5" width="14" height="16" rx="2.2"></rect><path d="M9 4.5V3.2A1.2 1.2 0 0 1 10.2 2h3.6A1.2 1.2 0 0 1 15 3.2v1.3z"></path><path d="M9 12.5l2 2 4-4"></path></svg>
-            <span style="font-size: 9px; font-weight: 700; color: {{ tab2.cor }}; text-transform: uppercase; letter-spacing: 0.3px;">{{ tab2.label }}</span>
+            <span style="font-size: 10px; font-weight: 700; color: {{ tab2.cor }}; text-transform: lowercase; letter-spacing: 0.02em;">{{ tab2.label }}</span>
           </button>
           <!-- Turma abre a comunidade (comunidade.html): tela própria, que
                também vive no systeme e como app instalado -->
-          <a href="{{ linkComunidade }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: #b3a89d; text-decoration: none; position: relative;">
+          <a href="{{ linkComunidade }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: #8a7465; text-decoration: none; position: relative;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><circle cx="9" cy="8.5" r="3.2"></circle><path d="M2.8 20c0-3.6 2.8-5.8 6.2-5.8s6.2 2.2 6.2 5.8"></path><circle cx="17" cy="9.5" r="2.6"></circle><path d="M15.6 14.4c3 0 5.6 2 5.6 5.2"></path></svg>
-            <span style="font-size: 9px; font-weight: 700; color: #b3a89d; text-transform: uppercase; letter-spacing: 0.3px;">Turma</span>
+            <span style="font-size: 10px; font-weight: 700; color: #8a7465; text-transform: lowercase; letter-spacing: 0.02em;">turma</span>
             <sc-if value="{{ temNovidadesCom }}">
               <span style="position: absolute; top: 8px; right: calc(50% - 20px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #fc9082; color: #164951; font-size: 9px; font-weight: 800; line-height: 16px; text-align: center;">{{ novidadesCom }}</span>
             </sc-if>
           </a>
           <button onclick="{{ tab3.onClick }}" class="isr-btn" style="flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-family: inherit; padding: 0; color: {{ tab3.cor }};">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><circle cx="12" cy="8.2" r="3.6"></circle><path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"></path></svg>
-            <span style="font-size: 9px; font-weight: 700; color: {{ tab3.cor }}; text-transform: uppercase; letter-spacing: 0.3px;">{{ tab3.label }}</span>
+            <span style="font-size: 10px; font-weight: 700; color: {{ tab3.cor }}; text-transform: lowercase; letter-spacing: 0.02em;">{{ tab3.label }}</span>
           </button>
       </div>
     </nav>
@@ -1136,10 +1188,10 @@
 
     <!-- NAVEGAÇÃO DO DESAFIO · três abas, em texto -->
     <sc-if value="{{ modoDesafio }}">
-      <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #0e343a; z-index: 26;">
+      <nav style="position: fixed; bottom: 0; left: 0; right: 0; background: #164951; z-index: 26;">
         <div style="max-width: 420px; margin: 0 auto; display: flex; gap: 6px; padding: 6px 10px 10px;">
           <sc-for list="{{ dsTabs }}" as="dt" hint-placeholder-count="3">
-            <button onclick="{{ dt.onClick }}" class="isr-btn" style="flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; border: none; background: {{ dt.bg }}; color: {{ dt.cor }}; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;">{{ dt.label }}</button>
+            <button onclick="{{ dt.onClick }}" class="isr-btn" style="flex: 1; text-align: center; padding: 12px 0; border-radius: 999px; border: none; background: {{ dt.bg }}; color: {{ dt.cor }}; font-family: inherit; font-size: 13px; font-weight: 800; letter-spacing: -0.01em; cursor: pointer;">{{ dt.label }}</button>
           </sc-for>
         </div>
       </nav>
@@ -1260,7 +1312,7 @@ class Component extends DCLogic {
     const tabs = TABS.map(t => ({
       label: t.label,
       onClick: () => this.setState({ tab: t.id }),
-      cor: tab === t.id ? "#348a8e" : "#b3a89d"
+      cor: tab === t.id ? "#164951" : "#8a7465"
     }));
     // A barra tem quatro posições fixas no markup; no modo desafio são
     // três dobras — Início, Desafio e Perfil — e o rótulo vazio esconde
@@ -1532,10 +1584,11 @@ class Component extends DCLogic {
           linkClubes,
           temClubes: meusClubes.length > 0, semClubes: meusClubes.length === 0,
           clubesNomes: meusClubes.map(c => (c.emoji || "💬") + " " + c.nome).join("  ·  "),
-          clubesBorda: novC.total > 0 ? "#fc9082" : "#9ec970",
-          clubesNotaCor: novC.total > 0 ? "#b85f52" : "#7d6d63",
+          clubesBg: novC.total > 0 ? "#fff1ee" : "#fff",
+          clubesNotaPeso: novC.total > 0 ? 800 : 500,
+          clubesNotaCor: novC.total > 0 ? "#d9705f" : "#8a7465",
           clubesNota: novC.total > 0
-            ? (novC.total === 1 ? "1 novidade no fórum desde sua última visita" : novC.total + " novidades nos fóruns desde sua última visita")
+            ? "✳ " + (novC.total === 1 ? "1 novidade no fórum desde sua última visita" : novC.total + " novidades nos fóruns desde sua última visita")
             : (meusClubes.length < limiteClubes
                 ? "Você ainda pode entrar em mais " + (limiteClubes - meusClubes.length) + " neste ciclo."
                 : "Seus " + limiteClubes + " clubes do ciclo. Toque para abrir os fóruns."),
@@ -1857,7 +1910,7 @@ class Component extends DCLogic {
       onIrDesafio: () => this.setState({ tab: "desafio" }),
 
       // ── MODO DESAFIO · os dados das três telas ──
-      fundoApp: "#164951",
+      fundoApp: "#f2ebe3",
       padConteudo: modoDesafio ? "0 0 16px" : "16px",
       tabPerfilDesafio: modoDesafio && tab === "conta",
       ...((() => {
@@ -1875,7 +1928,7 @@ class Component extends DCLogic {
         for (let i = 1; i <= totalSem; i++) {
           const s = trilha ? (trilha.semanas[i - 1] || {}) : {};
           barras.push({
-            bg: s.feita ? "#9ec970" : (s.atual ? "#fc9082" : "rgba(242,235,227,0.18)"),
+            bg: s.feita ? "#9ec970" : (s.atual ? "#fc9082" : "#e2d8ca"),
             brilho: s.atual && !s.feita ? "0 0 10px rgba(252,144,130,0.5)" : "none"
           });
         }
@@ -1886,9 +1939,9 @@ class Component extends DCLogic {
           carimbos.push({
             n: String(i),
             marca: s.feita ? "✦ OK" : (s.atual ? "AQUI" : ""),
-            cor: s.feita ? "#9ec970" : (s.atual ? "#fc9082" : "rgba(242,235,227,0.3)"),
+            cor: s.feita ? "#5a9a2e" : (s.atual ? "#d9705f" : "#c9bfb2"),
             borda: s.feita ? "2.5px solid #9ec970"
-              : (s.atual ? "2.5px dashed #fc9082" : "1.5px dashed rgba(242,235,227,0.25)"),
+              : (s.atual ? "2.5px dashed #fc9082" : "1.5px dashed #d9cdbd"),
             giro: s.feita || s.atual ? giros[(i - 1) % giros.length] : "0deg",
             classe: s.atual && !s.feita ? "isr-spark" : (s.feita ? "isr-pop" : "")
           });
@@ -1905,7 +1958,7 @@ class Component extends DCLogic {
           dsEstado: respondeu
             ? "Desafio respondido. Sua sequência continua."
             : "Responda o desafio da semana para manter sua sequência.",
-          dsEstadoCor: respondeu ? "#9ec970" : "rgba(242,235,227,0.75)",
+          dsEstadoCor: respondeu ? "#5a9a2e" : "#1d5a63",
           dsBarras: barras,
           dsCarimbos: carimbos,
           dsStreakN: String(trilha ? trilha.streak : 0),
@@ -1931,8 +1984,8 @@ class Component extends DCLogic {
             { id: "conta", label: "Perfil" }
           ].map(x => ({
             label: x.label,
-            bg: tab === x.id ? "rgba(252,144,130,0.16)" : "transparent",
-            cor: tab === x.id ? "#fc9082" : "rgba(242,235,227,0.5)",
+            bg: tab === x.id ? "#fc9082" : "transparent",
+            cor: tab === x.id ? "#164951" : "rgba(242,235,227,0.6)",
             onClick: () => this.setState({ tab: x.id })
           }))
         };

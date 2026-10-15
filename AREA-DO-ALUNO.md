@@ -2,7 +2,7 @@
 
 **Decisão de base (out/2026):** cada parte da área do aluno é uma **página HTML independente** no Netlify. A mesma página abre por link no systeme (botão "Abrir minha área"), dentro do app da aluna e como aplicativo instalado (PWA já existe: `manifest.json` + `sw.js`). Nada de iframe no systeme: no iPhone, o Safari bloqueia o armazenamento local dentro de iframe de outro domínio, e a aluna cairia deslogada.
 
-**Visual:** toda página nova segue o design system do kit (fundo `#f2ebe3`, cartões brancos de cantos 20–32px, seções escuras `#164951` com cantos 48px, Inter 800 com letter-spacing −0,035em nos títulos, eyebrows minúsculas em `#8a7465`, botões 999px em coral com degrau sólido, emoji só com função, ícones Lucide). `comunidade.html` é a referência. O app antigo (`ISR - Aluna.dc.html`) ainda está no visual escuro anterior; migrar o Início dele para o kit é uma fatia própria.
+**Visual:** toda página nova segue o design system do kit (fundo `#f2ebe3`, cartões brancos de cantos 20–32px, seções escuras `#164951` com cantos 48px, Inter 800 com letter-spacing −0,035em nos títulos, eyebrows minúsculas em `#8a7465`, botões 999px em coral com degrau sólido, emoji só com função, ícones Lucide). `comunidade.html` é a referência. O app da aluna (`ISR - Aluna.dc.html`) também segue o kit: as telas foram escritas com estilo em cada elemento na paleta clara antiga, e uma folha de tradução no topo do arquivo (`.isr-kit`, seletores por `[style*=...]`) converte a paleta de uma vez; topo, saudação, cartão da aula, Comunidade/Clubes e a barra de abas foram reescritos à mão.
 
 Toda página nova segue o mesmo contrato:
 
