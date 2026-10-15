@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.09.29-l",
-  data: "29/09/2026",
-  nota: "Chamada da semana das particulares: todas as aulas dos últimos 7 dias em uma lista, e cada clique em Presente, Falta ou Justificada salva a chamada daquela aula e acerta o pacote. E o check-in agendado deixa de ficar preso em Para hoje — o botão Feito encerra o check-in e tira o item do dia"
+  numero: "2026.10.15-i",
+  data: "15/10/2026",
+  nota: "Varredura das telas portadas. A pendência volta a fechar pela Central, a fila mostra quantos itens ficaram de fora, e voltam o formulário de pendência nova, os avisos para a equipe e os ajustes de cadastro"
 };

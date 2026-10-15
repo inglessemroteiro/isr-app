@@ -81,9 +81,9 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 9px; margin-top: 10px;">
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome do ciclo</div>
             <input ref="{{ cicloRef }}" placeholder="{{ cicloAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Começa em</div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Começa em · {{ cicloIniAtual }}</div>
             <input ref="{{ inicioRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
-          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Termina em</div>
+          <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Termina em · {{ cicloFimAtual }}</div>
             <input ref="{{ fimRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Alunas no ciclo</div>
             <input ref="{{ metaRef }}" type="number" placeholder="{{ metaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 8px; background: #fff;" /></div>
@@ -96,7 +96,7 @@
           <div style="display: flex; align-items: flex-end;">
             <button onclick="{{ onSalvarMeta }}" style="width: 100%; border: none; background: #164951; color: #fff; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
           </div>
-          <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Campos em branco permanecem como estão. Sem alunas por mês, o sistema divide a meta do ciclo pelos meses dele.</p>
+          <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Campos em branco permanecem como estão. Sem alunas por mês, o sistema divide a meta do ciclo pelos meses dele. Sem data de fim, as aulas das turmas aparecem na agenda semana após semana e a chamada continua sendo cobrada.</p>
         </div>
       </sc-if>
       <sc-if value="{{ metaResumoVisivel }}">
@@ -238,7 +238,8 @@ class Component extends DCLogic {
       cicloLinha: "", barraLargura: "0%", barraCor: "#9ec970", placar: [], semFim: false,
       editandoMeta: false, metaLabel: "Ajustar", metaBg: "#fff", metaFg: "#6b6155",
       metaResumo: "", metaResumoVisivel: false, cicloAtual: "", metaAtual: "", metaMesAtual: "",
-      fatRAtual: "", fatEAtual: "", cicloRef: this.cicloRef, inicioRef: this.inicioRef,
+      fatRAtual: "", fatEAtual: "", cicloIniAtual: "", cicloFimAtual: "",
+      cicloRef: this.cicloRef, inicioRef: this.inicioRef,
       fimRef: this.fimRef, metaRef: this.metaRef, metaMesRef: this.metaMesRef,
       fatRRef: this.fatRRef, fatERef: this.fatERef, onEditarMeta: () => {}, onSalvarMeta: () => {},
       temMeses: false, mesesView: [], canais: [], niveis: [], semCanais: true, semNiveis: true,
@@ -359,7 +360,10 @@ class Component extends DCLogic {
       metaResumo: d.meta + (d.meta === 1 ? " aluna" : " alunas") + " no ciclo"
         + (d.metaMes ? " · " + d.metaMes + " por mês" : "")
         + " · faturamento " + duas(d.metaFaturamento),
-      cicloAtual: d.ciclo || "", metaAtual: String(d.meta),
+      cicloAtual: d.ciclo || "",
+      cicloIniAtual: M.cicloInicio ? CRM.ddmm(M.cicloInicio) : "em branco",
+      cicloFimAtual: M.cicloFim ? CRM.ddmm(M.cicloFim) : "em branco",
+      metaAtual: String(d.meta),
       metaMesAtual: String(d.metaMes || 0),
       fatRAtual: $("R$", (d.metaFaturamento || {})["R$"] || 0),
       fatEAtual: $("€", (d.metaFaturamento || {})["€"] || 0),

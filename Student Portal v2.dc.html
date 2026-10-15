@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/styles.css">
+<script src="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,system-ui,sans-serif;color:#164951}a{color:#348a8e}a:hover{color:#164951}*{box-sizing:border-box}textarea,input{font-family:inherit}</style>
+</helmet>
+
+<sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px">
+  <div style="width:100%;max-width:420px;background:#fff;border-radius:32px;padding:40px 32px;box-shadow:var(--web-shadow-card);display:flex;flex-direction:column;gap:20px">
+    <img src="assets/ISR_logo_primary.png" alt="Inglês sem Roteiro" style="height:40px;width:auto;align-self:flex-start">
+    <div><h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.04em">Welcome back</h1><div style="font-size:15px;color:#1d5a63;margin-top:4px">Log in to your student portal.</div></div>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#8a7465">email<input value="{{ email }}" onChange="{{ onEmail }}" style="border:1px solid #e2c8b5;border-radius:14px;padding:14px 16px;font-size:16px;color:#164951;outline:none"></label>
+    <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#8a7465">password<input type="password" value="{{ pass }}" onChange="{{ onPass }}" style="border:1px solid #e2c8b5;border-radius:14px;padding:14px 16px;font-size:16px;color:#164951;outline:none"></label>
+    <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#1d5a63"><input type="checkbox" checked="{{ remember }}" onChange="{{ toggleRemember }}" style="width:18px;height:18px;accent-color:#348a8e">Keep me logged in</label>
+    <sc-if value="{{ loginError }}"><div style="font-size:13px;color:#c82333;font-weight:600">Type your email and password to continue.</div></sc-if>
+    <x-import component-from-global-scope="InglesSemRoteiroDesignSystem_a7985f.CTAButton" onClick="{{ doLogin }}" hint-size="100%,64px">Log in</x-import>
+    <div style="font-size:13px;color:#8a7465">Forgot your password? <a href="#">Reset it</a></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;display:flex">
+  <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+  <aside style="width:240px;flex:none;background:#164951;color:#fff;padding:28px 18px;display:flex;flex-direction:column;gap:24px;position:sticky;top:0;height:100vh">
+    <img src="assets/ISR_logo_white.png" alt="Inglês sem Roteiro" style="height:34px;width:auto;object-fit:contain;object-position:left">
+    <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+      <sc-if value="{{ hasPhoto }}" hint-placeholder-val="{{ false }}"><div style="width:44px;height:44px;border-radius:999px;background-color:#fc9082;background-size:cover;background-position:center;background-image:{{ photoBg }}"></div></sc-if>
+      <sc-if value="{{ noPhoto }}" hint-placeholder-val="{{ true }}"><div style="width:44px;height:44px;border-radius:999px;background:#fc9082;color:#164951;display:grid;place-items:center;font-weight:800">M</div></sc-if>
+      <div><div style="font-weight:700;font-size:15px">Marianne</div><div style="font-size:12px;opacity:.75">Essentials · online</div></div>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="7">
+        <div onClick="{{ n.go }}" style="padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;background:{{ n.bg }};opacity:{{ n.op }}" style-hover="background:rgba(255,255,255,.08)"><span>{{ n.label }}</span><span style="font-size:11px;color:#fc9082">{{ n.badge }}</span></div>
+      </sc-for>
+    </nav>
+    <div onClick="{{ goShop }}" style="margin-top:auto;background:rgba(255,255,255,.08);border-radius:16px;padding:14px;cursor:pointer" style-hover="background:rgba(255,255,255,.14)"><div style="font-size:11px;font-weight:700;color:#fc9082">isr miles</div><div style="font-size:22px;font-weight:800;letter-spacing:-0.04em">{{ milesFmt }}</div><div style="font-size:12px;opacity:.85">🔥 14-day streak · open shop →</div></div>
+    <div onClick="{{ logout }}" style="font-size:13px;opacity:.7;cursor:pointer">Log out</div>
+  </aside>
+  </sc-if>
+
+  <main style="flex:1;min-width:0;padding:{{ mainPad }};display:flex;flex-direction:column;gap:22px">
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#8a7465">{{ eyebrow }}</div><h1 style="margin:2px 0 0;font-size:{{ h1Size }};font-weight:800;letter-spacing:-0.035em;line-height:1.1">{{ title }}</h1></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <sc-if value="{{ narrow }}"><div onClick="{{ goShop }}" style="background:#fff;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">{{ milesFmt }} mi</div></sc-if>
+        <sc-if value="{{ wide }}"><div style="background:#fff;border-radius:999px;padding:10px 16px;font-size:13px;color:#8a7465;width:220px">Search people / clubs…</div></sc-if>
+        <div onClick="{{ toggleNotif }}" style="background:{{ bellBg }};border-radius:999px;width:40px;height:40px;display:grid;place-items:center;position:relative;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#164951" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:999px;background:#fc9082;font-size:10px;font-weight:800;display:grid;place-items:center">{{ unread }}</span></sc-if></div>
+      </div>
+    </header>
+
+    <!-- HOME -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#164951;color:#fff;border-radius:24px;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div><div style="font-size:12px;font-weight:700;color:#fc9082;letter-spacing:.04em">{{ classEyebrow }}</div><div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-top:4px">Traditions · Session 4</div><div style="font-size:14px;opacity:.8;margin-top:4px">Tutor Dave · Tue 19:00–20:00 · Zoom</div></div>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><x-import component-from-global-scope="InglesSemRoteiroDesignSystem_a7985f.CTAButton" tone="onDark" onClick="{{ joinClass }}" hint-size="220px,64px">Join live room</x-import><span onClick="{{ goNotebook }}" style="font-size:14px;font-weight:700;cursor:pointer;text-decoration:underline">Open my notebook</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:start">
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px;grid-row:span 3">
+          <div style="font-size:16px;font-weight:800;letter-spacing:-0.02em">School feed</div>
+          <sc-for list="{{ feed }}" as="f" hint-placeholder-count="3">
+            <div onClick="{{ f.openWho }}" style="display:flex;gap:12px;padding-bottom:14px;border-bottom:1px solid #f2ebe3;cursor:{{ f.cursor }}"><div style="width:36px;height:36px;border-radius:999px;background:{{ f.color }};flex:none;display:grid;place-items:center;font-weight:800;font-size:13px">{{ f.initial }}</div><div style="font-size:14px;line-height:1.5;color:#1d5a63"><b style="color:#164951">{{ f.who }}</b> <span style="color:#8a7465;font-size:12px">· {{ f.when }}</span><br>{{ f.text }}</div></div>
+          </sc-for>
+        </section>
+        <section onClick="{{ goClubs }}" style="background:#fff;border-radius:24px;padding:22px 24px;cursor:pointer;display:flex;flex-direction:column;gap:10px"><div style="font-size:12px;font-weight:700;color:#8a7465">next club meetings</div><sc-for list="{{ myClubs }}" as="c"><div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span style="font-weight:700">{{ c.emoji }} {{ c.name }}</span><span style="color:#1d5a63">{{ c.nextShort }}</span></div></sc-for></section>
+        <section onClick="{{ goNotebook }}" style="background:#fc9082;border-radius:24px;padding:22px 24px;cursor:pointer"><div style="font-size:12px;font-weight:700">🏠 homework · session 3</div><div style="font-size:16px;font-weight:800;margin-top:6px;line-height:1.3">Record 1 minute about a family meal</div><div style="font-size:13px;margin-top:6px;font-weight:600">due before class · open →</div></section>
+        <section onClick="{{ goLastRec }}" style="background:#fff;border-radius:24px;padding:22px 24px;cursor:pointer;display:flex;align-items:center;gap:14px"><span style="font-size:28px">🎥</span><div><div style="font-size:12px;font-weight:700;color:#8a7465">last class recording</div><div style="font-size:15px;font-weight:800;margin-top:2px">Session 3 · Family recipes</div><div style="font-size:12px;color:#1d5a63;margin-top:2px">58 min · slides inside</div></div></section>
+        <section onClick="{{ goAccount }}" style="background:#fff;border-radius:24px;padding:22px 24px;cursor:pointer"><div style="font-size:12px;font-weight:700;color:#8a7465">attendance</div><div style="display:flex;gap:4px;margin-top:10px"><sc-for list="{{ attendance }}" as="a"><span style="flex:1;height:8px;border-radius:4px;background:{{ a.bar }}"></span></sc-for></div><div style="font-size:13px;margin-top:8px;color:#1d5a63">83% present · 75% needed</div></section>
+      </div>
+    </sc-if>
+
+    <!-- NOTEBOOK -->
+    <sc-if value="{{ isNotebook }}">
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+        <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="10">
+          <div onClick="{{ s.pick }}" style="flex:none;min-width:92px;border-radius:16px;padding:10px 12px;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }};border:2px solid {{ s.border }}"><div style="font-size:11px;font-weight:700;opacity:.75">S{{ s.n }} · {{ s.date }}</div><div style="font-size:13px;font-weight:800;margin-top:2px">{{ s.status }}</div></div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ nbCurrent }}">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="border-radius:999px;padding:7px 14px;font-size:12px;font-weight:800;background:{{ liveBg }};color:{{ liveFg }}">{{ liveLabel }}</span>
+          <sc-if value="{{ classLive }}"><span style="background:#fff;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;color:#348a8e">{{ saveLabel }}</span></sc-if>
+          <span onClick="{{ toggleLive }}" style="margin-left:auto;font-size:12px;font-weight:700;color:#8a7465;cursor:pointer;text-decoration:underline">demo: {{ liveToggleLabel }}</span>
+        </div>
+        <div style="background:#164951;color:#fff;border-radius:24px;padding:26px 28px"><div style="font-size:12px;font-weight:700;color:#fc9082">🎯 today you will…</div><div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-top:6px;line-height:1.2;text-wrap:pretty">{{ nbObj }}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          <div onClick="{{ openSlides }}" style="background:#fff;border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer" style-hover="box-shadow:var(--web-shadow-card)"><span style="font-size:26px">📊</span><div><div style="font-size:15px;font-weight:800">Class slides</div><div style="font-size:12px;color:#8a7465;font-weight:600">7 slides · open or download</div></div></div>
+          <div onClick="{{ recCur }}" style="background:#fff;border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;opacity:{{ recCurOp }}"><span style="font-size:26px">🎥</span><div><div style="font-size:15px;font-weight:800">Class recording</div><div style="font-size:12px;color:#8a7465;font-weight:600">{{ recCurSub }}</div></div></div>
+        </div>
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
+          <sc-for list="{{ scaffolds }}" as="s" hint-placeholder-count="3">
+            <div style="background:#fff;border-radius:20px;padding:18px 20px"><div style="font-size:12px;font-weight:700;color:#8a7465">{{ s.label }}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><sc-for list="{{ s.items }}" as="w"><span style="background:{{ s.tint }};border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600">{{ w }}</span></sc-for></div></div>
+          </sc-for>
+        </section>
+        <sc-if value="{{ classNotLive }}"><div style="background:#fff;border-radius:20px;padding:18px 20px;font-size:14px;line-height:1.5;color:#1d5a63;display:flex;gap:12px;align-items:center"><span style="font-size:22px">🔒</span><div><b style="color:#164951">Class activities open at 19:00, when the live class starts.</b><br>You can read the words now. Between classes, your homework is open below.</div></div></sc-if>
+        <sc-for list="{{ tasks }}" as="t" hint-placeholder-count="2">
+          <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px;opacity:{{ t.op }}"><div style="font-size:12px;font-weight:700;color:#8a7465">{{ t.step }}</div><div style="font-size:17px;font-weight:700;line-height:1.4">{{ t.prompt }}</div><textarea value="{{ t.value }}" onChange="{{ t.onChange }}" disabled="{{ t.locked }}" placeholder="{{ t.ph }}" rows="3" style="border:1px solid #e2c8b5;border-radius:14px;padding:14px 16px;font-size:16px;line-height:1.5;color:#164951;resize:vertical;outline:none;background:#f5f5f0"></textarea></section>
+        </sc-for>
+        <sc-if value="{{ classLive }}">
+          <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><div style="font-size:12px;font-weight:700;color:#8a7465">📷 media dropzone</div><div style="font-size:15px;color:#1d5a63;margin-top:4px">{{ photoLabel }}</div></div><div onClick="{{ addPhoto }}" style="border:2px dashed #7fb8be;border-radius:16px;padding:14px 20px;font-size:14px;font-weight:700;color:#348a8e;cursor:pointer">+ Upload photo</div></section>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><x-import component-from-global-scope="InglesSemRoteiroDesignSystem_a7985f.CTAButton" onClick="{{ syncVault }}" hint-size="380px,64px">{{ vaultLabel }}</x-import><sc-if value="{{ vaultAdded }}"><span style="font-size:14px;font-weight:700;color:#5a8a3a">+20 miles · 5 words in your Review Vault</span></sc-if></div>
+        </sc-if>
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px;border:2px solid {{ hwBorder }}"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-size:12px;font-weight:700;color:#8a7465">🏠 homework · opens after class</div><span style="font-size:12px;font-weight:700;color:{{ hwStatusColor }}">{{ hwStatus }}</span></div><div style="font-size:17px;font-weight:700;line-height:1.4">{{ hwText }}</div></section>
+      </sc-if>
+
+      <sc-if value="{{ nbPast }}">
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><span style="background:#e8f5dd;color:#5a8a3a;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:800">✓ class done · read only</span></div>
+        <div style="background:#164951;color:#fff;border-radius:24px;padding:24px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><div><div style="font-size:12px;font-weight:700;color:#fc9082">session {{ past.n }} · {{ past.date }}</div><div style="font-size:22px;font-weight:800;letter-spacing:-0.035em;margin-top:4px">{{ past.title }}</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><div onClick="{{ openSlides }}" style="background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:14px 20px;font-size:14px;font-weight:800;cursor:pointer">📊 Slides</div><div onClick="{{ watchRec }}" style="background:#fc9082;color:#164951;border-radius:999px;padding:14px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #d9675a">▶ Watch recording · {{ past.len }}</div></div></div>
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px"><div style="font-size:12px;font-weight:700;color:#8a7465">my answers in class</div><sc-for list="{{ past.answers }}" as="a"><div><div style="font-size:14px;font-weight:700">{{ a.q }}</div><div style="font-size:15px;line-height:1.5;color:#1d5a63;background:#f5f5f0;border-radius:12px;padding:12px 14px;margin-top:6px">{{ a.a }}</div></div></sc-for></section>
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-size:12px;font-weight:700;color:#8a7465">🏠 homework</div><span style="font-size:12px;font-weight:700;color:{{ past.hwColor }}">{{ past.hwStatus }}</span></div><div style="font-size:16px;font-weight:700;line-height:1.4">{{ past.hw }}</div><sc-if value="{{ past.hwOpen }}"><textarea placeholder="Write your homework here…" rows="3" style="border:1px solid #e2c8b5;border-radius:14px;padding:14px 16px;font-size:16px;line-height:1.5;color:#164951;outline:none;background:#f5f5f0"></textarea><div style="display:flex;gap:10px;align-items:center"><div onClick="{{ sendHw }}" style="background:#164951;color:#fff;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Send to Tutor Dave</div><span style="font-size:13px;color:#1d5a63">🎙 or record audio</span></div></sc-if></section>
+        <section style="background:#fff;border-radius:24px;padding:18px 24px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:12px;font-weight:700;color:#8a7465;margin-right:6px">words</span><sc-for list="{{ past.words }}" as="w"><span style="background:#e5f2f6;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600">{{ w }}</span></sc-for></section>
+      </sc-if>
+    </sc-if>
+
+    <!-- CLUBS -->
+    <sc-if value="{{ isClubs }}">
+      <div style="display:flex;gap:6px;background:#fff;border-radius:999px;padding:6px;align-self:flex-start">
+        <div onClick="{{ tabMine }}" style="border-radius:999px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;background:{{ mineBg }};color:{{ mineFg }}">My clubs</div>
+        <div onClick="{{ tabCatalog }}" style="border-radius:999px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;background:{{ catBg }};color:{{ catFg }}">All clubs</div>
+      </div>
+      <sc-if value="{{ showMine }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ myClubs }}" as="c"><span onClick="{{ c.pick }}" style="border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;background:{{ c.pickBg }};color:{{ c.pickFg }}">{{ c.emoji }} {{ c.name }}</span></sc-for></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start">
+          <section style="background:#164951;color:#fff;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:12px;align-items:center"><span style="font-size:30px">{{ fc.emoji }}</span><div><div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ fc.name }}</div><div style="font-size:13px;opacity:.8">with {{ fc.teacher }} · {{ fc.slot }}</div></div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ fc.meetings }}" as="m"><div style="display:flex;align-items:center;gap:12px;background:{{ m.bg }};border-radius:14px;padding:10px 12px"><div style="width:30px;height:30px;border-radius:999px;background:{{ m.dot }};color:#164951;display:grid;place-items:center;font-size:12px;font-weight:800;flex:none">{{ m.n }}</div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ m.date }}</div><div style="font-size:12px;opacity:.8">{{ m.topic }}</div></div><span style="font-size:11px;font-weight:800;color:{{ m.tagColor }}">{{ m.tag }}</span></div></sc-for>
+            </div>
+            <x-import component-from-global-scope="InglesSemRoteiroDesignSystem_a7985f.CTAButton" tone="onDark" onClick="{{ joinMeeting }}" hint-size="100%,64px">Join live meeting</x-import>
+            <div style="font-size:12px;opacity:.75;line-height:1.5">The link opens 10 min before the meeting. Member until {{ cycleEnd }}.</div>
+          </section>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border-radius:20px;padding:12px 14px;display:flex;align-items:center;gap:10px"><div style="flex:1;background:#f2ebe3;border-radius:999px;padding:10px 14px;font-size:13px;color:#8a7465">Start a new topic…</div><div style="width:34px;height:34px;border-radius:999px;background:#164951;color:#fff;display:grid;place-items:center;font-size:14px">🎙</div></div>
+            <sc-for list="{{ topics }}" as="t" hint-placeholder-count="2">
+              <article style="background:#fff;border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:10px"><div onClick="{{ t.openWho }}" style="display:flex;gap:10px;align-items:center;cursor:{{ t.cursor }}"><div style="width:36px;height:36px;border-radius:999px;background:{{ t.color }};display:grid;place-items:center;font-weight:800;font-size:13px">{{ t.initial }}</div><div style="font-size:13px;font-weight:700">{{ t.who }} <span style="color:#8a7465;font-weight:600">· {{ t.when }}</span></div></div><div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">{{ t.title }}</div><div style="font-size:14px;color:#1d5a63;line-height:1.5">{{ t.body }}</div><div style="display:flex;gap:16px;font-size:13px;font-weight:700;color:#348a8e"><span onClick="{{ t.toggle }}" style="cursor:pointer">💬 {{ t.replyLabel }}</span><span onClick="{{ t.startRec }}" style="cursor:pointer">🎙 audio reply</span></div>
+                <sc-if value="{{ t.open }}"><div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #f2ebe3;padding-top:12px">
+                  <sc-if value="{{ t.more }}"><div onClick="{{ t.toggleOlder }}" style="font-size:13px;font-weight:700;color:#348a8e;cursor:pointer;align-self:flex-start">{{ t.olderLabel }}</div></sc-if>
+                  <sc-for list="{{ t.replyList }}" as="r"><div style="display:flex;gap:10px"><div onClick="{{ r.openWho }}" style="width:30px;height:30px;border-radius:999px;background:{{ r.color }};flex:none;display:grid;place-items:center;font-weight:800;font-size:12px;cursor:{{ r.cursor }}">{{ r.initial }}</div><div style="background:#f5f5f0;border-radius:16px;padding:10px 14px;font-size:14px;line-height:1.5;color:#1d5a63;flex:1;min-width:0"><b onClick="{{ r.openWho }}" style="color:#164951;cursor:{{ r.cursor }}">{{ r.who }}</b> <span style="color:#8a7465;font-size:12px">· {{ r.when }}</span><sc-if value="{{ r.isText }}"><br>{{ r.text }}</sc-if><sc-if value="{{ r.audio }}"><div style="display:flex;align-items:center;gap:10px;margin-top:6px"><div onClick="{{ r.play }}" style="width:34px;height:34px;border-radius:999px;background:#164951;color:#fff;display:grid;place-items:center;font-size:12px;cursor:pointer;flex:none">{{ r.playIcon }}</div><div style="flex:1;height:6px;background:#e2c8b5;border-radius:3px;overflow:hidden"><div style="height:6px;background:#348a8e;width:{{ r.progress }};transition:width 200ms linear"></div></div><span style="font-size:12px;font-weight:700;color:#8a7465">{{ r.dur }}</span></div></sc-if></div></div></sc-for>
+                  <sc-if value="{{ t.recording }}"><div style="display:flex;gap:10px;align-items:center;background:#fde4df;border-radius:999px;padding:8px 8px 8px 16px"><span style="width:10px;height:10px;border-radius:999px;background:#d9675a;flex:none"></span><span style="font-size:14px;font-weight:800;flex:1">Recording · {{ t.recTime }}</span><span onClick="{{ t.cancelRec }}" style="font-size:13px;font-weight:700;color:#8a7465;cursor:pointer;padding:8px">Cancel</span><div onClick="{{ t.stopRec }}" style="background:#164951;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">■ Stop &amp; send</div></div></sc-if>
+                  <sc-if value="{{ t.notRecording }}"><div style="display:flex;gap:8px"><div onClick="{{ t.startRec }}" style="width:42px;height:42px;border-radius:999px;background:#f2ebe3;display:grid;place-items:center;cursor:pointer;flex:none;font-size:16px">🎙</div><input value="{{ t.replyDraft }}" onChange="{{ t.onReply }}" placeholder="Write a reply in English…" style="flex:1;min-width:0;border:1px solid #e2c8b5;border-radius:999px;padding:11px 16px;font-size:15px;outline:none;color:#164951"><div onClick="{{ t.send }}" style="background:#164951;color:#fff;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Reply</div></div></sc-if>
+                </div></sc-if>
+              </article>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showCatalog }}">
+        <div style="background:#fff;border-radius:20px;padding:16px 20px;font-size:14px;line-height:1.55;color:#1d5a63">Each club has <b style="color:#164951">4 live meetings per cycle</b>. Your plan includes <b style="color:#164951">2 clubs</b>; when you join, you stay until {{ cycleEnd }}. Want one more? Add a 3rd club for <b style="color:#164951">€50</b>.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px">
+          <sc-for list="{{ clubs }}" as="c" hint-placeholder-count="5">
+            <div style="background:#fff;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px"><div style="font-size:30px">{{ c.emoji }}</div><div style="font-size:18px;font-weight:800;letter-spacing:-0.03em">{{ c.name }}</div><div style="font-size:14px;color:#1d5a63;line-height:1.5;flex:1">{{ c.desc }}</div><div style="font-size:12px;color:#8a7465;font-weight:600;line-height:1.5">👩‍🏫 {{ c.teacher }}<br>🗓 {{ c.slot }} · 4 meetings<br>{{ c.members }} members</div><div onClick="{{ c.toggle }}" style="border-radius:999px;padding:11px;text-align:center;font-size:14px;font-weight:800;cursor:pointer;background:{{ c.btnBg }};color:{{ c.btnFg }}">{{ c.btn }}</div></div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- REVIEW -->
+    <sc-if value="{{ isReview }}">
+      <div style="width:100%;max-width:680px;display:flex;flex-direction:column;gap:16px">
+        <div style="background:#164951;color:#fff;border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+          <div><div style="font-size:12px;font-weight:700;color:#fc9082">today's review · about 5 min · from sessions 3 and 4</div><div style="font-size:20px;font-weight:800;letter-spacing:-0.03em;margin-top:4px">{{ revHeadline }}</div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px"><sc-for list="{{ activities }}" as="a" hint-placeholder-count="4"><div onClick="{{ a.pick }}" style="border-radius:16px;padding:10px 6px;text-align:center;cursor:pointer;background:{{ a.bg }};color:{{ a.fg }}"><div style="font-size:20px">{{ a.icon }}</div><div style="font-size:13px;font-weight:800;margin-top:2px">{{ a.label }}</div><div style="font-size:11px;font-weight:700;opacity:.75">{{ a.status }}</div></div></sc-for></div>
+        </div>
+
+        <sc-if value="{{ showFlash }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:12px;font-weight:700;color:#8a7465">words · card {{ cardNum }} of {{ cardTotal }}</div>
+          <div onClick="{{ flip }}" style="background:{{ cardBg }};color:{{ cardFg }};border-radius:32px;min-height:240px;padding:32px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer;box-shadow:var(--web-shadow-card);transition:background 200ms var(--web-ease)"><div style="font-size:12px;font-weight:700;opacity:.7">{{ cardSide }}</div><div style="font-size:30px;font-weight:800;letter-spacing:-0.04em;margin-top:8px;line-height:1.2;text-wrap:pretty">{{ cardText }}</div><div style="font-size:14px;margin-top:10px;opacity:.85;font-style:italic">{{ cardEx }}</div><div style="font-size:12px;margin-top:16px;opacity:.7">tap to flip</div></div>
+          <div style="font-size:13px;color:#1d5a63;text-align:center">Did you remember it?</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div onClick="{{ rate }}" style="background:#fff;border-radius:999px;padding:12px;text-align:center;font-weight:800;font-size:14px;cursor:pointer">Not yet</div>
+            <div onClick="{{ rate }}" style="background:#fff;border-radius:999px;padding:12px;text-align:center;font-weight:800;font-size:14px;cursor:pointer">Almost</div>
+            <div onClick="{{ rate }}" style="background:#9ec970;border-radius:999px;padding:12px;text-align:center;font-weight:800;font-size:14px;cursor:pointer">Yes!</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showBuild }}">
+          <div style="font-size:12px;font-weight:700;color:#8a7465">sentences · {{ bNum }} of {{ bTotal }} · put the words in order</div>
+          <div style="background:#fff;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:14px;color:#1d5a63">🇧🇷 {{ bPt }}</div>
+            <div style="min-height:60px;border:2px dashed {{ bBorder }};border-radius:16px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><sc-for list="{{ bPicked }}" as="c"><span onClick="{{ c.remove }}" style="background:#164951;color:#fff;border-radius:999px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer">{{ c.text }}</span></sc-for></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ bPool }}" as="c"><span onClick="{{ c.add }}" style="background:#ede6df;border-radius:999px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer">{{ c.text }}</span></sc-for></div>
+            <sc-if value="{{ bFeedback }}"><div style="font-size:14px;font-weight:700;color:{{ bFbColor }}">{{ bFeedback }}</div></sc-if>
+            <div onClick="{{ bAction }}" style="align-self:flex-start;background:#164951;color:#fff;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">{{ bActionLabel }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showListen }}">
+          <div style="font-size:12px;font-weight:700;color:#8a7465">listening · {{ lNum }} of {{ lTotal }} · listen first, don't read</div>
+          <div style="background:#fff;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div onClick="{{ lPlay }}" style="width:56px;height:56px;border-radius:999px;background:#fc9082;display:grid;place-items:center;font-size:20px;cursor:pointer;box-shadow:0 4px 0 #d9675a;flex:none">▶</div><div style="font-size:14px;color:#1d5a63;flex:1">Tap to listen. You can listen again.</div><span onClick="{{ lSlow }}" style="font-size:13px;font-weight:700;color:#348a8e;cursor:pointer">🐢 slower</span></div>
+            <div style="font-size:17px;font-weight:800">{{ lQ }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ lOpts }}" as="o"><div onClick="{{ o.pick }}" style="border-radius:14px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer;background:{{ o.bg }}">{{ o.text }}</div></sc-for></div>
+            <sc-if value="{{ lAnswered }}"><div style="font-size:14px;color:#1d5a63;background:#f5f5f0;border-radius:12px;padding:12px 14px">📝 "{{ lScript }}"</div><div onClick="{{ lNext }}" style="align-self:flex-start;background:#164951;color:#fff;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">{{ lNextLabel }}</div></sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showSpeak }}">
+          <div style="font-size:12px;font-weight:700;color:#8a7465">speaking · say it out loud, that's the point</div>
+          <div style="background:#fff;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:18px;font-weight:800;line-height:1.35;text-wrap:pretty">{{ spPrompt }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ spHelp }}" as="w"><span style="background:#e5f2f6;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600">{{ w }}</span></sc-for></div>
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div onClick="{{ spRecToggle }}" style="background:{{ spRecBg }};color:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer">{{ spRecLabel }}</div><span onClick="{{ spModel }}" style="font-size:14px;font-weight:700;color:#348a8e;cursor:pointer">🔊 hear a model answer</span></div>
+            <sc-if value="{{ spDone }}"><div style="font-size:14px;color:#5a8a3a;font-weight:700">✓ Recorded {{ spDur }}. Listen to the model and try once more if you want.</div></sc-if>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:14px;font-weight:700;color:#348a8e;padding-top:4px"><span onClick="{{ toggleAdd }}" style="cursor:pointer">+ Add my own word</span><span onClick="{{ toggleHow }}" style="cursor:pointer">How does Review work?</span></div>
+        <sc-if value="{{ showAdd }}">
+          <section style="background:#fff;border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+            <input value="{{ nwWord }}" onChange="{{ onNwWord }}" placeholder="word or expression" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;outline:none;color:#164951">
+            <input value="{{ nwMeaning }}" onChange="{{ onNwMeaning }}" placeholder="meaning (English or Portuguese)" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;outline:none;color:#164951">
+            <input value="{{ nwEx }}" onChange="{{ onNwEx }}" placeholder="example sentence (optional)" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;outline:none;color:#164951">
+            <div style="display:flex;gap:10px;align-items:center"><div onClick="{{ addCard }}" style="background:#164951;color:#fff;border-radius:999px;padding:11px 18px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Save word</div><span onClick="{{ toggleAdd }}" style="font-size:13px;font-weight:700;color:#8a7465;cursor:pointer">Cancel</span></div>
+          </section>
+        </sc-if>
+        <sc-if value="{{ showHow }}">
+          <div style="background:#fff;border-radius:20px;padding:18px 20px;font-size:14px;line-height:1.8;color:#1d5a63"><div>📓 Everything comes from your last classes: words, sentences, audio and speaking prompts.</div><div>🔁 4 short activities a day, one per skill. Words you forget come back sooner.</div><div>✍️ Words you add yourself also appear in Words.</div><div>🔥 Finish all 4 to keep your streak and earn miles.</div></div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- SHOP -->
+    <sc-if value="{{ isShop }}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;background:#fff;border-radius:999px;padding:6px">
+          <div onClick="{{ shopRewards }}" style="border-radius:999px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;background:{{ rwBg }};color:{{ rwFg }}">School rewards</div>
+          <div onClick="{{ shopMarket }}" style="border-radius:999px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;background:{{ mkBg }};color:{{ mkFg }}">Swap &amp; sell</div>
+        </div>
+        <div style="background:#164951;color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:800">{{ milesFmt }} miles</div>
+      </div>
+      <sc-if value="{{ showRewards }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+          <sc-for list="{{ rewards }}" as="r" hint-placeholder-count="4">
+            <div style="background:#fff;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px"><div style="height:110px;border-radius:16px;background:#f2ebe3;display:grid;place-items:center;font-size:40px">{{ r.emoji }}</div><div style="font-size:16px;font-weight:800">{{ r.name }}</div><div style="font-size:13px;color:#8a7465;font-weight:600">{{ r.costFmt }} miles</div><div onClick="{{ r.buy }}" style="border-radius:999px;padding:11px;text-align:center;font-size:14px;font-weight:800;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }}">{{ r.btn }}</div></div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:16px 18px;font-size:13px;line-height:1.6;color:#1d5a63"><b style="color:#164951">How to earn miles:</b> attend class +25 · daily review +10 · accept a testimonial +15 · popular club post +20 · 7-day streak +50</div>
+      </sc-if>
+      <sc-if value="{{ showMarket }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <sc-for list="{{ mkFilters }}" as="f" hint-placeholder-count="6"><div onClick="{{ f.pick }}" style="border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }}">{{ f.label }}</div></sc-for>
+          <div onClick="{{ openNewListing }}" style="margin-left:auto;background:#164951;color:#fff;border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">+ New listing</div>
+        </div>
+        <sc-if value="{{ mkEmpty }}"><div style="background:#fff;border-radius:20px;padding:24px;font-size:15px;color:#1d5a63">{{ mkEmptyText }}</div></sc-if>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+          <sc-for list="{{ mkPage }}" as="m" hint-placeholder-count="6">
+            <div style="background:#fff;border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;opacity:{{ m.op }}">
+              <div style="display:flex;gap:14px;align-items:center"><div style="width:52px;height:52px;border-radius:14px;background:#f2ebe3;display:grid;place-items:center;font-size:24px;flex:none">{{ m.emoji }}</div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;text-decoration:{{ m.deco }}">{{ m.title }}</div><div onClick="{{ m.openWho }}" style="font-size:12px;color:#8a7465;font-weight:600;cursor:{{ m.whoCursor }}">{{ m.who }} · {{ m.city }}</div></div></div>
+              <div style="font-size:13px;color:#1d5a63;line-height:1.45;flex:1">{{ m.desc }}</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="background:{{ m.tagBg }};border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800">{{ m.typeLabel }}</span><span style="font-size:13px;font-weight:800">{{ m.price }}</span>
+                <div style="margin-left:auto;display:flex;gap:6px">
+                  <sc-if value="{{ m.notMine }}"><div onClick="{{ m.contact }}" style="background:#164951;color:#fff;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">Message</div></sc-if>
+                  <sc-if value="{{ m.mine }}"><div onClick="{{ m.edit }}" style="background:#f2ebe3;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">Edit</div><div onClick="{{ m.toggleSold }}" style="background:#e8f5dd;color:#5a8a3a;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">{{ m.soldLabel }}</div></sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ mkHasPages }}"><div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap"><span style="font-size:12px;color:#8a7465;font-weight:600;margin-right:6px">{{ mkRange }}</span><sc-for list="{{ mkPages }}" as="p"><div onClick="{{ p.go }}" style="width:36px;height:36px;border-radius:999px;display:grid;place-items:center;font-size:13px;font-weight:800;cursor:pointer;background:{{ p.bg }};color:{{ p.fg }}">{{ p.n }}</div></sc-for></div></sc-if>
+      </sc-if>
+    </sc-if>
+
+    <!-- PROFILE -->
+    <sc-if value="{{ isProfile }}">
+      <sc-if value="{{ viewingPri }}"><div onClick="{{ viewMe }}" style="align-self:flex-start;background:#fff;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer">← My profile</div></sc-if>
+      <div style="background:#e5f2f6;border-radius:16px;padding:14px 18px;font-size:13px;line-height:1.55;color:#1d5a63"><b style="color:#164951">💬 Scrap</b> = a quick public message on someone's wall (hi, thanks, a question). Appears right away. · <b style="color:#164951">⭐ Testimonial</b> = a longer text about a classmate's progress. Only appears if they accept it.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start">
+        <section style="background:#fff;border-radius:24px;padding:28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="position:relative">
+            <sc-if value="{{ pShowImg }}" hint-placeholder-val="{{ false }}"><div style="width:120px;height:120px;border-radius:999px;background-color:#fc9082;background-size:cover;background-position:center;background-image:{{ photoBg }}"></div></sc-if>
+            <sc-if value="{{ pShowInitial }}" hint-placeholder-val="{{ true }}"><div style="width:120px;height:120px;border-radius:999px;background:{{ pColor }};display:grid;place-items:center;font-size:44px;font-weight:800">{{ pInitial }}</div></sc-if>
+            <sc-if value="{{ viewingMe }}"><label style="position:absolute;right:-4px;bottom:-4px;background:#164951;color:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #0e3339">📷 Change<input type="file" accept="image/*" onChange="{{ onPhoto }}" style="display:none"></label></sc-if>
+          </div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-top:8px">{{ pName }}</div>
+          <div style="font-size:13px;color:#8a7465;font-weight:600">{{ pMeta }}</div>
+          <sc-if value="{{ hasBirthday }}" hint-placeholder-val="{{ true }}"><div style="background:#f2ebe3;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700">🎂 {{ pBirthday }}</div></sc-if>
+          <div style="font-size:14px;color:#1d5a63;line-height:1.5;max-width:300px">{{ pBio }}</div>
+          <sc-if value="{{ showAttrs }}" hint-placeholder-val="{{ true }}"><div style="width:100%;display:flex;flex-direction:column;gap:12px;margin-top:14px;text-align:left">
+            <div style="font-size:12px;font-weight:700;color:#8a7465">{{ attrTitle }}</div>
+            <sc-for list="{{ attributes }}" as="a" hint-placeholder-count="3">
+              <div><div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;gap:8px"><span>{{ a.name }}</span><span style="display:flex;gap:2px"><sc-for list="{{ a.stars }}" as="st"><span onClick="{{ st.pick }}" style="font-size:18px;cursor:{{ st.cursor }};color:{{ st.color }}">★</span></sc-for></span></div><div style="height:8px;background:#f2ebe3;border-radius:4px;margin-top:6px"><div style="height:8px;border-radius:4px;background:#348a8e;width:{{ a.pct }}"></div></div></div>
+            </sc-for>
+            <sc-if value="{{ viewingPri }}"><div style="font-size:12px;color:#8a7465;line-height:1.5">{{ voteNote }}</div></sc-if>
+          </div></sc-if>
+        </section>
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:16px;font-weight:800">💬 Scraps · {{ scrapCount }}</div>
+            <div style="display:flex;gap:10px"><input value="{{ scrapDraft }}" onChange="{{ onScrap }}" placeholder="{{ scrapPh }}" style="flex:1;min-width:0;border:1px solid #e2c8b5;border-radius:999px;padding:12px 16px;font-size:15px;outline:none;color:#164951"><div onClick="{{ postScrap }}" style="background:#164951;color:#fff;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Post</div></div>
+            <sc-for list="{{ scraps }}" as="s" hint-placeholder-count="3">
+              <div onClick="{{ s.openWho }}" style="display:flex;gap:12px;padding-top:12px;border-top:1px solid #f2ebe3;cursor:{{ s.cursor }}"><div style="width:34px;height:34px;border-radius:999px;background:{{ s.color }};flex:none;display:grid;place-items:center;font-weight:800;font-size:12px">{{ s.initial }}</div><div style="font-size:14px;line-height:1.5;color:#1d5a63"><b style="color:#164951">{{ s.who }}</b> <span style="color:#8a7465;font-size:12px">· {{ s.when }}</span><br>{{ s.text }}</div></div>
+            </sc-for>
+          </section>
+          <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:16px;font-weight:800">⭐ Testimonials</div>
+            <sc-if value="{{ viewingMe }}">
+              <sc-if value="{{ testimonialPending }}"><div style="background:#f2ebe3;border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:12px"><div style="font-size:12px;font-weight:700;color:#8a7465">priscila wrote about you · only you can see this</div><div style="font-size:15px;line-height:1.5">"Marianne was so shy in session 1. Today she told the whole class about her grandmother's feijoada without looking at her notes. So proud of my buddy!"</div><div style="display:flex;gap:10px"><div onClick="{{ acceptT }}" style="background:#164951;color:#fff;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Accept · +15 miles</div><div onClick="{{ declineT }}" style="border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;color:#8a7465">Not now</div></div></div></sc-if>
+              <sc-if value="{{ testimonialAccepted }}"><div style="background:#e8f5dd;border-radius:16px;padding:16px 18px;font-size:15px;line-height:1.5"><b onClick="{{ openPri }}" style="cursor:pointer">Priscila</b> · "Marianne was so shy in session 1. Today she told the whole class about her grandmother's feijoada without looking at her notes. So proud of my buddy!"</div></sc-if>
+              <div style="font-size:14px;line-height:1.5;color:#1d5a63"><b onClick="{{ openDave }}" style="color:#164951;cursor:pointer">Tutor Dave</b> · "Marianne asks the best questions. Her listening improved a lot this cycle."</div>
+            </sc-if>
+            <sc-if value="{{ viewingPri }}">
+              <sc-if value="{{ hasPTesti }}"><div style="font-size:14px;line-height:1.5;color:#1d5a63"><b onClick="{{ openTestiWho }}" style="color:#164951;cursor:pointer">{{ pTestiWho }}</b> · "{{ pTesti }}"</div></sc-if>
+              <sc-if value="{{ tCanWrite }}">
+                <div style="font-size:13px;color:#1d5a63">Write about {{ pName }}'s progress. What changed since the first class?</div>
+                <textarea value="{{ tDraft }}" onChange="{{ onTDraft }}" rows="4" placeholder="{{ pName }}, when we started…" style="border:1px solid #e2c8b5;border-radius:14px;padding:14px 16px;font-size:15px;line-height:1.5;color:#164951;outline:none;background:#f5f5f0"></textarea>
+                <div onClick="{{ sendT }}" style="align-self:flex-start;background:#164951;color:#fff;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Send testimonial</div>
+              </sc-if>
+              <sc-if value="{{ tSent }}"><div style="background:#f2ebe3;border-radius:16px;padding:14px 16px;font-size:14px;line-height:1.5">✓ Sent! It will appear here when {{ pName }} accepts it.</div></sc-if>
+            </sc-if>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ACCOUNT -->
+    <sc-if value="{{ isAccount }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start">
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Attendance</div><div style="font-size:14px;font-weight:800;color:#5a8a3a">83%</div></div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <sc-for list="{{ attendance }}" as="a" hint-placeholder-count="10"><div style="aspect-ratio:1;border-radius:14px;background:{{ a.bg }};display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700"><span style="font-size:10px;opacity:.7">S</span>{{ a.n }}</div></sc-for>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;font-weight:600;color:#1d5a63"><span>🟩 present</span><span>🟨 justified</span><span>🟥 absent</span><span>⬜ upcoming</span></div>
+          <div style="font-size:13px;color:#1d5a63">You need 75% for your certificate. You're on track.</div>
+          <div style="border:2px dashed #7fb8be;border-radius:16px;padding:12px;text-align:center;font-size:13px;font-weight:700;color:#348a8e;cursor:pointer">+ Upload absence document</div>
+        </section>
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:16px;font-weight:800">Financial</div>
+          <div style="background:#f2ebe3;border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:700;color:#8a7465">card</div><div style="font-size:15px;font-weight:700">Visa •••• 4821</div></div><span style="font-size:13px;font-weight:700;color:#348a8e;cursor:pointer">Update</span></div>
+          <sc-for list="{{ invoices }}" as="i" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:8px 0;border-bottom:1px solid #f2ebe3;gap:8px"><span>{{ i.month }}</span><span style="font-weight:700">{{ i.amount }}</span><span style="background:#e8f5dd;color:#5a8a3a;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700">paid</span><span style="color:#348a8e;font-weight:700;font-size:13px;cursor:pointer">PDF</span></div>
+          </sc-for>
+          <div style="font-size:14px;color:#1d5a63">Enrollment contract · <span style="color:#5a8a3a;font-weight:700">signed 02 Sep</span></div>
+        </section>
+        <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:16px;font-weight:800">Settings</div>
+          <sc-for list="{{ prefs }}" as="p" hint-placeholder-count="3">
+            <div onClick="{{ p.toggle }}" style="display:flex;justify-content:space-between;align-items:center;font-size:14px;cursor:pointer;gap:12px"><span>{{ p.label }}</span><span style="width:44px;height:26px;border-radius:999px;background:{{ p.track }};position:relative;flex:none;transition:background 160ms"><span style="position:absolute;top:3px;left:{{ p.knob }};width:20px;height:20px;border-radius:999px;background:#fff;transition:left 160ms var(--web-ease)"></span></span></div>
+          </sc-for>
+          <div onClick="{{ goProfile }}" style="font-size:14px;color:#348a8e;font-weight:700;cursor:pointer;margin-top:4px">Edit photo, bio, birthday &amp; links</div>
+          <div style="font-size:14px;color:#348a8e;font-weight:700;cursor:pointer">Reset password</div>
+        </section>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+<sc-if value="{{ narrow }}">
+  <div style="height:84px"></div>
+  <nav style="position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e9e2d8;padding:10px 6px 22px;display:grid;grid-template-columns:repeat(5,1fr);font-size:10px;font-weight:700;text-align:center;z-index:10">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><div onClick="{{ t.go }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:{{ t.color }}"><span style="font-size:20px">{{ t.icon }}</span>{{ t.label }}</div></sc-for>
+  </nav>
+</sc-if>
+
+<sc-if value="{{ notifOpen }}">
+  <div onClick="{{ closeNotif }}" style="position:fixed;inset:0;z-index:25"></div>
+  <div style="position:fixed;top:76px;right:{{ notifRight }};width:360px;max-width:calc(100vw - 32px);background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(22,73,81,.18);padding:14px;z-index:26;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 8px"><div style="font-size:16px;font-weight:800">Notifications</div><span onClick="{{ markAllRead }}" style="font-size:12px;font-weight:700;color:#348a8e;cursor:pointer">Mark all as read</span></div>
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5"><div onClick="{{ n.open }}" style="display:flex;gap:12px;align-items:flex-start;padding:10px 8px;border-radius:14px;cursor:pointer;background:{{ n.bg }}" style-hover="background:#f2ebe3"><span style="font-size:18px;line-height:1.3">{{ n.icon }}</span><div style="flex:1;min-width:0;font-size:14px;line-height:1.45;color:#164951;font-weight:{{ n.weight }}">{{ n.text }}<div style="font-size:12px;color:#8a7465;margin-top:2px;font-weight:500">{{ n.when }}</div></div><sc-if value="{{ n.unread }}"><span style="width:8px;height:8px;border-radius:999px;background:#fc9082;margin-top:6px;flex:none"></span></sc-if></div></sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ slidesOpen }}">
+  <div onClick="{{ closeSlides }}" style="position:fixed;inset:0;background:rgba(22,73,81,.6);display:grid;place-items:center;padding:20px;z-index:30">
+    <div onClick="{{ stop }}" style="width:100%;max-width:820px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;color:#fff;gap:12px"><div style="font-size:14px;font-weight:700">📊 {{ slideDeckTitle }} · slide {{ slideNum }} of {{ slideTotal }}</div><div style="display:flex;gap:14px;align-items:center"><span style="font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Download PDF</span><span onClick="{{ closeSlides }}" style="font-size:22px;cursor:pointer">✕</span></div></div>
+      <div style="aspect-ratio:16/9;background:#f5f5f0;border-radius:20px;padding:6%;display:flex;flex-direction:column;justify-content:center;gap:12px"><div style="font-size:14px;font-weight:700;color:#8a7465">{{ slide.eyebrow }}</div><div style="font-size:40px;font-weight:800;letter-spacing:-0.04em;line-height:1.1;color:#164951;text-wrap:pretty">{{ slide.emoji }} {{ slide.title }}</div><div style="font-size:18px;color:#1d5a63;line-height:1.5">{{ slide.body }}</div></div>
+      <div style="display:flex;justify-content:space-between;gap:10px"><div onClick="{{ prevSlide }}" style="background:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer">← Previous</div><div onClick="{{ nextSlide }}" style="background:#fc9082;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #d9675a">Next →</div></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ modal }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(22,73,81,.45);display:grid;place-items:center;padding:20px;z-index:30">
+    <div onClick="{{ stop }}" style="width:100%;max-width:440px;background:#fff;border-radius:32px;padding:30px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:34px">{{ modal.emoji }}</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.035em;line-height:1.2">{{ modal.title }}</div>
+      <div style="font-size:15px;line-height:1.5;color:#1d5a63">{{ modal.body }}</div>
+      <div style="background:#f2ebe3;border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.6"><sc-for list="{{ modal.meetings }}" as="m"><div>🗓 {{ m.date }} · {{ m.topic }}</div></sc-for></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px"><div onClick="{{ confirmModal }}" style="background:#164951;color:#fff;border-radius:999px;padding:13px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">{{ modal.cta }}</div><div onClick="{{ closeModal }}" style="font-size:14px;font-weight:700;color:#8a7465;cursor:pointer;padding:10px">Cancel</div></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ listing }}">
+  <div onClick="{{ closeListing }}" style="position:fixed;inset:0;background:rgba(22,73,81,.45);display:grid;place-items:center;padding:20px;z-index:30">
+    <div onClick="{{ stop }}" style="width:100%;max-width:460px;background:#fff;border-radius:32px;padding:28px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.035em">{{ listingTitle }}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ lfTypes }}" as="t"><div onClick="{{ t.pick }}" style="border-radius:999px;padding:9px 4px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div></sc-for></div>
+      <input value="{{ lf.title }}" onChange="{{ onLfTitle }}" placeholder="What is it? e.g. kids bike, manicure, CV review" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;outline:none;color:#164951">
+      <input value="{{ lf.price }}" onChange="{{ onLfPrice }}" placeholder="{{ lfPricePh }}" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;outline:none;color:#164951">
+      <textarea value="{{ lf.desc }}" onChange="{{ onLfDesc }}" rows="3" placeholder="Details: size, condition, how to book…" style="border:1px solid #e2c8b5;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.5;outline:none;color:#164951;resize:vertical"></textarea>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px"><div onClick="{{ saveListing }}" style="background:#164951;color:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #0e3339">Save</div><div onClick="{{ closeListing }}" style="font-size:14px;font-weight:700;color:#8a7465;cursor:pointer;padding:10px">Cancel</div><sc-if value="{{ lfIsEdit }}"><div onClick="{{ deleteListing }}" style="margin-left:auto;font-size:13px;font-weight:700;color:#c82333;cursor:pointer">Delete</div></sc-if></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}">
+  <div style="position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#164951;color:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:700;z-index:40;box-shadow:0 8px 24px rgba(22,73,81,.3);white-space:nowrap">{{ toast }}</div>
+</sc-if>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startLoggedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;classLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const CLUBS = [
+  { id: 'book', emoji: '📖', name: 'Book Club', desc: 'One short book per cycle. We read, record audio reviews and argue nicely.', members: 24, teacher: 'Teacher Carla', slot: 'Thursdays 20:00', dates: ['Thu 2 Oct', 'Thu 16 Oct', 'Thu 6 Nov', 'Thu 27 Nov'], topics: ['Chapters 1–2', 'Chapters 3–4', 'Chapters 5–6', 'Final debate'] },
+  { id: 'chef', emoji: '🍲', name: 'Chef Traditions', desc: 'Family recipes, explained in English. Bring photos from your kitchen.', members: 18, teacher: 'Tutor Dave', slot: 'Saturdays 10:00', dates: ['Sat 4 Oct', 'Sat 18 Oct', 'Sat 8 Nov', 'Sat 29 Nov'], topics: ['Breakfast at home', 'Grandma\u2019s dish', 'Party food', 'Cook-along'] },
+  { id: 'movie', emoji: '🎬', name: 'Movie Lovers', desc: 'Monthly movie pick, then a forum thread full of opinions.', members: 31, teacher: 'Gabi', slot: 'Wednesdays 20:30', dates: ['Wed 8 Oct', 'Wed 22 Oct', 'Wed 12 Nov', 'Wed 3 Dec'], topics: ['October pick', 'Characters', 'November pick', 'Awards night'] },
+  { id: 'dutch', emoji: '🚲', name: 'Dutch Life Talk', desc: 'Huisarts, gemeente, school: practise the real conversations.', members: 22, teacher: 'Teacher Erika', slot: 'Mondays 19:30', dates: ['Mon 6 Oct', 'Mon 20 Oct', 'Mon 10 Nov', 'Mon 1 Dec'], topics: ['At the huisarts', 'Talking to the juf', 'Landlord calls', 'Role-play day'] },
+  { id: 'music', emoji: '🎧', name: 'Music & Lyrics', desc: 'One song a week. Listen first, then discuss.', members: 15, teacher: 'Teacher Carla', slot: 'Fridays 19:00', dates: ['Fri 10 Oct', 'Fri 24 Oct', 'Fri 14 Nov', 'Fri 5 Dec'], topics: ['90s hits', 'Love songs', 'Protest songs', 'Karaoke'] }
+];
+const PASSED = { book: 1, chef: 1, movie: 1, dutch: 1, music: 1 };
+const PEOPLE = {
+  pri: { name: 'Priscila', initial: 'P', color: '#cae6eb', meta: 'Essentials · Traditions · Haarlem', birthday: '15 October · this Wednesday!', bio: 'Nurse, runner, coffee addict. Learning English for work and for my daughter’s school.', attrs: [48, 80, 86], tWho: 'Carla', t: 'Priscila always helps the new students. Her questions make the class better.' },
+  lu: { name: 'Luciana', initial: 'L', color: '#9ec970', meta: 'Essentials · Traditions · Utrecht', birthday: '2 June', bio: 'Designer, two cats, always on the train. I want to stop freezing in meetings.', attrs: [70, 55, 78], tWho: 'Tutor Dave', t: 'Luciana writes beautifully. Now she is starting to speak with the same confidence.' },
+  bia: { name: 'Bia', initial: 'B', color: '#f5d77a', meta: 'Essentials · Traditions · Haarlem', birthday: '28 January', bio: 'Manicure with my own salon in Haarlem. ISR students get 10% off 💅', attrs: [52, 88, 64], tWho: 'Priscila', t: 'Bia makes everybody laugh in pair work. Her speaking is so natural now.' }
+};
+const WHO = { Priscila: 'pri', Luciana: 'lu', Bia: 'bia', Marianne: 'me' };
+const R = (who, when, text) => ({ who, when, text, initial: who[0], color: { Priscila: '#cae6eb', Luciana: '#9ec970', Bia: '#f5d77a', Marianne: '#fc9082' }[who] || '#f2ebe3' });
+const OLDER_POOL = [['Luciana', 'Good point! I agree.'], ['Bia', 'I never thought about that 🤔'], ['Priscila', 'Can we talk about this in the next meeting?'], ['Camila', 'Me too!'], ['Renata', 'I had the same problem last week.'], ['Juliana', 'Thanks for sharing 💛'], ['Fernanda', 'I didn’t understand the last part, can someone explain?'], ['Luciana', 'Here is a tip: say it slowly first.']];
+const OLDER = (n, seed) => Array.from({ length: Math.max(0, n) }, (_, j) => { const [w, t] = OLDER_POOL[(j + seed * 3) % OLDER_POOL.length]; const r = R(w, (n - j + 1) + 'd', t); if (j % 4 === 2) return { ...r, audio: true, secs: 8 + j, id: 'o' + seed + j }; return r; });
+const TOPICS = {
+  book: [{ who: 'Teacher Carla', initial: 'C', color: '#9ec970', when: '1d', title: 'Chapter 3: would you forgive her?', body: 'Write 3 sentences or leave a 1-minute audio. Use "If I were her, I would…".', replies: 14, rep: [R('Luciana', '20h', 'If I were her, I would forgive him, but not immediately.'), R('Priscila', '18h', 'No way! He lied three times 😅'), { ...R('Bia', '10h', ''), audio: true, secs: 14, id: 'seedA' }] }, { who: 'Luciana', initial: 'L', color: '#9ec970', when: '3d', title: 'New words from chapter 2', body: 'Let’s build a list together. I start: "reluctant", "to cope with".', replies: 9, rep: [R('Bia', '2d', '"To take for granted". I learned it this week!')] }],
+  chef: [{ who: 'Tutor Dave', initial: 'D', color: '#9ec970', when: '2h', title: 'Upload your grandmother’s dish', body: 'Photo + 2 sentences: what is it and when do you eat it?', replies: 7, rep: [R('Priscila', '1h', 'My grandma’s moqueca! Photo coming tonight.')] }, { who: 'Marianne', initial: 'M', color: '#fc9082', when: '1d', title: 'Feijoada in Amsterdam?', body: 'Where do you buy black beans here? Albert Heijn doesn’t have them.', replies: 11, rep: [R('Bia', '20h', 'Try the Brazilian shop near Centraal. They have everything.'), R('Luciana', '12h', 'The Turkish supermarket has them too, and cheaper.')] }],
+  movie: [{ who: 'Gabi', initial: 'G', color: '#fc9082', when: '1d', title: 'October pick: vote!', body: 'Leave a topic with your suggestion and one reason.', replies: 12, rep: [R('Priscila', '20h', 'Inside Out 2! Easy English and we can talk about feelings.')] }],
+  dutch: [{ who: 'Teacher Erika', initial: 'E', color: '#cae6eb', when: '2d', title: 'Calling the huisarts', body: 'What do you say first? Share your script.', replies: 6, rep: [R('Luciana', '1d', '"Hi, I’d like to make an appointment, please."')] }],
+  music: [{ who: 'Teacher Carla', initial: 'C', color: '#9ec970', when: '4d', title: 'Song of the week', body: 'Listen first, don’t read the lyrics. What’s the story?', replies: 5, rep: [R('Bia', '3d', 'I think it’s about a breakup 💔')] }]
+};
+const PAST = {
+  1: { title: 'Food memories', date: '23 Sep', len: '56 min', words: ['to remind', 'smell', 'childhood', 'tasty'], hw: 'Bring a photo of a food from your childhood.', answers: [{ q: 'What food reminds you of your childhood?', a: 'Pão de queijo reminds me of my grandmother\u2019s kitchen in Minas.' }] },
+  2: { title: 'Market day', date: '30 Sep', len: '61 min', words: ['a stall', 'fresh', 'to bargain', 'a kilo of'], hw: 'Go to the markt and buy one thing in English or Dutch. Tell us how it went.', answers: [{ q: 'Describe your favourite market.', a: 'The Albert Cuyp markt is busy and colourful. I buy fruit there on Saturdays.' }] },
+  3: { title: 'Family recipes', date: '7 Oct', len: '58 min', words: ['ingredients', 'to chop', 'to stir', 'a recipe'], hw: 'Record 1 minute about a family meal.', answers: [{ q: 'Who cooks in your family?', a: 'My mother cooks during the week and my father makes barbecue on Sundays.' }, { q: 'Write 3 ingredients of a family dish.', a: 'Black beans, pork and orange.' }] }
+};
+const DECKS = {
+  s4: [['to simmer', 'to cook slowly, just below boiling', 'Let the beans simmer for two hours.'], ['a signature dish', 'the dish someone is famous for', 'Feijoada is my grandma\u2019s signature dish.'], ['to season', 'to add salt, pepper or spices', 'She seasons it with garlic.'], ['leftovers', 'food that is saved for later', 'We eat the leftovers on Monday.'], ['a pinch of', 'a very small amount', 'Add a pinch of salt.']],
+  s3: [['ingredients', 'the things you use to make a dish', ''], ['to chop', 'to cut into small pieces', 'Chop the onion.'], ['to stir', 'to mix with a spoon', 'Stir slowly.'], ['a recipe', 'instructions to cook something', '']]
+};
+const BUILD = [
+  { chunks: ['She', 'always', 'used to', 'cook', 'on Sundays'], order: [3, 0, 4, 2, 1], pt: 'Ela sempre cozinhava aos domingos.' },
+  { chunks: ['It', 'tastes', 'like', 'home'], order: [2, 3, 0, 1], pt: 'Tem gosto de casa.' },
+  { chunks: ['We', 'eat it', 'when', 'it is', 'cold'], order: [4, 2, 0, 3, 1], pt: 'A gente come quando está frio.' }
+];
+const LISTEN = [
+  { say: 'Let the beans simmer for two hours, then add the meat.', q: 'How long do the beans cook first?', opts: ['Twenty minutes', 'Two hours', 'All day'], a: 1 },
+  { say: 'My grandmother always made it on Sunday, for the whole family.', q: 'When did she make it?', opts: ['On Sunday', 'At Christmas', 'Every day'], a: 0 },
+  { say: 'Add a pinch of salt, and stir slowly.', q: 'How much salt?', opts: ['A spoon', 'A cup', 'A very small amount'], a: 2 }
+];
+const SPEAK = { prompt: 'Tell me about a dish from your family. What is it, who makes it, and when do you eat it?', help: ['It’s called…', 'My … always makes it', 'We eat it when…', 'It tastes like…'], model: 'It’s called feijoada. My grandmother always makes it. We eat it on Saturdays, when the whole family is together. It tastes like home.' };
+const SLIDES = [
+  { eyebrow: 'today i can…', emoji: '🎯', title: 'Describe a family dish', body: 'Say what it is, who makes it and when you eat it.' },
+  { eyebrow: 'look back', emoji: '🔁', title: 'Last class: family recipes', body: 'Ingredients, to chop, to stir, a recipe.' },
+  { eyebrow: 'listen & read', emoji: '🎧', title: 'Listen first, don’t read', body: 'Ana talks about her grandmother’s moqueca.' },
+  { eyebrow: 'learn', emoji: '💡', title: 'Cooking verbs', body: 'to simmer · to season · a pinch of · leftovers' },
+  { eyebrow: 'practice', emoji: '✏️', title: 'She always used to…', body: 'Talk about habits in the past.' },
+  { eyebrow: 'mission', emoji: '🎯', title: 'Your signature dish', body: 'Explain it in 4 steps. Use first, after that, while, finally.' },
+  { eyebrow: 'homework', emoji: '🏠', title: 'Ask your family', body: 'Write 5 sentences you’ll say next class.' }
+];
+const REWARDS = [{ id: 'mug', emoji: '☕', name: 'ISR mug', cost: 600 }, { id: 'swap', emoji: '🔄', name: 'Swap club mid-cycle', cost: 800 }, { id: 'private', emoji: '🗣', name: '1 extra conversation class', cost: 1200 }, { id: 'hoodie', emoji: '🧥', name: 'ISR hoodie', cost: 1500 }];
+const WEEKLY = { say: { emoji: '🎙', title: 'Say it', desc: 'Listen to the word, record yourself, compare. Perfect for th, r and the words Brazilians mix up.' }, gap: { emoji: '🧩', title: 'Fill the gap', desc: 'Sentences from your last class with one word missing. Choose fast, beat your score.' } };
+
+class Component extends DCLogic {
+  state = {
+    loggedIn: (this.props.startLoggedIn ?? true), email: 'marianne@email.com', pass: '••••••', remember: true, loginError: false,
+    page: 'home', w: window.innerWidth, miles: 1250,
+    myClubs: ['book', 'chef'], extraClubs: 0, clubTab: 'mine', forumClub: 'book', modal: null,
+    nbSession: 4, classLive: (this.props.classLive ?? false), answers: { a: '', b: '' }, saved: true, photos: 0, vaultAdded: false, hwSent: {},
+    activity: 'flash', deck: 's4', card: 0, flipped: false, myCards: [], nw: { w: '', m: '', e: '' }, matchSel: null, matched: [], wrong: null,
+    shopTab: 'rewards', bought: [], li: { t: '', type: 'swap', p: '' },
+    market: [
+      { id: 1, emoji: '💅', title: '10% off manicure', who: 'Bia', city: 'Haarlem', type: 'service', price: '10% off for ISR students', desc: 'Gel or regular. Book by WhatsApp and say you are from ISR.' },
+      { id: 2, emoji: '📚', title: '"Wonder" (paperback)', who: 'Luciana', city: 'Utrecht', type: 'swap', price: 'for another novel', desc: 'Read it once, like new. Perfect for Book Club.' },
+      { id: 3, emoji: '🚲', title: 'Kids bike, 16 inch', who: 'Priscila', city: 'Haarlem', type: 'sell', price: '€45', desc: 'For 4–6 years. Small scratch on the frame.' },
+      { id: 4, emoji: '📄', title: 'CV review in English', who: 'Renata', city: 'online', type: 'service', price: '15% off', desc: '30-minute call. I work in HR in Rotterdam.' },
+      { id: 5, emoji: '🎟', title: '1 extra conversation class', who: 'Camila', city: 'online', type: 'miles', price: '900 miles', desc: 'I can’t use it this cycle.' },
+      { id: 6, emoji: '🍫', title: 'Brigadeiros for parties', who: 'Juliana', city: 'Amsterdam', type: 'service', price: '10% off', desc: 'Minimum 50. Pick up in Amsterdam-Noord.' },
+      { id: 7, emoji: '🧥', title: 'ISR hoodie, size M', who: 'Priscila', city: 'Haarlem', type: 'miles', price: '1,100 miles', desc: 'Too big for me 🙈' },
+      { id: 8, emoji: '🪴', title: 'Monstera plant', who: 'Luciana', city: 'Utrecht', type: 'swap', price: 'for any plant', desc: 'Big and healthy. Moving to a smaller house.' },
+      { id: 9, emoji: '🛒', title: 'Baby stroller', who: 'Fernanda', city: 'Leiden', type: 'sell', price: '€80', desc: 'Used for one year, very clean.' },
+      { id: 10, emoji: '🧾', title: 'Help with Dutch tax return', who: 'Camila', city: 'online', type: 'service', price: '20% off', desc: 'I’m a bookkeeper. Belastingaangifte for expats.' },
+      { id: 11, emoji: '🍳', title: 'Cast iron pan, 24 cm', who: 'Marianne', city: 'Amsterdam', type: 'sell', price: '€35', desc: 'Orange. I have two.' }
+    ],
+    photo: null, profile: 'me',
+    scraps: { me: [
+      { who: 'Tutor Dave', initial: 'D', color: '#9ec970', when: '2h', text: 'Great job today! Your recipe description was super clear.' },
+      { who: 'Priscila', initial: 'P', color: '#cae6eb', when: 'yesterday', text: "Your pronunciation of 'thorough' was perfect 👏" },
+      { who: 'Luciana', initial: 'L', color: '#9ec970', when: '3 days', text: 'Study group on Saturday at the bibliotheek?' }
+    ], pri: [
+      { who: 'Gabi', initial: 'G', color: '#fc9082', when: '1d', text: 'Happy almost-birthday, Priscila! 🎂' }
+    ], lu: [
+      { who: 'Bia', initial: 'B', color: '#f5d77a', when: '2d', text: 'Loved your audio in Book Club!' }
+    ], bia: [
+      { who: 'Priscila', initial: 'P', color: '#cae6eb', when: '1d', text: 'Booked my manicure for Saturday 💅' }
+    ] },
+    sync: null, scrapDraft: '', testimonial: 'pending', tDraft: '', tSent: {}, votes: {}, toast: '', openTopic: null, replyDraft: '', addedReplies: {}, olderOpen: {}, rec: null, playing: null, playPos: 0, notifOpen: false, slides: null, revDone: {}, build: { i: 0, picked: [], fb: null }, listen: { i: 0, pick: null }, speak: { rec: false, secs: 0, done: false },
+    notifs: [
+      { id: 1, icon: '💬', text: 'Priscila left you a scrap', when: '1 day ago', to: 'me', read: false },
+      { id: 2, icon: '⭐', text: 'Priscila wrote a testimonial about you. Accept it?', when: '1 day ago', to: 'me', read: false },
+      { id: 3, icon: '💬', text: 'Bia replied to "Feijoada in Amsterdam?"', when: '20 hours ago', to: 'forum', read: false },
+      { id: 4, icon: '🏠', text: 'Session 3 homework is due before class', when: '3 hours ago', to: 'hw', read: true },
+      { id: 5, icon: '🎂', text: 'Priscila’s birthday is on Wednesday', when: 'today', to: 'pri', read: true }
+    ], showAdd: false, showHow: false, mkFilter: 'all', mkPageN: 0, listing: null,
+    prefs: { scrap: true, club: true, birthday: true, weekly: false }
+  };
+  readSync() { try { const raw = localStorage.getItem('isr-demo-sync'); if (raw && raw !== this.lastRaw) { this.lastRaw = raw; this.setState({ sync: JSON.parse(raw) }); } } catch (e) {} }
+  componentDidMount() { this.onR = () => this.setState({ w: window.innerWidth }); window.addEventListener('resize', this.onR); this.readSync(); this.onSt = e => { if (e.key === 'isr-demo-sync') this.readSync(); }; window.addEventListener('storage', this.onSt); this.syi = setInterval(() => this.readSync(), 2000); }
+  componentWillUnmount() { clearInterval(this.syi); window.removeEventListener('storage', this.onSt); clearInterval(this.spi); clearInterval(this.ri); clearInterval(this.pi); this.killStream(); window.removeEventListener('resize', this.onR); clearTimeout(this.tt); clearTimeout(this.st); }
+  killStream() { try { this.stream && this.stream.getTracks().forEach(t => t.stop()); } catch (e) {} this.stream = null; this.mr = null; }
+  async startRec(key) {
+    if (this.state.rec) return;
+    clearInterval(this.ri); this.chunks = []; this.blobUrl = null;
+    this.setState({ openTopic: key, rec: { key, secs: 0 } });
+    this.ri = setInterval(() => this.setState(st => st.rec ? { rec: { ...st.rec, secs: st.rec.secs + 1 } } : null), 1000);
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mr = new MediaRecorder(this.stream); this.mr.ondataavailable = e => this.chunks.push(e.data); this.mr.start();
+    } catch (e) { this.mr = null; }
+  }
+  stopRec(send) {
+    const r = this.state.rec; if (!r) return; clearInterval(this.ri);
+    const finish = url => {
+      this.killStream();
+      if (!send) return this.setState({ rec: null });
+      const secs = Math.max(1, r.secs), item = { ...R('Marianne', 'now', ''), audio: true, secs, url, id: 'a' + Date.now() };
+      this.setState(st => ({ rec: null, miles: st.miles + 5, addedReplies: { ...st.addedReplies, [r.key]: [...(st.addedReplies[r.key] || []), item] } }));
+      this.flash('Audio reply posted · +5 miles');
+    };
+    if (this.mr && this.mr.state !== 'inactive') { this.mr.onstop = () => finish(this.chunks.length ? URL.createObjectURL(new Blob(this.chunks)) : null); this.mr.stop(); } else finish(null);
+  }
+  play(item) {
+    clearInterval(this.pi); if (this.audioEl) { this.audioEl.pause(); this.audioEl = null; }
+    if (this.state.playing === item.id) return this.setState({ playing: null, playPos: 0 });
+    if (item.url) { this.audioEl = new Audio(item.url); this.audioEl.play().catch(() => {}); }
+    this.setState({ playing: item.id, playPos: 0 });
+    this.pi = setInterval(() => this.setState(st => { const p = st.playPos + 0.25; if (p >= item.secs) { clearInterval(this.pi); return { playing: null, playPos: 0 }; } return { playPos: p }; }), 250);
+  }
+  say(text, rate) { try { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = rate || 1; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} }
+  markDone(k) {
+    this.setState(st => {
+      if (st.revDone[k]) return null;
+      const d = { ...st.revDone, [k]: true }, all = Object.keys(d).length === 4;
+      this.flash(all ? 'Today’s review done! +15 miles 🔥' : 'Done · +5 miles');
+      return { revDone: d, miles: st.miles + 5 + (all ? 10 : 0) };
+    });
+  }
+  flash(msg) { clearTimeout(this.tt); this.setState({ toast: msg }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2400); }
+  go(p) { this.setState({ page: p }); window.scrollTo(0, 0); }
+
+  renderVals() {
+    const s = this.state, wide = s.w >= 900;
+    const fmt = n => n.toLocaleString('en-US');
+    const pill = (on) => ({ bg: on ? '#164951' : 'transparent', fg: on ? '#fff' : '#164951' });
+    const clubOf = id => CLUBS.find(x => x.id === id);
+    const meetings = (k, dark) => k.dates.map((d, i) => { const done = i < PASSED[k.id], next = i === PASSED[k.id]; return { n: i + 1, date: d, topic: k.topics[i], tag: done ? 'done' : next ? 'next' : '', bg: next ? 'rgba(252,144,130,.22)' : 'rgba(255,255,255,.06)', dot: done ? '#9ec970' : next ? '#fc9082' : 'rgba(255,255,255,.85)', tagColor: done ? '#9ec970' : '#fc9082' }; });
+    const joined = id => s.myClubs.includes(id);
+    const fcId = joined(s.forumClub) ? s.forumClub : s.myClubs[0];
+    const fcK = clubOf(fcId);
+    const cycleEnd = '19 Dec';
+    const askJoin = id => () => {
+      if (joined(id)) { this.setState({ clubTab: 'mine', forumClub: id }); return; }
+      const k = clubOf(id), extra = s.myClubs.length >= 2;
+      this.setState({ modal: { id, extra, emoji: k.emoji, title: extra ? `Add ${k.name} as a 3rd club?` : `Join ${k.name}?`, body: extra ? `Your plan includes 2 clubs and you already have them. You can add ${k.name} for €50 this cycle. You'll stay until ${cycleEnd}, with ${k.teacher}, ${k.slot}.` : `When you join, ${k.name} is one of your 2 clubs until the end of the cycle (${cycleEnd}). ${k.teacher} leads the 4 live meetings, ${k.slot}.`, cta: extra ? 'Pay €50 and join' : 'Join until ' + cycleEnd, meetings: k.dates.map((d, i) => ({ date: d, topic: k.topics[i] })) } });
+    };
+    const confirmModal = () => { const m = s.modal; this.setState({ myClubs: [...s.myClubs, m.id], extraClubs: s.extraClubs + (m.extra ? 1 : 0), modal: null, clubTab: 'mine', forumClub: m.id }); this.flash(m.extra ? 'Paid €50 · welcome to your 3rd club!' : 'Joined! See you at the next meeting.'); };
+
+    // notebook
+    const nb = s.nbSession, isCur = nb === 4, past = PAST[nb];
+    const setAns = k => e => { const v = e.target.value; clearTimeout(this.st); this.setState({ answers: { ...s.answers, [k]: v }, saved: false }); this.st = setTimeout(() => this.setState({ saved: true }), 700); };
+    const sessDates = ['23 Sep', '30 Sep', '7 Oct', '14 Oct', '21 Oct', '28 Oct', '4 Nov', '11 Nov', '18 Nov', '25 Nov'];
+    const sessions = sessDates.map((d, i) => { const n = i + 1, sel = n === nb, st = n < 4 ? 'done' : n === 4 ? 'today' : 'locked'; return { n, date: d, status: st === 'done' ? (s.hwSent[n] || n < 3 ? '✓ done' : '🏠 homework') : st === 'today' ? '● today' : '🔒', bg: sel ? '#164951' : st === 'locked' ? 'transparent' : '#fff', fg: sel ? '#fff' : st === 'locked' ? '#8a7465' : '#164951', border: sel ? '#164951' : st === 'today' ? '#fc9082' : st === 'locked' ? '#e2c8b5' : '#fff', pick: () => n > 4 ? this.flash(`Session ${n} opens on ${d}`) : this.setState({ nbSession: n }) }; });
+    const hw3Done = !!s.hwSent[3];
+
+    // review
+    const deckCards = [...s.myCards, ...DECKS.s4, ...DECKS.s3];
+    const ci = deckCards.length ? s.card % deckCards.length : 0, c = deckCards[ci] || ['', '', ''];
+    const nextCard = () => { if (s.card + 1 >= deckCards.length) { this.setState({ card: 0, flipped: false }); this.markDone('flash'); } else this.setState({ card: s.card + 1, flipped: false }); };
+    const B = BUILD[s.build.i], bOk = s.build.picked.join() === B.chunks.map((_, i) => i).join();
+    const Lc = LISTEN[s.listen.i], lAns = s.listen.pick !== null;
+    const mc = deckCards.slice(0, 4), order = mc.map((_, i) => i).reverse();
+    const pickMeaning = i => () => { if (s.matchSel === null || s.matched.includes(i)) return; if (s.matchSel === i) { const m = [...s.matched, i]; this.setState({ matched: m, matchSel: null }); if (m.length === mc.length) { this.setState({ miles: s.miles + 10 }); this.flash('All pairs! +10 miles'); } } else { this.setState({ wrong: i }); setTimeout(() => this.setState({ wrong: null }), 400); } };
+    const weekly = WEEKLY[s.activity];
+
+    // profile
+    const personOf = id => PEOPLE[id] || (() => { const school = id === 'ISR', teacher = /^(Teacher|Tutor) /.test(id) || id === 'Gabi'; const short = id.replace(/^(Teacher|Tutor) /, ''); return { name: id, initial: school ? '✳' : short[0], color: school ? '#f2ebe3' : teacher ? '#9ec970' : '#e5f2f6', meta: school ? 'Inglês sem Roteiro · school news' : id === 'Gabi' ? 'Founder & teacher · Inglês sem Roteiro' : teacher ? 'Teacher · Inglês sem Roteiro' : 'Essentials · ISR student', birthday: '', bio: school ? 'Official news from the school: recordings, events and reminders.' : teacher ? 'Teacher at ISR. Leave me a scrap with your questions!' : 'ISR student living in the Netherlands.', attrs: [60, 70, 65], noAttrs: school || teacher }; })();
+    const me = s.profile === 'me', Pp = personOf(s.profile);
+    const ATTR = ['📚 Vocabulary Master', '🗣 Fearless Speaker', '🎧 Great Listener'], MY = [62, 91, 74];
+    const myVote = s.votes[s.profile] || {};
+    const openWho = name => () => { const id = WHO[name] || name; this.setState({ profile: id, scrapDraft: '', tDraft: '', notifOpen: false }); this.go('profile'); };
+    const cur = name => 'pointer';
+    const pScraps = (s.scraps[s.profile] || []).map(x => ({ ...x, openWho: openWho(x.who), cursor: cur(x.who) }));
+    // market
+    const PER = 6, TL = { swap: '🔄 swap', sell: '€ sell', miles: '✈ miles', service: '🤝 service' }, TB = { swap: '#e8f5dd', sell: '#ede6df', miles: '#e5f2f6', service: '#fde4df' };
+    const mkList = s.market.filter(m => s.mkFilter === 'mine' ? m.who === 'Marianne' : !m.sold && (s.mkFilter === 'all' || m.type === s.mkFilter));
+    const nPages = Math.max(1, Math.ceil(mkList.length / PER)), pg = Math.min(s.mkPageN, nPages - 1);
+    const L = s.listing;
+
+    const prefL = { scrap: 'Email me when I get a scrap', club: 'Notify new club topics', birthday: 'Show my birthday on my profile', weekly: 'Weekly progress email' };
+    const titles = { home: ['tuesday, 14 october', 'Hello, Marianne!'], notebook: ['my notebook · traditions', isCur ? 'Session 4 · Family dishes' : `Session ${nb} · ${past.title}`], clubs: ['clubs & community', 'Clubs'], profile: ['public profile', me ? 'My profile' : Pp.name], review: ['review vault', 'Review'], shop: ['isr miles', 'Miles shop'], account: ['my account', 'Account'] };
+    const pages = [['home', 'Home'], ['notebook', 'My Notebook', s.classLive ? 'live' : ''], ['clubs', 'Clubs'], ['review', 'Review', '5 due'], ['shop', 'Miles shop'], ['profile', 'My Profile', '1 new'], ['account', 'Account']];
+
+    return {
+      showLogin: !s.loggedIn, showApp: s.loggedIn, wide, narrow: !wide,
+      email: s.email, pass: s.pass, remember: s.remember, loginError: s.loginError,
+      onEmail: e => this.setState({ email: e.target.value }), onPass: e => this.setState({ pass: e.target.value }),
+      toggleRemember: () => this.setState({ remember: !s.remember }),
+      doLogin: () => (s.email && s.pass) ? this.setState({ loggedIn: true, loginError: false, page: 'home' }) : this.setState({ loginError: true }),
+      logout: () => this.setState({ loggedIn: false }),
+      photoBg: s.photo ? 'url(' + s.photo + ')' : 'none', hasPhoto: !!s.photo, noPhoto: !s.photo, photo: s.photo,
+      mainPad: wide ? '28px 40px 40px' : '20px 16px 24px', h1Size: wide ? '30px' : '24px',
+      eyebrow: titles[s.page][0], title: titles[s.page][1],
+      nav: pages.map(([id, label, badge]) => ({ label, badge: badge || '', go: () => this.go(id), bg: s.page === id ? 'rgba(255,255,255,.14)' : 'transparent', op: s.page === id ? 1 : .8 })),
+      tabs: [['home', 'Home', '🏠'], ['notebook', 'Notebook', '📓'], ['clubs', 'Clubs', '👥'], ['review', 'Review', '🃏'], ['profile', 'Me', '🙂']].map(([id, label, icon]) => ({ label, icon, go: () => this.go(id), color: s.page === id ? '#164951' : '#8a7465' })),
+      goProfile: () => { this.setState({ profile: 'me' }); this.go('profile'); }, goNotebook: () => { this.setState({ nbSession: 4 }); this.go('notebook'); }, goShop: () => this.go('shop'), goClubs: () => this.go('clubs'), goAccount: () => this.go('account'),
+      classEyebrow: s.classLive ? 'live now' : 'next class · today in 20 min',
+      joinClass: () => { this.setState(st => ({ miles: st.miles + 25, classLive: true })); this.flash('Opening Zoom… notebook unlocked · +25 miles'); },
+      milesFmt: fmt(s.miles), toast: s.toast,
+      isHome: s.page === 'home', isNotebook: s.page === 'notebook', isClubs: s.page === 'clubs', isProfile: s.page === 'profile', isReview: s.page === 'review', isShop: s.page === 'shop', isAccount: s.page === 'account',
+      feed: [
+        { who: 'Tutor Dave', initial: 'D', color: '#9ec970', when: '2h', text: "Great job last class, everyone! Don't forget your homework before Tuesday." },
+        { who: 'Gabi', initial: 'G', color: '#fc9082', when: 'yesterday', text: 'Movie Lovers is picking the October film. Leave a topic in the forum!' },
+        { who: 'Priscila', initial: 'P', color: '#cae6eb', when: 'yesterday', text: 'left you a scrap and a testimonial. Go check your profile 👀' },
+        { who: 'ISR', initial: '🎂', color: '#f2ebe3', when: 'today', text: 'Priscila\u2019s birthday is on Wednesday. Leave her a scrap!' }
+      ].map(x => ({ ...x, openWho: openWho(x.who), cursor: cur(x.who) })),
+      myClubs: s.myClubs.map(id => { const k = clubOf(id); return { ...k, nextShort: k.dates[PASSED[id]], pick: () => this.setState({ forumClub: id }), pickBg: fcId === id ? '#164951' : '#fff', pickFg: fcId === id ? '#fff' : '#164951' }; }),
+      attendance: (() => { const a = ['p', 'p', 'j', 'u', 'u', 'u', 'u', 'u', 'u', 'u'], m = s.sync && s.sync.att; if (m) a[3] = { presente: 'p', 'com atraso': 'p', falta: 'a', 'falta justificada': 'j' }[m] || 'u'; return a; })().map((t, i) => { const C = { p: '#9ec970', j: '#f5d77a', a: '#f4a99f', u: '#f2ebe3' }; return { n: i + 1, bg: C[t], bar: t === 'u' ? '#e9e2d8' : C[t] }; }),
+
+      sessions, nbCurrent: isCur, nbPast: !isCur,
+      classLive: s.classLive, classNotLive: !s.classLive,
+      liveLabel: s.classLive ? '● live class · editing open' : '🔒 class starts 19:00', liveBg: s.classLive ? '#fc9082' : '#fff', liveFg: '#164951',
+      liveToggleLabel: s.classLive ? 'end class' : 'start class',
+      toggleLive: () => this.setState({ classLive: !s.classLive }),
+      saveLabel: s.saved ? '✓ saved' : 'saving…',
+      photoLabel: s.photos ? `${s.photos} photo${s.photos > 1 ? 's' : ''} added to this session` : 'Add a photo of the dish or your family cooking.',
+      addPhoto: () => this.setState({ photos: s.photos + 1 }),
+      scaffolds: (() => { const sn = s.sync && s.sync.nb, sp = t => String(t || '').split(',').map(x => x.trim()).filter(Boolean); return [
+        { label: '💡 words', tint: '#e5f2f6', items: sn ? sp(sn.words) : ['to simmer', 'to season', 'a pinch of', 'leftovers', 'signature dish'] },
+        { label: '🔗 connectors', tint: '#e8f5dd', items: sn ? sp(sn.conn) : ['first', 'after that', 'while', 'finally'] },
+        { label: '🧱 structures', tint: '#ede6df', items: sn ? sp(sn.struct) : ['She always used to…', 'It tastes like…', 'We eat it when…'] }
+      ]; })(),
+      tasks: (() => { const sn = s.sync && s.sync.nb; const list = sn ? sn.tasks : [{ type: 'escrita', prompt: 'What is your grandmother\u2019s signature dish? When do you eat it?' }, { type: 'escrita', prompt: 'Explain how she makes it in 4 steps. Use the connectors.' }]; const TL = { escrita: 'write', audio: 'record audio', foto: 'photo' }; return list.map((t, i) => { const k = 'abcdefgh'[i]; return { step: 'step ' + (i + 1) + ' · ' + (TL[t.type] || 'write'), prompt: t.prompt || '…', ph: s.classLive ? (t.type === 'escrita' ? 'Write here…' : t.type === 'audio' ? 'Record in class or write a note…' : 'Describe your photo…') : 'Opens when class starts', value: s.answers[k] || '', onChange: setAns(k), locked: !s.classLive, op: s.classLive ? 1 : .55 }; }); })(),
+      nbObj: (s.sync && s.sync.nb && s.sync.nb.obj) || 'Describe your grandmother\u2019s signature dish.',
+      hwText: (s.sync && s.sync.nb && s.sync.nb.hw) || 'Ask someone in your family about the dish. Write 5 sentences you\u2019ll say next class.',
+      recCurOp: s.sync && s.sync.grav && s.sync.grav['w2-2'] ? 1 : .7, recCurSub: s.sync && s.sync.grav && s.sync.grav['w2-2'] ? 'available · only for your class' : 'appears after class',
+      hwBorder: 'transparent', hwStatus: '🔒 opens at 20:00 today', hwStatusColor: '#8a7465',
+      vaultAdded: s.vaultAdded, vaultLabel: s.vaultAdded ? 'Added to my Review Vault' : "Add today's words to my Review Vault",
+      syncVault: () => { if (!s.vaultAdded) { this.setState({ vaultAdded: true, miles: s.miles + 20 }); this.flash('5 words added · +20 miles'); } },
+      past: past ? { ...past, n: nb, hwOpen: nb === 3 && !hw3Done, hwStatus: nb === 3 ? (hw3Done ? '✓ sent' : '● open until next class') : '✓ sent', hwColor: nb === 3 && !hw3Done ? '#d9675a' : '#5a8a3a' } : { answers: [], words: [] },
+      watchRec: () => this.flash(s.sync && s.sync.grav && s.sync.grav['w1-2'] === undefined && s.sync ? 'The school hasn\u2019t published this recording yet' : 'Opening recording…'),
+      sendHw: () => { this.setState({ hwSent: { ...s.hwSent, 3: true }, miles: s.miles + 15 }); this.flash('Homework sent · +15 miles'); },
+
+      showMine: s.clubTab === 'mine', showCatalog: s.clubTab === 'catalog',
+      tabMine: () => this.setState({ clubTab: 'mine' }), tabCatalog: () => this.setState({ clubTab: 'catalog' }),
+      mineBg: pill(s.clubTab === 'mine').bg, mineFg: pill(s.clubTab === 'mine').fg, catBg: pill(s.clubTab === 'catalog').bg, catFg: pill(s.clubTab === 'catalog').fg,
+      fc: { ...fcK, meetings: meetings(fcK) }, cycleEnd,
+      joinMeeting: () => this.flash(`Link opens 10 min before · ${fcK.dates[PASSED[fcId]]}`),
+      topics: TOPICS[fcId].map((t, i) => { const key = fcId + i, extra = s.addedReplies[key] || [], open = s.openTopic === key; return { ...t, open, cursor: cur(t.who), openWho: openWho(t.who), replyLabel: open ? 'hide replies' : (t.replies + extra.length) + ' replies', more: Math.max(0, t.replies - t.rep.length), olderLabel: s.olderOpen[key] ? 'hide older replies' : 'see ' + Math.max(0, t.replies - t.rep.length) + ' older replies', toggleOlder: () => this.setState({ olderOpen: { ...s.olderOpen, [key]: !s.olderOpen[key] } }),
+        recording: !!(s.rec && s.rec.key === key), notRecording: !(s.rec && s.rec.key === key), recTime: s.rec ? '0:' + String(s.rec.secs).padStart(2, '0') : '',
+        startRec: () => this.startRec(key), stopRec: () => this.stopRec(true), cancelRec: () => this.stopRec(false),
+        replyList: [...(s.olderOpen[key] ? OLDER(t.replies - t.rep.length, i) : []), ...t.rep, ...extra].map(r => { const on = s.playing === r.id; return { ...r, isText: !r.audio, audio: !!r.audio, openWho: openWho(r.who), cursor: cur(r.who), dur: r.audio ? '0:' + String(r.secs).padStart(2, '0') : '', playIcon: on ? '❚❚' : '▶', progress: on ? Math.min(100, (s.playPos / r.secs) * 100) + '%' : '0%', play: () => this.play(r) }; }), replyDraft: s.replyDraft, onReply: e => this.setState({ replyDraft: e.target.value }), toggle: () => this.setState({ openTopic: open ? null : key, replyDraft: '' }), send: () => { if (!s.replyDraft.trim()) return; this.setState({ addedReplies: { ...s.addedReplies, [key]: [...extra, R('Marianne', 'now', s.replyDraft)] }, replyDraft: '' }); } }; }),
+      clubs: CLUBS.map(k => { const j = joined(k.id), extra = !j && s.myClubs.length >= 2; return { ...k, toggle: askJoin(k.id), btn: j ? `✓ Member until ${cycleEnd}` : extra ? '+ Add as 3rd club · €50' : 'Join club', btnBg: j ? '#e8f5dd' : extra ? '#f2ebe3' : '#164951', btnFg: j ? '#5a8a3a' : '#164951' === '#164951' && !extra ? '#fff' : '#164951' }; }),
+      modal: s.modal, closeModal: () => this.setState({ modal: null }), stop: e => e.stopPropagation(), confirmModal,
+
+      activities: [['flash', '🃏', 'Words', 'vocabulary'], ['build', '🧱', 'Sentences', 'grammar'], ['listen', '🎧', 'Listen', 'listening'], ['speak', '🎙', 'Speak', 'speaking']].map(([id, icon, label, skill]) => { const on = s.activity === id; return { icon, label, status: s.revDone[id] ? '✓ done' : skill, bg: on ? '#fff' : 'rgba(255,255,255,.1)', fg: on ? '#164951' : '#fff', pick: () => this.setState({ activity: id }) }; }),
+      revHeadline: Object.keys(s.revDone).length === 4 ? 'All done for today 🎉 Come back tomorrow.' : Object.keys(s.revDone).length + ' of 4 done · keep your 14-day streak',
+      showBuild: s.activity === 'build', showListen: s.activity === 'listen', showSpeak: s.activity === 'speak',
+      bNum: s.build.i + 1, bTotal: BUILD.length, bPt: B.pt, bBorder: s.build.fb === 'ok' ? '#9ec970' : s.build.fb === 'no' ? '#fc9082' : '#7fb8be',
+      bPicked: s.build.picked.map((ci, k) => ({ text: B.chunks[ci], remove: () => s.build.fb !== 'ok' && this.setState({ build: { ...s.build, picked: s.build.picked.filter((_, j) => j !== k), fb: null } }) })),
+      bPool: B.order.filter(ci => !s.build.picked.includes(ci)).map(ci => ({ text: B.chunks[ci], add: () => this.setState({ build: { ...s.build, picked: [...s.build.picked, ci], fb: null } }) })),
+      bFeedback: s.build.fb === 'ok' ? '✓ Perfect! Now say it out loud.' : s.build.fb === 'no' ? 'Almost! Tap a word to move it back.' : s.build.fb === 'short' ? 'Use all the words.' : '', bFbColor: s.build.fb === 'ok' ? '#5a8a3a' : '#d9675a',
+      bActionLabel: s.build.fb === 'ok' ? (s.build.i + 1 >= BUILD.length ? 'Finish' : 'Next sentence →') : 'Check',
+      bAction: () => { if (s.build.fb === 'ok') { if (s.build.i + 1 >= BUILD.length) { this.setState({ build: { i: 0, picked: [], fb: null } }); this.markDone('build'); } else this.setState({ build: { i: s.build.i + 1, picked: [], fb: null } }); return; } if (s.build.picked.length < B.chunks.length) return this.setState({ build: { ...s.build, fb: 'short' } }); this.setState({ build: { ...s.build, fb: bOk ? 'ok' : 'no' } }); if (bOk) this.say(B.chunks.join(' ')); },
+      lNum: s.listen.i + 1, lTotal: LISTEN.length, lQ: Lc.q, lScript: Lc.say, lAnswered: lAns,
+      lPlay: () => this.say(Lc.say), lSlow: () => this.say(Lc.say, 0.7),
+      lOpts: Lc.opts.map((t, oi) => ({ text: t, bg: !lAns ? '#f2ebe3' : oi === Lc.a ? '#9ec970' : oi === s.listen.pick ? '#fc9082' : '#f2ebe3', pick: () => !lAns && this.setState({ listen: { ...s.listen, pick: oi } }) })),
+      lNextLabel: s.listen.i + 1 >= LISTEN.length ? 'Finish' : 'Next audio →',
+      lNext: () => { if (s.listen.i + 1 >= LISTEN.length) { this.setState({ listen: { i: 0, pick: null } }); this.markDone('listen'); } else this.setState({ listen: { i: s.listen.i + 1, pick: null } }); },
+      spPrompt: SPEAK.prompt, spHelp: SPEAK.help, spDone: s.speak.done && !s.speak.rec, spDur: '0:' + String(s.speak.secs).padStart(2, '0'),
+      spRecLabel: s.speak.rec ? '■ Stop · 0:' + String(s.speak.secs).padStart(2, '0') : (s.speak.done ? '🎙 Record again' : '🎙 Record my answer'), spRecBg: s.speak.rec ? '#d9675a' : '#164951',
+      spModel: () => this.say(SPEAK.model, 0.9),
+      spRecToggle: () => { if (s.speak.rec) { clearInterval(this.spi); this.setState({ speak: { ...s.speak, rec: false, done: true } }); this.markDone('speak'); } else { clearInterval(this.spi); this.setState({ speak: { rec: true, secs: 0, done: false } }); this.spi = setInterval(() => this.setState(st => ({ speak: { ...st.speak, secs: st.speak.secs + 1 } })), 1000); } },
+      notifOpen: s.notifOpen, notifRight: wide ? '40px' : '16px', bellBg: s.notifOpen ? '#e9e2d8' : '#fff',
+      unread: s.notifs.filter(n => !n.read).length, hasUnread: s.notifs.some(n => !n.read),
+      toggleNotif: () => this.setState({ notifOpen: !s.notifOpen }), closeNotif: () => this.setState({ notifOpen: false }),
+      markAllRead: () => this.setState({ notifs: s.notifs.map(n => ({ ...n, read: true })) }),
+      notifs: s.notifs.map(n => ({ ...n, unread: !n.read, bg: n.read ? 'transparent' : '#fdf3ef', weight: n.read ? 500 : 700, open: () => { const st = { notifOpen: false, notifs: s.notifs.map(x => x.id === n.id ? { ...x, read: true } : x) }; if (n.to === 'me' || n.to === 'pri') { st.profile = n.to; this.setState(st); this.go('profile'); } else if (n.to === 'forum') { Object.assign(st, { clubTab: 'mine', forumClub: 'chef', openTopic: 'chef1' }); this.setState(st); this.go('clubs'); } else { st.nbSession = 3; this.setState(st); this.go('notebook'); } } })),
+      slidesOpen: !!s.slides, slide: SLIDES[s.slides ? s.slides.i : 0], slideNum: (s.slides ? s.slides.i : 0) + 1, slideTotal: SLIDES.length, slideDeckTitle: 'Session ' + nb,
+      openSlides: () => this.setState({ slides: { i: 0 } }), closeSlides: () => this.setState({ slides: null }),
+      nextSlide: () => this.setState({ slides: { i: Math.min(SLIDES.length - 1, s.slides.i + 1) } }), prevSlide: () => this.setState({ slides: { i: Math.max(0, s.slides.i - 1) } }),
+      recCur: () => this.flash(s.sync && s.sync.grav && s.sync.grav['w2-2'] ? 'Opening recording · ' + s.sync.grav['w2-2'] : 'The recording appears here after class'),
+      goLastRec: () => { this.setState({ nbSession: 3 }); this.go('notebook'); },
+      deckEmpty: false,
+      showFlash: s.activity === 'flash' && deckCards.length > 0, showMatch: false, showWeekly: false, weekly: {},
+      cardNum: ci + 1, cardTotal: deckCards.length, cardSide: s.flipped ? 'meaning' : 'word', cardText: s.flipped ? c[1] : c[0], cardEx: s.flipped ? c[2] : '',
+      cardBg: s.flipped ? '#348a8e' : '#fff', cardFg: s.flipped ? '#fff' : '#164951',
+      flip: () => this.setState({ flipped: !s.flipped }), rate: nextCard,
+      matchDone: s.matched.length, matchTotal: mc.length,
+      matchWords: mc.map((x, i) => { const done = s.matched.includes(i), sel = s.matchSel === i; return { text: x[0], bg: done ? '#e8f5dd' : sel ? '#164951' : '#fff', fg: done ? '#5a8a3a' : sel ? '#fff' : '#164951', border: sel ? '#164951' : 'transparent', pick: () => !done && this.setState({ matchSel: i }) }; }),
+      matchMeanings: order.map(i => { const done = s.matched.includes(i); return { text: mc[i][1], bg: done ? '#e8f5dd' : s.wrong === i ? '#fc9082' : '#fff', fg: done ? '#5a8a3a' : '#164951', pick: pickMeaning(i) }; }),
+      nwWord: s.nw.w, nwMeaning: s.nw.m, nwEx: s.nw.e,
+      onNwWord: e => this.setState({ nw: { ...s.nw, w: e.target.value } }), onNwMeaning: e => this.setState({ nw: { ...s.nw, m: e.target.value } }), onNwEx: e => this.setState({ nw: { ...s.nw, e: e.target.value } }),
+      addCard: () => { if (!s.nw.w.trim() || !s.nw.m.trim()) return this.flash('Add a word and a meaning'); this.setState({ showAdd: false, myCards: [...s.myCards, [s.nw.w, s.nw.m, s.nw.e]], nw: { w: '', m: '', e: '' }, activity: 'flash', card: s.myCards.length, flipped: false }); this.flash('Saved to My words'); },
+
+      showDecks: s.activity === 'flash' || s.activity === 'match', showAdd: s.showAdd, showHow: s.showHow,
+      toggleAdd: () => this.setState({ showAdd: !s.showAdd, showHow: false }), toggleHow: () => this.setState({ showHow: !s.showHow, showAdd: false }),
+      showRewards: s.shopTab === 'rewards', showMarket: s.shopTab === 'market',
+      shopRewards: () => this.setState({ shopTab: 'rewards' }), shopMarket: () => this.setState({ shopTab: 'market' }),
+      rwBg: pill(s.shopTab === 'rewards').bg, rwFg: pill(s.shopTab === 'rewards').fg, mkBg: pill(s.shopTab === 'market').bg, mkFg: pill(s.shopTab === 'market').fg,
+      rewards: REWARDS.map(r => { const own = s.bought.includes(r.id), can = s.miles >= r.cost; return { ...r, costFmt: fmt(r.cost), btn: own ? '✓ Redeemed' : can ? 'Redeem' : `${fmt(r.cost - s.miles)} to go`, bg: own ? '#e8f5dd' : can ? '#fc9082' : '#f2ebe3', fg: own ? '#5a8a3a' : can ? '#164951' : '#8a7465', buy: () => { if (own || !can) return; this.setState({ miles: s.miles - r.cost, bought: [...s.bought, r.id] }); this.flash(`${r.name} redeemed!`); } }; }),
+      mkFilters: [['all', 'All'], ['swap', '🔄 Swap'], ['sell', '€ Sell'], ['miles', '✈ Miles'], ['service', '🤝 Services'], ['mine', 'My listings']].map(([id, label]) => ({ label, bg: s.mkFilter === id ? '#164951' : '#fff', fg: s.mkFilter === id ? '#fff' : '#164951', pick: () => this.setState({ mkFilter: id, mkPageN: 0 }) })),
+      mkEmpty: !mkList.length, mkEmptyText: s.mkFilter === 'mine' ? 'You have no listings yet. Tap "+ New listing".' : 'Nothing here yet.',
+      mkPage: mkList.slice(pg * PER, pg * PER + PER).map(m => { const mine = m.who === 'Marianne'; return { ...m, typeLabel: TL[m.type], tagBg: TB[m.type], mine, notMine: !mine, op: m.sold ? .6 : 1, deco: m.sold ? 'line-through' : 'none', soldLabel: m.sold ? '↺ Relist' : '✓ Mark as sold', openWho: openWho(m.who), whoCursor: 'pointer', contact: () => this.flash('Chat with ' + m.who + ' opened'), edit: () => this.setState({ listing: { ...m } }), toggleSold: () => { this.setState({ market: s.market.map(x => x.id === m.id ? { ...x, sold: !m.sold } : x) }); this.flash(m.sold ? 'Listed again' : 'Marked as sold 🎉'); } }; }),
+      mkHasPages: nPages > 1, mkRange: (pg * PER + 1) + '–' + Math.min(mkList.length, (pg + 1) * PER) + ' of ' + mkList.length,
+      mkPages: Array.from({ length: nPages }, (_, i) => ({ n: i + 1, bg: i === pg ? '#164951' : '#fff', fg: i === pg ? '#fff' : '#164951', go: () => this.setState({ mkPageN: i }) })),
+      openNewListing: () => this.setState({ listing: { id: null, title: '', type: 'sell', price: '', desc: '' } }),
+      listing: L, lf: L || {}, listingTitle: L && L.id ? 'Edit listing' : 'New listing', lfIsEdit: !!(L && L.id),
+      onLfTitle: e => this.setState({ listing: { ...L, title: e.target.value } }), onLfPrice: e => this.setState({ listing: { ...L, price: e.target.value } }), onLfDesc: e => this.setState({ listing: { ...L, desc: e.target.value } }),
+      lfTypes: ['sell', 'swap', 'miles', 'service'].map(id => ({ label: TL[id], bg: L && L.type === id ? '#164951' : '#f2ebe3', fg: L && L.type === id ? '#fff' : '#164951', pick: () => this.setState({ listing: { ...L, type: id } }) })),
+      lfPricePh: !L ? '' : L.type === 'service' ? 'e.g. 10% off for ISR students' : L.type === 'swap' ? 'what do you want in exchange?' : L.type === 'miles' ? 'e.g. 500 miles' : 'e.g. €20',
+      closeListing: () => this.setState({ listing: null }),
+      saveListing: () => { if (!L.title.trim()) return this.flash('Write what you are offering'); if (L.id) { this.setState({ market: s.market.map(x => x.id === L.id ? { ...x, ...L } : x), listing: null }); this.flash('Listing updated'); } else { this.setState({ market: [{ ...L, id: Date.now(), emoji: L.type === 'service' ? '🤝' : '📦', who: 'Marianne', city: 'Amsterdam', price: L.price || 'make an offer', sold: false }, ...s.market], listing: null, mkFilter: 'mine', mkPageN: 0 }); this.flash('Published in Swap & sell'); } },
+      deleteListing: () => { this.setState({ market: s.market.filter(x => x.id !== L.id), listing: null }); this.flash('Listing deleted'); },
+
+      viewMe: () => this.setState({ profile: 'me', scrapDraft: '' }),
+      meBg: pill(me).bg, meFg: pill(me).fg,
+      classmates: Object.keys(PEOPLE).map(id => ({ name: PEOPLE[id].name, initial: PEOPLE[id].initial, color: PEOPLE[id].color, bg: s.profile === id ? '#164951' : '#fff', fg: s.profile === id ? '#fff' : '#164951', open: () => this.setState({ profile: id, scrapDraft: '', tDraft: '' }) })),
+      viewingMe: me, viewingPri: !me,
+      pShowImg: me && !!s.photo, pShowInitial: !(me && s.photo), pPhoto: s.photo, pInitial: me ? 'M' : Pp.initial, pColor: me ? '#fc9082' : Pp.color,
+      pName: me ? 'Marianne' : Pp.name, pMeta: me ? 'Essentials · Traditions · Amsterdam' : Pp.meta,
+      pBirthday: me ? '12 March' : Pp.birthday,
+      pBio: me ? 'Mom of two, learning English to talk to the juf without panicking. Love cooking and bad movies.' : Pp.bio,
+      pTestiWho: Pp.tWho || '', pTesti: Pp.t || '', hasPTesti: !me && !!Pp.t, openTestiWho: openWho(Pp.tWho || ''),
+      openDave: openWho('Tutor Dave'), openPri: openWho('Priscila'),
+      hasBirthday: me || !!Pp.birthday, showAttrs: me || !Pp.noAttrs,
+      onPhoto: e => { const fl = e.target.files && e.target.files[0]; if (fl) { this.setState({ photo: URL.createObjectURL(fl) }); this.flash('Photo updated'); } },
+      attrTitle: me ? 'fluency attributes · votes from classmates & teachers' : 'vote for ' + Pp.name + ' · tap the stars (anonymous)',
+      voteNote: Object.keys(myVote).length ? '✓ Your vote is saved. Nobody sees who voted. You can change it until the end of the cycle.' : 'Only classmates and teachers from the same class can vote. 1 vote per cycle.',
+      attributes: ATTR.map((name, ai) => { const pct = me ? MY[ai] : Pp.attrs[ai], v = myVote[ai] || 0; return { name, pct: pct + '%', stars: [1, 2, 3].map(n => ({ color: me ? (n <= Math.round(pct / 33) ? '#fc9082' : '#e2c8b5') : (n <= v ? '#fc9082' : '#e2c8b5'), cursor: me ? 'default' : 'pointer', pick: () => { if (!me) this.setState({ votes: { ...s.votes, [s.profile]: { ...myVote, [ai]: n } } }); } })) }; }),
+      scraps: pScraps, scrapCount: pScraps.length, scrapDraft: s.scrapDraft,
+      scrapPh: me ? 'Reply on your wall…' : 'Leave ' + Pp.name + ' a scrap…',
+      onScrap: e => this.setState({ scrapDraft: e.target.value }),
+      postScrap: () => { if (!s.scrapDraft.trim()) return; this.setState({ scraps: { ...s.scraps, [s.profile]: [R('Marianne', 'now', s.scrapDraft), ...(s.scraps[s.profile] || [])] }, scrapDraft: '' }); },
+      testimonialPending: s.testimonial === 'pending', testimonialAccepted: s.testimonial === 'accepted',
+      acceptT: () => { this.setState({ testimonial: 'accepted', miles: s.miles + 15 }); this.flash('Testimonial on your profile · +15 miles'); },
+      declineT: () => this.setState({ testimonial: 'hidden' }),
+      tCanWrite: !s.tSent[s.profile], tSent: !!s.tSent[s.profile], tDraft: s.tDraft,
+      onTDraft: e => this.setState({ tDraft: e.target.value }),
+      sendT: () => { if (s.tDraft.trim().length < 20) return this.flash('Write a little more (20+ characters)'); this.setState({ tSent: { ...s.tSent, [s.profile]: true }, tDraft: '' }); },
+
+      invoices: [{ month: 'October 2026', amount: '€129' }, { month: 'September 2026', amount: '€129' }, { month: 'August 2026', amount: '€129' }],
+      prefs: Object.keys(prefL).map(k => ({ label: prefL[k], track: s.prefs[k] ? '#348a8e' : '#d4d4d4', knob: s.prefs[k] ? '21px' : '3px', toggle: () => this.setState({ prefs: { ...s.prefs, [k]: !s.prefs[k] } }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

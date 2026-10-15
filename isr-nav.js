@@ -334,7 +334,8 @@
     sair.textContent = "sair";
     sair.style.cssText = "flex:none;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.7);font-size:10.5px;font-weight:600;padding:5px 11px;border-radius:999px;cursor:pointer;font-family:inherit;";
     sair.onclick = function () {
-      localStorage.removeItem("isr_gestao_user");
+      try { window.ISRCRM.sairGestao(); }
+      catch (e) { try { localStorage.removeItem("isr_gestao_user"); } catch (e2) {} }
       window.location.href = "gestao.html";
     };
     bar.appendChild(sair);

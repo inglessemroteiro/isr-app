@@ -376,6 +376,7 @@
     var m = {}; try { m = JSON.parse(localStorage.getItem(METAS_KEY)) || {}; } catch (e) {}
     Object.assign(m, patch);
     try { localStorage.setItem(METAS_KEY, JSON.stringify(m)); } catch (e) {}
+    janelasCache = null;
     agendarSync();
     return metasAtuais();
   }
@@ -394,6 +395,140 @@
     if (fim && iso > fim) return { quando: "proximo", ciclo: label,
       label: "Ciclo seguinte — o " + label + " termina em " + ddmm(fim) };
     return { quando: "atual", ciclo: label, label: "Ciclo " + label };
+  }
+
+  // ── A JANELA DO CICLO ─────────────────────────────────────────
+  //
+  // A escola vende ciclo, mas a agenda gerava aula pelo dia da semana
+  // escrito no nome da turma — "TUE 13h" virava terça-feira para
+  // sempre. Quando o ciclo acabava, a agenda continuava inventando
+  // aula toda semana e a escola continuava pedindo chamada de aula
+  // que não existiu. Daqui em diante a aula só existe dentro da
+  // janela: do início do ciclo ao fim dele.
+  //
+  // Sem data de fim gravada nada muda — é o estado "sem_fim", e a
+  // Central avisa. Isso evita que a agenda de quem ainda não
+  // configurou o ciclo esvazie de uma hora para outra.
+  function cicloJanela() {
+    var M = metasAtuais();
+    var hoje = iso(today());
+    var ini = M.cicloInicio || "";
+    var fim = M.cicloFim || "";
+    var estado = !fim ? "sem_fim"
+      : (hoje > fim ? "terminado"
+      : (ini && hoje < ini ? "por_comecar" : "aberto"));
+    var dFim = fim ? parseISO(fim) : null;
+    var dIni = ini ? parseISO(ini) : null;
+    return {
+      label: M.cicloLabel || "", inicio: ini, fim: fim, estado: estado,
+      diasAteOFim: dFim ? daysBetween(today(), dFim) : null,
+      // entre um ciclo e outro há férias, e nesses dias a agenda fica
+      // vazia de propósito. Sem este número as telas não conseguem
+      // dizer por quê
+      diasAteOInicio: dIni ? daysBetween(today(), dIni) : null
+    };
+  }
+
+  // ── OS CICLOS JÁ FECHADOS ─────────────────────────────────────
+  //
+  // O sistema tinha UM ciclo, não uma lista. Abrir o 4.2026 apagava
+  // o 3.2026, e com ele a resposta para "quais aulas deveriam ter
+  // acontecido entre julho e outubro". Isso é registro acadêmico: a
+  // escola guarda por anos, e é dele que sai a frequência do
+  // certificado. Um campo que se sobrescreve não serve.
+  //
+  // Agora cada ciclo fechado vira uma linha guardada. A lista anda
+  // junto no sync, então vale em qualquer aparelho e é carimbada no
+  // backup da planilha.
+  var CICLOS_KEY = "isr_ciclos_v1";
+  function ciclosLista() {
+    try { return JSON.parse(localStorage.getItem(CICLOS_KEY)) || []; } catch (e) { return []; }
+  }
+  function ciclosSalvar(l) {
+    try { localStorage.setItem(CICLOS_KEY, JSON.stringify(l || [])); } catch (e) {}
+    janelasCache = null;
+    agendarSync();
+  }
+  // O ciclo de agora mais todos os que já fecharam, do mais novo para
+  // o mais antigo. É a memória completa da escola.
+  function ciclosTodos() {
+    var M = metasAtuais();
+    var fora = ciclosLista().slice();
+    if (M.cicloLabel && M.cicloInicio) {
+      fora = fora.filter(function (c) { return c.label !== M.cicloLabel; });
+      fora.push({ label: M.cicloLabel, inicio: M.cicloInicio, fim: M.cicloFim || "", atual: true });
+    }
+    return fora.sort(function (a, b) { return a.inicio < b.inicio ? 1 : -1; });
+  }
+
+  // Há aula nesta data? É o filtro que a agenda consulta.
+  //
+  // Vale para QUALQUER ciclo, não só o de agora: uma aula de setembro
+  // continua tendo existido depois que outubro começa, senão a
+  // chamada retroativa e a frequência do ciclo passado sumiriam.
+  // Entre um ciclo e outro não há aula — é o intervalo.
+  var janelasCache = null;
+  function janelasDeAula() {
+    if (janelasCache) return janelasCache;
+    janelasCache = ciclosTodos()
+      .filter(function (c) { return c.inicio; })
+      .map(function (c) { return { ini: c.inicio, fim: c.fim || "" }; });
+    return janelasCache;
+  }
+  function temAulaEm(data) {
+    if (!data) return false;
+    var js = janelasDeAula();
+    // nenhum ciclo configurado: nada muda, como antes
+    if (!js.length) return true;
+    for (var i = 0; i < js.length; i++) {
+      if (data < js[i].ini) continue;
+      if (js[i].fim && data > js[i].fim) continue;
+      return true;
+    }
+    return false;
+  }
+
+  // Abrir o próximo ciclo: nome, início e fim de uma vez. Enquanto o
+  // próximo não for aberto a agenda fica sem aula, e é por isso que
+  // isto precisa de um lugar na tela — não de um campo escondido.
+  function abrirCiclo(cfg) {
+    cfg = cfg || {};
+    var dia = /^\d{4}-\d{2}-\d{2}$/;
+    var label = String(cfg.label || "").trim();
+    if (!label || !dia.test(cfg.inicio || "") || !dia.test(cfg.fim || "")) return false;
+    if (cfg.fim < cfg.inicio) return false;
+    var antes = metasAtuais();
+    // o ciclo que estava valendo vira registro antes de ser trocado —
+    // é o que impede a troca de apagar a história
+    //
+    // Duas limpezas, as duas aprendidas numa sequência real: corrigir
+    // as datas do ciclo que acabou e só depois abrir o próximo. Nela,
+    // o nome do ciclo atual chega trocado, e sem cuidado sobra lixo.
+    var guardados = ciclosLista()
+      // um ciclo que volta a ser o atual deixa de ser registro
+      // fechado: senão ficariam dois, com datas diferentes
+      .filter(function (c) { return c.label !== label; });
+    var mexeu = guardados.length !== ciclosLista().length;
+    if (antes.cicloLabel && antes.cicloInicio && antes.cicloLabel !== label) {
+      guardados = guardados.filter(function (c) { return c.label !== antes.cicloLabel; });
+      guardados.push({ label: antes.cicloLabel, inicio: antes.cicloInicio,
+        fim: antes.cicloFim || "", fechadoEm: new Date().toISOString() });
+      mexeu = true;
+    }
+    if (mexeu) ciclosSalvar(guardados);
+    var patch = { cicloLabel: label, cicloInicio: cfg.inicio, cicloFim: cfg.fim };
+    if (cfg.meta != null && cfg.meta !== "") patch.matriculas = parseInt(cfg.meta, 10) || 0;
+    setMetas(patch);
+    janelasCache = null;
+    // a equipe precisa saber que a agenda mudou de janela
+    try {
+      muralPost("Ciclo " + label + " aberto · aulas de "
+        + ddmm(cfg.inicio) + " a " + ddmm(cfg.fim)
+        + (antes.cicloLabel && antes.cicloLabel !== label
+            ? " · o ciclo " + antes.cicloLabel + " fica fechado" : ""),
+        "Pedagógico", (gestaoUser() || {}).nome || "");
+    } catch (e) {}
+    return true;
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -725,7 +860,7 @@
       { nome: "Priscila Nunes", whatsapp: "+55 41 96000-0004", email: "priscila@exemplo.com" }
     ];
     var pg = { id: "pgDemo", nome: "Programa Sem Roteiro", inicio: inicio,
-      semanas: 8, diaFeedback: 5, moeda: "€", preco: "27,00",
+      semanas: 8, diaFeedback: 5,
       missoes: MISSOES_PILOTO.slice(),
       participantes: [], progresso: {}, respostas: {},
       missoesEnviadas: { 1: inicio, 2: inicio, 3: iso(today()) },
@@ -2314,10 +2449,11 @@
     agendarSync();
     return true;
   }
-  // O acompanhamento é um produto à parte, com preço próprio. A maioria
-  // de quem participa não está em turma nenhuma — e quem está em turma
-  // pode participar também. As duas coisas são independentes.
-  var PROGRAMA_PRECO_PADRAO = { moeda: "€", valor: "27,00" };
+  // O acompanhamento era um produto vendido à parte, por € 27 ao mês.
+  // A escola deixou de vender: o que ficou é o desafio da semana, que
+  // roda para quem já é aluna e não é cobrado. Por isso o programa não
+  // tem mais preço — os registros antigos guardam o valor que foi pago
+  // na época, e continuam aparecendo no Caixa e no perfil.
 
   function addPrograma(dados) {
     var l = programasLista();
@@ -2325,21 +2461,9 @@
       inicio: dados.inicio || iso(today()),
       semanas: parseInt(dados.semanas, 10) || 8,
       diaFeedback: dados.diaFeedback || 5, // sexta
-      moeda: dados.moeda || PROGRAMA_PRECO_PADRAO.moeda,
-      preco: dados.preco || PROGRAMA_PRECO_PADRAO.valor,
       missoes: dados.missoes || MISSOES_PILOTO.slice(),
       participantes: dados.participantes || [], progresso: {}, respostas: {} };
     l.push(p); programasSave(l); return p;
-  }
-  function setPrecoPrograma(programaId, moeda, valor) {
-    var l = programasLista();
-    l.forEach(function (pg) {
-      if (pg.id !== programaId) return;
-      if (moeda) pg.moeda = moeda;
-      if (valor) pg.preco = valor;
-      carimbar(pg);
-    });
-    programasSave(l); return l;
   }
   function getPrograma(id) {
     var l = programasLista();
@@ -2371,8 +2495,6 @@
       return { id: pg.id, nome: pg.nome, semanas: pg.semanas, semana: semana,
         participantes: (pg.participantes || []).length,
         inicio: pg.inicio, encerrada: pg.encerrada || "",
-        moeda: pg.moeda || PROGRAMA_PRECO_PADRAO.moeda,
-        preco: pg.preco || PROGRAMA_PRECO_PADRAO.valor,
         terminou: !!pg.encerrada || semana >= pg.semanas };
     }).sort(function (a, b) {
       if (!!a.encerrada !== !!b.encerrada) return a.encerrada ? 1 : -1;
@@ -2409,17 +2531,13 @@
     var pessoa = getPessoa(pessoaId);
     if (!pessoa) return null;
 
-    var moeda = cfg.moeda || pg.moeda || PROGRAMA_PRECO_PADRAO.moeda;
-    var valorTxt = cfg.valor || pg.preco || PROGRAMA_PRECO_PADRAO.valor;
-    if (!/[R$€]/.test(String(valorTxt))) valorTxt = fmtMoney(moeda, parseMoney(valorTxt));
     var desde = cfg.desde || iso(today());
-    var pago = !!cfg.pago;
 
     addParticipante(pg.id, pessoaId);
 
     mutate(pessoaId, function (p) {
-      p.programa = { id: pg.id, nome: pg.nome, moeda: moeda, valor: valorTxt,
-        desde: desde, pago: pago, por: (gestaoUser() || {}).nome || "" };
+      p.programa = { id: pg.id, nome: pg.nome,
+        desde: desde, por: (gestaoUser() || {}).nome || "" };
       // Ser aluna de turma manda no status; quem só faz o acompanhamento
       // ganha um status próprio para não sumir do sistema nem virar aluna.
       if (p.status !== "aluna" && p.status !== "mvs" && p.status !== "pausada") {
@@ -2428,18 +2546,15 @@
         if (!p.desde) p.desde = desde;
       }
       concluirReuniaoPelaMatricula(p);
-      pushHist(p, "matricula", "Entrou no " + pg.nome + " · " + valorTxt
-        + (pago ? " (pago)" : " (a receber)"));
+      pushHist(p, "matricula", "Entrou no " + pg.nome);
     });
 
-    if (pago) registrarPagamentoPrograma(pessoaId, desde);
 
     var dono = donoDaIntegracao();
     avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
       + ". Envie o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
-      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual."
-        + (pago ? "" : " Pagamento de " + valorTxt + " ainda não confirmado."),
+      detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual.",
       dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
 
     return getPessoa(pessoaId);
@@ -2461,7 +2576,8 @@
     mutate(pessoaId, function (p) {
       if (!p.programa) return;
       p.programa.pago = !!pago;
-      pushHist(p, "pagamento", "Acompanhamento " + p.programa.valor
+      pushHist(p, "pagamento", "Acompanhamento"
+        + (p.programa.valor ? " " + p.programa.valor : "")
         + (pago ? " recebido" : " marcado como pendente"));
     });
     // dataIso: quando o pagamento veio do extrato, a receita entra no mês
@@ -5749,6 +5865,52 @@
       return (!p || !p.length) && (!t || !t.length);
     } catch (e) { return true; }
   }
+  // ── FALAR COM A BASE ──────────────────────────────────────────
+  //
+  // Durante muito tempo o navegador falou com o Apps Script direto, e
+  // o endereço do Web App está logo acima, em texto puro, num arquivo
+  // que qualquer pessoa abre. Quem lesse o JavaScript do site lia e
+  // escrevia a escola inteira, sem passar por portão nenhum.
+  //
+  // Agora o pedido vai para a função base do Netlify, que confere o
+  // token da pessoa e só então fala com o Apps Script, com um endereço
+  // e uma chave que ficam no servidor.
+  //
+  // REDE, enquanto o caminho novo não estiver provado em produção: se
+  // a função não responder — porque a pessoa ainda não tem conta no
+  // Identity, porque a variável não foi configurada, porque deu erro —
+  // cai no caminho direto de antes, e a escola continua funcionando.
+  // Isto sai daqui no passo seguinte, junto com o endereço acima.
+  var baseDiretaAvisada = false;
+  // action: a ação do Apps Script. corpo: os campos a mais do pedido —
+  // { data: … } numa escrita de sistema, { id: … } ao marcar algo como
+  // processado. Sem corpo, é leitura.
+  function chamarBase(action, corpo) {
+    var url = backendUrl();
+    var direto = function () {
+      if (!url) return Promise.reject(new Error("sem base"));
+      if (!baseDiretaAvisada) {
+        baseDiretaAvisada = true;
+        try { console.warn("ISR: falando com a base pelo caminho antigo (sem token)."); } catch (e) {}
+      }
+      if (corpo === undefined) {
+        return fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=" + action)
+          .then(function (r) { return r.json(); });
+      }
+      var b = Object.assign({ action: action }, corpo);
+      return fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(b) }).then(function (r) { return r.json(); });
+    };
+    // dado de exemplo nunca sai do aparelho
+    if (exemploLigado()) return Promise.reject(new Error("exemplo"));
+    return chamarFuncao("base", { body: Object.assign({ action: action }, corpo || {}) })
+      .then(function (r) {
+        if (!r.ok) throw new Error("funcao " + r.status);
+        return r.json();
+      })
+      .catch(function () { return direto(); });
+  }
+
   var syncTimer = null;
   function agendarSync() {
     if (!backendUrl()) return;
@@ -6173,6 +6335,8 @@
       turmas: turmasRaw(), eventos: eventosLista(), chamadas: chamadasAll(),
       // tarefas vai CRU (com as lápides das pendências removidas)
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
+      // os ciclos já fechados: registro acadêmico, vai junto
+      ciclos: ciclosLista(),
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosRaw(), cambio: taxaCambio(), contas: contasLista(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
@@ -6210,6 +6374,7 @@
     grava(VOTOS_KEY, d.votos); grava(FEED_ESCOLA_KEY, d.feedEscola);
     grava(CLUBES_KEY, d.clubes); grava(CLUBE_INSCRICOES_KEY, d.clubeInscricoes);
     grava(CLUBE_TOPICOS_KEY, d.clubeTopicos); grava(CLUBE_POSTS_KEY, d.clubePosts);
+    if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
     if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
@@ -6266,13 +6431,11 @@
     if (syncEmCurso) { agendarSync(); return; }
     syncEmCurso = true;
     setSyncEstado({ status: "sincronizando" });
-    fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
-      .then(function (r) { return r.json(); })
+    chamarBase("sistemaLoad")
       .then(function (d) {
         var m = mesclarComRemoto(d && d.ok ? d.data : null);
         aplicarRemoto(m.data);            // o local já fica com o resultado da mesclagem
-        return fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "sistemaSave", data: m.data }) })
+        return chamarBase("sistemaSave", { data: m.data })
           .then(function () {
             setSyncEstado({ status: "ok", em: m.data.atualizadoEm, conflitos: m.conflitos });
           });
@@ -6294,8 +6457,7 @@
       if (cb) cb(ok);
     };
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
-        .then(function (r) { return r.json(); })
+      chamarBase("sistemaLoad")
         .then(function (d) {
           if (d && d.ok && d.data) {
             // PUXAR NUNCA SUBSTITUI: mescla registro a registro, igual ao
@@ -6308,7 +6470,7 @@
             // Campos sem id (custos, modelos, metas, calculadora, câmbio)
             // não têm carimbo por registro: no puxe, vale o servidor —
             // é o que garante que um aparelho novo receba tudo.
-            ["custos", "templates", "metas", "calc", "cambio",
+            ["custos", "templates", "metas", "calc", "cambio", "ciclos",
              "assinaturaCfg", "bookclub", "bookclubAula"].forEach(function (k) {
               if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
             });
@@ -6323,8 +6485,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=cadastrosPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("cadastrosPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var novos = 0;
@@ -6346,10 +6507,8 @@
               });
               novos++;
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "cadastroProcessado", id: c.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("cadastroProcessado", { id: c.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(novos);
         }).catch(function () { if (cb) cb(0); });
@@ -6384,8 +6543,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=atividadesPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("atividadesPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var novos = 0;
@@ -6414,10 +6572,8 @@
                 detalhe: "Semana " + (a.semana || "?") + " · confira o nome e registre no programa",
                 dono: "Gabi", por: "sistema" });
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "atividadeProcessada", id: a.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("atividadeProcessada", { id: a.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(novos);
         }).catch(function () { if (cb) cb(0); });
@@ -6432,8 +6588,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=assinaturasPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("assinaturasPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var mexeu = 0;
@@ -6475,10 +6630,8 @@
                   dono: "Gabi", por: "sistema" });
               }
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "assinaturaProcessada", id: ev.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("assinaturaProcessada", { id: ev.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(mexeu);
         }).catch(function () { if (cb) cb(0); });
@@ -6645,17 +6798,96 @@
     localStorage.setItem("isr_gestao_user", JSON.stringify(u));
     return u;
   }
-  function sairGestao() { localStorage.removeItem("isr_gestao_user"); }
+  function sairGestao() {
+    localStorage.removeItem("isr_gestao_user");
+    guardarTokenGestao(null);
+  }
+
+  // ── O TOKEN DA EQUIPE ─────────────────────────────────────────
+  //
+  // Quem diz que a pessoa é quem diz ser é o Netlify Identity, não
+  // esta tela. O que ele devolve no login fica guardado aqui, e é o
+  // que vai no cabeçalho das chamadas às funções — é assim que o
+  // servidor confere sem acreditar no navegador.
+  //
+  // O token vale cerca de uma hora. Junto vem um refresh_token, que
+  // serve para pedir outro sem fazer a pessoa digitar a senha de novo;
+  // sem ele, a equipe cairia do sistema de hora em hora.
+  var TOKEN_KEY = "isr_gestao_token";
+  function guardarTokenGestao(tokens) {
+    try {
+      if (!tokens || !tokens.access_token) { localStorage.removeItem(TOKEN_KEY); return; }
+      localStorage.setItem(TOKEN_KEY, JSON.stringify({
+        access: tokens.access_token,
+        refresh: tokens.refresh_token || "",
+        // o expires_in vem em segundos; guardamos o instante, que é o
+        // que dá para comparar depois sem saber quando foi emitido
+        vence: Date.now() + ((tokens.expires_in || 3600) * 1000)
+      }));
+    } catch (e) {}
+  }
+  function tokenGestaoGuardado() {
+    try { return JSON.parse(localStorage.getItem(TOKEN_KEY)) || null; } catch (e) { return null; }
+  }
+  // Devolve um token válido, renovando se estiver perto de vencer.
+  // Sem conta criada ainda (transição), devolve vazio e quem chamar
+  // decide o que fazer.
+  function tokenGestao() {
+    var t = tokenGestaoGuardado();
+    if (!t || !t.access) return Promise.resolve("");
+    // um minuto de folga: token que vence no meio da chamada é erro
+    if (t.vence - Date.now() > 60000) return Promise.resolve(t.access);
+    if (!t.refresh) { guardarTokenGestao(null); return Promise.resolve(""); }
+    return fetch(window.location.origin + "/.netlify/identity/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(t.refresh)
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.access_token) { guardarTokenGestao(null); return ""; }
+        guardarTokenGestao(d);
+        return d.access_token;
+      })
+      .catch(function () { return ""; });
+  }
+  // Chamada a uma função do Netlify já com o token da pessoa.
+  function chamarFuncao(nome, opcoes) {
+    var o = opcoes || {};
+    return tokenGestao().then(function (tk) {
+      var h = Object.assign({ "Content-Type": "application/json" }, o.headers || {});
+      if (tk) h.Authorization = "Bearer " + tk;
+      return fetch("/.netlify/functions/" + nome, {
+        method: o.method || "POST",
+        headers: h,
+        body: o.body ? (typeof o.body === "string" ? o.body : JSON.stringify(o.body)) : undefined
+      });
+    });
+  }
 
   // Guard automático: telas de gestão redirecionam pro portão se não
   // houver sessão. Iframes (miniaturas do launcher) ficam de fora.
+  //
+  // ATENÇÃO, para não confundir uma coisa com a outra: isto evita que
+  // alguém caia numa tela de gestão por engano — um link mandado no
+  // grupo errado, uma aluna seguindo um endereço. NÃO é proteção: roda
+  // no navegador e qualquer pessoa contorna. O que protege de verdade é
+  // o servidor, e isso é trabalho à parte.
+  //
+  // A lista era escrita à mão e ficava para trás a cada tela nova: as
+  // telas v3 do Painel e da Matrícula nasceram fora dela. Agora a regra
+  // é a inversa — toda tela "ISR - ..." é de gestão, menos as que a
+  // aluna precisa abrir.
+  var ABERTAS = ["ISR - Aluna.", "ISR - Certificado", "ISR - Login",
+                 "ISR - Comunidade", "ISR - Tela de Aula", "ISR - Aulas."];
+  function telaDeGestao(path) {
+    if (path.indexOf("ISR - ") < 0) return false;
+    return !ABERTAS.some(function (a) { return path.indexOf(a) >= 0; });
+  }
   (function guardGestao() {
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      var protegidas = ["ISR - Central", "ISR - CRM", "ISR - Mensagens", "ISR - Cobran", "ISR - Caixa", "ISR - Perfil", "ISR - Turmas", "ISR - Turma.", "ISR - Alunas", "ISR - Acompanhamento", "ISR - Programa", "ISR - Marketing", "ISR - Agenda", "ISR - Painel do Professor", "ISR - Equipe", "ISR - Calculadora"];
-      var ehGestao = protegidas.some(function (p) { return path.indexOf(p) >= 0; });
-      if (ehGestao && !gestaoUser()) window.location.replace("gestao.html");
+      if (telaDeGestao(path) && !gestaoUser()) window.location.replace("gestao.html");
     } catch (e) {}
   })();
 
@@ -7637,11 +7869,41 @@
   //
   // Aqui ficam as aulas que já aconteceram e continuam sem chamada
   // salva — de turma, particular e extra, na mesma lista.
+  // Qual ciclo está sendo conferido agora. Durante o ciclo, ele
+  // mesmo. No intervalo entre dois, o que acabou de fechar — é dele
+  // que as chamadas ainda faltam, e é dele que sai o certificado.
+  function cicloDeAuditoria() {
+    var hoje = iso(today());
+    var todos = ciclosTodos().filter(function (c) { return c.inicio; });
+    var dentro = todos.filter(function (c) {
+      return c.inicio <= hoje && (!c.fim || hoje <= c.fim);
+    })[0];
+    if (dentro) return dentro;
+    // ciclosTodos já vem do mais novo para o mais antigo
+    return todos.filter(function (c) { return c.fim && c.fim < hoje; })[0] || null;
+  }
+
+  // A janela da conferência era de 21 dias corridos. Isso faz da
+  // chamada um lembrete, não um registro: a aula de 22 dias atrás
+  // sumia da lista sem nunca ter sido lançada, e a frequência do
+  // ciclo ficava furada em silêncio. Agora a conferência é do CICLO
+  // inteiro — que é a unidade que a escola fecha e arquiva.
   var JANELA_CHAMADA_DIAS = 21;
   function chamadasPendentes(professora, dias) {
-    var n = dias || JANELA_CHAMADA_DIAS;
     var hoje = iso(today());
-    var desde = addDays(-n);
+    var n, desde;
+    if (dias) {
+      n = dias; desde = addDays(-n);
+    } else {
+      var c = cicloDeAuditoria();
+      if (c && c.inicio) {
+        desde = c.inicio;
+        var ate = (c.fim && c.fim < hoje) ? c.fim : hoje;
+        n = Math.max(1, daysBetween(parseISO(desde), parseISO(ate)) + 1);
+      } else {
+        n = JANELA_CHAMADA_DIAS; desde = addDays(-n);
+      }
+    }
     var out = [];
 
     // turmas: a agenda sabe em que dias elas caem
@@ -9244,27 +9506,28 @@
         : "",
       pago: pa ? !!pa.pago : null });
 
+    // A assinatura de € 27 do acompanhamento deixou de ser vendida. O
+    // cartão só aparece para quem ainda tem uma ativa, e só para encerrar
+    // — sem isso, não haveria como fechar as que restaram.
     var asn = p.assinatura;
-    out.push({ id: "assinatura", nome: "Assinatura",
-      contratado: assinaturaAtiva(p),
-      detalhe: assinaturaAtiva(p)
-        ? ("desde " + ddmm(asn.inicio)
+    if (assinaturaAtiva(p)) out.push({ id: "assinatura", nome: "Assinatura",
+      contratado: true, semVenda: true,
+      detalhe: ("desde " + ddmm(asn.inicio)
           + (asn.valor ? " \u00b7 " + asn.valor + "/m\u00eas" : "")
           + (assinaturaNoAviso(p) ? " \u00b7 CANCELADA \u00b7 acesso at\u00e9 " + ddmm(asn.ate) : "")
           + (assinaturaFalhando(p) ? " \u00b7 COBRAN\u00c7A N\u00c3O PASSOU em " + ddmm(asn.falhou) : "")
           + (asn.pedidoCancelamento && !asn.encerrada
-              ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : ""))
-        : "",
+              ? " \u00b7 PEDIU CANCELAMENTO em " + ddmm(asn.pedidoCancelamento) : "")),
       pago: null });
 
     var pr = p.programa;
-    out.push({ id: "programa", nome: "Acompanhamento",
+    out.push({ id: "programa", nome: "Desafio da semana",
       contratado: !!(pr && !pr.encerrado),
       detalhe: pr && !pr.encerrado
-        ? pr.nome + " · " + pr.valor
+        ? pr.nome + (pr.valor ? " · " + pr.valor : "")
           + (pr.desde ? " · desde " + ddmm(pr.desde) : "")
         : "",
-      pago: pr && !pr.encerrado ? !!pr.pago : null });
+      pago: null });
 
     return out;
   }
@@ -9994,7 +10257,9 @@
       var hora = ((u.turma || "").match(/(\d{1,2})H/i) || [])[1];
       for (var i = 0; i < nDias; i++) {
         var d = new Date(t0); d.setDate(d.getDate() + i);
-        if (d.getDay() === alvo && !ehFeriado(iso(d))) {
+        // fora da janela do ciclo não há aula: é o que impede a agenda
+        // de inventar terça-feira para sempre depois do ciclo acabar
+        if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d))) {
           itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula", turmaId: u.id,
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
@@ -12606,6 +12871,8 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    guardarTokenGestao: guardarTokenGestao, tokenGestao: tokenGestao,
+    temTokenGestao: function () { return !!tokenGestaoGuardado(); }, chamarFuncao: chamarFuncao,
     categorias: function () { var seen = {}, out = []; templatesMerged().forEach(function (t) { if (!seen[t.categoria]) { seen[t.categoria] = 1; out.push(t.categoria); } }); return out; },
     // ações
     updateLead: updateLead, setStage: setStage, setFollowup: setFollowup, addNote: addNote,
@@ -12625,6 +12892,8 @@
     // fila + metas
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
+    cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
+    ciclosLista: ciclosLista, ciclosTodos: ciclosTodos, cicloDeAuditoria: cicloDeAuditoria,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
@@ -12825,7 +13094,6 @@
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,
     setParticularPago: setParticularPago, produtosDe: produtosDe,
-    PROGRAMA_PRECO_PADRAO: PROGRAMA_PRECO_PADRAO, setPrecoPrograma: setPrecoPrograma,
     matricularNoPrograma: matricularNoPrograma, sairDoPrograma: sairDoPrograma,
     setProgramaPago: setProgramaPago, participantesPrograma: participantesPrograma,
     pagamentosPendentesPrograma: pagamentosPendentesPrograma,

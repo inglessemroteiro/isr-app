@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Turmas e projetos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:#164951}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: #164951;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">pedagógico · as turmas da escola</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Turmas e projetos</h1>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="{{ onToggleNova }}" style="font-family: inherit; border: none; background: {{ novaBg }}; color: {{ novaFg }}; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novaLabel }}</button>
+      </div>
+    </header>
+    <p style="margin: 0; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 680px;">Lista das turmas. Abra uma turma pelo nome para editar horário, professora, alunas, materiais e chamadas. A ocupação vem das matrículas; turmas com menos de 3 alunas — o mínimo para abrir e manter — são sinalizadas.</p>
+
+    <!-- QUANDO ESTAS AULAS ACONTECEM -->
+    <!-- O horário cadastrado aqui é o que gera a aula na Agenda, mas
+         só dentro do ciclo. Dizer a janela aqui evita a pergunta
+         "cadastrei a turma, por que não aparece aula?". -->
+    <div style="background: {{ cicloBg }}; border-radius: 24px; padding: 13px 20px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
+      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Ciclo</span>
+      <span style="font-size: 13px; color: {{ cicloCor }}; flex: 1; min-width: 220px;">{{ cicloTexto }}</span>
+      <a href="central.html" class="lk" style="font-size: 12px; font-weight: 600; color: #164951;">{{ cicloAcao }}</a>
+    </div>
+
+    <!-- FORM NOVA TURMA -->
+    <sc-if value="{{ novaAberta }}">
+      <div style="background: #fff; border: 1px solid #d9d2e5; border-radius: 18px; padding: 16px 18px; margin-bottom: 16px;">
+        <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #6b5b95; margin-bottom: 12px;">Nova turma</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <input ref="{{ ntNivelRef }}" placeholder="Nível (ex. Essentials A2)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+          <input ref="{{ ntTurmaRef }}" placeholder="Horário (ex. TUE 19H)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+          <input ref="{{ ntTeacherRef }}" placeholder="Professora" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+          <input ref="{{ ntProjetoRef }}" placeholder="Projeto do ciclo" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+          <input ref="{{ ntMaterialRef }}" placeholder="Material / caderno" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+          <input ref="{{ ntCapRef }}" type="number" placeholder="Capacidade (padrão 10)" style="padding: 10px 12px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button onclick="{{ onCriarTurma }}" style="font-family: inherit; border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12.5px; font-weight: 600; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Criar turma</button>
+          <span style="font-size: 11px; color: #b3a693;">Use o dia em inglês ou português no horário (TUE 19H, SEG 18H) — a aula é criada automaticamente na Agenda da escola.</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- FILTRO PROFESSORA (dropdown) -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+      <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; font-weight: 500;">Professora</div>
+      <select onchange="{{ onTeacher }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;">
+        <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="5">
+          <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
+        </sc-for>
+      </select>
+    </div>
+
+    <!-- SELEÇÃO · agir sobre várias turmas de uma vez -->
+    <sc-if value="{{ temSelecao }}">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fdece9; border: 1px solid #f3c4bb; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;">
+        <span style="font-size: 12.5px; font-weight: 600; color: #164951;">{{ selContagem }}</span>
+        <button onclick="{{ onSelExcluir }}" style="border: 1px solid {{ selExcluirBorda }}; background: {{ selExcluirBg }}; color: #cf6b5c; font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ selExcluirLabel }}</button>
+        <button onclick="{{ onSelLimparTurmas }}" style="border: none; background: transparent; color: #9c6f56; font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 6px; font-family: inherit;">Limpar seleção</button>
+        <span style="font-size: 11px; color: #8a7465;">A exclusão vale em todos os aparelhos. Alunas de turma excluída ficam sem turma (o histórico registra).</span>
+      </div>
+    </sc-if>
+
+    <!-- ABAS DE OCUPAÇÃO -->
+    <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px;">
+      <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="3">
+        <button onclick="{{ tab.onClick }}" style="font-family: inherit; flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 16px 9px; border-radius: 12px 10px 0 0; display: flex; align-items: center; gap: 6px;">
+          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- TABELA DE TURMAS -->
+    <div style="background: #fff; border-radius: 0 18px 18px 18px; overflow-x: auto;">
+      <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 11px 18px; background: #faf7f2; min-width: 780px;">
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Turma</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Professora</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Projeto do ciclo</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Ocupação</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Material</span>
+        <span></span>
+      </div>
+
+      <sc-if value="{{ vazio }}">
+        <div style="text-align: center; padding: 44px 20px; color: #8a7465;">
+          <p style="margin: 0; font-size: 13px;">Nenhuma turma nesta visão.</p>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ turmas }}" as="u" hint-placeholder-count="6">
+        <div style="border-top: 1px solid #f2e9dd; background: #fff;">
+          <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 15px 18px; min-width: 780px;">
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" checked="{{ u.sel }}" onchange="{{ u.onSel }}" title="Selecionar esta turma" style="width: 15px; height: 15px; accent-color: #348a8e; flex: none; cursor: pointer;" />
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
+                <a href="{{ u.turmaHref }}" class="lk" style="font-size: 14px; font-weight: 600; color: #164951;">{{ u.nivel }}</a>
+              </div>
+              <div style="font-size: 11.5px; color: #8a7465; margin-top: 3px; margin-left: 17px;">{{ u.turma }} · ciclo {{ u.cycle }}</div>
+            </div>
+            <div style="font-size: 13px; color: #1d5a63;">{{ u.teacher }}</div>
+            <div style="font-size: 13px; font-weight: 600; color: {{ u.cor }};">{{ u.projeto }}</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12.5px; font-weight: 600; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
+                <span style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px;">{{ u.vagaLabel }}</span>
+                <sc-if value="{{ u.abaixoDoMinimo }}">
+                  <span title="{{ u.minimoTitulo }}" style="display: inline-block; white-space: nowrap; background: rgba(207,107,92,0.14); color: #b05c4c; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 999px; margin-left: 5px;">{{ u.minimoLabel }}</span>
+                </sc-if>
+              </div>
+              <div style="height: 6px; border-radius: 999px; background: #f0e7db; overflow: hidden; margin-top: 5px; max-width: 110px;">
+                <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: #1d5a63; line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+            <div style="display: flex; gap: 4px; justify-content: flex-end;">
+              <button onclick="{{ u.onEditar }}" style="font-family: inherit; border: 0; background: {{ u.editBg }}; color: {{ u.editFg }}; font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer;">{{ u.editLabel }}</button>
+              <button onclick="{{ u.onExcluir }}" title="Excluir turma" style="font-family: inherit; border: none; background: transparent; color: #cf6b5c; font-size: 11px; font-weight: 600; padding: 6px 7px; cursor: pointer;">excluir</button>
+            </div>
+          </div>
+
+          <!-- PAINEL DE EDIÇÃO INLINE -->
+          <sc-if value="{{ u.editando }}">
+            <div style="background: #faf7f2; border-top: 1px dashed #e5dccf; padding: 14px 18px;">
+              <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; margin-bottom: 10px;">Editar · deixe em branco o que não muda</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                <input ref="{{ edNivelRef }}" placeholder="Nível: {{ u.nivel }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                <input ref="{{ edHorarioRef }}" placeholder="Dia e horário: {{ u.turma }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                <select ref="{{ edTeacherRef }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
+                  <sc-for list="{{ u.profOpts }}" as="po" hint-placeholder-count="6">
+                    <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+                  </sc-for>
+                </select>
+                <input ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                <input ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                <input ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ u.capacidade }}" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button onclick="{{ u.onSalvarEdicao }}" style="font-family: inherit; border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer;">Salvar</button>
+                <button onclick="{{ u.onCancelarEdicao }}" style="font-family: inherit; border: none; background: transparent; color: #8a7465; font-size: 12px; font-weight: 600; padding: 9px 8px; cursor: pointer;">cancelar</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- ALUNAS PARTICULARES -->
+    <div style="margin-top: 26px;">
+      <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.3px; color: #164951;">Alunas particulares</h2>
+        <span style="font-size: 12px; color: #8a7465;">{{ partCount }}</span>
+      </div>
+      <div style="background: #fff; border-radius: 24px; overflow-x: auto;">
+        <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.7fr 0.8fr 0.8fr; gap: 12px; align-items: center; padding: 11px 18px; background: #faf7f2; min-width: 620px;">
+          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Aluna</span>
+          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Professora</span>
+          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Início</span>
+          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Pacote</span>
+          <span></span>
+        </div>
+        <sc-if value="{{ partVazio }}">
+          <div style="text-align: center; padding: 30px 20px; color: #8a7465; font-size: 13px;">Nenhuma aluna particular no momento. Na matrícula, escolha a turma "Particular · aula individual".</div>
+        </sc-if>
+        <sc-for list="{{ particulares }}" as="pp" hint-placeholder-count="2">
+          <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.7fr 0.8fr 0.8fr; gap: 12px; align-items: center; padding: 13px 18px; border-top: 1px solid #f2e9dd; min-width: 620px;">
+            <a href="{{ pp.perfilHref }}" class="lk" style="font-size: 13.5px; font-weight: 600; color: #2a9d8f;">{{ pp.nome }}</a>
+            <span style="font-size: 12.5px; color: #1d5a63;">{{ pp.professora }}</span>
+            <span style="font-size: 12.5px; color: #1d5a63;">{{ pp.desde }}</span>
+            <span style="font-size: 12.5px; font-weight: 600; color: {{ pp.pacoteCor }};">{{ pp.pacote }}</span>
+            <a href="ISR%20-%20Agenda%20v3.dc.html" style="justify-self: end; text-decoration: none; border: 0; background: #e5f2f6; color: #348a8e; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 999px;">+ aula na Agenda</a>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Aulas de particulares não têm horário fixo de turma: registre cada aula (ou pacote) na <strong>Agenda da escola</strong> como aula extra.</p>
+    </div>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null,
+            selTurmas: {}, confirmaExcluirSel: false };
+  ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
+  ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
+  edTeacherRef = React.createRef();
+  edNivelRef = React.createRef(); edHorarioRef = React.createRef(); edProjetoRef = React.createRef();
+  edMaterialRef = React.createRef(); edCapRef = React.createRef();
+
+  // Esta tela só se redesenhava ao mexer nela própria. Com o sync
+  // puxando dados em segundo plano, e com a janela do ciclo podendo
+  // mudar na Central, ela ficava mostrando o estado de antes.
+  componentDidMount() {
+    this.onDados = () => this.setState(s => ({ tick: (s.tick || 0) + 1 }));
+    window.addEventListener("isr-dados", this.onDados);
+    window.addEventListener("isr-dados-novos", this.onDados);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.onDados);
+    window.removeEventListener("isr-dados-novos", this.onDados);
+  }
+
+  nivelCor(nivel) {
+    if (nivel.indexOf("First") >= 0) return "#d4a574";
+    if (nivel.indexOf("Basics") >= 0) return "#e07856";
+    if (nivel.indexOf("Essentials") >= 0) return "#2a9d8f";
+    if (nivel.indexOf("Speaking") >= 0) return "#6b5b95";
+    return "#348a8e";
+  }
+
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "#164951", novaFg: "#fff", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      cicloBg: "#fff", cicloCor: "#1d5a63", cicloTexto: "", cicloAcao: "" };
+
+    const ocup = CRM.ocupacaoTurmas();
+    const names = ["Todas"];
+    ocup.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
+    const teacherSel = this.state.teacher;
+
+    const ABAS = [
+      { id: "todas", label: "Todas", test: () => true },
+      { id: "vagas", label: "Com vagas", test: u => u.vagas > 0 },
+      { id: "lotadas", label: "Lotadas", test: u => u.vagas <= 0 }
+    ];
+    const abaAtiva = this.state.aba;
+
+    const base = ocup.filter(u => teacherSel === "Todas" || u.teacher === teacherSel);
+    const counts = {};
+    ABAS.forEach(a => { counts[a.id] = base.filter(a.test).length; });
+
+    const abas = ABAS.map(a => {
+      const on = a.id === abaAtiva;
+      return {
+        label: a.label, count: counts[a.id],
+        onClick: () => this.setState({ aba: a.id }),
+        bg: on ? "#fff" : "#f2ebe3", fg: on ? "#164951" : "#8a7465",
+        border: on ? "transparent" : "transparent", weight: on ? 600 : 500,
+        countFg: on ? "#9c6f56" : "#b3a693"
+      };
+    });
+
+    const professoras = CRM.equipeLista()
+      .filter(m => (m.papeis || []).indexOf("professora") >= 0)
+      .map(m => m.nome);
+        const test = (ABAS.filter(a => a.id === abaAtiva)[0] || ABAS[0]).test;
+    const turmas = base.filter(test).map(u => {
+      const pct = Math.min(100, Math.round(100 * u.ocupadas / u.capacidade));
+      const lotada = u.vagas <= 0, umaVaga = u.vagas === 1;
+      // abaixo de 3 alunas a turma não se paga: o custo da professora é o
+      // mesmo e a receita cai. Vale para abrir e para manter.
+      const minimo = CRM.MINIMO_TURMA || 3;
+      const abaixoDoMinimo = u.ocupadas < minimo;
+      const editando = this.state.editId === u.id;
+      return {
+        sel: !!this.state.selTurmas[u.id],
+        onSel: () => this.setState(s => {
+          const m = Object.assign({}, s.selTurmas);
+          if (m[u.id]) delete m[u.id]; else m[u.id] = true;
+          return { selTurmas: m, confirmaExcluirSel: false };
+        }),
+        turmaHref: "ISR%20-%20Turma.dc.html?id=" + u.id,
+        nivel: u.nivel, turma: u.turma, cycle: u.cycle, teacher: u.teacher,
+        cor: this.nivelCor(u.nivel),
+        projeto: u.projeto || "—", projetoRaw: u.projeto || "—",
+        capacidade: u.capacidade,
+        ocupLabel: u.ocupadas + "/" + u.capacidade,
+        ocupPct: pct + "%",
+        ocupCor: lotada ? "#cf6b5c" : (umaVaga ? "#b0722c" : "#348a8e"),
+        vagaLabel: lotada ? "Lotada" : (u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
+        vagaBg: lotada ? "rgba(207,107,92,0.14)" : (umaVaga ? "#f9dfc6" : "rgba(52,138,142,0.14)"),
+        vagaFg: lotada ? "#b05c4c" : (umaVaga ? "#b0722c" : "#348a8e"),
+        abaixoDoMinimo,
+        minimoLabel: (minimo - u.ocupadas) + " abaixo do mínimo",
+        minimoTitulo: "Mínimo de " + minimo + " alunas para abrir e para manter a turma",
+        material: u.notebook || "Sem caderno vinculado neste ciclo",
+        materialCurto: (u.notebook || "—").slice(0, 30),
+        editando,
+        // a professora vem da Equipe: nome digitado à mão desliga a turma
+        // da folha de pagamento sem avisar ninguém.
+        profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
+          .concat(professoras.map(n => ({ id: n, label: n, sel: n === u.teacher }))),
+        editLabel: editando ? "editando…" : "editar",
+        editBg: editando ? "#164951" : "#fff",
+        editFg: editando ? "#fff" : "#164951",
+        onEditar: () => this.setState({ editId: editando ? null : u.id, novaAberta: false }),
+        onCancelarEdicao: () => this.setState({ editId: null }),
+        onSalvarEdicao: () => {
+          const patch = {};
+          const t = this.val(this.edTeacherRef); if (t) patch.teacher = t;
+          const pj = this.val(this.edProjetoRef); if (pj) patch.projeto = pj;
+          const mt = this.val(this.edMaterialRef); if (mt) patch.notebook = mt;
+          const cp = parseInt(this.val(this.edCapRef), 10); if (cp > 0) patch.capacidade = cp;
+          const nv = this.val(this.edNivelRef); if (nv) patch.nivel = nv;
+          const hr = this.val(this.edHorarioRef); if (hr) patch.turma = hr;
+          // mudar nível ou horário muda o rótulo da turma: as alunas vão junto
+          if (patch.nivel || patch.turma) {
+            const antes = u.nivel + " · " + u.turma;
+            const depois = (patch.nivel || u.nivel) + " · " + (patch.turma || u.turma);
+            CRM.getPessoas().filter(pp => pp.turma === antes).forEach(pp => {
+              CRM.updateLead(pp.id, { turma: depois });
+            });
+          }
+          if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
+          this.setState({ editId: null });
+        },
+        onExcluir: () => {
+          const ocupadas = u.ocupadas > 0 ? "\nAtenção: " + u.ocupadas + " aluna(s) matriculada(s) nela." : "";
+          if (window.confirm("Excluir a turma " + u.nivel + " (" + u.turma + ")?" + ocupadas)) {
+            CRM.removeTurma(u.id);
+            this.setState({ editId: null });
+          }
+        }
+      };
+    });
+
+    // alunas particulares (matrícula com turma "Particular")
+    const particulares = CRM.getPessoas()
+      .filter(p => p.status === "aluna" && (p.turma === "Particular" || (p.formatos || []).indexOf("particular") >= 0))
+      .map(p => {
+        const pac = p.particular || null;
+        return {
+          nome: p.nome, professora: p.professora || "—",
+          desde: pac && pac.inicio ? CRM.mesAno(pac.inicio) : (p.desde ? CRM.mesAno(p.desde) : "—"),
+          pacote: pac && pac.aulas ? (pac.feitas || 0) + "/" + pac.aulas + " aulas" : "—",
+          pacoteCor: pac && pac.aulas && (pac.feitas || 0) >= pac.aulas ? "#e07856" : "#348a8e",
+          perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + p.id
+        };
+      });
+
+    const selIds = Object.keys(this.state.selTurmas);
+
+    // ── a janela do ciclo ──
+    // O horário cadastrado nesta tela é o que gera a aula na Agenda,
+    // mas só dentro do ciclo. Sem fim informado a aula não para nunca;
+    // com o ciclo terminado ela já parou. Os dois precisam estar
+    // escritos aqui, ou a pergunta vira "cadastrei a turma, por que
+    // não aparece aula?".
+    const jan = CRM.cicloJanela ? CRM.cicloJanela() : { estado: "aberto", label: "" };
+    const cicloTexto = jan.estado === "sem_fim"
+      ? jan.label + " · sem data de fim, então estas aulas vão aparecer na agenda semana após semana."
+      : jan.estado === "terminado"
+        ? jan.label + " · terminou em " + CRM.ddmm(jan.fim) + ", e não há aula destas turmas na agenda desde então."
+        : jan.estado === "por_comecar"
+          ? jan.label + " · começa em " + CRM.ddmm(jan.inicio) + ". Até lá estas turmas não têm aula na agenda."
+          : jan.label + " · aulas de " + CRM.ddmm(jan.inicio) + " a " + CRM.ddmm(jan.fim);
+
+    return {
+      cicloBg: (jan.estado === "aberto" || jan.estado === "por_comecar") ? "#fff" : "#fdf1e8",
+      cicloCor: (jan.estado === "aberto" || jan.estado === "por_comecar") ? "#1d5a63" : "#c98a3a",
+      cicloTexto: cicloTexto,
+      cicloAcao: "mudar as datas na Central",
+
+      teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
+      onTeacher: (e) => this.setState({ teacher: e.target.value }),
+      // barra de seleção: excluir várias turmas de uma vez, em dois cliques
+      temSelecao: selIds.length > 0,
+      selContagem: selIds.length === 1 ? "1 turma selecionada" : selIds.length + " turmas selecionadas",
+      selExcluirLabel: this.state.confirmaExcluirSel
+        ? "Confirmar exclusão" : (selIds.length === 1 ? "Excluir turma" : "Excluir turmas"),
+      selExcluirBorda: this.state.confirmaExcluirSel ? "#cf6b5c" : "#f3c4bb",
+      selExcluirBg: this.state.confirmaExcluirSel ? "#fff" : "transparent",
+      onSelExcluir: () => {
+        if (!selIds.length) return;
+        if (!this.state.confirmaExcluirSel) { this.setState({ confirmaExcluirSel: true }); return; }
+        selIds.forEach(id => CRM.removeTurma(id));
+        this.setState({ selTurmas: {}, confirmaExcluirSel: false, editId: null });
+      },
+      onSelLimparTurmas: () => this.setState({ selTurmas: {}, confirmaExcluirSel: false }),
+      abas, turmas, vazio: turmas.length === 0,
+      particulares, partVazio: particulares.length === 0,
+      partCount: particulares.length + (particulares.length === 1 ? " aluna" : " alunas"),
+      novaAberta: this.state.novaAberta,
+      novaLabel: this.state.novaAberta ? "fechar" : "+ Nova turma",
+      novaBg: this.state.novaAberta ? "#fff" : "#164951",
+      novaFg: this.state.novaAberta ? "#1d5a63" : "#fff",
+      onToggleNova: () => this.setState({ novaAberta: !this.state.novaAberta, editId: null }),
+      ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef,
+      ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef,
+      edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef,
+      edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
+      onCriarTurma: () => {
+        const nivel = this.val(this.ntNivelRef), turma = this.val(this.ntTurmaRef);
+        if (!nivel || !turma) { window.alert("Preencha pelo menos o nível e o horário da turma."); return; }
+        window.ISRCRM.addTurma({
+          nivel, turma,
+          teacher: this.val(this.ntTeacherRef),
+          projeto: this.val(this.ntProjetoRef),
+          notebook: this.val(this.ntMaterialRef),
+          capacidade: this.val(this.ntCapRef)
+        });
+        [this.ntNivelRef, this.ntTurmaRef, this.ntTeacherRef, this.ntProjetoRef, this.ntMaterialRef, this.ntCapRef]
+          .forEach(r => { if (r.current) r.current.value = ""; });
+        this.setState({ novaAberta: false });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
