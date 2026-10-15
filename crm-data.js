@@ -6374,6 +6374,59 @@
   function gestaoUser() {
     try { return JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) { return null; }
   }
+
+  // ── VER COMO ──────────────────────────────────────────────────
+  //
+  // Quem cuida da escola precisa conseguir olhar o sistema pelos
+  // olhos de quem trabalha nela: a fila da Carla, o painel da
+  // professora, o menu que cada uma vê. Isso existia no seletor de
+  // perfil da Central antiga e se perdeu no porte.
+  //
+  // Duas regras, e a segunda é a que importa:
+  //
+  // 1. só a gestora liga. Ver como outra pessoa nunca dá acesso a
+  //    nada — a gestora já vê tudo —, então isto só estreita a
+  //    visão, nunca alarga;
+  // 2. **gestaoUser() continua devolvendo a pessoa de verdade.** É
+  //    dela que saem os "por" de toda gravação: chamada, pendência,
+  //    toque, recado no mural. Se o ver como entrasse aqui, a Gabi
+  //    olhando como Carla gravaria chamada assinada pela Carla, e o
+  //    arquivo de cinco anos passaria a mentir. Quem filtra tela usa
+  //    gestaoVisao(); quem grava usa gestaoUser().
+  var VER_COMO_KEY = "isr_ver_como_v1";
+  function verComo() {
+    var u = gestaoUser();
+    if (!u || u.perfil !== "gestora") return null;
+    try {
+      var v = JSON.parse(localStorage.getItem(VER_COMO_KEY));
+      if (!v || !v.nome || v.nome === u.nome) return null;
+      return v;
+    } catch (e) { return null; }
+  }
+  function setVerComo(v) {
+    var u = gestaoUser();
+    if (!u || u.perfil !== "gestora") return null;
+    try {
+      if (!v || !v.nome || v.nome === u.nome) localStorage.removeItem(VER_COMO_KEY);
+      else localStorage.setItem(VER_COMO_KEY, JSON.stringify(
+        { nome: v.nome, perfil: v.perfil || "professora", papeis: v.papeis || [v.perfil || "professora"] }));
+    } catch (e) {}
+    return verComo();
+  }
+  // A identidade que as telas usam para FILTRAR e para decidir o que
+  // mostrar. Nunca para gravar.
+  function gestaoVisao() { return verComo() || gestaoUser(); }
+  // Quem a gestora pode escolher ver: a equipe cadastrada, sem ela.
+  function verComoOpcoes() {
+    var u = gestaoUser();
+    if (!u || u.perfil !== "gestora") return [];
+    return (equipeLista() || []).filter(function (m) {
+      return m.nome && m.nome !== u.nome && (m.papeis || []).length;
+    }).map(function (m) {
+      var papeis = (m.papeis || []).filter(function (x) { return x !== "prestadora"; });
+      return { nome: m.nome, perfil: papeis[0] || "professora", papeis: papeis };
+    }).filter(function (m) { return m.papeis.length; });
+  }
   var CALC_KEY = "isr_calc_v1";
   var CALC_PADRAO = { grupoBRL: 497, grupoEUR: 125, partBRL: 800, partEUR: 200,
     descAvistaMax: 10, sinalPct: 20, parcelas: [3, 6, 8] };
@@ -6498,6 +6551,9 @@
   }
   function sairGestao() {
     localStorage.removeItem("isr_gestao_user");
+    // o "ver como" não pode sobreviver à troca de pessoa: quem entrar
+    // depois abriria o sistema já olhando pelos olhos de outra
+    try { localStorage.removeItem(VER_COMO_KEY); } catch (e) {}
     guardarTokenGestao(null);
   }
 
@@ -12625,6 +12681,8 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    gestaoVisao: gestaoVisao, verComo: verComo, setVerComo: setVerComo,
+    verComoOpcoes: verComoOpcoes,
     guardarTokenGestao: guardarTokenGestao, tokenGestao: tokenGestao,
     temTokenGestao: function () { return !!tokenGestaoGuardado(); }, chamarFuncao: chamarFuncao,
     categorias: function () { var seen = {}, out = []; templatesMerged().forEach(function (t) { if (!seen[t.categoria]) { seen[t.categoria] = 1; out.push(t.categoria); } }); return out; },

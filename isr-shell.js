@@ -24,9 +24,21 @@
   "use strict";
   try { if (window.self !== window.top) return; } catch (e) { return; }
 
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) {}
-  if (!user) return;
+  var real = null;
+  try { real = JSON.parse(localStorage.getItem("isr_gestao_user")) || null; } catch (e) {}
+  if (!real) return;
+  // user é a identidade de VISÃO: com "ver como" ligado, é a pessoa
+  // por cujos olhos a gestora está olhando. Quem grava continua sendo
+  // a de verdade, que o crm-data resolve em gestaoUser().
+  function visao() {
+    try { return (window.ISRCRM && window.ISRCRM.gestaoVisao && window.ISRCRM.gestaoVisao()) || real; }
+    catch (e) { return real; }
+  }
+  // o shell carrega ANTES do crm-data, então aqui ainda não há
+  // ISRCRM: a identidade de visão só pode ser resolvida na hora de
+  // desenhar. Sem isso o "ver como" trocava o conteúdo das telas e
+  // deixava o menu e o nome na barra como estavam.
+  var user = real;
 
   var LARGURA = 252;
   var ESTREITO = 860;
@@ -85,31 +97,41 @@
   }
 
   // ── os destinos ───────────────────────────────────────────────
-  // A mesma lista da barra de cima, na ordem do dia de trabalho e sem
-  // as áreas: numa coluna alta, agrupar em sete títulos gasta altura
-  // sem ajudar ninguém a achar nada.
+  // Agrupados em cinco seções, como no desenho v4. Vinte itens numa
+  // coluna lisa viram uma lista para ler inteira toda vez; com
+  // título em cima de cada grupo, a pessoa pula direto para o pedaço
+  // do dia em que está.
+  //
+  // O Mural e o Desafio da semana saíram do menu por decisão da
+  // escola. Continuam no ar, pelos endereços /mural.html e
+  // /programa.html, e com link no rodapé da Central — tela que
+  // ninguém alcança é tela morta.
   var ITENS = [
-    { id: "central", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: null },
-    { id: "professor", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
-    { id: "alunas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "crm", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-    { id: "mensagens", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-    { id: "mural", icone: "▭", label: "Mural da equipe", href: "ISR - Mural v3.dc.html", perfis: null },
-    { id: "mciclo", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matriculas ciclo v3.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "calc", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora v3.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "acomp", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "cobranca", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
-    { id: "caixa", icone: "⇅", label: "Caixa", href: "ISR - Caixa v3.dc.html", perfis: ["gestora", "operacao"] },
-    { id: "folha", icone: "≡", label: "Folha", href: "ISR - Folha v3.dc.html", perfis: ["gestora"] },
-    { id: "turmas", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "programa", icone: "◇", label: "Desafio da semana", href: "ISR - Desafio v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
-    { id: "agenda", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
-    { id: "marketing", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "importar", icone: "↧", label: "Importar", href: "ISR - Importar v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-    { id: "equipe", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },
-    { id: "dados", icone: "▣", label: "Dados", href: "ISR - Dados v3.dc.html", perfis: ["gestora"] },
-    { id: "conexao", icone: "⟳", label: "Conexão", href: "gestao.html?config", perfis: ["gestora"] }
+    { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: null },
+    { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
+
+    { id: "alunas", sec: "pessoas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    { id: "crm", sec: "pessoas e vendas", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "mensagens", sec: "pessoas e vendas", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "matricula", sec: "pessoas e vendas", icone: "+", label: "Matrícula", href: "ISR - Matrícula v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "mciclo", sec: "pessoas e vendas", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matriculas ciclo v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "calc", sec: "pessoas e vendas", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora v3.dc.html", perfis: ["gestora", "comercial"] },
+
+    { id: "cobranca", sec: "financeiro", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
+    { id: "caixa", sec: "financeiro", icone: "⇅", label: "Caixa", href: "ISR - Caixa v3.dc.html", perfis: ["gestora", "operacao"] },
+    { id: "folha", sec: "financeiro", icone: "≡", label: "Folha", href: "ISR - Folha v3.dc.html", perfis: ["gestora"] },
+
+    { id: "professor", sec: "pedagógico", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
+    { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+
+    { id: "marketing", sec: "escola", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "equipe", sec: "escola", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },
+    { id: "dados", sec: "escola", icone: "▣", label: "Dados", href: "ISR - Dados v3.dc.html", perfis: ["gestora"] },
+    { id: "importar", sec: "escola", icone: "↧", label: "Importar", href: "ISR - Importar v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "conexao", sec: "escola", icone: "⟳", label: "Conexão", href: "gestao.html?config", perfis: ["gestora"] }
   ];
+  var SECOES = ["hoje", "pessoas e vendas", "financeiro", "pedagógico", "escola"];
 
   function visivel(item) {
     if (!item.perfis) return true;
@@ -155,6 +177,7 @@
     if (document.getElementById("isr-shell")) return;
     if (!document.body) return;
     garantirFonte();
+    user = visao();
 
     var nums = contagens();
     var estreito = window.innerWidth <= ESTREITO;
@@ -168,7 +191,11 @@
     aside.id = "isr-shell";
     aside.style.cssText = "position:fixed;left:0;top:0;width:" + LARGURA + "px;height:100vh;"
       + "background:#164951;color:#fff;padding:22px 14px;box-sizing:border-box;z-index:9998;"
-      + "display:flex;flex-direction:column;gap:16px;overflow-y:auto;"
+      // Só a lista de destinos rola. O rodapé — sincronização, versão
+      // e sair — fica preso embaixo: com o menu agrupado a coluna
+      // passou de 1.100px e, rolando tudo junto, o "sair" e o aviso
+      // de sincronização sumiam de qualquer tela de notebook.
+      + "display:flex;flex-direction:column;gap:16px;overflow:hidden;"
       + "font-family:" + FONTE + ";";
 
     var logo = document.createElement("img");
@@ -177,9 +204,11 @@
     logo.style.cssText = "height:30px;width:auto;object-fit:contain;object-position:left;align-self:flex-start;flex:none;";
     aside.appendChild(logo);
 
+    var vendoComo = null;
+    try { vendoComo = window.ISRCRM && window.ISRCRM.verComo ? window.ISRCRM.verComo() : null; } catch (e) {}
+
     var quem = document.createElement("div");
     quem.style.cssText = "flex:none;font-size:12px;line-height:1.4;color:rgba(255,255,255,0.75);";
-    quem.innerHTML = "";
     var qn = document.createElement("div");
     qn.textContent = user.nome;
     qn.style.cssText = "font-size:14px;font-weight:600;color:#fff;";
@@ -188,34 +217,101 @@
     quem.appendChild(qn); quem.appendChild(qp);
     aside.appendChild(quem);
 
-    var nav = document.createElement("nav");
-    nav.style.cssText = "display:flex;flex-direction:column;gap:2px;flex:1;";
-    ITENS.filter(visivel).forEach(function (it) {
-      var on = ativo(it);
-      var a = document.createElement("a");
-      a.href = encodeURI(it.href);
-      a.style.cssText = "display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;"
-        + "font-size:14px;font-weight:500;text-decoration:none;color:#fff;"
-        + (on ? "background:rgba(255,255,255,0.14);" : "");
-      var ic = document.createElement("span");
-      ic.textContent = it.icone;
-      // O ícone não herda o peso do rótulo: a 600, vinte glifos geométricos
-      // em coluna pesam mais que os vinte nomes ao lado deles, e a coluna
-      // inteira fica carregada.
-      ic.style.cssText = "width:18px;text-align:center;flex:none;font-weight:400;opacity:.7;";
-      var lb = document.createElement("span");
-      lb.textContent = it.label;
-      lb.style.cssText = "flex:1;min-width:0;";
-      a.appendChild(ic); a.appendChild(lb);
-      if (nums[it.id]) {
-        var bd = document.createElement("span");
-        bd.textContent = String(nums[it.id]);
-        bd.style.cssText = "flex:none;font-size:11px;font-weight:700;color:#fc9082;";
-        a.appendChild(bd);
+    // ── ver como ────────────────────────────────────────────────
+    // Só a gestora, e marcado o tempo todo: olhar pelos olhos de
+    // outra pessoa sem perceber é pior do que não poder olhar.
+    var opcoes = [];
+    try { opcoes = (window.ISRCRM && window.ISRCRM.verComoOpcoes ? window.ISRCRM.verComoOpcoes() : []) || []; } catch (e) {}
+    if (real.perfil === "gestora" && opcoes.length) {
+      var vc = document.createElement("div");
+      vc.id = "isr-shell-vercomo";
+      vc.style.cssText = "flex:none;display:flex;flex-direction:column;gap:6px;"
+        + (vendoComo ? "background:#9c6f56;margin:0 -6px;padding:8px 8px 10px;border-radius:14px;" : "");
+      var vt = document.createElement("div");
+      vt.textContent = vendoComo ? "vendo como" : "ver como";
+      vt.style.cssText = "font-size:11px;font-weight:600;letter-spacing:.04em;"
+        + (vendoComo ? "color:#ffe6d8;" : "color:#fc9082;") + "padding:0 4px;";
+      vc.appendChild(vt);
+      var chips = document.createElement("div");
+      chips.style.cssText = "display:flex;flex-wrap:wrap;gap:5px;";
+      var trocar = function (alvo) {
+        try { window.ISRCRM.setVerComo(alvo); } catch (e) {}
+        window.location.reload();
+      };
+      var chip = function (rotulo, sub, ligado, aoClicar) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.style.cssText = "border:0;cursor:pointer;font-family:inherit;text-align:left;"
+          + "border-radius:10px;padding:6px 9px;line-height:1.25;"
+          + (ligado ? "background:#fff;color:#164951;" : "background:rgba(255,255,255,0.10);color:#fff;");
+        var l1 = document.createElement("div");
+        l1.textContent = rotulo;
+        l1.style.cssText = "font-size:12px;font-weight:600;";
+        b.appendChild(l1);
+        if (sub) {
+          var l2 = document.createElement("div");
+          l2.textContent = sub;
+          l2.style.cssText = "font-size:10px;opacity:.75;";
+          b.appendChild(l2);
+        }
+        b.onclick = aoClicar;
+        return b;
+      };
+      chips.appendChild(chip(real.nome, PERFIL_LABEL[real.perfil] || real.perfil, !vendoComo,
+        function () { trocar(null); }));
+      opcoes.forEach(function (o) {
+        chips.appendChild(chip(o.nome, PERFIL_LABEL[o.perfil] || o.perfil,
+          !!vendoComo && vendoComo.nome === o.nome, function () { trocar(o); }));
+      });
+      vc.appendChild(chips);
+      if (vendoComo) {
+        var aviso = document.createElement("div");
+        aviso.textContent = "Você vê o que " + vendoComo.nome + " vê. O que você gravar continua no seu nome.";
+        aviso.style.cssText = "font-size:10.5px;line-height:1.4;color:#ffe6d8;padding:0 4px;";
+        vc.appendChild(aviso);
       }
-      a.onmouseenter = function () { if (!on) a.style.background = "rgba(255,255,255,0.08)"; };
-      a.onmouseleave = function () { if (!on) a.style.background = "transparent"; };
-      nav.appendChild(a);
+      aside.appendChild(vc);
+    }
+
+    var nav = document.createElement("nav");
+    nav.style.cssText = "display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow-y:auto;";
+    SECOES.forEach(function (sec) {
+      var doGrupo = ITENS.filter(function (it) { return it.sec === sec; }).filter(visivel);
+      if (!doGrupo.length) return;
+      var bloco = document.createElement("div");
+      bloco.style.cssText = "display:flex;flex-direction:column;gap:2px;";
+      var tit = document.createElement("div");
+      tit.textContent = sec;
+      tit.style.cssText = "font-size:11px;font-weight:600;color:#fc9082;padding:2px 12px;";
+      bloco.appendChild(tit);
+      doGrupo.forEach(function (it) {
+        var on = ativo(it);
+        var a = document.createElement("a");
+        a.href = encodeURI(it.href);
+        a.style.cssText = "display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;"
+          + "font-size:14px;font-weight:500;text-decoration:none;color:#fff;"
+          + (on ? "background:rgba(255,255,255,0.14);" : "");
+        var ic = document.createElement("span");
+        ic.textContent = it.icone;
+        // O ícone não herda o peso do rótulo: a 600, vinte glifos
+        // geométricos em coluna pesam mais que os vinte nomes ao lado
+        // deles, e a coluna inteira fica carregada.
+        ic.style.cssText = "width:18px;text-align:center;flex:none;font-weight:400;opacity:.7;";
+        var lb = document.createElement("span");
+        lb.textContent = it.label;
+        lb.style.cssText = "flex:1;min-width:0;";
+        a.appendChild(ic); a.appendChild(lb);
+        if (nums[it.id]) {
+          var bd = document.createElement("span");
+          bd.textContent = String(nums[it.id]);
+          bd.style.cssText = "flex:none;font-size:11px;font-weight:700;color:#fc9082;";
+          a.appendChild(bd);
+        }
+        a.onmouseenter = function () { if (!on) a.style.background = "rgba(255,255,255,0.08)"; };
+        a.onmouseleave = function () { if (!on) a.style.background = "transparent"; };
+        bloco.appendChild(a);
+      });
+      nav.appendChild(bloco);
     });
     aside.appendChild(nav);
 

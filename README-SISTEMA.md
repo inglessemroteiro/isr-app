@@ -261,6 +261,51 @@ Substitui o Zap. A pessoa compra no link de checkout do Stripe (com ou sem order
 
 ---
 
+## A barra lateral
+
+Os destinos em cinco seções, na ordem do dia de trabalho: **hoje ·
+pessoas e vendas · financeiro · pedagógico · escola**. Vinte itens
+numa coluna lisa viram uma lista para ler inteira toda vez; com
+título em cima de cada grupo, a pessoa pula direto para o pedaço em
+que está.
+
+Só a lista rola. O rodapé — sincronização, versão e sair — fica preso
+embaixo: a coluna agrupada passa de 1.100px e, rolando tudo junto, o
+"sair" sumia de qualquer tela de notebook.
+
+O **Mural da equipe** e o **Desafio da semana** saíram do menu. Estão
+no rodapé da Central e nos endereços `/mural.html` e
+`/programa.html` — tela que ninguém alcança é tela morta, e o Mural
+ainda é de onde saem pendências para a equipe.
+
+### Ver como
+
+Quem cuida da escola precisa olhar o sistema pelos olhos de quem
+trabalha nela: a fila da Carla, o painel da professora, o menu que
+cada uma vê. Isso existia no seletor de perfil da Central antiga e se
+perdeu no porte; voltou na barra lateral, onde vale para todas as
+telas.
+
+Duas regras, e a segunda é a que importa:
+
+1. **só a gestora liga.** Ver como outra pessoa nunca dá acesso a
+   nada — a gestora já vê tudo —, então isto só estreita a visão,
+   nunca alarga. Ligar por fora, pelo console, não funciona.
+2. **`gestaoUser()` continua devolvendo a pessoa de verdade.** É dela
+   que saem os "por" de toda gravação: chamada, pendência, toque,
+   recado no mural. Se o ver como entrasse ali, a Gabi olhando como
+   Carla gravaria chamada assinada pela Carla, e o arquivo de cinco
+   anos passaria a mentir.
+
+Quem filtra tela usa `gestaoVisao()`; quem grava usa `gestaoUser()`.
+Enquanto está ligado, a barra fica marcada e diz, com todas as
+letras, que o que for gravado continua no nome de quem está ali.
+
+Sair da gestão limpa o ver como: quem entrar depois abriria o sistema
+já olhando pelos olhos de outra pessoa.
+
+---
+
 ## Ligar as chaves · passo a passo
 
 Três coisas, nesta ordem. A primeira é urgente: **enquanto
