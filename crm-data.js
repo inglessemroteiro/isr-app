@@ -376,6 +376,7 @@
     var m = {}; try { m = JSON.parse(localStorage.getItem(METAS_KEY)) || {}; } catch (e) {}
     Object.assign(m, patch);
     try { localStorage.setItem(METAS_KEY, JSON.stringify(m)); } catch (e) {}
+    janelasCache = null;
     agendarSync();
     return metasAtuais();
   }
@@ -428,13 +429,63 @@
     };
   }
 
-  // Há aula nesta data? É o filtro que a agenda consulta.
-  function temAulaEm(data) {
+  // ── OS CICLOS JÁ FECHADOS ─────────────────────────────────────
+  //
+  // O sistema tinha UM ciclo, não uma lista. Abrir o 4.2026 apagava
+  // o 3.2026, e com ele a resposta para "quais aulas deveriam ter
+  // acontecido entre julho e outubro". Isso é registro acadêmico: a
+  // escola guarda por anos, e é dele que sai a frequência do
+  // certificado. Um campo que se sobrescreve não serve.
+  //
+  // Agora cada ciclo fechado vira uma linha guardada. A lista anda
+  // junto no sync, então vale em qualquer aparelho e é carimbada no
+  // backup da planilha.
+  var CICLOS_KEY = "isr_ciclos_v1";
+  function ciclosLista() {
+    try { return JSON.parse(localStorage.getItem(CICLOS_KEY)) || []; } catch (e) { return []; }
+  }
+  function ciclosSalvar(l) {
+    try { localStorage.setItem(CICLOS_KEY, JSON.stringify(l || [])); } catch (e) {}
+    janelasCache = null;
+    agendarSync();
+  }
+  // O ciclo de agora mais todos os que já fecharam, do mais novo para
+  // o mais antigo. É a memória completa da escola.
+  function ciclosTodos() {
     var M = metasAtuais();
+    var fora = ciclosLista().slice();
+    if (M.cicloLabel && M.cicloInicio) {
+      fora = fora.filter(function (c) { return c.label !== M.cicloLabel; });
+      fora.push({ label: M.cicloLabel, inicio: M.cicloInicio, fim: M.cicloFim || "", atual: true });
+    }
+    return fora.sort(function (a, b) { return a.inicio < b.inicio ? 1 : -1; });
+  }
+
+  // Há aula nesta data? É o filtro que a agenda consulta.
+  //
+  // Vale para QUALQUER ciclo, não só o de agora: uma aula de setembro
+  // continua tendo existido depois que outubro começa, senão a
+  // chamada retroativa e a frequência do ciclo passado sumiriam.
+  // Entre um ciclo e outro não há aula — é o intervalo.
+  var janelasCache = null;
+  function janelasDeAula() {
+    if (janelasCache) return janelasCache;
+    janelasCache = ciclosTodos()
+      .filter(function (c) { return c.inicio; })
+      .map(function (c) { return { ini: c.inicio, fim: c.fim || "" }; });
+    return janelasCache;
+  }
+  function temAulaEm(data) {
     if (!data) return false;
-    if (M.cicloInicio && data < M.cicloInicio) return false;
-    if (M.cicloFim && data > M.cicloFim) return false;
-    return true;
+    var js = janelasDeAula();
+    // nenhum ciclo configurado: nada muda, como antes
+    if (!js.length) return true;
+    for (var i = 0; i < js.length; i++) {
+      if (data < js[i].ini) continue;
+      if (js[i].fim && data > js[i].fim) continue;
+      return true;
+    }
+    return false;
   }
 
   // Abrir o próximo ciclo: nome, início e fim de uma vez. Enquanto o
@@ -447,9 +498,18 @@
     if (!label || !dia.test(cfg.inicio || "") || !dia.test(cfg.fim || "")) return false;
     if (cfg.fim < cfg.inicio) return false;
     var antes = metasAtuais();
+    // o ciclo que estava valendo vira registro antes de ser trocado —
+    // é o que impede a troca de apagar a história
+    if (antes.cicloLabel && antes.cicloInicio && antes.cicloLabel !== label) {
+      var guardados = ciclosLista().filter(function (c) { return c.label !== antes.cicloLabel; });
+      guardados.push({ label: antes.cicloLabel, inicio: antes.cicloInicio,
+        fim: antes.cicloFim || "", fechadoEm: new Date().toISOString() });
+      ciclosSalvar(guardados);
+    }
     var patch = { cicloLabel: label, cicloInicio: cfg.inicio, cicloFim: cfg.fim };
     if (cfg.meta != null && cfg.meta !== "") patch.matriculas = parseInt(cfg.meta, 10) || 0;
     setMetas(patch);
+    janelasCache = null;
     // a equipe precisa saber que a agenda mudou de janela
     try {
       muralPost("Ciclo " + label + " aberto · aulas de "
@@ -5865,6 +5925,8 @@
       turmas: turmasRaw(), eventos: eventosLista(), chamadas: chamadasAll(),
       // tarefas vai CRU (com as lápides das pendências removidas)
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
+      // os ciclos já fechados: registro acadêmico, vai junto
+      ciclos: ciclosLista(),
       equipe: equipeLista(), calc: calcParams(),
       lancamentos: lancamentosRaw(), cambio: taxaCambio(), contas: contasLista(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
@@ -5892,6 +5954,7 @@
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
     grava(MURAL_KEY, d.mural); grava(CONTAS_KEY, d.contas);
+    if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
     if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
@@ -5983,7 +6046,7 @@
             // Campos sem id (custos, modelos, metas, calculadora, câmbio)
             // não têm carimbo por registro: no puxe, vale o servidor —
             // é o que garante que um aparelho novo receba tudo.
-            ["custos", "templates", "metas", "calc", "cambio",
+            ["custos", "templates", "metas", "calc", "cambio", "ciclos",
              "assinaturaCfg", "bookclub", "bookclubAula"].forEach(function (k) {
               if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
             });
@@ -7382,11 +7445,41 @@
   //
   // Aqui ficam as aulas que já aconteceram e continuam sem chamada
   // salva — de turma, particular e extra, na mesma lista.
+  // Qual ciclo está sendo conferido agora. Durante o ciclo, ele
+  // mesmo. No intervalo entre dois, o que acabou de fechar — é dele
+  // que as chamadas ainda faltam, e é dele que sai o certificado.
+  function cicloDeAuditoria() {
+    var hoje = iso(today());
+    var todos = ciclosTodos().filter(function (c) { return c.inicio; });
+    var dentro = todos.filter(function (c) {
+      return c.inicio <= hoje && (!c.fim || hoje <= c.fim);
+    })[0];
+    if (dentro) return dentro;
+    // ciclosTodos já vem do mais novo para o mais antigo
+    return todos.filter(function (c) { return c.fim && c.fim < hoje; })[0] || null;
+  }
+
+  // A janela da conferência era de 21 dias corridos. Isso faz da
+  // chamada um lembrete, não um registro: a aula de 22 dias atrás
+  // sumia da lista sem nunca ter sido lançada, e a frequência do
+  // ciclo ficava furada em silêncio. Agora a conferência é do CICLO
+  // inteiro — que é a unidade que a escola fecha e arquiva.
   var JANELA_CHAMADA_DIAS = 21;
   function chamadasPendentes(professora, dias) {
-    var n = dias || JANELA_CHAMADA_DIAS;
     var hoje = iso(today());
-    var desde = addDays(-n);
+    var n, desde;
+    if (dias) {
+      n = dias; desde = addDays(-n);
+    } else {
+      var c = cicloDeAuditoria();
+      if (c && c.inicio) {
+        desde = c.inicio;
+        var ate = (c.fim && c.fim < hoje) ? c.fim : hoje;
+        n = Math.max(1, daysBetween(parseISO(desde), parseISO(ate)) + 1);
+      } else {
+        n = JANELA_CHAMADA_DIAS; desde = addDays(-n);
+      }
+    }
     var out = [];
 
     // turmas: a agenda sabe em que dias elas caem
@@ -12350,6 +12443,7 @@
     filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
     cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
+    ciclosLista: ciclosLista, ciclosTodos: ciclosTodos, cicloDeAuditoria: cicloDeAuditoria,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,

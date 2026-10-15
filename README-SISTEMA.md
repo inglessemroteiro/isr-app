@@ -319,6 +319,34 @@ quem souber um e-mail da equipe ainda entra. Assim que as quatro
 contas existirem, o bloco marcado `PORTA DE TRANSIÇÃO` em `gestao.html`
 sai do código.
 
+### O ciclo, e o arquivo de cinco anos
+
+A escola vende ciclo, e é o ciclo que a agenda usa para saber em que
+dias há aula. Por muito tempo isso foi **um** campo: abrir o ciclo
+seguinte apagava o anterior, e com ele a resposta para "quais aulas
+deveriam ter acontecido entre julho e outubro". Para frequência e
+certificado, que a escola guarda por anos, um campo que se
+sobrescreve não serve.
+
+Agora cada ciclo fechado vira uma linha guardada (`isr_ciclos_v1`),
+que anda no sync e é carimbada no backup da planilha. Disso decorre:
+
+- **a aula de um ciclo passado continua tendo existido.** Trocar de
+  ciclo não apaga a história, e a chamada retroativa continua
+  possível — pelo Painel do professor, em "outra data · chamada
+  retroativa", sem limite de prazo;
+- **a conferência de chamada é do ciclo inteiro**, não de 21 dias
+  corridos como antes. A aula de 22 dias atrás sumia da lista sem
+  nunca ter sido lançada, e a frequência ficava furada em silêncio;
+- **no intervalo entre dois ciclos**, quem está em conferência é o que
+  acabou de fechar — é dele que as chamadas ainda faltam e é dele que
+  sai o certificado;
+- a agenda não gera aula no intervalo, nem antes do primeiro ciclo.
+
+A chamada, uma vez salva, não é apagada por nada: fica em
+`isr_chamadas_v1`, vai no sync e é carimbada em aba legível da
+planilha. É esse o arquivo de cinco anos.
+
 ### A base
 
 O navegador falava direto com o Apps Script, com o endereço escrito em
