@@ -409,18 +409,65 @@
   // Sem data de fim gravada nada muda — é o estado "sem_fim", e a
   // Central avisa. Isso evita que a agenda de quem ainda não
   // configurou o ciclo esvazie de uma hora para outra.
-  function cicloJanela() {
-    var M = metasAtuais();
+  // ── OS TRÊS CALENDÁRIOS ───────────────────────────────────────
+  //
+  // A escola tinha um ciclo só, e isso estava errado: as turmas
+  // online, a turma presencial e as alunas particulares começam e
+  // terminam em datas diferentes. Com uma janela só, a agenda
+  // inventava aula presencial em semana sem aula presencial, e a
+  // conferência de chamada cobrava aula que não houve.
+  //
+  // O ciclo das turmas online continua onde sempre esteve (nas
+  // metas), para nada quebrar em quem ainda não configurou os
+  // outros. Os outros dois ficam na lista de ciclos, marcados com
+  // tipo e com "atual".
+  var TIPOS_CICLO = [
+    { id: "online", nome: "Turmas online" },
+    { id: "presencial", nome: "Turma presencial" },
+    { id: "particular", nome: "Aulas particulares" }
+  ];
+  function tipoCicloValido(t) {
+    return TIPOS_CICLO.some(function (x) { return x.id === t; }) ? t : "online";
+  }
+  // De que calendário é esta turma. O nome da turma é o que a escola
+  // escreve, e "PRESENCIAL" está escrito nele.
+  function tipoDaTurma(u) {
+    return /PRESENCIAL/i.test((u && (u.turma || u.label)) || "") ? "presencial" : "online";
+  }
+  // O ciclo em vigor de um tipo. Para "online" é o das metas; para os
+  // outros, a linha marcada como atual na lista.
+  function cicloAtualDe(tipo) {
+    tipo = tipoCicloValido(tipo);
+    if (tipo === "online") {
+      var M = metasAtuais();
+      return { label: M.cicloLabel || "", inicio: M.cicloInicio || "",
+        fim: M.cicloFim || "", tipo: "online" };
+    }
+    var c = ciclosLista().filter(function (x) {
+      return x.atual && tipoCicloValido(x.tipo) === tipo;
+    })[0];
+    return { label: (c && c.label) || "", inicio: (c && c.inicio) || "",
+      fim: (c && c.fim) || "", tipo: tipo };
+  }
+
+  function cicloJanela(tipo) {
+    tipo = tipoCicloValido(tipo);
+    var c = cicloAtualDe(tipo);
     var hoje = iso(today());
-    var ini = M.cicloInicio || "";
-    var fim = M.cicloFim || "";
-    var estado = !fim ? "sem_fim"
+    var ini = c.inicio;
+    var fim = c.fim;
+    // presencial e particular sem nada configurado não existem ainda, e
+    // dizer isso é diferente de dizer "sem data de fim". O online segue
+    // como sempre: sem fim gravado é "sem_fim", e a Central avisa.
+    var estado = (tipo !== "online" && !ini && !fim) ? "sem_ciclo"
+      : !fim ? "sem_fim"
       : (hoje > fim ? "terminado"
       : (ini && hoje < ini ? "por_comecar" : "aberto"));
     var dFim = fim ? parseISO(fim) : null;
     var dIni = ini ? parseISO(ini) : null;
     return {
-      label: M.cicloLabel || "", inicio: ini, fim: fim, estado: estado,
+      tipo: tipo, tipoNome: (TIPOS_CICLO.filter(function (x) { return x.id === tipo; })[0] || {}).nome || "",
+      label: c.label, inicio: ini, fim: fim, estado: estado,
       diasAteOFim: dFim ? daysBetween(today(), dFim) : null,
       // entre um ciclo e outro há férias, e nesses dias a agenda fica
       // vazia de propósito. Sem este número as telas não conseguem
@@ -451,13 +498,19 @@
   }
   // O ciclo de agora mais todos os que já fecharam, do mais novo para
   // o mais antigo. É a memória completa da escola.
-  function ciclosTodos() {
+  // tipo opcional: sem ele vêm os três calendários juntos, que é o que
+  // a frequência e o arquivo de cinco anos precisam.
+  function ciclosTodos(tipo) {
     var M = metasAtuais();
-    var fora = ciclosLista().slice();
+    var fora = ciclosLista().slice().map(function (c) {
+      return Object.assign({}, c, { tipo: tipoCicloValido(c.tipo) });
+    });
     if (M.cicloLabel && M.cicloInicio) {
-      fora = fora.filter(function (c) { return c.label !== M.cicloLabel; });
-      fora.push({ label: M.cicloLabel, inicio: M.cicloInicio, fim: M.cicloFim || "", atual: true });
+      fora = fora.filter(function (c) { return !(c.tipo === "online" && c.label === M.cicloLabel); });
+      fora.push({ label: M.cicloLabel, inicio: M.cicloInicio, fim: M.cicloFim || "",
+        tipo: "online", atual: true });
     }
+    if (tipo) fora = fora.filter(function (c) { return c.tipo === tipoCicloValido(tipo); });
     return fora.sort(function (a, b) { return a.inicio < b.inicio ? 1 : -1; });
   }
 
@@ -468,16 +521,27 @@
   // chamada retroativa e a frequência do ciclo passado sumiriam.
   // Entre um ciclo e outro não há aula — é o intervalo.
   var janelasCache = null;
-  function janelasDeAula() {
-    if (janelasCache) return janelasCache;
-    janelasCache = ciclosTodos()
-      .filter(function (c) { return c.inicio; })
-      .map(function (c) { return { ini: c.inicio, fim: c.fim || "" }; });
-    return janelasCache;
+  function janelasDeAula(tipo) {
+    if (!janelasCache) {
+      janelasCache = {};
+      ciclosTodos().filter(function (c) { return c.inicio; }).forEach(function (c) {
+        (janelasCache[c.tipo] = janelasCache[c.tipo] || []).push({ ini: c.inicio, fim: c.fim || "" });
+      });
+    }
+    if (!tipo) {
+      var tudo = [];
+      Object.keys(janelasCache).forEach(function (k) { tudo = tudo.concat(janelasCache[k]); });
+      return tudo;
+    }
+    return janelasCache[tipoCicloValido(tipo)] || [];
   }
-  function temAulaEm(data) {
+  // tipo: "online", "presencial" ou "particular". Quem não configurou o
+  // calendário daquele tipo cai no calendário geral — é o que mantém a
+  // agenda de quem nunca mexeu nisso exatamente como estava.
+  function temAulaEm(data, tipo) {
     if (!data) return false;
-    var js = janelasDeAula();
+    var js = tipo ? janelasDeAula(tipo) : [];
+    if (!js.length) js = janelasDeAula();
     // nenhum ciclo configurado: nada muda, como antes
     if (!js.length) return true;
     for (var i = 0; i < js.length; i++) {
@@ -497,6 +561,11 @@
     var label = String(cfg.label || "").trim();
     if (!label || !dia.test(cfg.inicio || "") || !dia.test(cfg.fim || "")) return false;
     if (cfg.fim < cfg.inicio) return false;
+    var tipo = tipoCicloValido(cfg.tipo);
+    // o presencial e o particular têm calendário próprio: ficam na
+    // lista, um "atual" por tipo, sem tocar nas metas (que são do
+    // calendário das turmas online)
+    if (tipo !== "online") return abrirCicloDeTipo(tipo, label, cfg.inicio, cfg.fim);
     var antes = metasAtuais();
     // o ciclo que estava valendo vira registro antes de ser trocado —
     // é o que impede a troca de apagar a história
@@ -526,6 +595,38 @@
         + ddmm(cfg.inicio) + " a " + ddmm(cfg.fim)
         + (antes.cicloLabel && antes.cicloLabel !== label
             ? " · o ciclo " + antes.cicloLabel + " fica fechado" : ""),
+        "Pedagógico", (gestaoUser() || {}).nome || "");
+    } catch (e) {}
+    return true;
+  }
+
+  // O mesmo para o presencial e o particular. A diferença é só onde o
+  // ciclo em vigor mora: nas metas, no caso das turmas online; na
+  // lista, com atual: true, nos outros dois. As regras são iguais —
+  // o que estava valendo vira registro fechado, e um nome que volta
+  // a valer deixa de ter uma linha fechada com o mesmo nome.
+  function abrirCicloDeTipo(tipo, label, inicio, fim) {
+    var antes = cicloAtualDe(tipo);
+    var l = ciclosLista().filter(function (c) {
+      if (tipoCicloValido(c.tipo) !== tipo) return true;
+      // a linha do nome que está sendo gravado sai: ela vira a atual
+      if (c.label === label) return false;
+      // a que estava valendo deixa de ser a atual e fica como registro
+      if (c.atual) {
+        c.atual = false;
+        c.fechadoEm = new Date().toISOString();
+      }
+      return true;
+    });
+    l.push({ label: label, inicio: inicio, fim: fim, tipo: tipo, atual: true });
+    ciclosSalvar(l);
+    janelasCache = null;
+    try {
+      var nome = (TIPOS_CICLO.filter(function (x) { return x.id === tipo; })[0] || {}).nome || tipo;
+      muralPost(nome + " · ciclo " + label + " · aulas de "
+        + ddmm(inicio) + " a " + ddmm(fim)
+        + (antes.label && antes.label !== label
+            ? " · o ciclo " + antes.label + " fica fechado" : ""),
         "Pedagógico", (gestaoUser() || {}).nome || "");
     } catch (e) {}
     return true;
@@ -7458,9 +7559,9 @@
   // Qual ciclo está sendo conferido agora. Durante o ciclo, ele
   // mesmo. No intervalo entre dois, o que acabou de fechar — é dele
   // que as chamadas ainda faltam, e é dele que sai o certificado.
-  function cicloDeAuditoria() {
+  function cicloDeAuditoria(tipo) {
     var hoje = iso(today());
-    var todos = ciclosTodos().filter(function (c) { return c.inicio; });
+    var todos = ciclosTodos(tipo).filter(function (c) { return c.inicio; });
     var dentro = todos.filter(function (c) {
       return c.inicio <= hoje && (!c.fim || hoje <= c.fim);
     })[0];
@@ -7481,11 +7582,18 @@
     if (dias) {
       n = dias; desde = addDays(-n);
     } else {
-      var c = cicloDeAuditoria();
-      if (c && c.inicio) {
-        desde = c.inicio;
-        var ate = (c.fim && c.fim < hoje) ? c.fim : hoje;
-        n = Math.max(1, daysBetween(parseISO(desde), parseISO(ate)) + 1);
+      // Três calendários, três ciclos a conferir. A varredura começa
+      // no mais antigo deles e vai até hoje; cada aula depois é
+      // descartada pela janela do SEU calendário, não pela desta
+      // varredura — senão a aula presencial de uma semana que não
+      // existe para as turmas online entraria na conta.
+      var inicios = TIPOS_CICLO.map(function (t) { return cicloDeAuditoria(t.id); })
+        .filter(function (c) { return c && c.inicio; })
+        .map(function (c) { return c.inicio; })
+        .sort();
+      if (inicios.length) {
+        desde = inicios[0];
+        n = Math.max(1, daysBetween(parseISO(desde), today()) + 1);
       } else {
         n = JANELA_CHAMADA_DIAS; desde = addDays(-n);
       }
@@ -7512,6 +7620,8 @@
     // particulares: a série diz quando cada aula foi marcada
     aulasParticularesAgendadas(desde, hoje, professora).forEach(function (a) {
       if (a.data >= hoje || a.estado === "feita") return;
+      // fora do ciclo das particulares a aula não é cobrada
+      if (!temAulaEm(a.data, "particular")) return;
       var label = "Particular · " + a.nome;
       if (getChamada(label, a.data)) return;
       out.push({ tipo: "particular", label: label, data: a.data, hora: a.hora || "",
@@ -7597,6 +7707,73 @@
     });
     return Object.keys(mapa).map(function (k) { return mapa[k]; })
       .sort(function (a, b) { return b.n - a.n; });
+  }
+
+  // ── PRESENÇA PARA TODOS, NAS AULAS SEM CHAMADA ────────────────
+  //
+  // A escola ficou meses sem lançar chamada e juntou uma pilha. Fazer
+  // uma a uma é o certo quando a professora lembra quem faltou; não é
+  // viável para o acúmulo, e a alternativa real não é "fazer com
+  // calma", é não fazer — e sem chamada a aluna não tem presença nem
+  // falta, e a frequência do certificado sai menor do que a real.
+  //
+  // Então: dar presença a todas, de uma vez, com duas travas. A
+  // primeira é que isto só escreve onde NÃO existe chamada — nada
+  // que a professora lançou é tocado. A segunda é o simular: antes de
+  // gravar, a tela mostra quantas aulas e quantas alunas, porque isto
+  // vai para o arquivo de cinco anos.
+  //
+  // A aula extra fica de fora: ela não tem lista de alunas, e inventar
+  // presença sem saber quem estava lá é inventar registro.
+  function presencaParaTodos(opcoes) {
+    opcoes = opcoes || {};
+    var simular = !!opcoes.simular;
+    var por = opcoes.por || (gestaoUser() || {}).nome || "";
+    var pendentes = chamadasPendentes(opcoes.professora || "", opcoes.dias)
+      .filter(function (c) { return c.tipo !== "extra"; })
+      .filter(function (c) { return !opcoes.tipo || c.tipo === opcoes.tipo; })
+      .filter(function (c) { return !opcoes.ate || c.data <= opcoes.ate; });
+
+    var aulas = 0, presencas = 0, semAluna = 0, extras = 0, porProfessora = {};
+    chamadasPendentes(opcoes.professora || "", opcoes.dias).forEach(function (c) {
+      if (c.tipo === "extra") extras++;
+    });
+
+    pendentes.forEach(function (c) {
+      var ids = [];
+      if (c.tipo === "turma") {
+        ids = alunasDaTurma(c.label, c.data).map(function (a) { return a.id; });
+      } else if (c.tipo === "particular" && c.pessoaId) {
+        ids = [c.pessoaId];
+      }
+      if (!ids.length) { semAluna++; return; }
+      aulas++; presencas += ids.length;
+      var k = c.professora || "sem professora";
+      porProfessora[k] = (porProfessora[k] || 0) + 1;
+      if (simular) return;
+      var mapa = {};
+      ids.forEach(function (id) { mapa[id] = "presente"; });
+      salvarChamada(c.label, c.data, mapa, por);
+    });
+
+    var resumo = { aulas: aulas, presencas: presencas, semAluna: semAluna,
+      extras: extras, simulado: simular,
+      porProfessora: Object.keys(porProfessora).sort().map(function (k) {
+        return { professora: k, n: porProfessora[k] };
+      }) };
+    // o lote fica no mural: é uma alteração grande no registro, e a
+    // equipe tem que poder ver que foi feita, por quem e quando
+    if (!simular && aulas) {
+      try {
+        muralPost("Presença lançada para todas em " + aulas
+          + (aulas === 1 ? " aula sem chamada" : " aulas sem chamada")
+          + " · " + presencas + (presencas === 1 ? " presença" : " presenças")
+          + (opcoes.professora ? " · só as de " + opcoes.professora : "")
+          + ". Quem faltou precisa ser corrigido na chamada do dia.",
+          "Pedagógico", por);
+      } catch (e) {}
+    }
+    return resumo;
   }
 
   function proximaAulaParticular(pessoaId) {
@@ -9819,7 +9996,10 @@
         var d = new Date(t0); d.setDate(d.getDate() + i);
         // fora da janela do ciclo não há aula: é o que impede a agenda
         // de inventar terça-feira para sempre depois do ciclo acabar
-        if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d))) {
+        // o calendário é o do tipo da turma: a presencial começa e
+        // termina em datas próprias, e usar a janela das online punha
+        // aula presencial em semana sem aula presencial
+        if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d), tipoDaTurma(u))) {
           itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula", turmaId: u.id,
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
@@ -12454,6 +12634,8 @@
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
     cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
     ciclosLista: ciclosLista, ciclosTodos: ciclosTodos, cicloDeAuditoria: cicloDeAuditoria,
+    TIPOS_CICLO: TIPOS_CICLO, cicloAtualDe: cicloAtualDe, tipoDaTurma: tipoDaTurma,
+    presencaParaTodos: presencaParaTodos,
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,

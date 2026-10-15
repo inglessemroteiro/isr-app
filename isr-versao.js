@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-k",
-  data: "15/10/2026",
-  nota: "As 22 telas antigas saem do sistema. Os endereços delas continuam abrindo, agora na tela nova, por redirecionamento — link salvo nos favoritos ou numa ata não quebra"
+  numero: "2026.10.16-a",
+  data: "16/10/2026",
+  nota: "Três calendários em vez de um: turmas online, turma presencial e aulas particulares começam e terminam em datas próprias. E a Central passa a lançar presença em todas as aulas sem chamada de uma vez, em duas etapas"
 };

@@ -261,6 +261,62 @@ Substitui o Zap. A pessoa compra no link de checkout do Stripe (com ou sem order
 
 ---
 
+## Ligar as chaves · passo a passo
+
+Três coisas, nesta ordem. A primeira é urgente: **enquanto
+`ISR_FUNCOES_CHAVE` não existir, seis funções recusam tudo** —
+certificado, push, aviso de onboarding, chat, data e confirmações.
+Elas foram fechadas de propósito sem modo aberto, e isso significa
+que estão paradas até a variável existir.
+
+### 1. `ISR_FUNCOES_CHAVE` — fecha as seis funções
+
+1. Abra **app.netlify.com** e entre no site do ISR.
+2. **Site configuration** → **Environment variables** → **Add a
+   variable** → **Add a single variable**.
+3. Key: `ISR_FUNCOES_CHAVE`. Value: uma senha longa inventada na hora
+   — 30 caracteres aleatórios, sem significado. Guarde-a no
+   gerenciador de senhas; ela não aparece mais depois de salva.
+4. Scopes: deixe em **All scopes**. Deploy contexts: **All**.
+5. **Create variable**.
+6. **Deploys** → **Trigger deploy** → **Deploy site**. Variável nova
+   só vale depois de um deploy.
+7. Quem chama essas funções de fora (Zapier, Apps Script) precisa
+   mandar a mesma senha no cabeçalho `x-isr-chave` ou no campo
+   `chave` do corpo. Onde houver automação chamando uma das seis,
+   acrescente o cabeçalho.
+
+### 2. `ISR_BASE_URL` — o endereço da base sai do código
+
+1. Mesma tela: **Add a variable** → Key `ISR_BASE_URL`.
+2. Value: o endereço do Web App do banco central — o mesmo `.../exec`
+   que está hoje em `crm-data.js`.
+3. **Create variable** → **Trigger deploy**.
+4. Abra a Central e confira que a sincronização continua. Se cair no
+   caminho antigo, o console do navegador escreve "falando com a base
+   pelo caminho antigo".
+
+### 3. Convidar a equipe no Netlify Identity
+
+Até cada pessoa ter conta, a porta de transição do `gestao.html`
+deixa entrar só com o e-mail — que é o buraco que o Identity fecha.
+
+1. No site do ISR: aba **Identity**. Se ainda estiver desligada,
+   **Enable Identity**.
+2. **Settings and usage** → **Registration** → **Invite only**. Sem
+   isso qualquer pessoa cria conta sozinha.
+3. Volte para **Identity** → **Invite users**.
+4. Um e-mail por linha: o da Gabi, o da Carla, o da Érika, e os das
+   professoras que entram no sistema.
+5. **Send**. Cada pessoa recebe um convite, escolhe a própria senha e
+   passa a entrar por `inglessemroteiro.netlify.app/gestao.html`.
+6. Quando **todas** tiverem entrado uma vez, avise — aí a porta de
+   transição sai do `gestao.html` e o e-mail sozinho deixa de valer.
+
+Nenhuma dessas senhas deve ser mandada por conversa, nem para mim.
+
+---
+
 ## As portas do sistema
 
 O site é estático: qualquer pessoa lê o JavaScript dele e descobre
@@ -314,6 +370,51 @@ transição, não é para ficar: senha errada nunca abre essa porta, mas
 quem souber um e-mail da equipe ainda entra. Assim que as quatro
 contas existirem, o bloco marcado `PORTA DE TRANSIÇÃO` em `gestao.html`
 sai do código.
+
+### Os três calendários
+
+A escola não tem **um** ciclo, tem três: as turmas online, a turma
+presencial e as aulas particulares começam e terminam em datas
+diferentes. Enquanto havia uma janela só, a agenda gerava aula
+presencial em semana sem aula presencial, e a conferência cobrava
+chamada de aula que não houve.
+
+Cada tipo tem seu calendário, na Central:
+
+| Tipo | Onde o ciclo em vigor mora | Como a aula é reconhecida |
+|---|---|---|
+| Turmas online | nas metas (`cicloLabel/Inicio/Fim`) | o padrão |
+| Turma presencial | na lista de ciclos, com `tipo` e `atual` | "PRESENCIAL" no nome da turma |
+| Aulas particulares | idem | a aula é marcada na série da aluna |
+
+Quem não informa um calendário próprio não muda de comportamento: o
+tipo cai no calendário geral da escola, como sempre foi. É por isso
+que o presencial e o particular nascem como "sem calendário próprio"
+em vez de nascerem vazios — vazio pareceria "não há aula".
+
+A aula particular não é gerada por janela nenhuma (cada uma é marcada
+numa data), então o calendário das particulares serve para **não
+cobrar chamada** de aula fora do ciclo delas.
+
+### Presença para todas, nas aulas sem chamada
+
+Quando a pilha de chamadas não lançadas é grande, fazer uma a uma não
+é a alternativa real — a alternativa real é não fazer, e sem chamada a
+aluna não tem presença nem falta, e a frequência do certificado sai
+menor do que a real.
+
+`presencaParaTodos()` lança presença em todas as aulas sem chamada de
+uma vez. Três travas:
+
+1. **só escreve onde não existe chamada.** O que a professora lançou
+   não é tocado, e nenhuma chamada antiga fica marcada como corrigida;
+2. **duas etapas.** O primeiro clique simula e diz quantas aulas e
+   quantas presenças; o segundo grava;
+3. **a aula extra fica de fora.** Ela não tem lista de alunas, e
+   inventar presença sem saber quem estava lá é inventar registro.
+
+O lote vai para o mural da equipe, com quem fez e quanto. Quem faltou
+se corrige depois, na chamada do dia, pelo Painel do professor.
 
 ### O ciclo, e o arquivo de cinco anos
 
