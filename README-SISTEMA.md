@@ -394,7 +394,16 @@ em vez de nascerem vazios — vazio pareceria "não há aula".
 
 A aula particular não é gerada por janela nenhuma (cada uma é marcada
 numa data), então o calendário das particulares serve para **não
-cobrar chamada** de aula fora do ciclo delas.
+cobrar chamada** de aula fora do ciclo delas. Enquanto esse
+calendário não existir, nenhuma aula particular é descartada da
+conferência — cair na união das janelas dos outros tipos esconderia
+aula que aconteceu, que é justamente o defeito que a conferência
+existe para evitar.
+
+Com três calendários, a conferência deixou de poder nomear **um**
+ciclo: ela varre os três, e o nome escolhido seria o de um só. A tela
+diz o período de verdade — "Desde 01/07" — em vez de "no ciclo
+4.2026, de 31/08 a 07/11" diante de aulas de julho.
 
 ### Presença para todas, nas aulas sem chamada
 

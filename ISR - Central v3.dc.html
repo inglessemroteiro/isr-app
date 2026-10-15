@@ -478,11 +478,11 @@ class Component extends DCLogic {
     }
 
     // ── aulas sem chamada ─────────────────────────────────────
-    const audit = CRM.cicloDeAuditoria ? CRM.cicloDeAuditoria() : null;
     const grupos = (CRM.chamadasPendentesPorProfessora ? CRM.chamadasPendentesPorProfessora() : [])
       .filter(g => g.professora)
       .filter(g => vePelaEscola || g.professora === meuNome);
     const nAulas = grupos.reduce((t, g) => t + g.n, 0);
+    const maisAntiga = grupos.map(g => g.maisAntiga).filter(Boolean).sort()[0] || "";
     // ── presença para todas, de uma vez ───────────────────────
     // A pilha acumulada não se resolve uma por uma. Duas etapas: o
     // primeiro clique conta o que seria escrito (simular), o segundo
@@ -630,6 +630,7 @@ class Component extends DCLogic {
     };
 
     const TIPOS = (CRM.TIPOS_CICLO || [{ id: "online", nome: "Turmas online" }]);
+    const labelOnline = (CRM.cicloJanela ? CRM.cicloJanela("online").label : "") || "";
     const ciclos = TIPOS.map((t) => {
       const jan = CRM.cicloJanela ? CRM.cicloJanela(t.id) : { estado: "sem_fim", label: "" };
       const diasFim = jan.diasAteOFim;
@@ -675,11 +676,16 @@ class Component extends DCLogic {
         ajuda: "Depois da última aula a agenda para de gerar " + oQue
           + ", e a chamada deixa de ser cobrada. Para começar um ciclo novo, troque o nome e as duas datas.",
         // abre já preenchido com o que está gravado: quem só quer
-        // corrigir uma data não deve ter de redigitar o resto
+        // corrigir uma data não deve ter de redigitar o resto.
+        // Tipo que ainda não tem ciclo herda o nome do ciclo das
+        // turmas online: a escola numera os ciclos de um jeito só, e
+        // obrigar a inventar um nome para informar duas datas é
+        // atrito no exato momento em que a pessoa já está resolvendo.
         onMudar: () => this.setState({
           cicloErro: "",
           cicloForm: editando ? null
-            : { tipo: t.id, label: jan.label || "", inicio: jan.inicio || "", fim: jan.fim || "" }
+            : { tipo: t.id, label: jan.label || labelOnline || "",
+                inicio: jan.inicio || "", fim: jan.fim || "" }
         })
       };
     });
@@ -795,9 +801,12 @@ class Component extends DCLogic {
         + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
       // dizer de qual ciclo: a conferência passou a ser do ciclo
       // inteiro, e um número grande sem período assusta sem informar
-      semChamadaTexto: (audit ? "No ciclo " + audit.label
-          + (audit.inicio ? ", de " + CRM.ddmm(audit.inicio)
-             + (audit.fim ? " a " + CRM.ddmm(audit.fim) : "") : "") + ". " : "")
+      // Nomear UM ciclo deixou de funcionar com três calendários: a
+      // conferência varre os três, e o nome escolhido seria o de um
+      // só — que é o que a tela fez até agora, e dizia "no ciclo
+      // 4.2026, de 31/08 a 07/11" diante de aulas de julho. O período
+      // de verdade é o da aula mais antiga que falta até hoje.
+      semChamadaTexto: (maisAntiga ? "Desde " + CRM.ddmm(maisAntiga) + ". " : "")
         + (vePelaEscola
           ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo, e a frequência do certificado fica menor do que a real."
           : "Estas aulas suas aconteceram e ficaram sem chamada."),
