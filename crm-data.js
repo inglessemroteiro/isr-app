@@ -7618,10 +7618,16 @@
     });
 
     // particulares: a série diz quando cada aula foi marcada
+    var temCicloParticular = janelasDeAula("particular").length > 0;
     aulasParticularesAgendadas(desde, hoje, professora).forEach(function (a) {
       if (a.data >= hoje || a.estado === "feita") return;
-      // fora do ciclo das particulares a aula não é cobrada
-      if (!temAulaEm(a.data, "particular")) return;
+      // Fora do ciclo das particulares a aula não é cobrada — mas só
+      // quando esse ciclo existe. Sem ele, temAulaEm cairia na união
+      // das janelas dos outros tipos e esconderia da conferência uma
+      // aula particular marcada fora delas. Esconder aula que
+      // aconteceu é o defeito que esta conferência existe para
+      // evitar, então aqui o padrão é não filtrar.
+      if (temCicloParticular && !temAulaEm(a.data, "particular")) return;
       var label = "Particular · " + a.nome;
       if (getChamada(label, a.data)) return;
       out.push({ tipo: "particular", label: label, data: a.data, hora: a.hora || "",

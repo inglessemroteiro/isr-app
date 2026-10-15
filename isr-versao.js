@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-a",
+  numero: "2026.10.16-b",
   data: "16/10/2026",
-  nota: "Três calendários em vez de um: turmas online, turma presencial e aulas particulares começam e terminam em datas próprias. E a Central passa a lançar presença em todas as aulas sem chamada de uma vez, em duas etapas"
+  nota: "A conferência de chamada diz o período de verdade em vez de nomear um ciclo só, a aula particular não some dela por falta de calendário próprio, e informar as datas de um calendário novo já vem com o nome do ciclo preenchido"
 };
