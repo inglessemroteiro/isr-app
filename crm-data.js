@@ -882,6 +882,7 @@
     semearProgramaDemo(lista);
     semearChamadasDemo(lista);
     semearAulaExtraDemo(lista);
+    semearClubesDemo(lista);
     semearContatosDemo(lista);
   }
 
@@ -1028,6 +1029,51 @@
       turmaAlvo: "", rsvps: {}, manuais: alunas.map(function (p) { return p.id; }),
       criadoEm: iso(today()) };
     try { localStorage.setItem("isr_eventos_v1", JSON.stringify([ev])); } catch (e) {}
+  }
+
+  // Clubes de exemplo, com uma aluna em três deles: é a situação que
+  // a tela existe para resolver — o terceiro clube é pago, e quem
+  // está devendo tem que aparecer.
+  function semearClubesDemo(lista) {
+    try {
+      if ((JSON.parse(localStorage.getItem(CLUBES_KEY)) || []).length) return;
+    } catch (e) {}
+    var alunas = lista.filter(function (p) { return p.status === "aluna"; });
+    if (!alunas.length) return;
+    var base = [
+      { id: "clBook", nome: "Book Club", professora: "Carla", formato: "online",
+        dia: "quinta", hora: "20:00", duracao: "60 min", vagas: 8, status: "publicado",
+        descricao: "Um livro por ciclo, um capítulo por encontro." },
+      { id: "clMovie", nome: "Movie Lovers", professora: "Gabi", formato: "online",
+        dia: "quarta", hora: "20:30", duracao: "90 min", vagas: 10, status: "publicado",
+        descricao: "Um filme por mês, conversa na semana seguinte." },
+      { id: "clChef", nome: "Chef Traditions", professora: "Adrielly", formato: "presencial",
+        dia: "sábado", hora: "10:00", duracao: "120 min", vagas: 6, status: "publicado",
+        local: "Den Haag · a combinar",
+        descricao: "Cozinhar e conversar. Receita de casa de cada uma." },
+      { id: "clDutch", nome: "Dutch Life Talk", professora: "Érika", formato: "online",
+        dia: "segunda", hora: "19:30", duracao: "60 min", vagas: 10, status: "rascunho",
+        descricao: "A vida na Holanda, em inglês." }
+    ];
+    var agora = Date.now();
+    base.forEach(function (c, k) {
+      c.membros = []; c.espera = []; c.entrou = {}; c.pagos = {};
+      c.materiais = []; c.encontros = []; c.link = "";
+      c.vagas = c.vagas || 0;
+    });
+    // as três primeiras alunas entram em dois clubes; a primeira entra
+    // num terceiro e fica devendo
+    alunas.slice(0, 5).forEach(function (p, i) {
+      var quais = [base[i % 3], base[(i + 1) % 3]];
+      if (i === 0) quais.push(base[2]);
+      quais.forEach(function (c, j) {
+        if (c.membros.indexOf(p.id) >= 0) return;
+        if (c.vagas && c.membros.length >= c.vagas) { c.espera.push(p.id); return; }
+        c.membros.push(p.id);
+        c.entrou[p.id] = new Date(agora + i * 86400000 + j * 1000).toISOString();
+      });
+    });
+    try { localStorage.setItem(CLUBES_KEY, JSON.stringify(base)); } catch (e) {}
   }
 
   // Sem contatos registrados, a agenda do comercial abre zerada e não dá
@@ -5710,7 +5756,10 @@
     "isr_link_pagamento_v1", "isr_flin_url_v1", "isr_minutos_aula_v1", "isr_acessos_v1",
     "isr_contas_proprias_v1", "isr_jotform_v1", "isr_jotform_base_v1", "isr_gravadas_v1",
     "isr_booking_v1", "isr_systeme_v1", "isr_furos_ok_v1", "isr_bookclub_v1",
-    "isr_bookclub_aula_v1"];
+    // os ciclos fechados são o arquivo de cinco anos, e os clubes
+    // guardam quem está em qual: nenhum dos dois pode ficar de fora
+    // de uma cópia que se chama "contém tudo"
+    "isr_bookclub_aula_v1", "isr_ciclos_v1", "isr_clubes_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6045,6 +6094,7 @@
       // turmas vai CRU (com as lápides): sem isto a marca de "apagada"
       // não subia ao banco e o puxe seguinte devolvia a turma
       turmas: turmasRaw(), eventos: eventosLista(), chamadas: chamadasAll(),
+      clubes: clubesRaw(),
       // tarefas vai CRU (com as lápides das pendências removidas)
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       // os ciclos já fechados: registro acadêmico, vai junto
@@ -6071,6 +6121,7 @@
     if (d.templates) tplSaveLocal(d.templates);
     var grava = function (k, v) { if (v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
     grava(TURMAS_KEY, d.turmas); grava(EVENTOS_KEY, d.eventos); grava(CHAMADAS_KEY, d.chamadas);
+    grava(CLUBES_KEY, d.clubes);
     grava(TAREFAS_KEY, d.tarefas); grava(FERIADOS_KEY, d.feriados); grava(METAS_KEY, d.metas);
     grava(MOEDAS_KEY, d.moedas); grava(EQUIPE_KEY, d.equipe); grava(CALC_KEY, d.calc);
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
@@ -6098,6 +6149,7 @@
       custos: local.custos,               // lista curta e sem id: última edição vale
       templates: local.templates,
       turmas: lista("turmas"),
+      clubes: lista("clubes"),
       eventos: lista("eventos"),
       chamadas: mesclarMapa(local.chamadas, remoto.chamadas),
       tarefas: lista("tarefas"),
@@ -9653,6 +9705,199 @@
   // O Book Club tem app próprio (hoje no Netlify da escola). O endereço
   // fica configurável, com o atual como padrão — a aluna ganha o atalho
   // nos materiais sem ninguém precisar configurar nada.
+  // ── OS CLUBES ─────────────────────────────────────────────────
+  //
+  // Clube é encontro de conversa por tema, fora da aula: Book Club,
+  // Movie Lovers, Chef Traditions. A escola vendia um só (o Book
+  // Club, com um link solto na configuração) e agora oferece vários.
+  //
+  // A regra comercial é o que exige modelo de verdade: **os dois
+  // primeiros clubes de cada aluna vêm no plano; do terceiro em
+  // diante ela paga**. Quem decide quais dois são os incluídos é a
+  // ordem de entrada — por isso cada entrada fica carimbada. Sem o
+  // carimbo, entrar num quarto clube poderia tornar pago um clube
+  // em que ela está desde o começo.
+  //
+  // Vaga é limitada, então existe lista de espera: quem sai libera a
+  // vaga e a primeira da espera entra no lugar.
+  // Duas entradas no mesmo milissegundo empatavam, e o desempate
+  // caía no nome do clube: a aluna entrava no terceiro e o sistema
+  // cobrava o segundo. A ordem de entrada decide quem é pago, então
+  // ela não pode empatar.
+  var ultimoCarimboClube = "";
+  function carimboDeEntrada() {
+    var t = new Date().toISOString();
+    if (t <= ultimoCarimboClube) t = new Date(Date.parse(ultimoCarimboClube) + 1).toISOString();
+    ultimoCarimboClube = t;
+    return t;
+  }
+
+  var CLUBES_KEY = "isr_clubes_v1";
+  var CLUBES_INCLUIDOS = 2;
+  function clubesRaw() {
+    try { return JSON.parse(localStorage.getItem(CLUBES_KEY)) || []; } catch (e) { return []; }
+  }
+  function clubesSalvar(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(CLUBES_KEY, JSON.stringify(l || [])); } catch (e) {}
+    agendarSync();
+    return clubesLista();
+  }
+  function clubeNormal(c) {
+    return {
+      id: c.id, nome: c.nome || "", professora: c.professora || "",
+      formato: c.formato === "presencial" ? "presencial" : "online",
+      dia: c.dia || "", hora: c.hora || "", duracao: c.duracao || "",
+      local: c.local || "", link: c.link || "",
+      vagas: Math.max(0, parseInt(c.vagas, 10) || 0),
+      status: c.status === "publicado" ? "publicado" : "rascunho",
+      descricao: c.descricao || "",
+      materiais: c.materiais || [], encontros: c.encontros || [],
+      membros: c.membros || [], espera: c.espera || [],
+      entrou: c.entrou || {}, pagos: c.pagos || {},
+      _v: c._v
+    };
+  }
+  function clubesLista() {
+    return clubesRaw().filter(function (c) { return c && c.id && !c.apagado; }).map(clubeNormal);
+  }
+  function getClube(id) {
+    return clubesLista().filter(function (c) { return c.id === id; })[0] || null;
+  }
+  function clubeSalvar(cfg) {
+    cfg = cfg || {};
+    var nome = String(cfg.nome || "").trim();
+    if (!nome) return { ok: false, erro: "O clube precisa de um nome." };
+    if (cfg.formato === "presencial" && !String(cfg.local || "").trim()) {
+      return { ok: false, erro: "Clube presencial precisa de endereço." };
+    }
+    var l = clubesRaw();
+    var i = -1;
+    if (cfg.id) l.forEach(function (c, k) { if (c.id === cfg.id) i = k; });
+    if (i < 0) {
+      var novo = clubeNormal(Object.assign({ id: "cl" + Date.now() + Math.floor(Math.random() * 1000) }, cfg));
+      novo.nome = nome;
+      l.push(novo);
+    } else {
+      l[i] = clubeNormal(Object.assign({}, l[i], cfg, { id: l[i].id, nome: nome }));
+    }
+    clubesSalvar(l);
+    return { ok: true, id: i < 0 ? l[l.length - 1].id : cfg.id };
+  }
+  function clubeRemover(id) {
+    var l = clubesRaw().map(function (c) {
+      return c.id === id ? { id: c.id, apagado: iso(today()), _v: Date.now() } : c;
+    });
+    try { localStorage.setItem(CLUBES_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return clubesLista();
+  }
+
+  // Os clubes de uma aluna, na ordem em que ela entrou, já dizendo
+  // qual vem no plano e qual é pago.
+  function clubesDaAluna(pessoaId) {
+    if (!pessoaId) return [];
+    return clubesLista()
+      .filter(function (c) { return c.membros.indexOf(pessoaId) >= 0; })
+      .sort(function (a, b) {
+        var ea = a.entrou[pessoaId] || "", eb = b.entrou[pessoaId] || "";
+        return ea < eb ? -1 : ea > eb ? 1 : (a.nome < b.nome ? -1 : 1);
+      })
+      .map(function (c, i) {
+        var incluido = i < CLUBES_INCLUIDOS;
+        return { id: c.id, nome: c.nome, professora: c.professora,
+          formato: c.formato, dia: c.dia, hora: c.hora, local: c.local,
+          ordem: i + 1,
+          plano: incluido ? "incluido" : (c.pagos[pessoaId] ? "pago" : "pendente"),
+          pagoEm: c.pagos[pessoaId] || "" };
+      });
+  }
+  function clubeVagasLivres(c) {
+    return c.vagas ? Math.max(0, c.vagas - c.membros.length) : null;
+  }
+  // Entrar: vira membro se há vaga, senão entra na espera. Do
+  // terceiro clube em diante a entrada nasce pendente de pagamento —
+  // a aluna participa, e a cobrança aparece para a gestão.
+  function clubeEntrar(clubeId, pessoaId, opcoes) {
+    opcoes = opcoes || {};
+    var l = clubesRaw(), i = -1;
+    l.forEach(function (c, k) { if (c.id === clubeId) i = k; });
+    if (i < 0) return { ok: false, erro: "Clube não encontrado." };
+    var c = clubeNormal(l[i]);
+    if (c.membros.indexOf(pessoaId) >= 0) return { ok: true, jaEra: true };
+    var livres = clubeVagasLivres(c);
+    if (livres === 0 && !opcoes.forcar) {
+      if (c.espera.indexOf(pessoaId) < 0) c.espera.push(pessoaId);
+      l[i] = c; clubesSalvar(l);
+      return { ok: true, espera: true, posicao: c.espera.indexOf(pessoaId) + 1 };
+    }
+    c.espera = c.espera.filter(function (x) { return x !== pessoaId; });
+    c.membros.push(pessoaId);
+    c.entrou[pessoaId] = carimboDeEntrada();
+    l[i] = c; clubesSalvar(l);
+    var depois = clubesDaAluna(pessoaId).filter(function (x) { return x.id === clubeId; })[0];
+    return { ok: true, plano: depois ? depois.plano : "incluido",
+      ordem: depois ? depois.ordem : 1 };
+  }
+  // Sair libera a vaga, e a primeira da espera entra no lugar.
+  function clubeSair(clubeId, pessoaId) {
+    var l = clubesRaw(), i = -1;
+    l.forEach(function (c, k) { if (c.id === clubeId) i = k; });
+    if (i < 0) return { ok: false, erro: "Clube não encontrado." };
+    var c = clubeNormal(l[i]);
+    c.membros = c.membros.filter(function (x) { return x !== pessoaId; });
+    c.espera = c.espera.filter(function (x) { return x !== pessoaId; });
+    delete c.entrou[pessoaId];
+    delete c.pagos[pessoaId];
+    var entrou = null;
+    if (c.espera.length && clubeVagasLivres(c) !== 0) {
+      entrou = c.espera.shift();
+      c.membros.push(entrou);
+      c.entrou[entrou] = carimboDeEntrada();
+    }
+    l[i] = c; clubesSalvar(l);
+    return { ok: true, promovida: entrou };
+  }
+  function clubePagamentoFeito(clubeId, pessoaId, quando) {
+    var l = clubesRaw(), i = -1;
+    l.forEach(function (c, k) { if (c.id === clubeId) i = k; });
+    if (i < 0) return { ok: false };
+    var c = clubeNormal(l[i]);
+    c.pagos[pessoaId] = quando || iso(today());
+    l[i] = c; clubesSalvar(l);
+    return { ok: true };
+  }
+  // O que a gestão precisa ver de uma vez: quanto, quantos e quem
+  // está devendo o terceiro clube.
+  function clubesResumo() {
+    var cs = clubesLista();
+    var publicados = cs.filter(function (c) { return c.status === "publicado"; });
+    var pessoas = {};
+    var pendentes = [];
+    cs.forEach(function (c) {
+      c.membros.forEach(function (pid) { pessoas[pid] = true; });
+    });
+    Object.keys(pessoas).forEach(function (pid) {
+      clubesDaAluna(pid).forEach(function (x) {
+        if (x.plano !== "pendente") return;
+        var p = getPessoa(pid);
+        pendentes.push({ pessoaId: pid, nome: (p && p.nome) || pid,
+          clubeId: x.id, clube: x.nome, ordem: x.ordem });
+      });
+    });
+    pendentes.sort(function (a, b) { return a.nome < b.nome ? -1 : 1; });
+    return {
+      clubes: cs.length, publicados: publicados.length,
+      rascunhos: cs.length - publicados.length,
+      alunas: Object.keys(pessoas).length,
+      inscricoes: cs.reduce(function (t, c) { return t + c.membros.length; }, 0),
+      espera: cs.reduce(function (t, c) { return t + c.espera.length; }, 0),
+      vagas: cs.reduce(function (t, c) {
+        var v = clubeVagasLivres(c); return t + (v === null ? 0 : v); }, 0),
+      pendentes: pendentes
+    };
+  }
+
   var BOOKCLUB_KEY = "isr_bookclub_v1";
   function bookclubUrl() {
     try { return localStorage.getItem(BOOKCLUB_KEY) || "https://app.inglessemroteiro.com.br"; }
@@ -12799,6 +13044,11 @@
     jotformKey: jotformKey, setJotformKey: setJotformKey,
     jotformBase: jotformBase, setJotformBase: setJotformBase, jotformOutraBase: jotformOutraBase,
     gravadasUrl: gravadasUrl, setGravadasUrl: setGravadasUrl,
+    clubesLista: clubesLista, getClube: getClube, clubeSalvar: clubeSalvar,
+    clubeRemover: clubeRemover, clubesDaAluna: clubesDaAluna, clubeEntrar: clubeEntrar,
+    clubeSair: clubeSair, clubePagamentoFeito: clubePagamentoFeito,
+    clubesResumo: clubesResumo, clubeVagasLivres: clubeVagasLivres,
+    CLUBES_INCLUIDOS: CLUBES_INCLUIDOS,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,
     bookingUrl: bookingUrl, setBookingUrl: setBookingUrl,

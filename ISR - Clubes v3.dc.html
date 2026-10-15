@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Clubes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:#164951}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: #164951;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">clubes · encontros de conversa por tema</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Clubes</h1>
+      </div>
+      <button onclick="{{ onNovo }}" style="border: 0; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ novoBotao }}</button>
+    </header>
+
+    <!-- NÚMEROS -->
+    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+      <sc-for list="{{ numeros }}" as="n" hint-placeholder-count="4">
+        <section style="flex: 1 1 170px; min-width: 0; background: #fff; border-radius: 24px; padding: 16px 20px;">
+          <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: {{ n.cor }};">{{ n.valor }}</div>
+          <div style="font-size: 12.5px; color: #1d5a63; margin-top: 2px;">{{ n.label }}</div>
+        </section>
+      </sc-for>
+    </div>
+
+    <!-- OFERECER UM CLUBE -->
+    <sc-if value="{{ formAberto }}">
+      <section style="background: #fff; border-radius: 24px; padding: 20px 22px;">
+        <div style="font-size: 17px; font-weight: 600;">{{ formTitulo }}</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;">
+          <label style="flex: 1 1 240px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">nome do clube</div>
+            <input ref="{{ fNomeRef }}" placeholder="Movie Lovers" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+          <label style="flex: 0 1 180px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">quem conduz</div>
+            <select ref="{{ fProfRef }}" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951;">
+              <sc-for list="{{ fProfs }}" as="pf" hint-placeholder-count="3">
+                <option value="{{ pf.v }}" selected="{{ pf.sel }}">{{ pf.t }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <label style="flex: 0 1 150px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">formato</div>
+            <select ref="{{ fFormatoRef }}" onchange="{{ onFormato }}" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951;">
+              <option value="online" selected="{{ fOnline }}">online</option>
+              <option value="presencial" selected="{{ fPresencial }}">presencial</option>
+            </select>
+          </label>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+          <label style="flex: 0 1 130px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">dia</div>
+            <input ref="{{ fDiaRef }}" placeholder="quinta" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+          <label style="flex: 0 1 110px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">hora</div>
+            <input ref="{{ fHoraRef }}" placeholder="20:00" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+          <label style="flex: 0 1 110px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">duração</div>
+            <input ref="{{ fDuracaoRef }}" placeholder="60 min" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+          <label style="flex: 0 1 110px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">vagas</div>
+            <input ref="{{ fVagasRef }}" type="number" min="0" placeholder="25" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+          <label style="flex: 1 1 240px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">{{ fLocalLabel }}</div>
+            <input ref="{{ fLocalRef }}" placeholder="{{ fLocalPh }}" style="width: 100%; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951;">
+          </label>
+        </div>
+        <label style="display: block; margin-top: 12px;">
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">descrição para as alunas</div>
+          <textarea ref="{{ fDescRef }}" placeholder="Do que é o clube, em duas linhas." style="width: 100%; min-height: 70px; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951; resize: vertical;"></textarea>
+        </label>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px;">
+          <button onclick="{{ onGravarRascunho }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar rascunho</button>
+          <button onclick="{{ onPublicar }}" style="border: 0; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Publicar para as alunas</button>
+          <span style="font-size: 12.5px; font-weight: 600; color: #a3392c;">{{ formErro }}</span>
+        </div>
+        <p style="margin: 10px 0 0; font-size: 12.5px; color: #8a7465; line-height: 1.5;">Rascunho fica só para a equipe. Publicado, o clube aparece para as alunas e pode receber inscrição.</p>
+      </section>
+    </sc-if>
+
+    <!-- PAGAMENTOS PENDENTES -->
+    <!-- Os dois primeiros clubes vêm no plano; do terceiro em diante a
+         aluna paga. Quem está participando sem ter pago aparece aqui,
+         porque dinheiro que não é cobrado some sem ninguém notar. -->
+    <sc-if value="{{ temPendentes }}">
+      <section style="background: #fdf3d6; border-radius: 24px; padding: 18px 22px;">
+        <div style="font-size: 16px; font-weight: 600; color: #7a5c00;">Pagamentos pendentes · {{ pendentesN }}</div>
+        <p style="margin: 4px 0 8px; font-size: 13px; color: #5c4400; line-height: 1.5;">{{ pendentesTexto }}</p>
+        <sc-for list="{{ pendentes }}" as="pd" hint-placeholder-count="2">
+          <div style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #f2e2b0; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+              <a href="{{ pd.href }}" class="lk" style="font-size: 14.5px; font-weight: 600; color: #164951;">{{ pd.nome }}</a>
+              <div style="font-size: 12.5px; color: #5c4400; margin-top: 2px;">{{ pd.detalhe }}</div>
+            </div>
+            <span onclick="{{ pd.onPago }}" style="background: #fff; border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: #7a5c00; cursor: pointer;">Marcar como pago</span>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <!-- POR CLUBE OU POR ALUNA -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+      <sc-for list="{{ visoes }}" as="vi" hint-placeholder-count="2">
+        <button onclick="{{ vi.onClick }}" style="font-family: inherit; border: 0; background: {{ vi.bg }}; color: {{ vi.fg }}; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: {{ vi.peso }}; cursor: pointer;">{{ vi.label }}</button>
+      </sc-for>
+    </div>
+
+    <!-- A LISTA DOS CLUBES -->
+    <sc-if value="{{ porClube }}">
+      <sc-if value="{{ semClube }}">
+        <section style="background: #fff; border-radius: 24px; padding: 24px 22px;">
+          <div style="font-size: 15px; color: #1d5a63; line-height: 1.6;">Nenhum clube ainda. O botão de cima cria o primeiro: nome, quem conduz, dia e quantas vagas.</div>
+        </section>
+      </sc-if>
+      <sc-for list="{{ clubes }}" as="cl" hint-placeholder-count="3">
+        <section style="background: #fff; border-radius: 24px; padding: 20px 22px;">
+          <div style="display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 220px;">
+              <div style="display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;">
+                <span onclick="{{ cl.onAbrir }}" style="font-size: 17px; font-weight: 600; cursor: pointer;">{{ cl.nome }}</span>
+                <span style="font-size: 11px; font-weight: 600; background: {{ cl.statusBg }}; color: {{ cl.statusFg }}; border-radius: 999px; padding: 3px 10px;">{{ cl.statusLabel }}</span>
+              </div>
+              <div style="font-size: 13px; color: #1d5a63; margin-top: 2px;">{{ cl.linha }}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 15px; font-weight: 600; color: {{ cl.lotacaoCor }};">{{ cl.lotacao }}</div>
+              <div style="font-size: 12px; color: #8a7465;">{{ cl.esperaLabel }}</div>
+            </div>
+            <span onclick="{{ cl.onAbrir }}" style="font-size: 12.5px; font-weight: 600; color: #348a8e; cursor: pointer;">{{ cl.abrirLabel }}</span>
+          </div>
+
+          <sc-if value="{{ cl.aberto }}">
+            <div style="display: flex; flex-direction: column; margin-top: 10px; border-top: 1px solid #f2ebe3;">
+              <sc-for list="{{ cl.membros }}" as="mb" hint-placeholder-count="4">
+                <div style="display: flex; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid #f2ebe3; flex-wrap: wrap;">
+                  <a href="{{ mb.href }}" class="lk" style="flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; color: #348a8e;">{{ mb.nome }}</a>
+                  <span style="font-size: 11px; font-weight: 600; background: {{ mb.planoBg }}; color: {{ mb.planoFg }}; border-radius: 999px; padding: 3px 10px;">{{ mb.planoLabel }}</span>
+                  <span onclick="{{ mb.onSair }}" style="font-size: 12px; font-weight: 600; color: #8a7465; cursor: pointer;">tirar</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ cl.semMembro }}">
+                <div style="padding: 12px 0; font-size: 13.5px; color: #8a7465;">Ninguém inscrito ainda.</div>
+              </sc-if>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px;">
+              <span style="font-size: 12px; font-weight: 600; color: #8a7465;">adicionar aluna</span>
+              <select onchange="{{ cl.onAdicionar }}" style="flex: 1; min-width: 200px; border: 0; background: #f2ebe3; border-radius: 12px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951;">
+                <sc-for list="{{ cl.candidatas }}" as="cd" hint-placeholder-count="5">
+                  <option value="{{ cd.v }}">{{ cd.t }}</option>
+                </sc-for>
+              </select>
+              <span onclick="{{ cl.onEditar }}" style="font-size: 12.5px; font-weight: 600; color: #348a8e; cursor: pointer;">editar o clube</span>
+            </div>
+            <sc-if value="{{ cl.temEspera }}">
+              <div style="margin-top: 10px; font-size: 13px; color: #1d5a63;"><strong style="color: #164951;">Lista de espera:</strong> {{ cl.espera }}</div>
+            </sc-if>
+            <sc-if value="{{ cl.aviso }}">
+              <div style="margin-top: 10px; font-size: 13px; font-weight: 600; color: #3d6b22;">{{ cl.aviso }}</div>
+            </sc-if>
+          </sc-if>
+        </section>
+      </sc-for>
+    </sc-if>
+
+    <!-- POR ALUNA -->
+    <sc-if value="{{ porAluna }}">
+      <section style="background: #fff; border-radius: 24px; padding: 8px 22px;">
+        <sc-for list="{{ alunas }}" as="al" hint-placeholder-count="8">
+          <div style="display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2ebe3; flex-wrap: wrap;">
+            <a href="{{ al.href }}" class="lk" style="flex: 1; min-width: 170px; font-size: 14.5px; font-weight: 600; color: #348a8e;">{{ al.nome }}</a>
+            <div style="flex: 2; min-width: 220px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <sc-for list="{{ al.clubes }}" as="cb" hint-placeholder-count="2">
+                <span style="font-size: 12px; font-weight: 600; background: {{ cb.bg }}; color: {{ cb.fg }}; border-radius: 999px; padding: 4px 11px;">{{ cb.label }}</span>
+              </sc-for>
+            </div>
+            <span style="font-size: 12.5px; color: #8a7465;">{{ al.resumo }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ semAluna }}">
+          <div style="padding: 16px 0; font-size: 14px; color: #1d5a63;">Ninguém em clube nenhum ainda.</div>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <p style="margin: 0; font-size: 12.5px; color: #8a7465; line-height: 1.55; max-width: 760px;">Os dois primeiros clubes de cada aluna vêm no plano. Do terceiro em diante ela paga, e a ordem de entrada é o que decide quais são os dois — por isso sair de um clube antigo pode tornar incluído um que era pago.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // Clube é encontro de conversa por tema, fora da aula. A regra que
+  // manda na tela é comercial: os dois primeiros de cada aluna vêm no
+  // plano, do terceiro em diante ela paga. Quem decide quais dois é a
+  // ordem de entrada, que o crm-data carimba.
+  state = { tick: 0, visao: "clube", aberto: "", form: null, formErro: "",
+    formato: "online", aviso: {} };
+  fNomeRef = React.createRef(); fProfRef = React.createRef();
+  fFormatoRef = React.createRef(); fDiaRef = React.createRef();
+  fHoraRef = React.createRef(); fDuracaoRef = React.createRef();
+  fVagasRef = React.createRef(); fLocalRef = React.createRef();
+  fDescRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.onDados = () => this.bump();
+    window.addEventListener("isr-dados", this.onDados);
+    window.addEventListener("isr-dados-novos", this.onDados);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.onDados);
+    window.removeEventListener("isr-dados-novos", this.onDados);
+  }
+
+  // O formulário escreve nos refs depois que a tela desenha: abrir
+  // para editar precisa esperar o campo existir.
+  preencher(c) {
+    setTimeout(() => {
+      const por = (ref, v) => { if (ref.current) ref.current.value = v || ""; };
+      por(this.fNomeRef, c.nome); por(this.fProfRef, c.professora);
+      por(this.fFormatoRef, c.formato); por(this.fDiaRef, c.dia);
+      por(this.fHoraRef, c.hora); por(this.fDuracaoRef, c.duracao);
+      por(this.fVagasRef, c.vagas ? String(c.vagas) : "");
+      por(this.fLocalRef, c.formato === "presencial" ? c.local : c.link);
+      por(this.fDescRef, c.descricao);
+    }, 0);
+  }
+
+  lerForm() {
+    const v = (ref) => ((ref.current && ref.current.value) || "").trim();
+    const formato = v(this.fFormatoRef) === "presencial" ? "presencial" : "online";
+    const localOuLink = v(this.fLocalRef);
+    return { nome: v(this.fNomeRef), professora: v(this.fProfRef), formato: formato,
+      dia: v(this.fDiaRef), hora: v(this.fHoraRef), duracao: v(this.fDuracaoRef),
+      vagas: v(this.fVagasRef), descricao: v(this.fDescRef),
+      local: formato === "presencial" ? localOuLink : "",
+      link: formato === "presencial" ? "" : localOuLink };
+  }
+
+  gravar(status) {
+    const CRM = window.ISRCRM;
+    const f = this.state.form || {};
+    const dados = Object.assign(this.lerForm(), { status: status });
+    if (f.id) dados.id = f.id;
+    const r = CRM.clubeSalvar(dados);
+    if (!r.ok) { this.setState({ formErro: r.erro }); return; }
+    this.setState({ form: null, formErro: "" });
+    this.bump();
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const vazio = { numeros: [], clubes: [], alunas: [], visoes: [], pendentes: [],
+      temPendentes: false, pendentesN: "0", pendentesTexto: "",
+      porClube: true, porAluna: false, semClube: true, semAluna: true,
+      formAberto: false, formTitulo: "", formErro: "", novoBotao: "+ novo clube",
+      fProfs: [], fOnline: true, fPresencial: false,
+      fLocalLabel: "link da sala", fLocalPh: "https://meet.google.com/…",
+      fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
+      fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
+      fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      onNovo: () => {}, onFormato: () => {}, onGravarRascunho: () => {}, onPublicar: () => {} };
+    if (!CRM || !CRM.clubesLista) return vazio;
+
+    const cs = CRM.clubesLista();
+    const resumo = CRM.clubesResumo();
+    const pessoas = CRM.getPessoas() || [];
+    const nomeDe = (id) => { const p = pessoas.filter(x => x.id === id)[0]; return (p && p.nome) || id; };
+    const perfilHref = (id) => "ISR%20-%20Perfil%20v3.dc.html?id=" + id;
+
+    const PLANO = {
+      incluido: ["no plano", "#e5f2f6", "#164951"],
+      pago: ["3º clube · pago", "#e8f5dd", "#3d6b22"],
+      pendente: ["3º clube · a pagar", "#fdf3d6", "#7a5c00"]
+    };
+
+    const f = this.state.form;
+    const equipe = (CRM.equipeLista ? CRM.equipeLista() : []) || [];
+    const profs = equipe
+      .filter(m => (m.papeis || []).some(p => p === "professora" || p === "gestora"))
+      .map(m => ({ v: m.nome, t: m.nome, sel: !!f && f.professora === m.nome }));
+
+    const formato = this.state.formato;
+    const presencial = formato === "presencial";
+
+    return {
+      numeros: [
+        { valor: String(resumo.publicados), label: resumo.publicados === 1 ? "clube no ar" : "clubes no ar", cor: "#164951" },
+        { valor: String(resumo.alunas), label: resumo.alunas === 1 ? "aluna em clube" : "alunas em clube", cor: "#164951" },
+        { valor: String(resumo.vagas), label: resumo.vagas === 1 ? "vaga aberta" : "vagas abertas", cor: resumo.vagas ? "#3d6b22" : "#8a7465" },
+        { valor: String(resumo.pendentes.length), label: "a pagar", cor: resumo.pendentes.length ? "#a3392c" : "#3d6b22" }
+      ],
+
+      novoBotao: f ? "fechar" : "+ novo clube",
+      onNovo: () => {
+        if (this.state.form) { this.setState({ form: null, formErro: "" }); return; }
+        this.setState({ form: {}, formErro: "", formato: "online" });
+        this.preencher({ formato: "online" });
+      },
+      formAberto: !!f,
+      formTitulo: f && f.id ? "Editar o clube" : "Oferecer novo clube",
+      formErro: this.state.formErro,
+      fProfs: profs.length ? profs : [{ v: "", t: "—", sel: true }],
+      fOnline: !presencial, fPresencial: presencial,
+      fLocalLabel: presencial ? "endereço" : "link da sala",
+      fLocalPh: presencial ? "Rua, número, cidade" : "https://meet.google.com/…",
+      fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
+      fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
+      fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      onFormato: (e) => this.setState({ formato: e.target.value }),
+      onGravarRascunho: () => this.gravar("rascunho"),
+      onPublicar: () => this.gravar("publicado"),
+
+      temPendentes: resumo.pendentes.length > 0,
+      pendentesN: String(resumo.pendentes.length),
+      pendentesTexto: "Estas alunas estão num terceiro clube sem ter pago. A vaga só fica garantida depois do pagamento.",
+      pendentes: resumo.pendentes.map(pd => ({
+        nome: pd.nome, href: perfilHref(pd.pessoaId),
+        detalhe: pd.clube + " · " + pd.ordem + "º clube dela",
+        onPago: () => { CRM.clubePagamentoFeito(pd.clubeId, pd.pessoaId); this.bump(); }
+      })),
+
+      visoes: [
+        { id: "clube", label: "Por clube" },
+        { id: "aluna", label: "Por aluna" }
+      ].map(v => {
+        const on = this.state.visao === v.id;
+        return { label: v.label, bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#1d5a63",
+          peso: on ? 600 : 500, onClick: () => this.setState({ visao: v.id }) };
+      }),
+      porClube: this.state.visao === "clube",
+      porAluna: this.state.visao === "aluna",
+      semClube: cs.length === 0,
+
+      clubes: cs.map(c => {
+        const aberto = this.state.aberto === c.id;
+        const livres = CRM.clubeVagasLivres(c);
+        const naoMembros = pessoas
+          .filter(p => (p.status === "aluna" || p.status === "mvs") && c.membros.indexOf(p.id) < 0)
+          .sort((a, b) => (a.nome || "") < (b.nome || "") ? -1 : 1);
+        return {
+          nome: c.nome,
+          statusLabel: c.status === "publicado" ? "no ar" : "rascunho",
+          statusBg: c.status === "publicado" ? "#e8f5dd" : "#f2ebe3",
+          statusFg: c.status === "publicado" ? "#3d6b22" : "#8a7465",
+          linha: [c.professora, c.dia + (c.hora ? " " + c.hora : ""), c.duracao,
+                  c.formato === "presencial" ? (c.local || "presencial") : "online"]
+            .filter(x => x && String(x).trim()).join(" · "),
+          lotacao: c.vagas ? c.membros.length + " de " + c.vagas : String(c.membros.length),
+          lotacaoCor: livres === 0 ? "#a3392c" : "#164951",
+          esperaLabel: livres === 0 ? "lotado" : (livres === null ? "sem limite" : livres + (livres === 1 ? " vaga" : " vagas")),
+          abrirLabel: aberto ? "fechar" : "ver quem está",
+          onAbrir: () => this.setState(s => ({ aberto: s.aberto === c.id ? "" : c.id })),
+          aberto: aberto,
+          semMembro: c.membros.length === 0,
+          membros: c.membros.map(pid => {
+            const dela = CRM.clubesDaAluna(pid).filter(x => x.id === c.id)[0];
+            const pl = PLANO[(dela && dela.plano) || "incluido"];
+            return { nome: nomeDe(pid), href: perfilHref(pid),
+              planoLabel: pl[0], planoBg: pl[1], planoFg: pl[2],
+              onSair: () => {
+                const r = CRM.clubeSair(c.id, pid);
+                this.setState(s => ({ aviso: Object.assign({}, s.aviso,
+                  { [c.id]: r.promovida ? nomeDe(r.promovida) + " entrou no lugar, da lista de espera." : "" }) }));
+                this.bump();
+              } };
+          }),
+          candidatas: [{ v: "", t: naoMembros.length ? "escolha uma aluna…" : "todas já estão no clube" }]
+            .concat(naoMembros.map(p => ({ v: p.id, t: p.nome }))),
+          onAdicionar: (e) => {
+            const pid = e.target.value;
+            if (!pid) return;
+            e.target.value = "";
+            const r = CRM.clubeEntrar(c.id, pid);
+            const msg = r.espera
+              ? nomeDe(pid) + " entrou na lista de espera — o clube está lotado."
+              : r.plano === "pendente"
+                ? nomeDe(pid) + " entrou. É o " + r.ordem + "º clube dela, então entra como a pagar."
+                : nomeDe(pid) + " entrou. Está no plano dela.";
+            this.setState(s => ({ aviso: Object.assign({}, s.aviso, { [c.id]: msg }) }));
+            this.bump();
+          },
+          onEditar: () => {
+            this.setState({ form: c, formErro: "", formato: c.formato });
+            this.preencher(c);
+          },
+          temEspera: c.espera.length > 0,
+          espera: c.espera.map(nomeDe).join(", "),
+          aviso: (this.state.aviso || {})[c.id] || ""
+        };
+      }),
+
+      // ── por aluna ──
+      // A mesma informação virada do outro lado: é assim que se
+      // responde "em que clubes a Fernanda está?" sem abrir cinco.
+      ...(() => {
+        const comClube = pessoas
+          .map(p => ({ p: p, cl: CRM.clubesDaAluna(p.id) }))
+          .filter(x => x.cl.length)
+          .sort((a, b) => (a.p.nome || "") < (b.p.nome || "") ? -1 : 1);
+        return {
+          semAluna: comClube.length === 0,
+          alunas: comClube.map(x => ({
+            nome: x.p.nome, href: perfilHref(x.p.id),
+            clubes: x.cl.map(c => {
+              const pl = PLANO[c.plano];
+              return { label: c.nome, bg: pl[1], fg: pl[2] };
+            }),
+            resumo: x.cl.length + (x.cl.length === 1 ? " clube" : " clubes")
+              + (x.cl.some(c => c.plano === "pendente") ? " · 1 a pagar" : "")
+          }))
+        };
+      })()
+    };
+  }
+}
+</script>
+</body>
+</html>

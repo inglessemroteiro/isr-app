@@ -472,6 +472,38 @@ uma vez. Três travas:
 O lote vai para o mural da equipe, com quem fez e quanto. Quem faltou
 se corrige depois, na chamada do dia, pelo Painel do professor.
 
+### Os clubes
+
+Clube é encontro de conversa por tema, fora da aula: Book Club,
+Movie Lovers, Chef Traditions. A escola vendia **um** (o Book Club,
+com um link solto na configuração) e agora oferece vários.
+
+A regra comercial é o que exige modelo de verdade: **os dois
+primeiros clubes de cada aluna vêm no plano; do terceiro em diante
+ela paga.** Quem decide quais dois são os incluídos é a **ordem de
+entrada**, por isso cada entrada fica carimbada. Duas entradas no
+mesmo milissegundo empatavam e o desempate caía no nome do clube — a
+aluna entrava no terceiro e o sistema cobrava o segundo —, então o
+carimbo é estritamente crescente.
+
+- vaga é limitada, então existe **lista de espera**: quem sai libera
+  a vaga e a primeira da espera entra no lugar, já carimbada;
+- sair de um clube antigo pode tornar **incluído** um que era pago, e
+  o cálculo é sempre pela lista atual, nunca por um campo guardado;
+- clube nasce **rascunho** (só a equipe vê) e vira **publicado**;
+- presencial exige endereço — clube presencial sem onde é não é
+  oferta, é promessa.
+
+Na tela, duas vistas: **por clube** (quem está em cada um, adicionar,
+tirar, lista de espera) e **por aluna** (em que clubes ela está e o
+que é pago). O bloco amarelo no topo lista quem está num terceiro
+clube sem ter pago: dinheiro que não é cobrado some sem ninguém
+notar.
+
+`isr_clubes_v1` anda no sync por registro e entra na cópia de
+segurança. Os ciclos fechados (`isr_ciclos_v1`) também — estavam de
+fora, e são o arquivo de cinco anos.
+
 ### O histórico de uma chamada
 
 Cada gravação de chamada acrescenta uma linha a `hist`, dentro do
@@ -601,6 +633,7 @@ precisar da tela antiga a encontra no histórico do git.
 | Caixa | `ISR - Caixa v3.dc.html` | `/caixa.html` |
 | Folha | `ISR - Folha v3.dc.html` | `/folha.html` |
 | Turmas e projetos | `ISR - Turmas v3.dc.html` | `/turmas.html` |
+| Clubes | `ISR - Clubes v3.dc.html` | `/clubes.html` |
 | Desafio da semana | `ISR - Desafio v3.dc.html` | `/programa.html` |
 | Agenda | `ISR - Agenda v3.dc.html` | `/agenda.html` |
 | Marketing | `ISR - Marketing v3.dc.html` | `/marketing.html` |
