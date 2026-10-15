@@ -395,3 +395,62 @@ continua com o endereço. Uma implantação nova, com endereço novo em
 3. **A guarda das telas** (`guardGestao`, em `crm-data.js`) roda no
    navegador. Serve para ninguém cair numa tela por engano. Não é
    proteção.
+
+---
+
+## As telas, no desenho novo
+
+O sistema foi redesenhado tela a tela. A versão nova de cada uma tem
+`v3` no nome do arquivo; a antiga continua no repositório e no ar, como
+saída de emergência, mas não está mais no menu.
+
+| Menu | Arquivo | Endereço curto |
+|---|---|---|
+| Central | `ISR - Central v3.dc.html` | `/central.html` |
+| Painel do professor | `ISR - Painel v3.dc.html` | `/professor.html` |
+| Alunas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
+| CRM · Funil | `ISR - CRM v3.dc.html` | `/crm.html` |
+| Mensagens | `ISR - Mensagens v3.dc.html` | `/mensagens.html` |
+| Mural da equipe | `ISR - Mural v3.dc.html` | `/mural.html` |
+| Matrículas do ciclo | `ISR - Matriculas ciclo v3.dc.html` | `/ciclo.html` |
+| Calculadora de preços | `ISR - Calculadora v3.dc.html` | `/precos.html` |
+| Acompanhamento | `ISR - Acompanhamento v3.dc.html` | `/acompanhamento.html` |
+| Contas a receber | `ISR - Cobrança v3.dc.html` | `/cobranca.html` |
+| Caixa | `ISR - Caixa v3.dc.html` | `/caixa.html` |
+| Folha | `ISR - Folha v3.dc.html` | `/folha.html` |
+| Turmas e projetos | `ISR - Turmas v3.dc.html` | `/turmas.html` |
+| Desafio da semana | `ISR - Desafio v3.dc.html` | `/programa.html` |
+| Agenda | `ISR - Agenda v3.dc.html` | `/agenda.html` |
+| Marketing | `ISR - Marketing v3.dc.html` | `/marketing.html` |
+| Importar | `ISR - Importar v3.dc.html` | `/importar.html` |
+| Equipe | `ISR - Equipe v3.dc.html` | `/equipe.html` |
+| Dados | `ISR - Dados v3.dc.html` | `/dados.html` |
+| Conexão | `gestao.html?config` | — |
+
+Fora do menu, abertas por clique: a matrícula
+(`ISR - Matrícula v3.dc.html`, `/matricula.html`), o perfil de uma
+pessoa (`ISR - Perfil v3.dc.html?id=`, `/perfil.html?id=`) e a página
+de uma turma (`ISR - Turma v3.dc.html?id=`, `/turma.html?id=`).
+
+`/desafio.html` **não** é esta tela: é o material da aluna, semana a
+semana. A tela da gestão é `/programa.html`.
+
+As telas das alunas — `ISR - Aluna`, `ISR - Aulas`, `ISR - Certificado`,
+`ISR - Comunidade`, `ISR - Tela de Aula` e o portal — não entraram no
+redesenho: têm desenho próprio e público próprio.
+
+### Como uma tela foi portada
+
+Três foram reescritas à mão (Central, Painel, Alunas). As outras
+passaram pelo `repintar-v3.py`: ele separa a marcação da lógica no
+`<script type="text/x-dc" data-dc-script`, repinta só a marcação
+(superfície, borda, raio, cor, peso, campo de formulário) e devolve a
+lógica intacta. Esquecer um `{{ campo }}` quebra a tela em silêncio, e
+reescrever 1.100 linhas à mão para mudar cor era o jeito mais fácil de
+esquecer um.
+
+A conferência depois do porte compara os `{{ campo }}` das duas
+marcações: campo que existia na tela antiga e não existe na nova é
+candidato a recurso perdido. Das onze repintadas, nenhuma perdeu campo.
+A Central, que foi reescrita, perdeu — e é por isso que a reescrita só
+vale quando a tela muda de ideia, não só de cor.

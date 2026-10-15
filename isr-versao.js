@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-i",
+  numero: "2026.10.15-j",
   data: "15/10/2026",
-  nota: "Varredura das telas portadas. A pendência volta a fechar pela Central, a fila mostra quantos itens ficaram de fora, e voltam o formulário de pendência nova, os avisos para a equipe e os ajustes de cadastro"
+  nota: "As onze telas que faltavam entram no desenho novo: Mensagens, Mural, Dados, Marketing, Calculadora, Acompanhamento, Desafio, Equipe, Folha, Importar e a página da turma. O menu e os links entre telas deixam de abrir as antigas"
 };
