@@ -275,6 +275,7 @@ servidor, nunca a tela.
 
 | Função | Quem chama | Como está fechada |
 |---|---|---|
+| `base` | a gestão, pelo navegador | token do Netlify Identity |
 | `convidar-aluna` | Zapier | `ISR_CONVITE_CHAVE` |
 | `extrato-conta` | Caixa | `ISR_EXTRATO_CHAVE`, digitada uma vez por aparelho |
 | `stripe-compra` | Stripe | assinatura do webhook (`STRIPE_WEBHOOK_SECRET`) |
@@ -318,16 +319,51 @@ quem souber um e-mail da equipe ainda entra. Assim que as quatro
 contas existirem, o bloco marcado `PORTA DE TRANSIÇÃO` em `gestao.html`
 sai do código.
 
+### A base
+
+O navegador falava direto com o Apps Script, com o endereço escrito em
+`crm-data.js` — um arquivo público. Agora o pedido vai para a função
+`base`, que confere o token da pessoa e só então fala com o Apps
+Script, com endereço e chave que ficam no servidor.
+
+**Como está ligando, em dois passos.** O primeiro já está no ar: o
+navegador prefere a função e, se ela não responder, cai no caminho
+antigo. Assim nada para enquanto as contas do Identity não existem.
+
+Passo 1 — agora:
+
+1. Netlify → Environment variables → `ISR_BASE_URL` = o endereço do
+   Web App do banco central (o mesmo que está em `crm-data.js`).
+2. Trigger deploy. Abra a Central e confira que a sincronização
+   continua funcionando. No console do navegador, o aviso "falando com
+   a base pelo caminho antigo" diz que a função não está sendo usada.
+
+Passo 2 — quando o passo 1 estiver funcionando para toda a equipe:
+
+1. Apps Script → Configurações do projeto → Propriedades do script →
+   `ISR_BASE_CHAVE` com uma senha longa.
+2. A mesma string em Netlify → `ISR_BASE_CHAVE` → Trigger deploy.
+3. Publicar o Apps Script de novo (Implantar → Gerenciar implantações
+   → editar → Nova versão).
+4. Avisar, que aí sai do `crm-data.js` a rede do caminho antigo e o
+   endereço do Web App.
+
+Enquanto a propriedade não existir no Apps Script, ele aceita como
+sempre aceitou — é isso que permite ligar a chave sem derrubar a
+escola no meio do expediente. As ações do Zapier (`novoCadastro`,
+`assinaturaEvento`, `novaAtividade`) nunca são trancadas.
+
+**O endereço de hoje está no git desde sempre.** Depois do passo 2, a
+chave já basta para fechar a porta; mas quem clonou o repositório
+continua com o endereço. Uma implantação nova, com endereço novo em
+`ISR_BASE_URL`, resolve isso de vez — e aí só o servidor o conhece.
+
 ### O que ainda está aberto
 
-1. **A base.** O endereço do Web App do Apps Script está escrito em
-   `crm-data.js`, e o navegador fala com ele direto, sem credencial
-   nenhuma. Quem abrir o JavaScript do site lê e escreve a escola
-   inteira. O conserto é o navegador parar de falar com o Apps Script:
-   fala com uma função, e a função fala com o Apps Script usando uma
-   chave que só o servidor conhece.
-2. **As seis funções do app da aluna.** Precisam do token da aluna
+1. **As seis funções do app da aluna.** Precisam do token da aluna
    (Netlify Identity), não de uma chave fixa.
+2. **A porta de transição do portão**, em `gestao.html`: enquanto uma
+   conta não existir, aquela pessoa entra só com o e-mail.
 3. **A guarda das telas** (`guardGestao`, em `crm-data.js`) roda no
    navegador. Serve para ninguém cair numa tela por engano. Não é
    proteção.

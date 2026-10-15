@@ -5390,6 +5390,52 @@
       return (!p || !p.length) && (!t || !t.length);
     } catch (e) { return true; }
   }
+  // ── FALAR COM A BASE ──────────────────────────────────────────
+  //
+  // Durante muito tempo o navegador falou com o Apps Script direto, e
+  // o endereço do Web App está logo acima, em texto puro, num arquivo
+  // que qualquer pessoa abre. Quem lesse o JavaScript do site lia e
+  // escrevia a escola inteira, sem passar por portão nenhum.
+  //
+  // Agora o pedido vai para a função base do Netlify, que confere o
+  // token da pessoa e só então fala com o Apps Script, com um endereço
+  // e uma chave que ficam no servidor.
+  //
+  // REDE, enquanto o caminho novo não estiver provado em produção: se
+  // a função não responder — porque a pessoa ainda não tem conta no
+  // Identity, porque a variável não foi configurada, porque deu erro —
+  // cai no caminho direto de antes, e a escola continua funcionando.
+  // Isto sai daqui no passo seguinte, junto com o endereço acima.
+  var baseDiretaAvisada = false;
+  // action: a ação do Apps Script. corpo: os campos a mais do pedido —
+  // { data: … } numa escrita de sistema, { id: … } ao marcar algo como
+  // processado. Sem corpo, é leitura.
+  function chamarBase(action, corpo) {
+    var url = backendUrl();
+    var direto = function () {
+      if (!url) return Promise.reject(new Error("sem base"));
+      if (!baseDiretaAvisada) {
+        baseDiretaAvisada = true;
+        try { console.warn("ISR: falando com a base pelo caminho antigo (sem token)."); } catch (e) {}
+      }
+      if (corpo === undefined) {
+        return fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=" + action)
+          .then(function (r) { return r.json(); });
+      }
+      var b = Object.assign({ action: action }, corpo);
+      return fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(b) }).then(function (r) { return r.json(); });
+    };
+    // dado de exemplo nunca sai do aparelho
+    if (exemploLigado()) return Promise.reject(new Error("exemplo"));
+    return chamarFuncao("base", { body: Object.assign({ action: action }, corpo || {}) })
+      .then(function (r) {
+        if (!r.ok) throw new Error("funcao " + r.status);
+        return r.json();
+      })
+      .catch(function () { return direto(); });
+  }
+
   var syncTimer = null;
   function agendarSync() {
     if (!backendUrl()) return;
@@ -5893,13 +5939,11 @@
     if (syncEmCurso) { agendarSync(); return; }
     syncEmCurso = true;
     setSyncEstado({ status: "sincronizando" });
-    fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
-      .then(function (r) { return r.json(); })
+    chamarBase("sistemaLoad")
       .then(function (d) {
         var m = mesclarComRemoto(d && d.ok ? d.data : null);
         aplicarRemoto(m.data);            // o local já fica com o resultado da mesclagem
-        return fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "sistemaSave", data: m.data }) })
+        return chamarBase("sistemaSave", { data: m.data })
           .then(function () {
             setSyncEstado({ status: "ok", em: m.data.atualizadoEm, conflitos: m.conflitos });
           });
@@ -5921,8 +5965,7 @@
       if (cb) cb(ok);
     };
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=sistemaLoad")
-        .then(function (r) { return r.json(); })
+      chamarBase("sistemaLoad")
         .then(function (d) {
           if (d && d.ok && d.data) {
             // PUXAR NUNCA SUBSTITUI: mescla registro a registro, igual ao
@@ -5950,8 +5993,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=cadastrosPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("cadastrosPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var novos = 0;
@@ -5973,10 +6015,8 @@
               });
               novos++;
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "cadastroProcessado", id: c.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("cadastroProcessado", { id: c.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(novos);
         }).catch(function () { if (cb) cb(0); });
@@ -6011,8 +6051,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=atividadesPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("atividadesPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var novos = 0;
@@ -6041,10 +6080,8 @@
                 detalhe: "Semana " + (a.semana || "?") + " · confira o nome e registre no programa",
                 dono: "Gabi", por: "sistema" });
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "atividadeProcessada", id: a.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("atividadeProcessada", { id: a.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(novos);
         }).catch(function () { if (cb) cb(0); });
@@ -6059,8 +6096,7 @@
     var url = backendUrl();
     if (!url) { if (cb) cb(0); return; }
     try {
-      fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") + "action=assinaturasPendentes")
-        .then(function (r) { return r.json(); })
+      chamarBase("assinaturasPendentes")
         .then(function (d) {
           if (!d || !d.ok || !d.itens || !d.itens.length) { if (cb) cb(0); return; }
           var mexeu = 0;
@@ -6102,10 +6138,8 @@
                   dono: "Gabi", por: "sistema" });
               }
             }
-            try {
-              fetch(url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "assinaturaProcessada", id: ev.id }) }).catch(function () {});
-            } catch (e) {}
+            try { chamarBase("assinaturaProcessada", { id: ev.id }).catch(function () {}); }
+            catch (e) {}
           });
           if (cb) cb(mexeu);
         }).catch(function () { if (cb) cb(0); });

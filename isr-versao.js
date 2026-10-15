@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-b",
+  numero: "2026.10.15-c",
   data: "15/10/2026",
-  nota: "O portão da gestão passa a ter senha de verdade, conferida pelo Netlify Identity — o mesmo serviço que as alunas já usam. Criar as contas da equipe em Netlify → Identity → Invite users. Enquanto uma conta não existir, aquela pessoa entra como antes e a tela avisa"
+  nota: "A base sai de trás do navegador: a sincronização passa a ir por uma função que confere o token da pessoa. Criar a ISR_BASE_URL no Netlify com o endereço do banco central e fazer Trigger deploy. Enquanto a função não responder, o caminho antigo continua valendo — nada para"
 };

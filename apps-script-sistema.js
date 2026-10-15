@@ -29,10 +29,55 @@ var CHUNK = 45000;                // limite seguro por célula
 // ?action= devolve este número: é assim que se sabe, olhando, se a
 // versão que está no ar é a mesma do arquivo — sem isso, uma publicação
 // esquecida parece funcionar até a hora errada.
-var VERSAO_SCRIPT = "2026.08.21-p";
+var VERSAO_SCRIPT = "2026.10.15-a";
+
+// ── A CHAVE DO SISTEMA ───────────────────────────────────────────
+//
+// Este Web App está publicado para "qualquer pessoa", porque é assim
+// que o sistema fala com ele. O problema é que, até agora, QUALQUER
+// pessoa mesmo: o endereço estava escrito no JavaScript do site, que
+// é público, e quem o lesse lia e escrevia a escola inteira.
+//
+// Agora quem fala com o sistema é a função base do Netlify, do lado
+// do servidor, e ela manda uma chave que o navegador nunca vê.
+//
+// COMO LIGAR (depois de a função estar no ar e funcionando):
+//   1. Apps Script → Configurações do projeto → Propriedades do
+//      script → adicionar  ISR_BASE_CHAVE  com uma senha longa.
+//   2. A MESMA string em Netlify → Environment variables →
+//      ISR_BASE_CHAVE, e Trigger deploy.
+//   3. Publicar este script de novo (Implantar → Gerenciar
+//      implantações → editar → Nova versão).
+//
+// Enquanto a propriedade não existir, nada muda: o script aceita como
+// sempre aceitou. É isso que permite ligar a chave sem derrubar a
+// escola no meio do expediente. Quando ela existir, só passa quem a
+// tiver — e aí o caminho antigo, direto do navegador, morre.
+//
+// As ações do Zapier (novoCadastro, assinaturaEvento, novaAtividade)
+// ficam de fora desta exigência: quem chama aquelas é máquina, por
+// outro caminho, e trancá-las aqui quebraria as automações.
+var ACOES_DO_SISTEMA = {
+  sistemaLoad: 1, sistemaSave: 1, cadastrosPendentes: 1,
+  atividadesPendentes: 1, assinaturasPendentes: 1,
+  cadastroProcessado: 1, atividadeProcessada: 1, assinaturaProcessada: 1
+};
+function chaveDoSistema_() {
+  try { return PropertiesService.getScriptProperties().getProperty("ISR_BASE_CHAVE") || ""; }
+  catch (err) { return ""; }
+}
+function podePassar_(action, e, body) {
+  if (!ACOES_DO_SISTEMA[action]) return true;      // não é ação do sistema
+  var esperada = chaveDoSistema_();
+  if (!esperada) return true;                       // chave ainda não ligada
+  var veio = (body && body.chave) || (e && e.parameter && e.parameter.chave) || "";
+  return veio === esperada;
+}
+var RECUSA_ = { ok: false, error: "chave do sistema ausente ou inválida" };
 
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || "";
+  if (!podePassar_(action, e, null)) return json_(RECUSA_);
   if (action === "sistemaLoad") return json_(sistemaLoad_());
   if (action === "cadastrosPendentes") return json_(cadastrosPendentes_());
   if (action === "systemeContacts") return json_(systemeContacts_(e.parameter.key, e.parameter.limit));
@@ -54,6 +99,7 @@ function doPost(e) {
     // O Zapier envia formulário (form-encoded), não JSON: os campos chegam
     // em e.parameter. A ação vale dos dois jeitos.
     var action = body.action || (e && e.parameter && e.parameter.action) || "";
+    if (!podePassar_(action, e, body)) return json_(RECUSA_);
     if (action === "sistemaSave") return json_(sistemaSave_(body.data || {}));
     if (action === "novoCadastro") return json_(novoCadastro_(body.data || {}));
     if (action === "cadastroProcessado") return json_(cadastroProcessado_(body.id));
