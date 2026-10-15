@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-g",
+  numero: "2026.10.15-h",
   data: "15/10/2026",
-  nota: "Corrigir as datas de um ciclo e só depois abrir o próximo deixa de criar um registro de mentira. Um ciclo que volta a ser o atual deixa de constar como fechado"
+  nota: "A Central volta a abrir na fila de quem entrou, e não na da escola inteira. Os chips da equipe deixam de ser enfeite e passam a filtrar: Minhas, cada pessoa, ou De todas"
 };

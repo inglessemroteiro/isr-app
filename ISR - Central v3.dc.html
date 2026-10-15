@@ -86,13 +86,17 @@
       <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ filaSub }}</div>
     </div>
     <sc-if value="{{ filaVazia }}">
-      <div style="padding: 24px 2px 6px; font-size: 15px; color: #1d5a63; line-height: 1.6;">Nenhum item na fila. Os itens aparecem quando uma regra é acionada: parcela vencida, follow-up do dia, chamada não feita, integração parada.</div>
+      <div style="padding: 24px 2px 6px; font-size: 15px; color: #1d5a63; line-height: 1.6;">{{ filaVaziaTexto }}</div>
     </sc-if>
+    <!-- De quem é a fila. A Central antiga abria nas tarefas de quem
+         entrou e deixava a fila de todo mundo a um toque; no porte
+         isso se perdeu, e a gestora passou a ver a fila da equipe
+         inteira misturada com a dela. Os chips da equipe eram enfeite;
+         agora filtram. -->
     <sc-if value="{{ temEquipe }}">
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
-        <span style="font-size: 12px; font-weight: 600; color: #8a7465;">filas da equipe</span>
-        <sc-for list="{{ equipe }}" as="eq" hint-placeholder-count="3">
-          <span style="background: #f2ebe3; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600;">{{ eq.label }}</span>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+        <sc-for list="{{ donos }}" as="dn" hint-placeholder-count="4">
+          <button onclick="{{ dn.onClick }}" style="font-family: inherit; border: 0; background: {{ dn.bg }}; color: {{ dn.fg }}; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: {{ dn.peso }}; cursor: pointer;">{{ dn.label }}</button>
         </sc-for>
       </div>
     </sc-if>
@@ -103,7 +107,7 @@
           <div style="flex: 1; min-width: 200px;">
             <div style="display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;">
               <a href="{{ q.perfilHref }}" class="lk" style="font-size: 15px; font-weight: 700; color: {{ q.nomeCor }};">{{ q.nome }}</a>
-              <span style="font-size: 11px; font-weight: 600; color: #8a7465;">{{ q.dono }}</span>
+              <span title="responsável" style="font-size: 11px; font-weight: 600; color: #8a7465;">{{ q.dono }}</span>
             </div>
             <div style="font-size: 14px; color: #1d5a63; margin-top: 2px;">{{ q.motivo }}</div>
           </div>
@@ -195,7 +199,9 @@ class Component extends DCLogic {
   // Guardar o que foi digitado no estado, e não em refs, é o que
   // permite abrir o formulário já preenchido com o que está gravado —
   // que era o que faltava para alguém só corrigir uma data.
-  state = { tick: 0, busca: "", cicloErro: "", cicloForm: null };
+  // quemNaFila: "" = a minha fila (o padrão, como era antes do
+  // porte), "todas" = a escola inteira, ou o nome de alguém
+  state = { tick: 0, busca: "", cicloErro: "", cicloForm: null, quemNaFila: "" };
   buscaRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -219,8 +225,8 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const vazio = { eyebrow: "", fila: [], filaCount: "0", filaVazia: true, filaSub: "",
-      equipe: [], temEquipe: false, metas: [], areas: [], achados: [], buscando: false,
-      buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {},
+      equipe: [], temEquipe: false, donos: [], metas: [], areas: [], achados: [], buscando: false,
+      buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {}, filaVaziaTexto: "",
       semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "",
       veCiclo: false, cicloEditando: false, cicloTitulo: "", cicloTexto: "",
       cicloBg: "#fff", cicloCor: "#164951", cicloBotao: "mudar as datas",
@@ -251,8 +257,17 @@ class Component extends DCLogic {
       followup_lead: ["#e5f2f6", "◎"], folha_dia15: ["#ede6df", "≡"],
       reativar: ["#ede6df", "↺"], chamada_pendente: ["#fdf3d6", "✎"]
     };
-    const filaAll = (CRM.filaParaHoje(perfil, meuNome) || [])
-      .filter(x => vePelaEscola || !x.dono || x.dono === meuNome);
+    // Quem cuida da escola escolhe de quem é a fila, e abre na dela.
+    // Antes do porte era assim; a Central nova mostrava tudo de todo
+    // mundo misturado, e a fila da gestora sumia no meio.
+    const quem = vePelaEscola ? (this.state.quemNaFila || "") : "";
+    const filaBruta = CRM.filaParaHoje(perfil, meuNome) || [];
+    const minha = (x) => !x.dono || x.dono === meuNome;
+    const filaAll = !vePelaEscola
+      ? filaBruta.filter(minha)
+      : quem === "todas" ? filaBruta
+      : quem ? filaBruta.filter(x => x.dono === quem)
+      : filaBruta.filter(minha);
     const fila = filaAll.slice(0, 12).map(item => {
       const tom = TOM[item.sinal] || ["#f2ebe3", "•"];
       const ehPessoa = item.pessoaId && String(item.pessoaId).indexOf(":") < 0;
@@ -282,15 +297,27 @@ class Component extends DCLogic {
     // filas da equipe: quem vê a escola inteira precisa saber se a fila
     // de alguém está crescendo sem ninguém olhar
     const equipe = [];
+    const donos = [];
     if (vePelaEscola) {
       const porDono = {};
-      (CRM.filaParaHoje("gestora", meuNome) || []).forEach(x => {
-        if (!x.dono || x.dono === meuNome) return;
+      let minhas = 0;
+      filaBruta.forEach(x => {
+        if (minha(x)) { minhas++; return; }
         porDono[x.dono] = (porDono[x.dono] || 0) + 1;
       });
+      const chip = (id, label) => {
+        const on = quem === id;
+        return { label: label,
+          bg: on ? "#164951" : "#f2ebe3", fg: on ? "#fff" : "#1d5a63",
+          peso: on ? 600 : 500,
+          onClick: () => this.setState({ quemNaFila: id }) };
+      };
+      donos.push(chip("", "Minhas · " + minhas));
       Object.keys(porDono).sort().forEach(d => {
+        donos.push(chip(d, d + " · " + porDono[d]));
         equipe.push({ label: d + " · " + porDono[d] + " na fila" });
       });
+      donos.push(chip("todas", "De todas · " + filaBruta.length));
     }
 
     // ── aulas sem chamada ─────────────────────────────────────
@@ -460,7 +487,13 @@ class Component extends DCLogic {
 
       fila, filaCount: String(filaAll.length), filaVazia: filaAll.length === 0,
       filaSub: vePelaEscola ? "o que está esperando você hoje" : "sua fila de hoje",
-      equipe, temEquipe: equipe.length > 0,
+      equipe, temEquipe: donos.length > 1, donos,
+      // fila vazia tem dois motivos, e confundi-los faz a tela parecer
+      // quebrada: ou não há nada a fazer na escola, ou não há nada SEU
+      filaVaziaTexto: (vePelaEscola && !quem && filaBruta.length > 0)
+        ? "Nada na sua fila agora. A escola tem " + filaBruta.length
+          + (filaBruta.length === 1 ? " item" : " itens") + " com a equipe — os botões acima mostram de quem."
+        : "Nenhum item na fila. Os itens aparecem quando uma regra é acionada: parcela vencida, follow-up do dia, chamada não feita, integração parada.",
 
       temSemChamada: grupos.length > 0,
       semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
