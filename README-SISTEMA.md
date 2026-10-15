@@ -472,6 +472,33 @@ uma vez. Três travas:
 O lote vai para o mural da equipe, com quem fez e quanto. Quem faltou
 se corrige depois, na chamada do dia, pelo Painel do professor.
 
+### Meu progresso, no app da aluna
+
+A aluna via aula, material e miles, e nunca a resposta para "como eu
+estou indo?". Os números já existiam, cada um num canto: a chamada
+sabe a frequência e a tarefa, a turma sabe o projeto e o nível, o
+cadastro sabe o resto. `progressoDaAluna(pessoaId)` junta.
+
+Duas decisões que mudam o número na tela:
+
+- **o nível é o da turma**, não o do cadastro. O campo do cadastro
+  guarda "Básico", "Intermediário" — como a escola conversa —, e o
+  degrau do caminho está no nome da turma ("Essentials (A2)"). É
+  dele que sai também o próximo passo;
+- **a ausência justificada não conta contra.** Justificar existe
+  exatamente para isso, então ela sai da conta em vez de virar
+  falta. Presença e atraso contam como presença.
+
+Sem chamada no ciclo, a tela diz isso em vez de mostrar 0%: zero é
+uma afirmação, e seria falsa.
+
+A entrada é um cartão no Início, não uma quinta aba — a barra de
+baixo tem quatro, e uma quinta aperta tudo no celular. É o mesmo
+caminho do desenho.
+
+Os projetos que já passaram saem das turmas em que ela teve chamada.
+É o único registro de onde ela esteve, e é verdade.
+
 ### Os clubes
 
 Clube é encontro de conversa por tema, fora da aula: Book Club,

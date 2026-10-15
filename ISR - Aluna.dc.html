@@ -367,6 +367,18 @@
             </div>
             <p style="margin: 12px 0 14px; font-size: 12.5px; color: #6b6155; line-height: 1.5;">{{ incentivo }}</p>
 
+            <!-- porta para o Meu progresso: aqui está o quanto do ciclo
+                 passou; lá está como ELA está indo nele -->
+            <sc-if value="{{ pgCartaoNivel }}">
+              <button onclick="{{ pgVer }}" class="isr-btn" style="display: flex; width: 100%; align-items: center; gap: 10px; margin-bottom: 14px; background: #f7f5f1; border: 0; border-radius: 12px; padding: 12px 14px; cursor: pointer; text-align: left; font-family: inherit;">
+                <span style="flex: 1; min-width: 0;">
+                  <span style="display: block; font-size: 13.5px; font-weight: 700; color: #164951;">{{ pgCartaoNivel }}</span>
+                  <span style="display: block; font-size: 12px; color: #6b6155; margin-top: 1px;">{{ pgCartaoLinha }}</span>
+                </span>
+                <span style="flex: none; font-size: 12.5px; font-weight: 700; color: #348a8e;">meu progresso →</span>
+              </button>
+            </sc-if>
+
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
               <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="3">
                 <div style="background: #f7f5f1; border-radius: 10px; padding: 11px 6px; text-align: center;">
@@ -471,6 +483,65 @@
         </section>
         </sc-if>
         </div>
+        </div>
+      </sc-if>
+
+      <!-- ══════════ MEU PROGRESSO ══════════ -->
+      <!-- A aluna via aula, material e miles, e nunca a resposta para
+           "como eu estou indo?". Os números já existiam, cada um num
+           canto: a chamada sabe a frequência e a tarefa, a turma sabe
+           o projeto e o nível. Aqui viram uma coisa só. -->
+      <sc-if value="{{ tabProgresso }}">
+        <div style="margin: 12px 0 20px;">
+          <section style="background: #164951; color: #fff; border-radius: 20px; padding: 20px 22px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ec970;">seu nível</div>
+            <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 3px;">{{ pgNivel }}</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 6px; line-height: 1.5;">{{ pgProximo }}</div>
+          </section>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;">
+            <sc-for list="{{ pgNumeros }}" as="pn" hint-placeholder-count="3">
+              <section style="flex: 1 1 104px; min-width: 0; background: #fff; border-radius: 14px; padding: 13px 12px; border: 1px solid #e8e5e0;">
+                <div style="font-size: 22px; font-weight: 700; color: {{ pn.cor }};">{{ pn.valor }}</div>
+                <div style="font-size: 12px; color: #164951; margin-top: 1px;">{{ pn.label }}</div>
+                <div style="font-size: 11px; color: #9b8b7e;">{{ pn.sub }}</div>
+              </section>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ pgTemProjeto }}">
+            <section style="background: #fff; border-radius: 14px; padding: 16px 18px; border: 1px solid #e8e5e0; margin-top: 12px;">
+              <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9b8b7e;">projeto deste ciclo</div>
+              <div style="font-size: 16px; font-weight: 700; color: #164951; margin-top: 3px;">{{ pgProjeto }}</div>
+              <div style="font-size: 13px; color: #6b6155; margin-top: 2px;">{{ pgTurma }}</div>
+            </section>
+          </sc-if>
+
+          <section style="background: #fff; border-radius: 14px; padding: 16px 18px; border: 1px solid #e8e5e0; margin-top: 12px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9b8b7e;">sua presença</div>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px;">
+              <sc-for list="{{ pgAulas }}" as="pa" hint-placeholder-count="8">
+                <span title="{{ pa.titulo }}" style="width: 14px; height: 14px; border-radius: 4px; background: {{ pa.cor }};"></span>
+              </sc-for>
+            </div>
+            <div style="font-size: 12.5px; color: #6b6155; margin-top: 10px; line-height: 1.5;">{{ pgPresencaTexto }}</div>
+            <sc-if value="{{ pgSemAula }}">
+              <div style="font-size: 13px; color: #6b6155; line-height: 1.5;">Nenhuma aula com chamada neste ciclo ainda. Assim que a primeira for lançada, ela aparece aqui.</div>
+            </sc-if>
+          </section>
+
+          <sc-if value="{{ pgTemPassados }}">
+            <section style="background: #fff; border-radius: 14px; padding: 16px 18px; border: 1px solid #e8e5e0; margin-top: 12px;">
+              <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9b8b7e;">projetos que você já fez</div>
+              <sc-for list="{{ pgPassados }}" as="pp" hint-placeholder-count="2">
+                <div style="padding: 9px 0; border-bottom: 1px solid #e8e5e0; font-size: 13.5px; color: #164951;"><strong>{{ pp.projeto }}</strong> · {{ pp.onde }}</div>
+              </sc-for>
+            </section>
+          </sc-if>
+
+          <div style="margin-top: 14px;">
+            <span onclick="{{ pgVoltar }}" style="font-size: 13px; font-weight: 700; color: #348a8e; cursor: pointer;">← voltar para o início</span>
+          </div>
         </div>
       </sc-if>
 
@@ -1452,6 +1523,57 @@ class Component extends DCLogic {
       tabs, tab0, tab1, tab2, tab3,
       tabInicio: tab === "inicio", tabAulas: tab === "aulas",
       tabMateriais: tab === "materiais",
+      tabProgresso: !modoDesafio && tab === "progresso",
+
+      // ── meu progresso ──
+      // Sem aba própria: a barra de baixo tem quatro, e uma quinta
+      // aperta tudo no celular. Entra por um cartão no Início, como
+      // no desenho.
+      ...(() => {
+        const g = (CRM.progressoDaAluna && p && p.id) ? CRM.progressoDaAluna(p.id) : null;
+        if (!g) return { pgNivel: "", pgProximo: "", pgNumeros: [], pgAulas: [],
+          pgPresencaTexto: "", pgSemAula: true, pgTemProjeto: false, pgProjeto: "",
+          pgTurma: "", pgTemPassados: false, pgPassados: [], pgVoltar: () => {},
+          pgCartaoNivel: "", pgCartaoLinha: "", pgVer: () => {} };
+        const pc = g.presenca;
+        const COR = { presente: "#9ec970", atraso: "#f5d77a", falta: "#fc9082", justificada: "#d9d2c7" };
+        const QUE = { presente: "presente", atraso: "chegou atrasada", falta: "faltou", justificada: "ausência justificada" };
+        return {
+          pgNivel: g.nivel || "—",
+          pgProximo: g.proximoNivel
+            ? "Terminando este ciclo com frequência, o próximo passo é " + g.proximoNivel + "."
+            : "Você está no nível mais avançado das turmas.",
+          pgNumeros: [
+            { valor: pc.pct === null ? "—" : pc.pct + "%", label: "presença",
+              sub: "mínimo " + pc.minimo + "%",
+              cor: pc.ok === null ? "#8a7465" : (pc.ok ? "#3d6b22" : "#a3392c") },
+            { valor: pc.total ? pc.presentes + "/" + pc.total : "—", label: "aulas",
+              sub: pc.justificadas ? pc.justificadas + " justificada(s)" : "neste ciclo", cor: "#164951" },
+            { valor: g.tarefas.pedidas ? g.tarefas.feitas + "/" + g.tarefas.pedidas : "—",
+              label: "tarefas", sub: "entregues", cor: "#164951" }
+          ],
+          pgTemProjeto: !!g.projeto,
+          pgProjeto: g.projeto,
+          pgTurma: [g.turma, g.ciclo ? "ciclo " + g.ciclo : ""].filter(Boolean).join(" · "),
+          pgAulas: g.aulas.map(a => ({ cor: COR[a.estado] || "#d9d2c7",
+            titulo: CRM.ddmm(a.data) + " · " + (QUE[a.estado] || a.estado) })),
+          pgSemAula: g.aulas.length === 0,
+          pgPresencaTexto: pc.total
+            ? pc.presentes + " de " + pc.total + (pc.total === 1 ? " aula" : " aulas")
+              + (pc.ok ? ". Você está acima do mínimo." : ". Abaixo do mínimo de " + pc.minimo + "% para o certificado.")
+            : "",
+          pgTemPassados: g.projetosPassados.length > 0,
+          pgPassados: g.projetosPassados.map(x => ({ projeto: x.projeto,
+            onde: [x.turma, x.ciclo ? "ciclo " + x.ciclo : ""].filter(Boolean).join(" · ") })),
+          pgVoltar: () => this.setState({ tab: "inicio" }),
+          // o cartão que leva até aqui, no Início
+          pgCartaoNivel: g.nivel || "",
+          pgCartaoLinha: pc.pct === null
+            ? "Ainda sem chamada neste ciclo."
+            : pc.pct + "% de presença" + (g.projeto ? " · " + g.projeto : ""),
+          pgVer: () => { this.setState({ tab: "progresso" }); window.scrollTo(0, 0); }
+        };
+      })(),
       // no modo desafio o Perfil é o do desafio; a Conta completa é do
       // app de turma
       tabConta: !modoDesafio && tab === "conta",

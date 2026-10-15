@@ -7007,6 +7007,88 @@
     out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
     return out;
   }
+  // ── O PROGRESSO DE UMA ALUNA ──────────────────────────────────
+  //
+  // A aluna via aula, material e miles, mas nunca a resposta para
+  // "como eu estou indo?". Os números para isso já existiam, cada um
+  // num canto: a chamada sabe a frequência, a chamada sabe a tarefa,
+  // a turma sabe o projeto, o cadastro sabe o nível. Aqui eles viram
+  // uma coisa só.
+  //
+  // Frequência conta presença e atraso como presença, e ignora a
+  // ausência justificada: justificar existe exatamente para não
+  // pesar contra ela.
+  var NIVEIS = ["First Steps (A0)", "Basics (A1)", "Essentials (A2)",
+                "Speaking (B1)", "Advanced (B2)"];
+  var FREQUENCIA_MINIMA = 75;
+  function nivelSeguinte(nivel) {
+    var i = NIVEIS.indexOf(String(nivel || "").trim());
+    return i >= 0 && i < NIVEIS.length - 1 ? NIVEIS[i + 1] : "";
+  }
+  function progressoDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var jan = cicloJanela ? cicloJanela(tipoDaTurma({ turma: p.turma })) : null;
+    var desde = (jan && jan.inicio) || "";
+
+    // frequência
+    var todas = presencasDe(pessoaId);
+    var doCiclo = desde ? todas.filter(function (x) { return x.data >= desde; }) : todas;
+    var contam = doCiclo.filter(function (x) { return x.estado !== "justificada"; });
+    var presentes = contam.filter(function (x) {
+      return x.estado === "presente" || x.estado === "atraso"; }).length;
+    var pct = contam.length ? Math.round(100 * presentes / contam.length) : null;
+
+    // tarefas: a chamada registra quem fez
+    var m = chamadasAll(), feitas = 0, pedidas = 0;
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || !ch.data || (desde && ch.data < desde)) return;
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      var t = ch.tarefas || {};
+      if (!Object.keys(t).length) return;
+      pedidas++;
+      if (t[pessoaId]) feitas++;
+    });
+
+    // o projeto de agora e os que já passaram
+    var turmas = turmasLista() || [];
+    var rotulo = function (u) { return u.nivel + " · " + u.turma; };
+    var turma = turmas.filter(function (u) { return rotulo(u) === p.turma; })[0];
+    // Os projetos que já passaram saem das turmas em que ela teve
+    // chamada: é o único registro de onde ela esteve, e é verdade.
+    var vistos = {}, passados = [];
+    if (turma && turma.projeto) vistos[turma.projeto] = true;
+    todas.forEach(function (x) {
+      var u = turmas.filter(function (z) { return rotulo(z) === x.turma; })[0];
+      if (!u || !u.projeto || vistos[u.projeto]) return;
+      vistos[u.projeto] = true;
+      passados.push({ projeto: u.projeto, turma: u.nivel, ciclo: u.cycle || "", quando: x.data });
+    });
+
+    return {
+      nome: p.nome,
+      // o nível do curso é o da turma ("Essentials (A2)"); o campo do
+      // cadastro guarda outra coisa — "Básico", "Intermediário" —, que
+      // é como a escola conversa, não o degrau do caminho
+      nivel: (turma && turma.nivel) || p.nivel || "",
+      nivelCadastro: p.nivel || "",
+      proximoNivel: nivelSeguinte((turma && turma.nivel) || ""),
+      turma: p.turma || "",
+      projeto: (turma && turma.projeto) || "",
+      ciclo: (turma && turma.cycle) || (jan && jan.label) || "",
+      presenca: { pct: pct, presentes: presentes, total: contam.length,
+        minimo: FREQUENCIA_MINIMA,
+        ok: pct === null ? null : pct >= FREQUENCIA_MINIMA,
+        justificadas: doCiclo.length - contam.length },
+      // a linha do tempo da presença, da mais antiga para a mais nova
+      aulas: doCiclo.slice().reverse().map(function (x) {
+        return { data: x.data, estado: x.estado, turma: x.turma }; }),
+      tarefas: { feitas: feitas, pedidas: pedidas },
+      projetosPassados: passados
+    };
+  }
+
   function ultimaFaltaDe(pessoaId) {
     var m = chamadasAll(), ultima = null;
     Object.keys(m).forEach(function (k) {
@@ -13006,7 +13088,7 @@
     textoAulaExtra: textoAulaExtra, mailtoAulaExtra: mailtoAulaExtra,
     aulasExtraDaAluna: aulasExtraDaAluna,
     agendaItens: agendaItens, gcalLink: gcalLink,
-    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, alunasDaTurma: alunasDaTurma, alunasQueVaoComecar: alunasQueVaoComecar,
+    getChamada: getChamada, salvarChamada: salvarChamada, faltasDe: faltasDe, presencasDe: presencasDe, progressoDaAluna: progressoDaAluna, NIVEIS: NIVEIS, alunasDaTurma: alunasDaTurma, alunasQueVaoComecar: alunasQueVaoComecar,
     setInicioDasAulas: setInicioDasAulas, setInicioDasAulasEmLote: setInicioDasAulasEmLote,
     chamadasDaTurma: chamadasDaTurma,
     semanaDoPrograma: semanaDoPrograma, respostaDaSemana: respostaDaSemana,

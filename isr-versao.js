@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-f",
+  numero: "2026.10.16-g",
   data: "16/10/2026",
-  nota: "Os clubes entram no sistema: quem está em cada um, vaga, lista de espera, e a regra de que os dois primeiros vêm no plano e do terceiro em diante a aluna paga"
+  nota: "A aluna passa a ver como está indo: nível, próximo passo, presença do ciclo com o mínimo do certificado, tarefas e o projeto. Entra por um cartão no Início"
 };
