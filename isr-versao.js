@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-c",
+  numero: "2026.10.15-d",
   data: "15/10/2026",
-  nota: "A base sai de trás do navegador: a sincronização passa a ir por uma função que confere o token da pessoa. Criar a ISR_BASE_URL no Netlify com o endereço do banco central e fazer Trigger deploy. Enquanto a função não responder, o caminho antigo continua valendo — nada para"
+  nota: "O ciclo passa a ficar sempre à vista na Central, com as datas e o formulário para mudá-las. Antes o bloco só aparecia quando havia problema, e quem quisesse só corrigir uma data não achava onde"
 };

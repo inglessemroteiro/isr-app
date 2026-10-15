@@ -28,36 +28,39 @@
     <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar pessoa…" style="background: #fff; border: 0; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-family: inherit; color: #164951; outline: none; width: 260px; max-width: 100%;" />
   </header>
 
-  <!-- O CICLO · início e fim das aulas -->
-  <!-- A agenda gera aula pelo dia da semana do nome da turma. Sem data
-       de fim ela gera para sempre, e a escola fica pedindo chamada de
-       aula que não existiu. Este bloco é o lugar de fechar um ciclo e
-       abrir o próximo — e só aparece quando há algo a resolver. -->
-  <sc-if value="{{ cicloAvisa }}">
-    <section style="background: {{ cicloBg }}; border-radius: 24px; padding: 18px 22px;">
+  <!-- O CICLO · quando as aulas acontecem -->
+  <!-- A agenda gera aula pelo dia da semana escrito no nome da turma.
+       É o começo e o fim do ciclo que dizem até quando. Este bloco
+       fica sempre à vista para quem cuida da escola: quieto quando
+       está tudo certo, aceso quando falta data ou o ciclo acabou — e
+       com o formulário sempre ao alcance. Escondê-lo quando não há
+       problema foi erro: quem quisesse só corrigir a data não achava
+       onde. -->
+  <sc-if value="{{ veCiclo }}">
+    <section style="background: {{ cicloBg }}; border-radius: 24px; padding: 16px 22px;">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
-        <div style="font-size: 16px; font-weight: 600; color: {{ cicloCor }};">{{ cicloTitulo }}</div>
-        <span style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ cicloPeriodo }}</span>
+        <div style="font-size: 15px; font-weight: 600; color: {{ cicloCor }};">{{ cicloTitulo }}</div>
+        <button onclick="{{ onMudarCiclo }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cicloBotao }}</button>
       </div>
       <p style="margin: 4px 0 0; font-size: 13px; color: #1d5a63; line-height: 1.55; max-width: 720px;">{{ cicloTexto }}</p>
-      <sc-if value="{{ cicloFechado }}">
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
-          <input ref="{{ cicloLabelRef }}" placeholder="{{ cicloLabelSugerido }}" title="Nome do ciclo, como 4.2026" style="width: 110px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
-          <span style="font-size: 12px; color: #8a7465;">de</span>
-          <input ref="{{ cicloIniRef }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
-          <span style="font-size: 12px; color: #8a7465;">a</span>
-          <input ref="{{ cicloFimRef }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
-          <button onclick="{{ onAbrirCiclo }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Abrir ciclo</button>
-          <span style="font-size: 12px; font-weight: 600; color: {{ cicloErroCor }};">{{ cicloErro }}</span>
+      <sc-if value="{{ cicloEditando }}">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 14px;">
+          <div>
+            <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Ciclo</div>
+            <input value="{{ cfLabel }}" oninput="{{ onCfLabel }}" title="Nome do ciclo, como 4.2026" style="width: 110px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Primeira aula</div>
+            <input value="{{ cfInicio }}" oninput="{{ onCfInicio }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+          </div>
+          <div>
+            <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Última aula</div>
+            <input value="{{ cfFim }}" oninput="{{ onCfFim }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+          </div>
+          <button onclick="{{ onGravarCiclo }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Gravar</button>
+          <span style="font-size: 12px; font-weight: 600; color: #a3392c;">{{ cicloErro }}</span>
         </div>
-      </sc-if>
-      <sc-if value="{{ cicloSemFim }}">
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
-          <span style="font-size: 12px; color: #8a7465;">As aulas do ciclo {{ cicloNome }} terminam em</span>
-          <input ref="{{ cicloSoFimRef }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
-          <button onclick="{{ onFecharCiclo }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Gravar</button>
-          <span style="font-size: 12px; font-weight: 600; color: {{ cicloErroCor }};">{{ cicloErro }}</span>
-        </div>
+        <p style="margin: 10px 0 0; font-size: 12px; color: #8a7465; line-height: 1.5; max-width: 720px;">Depois da última aula a agenda para de gerar aula destas turmas, e a chamada deixa de ser cobrada. Para começar um ciclo novo, troque o nome e as duas datas.</p>
       </sc-if>
     </section>
   </sc-if>
@@ -188,10 +191,12 @@ class Component extends DCLogic {
   // A Central no desenho novo: a mesma fila e os mesmos números da
   // Central de hoje, na coluna lateral e nos cartões do projeto de
   // design. Nada aqui é dado de exemplo — tudo sai do crm-data.
-  state = { tick: 0, busca: "", cicloErro: "" };
+  // cicloForm: null quando fechado; { label, inicio, fim } ao editar.
+  // Guardar o que foi digitado no estado, e não em refs, é o que
+  // permite abrir o formulário já preenchido com o que está gravado —
+  // que era o que faltava para alguém só corrigir uma data.
+  state = { tick: 0, busca: "", cicloErro: "", cicloForm: null };
   buscaRef = React.createRef();
-  cicloLabelRef = React.createRef(); cicloIniRef = React.createRef();
-  cicloFimRef = React.createRef(); cicloSoFimRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -217,12 +222,11 @@ class Component extends DCLogic {
       equipe: [], temEquipe: false, metas: [], areas: [], achados: [], buscando: false,
       buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {},
       semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "",
-      cicloAvisa: false, cicloFechado: false, cicloSemFim: false, cicloTitulo: "",
-      cicloTexto: "", cicloPeriodo: "", cicloNome: "", cicloBg: "#fff", cicloCor: "#164951",
-      cicloLabelSugerido: "", cicloErro: "", cicloErroCor: "#a3392c",
-      cicloLabelRef: this.cicloLabelRef, cicloIniRef: this.cicloIniRef,
-      cicloFimRef: this.cicloFimRef, cicloSoFimRef: this.cicloSoFimRef,
-      onAbrirCiclo: () => {}, onFecharCiclo: () => {} };
+      veCiclo: false, cicloEditando: false, cicloTitulo: "", cicloTexto: "",
+      cicloBg: "#fff", cicloCor: "#164951", cicloBotao: "mudar as datas",
+      cicloErro: "", cfLabel: "", cfInicio: "", cfFim: "",
+      onMudarCiclo: () => {}, onGravarCiclo: () => {},
+      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {} };
     if (!CRM) return vazio;
 
     let user = {};
@@ -374,71 +378,66 @@ class Component extends DCLogic {
           })
       : [];
 
-    // ── o ciclo: quando as aulas começam e quando param ───────
-    // Só quem cuida da escola fecha e abre ciclo. Para a professora o
-    // bloco não aparece — ela não tem o que resolver aqui.
+    // ── o ciclo: quando as aulas acontecem ────────────────────
+    // Só quem cuida da escola mexe nisso. Para a professora o bloco
+    // não aparece — ela não tem o que resolver aqui.
     const jan = CRM.cicloJanela ? CRM.cicloJanela() : { estado: "sem_fim", label: "" };
-    const podeCiclo = vePelaEscola;
-    const perto = jan.diasAteOFim !== null && jan.diasAteOFim >= 0 && jan.diasAteOFim <= 21;
-    const cicloAvisa = podeCiclo
-      && (jan.estado === "sem_fim" || jan.estado === "terminado" || perto);
-    const periodo = (jan.inicio ? CRM.ddmm(jan.inicio) : "sem início")
-      + " a " + (jan.fim ? CRM.ddmm(jan.fim) : "sem fim");
-    // sugestão do nome do próximo: 3.2026 → 4.2026, e 4.2026 → 1.2027
-    const prox = (() => {
-      const m = /^(\d+)\.(\d{4})$/.exec(jan.label || "");
-      if (!m) return "";
-      const n = parseInt(m[1], 10), ano = parseInt(m[2], 10);
-      return n >= 4 ? "1." + (ano + 1) : (n + 1) + "." + ano;
-    })();
     const diasFim = jan.diasAteOFim;
+    const acabando = diasFim !== null && diasFim >= 0 && diasFim <= 21;
+    const comProblema = jan.estado === "sem_fim" || jan.estado === "terminado" || acabando;
+    const dd = (iso) => (iso ? CRM.ddmm(iso) : "");
+
     const cicloTitulo = jan.estado === "sem_fim"
       ? "O ciclo " + jan.label + " não tem data de fim"
       : jan.estado === "terminado"
-        ? "O ciclo " + jan.label + " terminou"
-        : "O ciclo " + jan.label + " está acabando";
+        ? "O ciclo " + jan.label + " terminou em " + dd(jan.fim)
+        : "Ciclo " + jan.label + " · aulas de " + dd(jan.inicio) + " a " + dd(jan.fim);
     const cicloTexto = jan.estado === "sem_fim"
       ? "A agenda gera aula toda semana pelo dia escrito no nome da turma. Sem data de fim ela não para, e a escola continua pedindo chamada de aula que não aconteceu. Informe o último dia de aula deste ciclo."
       : jan.estado === "terminado"
-        ? "Desde " + CRM.ddmm(jan.fim) + " não há aula na agenda, e nenhuma chamada é cobrada. Abra o próximo ciclo para as aulas voltarem."
-        : (diasFim === 0 ? "Hoje é o último dia de aula." : "Faltam " + diasFim + (diasFim === 1 ? " dia" : " dias") + " para o último dia de aula.")
-          + " Depois disso a agenda fica sem aula até o próximo ciclo ser aberto.";
+        ? "Não há aula na agenda desde então, e nenhuma chamada é cobrada. Para as aulas voltarem, troque o nome e as datas pelo ciclo novo."
+        : acabando
+          ? (diasFim === 0 ? "Hoje é o último dia de aula." : "Faltam " + diasFim + (diasFim === 1 ? " dia" : " dias") + " para o último dia de aula.")
+            + " Depois disso a agenda fica sem aula até você abrir o próximo ciclo."
+          : "É esta janela que decide quais aulas entram na agenda e de quais a chamada é cobrada.";
 
-    const gravaCiclo = (cfg) => {
-      if (!CRM.abrirCiclo(cfg)) {
-        this.setState({ cicloErro: "Confira o nome e as duas datas — o fim não pode ser antes do início." });
-        return;
-      }
-      [this.cicloLabelRef, this.cicloIniRef, this.cicloFimRef, this.cicloSoFimRef]
-        .forEach(r => { if (r.current) r.current.value = ""; });
-      this.setState({ cicloErro: "" });
-      this.bump();
+    const editando = !!this.state.cicloForm;
+    const form = this.state.cicloForm || {};
+    const campo = (nome) => (e) => {
+      const v = e.target.value;
+      this.setState((st) => ({ cicloForm: Object.assign({}, st.cicloForm, { [nome]: v }) }));
     };
-    const val = r => ((r.current && r.current.value) || "").trim();
 
     return {
       eyebrow: "central · " + DIAS[hoje.getDay()] + ", " + hoje.getDate() + " "
         + MES[hoje.getMonth()] + " · " + (meuNome || "equipe"),
 
-      cicloAvisa: cicloAvisa,
-      cicloFechado: cicloAvisa && jan.estado === "terminado",
-      cicloSemFim: cicloAvisa && jan.estado === "sem_fim",
+      veCiclo: vePelaEscola,
+      cicloEditando: editando,
       cicloTitulo: cicloTitulo,
       cicloTexto: cicloTexto,
-      cicloPeriodo: "aulas de " + periodo,
-      cicloNome: jan.label,
-      cicloLabelSugerido: prox || "nome do ciclo",
-      cicloBg: jan.estado === "aberto" ? "#fff" : "#fdf1e8",
-      cicloCor: jan.estado === "aberto" ? "#164951" : "#c98a3a",
+      cicloBg: comProblema ? "#fdf1e8" : "#fff",
+      cicloCor: comProblema ? "#c98a3a" : "#164951",
+      cicloBotao: editando ? "fechar" : "mudar as datas",
       cicloErro: this.state.cicloErro,
-      cicloErroCor: "#a3392c",
-      cicloLabelRef: this.cicloLabelRef, cicloIniRef: this.cicloIniRef,
-      cicloFimRef: this.cicloFimRef, cicloSoFimRef: this.cicloSoFimRef,
-      onAbrirCiclo: () => gravaCiclo({ label: val(this.cicloLabelRef) || prox,
-        inicio: val(this.cicloIniRef), fim: val(this.cicloFimRef) }),
-      // fechar é abrir o mesmo ciclo com a data de fim que faltava
-      onFecharCiclo: () => gravaCiclo({ label: jan.label,
-        inicio: jan.inicio || this.hojeIso(), fim: val(this.cicloSoFimRef) }),
+      cfLabel: form.label || "", cfInicio: form.inicio || "", cfFim: form.fim || "",
+      onCfLabel: campo("label"), onCfInicio: campo("inicio"), onCfFim: campo("fim"),
+      // abre já preenchido com o que está gravado: quem só quer
+      // corrigir uma data não deve ter de redigitar o resto
+      onMudarCiclo: () => this.setState({
+        cicloErro: "",
+        cicloForm: editando ? null
+          : { label: jan.label || "", inicio: jan.inicio || "", fim: jan.fim || "" }
+      }),
+      onGravarCiclo: () => {
+        const f = this.state.cicloForm || {};
+        if (!CRM.abrirCiclo({ label: (f.label || "").trim(), inicio: f.inicio, fim: f.fim })) {
+          this.setState({ cicloErro: "Confira o nome e as duas datas — a última aula não pode ser antes da primeira." });
+          return;
+        }
+        this.setState({ cicloErro: "", cicloForm: null });
+        this.bump();
+      },
 
       buscaRef: this.buscaRef,
       onBusca: e => this.setState({ busca: e.target.value }),
