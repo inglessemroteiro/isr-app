@@ -36,7 +36,7 @@
          só dentro do ciclo. Dizer a janela aqui evita a pergunta
          "cadastrei a turma, por que não aparece aula?". -->
     <div style="background: {{ cicloBg }}; border-radius: 24px; padding: 13px 20px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
-      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Quando estas aulas acontecem</span>
+      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Ciclo</span>
       <span style="font-size: 13px; color: {{ cicloCor }}; flex: 1; min-width: 220px;">{{ cicloTexto }}</span>
       <a href="central.html" class="lk" style="font-size: 12px; font-weight: 600; color: #164951;">{{ cicloAcao }}</a>
     </div>
@@ -360,16 +360,16 @@ class Component extends DCLogic {
     // não aparece aula?".
     const jan = CRM.cicloJanela ? CRM.cicloJanela() : { estado: "aberto", label: "" };
     const cicloTexto = jan.estado === "sem_fim"
-      ? "O ciclo " + jan.label + " não tem data de fim, então estas aulas vão aparecer na agenda semana após semana."
+      ? jan.label + " · sem data de fim, então estas aulas vão aparecer na agenda semana após semana."
       : jan.estado === "terminado"
-        ? "O ciclo " + jan.label + " terminou em " + CRM.ddmm(jan.fim) + ". Não há aula destas turmas na agenda desde então."
-        : "De " + CRM.ddmm(jan.inicio) + " a " + CRM.ddmm(jan.fim) + " · ciclo " + jan.label;
+        ? jan.label + " · terminou em " + CRM.ddmm(jan.fim) + ", e não há aula destas turmas na agenda desde então."
+        : jan.label + " · aulas de " + CRM.ddmm(jan.inicio) + " a " + CRM.ddmm(jan.fim);
 
     return {
       cicloBg: jan.estado === "aberto" ? "#fff" : "#fdf1e8",
       cicloCor: jan.estado === "aberto" ? "#1d5a63" : "#c98a3a",
       cicloTexto: cicloTexto,
-      cicloAcao: jan.estado === "aberto" ? "mudar na Central" : "resolver na Central",
+      cicloAcao: "mudar as datas na Central",
 
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
       onTeacher: (e) => this.setState({ teacher: e.target.value }),
