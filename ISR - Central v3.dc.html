@@ -294,6 +294,7 @@ class Component extends DCLogic {
     }
 
     // ── aulas sem chamada ─────────────────────────────────────
+    const audit = CRM.cicloDeAuditoria ? CRM.cicloDeAuditoria() : null;
     const grupos = (CRM.chamadasPendentesPorProfessora ? CRM.chamadasPendentesPorProfessora() : [])
       .filter(g => g.professora)
       .filter(g => vePelaEscola || g.professora === meuNome);
@@ -464,9 +465,14 @@ class Component extends DCLogic {
       temSemChamada: grupos.length > 0,
       semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
         + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
-      semChamadaTexto: vePelaEscola
-        ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo."
-        : "Estas aulas suas aconteceram e ficaram sem chamada.",
+      // dizer de qual ciclo: a conferência passou a ser do ciclo
+      // inteiro, e um número grande sem período assusta sem informar
+      semChamadaTexto: (audit ? "No ciclo " + audit.label
+          + (audit.inicio ? ", de " + CRM.ddmm(audit.inicio)
+             + (audit.fim ? " a " + CRM.ddmm(audit.fim) : "") : "") + ". " : "")
+        + (vePelaEscola
+          ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo, e a frequência do certificado fica menor do que a real."
+          : "Estas aulas suas aconteceram e ficaram sem chamada."),
       semChamada: grupos.map(g => ({
         professora: g.professora,
         detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
