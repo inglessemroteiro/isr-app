@@ -2,37 +2,33 @@
 
 **Produto:** Sistema de gestão do Inglês sem Roteiro (CRM, cobrança, pedagógico e marketing)
 **Stack:** telas HTML (framework DC) + Netlify + Google Apps Script/Planilhas
-**Estado:** funcional com dados de demonstração no navegador (localStorage); integrações com as planilhas reais prontas em `apps-script-integracoes.js`
-**Última atualização:** Julho 2026
+**Estado:** em uso, com o banco central no Google Apps Script; a base de demonstração no navegador (localStorage) fica para testar
+**Última atualização:** Outubro 2026
 
 ---
 
 ## Mapa de navegação
 
 ```
-index.html → Login (Magic Link) → Área do aluno / Painel do professor   (app já existente)
+index.html → Login (Magic Link) → Área da aluna / Painel do professor
 
-launcher.html  (visão geral de todas as telas, com miniaturas)
-└── ISR - Central.dc.html  ······················· HOME DO SISTEMA (gestão)
-    ├── 🎯 Comercial
-    │   ├── ISR - CRM (Funil de Leads).dc.html
-    │   └── ISR - Mensagens WhatsApp.dc.html
-    ├── 💰 Gestão
-    │   ├── ISR - Cobrança.dc.html
-    │   └── ISR App (Conectado).dc.html  (app do aluno, já existia)
-    ├── 📚 Pedagógico
-    │   ├── ISR - Turmas e Projetos.dc.html
-    │   └── ISR - Painel do Professor.dc.html  (já existia)
-    └── 📣 Marketing
-        ├── ISR - Marketing.dc.html
-        └── launcher.html
+gestao.html  (entrada da equipe: e-mail e senha pelo Netlify Identity)
+└── a barra lateral fixa, em isr-shell.js, leva a todas as telas
+    conforme o papel de quem entrou
 ```
 
-Todas as telas de gestão têm um botão **⌂ Central** no topo para voltar à home.
+A lista completa das telas, com o nome do arquivo e o endereço curto de
+cada uma, está em **"As telas, no desenho novo"**, no fim deste
+arquivo. A barra lateral é a navegação: não há mais botão "⌂ Central"
+no topo de cada tela.
+
+As seções 1 a 6 abaixo descrevem o que cada tela faz e por quê. Foram
+escritas antes do redesenho, então as cores e as medidas que elas citam
+são as de antes; o que a tela resolve continua valendo.
 
 ---
 
-## 1. HOME — `ISR - Central.dc.html`
+## 1. HOME — `ISR - Central v3.dc.html`
 
 Fundo teal escuro (#164951). É o "bom dia" da gestora: o que precisa de atenção + as 4 áreas.
 
@@ -64,7 +60,7 @@ Fundo teal escuro (#164951). É o "bom dia" da gestora: o que precisa de atenç�
 
 ---
 
-## 2. COMERCIAL — `ISR - CRM (Funil de Leads).dc.html`
+## 2. COMERCIAL — `ISR - CRM v3.dc.html`
 
 Referência: CRM da mentoria (funil por abas + painel de lead expansível).
 
@@ -100,7 +96,7 @@ Referência: CRM da mentoria (funil por abas + painel de lead expansível).
 
 ---
 
-## 3. COMERCIAL — `ISR - Mensagens WhatsApp.dc.html`
+## 3. COMERCIAL — `ISR - Mensagens v3.dc.html`
 
 Mensagens prontas com variáveis preenchidas automaticamente.
 
@@ -125,7 +121,7 @@ Nota de rodapé explica que nada é enviado automaticamente.
 
 ---
 
-## 4. GESTÃO — `ISR - Cobrança.dc.html`
+## 4. GESTÃO — `ISR - Cobrança v3.dc.html`
 
 Espelho da [ISR] Planilha Renovações. Título mostra o mês corrente ("Cobrança · Julho").
 
@@ -153,7 +149,7 @@ Espelho da [ISR] Planilha Renovações. Título mostra o mês corrente ("Cobran�
 
 ---
 
-## 5. PEDAGÓGICO — `ISR - Turmas e Projetos.dc.html`
+## 5. PEDAGÓGICO — `ISR - Turmas v3.dc.html`
 
 Units of study visual: o que cada turma estuda agora.
 
@@ -170,7 +166,7 @@ Units of study visual: o que cada turma estuda agora.
 
 ---
 
-## 6. MARKETING — `ISR - Marketing.dc.html`
+## 6. MARKETING — `ISR - Marketing v3.dc.html`
 
 **Topo:** botões **⌂ Central** e **🎯 Abrir CRM**.
 
@@ -401,8 +397,10 @@ continua com o endereço. Uma implantação nova, com endereço novo em
 ## As telas, no desenho novo
 
 O sistema foi redesenhado tela a tela. A versão nova de cada uma tem
-`v3` no nome do arquivo; a antiga continua no repositório e no ar, como
-saída de emergência, mas não está mais no menu.
+`v3` no nome do arquivo. As antigas foram apagadas quando o desenho
+novo ficou pronto; os endereços delas continuam funcionando, por
+redirecionamento no `netlify.toml`, para não quebrar link salvo. Quem
+precisar da tela antiga a encontra no histórico do git.
 
 | Menu | Arquivo | Endereço curto |
 |---|---|---|

@@ -52,7 +52,7 @@ function conferirAbertura(html, arquivo) {
 // as mesmas exceções do verificador de linguagem: rascunho, protótipo e
 // as telas que falam com a aluna em vez de descrever o sistema
 var IGNORAR = [
-  "ISR - Mensagens WhatsApp.dc.html",
+  "ISR - Mensagens v3.dc.html",
   "Brainstorm", "Arquitetura", "Design System", "Estratégia", "Journey",
   "Home Redesenhada", "Home v", "Implementacao", "Login (Magic Link)",
   "Visão Geral (Launcher)", "Tela de Aula", "Flin (IA)", "Comunidade",

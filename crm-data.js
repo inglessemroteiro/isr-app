@@ -2254,7 +2254,7 @@
   };
   function alertasDaEscola() {
     var out = [];
-    var perfil = function (id) { return "ISR - Perfil.dc.html?id=" + id; };
+    var perfil = function (id) { return "ISR - Perfil v3.dc.html?id=" + id; };
 
     // ── quem está sumindo ou insatisfeita ──
     var interessa = { falta_recente: "falta", avaliacao_baixa: "avaliacao_baixa",
@@ -2304,7 +2304,7 @@
       if (!g.professora) return;
       out.push({ id: "chamada|" + g.professora, tipo: "chamada_pendente", area: "pedagogico",
         quem: g.professora, professora: g.professora,
-        href: "ISR - Painel do Professor.dc.html?prof=" + encodeURIComponent(g.professora),
+        href: "ISR - Painel v3.dc.html?prof=" + encodeURIComponent(g.professora),
         texto: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
           + " · desde " + ddmm(g.maisAntiga),
         peso: ALERTA_PESO.chamada_pendente });
@@ -2313,7 +2313,7 @@
     // ── turma que não fecha ──
     turmasAbaixoDoMinimo().forEach(function (t) {
       out.push({ id: "turma_vazia|" + t.id, tipo: "turma_vazia", area: "pedagogico",
-        quem: t.label, href: "ISR - Turmas e Projetos.dc.html",
+        quem: t.label, href: "ISR - Turmas v3.dc.html",
         texto: t.alunas + (t.alunas === 1 ? " aluna" : " alunas")
           + " · faltam " + t.faltam + " para o mínimo",
         peso: ALERTA_PESO.turma_vazia });
@@ -2331,7 +2331,7 @@
     if ((fin.presumido || 0) >= 0.01) {
       out.push({ id: "conciliar", area: "financeiro", titulo: "Conciliar o extrato do mês",
         texto: fmtMoney("R$", fin.presumido) + " ainda não apareceu em conta nenhuma",
-        href: "ISR - Caixa.dc.html" });
+        href: "ISR - Caixa v3.dc.html" });
     }
 
     // turma com aula dada e chamada em branco: sete dias sem registro
@@ -2347,7 +2347,7 @@
         texto: atrasadas.length + (atrasadas.length === 1 ? " turma sem registro" : " turmas sem registro")
           + " há mais de uma semana: " + atrasadas.slice(0, 3).join(", ")
           + (atrasadas.length > 3 ? "…" : ""),
-        href: "ISR - Painel do Professor.dc.html" });
+        href: "ISR - Painel v3.dc.html" });
     }
 
     var aud = auditoriaDados();
@@ -2355,7 +2355,7 @@
       out.push({ id: "revisao", area: "config", titulo: "Corrigir dados repetidos",
         texto: aud.seguras + (aud.seguras === 1 ? " problema pode" : " problemas podem")
           + " ser corrigido de uma vez",
-        href: "ISR - Caixa.dc.html" });
+        href: "ISR - Caixa v3.dc.html" });
     }
 
     var semPlano = alunasSemPlano();
@@ -2363,7 +2363,7 @@
       out.push({ id: "sem_plano", area: "alunas", titulo: "Completar plano de aluna",
         texto: semPlano.length + (semPlano.length === 1 ? " aluna sem" : " alunas sem")
           + " turma, valor ou parcelas: " + semPlano.slice(0, 3).map(function (a) { return firstName(a.nome); }).join(", "),
-        href: "ISR - Alunas.dc.html" });
+        href: "ISR - Alunas v3.dc.html" });
     }
 
     return out;
@@ -3521,7 +3521,7 @@
             + (fpPend.length === 1 ? " pagamento pendente" : " pagamentos pendentes")
             + " da folha de " + fpMes.mes.slice(5, 7) + "/" + fpMes.mes.slice(0, 4) + " ("
             + fpPend.map(function (x) { return firstName(x.nome); }).slice(0, 4).join(", ") + ")",
-          href: "ISR%20-%20Pagamentos.dc.html",
+          href: "ISR%20-%20Folha%20v3.dc.html",
           acao: "Abrir a folha", tpl: "" });
       }
     }
@@ -3545,7 +3545,7 @@
         icon: "", cor: "#9c6f56",
         pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
         motivo: motivo.slice(0, 160),
-        href: tf.pessoaId ? "ISR%20-%20Perfil.dc.html?id=" + tf.pessoaId : (tf.tela || ""),
+        href: tf.pessoaId ? "ISR%20-%20Perfil%20v3.dc.html?id=" + tf.pessoaId : (tf.tela || ""),
         acao: "Concluir", tpl: "" });
     });
 
@@ -8279,7 +8279,7 @@
         detalhe: temTurma
           ? "Turma " + a.turma + " sem professora atribuída"
           : "Sem turma e sem professora",
-        onde: t ? "ISR - Turma.dc.html" : "ISR - Perfil.dc.html",
+        onde: t ? "ISR - Turma v3.dc.html" : "ISR - Perfil v3.dc.html",
         ondeLabel: t ? "Abrir a turma" : "Abrir o perfil",
         turmaId: t ? t.id : "",
         pessoaId: a.id });
@@ -8293,7 +8293,7 @@
         detalhe: s.aPagar
           ? fmtMoney(configPagamento().moeda, s.aPagar) + " retidos até o cadastro"
           : "Sem cadastro, sem acesso e sem remuneração combinada",
-        onde: "ISR - Equipe.dc.html", ondeLabel: "Cadastrar",
+        onde: "ISR - Equipe v3.dc.html", ondeLabel: "Cadastrar",
         nome: s.nome });
     });
 
@@ -8304,7 +8304,7 @@
       out.push({ tipo: "remuneracao_incompleta", urg: 1, chave: "remuneracao_incompleta|" + m.nome,
         titulo: m.nome + " tem " + fmtMoney(m.moeda || "R$", m.valor) + " no cadastro sem forma de pagamento",
         detalhe: "Sem escolher \u201ccomo recebe\u201d, o valor não entra na folha",
-        onde: "ISR - Equipe.dc.html", ondeLabel: "Corrigir",
+        onde: "ISR - Equipe v3.dc.html", ondeLabel: "Corrigir",
         nome: m.nome });
     });
 
@@ -8315,7 +8315,7 @@
         titulo: u.label + " com " + u.alunas
           + (u.alunas === 1 ? " aluna" : " alunas"),
         detalhe: "Faltam " + u.faltam + " para o mínimo de " + MINIMO_TURMA,
-        onde: "ISR - Turma.dc.html", ondeLabel: "Abrir a turma",
+        onde: "ISR - Turma v3.dc.html", ondeLabel: "Abrir a turma",
         turmaId: u.id });
     });
 
@@ -8331,7 +8331,7 @@
       out.push({ tipo: "renovacao_parada", urg: 2, chave: "renovacao_parada|" + p.id,
         titulo: p.nome + " termina o ciclo em " + dias + " dias",
         detalhe: "Conversa de renovação ainda não começou",
-        onde: "ISR - Perfil.dc.html", ondeLabel: "Abrir",
+        onde: "ISR - Perfil v3.dc.html", ondeLabel: "Abrir",
         pessoaId: p.id });
     });
 

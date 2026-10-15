@@ -34,7 +34,7 @@ var PROIBIDOS = [
 
 // trechos que o verificador não avalia
 var IGNORAR_ARQUIVOS = [
-  "ISR - Mensagens WhatsApp.dc.html", // a tela é feita de modelos de mensagem
+  "ISR - Mensagens v3.dc.html", // a tela é feita de modelos de mensagem
   "Brainstorm", "Arquitetura", "Design System", "Estratégia", "Journey",
   "Home Redesenhada", "Home v", "Implementacao", "Login (Magic Link)",
   "Visão Geral (Launcher)", "Tela de Aula", "Flin (IA)", "Comunidade",

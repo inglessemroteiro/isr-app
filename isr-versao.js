@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-j",
+  numero: "2026.10.15-k",
   data: "15/10/2026",
-  nota: "As onze telas que faltavam entram no desenho novo: Mensagens, Mural, Dados, Marketing, Calculadora, Acompanhamento, Desafio, Equipe, Folha, Importar e a página da turma. O menu e os links entre telas deixam de abrir as antigas"
+  nota: "As 22 telas antigas saem do sistema. Os endereços delas continuam abrindo, agora na tela nova, por redirecionamento — link salvo nos favoritos ou numa ata não quebra"
 };
