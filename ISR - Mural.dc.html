@@ -33,6 +33,31 @@
       </div>
     </div>
 
+    <!-- RECADO PARA AS ALUNAS · vai para o mural da escola na comunidade
+         (comunidade.html), visível para toda aluna com acesso ao app -->
+    <div style="background: #fdfbf8; border: 1px solid #c9dede; border-left: 4px solid #9ec970; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px;">
+        <strong style="font-size: 13px; color: #164951;">Recado para as alunas</strong>
+        <span style="font-size: 11px; color: #8a7c6b;">{{ feedContagem }}</span>
+      </div>
+      <p style="margin: 0 0 10px; font-size: 12px; color: #6b6155; line-height: 1.6;">O que você escrever aqui aparece no <strong>Mural da escola</strong>, na comunidade do app, para todas as alunas. Avisos, eventos, memes, a novidade da semana.</p>
+      <div style="display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
+        <textarea ref="{{ feedRef }}" placeholder="Escreva para as alunas (em inglês simples, ou português)" style="flex: 1; min-width: 220px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff; resize: vertical;"></textarea>
+        <input ref="{{ feedLinkRef }}" placeholder="Link (opcional)" style="width: 100%; max-width: 260px; box-sizing: border-box; padding: 10px 12px; font-size: 12px; font-family: inherit; color: #164951; border: 1px solid #e5dccf; border-radius: 10px; background: #fff;" />
+        <button onclick="{{ onFeedEnviar }}" style="border: none; background: #348a8e; color: #fff; font-size: 12.5px; font-weight: 700; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Publicar para as alunas</button>
+      </div>
+      <sc-if value="{{ temFeed }}">
+        <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+          <sc-for list="{{ feed }}" as="f" hint-placeholder-count="3">
+            <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 12px; color: #3d3529; line-height: 1.5; border-top: 1px solid #eee3d6; padding-top: 6px;">
+              <span style="flex: 1; min-width: 0; white-space: pre-wrap;"><strong style="color: #164951;">{{ f.autor }}</strong> <span style="color: #b3a693; font-size: 11px;">{{ f.quando }}</span><br>{{ f.texto }}</span>
+              <button onclick="{{ f.onRemover }}" style="flex: none; border: 1px solid {{ f.remBorda }}; background: {{ f.remBg }}; color: #cf6b5c; font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ f.remLabel }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- FILTRO -->
     <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
       <sc-for list="{{ assuntosFiltro }}" as="af" hint-placeholder-count="5">
@@ -76,9 +101,11 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = { assuntoEscrever: "Geral", filtro: "", tick: 0,
-            virandoId: null, removendoId: null };
+            virandoId: null, removendoId: null, removendoFeedId: null };
   msgRef = React.createRef();
   viraDonoRef = React.createRef();
+  feedRef = React.createRef();
+  feedLinkRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   // o puxe do banco (a cada 5 min) traz mensagens novas; o redesenho
   // periódico faz a tela refletir sem ninguém recarregar
@@ -106,7 +133,8 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { assuntosEscrever: [], assuntosFiltro: [], mensagens: [], vazio: true,
       contagem: "", msgRef: this.msgRef, viraDonoRef: this.viraDonoRef,
-      onEnviar: () => {}, onMsgKey: () => {} };
+      feedRef: this.feedRef, feedLinkRef: this.feedLinkRef, feed: [], temFeed: false, feedContagem: "",
+      onFeedEnviar: () => {}, onEnviar: () => {}, onMsgKey: () => {} };
     const user = CRM.gestaoUser();
     const CORES = { "Geral": ["#f2ebe3", "#8a7c6b"], "Pedagógico": ["rgba(107,91,149,0.14)", "#6b5b95"],
       "Comercial": ["rgba(224,120,86,0.14)", "#c8622f"], "Operação": ["rgba(42,157,143,0.14)", "#2a9d8f"] };
@@ -126,8 +154,38 @@ class Component extends DCLogic {
       .filter(mb => (mb.papeis || []).length && (mb.papeis || []).indexOf("prestadora") < 0)
       .map(mb => mb.nome);
 
+    // mural da escola: os 5 recados mais recentes, para conferir e remover
+    const feedTodos = CRM.feedEscolaLista ? CRM.feedEscolaLista() : [];
+    const feed = feedTodos.slice(0, 5).map(f => {
+      const removendo = this.state.removendoFeedId === f.id;
+      return {
+        autor: f.autor || "Equipe", quando: this.quando(f.em), texto: f.texto,
+        remLabel: removendo ? "Confirmar remoção" : "remover",
+        remBorda: removendo ? "#cf6b5c" : "#e5dccf",
+        remBg: removendo ? "#fdece9" : "#fff",
+        onRemover: () => {
+          if (!removendo) { this.setState({ removendoFeedId: f.id }); return; }
+          CRM.feedEscolaRemover(f.id);
+          this.setState({ removendoFeedId: null });
+        }
+      };
+    });
+
     return {
       msgRef: this.msgRef, viraDonoRef: this.viraDonoRef,
+      feedRef: this.feedRef, feedLinkRef: this.feedLinkRef,
+      feed, temFeed: feed.length > 0,
+      feedContagem: feedTodos.length === 0 ? "nenhum recado ainda"
+        : (feedTodos.length === 1 ? "1 recado publicado" : feedTodos.length + " recados publicados"),
+      onFeedEnviar: () => {
+        const t = ((this.feedRef.current && this.feedRef.current.value) || "").trim();
+        if (!t) return;
+        const link = (this.feedLinkRef.current && this.feedLinkRef.current.value) || "";
+        CRM.feedEscolaPost(t, (user && user.nome) || "Equipe ISR", link);
+        this.feedRef.current.value = "";
+        if (this.feedLinkRef.current) this.feedLinkRef.current.value = "";
+        this.bump();
+      },
       onEnviar: enviar,
       onMsgKey: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } },
       assuntosEscrever: CRM.ASSUNTOS_MURAL.map(a => {

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Clubes</title>
+<meta name="theme-color" content="#f2ebe3">
+<link rel="manifest" href="manifest.json">
+<!--
+  Clubs Hub — tela independente, irmã de comunidade.html, no design
+  system da escola (fundo creme, cartões brancos, Inter 800, coral com
+  degrau). Abre por link no systeme, dentro do app da aluna (cartão
+  "Seus clubes") e como aplicativo instalado. Só depende do login
+  (isr-trava.js) e do banco (crm-data.js).
+
+    clubes.html                        todos os clubes do ciclo e os seus
+    clubes.html?clube=ID               a página do clube: fórum e quem está nele
+    clubes.html?clube=ID&topico=TID    um tópico aberto, com as respostas
+
+  Regra: até 2 clubes por ciclo (CLUBES_POR_CICLO). Trocar no meio do
+  ciclo só com o resgate "Trocar de clube" na conta de miles.
+  Quem está na equipe e abre pelo sistema vê tudo e assina como equipe.
+-->
+<script src="./isr-trava.js"></script>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./crm-data.js"></script>
+<link rel="stylesheet" href="./isr-tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── tokens do kit (web) ─────────────────────────────────────────
+     fundo #f2ebe3 · títulos/texto #164951 · apoio #1d5a63 · teal #348a8e
+     coral #fc9082 (ação) · verde #9ec970 (positivo) · marrom #8a7465 (rótulos)
+     cantos: 8 papel · 20–32 cartões · 48 seções escuras · 999 botões */
+  html, body { margin: 0; background: #f2ebe3; }
+  .com { min-height: 100vh; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color: #164951; -webkit-font-smoothing: antialiased; background: #f2ebe3; }
+  .com * { box-sizing: border-box; }
+  .com a { color: #348a8e; }
+  .com a:hover { color: #164951; }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px 56px; }
+  @media (min-width: 640px) { .wrap { padding: 28px 24px 72px; } }
+
+  /* topo: wordmark + eyebrow, e o botão de voltar */
+  .topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .marca { display: flex; flex-direction: column; gap: 5px; text-decoration: none; }
+  .marca img { height: 13px; width: auto; display: block; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: #8a7465; text-transform: lowercase; }
+  .volta { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #164951; text-decoration: none; background: #fff; padding: 9px 14px; border-radius: 999px; box-shadow: 0 3px 0 #e2d8ca; white-space: nowrap; max-width: 55%; overflow: hidden; text-overflow: ellipsis; transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .volta:hover { transform: translateY(-3px); box-shadow: 0 6px 0 #e2d8ca; color: #164951; }
+  .volta:active { transform: translateY(1px); box-shadow: 0 2px 0 #e2d8ca; }
+  .volta svg { width: 16px; height: 16px; flex: none; }
+
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin: 0 0 8px; color: #164951; }
+  h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; margin: 0; color: #164951; }
+  h3.eyebrow { margin: 0; font-size: 13px; }
+  .ico { display: inline-block; margin-right: 9px; font-size: 14px; }
+  .sub { margin: 0; font-size: 16px; line-height: 1.5; color: #1d5a63; }
+  .secao { margin: 0 0 28px; }
+  .cabeca { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px 4px; }
+  .cabeca .conta { font-size: 12px; font-weight: 700; color: #348a8e; white-space: nowrap; }
+
+  /* seção escura do topo: boas-vindas na lista, identidade na página do clube */
+  .hero { background: #164951; color: #f2ebe3; border-radius: 32px; padding: 26px 24px 28px; margin-bottom: 28px; }
+  @media (min-width: 640px) { .hero { border-radius: 48px; padding: 36px 36px 38px; } }
+  .hero .eyebrow { color: #9ec970; }
+  .hero h1 { color: #fff; margin-top: 6px; }
+  .hero .sub { color: rgba(242,235,227,0.8); }
+  .hero .novidade { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; background: #fc9082; color: #164951; font-size: 13px; font-weight: 800; padding: 8px 14px; border-radius: 999px; }
+  .hero .nota { color: rgba(242,235,227,0.65); }
+  .hero.identidade { text-align: center; }
+  .hero.identidade .selo { width: 72px; height: 72px; border-radius: 24px; background: rgba(242,235,227,0.12); display: inline-flex; align-items: center; justify-content: center; font-size: 38px; margin-bottom: 12px; }
+  .hero.identidade .sub { max-width: 440px; margin: 10px auto 0; }
+  .hero.identidade .acoes { justify-content: center; margin-top: 18px; }
+
+  /* cartões brancos sobre o creme, sem borda, sombra baixa */
+  .card { background: #fff; border-radius: 20px; padding: 18px 20px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(22,73,81,0.06); }
+  .card.tint-coral { background: #fff1ee; }
+  .card.tint-verde { background: #f1f7e9; }
+  .card.papel { border-radius: 8px; background: #fffdf8; box-shadow: 0 1px 4px rgba(22,73,81,0.06); }
+  a.card { display: block; text-decoration: none; color: inherit; transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  a.card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(22,73,81,0.1); color: inherit; }
+  .vazio { font-size: 15px; line-height: 1.5; color: #1d5a63; margin: 0; }
+
+  .linha { display: flex; gap: 12px; align-items: flex-start; }
+  .linha .corpo { flex: 1; min-width: 0; }
+  .quem { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #164951; }
+  .quem .eq { display: inline-block; margin-left: 6px; background: #9ec970; color: #164951; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
+  .quando { font-size: 12px; font-weight: 600; color: #8a7465; margin-top: 2px; }
+  .texto { margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #164951; white-space: pre-wrap; word-wrap: break-word; }
+
+  .avatar { flex: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; color: #164951; overflow: hidden; background: #e8f5dd; }
+  .avatar .foto { display: block; width: 100%; height: 100%; background-size: cover; background-position: center; }
+
+  /* botões: 999px, primeira pessoa quando couber, degrau sólido embaixo;
+     hover sobe 3px e a sombra cresce; clique afunda */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; padding: 12px 20px; cursor: pointer; text-decoration: none; transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .btn.coral { background: #fc9082; color: #164951; box-shadow: 0 4px 0 #d9705f; }
+  .btn.coral:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #d9705f; color: #164951; }
+  .btn.coral:active { transform: translateY(1px); box-shadow: 0 1px 0 #d9705f; }
+  .btn.verde { background: #9ec970; color: #164951; box-shadow: 0 4px 0 #7ca954; }
+  .btn.verde:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #7ca954; color: #164951; }
+  .btn.verde:active { transform: translateY(1px); box-shadow: 0 1px 0 #7ca954; }
+  .btn.creme { background: #f2ebe3; color: #164951; box-shadow: 0 4px 0 #d9cdbd; }
+  .btn.creme:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #d9cdbd; color: #164951; }
+  .btn.creme:active { transform: translateY(1px); box-shadow: 0 1px 0 #d9cdbd; }
+  .btn.mini { font-size: 13px; padding: 10px 16px; }
+  .btn svg { width: 16px; height: 16px; }
+  .link-btn { background: none; border: none; padding: 0; font-family: inherit; font-size: 13px; font-weight: 700; color: #8a7465; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { color: #164951; }
+  .acoes { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+
+  .campo { width: 100%; border: 1.5px solid #e2d8ca; background: #fffdf8; color: #164951; font-family: inherit; font-size: 16px; line-height: 1.5; padding: 13px 15px; border-radius: 14px; outline: none; transition: border-color .15s; }
+  textarea.campo { min-height: 72px; resize: vertical; }
+  .campo + .campo { margin-top: 8px; }
+  .campo::placeholder { color: #9b8b7e; }
+  .campo:focus { border-color: #348a8e; }
+  .nota { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: #8a7465; }
+  .nota strong { color: #164951; }
+  .ok { font-size: 14px; font-weight: 800; color: #348a8e; }
+
+  /* cartão de clube: o emoji é a identidade do clube (um por cartão) */
+  .clube { display: flex; gap: 14px; align-items: flex-start; }
+  .clube .selo { flex: none; width: 52px; height: 52px; border-radius: 16px; background: #f2ebe3; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .clube .corpo { flex: 1; min-width: 0; }
+  .clube .nome { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; color: #164951; }
+  .clube .meta { font-size: 12px; font-weight: 700; color: #8a7465; margin-top: 3px; text-transform: lowercase; }
+  .clube .desc { margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: #1d5a63; }
+  .clube .novo { margin: 8px 0 0; font-size: 13px; font-weight: 800; color: #d9705f; }
+
+  /* membros: grade de avatares com o primeiro nome */
+  .grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (min-width: 480px) { .grade { grid-template-columns: repeat(5, 1fr); } }
+  .pessoa { background: #fff; border-radius: 20px; padding: 14px 6px 12px; cursor: pointer; font-family: inherit; color: #164951; text-align: center; text-decoration: none; display: block; box-shadow: 0 2px 10px rgba(22,73,81,0.06); transition: transform .15s cubic-bezier(.4,0,.2,1), box-shadow .15s cubic-bezier(.4,0,.2,1); }
+  .pessoa:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(22,73,81,0.1); color: #164951; }
+  .pessoa .avatar { margin: 0 auto 8px; width: 48px; height: 48px; font-size: 18px; }
+  .pessoa .nome { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* tópico na lista: título, quem abriu e quantas respostas */
+  .topico .titulo { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3; color: #164951; }
+  .topico .resumo { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 13px; color: #8a7465; font-weight: 600; }
+  .topico .resumo b { color: #348a8e; font-weight: 800; white-space: nowrap; }
+
+  .pill { display: inline-block; background: #fc9082; color: #164951; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; vertical-align: middle; }
+  .pill.verde { background: #9ec970; }
+  .pill.neutra { background: #f2ebe3; color: #164951; }
+
+  @media (prefers-reduced-motion: reduce) { .com * { transition: none !important; } .com .btn:hover, .com .pessoa:hover, .com .volta:hover, .com a.card:hover { transform: none; } }
+</style>
+</head>
+<body>
+<x-dc>
+<main class="com">
+  <div class="wrap">
+
+    <sc-if value="{{ semPessoa }}">
+      <div class="topo"><a class="marca" href="clubes.html"><img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" /><span class="eyebrow">clubes</span></a></div>
+      <div class="card">
+        <p class="vazio">Não encontramos sua matrícula neste aparelho. <a href="aluna.html?trocar">Entrar de novo →</a></p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ ok }}">
+
+    <div class="topo">
+      <a class="marca" href="{{ linkLista }}"><img src="uploads/Logo ISR-20260619T084739Z-3-001/ISR iconografia-19.png" alt="Inglês sem Roteiro" /><span class="eyebrow">clubes</span></a>
+      <sc-if value="{{ vistaLista }}">
+        <a class="volta" href="{{ linkApp }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Meu app</a>
+      </sc-if>
+      <sc-if value="{{ vistaClube }}">
+        <a class="volta" href="{{ linkLista }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>Clubes</a>
+      </sc-if>
+      <sc-if value="{{ vistaTopico }}">
+        <a class="volta" href="{{ linkClube }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>{{ clubeNome }}</a>
+      </sc-if>
+    </div>
+
+    <!-- aviso da última ação: entrou, foi barrada, saiu -->
+    <sc-if value="{{ temMsg }}">
+      <div class="card {{ msgClasse }}">
+        <p class="texto" style="margin: 0;">{{ msgTexto }}</p>
+        <div class="acoes" style="margin-top: 8px;"><button class="link-btn" onclick="{{ onFecharMsg }}">fechar</button></div>
+      </div>
+    </sc-if>
+
+    <!-- ══════════ LISTA: os seus e os do ciclo ══════════ -->
+    <sc-if value="{{ vistaLista }}">
+      <section class="hero">
+        <span class="eyebrow">{{ heroEyebrow }}</span>
+        <h1>{{ saudacao }}</h1>
+        <p class="sub">{{ subLista }}</p>
+        <sc-if value="{{ temNovidades }}"><span class="novidade">✳ {{ novidadesLabel }}</span></sc-if>
+      </section>
+
+      <sc-if value="{{ temMinha }}">
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow">seus clubes</h3><span class="conta">{{ meusContagem }}</span></div>
+          <sc-if value="{{ semMeus }}">
+            <div class="card papel"><p class="vazio">Você ainda não entrou em nenhum clube. Escolha até {{ limite }} abaixo: cada um tem um fórum só de quem está nele.</p></div>
+          </sc-if>
+          <sc-for list="{{ meus }}" as="c" hint-placeholder-count="2">
+            <a class="card tint-verde" href="{{ c.link }}">
+              <div class="clube">
+                <div class="selo">{{ c.emoji }}</div>
+                <div class="corpo">
+                  <div class="nome">{{ c.nome }}</div>
+                  <div class="meta">{{ c.meta }}</div>
+                  <sc-if value="{{ c.temNovidade }}"><p class="novo">✳ {{ c.novidade }}</p></sc-if>
+                </div>
+                <span class="pill neutra">abrir →</span>
+              </div>
+            </a>
+          </sc-for>
+          <sc-if value="{{ temTroca }}"><p class="nota">{{ trocaTexto }}</p></sc-if>
+        </section>
+      </sc-if>
+
+      <section class="secao">
+        <div class="cabeca"><h3 class="eyebrow">{{ tituloCiclo }}</h3><span class="conta">{{ clubesContagem }}</span></div>
+        <sc-if value="{{ semClubes }}">
+          <div class="card papel"><p class="vazio">A escola ainda não abriu clubes neste ciclo. Quando abrir, eles aparecem aqui.</p></div>
+        </sc-if>
+        <sc-for list="{{ clubes }}" as="c" hint-placeholder-count="3">
+          <div class="card">
+            <div class="clube">
+              <div class="selo">{{ c.emoji }}</div>
+              <div class="corpo">
+                <div class="nome">{{ c.nome }}</div>
+                <div class="meta">{{ c.meta }}</div>
+                <sc-if value="{{ c.temDesc }}"><p class="desc">{{ c.descricao }}</p></sc-if>
+                <div class="acoes">
+                  <sc-if value="{{ c.podeEntrar }}"><button class="btn coral mini" onclick="{{ c.onEntrar }}">Quero entrar no clube →</button></sc-if>
+                  <sc-if value="{{ c.souMembro }}"><span class="pill verde">você está aqui</span></sc-if>
+                  <a class="btn creme mini" href="{{ c.link }}">{{ c.abrirLabel }}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <!-- ══════════ PÁGINA DO CLUBE ══════════ -->
+    <sc-if value="{{ vistaClube }}">
+      <sc-if value="{{ clubeNaoExiste }}">
+        <div class="card"><p class="vazio">Este clube não existe mais. <a href="{{ linkLista }}">Ver os clubes do ciclo →</a></p></div>
+      </sc-if>
+      <sc-if value="{{ clubeExiste }}">
+
+        <section class="hero identidade">
+          <div class="selo">{{ cl.emoji }}</div>
+          <span class="eyebrow" style="display: block;">{{ cl.meta }}</span>
+          <h1>{{ cl.nome }}</h1>
+          <sc-if value="{{ cl.temDesc }}"><p class="sub">{{ cl.descricao }}</p></sc-if>
+          <sc-if value="{{ podeEntrarAqui }}">
+            <div class="acoes"><button class="btn coral" onclick="{{ onEntrarAqui }}">Quero entrar no clube →</button></div>
+            <p class="nota">O fórum é só de quem está no clube. Você pode estar em até {{ limite }} por ciclo.</p>
+          </sc-if>
+          <sc-if value="{{ souMembroAqui }}"><span class="novidade">✳ você está neste clube</span></sc-if>
+        </section>
+
+        <!-- fórum: só membros e equipe -->
+        <sc-if value="{{ dentro }}">
+          <section class="secao">
+            <div class="cabeca"><h3 class="eyebrow"><span class="ico">💬</span>conversas</h3><span class="conta">{{ topicosContagem }}</span></div>
+            <sc-if value="{{ composerFechado }}">
+              <div class="card tint-verde">
+                <h2>Puxa uma conversa?</h2>
+                <p class="vazio" style="margin: 6px 0 14px;">Uma pergunta, uma dica, o capítulo da semana. Em inglês vale mais.</p>
+                <button class="btn coral mini" onclick="{{ onAbrirComposer }}">Quero abrir um tópico →</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ composerAberto }}">
+              <div class="card">
+                <input class="campo" ref="{{ tituloRef }}" maxlength="120" placeholder="Título do tópico" />
+                <textarea class="campo" ref="{{ textoRef }}" placeholder="Escreva o que quer conversar"></textarea>
+                <input class="campo" ref="{{ linkRef }}" placeholder="Link (opcional)" />
+                <div class="acoes">
+                  <button class="btn coral mini" onclick="{{ onAbrirTopico }}">Publicar o tópico →</button>
+                  <button class="link-btn" onclick="{{ onFecharComposer }}">cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ semTopicos }}">
+              <div class="card papel"><p class="vazio">Ninguém abriu conversa ainda. A primeira pode ser sua.</p></div>
+            </sc-if>
+            <sc-for list="{{ topicos }}" as="t" hint-placeholder-count="4">
+              <a class="card topico" href="{{ t.link }}">
+                <div class="titulo">{{ t.titulo }}</div>
+                <div class="resumo"><span>{{ t.quemQuando }}</span><b>{{ t.respostasLabel }}</b></div>
+              </a>
+            </sc-for>
+          </section>
+        </sc-if>
+
+        <section class="secao">
+          <div class="cabeca"><h3 class="eyebrow"><span class="ico">👥</span>quem está no clube</h3><span class="conta">{{ membrosContagem }}</span></div>
+          <sc-if value="{{ semMembros }}">
+            <div class="card papel"><p class="vazio">Ninguém entrou ainda. {{ semMembrosDica }}</p></div>
+          </sc-if>
+          <div class="grade">
+            <sc-for list="{{ membros }}" as="m" hint-placeholder-count="4">
+              <a class="pessoa" href="{{ m.link }}">
+                <div class="avatar" style="background: {{ m.cor }};">
+                  <sc-if value="{{ m.temFoto }}"><span class="foto" style="background-image: url('{{ m.foto }}');"></span></sc-if>
+                  <sc-if value="{{ m.semFoto }}">{{ m.inicial }}</sc-if>
+                </div>
+                <div class="nome">{{ m.nome }}</div>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+
+        <sc-if value="{{ souMembroAqui }}">
+          <section class="secao">
+            <div class="card papel">
+              <p class="vazio">{{ sairNota }}</p>
+              <div class="acoes" style="margin-top: 10px;"><button class="link-btn" onclick="{{ onSair }}">{{ sairLabel }}</button></div>
+            </div>
+          </section>
+        </sc-if>
+
+      </sc-if>
+    </sc-if>
+
+    <!-- ══════════ TÓPICO ABERTO ══════════ -->
+    <sc-if value="{{ vistaTopico }}">
+      <sc-if value="{{ topicoNaoExiste }}">
+        <div class="card"><p class="vazio">Esta conversa não está mais aqui. <a href="{{ linkClube }}">Voltar ao clube →</a></p></div>
+      </sc-if>
+      <sc-if value="{{ topicoFora }}">
+        <div class="card"><p class="vazio">O fórum é só de quem está no clube. <a href="{{ linkClube }}">Entrar no {{ clubeNome }} →</a></p></div>
+      </sc-if>
+      <sc-if value="{{ topicoExiste }}">
+        <div class="card tint-verde">
+          <h2>{{ tp.titulo }}</h2>
+          <div class="linha" style="margin-top: 12px;">
+            <div class="avatar" style="background: {{ tp.cor }}; width: 38px; height: 38px; font-size: 15px;">
+              <sc-if value="{{ tp.temFoto }}"><span class="foto" style="background-image: url('{{ tp.foto }}');"></span></sc-if>
+              <sc-if value="{{ tp.semFoto }}">{{ tp.inicial }}</sc-if>
+            </div>
+            <div class="corpo">
+              <div class="quem">{{ tp.deNome }}<sc-if value="{{ tp.equipe }}"><span class="eq">equipe</span></sc-if></div>
+              <div class="quando">{{ tp.quando }}</div>
+              <sc-if value="{{ tp.temTexto }}"><p class="texto">{{ tp.texto }}</p></sc-if>
+              <sc-if value="{{ tp.temLink }}"><div class="acoes"><a class="btn creme mini" href="{{ tp.link }}" target="_blank" rel="noopener">Abrir o link →</a></div></sc-if>
+              <sc-if value="{{ tp.podeRemover }}"><div class="acoes" style="margin-top: 8px;"><button class="link-btn" onclick="{{ tp.onRemover }}">{{ tp.removerLabel }}</button></div></sc-if>
+            </div>
+          </div>
+        </div>
+
+        <section class="secao" style="margin-top: 20px;">
+          <div class="cabeca"><h3 class="eyebrow">respostas</h3><span class="conta">{{ respostasContagem }}</span></div>
+          <sc-if value="{{ semRespostas }}">
+            <div class="card papel"><p class="vazio">Ninguém respondeu ainda. Sua resposta abre a conversa.</p></div>
+          </sc-if>
+          <sc-for list="{{ respostas }}" as="r" hint-placeholder-count="4">
+            <div class="card">
+              <div class="linha">
+                <div class="avatar" style="background: {{ r.cor }}; width: 38px; height: 38px; font-size: 15px;">
+                  <sc-if value="{{ r.temFoto }}"><span class="foto" style="background-image: url('{{ r.foto }}');"></span></sc-if>
+                  <sc-if value="{{ r.semFoto }}">{{ r.inicial }}</sc-if>
+                </div>
+                <div class="corpo">
+                  <div class="quem">{{ r.deNome }}<sc-if value="{{ r.equipe }}"><span class="eq">equipe</span></sc-if></div>
+                  <div class="quando">{{ r.quando }}</div>
+                  <p class="texto">{{ r.texto }}</p>
+                  <sc-if value="{{ r.temLink }}"><div class="acoes"><a class="btn creme mini" href="{{ r.link }}" target="_blank" rel="noopener">Abrir o link →</a></div></sc-if>
+                  <sc-if value="{{ r.podeRemover }}"><div class="acoes" style="margin-top: 8px;"><button class="link-btn" onclick="{{ r.onRemover }}">{{ r.removerLabel }}</button></div></sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+
+          <div class="card">
+            <textarea class="campo" ref="{{ respostaRef }}" placeholder="Responder (em inglês vale mais!)"></textarea>
+            <input class="campo" ref="{{ respostaLinkRef }}" placeholder="Link (opcional)" />
+            <div class="acoes">
+              <button class="btn coral mini" onclick="{{ onResponder }}">Responder →</button>
+              <sc-if value="{{ respondido }}"><span class="ok">Resposta publicada ✳</span></sc-if>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+    </sc-if>
+
+    </sc-if>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;420px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { tick: 0, msg: null, composerAberto: false, respondido: false,
+            removendoId: null, saindo: false };
+  tituloRef = React.createRef();
+  textoRef = React.createRef();
+  linkRef = React.createRef();
+  respostaRef = React.createRef();
+  respostaLinkRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.ouvinte = () => this.bump();
+    window.addEventListener("isr-dados", this.ouvinte);
+    window.addEventListener("isr-dados-novos", this.ouvinte);
+    this.timer = setInterval(() => this.bump(), 60 * 1000);
+    // marca a visita: o app usa isso para dizer "N novidades nos clubes".
+    // A tela lê o valor anterior antes de carimbar, para mostrar o que
+    // chegou desde a última vez.
+    try {
+      const id = this.alunaId();
+      if (id) {
+        this.vistoAntes = localStorage.getItem("isr_clubes_visto_" + id) || "";
+        localStorage.setItem("isr_clubes_visto_" + id, new Date().toISOString());
+      }
+    } catch (e) {}
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.ouvinte);
+    window.removeEventListener("isr-dados-novos", this.ouvinte);
+    clearInterval(this.timer);
+  }
+
+  param(n) { try { return new URLSearchParams(window.location.search).get(n) || ""; } catch (e) { return ""; } }
+  // A aluna é a sessão do aparelho. O ?id= só vale para a equipe, que
+  // abre o app de uma aluna pelo sistema.
+  alunaId() {
+    try {
+      const sessao = localStorage.getItem("isr_aluna_id") || "";
+      const q = this.param("id");
+      const equipe = !!JSON.parse(localStorage.getItem("isr_gestao_user") || "null");
+      if (q && (equipe || !sessao)) return q;
+      return sessao;
+    } catch (e) { return ""; }
+  }
+
+  quando(isoStr) {
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d)) return "";
+      const hoje = new Date();
+      const ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
+      const hora = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      if (d.toDateString() === hoje.toDateString()) return "hoje às " + hora;
+      if (d.toDateString() === ontem.toDateString()) return "ontem às " + hora;
+      const dia = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+      return dia + (d.getFullYear() !== hoje.getFullYear() ? "/" + d.getFullYear() : "");
+    } catch (e) { return ""; }
+  }
+  // cor do avatar sem foto: estável por nome, nos tons claros do kit
+  cor(nome) {
+    const CORES = ["#e8f5dd", "#fde3de", "#cae6eb", "#f6e7d3", "#ede6df", "#e5f2f6"];
+    let h = 0; for (const ch of (nome || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return CORES[h % CORES.length];
+  }
+  avatarDe(nome, foto) {
+    return { cor: this.cor(nome), temFoto: !!foto, semFoto: !foto, foto: foto || "",
+      inicial: ((nome || "?").trim().slice(0, 1) || "?").toUpperCase() };
+  }
+  fotoDeAutor(CRM, autorId) {
+    if (!autorId || autorId.indexOf("eq:") === 0) return "";
+    const p = CRM.getPessoa(autorId);
+    return (p && p.foto) || "";
+  }
+  val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
+  limpar(ref) { if (ref.current) ref.current.value = ""; }
+  avisar(texto, tipo) { this.setState({ msg: { texto, tipo: tipo || "tint-coral" } }); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const refs = { tituloRef: this.tituloRef, textoRef: this.textoRef, linkRef: this.linkRef,
+      respostaRef: this.respostaRef, respostaLinkRef: this.respostaLinkRef };
+    const nada = Object.assign({ ok: false, semPessoa: true, meus: [], clubes: [], topicos: [],
+      membros: [], respostas: [] }, refs);
+    if (!CRM) return nada;
+
+    const idAluna = this.alunaId();
+    const eu = CRM.autorComunidade(idAluna);
+    if (!eu) return nada;
+    const equipe = !!eu.equipe;
+    const minha = equipe ? null : CRM.getPessoa(eu.id);
+    const sufixoId = equipe && idAluna ? "&id=" + encodeURIComponent(idAluna) : "";
+    const linkApp = "ISR - Aluna.dc.html" + (equipe && idAluna ? "?id=" + encodeURIComponent(idAluna) : "");
+    const linkLista = "clubes.html" + (sufixoId ? "?" + sufixoId.slice(1) : "");
+    const clubeId = this.param("clube");
+    const topicoId = this.param("topico");
+    const vistaTopico = !!clubeId && !!topicoId;
+    const vistaClube = !!clubeId && !topicoId;
+    const vistaLista = !clubeId;
+    const limite = CRM.CLUBES_POR_CICLO;
+    const ciclo = CRM.cicloDosClubes();
+    const primeiro = n => CRM.firstName(n);
+    const turmaCurta = t => (t || "").split(" · ")[0] || "";
+    const linkClubeDe = id => "clubes.html?clube=" + encodeURIComponent(id) + sufixoId;
+    const linkTopicoDe = (cid, tid) => "clubes.html?clube=" + encodeURIComponent(cid) + "&topico=" + encodeURIComponent(tid) + sufixoId;
+    const alunasLabel = n => n === 1 ? "1 aluna" : n + " alunas";
+    const msg = this.state.msg;
+
+    const base = Object.assign({
+      ok: true, semPessoa: false, linkApp, linkLista, limite,
+      vistaLista, vistaClube, vistaTopico,
+      temMsg: !!msg, msgTexto: msg ? msg.texto : "", msgClasse: msg ? msg.tipo : "",
+      onFecharMsg: () => this.setState({ msg: null })
+    }, refs);
+
+    const entrar = (c) => () => {
+      if (!minha) return;
+      const r = CRM.clubeEntrar(minha.id, c.id);
+      if (r.ok) this.avisar(r.ja ? "Você já está no " + c.nome + "." : "Você entrou no " + c.nome + "! O fórum está aberto para você.", "tint-verde");
+      else this.avisar(r.texto, "tint-coral");
+    };
+
+    // ── LISTA ──
+    if (vistaLista) {
+      const todos = CRM.clubesLista();
+      const meusIds = {};
+      const meusRaw = minha ? CRM.clubesDaAluna(minha.id) : [];
+      meusRaw.forEach(c => { meusIds[c.id] = true; });
+      const visto = this.vistoAntes || "";
+      let novidadesTotal = 0;
+      const meus = meusRaw.map(c => {
+        // novidades deste clube: tópicos e respostas de outras pessoas
+        // desde a última visita
+        const nov = CRM.topicosDoClube(c.id).reduce((n, tp) => {
+          const nt = tp.de !== minha.id && (!visto || tp.em > visto) ? 1 : 0;
+          const np = CRM.postsDoTopico(tp.id).filter(p => p.de !== minha.id && (!visto || p.em > visto)).length;
+          return n + nt + np;
+        }, 0);
+        novidadesTotal += nov;
+        return { emoji: c.emoji, nome: c.nome, link: linkClubeDe(c.id),
+          meta: alunasLabel(c.membros) + (c.ciclo ? " · ciclo " + c.ciclo : ""),
+          temNovidade: nov > 0, novidade: nov === 1 ? "1 novidade no fórum" : nov + " novidades no fórum" };
+      });
+      const trocas = minha ? CRM.trocasClubeDe(minha.id) : 0;
+      const clubes = todos.map(c => ({
+        emoji: c.emoji, nome: c.nome, descricao: c.descricao, temDesc: !!c.descricao,
+        meta: alunasLabel(c.membros), link: linkClubeDe(c.id),
+        souMembro: !!meusIds[c.id], podeEntrar: !!minha && !meusIds[c.id],
+        abrirLabel: meusIds[c.id] || equipe ? "Abrir o fórum →" : "Ver quem está →",
+        onEntrar: entrar(c)
+      }));
+      return Object.assign(base, {
+        heroEyebrow: minha ? (turmaCurta(minha.turma) || "inglês sem roteiro") : "equipe",
+        saudacao: minha ? "Oi, " + primeiro(minha.nome) + "!" : "Clubes da escola",
+        subLista: minha
+          ? "Até " + limite + " clubes por ciclo. Cada um tem um fórum só de quem está nele: tópicos, respostas e links."
+          : "Você está vendo como equipe: pode abrir qualquer fórum e escrever como equipe. Os clubes são cadastrados em Turmas & Projetos.",
+        temNovidades: novidadesTotal > 0,
+        novidadesLabel: novidadesTotal === 1 ? "1 novidade nos seus clubes" : novidadesTotal + " novidades nos seus clubes",
+        temMinha: !!minha, meus, semMeus: meus.length === 0,
+        meusContagem: meus.length + " de " + limite,
+        temTroca: trocas > 0,
+        trocaTexto: trocas === 1 ? "Você tem 1 troca de clube disponível: pode sair de um clube e entrar em outro."
+                                  : "Você tem " + trocas + " trocas de clube disponíveis.",
+        tituloCiclo: ciclo ? "clubes do ciclo " + ciclo : "clubes",
+        clubes, semClubes: clubes.length === 0,
+        clubesContagem: clubes.length ? clubes.length + (clubes.length === 1 ? " clube" : " clubes") : ""
+      });
+    }
+
+    // ── CLUBE / TÓPICO ──
+    const cl = CRM.clubeDe(clubeId);
+    const linkClube = linkClubeDe(clubeId);
+    if (!cl) return Object.assign(base, { clubeNaoExiste: true, clubeExiste: false, topicoNaoExiste: true, topicoExiste: false,
+      topicoFora: false, linkClube, clubeNome: "clube", topicos: [], membros: [], respostas: [] });
+    const souMembro = !!minha && CRM.estaNoClube(minha.id, cl.id);
+    const dentro = souMembro || equipe;
+    const membrosRaw = CRM.membrosDoClube(cl.id);
+    const removivel = (reg, remover) => {
+      const removendo = this.state.removendoId === reg.id;
+      return {
+        podeRemover: reg.de === eu.id || equipe,
+        removerLabel: removendo ? "confirmar remoção" : "remover",
+        onRemover: () => {
+          if (!removendo) { this.setState({ removendoId: reg.id }); return; }
+          remover(reg.id);
+          this.setState({ removendoId: null });
+        }
+      };
+    };
+    const autorCard = reg => Object.assign({
+      deNome: reg.deNome || "—", equipe: !!reg.equipe, quando: this.quando(reg.em),
+      texto: reg.texto || "", temTexto: !!reg.texto, temLink: !!reg.link, link: reg.link || ""
+    }, this.avatarDe(reg.deNome, this.fotoDeAutor(CRM, reg.de)));
+
+    Object.assign(base, {
+      clubeNaoExiste: false, clubeExiste: true, linkClube, clubeNome: cl.nome,
+      cl: { emoji: cl.emoji || "💬", nome: cl.nome, descricao: cl.descricao, temDesc: !!cl.descricao,
+        meta: alunasLabel(membrosRaw.length) + (cl.ciclo ? " · ciclo " + cl.ciclo : "") },
+      membros: membrosRaw.map(m => Object.assign({ nome: primeiro(m.nome),
+        link: "comunidade.html?perfil=" + encodeURIComponent(m.id) + sufixoId }, this.avatarDe(m.nome, m.foto))),
+      semMembros: membrosRaw.length === 0,
+      semMembrosDica: minha && !souMembro ? "Que tal ser a primeira?" : "",
+      membrosContagem: membrosRaw.length ? alunasLabel(membrosRaw.length) : ""
+    });
+
+    if (vistaClube) {
+      const topicos = dentro ? CRM.topicosDoClube(cl.id).map(t => ({
+        titulo: t.titulo, link: linkTopicoDe(cl.id, t.id),
+        quemQuando: (t.equipe ? "equipe" : primeiro(t.deNome)) + " · " + this.quando(t.ultimoEm || t.em),
+        respostasLabel: t.respostas === 0 ? "sem respostas" : (t.respostas === 1 ? "1 resposta" : t.respostas + " respostas")
+      })) : [];
+      const trocas = minha ? CRM.trocasClubeDe(minha.id) : 0;
+      return Object.assign(base, {
+        podeEntrarAqui: !!minha && !souMembro, onEntrarAqui: entrar(cl),
+        dentro, souMembroAqui: souMembro,
+        topicos, semTopicos: topicos.length === 0,
+        topicosContagem: topicos.length ? topicos.length + (topicos.length === 1 ? " tópico" : " tópicos") : "",
+        composerAberto: this.state.composerAberto, composerFechado: !this.state.composerAberto,
+        onAbrirComposer: () => this.setState({ composerAberto: true }),
+        onFecharComposer: () => this.setState({ composerAberto: false }),
+        onAbrirTopico: () => {
+          const titulo = this.val(this.tituloRef), texto = this.val(this.textoRef);
+          if (!titulo && !texto) return;
+          CRM.topicoAbrir(cl.id, eu, titulo, texto, this.val(this.linkRef));
+          [this.tituloRef, this.textoRef, this.linkRef].forEach(r => this.limpar(r));
+          this.setState({ composerAberto: false });
+        },
+        sairLabel: this.state.saindo ? "confirmar: quero sair do " + cl.nome : "quero sair deste clube",
+        sairNota: trocas > 0
+          ? "Você tem uma troca de clube disponível: sair daqui usa essa troca."
+          : "A escolha vale até o fim do ciclo. Para trocar antes, resgate \"Trocar de clube\" na sua conta de miles.",
+        onSair: () => {
+          if (!minha) return;
+          if (!this.state.saindo) { this.setState({ saindo: true }); return; }
+          const r = CRM.clubeSair(minha.id, cl.id);
+          this.setState({ saindo: false });
+          if (r.ok) this.avisar("Você saiu do " + cl.nome + ".", "tint-verde");
+          else this.avisar(r.texto, "tint-coral");
+        }
+      });
+    }
+
+    // ── TÓPICO ──
+    const tp = CRM.topicoDe(topicoId);
+    if (!tp || tp.clubeId !== cl.id) return Object.assign(base, { topicoNaoExiste: true, topicoExiste: false, topicoFora: false, respostas: [] });
+    if (!dentro) return Object.assign(base, { topicoNaoExiste: false, topicoExiste: false, topicoFora: true, respostas: [] });
+    const respostas = tp.posts.map(p => Object.assign(autorCard(p), removivel(p, id => CRM.postRemover(id))));
+    return Object.assign(base, {
+      topicoNaoExiste: false, topicoFora: false, topicoExiste: true,
+      tp: Object.assign({ titulo: tp.titulo }, autorCard(tp), removivel(tp, id => {
+        CRM.topicoRemover(id);
+        window.location.href = linkClube;
+      })),
+      respostas, semRespostas: respostas.length === 0,
+      respostasContagem: respostas.length ? respostas.length + (respostas.length === 1 ? " resposta" : " respostas") : "",
+      respondido: this.state.respondido,
+      onResponder: () => {
+        const t = this.val(this.respostaRef);
+        if (!t) return;
+        CRM.postResponder(tp.id, eu, t, this.val(this.respostaLinkRef));
+        this.limpar(this.respostaRef); this.limpar(this.respostaLinkRef);
+        this.setState({ respondido: true });
+        setTimeout(() => this.setState({ respondido: false }), 2500);
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>
