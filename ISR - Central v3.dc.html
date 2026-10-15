@@ -106,7 +106,14 @@
           <span style="width: 40px; height: 40px; border-radius: 12px; background: {{ q.tint }}; display: grid; place-items: center; font-size: 17px; flex: none;">{{ q.icone }}</span>
           <div style="flex: 1; min-width: 200px;">
             <div style="display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;">
-              <a href="{{ q.perfilHref }}" class="lk" style="font-size: 15px; font-weight: 700; color: {{ q.nomeCor }};">{{ q.nome }}</a>
+              <!-- pendência e folha não têm perfil para abrir: nome em
+                   link que não leva a lugar nenhum parece defeito -->
+              <sc-if value="{{ q.temPerfil }}">
+                <a href="{{ q.perfilHref }}" class="lk" style="font-size: 15px; font-weight: 700; color: {{ q.nomeCor }};">{{ q.nome }}</a>
+              </sc-if>
+              <sc-if value="{{ q.semPerfil }}">
+                <span style="font-size: 15px; font-weight: 700; color: {{ q.nomeCor }};">{{ q.nome }}</span>
+              </sc-if>
               <span title="responsável" style="font-size: 11px; font-weight: 600; color: #8a7465;">{{ q.dono }}</span>
             </div>
             <div style="font-size: 14px; color: #1d5a63; margin-top: 2px;">{{ q.motivo }}</div>
@@ -116,12 +123,72 @@
             <sc-if value="{{ q.temFeito }}">
               <span onclick="{{ q.onFeito }}" style="font-size: 12px; font-weight: 600; color: #3d6b22; cursor: pointer;">feito</span>
             </sc-if>
-            <a href="{{ q.acaoHref }}" style="background: #164951; color: #fff; border-radius: 999px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 3px 0 #0e3339;">{{ q.acao }}</a>
+            <sc-if value="{{ q.temAcao }}">
+              <a href="{{ q.acaoHref }}" style="background: #164951; color: #fff; border-radius: 999px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 3px 0 #0e3339;">{{ q.acao }}</a>
+            </sc-if>
           </div>
         </div>
       </sc-for>
     </div>
+    <!-- A fila mostra 12 por vez. Sem este botão o resto some sem
+         aviso, e uma fila de 79 itens parece uma fila de 12. -->
+    <sc-if value="{{ temMais }}">
+      <div onclick="{{ onVerTodos }}" style="padding: 13px 2px 2px; border-top: 1px solid #f2ebe3; font-size: 13px; font-weight: 600; color: #348a8e; cursor: pointer;">{{ maisLabel }}</div>
+    </sc-if>
+    <!-- Criar pendência à mão. A Turma e o Mural criam pendência; sem
+         este formulário não havia onde criar uma solta, nem onde
+         mandar uma para outra pessoa com prazo. -->
+    <div style="border-top: 1px solid #f2ebe3; margin-top: 6px; padding-top: 13px;">
+      <span onclick="{{ onNovaPend }}" style="font-size: 13px; font-weight: 600; color: #348a8e; cursor: pointer;">{{ npBotao }}</span>
+      <sc-if value="{{ npAberta }}">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-top: 12px;">
+          <label style="flex: 1; min-width: 220px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">o que precisa ser feito</div>
+            <input ref="{{ npTituloRef }}" placeholder="Mandar o contrato assinado" style="width: 100%; box-sizing: border-box; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #3d3529;">
+          </label>
+          <label style="min-width: 150px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">fila de quem</div>
+            <select ref="{{ npDonoRef }}" style="width: 100%; box-sizing: border-box; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951;">
+              <sc-for list="{{ npDonos }}" as="nd" hint-placeholder-count="3">
+                <option value="{{ nd.v }}">{{ nd.t }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <label style="min-width: 150px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">para quando</div>
+            <input ref="{{ npPrazoRef }}" type="date" style="width: 100%; box-sizing: border-box; border: 0; background: #f2ebe3; border-radius: 12px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951;">
+          </label>
+          <button onclick="{{ onNpGravar }}" style="border: 0; background: #164951; color: #fff; border-radius: 999px; padding: 0 20px; min-height: 44px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; box-shadow: 0 3px 0 #0e3339;">criar</button>
+        </div>
+        <sc-if value="{{ npErro }}">
+          <div style="margin-top: 9px; font-size: 13px; color: #a3392c;">{{ npErro }}</div>
+        </sc-if>
+        <div style="margin-top: 9px; font-size: 12.5px; color: #8a7465;">Sem prazo ela entra na fila da pessoa hoje mesmo. Com prazo, entra no dia.</div>
+      </sc-if>
+      <sc-if value="{{ temFeitas }}">
+        <div style="margin-top: 11px; font-size: 12.5px; color: #8a7465;">{{ feitasTexto }}</div>
+      </sc-if>
+    </div>
   </section>
+
+  <!-- CONCLUÍDO PELA EQUIPE -->
+  <!-- Quem manda um aviso (a cobrança de chamada manda) precisa que ele
+       chegue a algum lugar. Sem este bloco o avisar era um botão que
+       escrevia num arquivo que ninguém abria. -->
+  <sc-if value="{{ temAvisos }}">
+    <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
+      <div style="font-size: 16px; font-weight: 600;">Concluído pela equipe · {{ avisosCount }}</div>
+      <sc-for list="{{ avisos }}" as="av" hint-placeholder-count="2">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 12px 2px; border-top: 1px solid #f2ebe3; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <div style="font-size: 14px; color: #1d5a63; line-height: 1.5;">{{ av.texto }}</div>
+            <div style="font-size: 12px; color: #8a7465; margin-top: 2px;">{{ av.quando }}</div>
+          </div>
+          <span onclick="{{ av.onLido }}" style="font-size: 12px; font-weight: 600; color: #348a8e; cursor: pointer;">ok, li</span>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
 
   <!-- AULAS SEM CHAMADA -->
   <sc-if value="{{ temSemChamada }}">
@@ -138,12 +205,43 @@
               <div style="font-size: 14px; font-weight: 600;">{{ sc.professora }}</div>
               <div style="font-size: 12.5px; color: #8a7465; margin-top: 2px;">{{ sc.detalhe }}</div>
             </div>
+            <sc-if value="{{ sc.podeAvisar }}">
+              <span onclick="{{ sc.onAvisar }}" style="background: #fff; border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: #a4783a; cursor: pointer;">{{ sc.avisarLabel }}</span>
+            </sc-if>
             <a href="{{ sc.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: #a4783a;">Abrir o painel</a>
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
             <sc-for list="{{ sc.aulas }}" as="au" hint-placeholder-count="3">
               <a href="{{ au.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #6b6155;">{{ au.label }}</a>
             </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- AJUSTES NO CADASTRO -->
+  <!-- Buracos que nenhuma regra da fila acende: aluna sem professora,
+       turma abaixo do mínimo, dinheiro que entrou e não foi conciliado.
+       O que já está na fila acima é descartado — ver a mesma pessoa
+       duas vezes na mesma tela é o que tornava a Central antiga longa. -->
+  <sc-if value="{{ temFuros }}">
+    <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 600;">Ajustes no cadastro · {{ furosCount }}</div>
+        <span style="font-size: 12px; font-weight: 600; color: #8a7465;">não aparecem na fila</span>
+      </div>
+      <sc-for list="{{ furos }}" as="fu" hint-placeholder-count="3">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 13px 2px; border-top: 1px solid #f2ebe3; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <div style="font-size: 14.5px; font-weight: 600;">{{ fu.titulo }}</div>
+            <div style="font-size: 13px; color: #1d5a63; margin-top: 2px;">{{ fu.detalhe }}</div>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <sc-if value="{{ fu.podeCiente }}">
+              <span onclick="{{ fu.onCiente }}" style="font-size: 12px; font-weight: 600; color: #8a7465; cursor: pointer;">já sei</span>
+            </sc-if>
+            <a href="{{ fu.href }}" style="text-decoration: none; background: #f2ebe3; border-radius: 999px; padding: 10px 16px; font-size: 12.5px; font-weight: 600; color: #164951;">{{ fu.label }}</a>
           </div>
         </div>
       </sc-for>
@@ -201,8 +299,14 @@ class Component extends DCLogic {
   // que era o que faltava para alguém só corrigir uma data.
   // quemNaFila: "" = a minha fila (o padrão, como era antes do
   // porte), "todas" = a escola inteira, ou o nome de alguém
-  state = { tick: 0, busca: "", cicloErro: "", cicloForm: null, quemNaFila: "" };
+  // verTodos: a fila mostra 12 por vez; quem tem 79 precisa de um jeito
+  // de ver o resto. npAberta: o formulário de pendência nova.
+  state = { tick: 0, busca: "", cicloErro: "", cicloForm: null, quemNaFila: "",
+    verTodos: false, npAberta: false, npErro: "", avisou: "" };
   buscaRef = React.createRef();
+  npTituloRef = React.createRef();
+  npDonoRef = React.createRef();
+  npPrazoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -232,7 +336,14 @@ class Component extends DCLogic {
       cicloBg: "#fff", cicloCor: "#164951", cicloBotao: "mudar as datas",
       cicloErro: "", cfLabel: "", cfInicio: "", cfFim: "",
       onMudarCiclo: () => {}, onGravarCiclo: () => {},
-      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {} };
+      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {},
+      temMais: false, maisLabel: "", onVerTodos: () => {},
+      npAberta: false, npBotao: "+ nova pendência", npErro: "", npDonos: [],
+      npTituloRef: this.npTituloRef, npDonoRef: this.npDonoRef, npPrazoRef: this.npPrazoRef,
+      onNovaPend: () => {}, onNpGravar: () => {},
+      temFeitas: false, feitasTexto: "",
+      avisos: [], temAvisos: false, avisosCount: "0",
+      furos: [], temFuros: false, furosCount: "0" };
     if (!CRM) return vazio;
 
     let user = {};
@@ -268,21 +379,29 @@ class Component extends DCLogic {
       : quem === "todas" ? filaBruta
       : quem ? filaBruta.filter(x => x.dono === quem)
       : filaBruta.filter(minha);
-    const fila = filaAll.slice(0, 12).map(item => {
+    const LIMITE = 12;
+    const fila = (this.state.verTodos ? filaAll : filaAll.slice(0, LIMITE)).map(item => {
       const tom = TOM[item.sinal] || ["#f2ebe3", "•"];
       const ehPessoa = item.pessoaId && String(item.pessoaId).indexOf(":") < 0;
+      // a pendência (regra RT) não é de uma pessoa, mas fecha: antes o
+      // botão "Concluir" apontava para # e a pendência ficava na fila
+      // para sempre, sem jeito nenhum de dar por encerrada
+      const ehPendencia = item.regra === "RT" && item.tarefaId;
       return {
         nome: item.nome, motivo: item.motivo,
         dono: perfil === "gestora" && item.dono ? item.dono : "",
         tint: tom[0], icone: tom[1],
         nomeCor: ehPessoa ? "#348a8e" : "#164951",
+        temPerfil: !!ehPessoa, semPerfil: !ehPessoa,
         perfilHref: ehPessoa ? "ISR%20-%20Perfil%20v3.dc.html?id=" + item.pessoaId : "#",
-        acao: item.acao || "Abrir",
+        acao: ehPendencia ? "Abrir" : (item.acao || "Abrir"),
         acaoHref: item.href ? encodeURI(item.href)
           : (ehPessoa ? "ISR%20-%20Mensagens%20WhatsApp.dc.html?para=" + item.pessoaId
               + (item.tpl ? "&tpl=" + item.tpl : "") : "#"),
-        temFeito: !!ehPessoa && item.regra !== "RT",
+        temAcao: !!item.href || !!ehPessoa,
+        temFeito: !!ehPessoa || !!ehPendencia,
         onFeito: () => {
+          if (ehPendencia) { CRM.setTarefaFeita(item.tarefaId, true); this.bump(); return; }
           const TIPO = { faltou: "falta", atrasada: "cobranca", renovacao: "renovacao" };
           CRM.registrarToque(item.pessoaId, TIPO[item.toque] || "checkin",
             "Pela Central · " + (item.motivo || ""));
@@ -293,6 +412,7 @@ class Component extends DCLogic {
         onAdiar: () => { CRM.adiarItem(item.sinal || item.regra, item.pessoaId); this.bump(); }
       };
     });
+    const escondidas = Math.max(0, filaAll.length - LIMITE);
 
     // filas da equipe: quem vê a escola inteira precisa saber se a fila
     // de alguém está crescendo sem ninguém olhar
@@ -330,6 +450,47 @@ class Component extends DCLogic {
       ? "ISR%20-%20Painel%20do%20Professor.dc.html?evento=" + encodeURIComponent(a.eventoId)
       : "ISR%20-%20Painel%20do%20Professor.dc.html?turma=" + encodeURIComponent(a.label)
         + "&data=" + a.data + "&retro=1";
+
+    // ── o que a equipe concluiu para você ─────────────────────
+    const avisosMeus = (CRM.avisosDe && meuNome ? CRM.avisosDe(meuNome) : []) || [];
+
+    // ── pendências: para quem se pode mandar uma ──────────────
+    // A lista sai da equipe real, não de nome fixo: quem entra na
+    // escola depois tem que aparecer aqui sem ninguém mexer no código.
+    const todasTarefas = CRM.tarefasLista ? CRM.tarefasLista() : [];
+    const feitasN = todasTarefas.filter(tf => tf.feita).length;
+    const donosPossiveis = [];
+    if (meuNome) donosPossiveis.push({ v: meuNome, t: "minha (" + meuNome + ")" });
+    ((CRM.equipeLista ? CRM.equipeLista() : []) || []).forEach(m => {
+      if (m.nome && m.nome !== meuNome) donosPossiveis.push({ v: m.nome, t: m.nome });
+    });
+    if (!donosPossiveis.length) donosPossiveis.push({ v: "", t: "minha" });
+
+    // ── ajustes no cadastro ───────────────────────────────────
+    // Os furos são buracos de cadastro que nenhuma regra da fila
+    // acende. As pendências da escola são rotina de dinheiro parada.
+    // Ambos passam por um filtro: quem já está na fila acima não
+    // entra de novo — a renovação parada, por exemplo, é a mesma
+    // linha que a regra R5 já mostrou.
+    // o descarte olha a fila da escola inteira, não a fila filtrada:
+    // o furo é repetição mesmo quando o item está com outra pessoa
+    const naFila = {};
+    filaBruta.forEach(x => { if (x.pessoaId) naFila[String(x.pessoaId)] = true; });
+    const furosBrutos = (vePelaEscola && CRM.furosDeCadastro ? CRM.furosDeCadastro() : [])
+      .filter(fu => !(fu.pessoaId && naFila[String(fu.pessoaId)]));
+    const pendEscola = (vePelaEscola && CRM.pendenciasDaEscola ? CRM.pendenciasDaEscola() : []);
+    const ajustes = furosBrutos.map(fu => ({
+      titulo: fu.titulo, detalhe: fu.detalhe,
+      href: encodeURI(fu.onde || "#") + (fu.turmaId ? "?id=" + fu.turmaId
+        : fu.pessoaId ? "?id=" + fu.pessoaId : ""),
+      label: fu.ondeLabel || "Abrir",
+      podeCiente: true,
+      onCiente: () => { CRM.marcarFuroCiente(fu.chave); this.bump(); }
+    })).concat(pendEscola.map(pe => ({
+      titulo: pe.titulo, detalhe: pe.texto || "",
+      href: encodeURI(pe.href || "#"), label: "Abrir",
+      podeCiente: false, onCiente: () => {}
+    })));
 
     // ── metas do ciclo ────────────────────────────────────────
     // As matrículas contam pelo fechamento do contrato, como em
@@ -495,6 +656,45 @@ class Component extends DCLogic {
           + (filaBruta.length === 1 ? " item" : " itens") + " com a equipe — os botões acima mostram de quem."
         : "Nenhum item na fila. Os itens aparecem quando uma regra é acionada: parcela vencida, follow-up do dia, chamada não feita, integração parada.",
 
+      temMais: escondidas > 0 || this.state.verTodos,
+      maisLabel: this.state.verTodos
+        ? "mostrar só os " + LIMITE + " primeiros"
+        : "ver os outros " + escondidas,
+      onVerTodos: () => this.setState(s => ({ verTodos: !s.verTodos })),
+
+      npAberta: this.state.npAberta,
+      npBotao: this.state.npAberta ? "fechar" : "+ nova pendência",
+      npErro: this.state.npErro,
+      npDonos: donosPossiveis,
+      npTituloRef: this.npTituloRef, npDonoRef: this.npDonoRef, npPrazoRef: this.npPrazoRef,
+      onNovaPend: () => this.setState(s => ({ npAberta: !s.npAberta, npErro: "" })),
+      onNpGravar: () => {
+        const t = ((this.npTituloRef.current || {}).value || "").trim();
+        if (!t) { this.setState({ npErro: "Escreva o que precisa ser feito." }); return; }
+        CRM.addTarefa({ titulo: t,
+          dono: (this.npDonoRef.current || {}).value || meuNome,
+          prazo: (this.npPrazoRef.current || {}).value || "",
+          por: meuNome });
+        if (this.npTituloRef.current) this.npTituloRef.current.value = "";
+        if (this.npPrazoRef.current) this.npPrazoRef.current.value = "";
+        this.setState({ npAberta: false, npErro: "" });
+        this.bump();
+      },
+      temFeitas: feitasN > 0,
+      feitasTexto: feitasN + (feitasN === 1 ? " pendência concluída" : " pendências concluídas")
+        + " até agora.",
+
+      temAvisos: avisosMeus.length > 0,
+      avisosCount: String(avisosMeus.length),
+      avisos: avisosMeus.map(a => ({
+        texto: a.texto, quando: CRM.ddmm(a.data),
+        onLido: () => { CRM.marcarAvisoLido(a.id); this.bump(); }
+      })),
+
+      temFuros: ajustes.length > 0,
+      furosCount: String(ajustes.length),
+      furos: ajustes,
+
       temSemChamada: grupos.length > 0,
       semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
         + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
@@ -510,6 +710,20 @@ class Component extends DCLogic {
         professora: g.professora,
         detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
           + " · a mais antiga em " + CRM.ddmm(g.maisAntiga),
+        // avisar a professora: o aviso cai na Central dela, em
+        // "Concluído pela equipe". Sem o bloco que lê os avisos este
+        // botão não existia, e a cobrança só podia ser feita por fora.
+        podeAvisar: vePelaEscola && g.professora !== meuNome && !!CRM.avisar,
+        avisarLabel: this.state.avisou === g.professora
+          ? "Avisada" : "Avisar " + String(g.professora).split(" ")[0],
+        onAvisar: () => {
+          if (this.state.avisou === g.professora) return;
+          CRM.avisar(g.professora, g.n + (g.n === 1 ? " aula sua está" : " aulas suas estão")
+            + " sem chamada, a mais antiga em " + CRM.ddmm(g.maisAntiga)
+            + ". A chamada pode ser feita por data no painel.", "chamada");
+          this.setState({ avisou: g.professora });
+          this.bump();
+        },
         href: "ISR%20-%20Painel%20do%20Professor.dc.html?prof=" + encodeURIComponent(g.professora),
         aulas: g.aulas.slice(0, 4).map(a => ({
           label: CRM.ddmm(a.data) + " · " + (a.tipo === "particular" ? a.quem : String(a.label).split("·")[0].trim()),
