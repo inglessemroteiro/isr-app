@@ -500,12 +500,22 @@
     var antes = metasAtuais();
     // o ciclo que estava valendo vira registro antes de ser trocado —
     // é o que impede a troca de apagar a história
+    //
+    // Duas limpezas, as duas aprendidas numa sequência real: corrigir
+    // as datas do ciclo que acabou e só depois abrir o próximo. Nela,
+    // o nome do ciclo atual chega trocado, e sem cuidado sobra lixo.
+    var guardados = ciclosLista()
+      // um ciclo que volta a ser o atual deixa de ser registro
+      // fechado: senão ficariam dois, com datas diferentes
+      .filter(function (c) { return c.label !== label; });
+    var mexeu = guardados.length !== ciclosLista().length;
     if (antes.cicloLabel && antes.cicloInicio && antes.cicloLabel !== label) {
-      var guardados = ciclosLista().filter(function (c) { return c.label !== antes.cicloLabel; });
+      guardados = guardados.filter(function (c) { return c.label !== antes.cicloLabel; });
       guardados.push({ label: antes.cicloLabel, inicio: antes.cicloInicio,
         fim: antes.cicloFim || "", fechadoEm: new Date().toISOString() });
-      ciclosSalvar(guardados);
+      mexeu = true;
     }
+    if (mexeu) ciclosSalvar(guardados);
     var patch = { cicloLabel: label, cicloInicio: cfg.inicio, cicloFim: cfg.fim };
     if (cfg.meta != null && cfg.meta !== "") patch.matriculas = parseInt(cfg.meta, 10) || 0;
     setMetas(patch);
