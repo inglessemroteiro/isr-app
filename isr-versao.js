@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.15-d",
+  numero: "2026.10.15-e",
   data: "15/10/2026",
-  nota: "O ciclo passa a ficar sempre à vista na Central, com as datas e o formulário para mudá-las. Antes o bloco só aparecia quando havia problema, e quem quisesse só corrigir uma data não achava onde"
+  nota: "As telas passam a entender o intervalo entre um ciclo e outro. Com o próximo ciclo marcado para começar mais à frente, a Central, a Agenda e as Turmas dizem quando ele começa e que até lá a agenda fica sem aula de propósito, em vez de ficarem vazias sem explicação"
 };

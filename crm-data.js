@@ -417,9 +417,14 @@
       : (hoje > fim ? "terminado"
       : (ini && hoje < ini ? "por_comecar" : "aberto"));
     var dFim = fim ? parseISO(fim) : null;
+    var dIni = ini ? parseISO(ini) : null;
     return {
       label: M.cicloLabel || "", inicio: ini, fim: fim, estado: estado,
-      diasAteOFim: dFim ? daysBetween(today(), dFim) : null
+      diasAteOFim: dFim ? daysBetween(today(), dFim) : null,
+      // entre um ciclo e outro há férias, e nesses dias a agenda fica
+      // vazia de propósito. Sem este número as telas não conseguem
+      // dizer por quê
+      diasAteOInicio: dIni ? daysBetween(today(), dIni) : null
     };
   }
 

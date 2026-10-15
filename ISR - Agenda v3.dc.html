@@ -582,13 +582,22 @@ class Component extends DCLogic {
     // A agenda só gera aula dentro do ciclo. Quando ele acaba, a
     // semana fica vazia de propósito, e isso precisa estar escrito.
     const jan = CRM.cicloJanela ? CRM.cicloJanela() : { estado: "aberto" };
-    const cicloAvisa = jan.estado === "sem_fim" || jan.estado === "terminado";
+    // a semana vazia tem três motivos, e cada um precisa do seu texto:
+    // falta a data de fim, o ciclo acabou, ou ele ainda não começou
+    const cicloAvisa = jan.estado === "sem_fim" || jan.estado === "terminado"
+      || jan.estado === "por_comecar";
+    const diasIni = jan.diasAteOInicio;
     const cicloTitulo = jan.estado === "sem_fim"
       ? "Ciclo " + jan.label + " sem data de fim."
-      : "Ciclo " + jan.label + " terminou em " + CRM.ddmm(jan.fim) + ".";
+      : jan.estado === "por_comecar"
+        ? "Ciclo " + jan.label + " começa em " + CRM.ddmm(jan.inicio) + "."
+        : "Ciclo " + jan.label + " terminou em " + CRM.ddmm(jan.fim) + ".";
     const cicloTexto = jan.estado === "sem_fim"
       ? "As aulas das turmas vão continuar aparecendo semana após semana até o último dia ser informado."
-      : "Não há aula de turma na agenda desde então. Abra o próximo ciclo para as aulas voltarem.";
+      : jan.estado === "por_comecar"
+        ? (diasIni === 1 ? "A primeira aula é amanhã." : "Faltam " + diasIni + " dias para a primeira aula.")
+          + " Até lá a agenda não tem aula de turma — é o intervalo entre os ciclos."
+        : "Não há aula de turma na agenda desde então. Abra o próximo ciclo para as aulas voltarem.";
 
     return Object.assign({
       cicloAvisa: cicloAvisa, cicloTitulo: cicloTitulo, cicloTexto: cicloTexto,

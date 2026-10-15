@@ -383,23 +383,33 @@ class Component extends DCLogic {
     // não aparece — ela não tem o que resolver aqui.
     const jan = CRM.cicloJanela ? CRM.cicloJanela() : { estado: "sem_fim", label: "" };
     const diasFim = jan.diasAteOFim;
+    const diasIni = jan.diasAteOInicio;
     const acabando = diasFim !== null && diasFim >= 0 && diasFim <= 21;
+    const porComecar = jan.estado === "por_comecar";
     const comProblema = jan.estado === "sem_fim" || jan.estado === "terminado" || acabando;
     const dd = (iso) => (iso ? CRM.ddmm(iso) : "");
+    const dias = (n) => n + (n === 1 ? " dia" : " dias");
 
     const cicloTitulo = jan.estado === "sem_fim"
       ? "O ciclo " + jan.label + " não tem data de fim"
       : jan.estado === "terminado"
         ? "O ciclo " + jan.label + " terminou em " + dd(jan.fim)
-        : "Ciclo " + jan.label + " · aulas de " + dd(jan.inicio) + " a " + dd(jan.fim);
+        : porComecar
+          ? "Ciclo " + jan.label + " · começa em " + dd(jan.inicio)
+          : "Ciclo " + jan.label + " · aulas de " + dd(jan.inicio) + " a " + dd(jan.fim);
     const cicloTexto = jan.estado === "sem_fim"
       ? "A agenda gera aula toda semana pelo dia escrito no nome da turma. Sem data de fim ela não para, e a escola continua pedindo chamada de aula que não aconteceu. Informe o último dia de aula deste ciclo."
       : jan.estado === "terminado"
         ? "Não há aula na agenda desde então, e nenhuma chamada é cobrada. Para as aulas voltarem, troque o nome e as datas pelo ciclo novo."
-        : acabando
-          ? (diasFim === 0 ? "Hoje é o último dia de aula." : "Faltam " + diasFim + (diasFim === 1 ? " dia" : " dias") + " para o último dia de aula.")
-            + " Depois disso a agenda fica sem aula até você abrir o próximo ciclo."
-          : "É esta janela que decide quais aulas entram na agenda e de quais a chamada é cobrada.";
+        // férias entre um ciclo e outro: a agenda vazia é o certo, e
+        // precisa estar escrito, senão parece defeito
+        : porComecar
+          ? (diasIni === 1 ? "A primeira aula é amanhã." : "Faltam " + dias(diasIni) + " para a primeira aula.")
+            + " Até lá a agenda fica sem aula de turma e nenhuma chamada é cobrada — é o intervalo entre os ciclos."
+          : acabando
+            ? (diasFim === 0 ? "Hoje é o último dia de aula." : "Faltam " + dias(diasFim) + " para o último dia de aula.")
+              + " Depois disso a agenda fica sem aula até você abrir o próximo ciclo."
+            : "É esta janela que decide quais aulas entram na agenda e de quais a chamada é cobrada.";
 
     const editando = !!this.state.cicloForm;
     const form = this.state.cicloForm || {};
