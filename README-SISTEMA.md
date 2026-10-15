@@ -472,6 +472,33 @@ uma vez. Três travas:
 O lote vai para o mural da equipe, com quem fez e quanto. Quem faltou
 se corrige depois, na chamada do dia, pelo Painel do professor.
 
+### O histórico de uma chamada
+
+Cada gravação de chamada acrescenta uma linha a `hist`, dentro do
+próprio registro: **quem, quando, e o quê** — "chamada salva", "2
+presenças alteradas", "regravada sem mudança".
+
+Os campos `corrigidaPor` e `corrigidaEm` continuam ali, mas guardam
+só a ÚLTIMA correção: duas seguidas e a primeira some. Numa chamada
+que a professora e a gestão mexem alternadamente, e que a escola
+guarda por cinco anos, "quem mudou o quê" só se responde com a lista
+inteira.
+
+- a lista para em **20 linhas**, mantendo a primeira (a origem) e as
+  19 últimas. Uma chamada reaberta muitas vezes não pode crescer sem
+  fim dentro do registro;
+- chamada gravada antes disto existir não começa vazia: o que já
+  estava nela (`criadaPor`/`criadaEm` e a última correção) vira as
+  primeiras linhas;
+- aparece no Painel do professor, embaixo da grade — a tela onde a
+  chamada é feita e corrigida.
+
+Uma ressalva do sync: a chamada é fundida por registro inteiro, pelo
+`salvoEm` mais novo. Se dois aparelhos editarem a mesma chamada sem
+rede, o que perder leva junto as linhas de histórico dele — como já
+levava as presenças. O histórico não piora isso, mas também não
+resolve.
+
 ### O ciclo, e o arquivo de cinco anos
 
 A escola vende ciclo, e é o ciclo que a agenda usa para saber em que
