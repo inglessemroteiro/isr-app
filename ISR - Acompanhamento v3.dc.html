@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Acompanhamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:#164951}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: #164951;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">pedagógico · como cada aluna está indo</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Acompanhamento</h1>
+      </div>
+      <a href="ISR%20-%20Alunas%20v3.dc.html" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Alunas</a>
+    </header>
+    <p style="margin: 0 0 16px; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 730px;"><strong>Acompanhamento.</strong> Alunas ordenadas por tempo sem contato, com histórico de contatos e avaliação de progresso.</p>
+
+    <!-- O QUE FAZER AGORA -->
+    <div style="background: #164951; border-radius: 18px; padding: 18px 20px; margin-bottom: 18px;">
+      <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 7px;">Agora</div>
+      <div style="font-size: 19px; font-weight: 600; color: #fff; letter-spacing: -0.3px; line-height: 1.35; margin-bottom: 4px;">{{ chamada }}</div>
+      <div style="font-size: 12.5px; color: rgba(255,255,255,0.7); line-height: 1.6;">{{ chamadaDetalhe }}</div>
+      <sc-if value="{{ temProximas }}">
+        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px;">
+          <sc-for list="{{ proximas }}" as="px" hint-placeholder-count="3">
+            <button onclick="{{ px.onClick }}" style="border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); color: #fff; font-size: 12px; font-weight: 600; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit; text-align: left;">{{ px.nome }} <span style="color: rgba(255,255,255,0.55); font-weight: 400;">· {{ px.porque }}</span></button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- USO DO APP -->
+    <div style="background: {{ usoBg }}; border: 1px solid {{ usoBorda }}; border-radius: 18px; padding: 14px 18px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465;">Uso do app · 30 dias</div>
+          <div style="font-size: 20px; font-weight: 600; color: {{ usoCor }}; margin-top: 3px;">{{ usoNumero }}</div>
+        </div>
+        <p style="flex: 1; min-width: 200px; margin: 0; font-size: 12px; color: #1d5a63; line-height: 1.55;">{{ usoFrase }}</p>
+      </div>
+    </div>
+
+    <!-- NÚMEROS DA SEMANA -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Resumo da semana</span>
+      <button onclick="{{ onDetalhes }}" style="border: 0; background: {{ detBg }}; color: {{ detFg }}; font-size: 10.5px; font-weight: 600; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ detLabel }}</button>
+    </div>
+    <sc-if value="{{ detalhesAbertos }}">
+    <div style="background: #164951; border-radius: 18px; padding: 16px 18px; margin-bottom: 20px;">
+      <div style="display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline;">
+        <div>
+          <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #9ec970; margin-bottom: 6px;">Contatos da semana</div>
+          <div style="font-size: 22px; font-weight: 600; color: #fff; letter-spacing: -0.4px;">{{ tocadas }} de {{ meta }}</div>
+          <div style="font-size: 11.5px; color: rgba(255,255,255,0.6);">alunas contatadas nos últimos 7 dias</div>
+        </div>
+        <div style="flex: 1; min-width: 180px;">
+          <div style="height: 12px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden; margin-bottom: 7px;">
+            <span style="display: block; height: 100%; width: {{ larguraSemana }}; background: {{ corSemana }};"></span>
+          </div>
+          <div style="font-size: 11.5px; color: rgba(255,255,255,0.72); line-height: 1.5;">{{ fraseSemana }}</div>
+        </div>
+        <div>
+          <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Avaliação média</div>
+          <div style="font-size: 22px; font-weight: 600; color: {{ pulsoEscolaCor }}; letter-spacing: -0.4px;">{{ pulsoEscola }}</div>
+          <div style="font-size: 11.5px; color: rgba(255,255,255,0.6);">{{ pulsoEscolaNota }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CADÊNCIA -->
+    <div style="background: #fff; border-radius: 24px; padding: 16px 18px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Frequência de contato</span>
+        <button onclick="{{ onEditarCadencia }}" style="border: 0; background: {{ cadBg }}; color: {{ cadFg }}; font-size: 10.5px; font-weight: 600; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cadLabel }}</button>
+      </div>
+      <p style="margin: 0 0 12px; font-size: 12px; color: #1d5a63; line-height: 1.6; max-width: 720px;">Cada grupo de alunas tem um intervalo entre contatos. Abaixo, quantos contatos por semana isso exige.</p>
+
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f4f1ec;">
+        <div>
+          <div style="font-size: 22px; font-weight: 600; color: #164951;">{{ cargaSemana }}</div>
+          <div style="font-size: 11px; color: #1d5a63;">contatos por semana</div>
+        </div>
+        <div>
+          <div style="font-size: 22px; font-weight: 600; color: #348a8e;">{{ cargaDia }}</div>
+          <div style="font-size: 11px; color: #1d5a63;">por dia útil</div>
+        </div>
+        <div>
+          <div style="font-size: 22px; font-weight: 600; color: {{ vencidasCor }};">{{ vencidas }}</div>
+          <div style="font-size: 11px; color: #1d5a63;">fora do intervalo agora</div>
+        </div>
+      </div>
+
+      <sc-for list="{{ segmentos }}" as="sg" hint-placeholder-count="5">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #f7f4ef;">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ sg.cor }}; flex: none;"></span>
+          <span style="flex: none; min-width: 120px; font-size: 12.5px; font-weight: 600; color: #164951;">{{ sg.label }}</span>
+          <span style="flex: none; font-size: 12px; color: #1d5a63;">{{ sg.contagem }}</span>
+          <sc-if value="{{ sg.temVencidas }}">
+            <span style="flex: none; background: rgba(207,107,92,0.12); color: #cf6b5c; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 999px;">{{ sg.vencidasLabel }}</span>
+          </sc-if>
+          <span style="flex: 1; min-width: 120px; font-size: 11px; color: #b3a693; line-height: 1.5;">{{ sg.desc }}</span>
+          <sc-if value="{{ editandoCadencia }}">
+            <span style="flex: none; display: flex; align-items: center; gap: 5px;">
+              <span style="font-size: 11px; color: #8a7465;">a cada</span>
+              <input ref="{{ sg.ref }}" placeholder="{{ sg.intervalo }}" style="width: 52px; padding: 6px 8px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 7px; background: #f2ebe3; text-align: center;" />
+              <span style="font-size: 11px; color: #8a7465;">dias</span>
+            </span>
+          </sc-if>
+          <sc-if value="{{ sg.mostrarIntervalo }}">
+            <span style="flex: none; font-size: 11.5px; font-weight: 600; color: {{ sg.cor }};">a cada {{ sg.intervalo }} dias</span>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ editandoCadencia }}">
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;">
+          <button onclick="{{ onSalvarCadencia }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar frequência</button>
+          <span style="font-size: 11px; color: #b3a693; line-height: 1.5;">Campo em branco mantém o intervalo atual. É ele que define quando a aluna entra na lista de sem contato.</span>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- FILA -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Alunas a contatar</span>
+      <span style="flex: 1;"></span>
+      <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="6">
+        <button onclick="{{ ft.onClick }}" style="border: 1px solid {{ ft.borda }}; background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 11px; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ft.label }}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ filaVazia }}">
+      <div style="background: #fff; border-radius: 24px; padding: 40px 20px; text-align: center; color: #8a7465; font-size: 13px;">Nenhuma aluna nesta seleção.</div>
+    </sc-if>
+
+    <sc-for list="{{ fila }}" as="f" hint-placeholder-count="6">
+      <div style="background: #fff; border-left: 4px solid {{ f.corBorda }}; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; opacity: {{ f.opacidade }};">
+
+        <div style="display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 190px;">
+            <a href="{{ f.perfilHref }}" title="Abrir o perfil de {{ f.nome }}" style="font-size: 15px; font-weight: 600; color: #2a9d8f; text-decoration: underline; text-underline-offset: 3px; padding: 2px 0;">{{ f.nome }}</a>
+            <div style="font-size: 11.5px; color: #8a7465; line-height: 1.5;">{{ f.contexto }}</div>
+            <div style="font-size: 11.5px; color: {{ f.cadenciaCor }}; line-height: 1.5; margin-top: 2px;">{{ f.cadenciaTexto }}</div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">
+              <sc-for list="{{ f.motivos }}" as="mt" hint-placeholder-count="2">
+                <span style="background: rgba(0,0,0,0.04); color: {{ mt.cor }}; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 999px;">{{ mt.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex: none; min-width: 108px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 500;">Satisfação</div>
+            <div style="font-size: 15px; font-weight: 600; color: {{ f.satisfacaoCor }}; margin-top: 2px;">{{ f.satisfacaoValor }}</div>
+            <div style="font-size: 10.5px; color: #b3a693; margin-top: 1px;">{{ f.satisfacaoSub }}</div>
+          </div>
+
+          <div style="flex: none; min-width: 130px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 500;">Desenvolvimento</div>
+            <div style="font-size: 15px; font-weight: 600; color: {{ f.desenvCor }}; margin-top: 2px;">{{ f.desenvValor }}</div>
+            <div style="font-size: 10.5px; color: #b3a693; margin-top: 1px;">{{ f.desenvSub }}</div>
+          </div>
+
+          <div style="flex: none; min-width: 96px;">
+            <div style="font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 2px;">Avaliação de progresso</div>
+            <div style="font-size: 12.5px; font-weight: 600; color: {{ f.pulsoCor }};">{{ f.pulsoLabel }}</div>
+            <div style="font-size: 10px; color: #b3a693;">{{ f.pulsoQuando }}</div>
+          </div>
+
+          <div style="flex: none; min-width: 82px;">
+            <div style="font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; margin-bottom: 2px;">Último contato</div>
+            <div style="font-size: 12.5px; font-weight: 600; color: {{ f.toqueCor }};">{{ f.toqueLabel }}</div>
+            <div style="font-size: 10px; color: #b3a693;">{{ f.toqueTipo }}</div>
+          </div>
+
+          <div style="flex: none; display: flex; gap: 6px; align-items: center;">
+            <a href="{{ f.waHref }}" target="_blank" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 11.5px; font-weight: 600; padding: 8px 15px; border-radius: 999px;">Abrir WhatsApp</a>
+            <button onclick="{{ f.onAbrir }}" style="border: 0; background: {{ f.abrirBg }}; color: {{ f.abrirFg }}; font-size: 11.5px; font-weight: 600; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ f.abrirLabel }}</button>
+          </div>
+        </div>
+
+        <!-- REGISTRO -->
+        <sc-if value="{{ f.aberto }}">
+          <div style="border-top: 1px dashed #e5dccf; margin-top: 12px; padding-top: 12px;">
+
+            <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: #348a8e; margin-bottom: 7px;">Registrar contato</div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 9px;">
+              <sc-for list="{{ f.tipos }}" as="tp" hint-placeholder-count="7">
+                <button onclick="{{ tp.onClick }}" title="{{ tp.desc }}" style="border: 1px solid {{ tp.borda }}; background: {{ tp.bg }}; color: {{ tp.fg }}; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ tp.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+              <input ref="{{ f.notaRef }}" placeholder="Assunto ou combinado (opcional)" style="flex: 1; min-width: 180px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              <button onclick="{{ f.onRegistrarToque }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 11.5px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar contato</button>
+            </div>
+
+            <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: #6b5b95; margin-bottom: 3px;">Avaliação informada pela aluna</div>
+            <p style="margin: 0 0 7px; font-size: 11px; color: #8a7465; line-height: 1.5;">Registre a resposta da aluna, não a impressão da equipe.</p>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 9px;">
+              <sc-for list="{{ f.pulsos }}" as="pl" hint-placeholder-count="5">
+                <button onclick="{{ pl.onClick }}" style="border: 1px solid {{ pl.borda }}; background: {{ pl.bg }}; color: {{ pl.fg }}; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pl.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center;">
+              <input ref="{{ f.pulsoNotaRef }}" placeholder="Observação da aluna (opcional)" style="flex: 1; min-width: 180px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              <button onclick="{{ f.onRegistrarPulso }}" style="border: none; background: #6b5b95; color: #fff; font-size: 11.5px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar avaliação</button>
+            </div>
+
+            <sc-if value="{{ f.temHistorico }}">
+              <div style="margin-top: 14px; padding-top: 11px; border-top: 1px solid #f2e9dd;">
+                <div style="font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: #b8ada0; margin-bottom: 6px;">Contatos anteriores</div>
+                <sc-for list="{{ f.historico }}" as="h" hint-placeholder-count="3">
+                  <div style="display: flex; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 11.5px;">
+                    <span style="flex: none; color: #b3a693; min-width: 42px;">{{ h.data }}</span>
+                    <span style="flex: none; font-weight: 600; color: {{ h.cor }};">{{ h.tipo }}</span>
+                    <span style="flex: 1; min-width: 0; color: #8a7465;">{{ h.nota }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  state = { abertoId: null, tipoSel: {}, pulsoSel: {}, filtro: "pendentes", tick: 0,
+            editandoCadencia: false, detalhes: false };
+  cadRefs = {};
+  notaRefs = {}; pulsoNotaRefs = {};
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  // atividade nova puxada do banco (resposta do desafio) redesenha a fila
+  _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
+
+  pill(on, corOn) {
+    return on ? { bg: corOn, fg: "#fff", borda: corOn }
+              : { bg: "#fff", fg: "#8a7c6b", borda: "#e5dccf" };
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { fila: [], filtros: [], filaVazia: true, tocadas: "0", meta: "0",
+      larguraSemana: "0%", corSemana: "#9ec970", fraseSemana: "", pulsoEscola: "—",
+      pulsoEscolaNota: "", pulsoEscolaCor: "#fff",
+      segmentos: [], cargaSemana: "0", cargaDia: "0", vencidas: "0", vencidasCor: "#8a7c6b",
+      cadLabel: "Ajustar", cadBg: "#fff", cadFg: "#164951", editandoCadencia: false,
+      chamada: "", chamadaDetalhe: "", proximas: [], temProximas: false,
+      detalhesAbertos: false, detLabel: "Ver números", detBg: "#fff", detFg: "#164951" };
+
+    const toda = CRM.filaAcompanhamento();
+
+    // ── cadência: quantos contatos por semana a escola precisa dar ──
+    const carga = CRM.cargaDeContato();
+    const segmentos = carga.segmentos.map(s => {
+      if (!this.cadRefs[s.id]) this.cadRefs[s.id] = React.createRef();
+      return {
+        label: s.label, cor: s.cor, desc: s.desc, intervalo: String(s.intervalo),
+        contagem: s.alunas + (s.alunas === 1 ? " aluna" : " alunas"),
+        temVencidas: s.vencidas > 0,
+        vencidasLabel: s.vencidas + (s.vencidas === 1 ? " vencida" : " vencidas"),
+        mostrarIntervalo: !this.state.editandoCadencia,
+        ref: this.cadRefs[s.id]
+      };
+    });
+
+    // ── semana: a meta vem da cadência, não de um palpite sobre a base ──
+    const tocadas = toda.filter(f => f.tocadaEstaSemana).length;
+    const meta = Math.max(1, Math.round(carga.porSemana));
+    const pct = Math.min(100, Math.round(100 * tocadas / meta));
+
+    // ── pulso da escola: média das últimas respostas ──
+    const comPulso = toda.filter(f => f.pulso);
+    const media = comPulso.length
+      ? comPulso.reduce((a, f) => a + f.pulso.nota, 0) / comPulso.length : 0;
+    const mediaMeta = media ? CRM.pulsoMeta(Math.round(media)) : null;
+
+    // ── filtros ──
+    // A escola acompanha duas coisas: satisfação e desenvolvimento. Com 100
+    // alunas não dá para ler a lista inteira, então cada filtro é uma fila
+    // curta, com a contagem no próprio botão.
+    const testes = {
+      pendentes: f => !f.tocadaEstaSemana,
+      insatisfeita: f => f.satisfacao.nivel === "baixa"
+        || (f.satisfacao.nivel === "media" && f.satisfacao.tendencia < 0),
+      parada: f => f.desenvolvimento.nivel === "baixo",
+      semNota: f => f.satisfacao.nivel === "sem",
+      risco: f => f.peso >= 35,
+      todas: () => true
+    };
+    const opcoes = [
+      { id: "pendentes", label: "Sem contato esta semana" },
+      { id: "insatisfeita", label: "Satisfação em queda" },
+      { id: "parada", label: "Desenvolvimento baixo" },
+      { id: "semNota", label: "Sem avaliação" },
+      { id: "risco", label: "Prioridade alta" },
+      { id: "todas", label: "Todas" }
+    ];
+    const filtros = opcoes.map(o => Object.assign(
+      { label: o.label + " · " + toda.filter(testes[o.id]).length,
+        onClick: () => this.setState({ filtro: o.id }) },
+      this.pill(this.state.filtro === o.id, "#164951")));
+
+    const filtrada = toda.filter(testes[this.state.filtro] || testes.todas);
+
+    // ── cada aluna ──
+    const fila = filtrada.map(f => {
+      const id = f.pessoaId;
+      if (!this.notaRefs[id]) this.notaRefs[id] = React.createRef();
+      if (!this.pulsoNotaRefs[id]) this.pulsoNotaRefs[id] = React.createRef();
+      const aberto = this.state.abertoId === id;
+      const tipoSel = this.state.tipoSel[id] || f.tipoSugerido;
+      const pulsoSel = this.state.pulsoSel[id] || 0;
+
+      const contexto = [
+        f.turma,
+        f.professora ? "com " + f.professora : "",
+        f.diasDeCasa <= 42 ? "matriculada há " + f.diasDeCasa + " dias" : "",
+        f.diasPraRenovar !== null && f.diasPraRenovar >= 0 && f.diasPraRenovar <= 30
+          ? "renovação em " + f.diasPraRenovar + " dias" : "",
+        f.faltas ? f.faltas + (f.faltas === 1 ? " ausência" : " ausências") : ""
+      ].filter(Boolean).join(" · ");
+
+      const tend = f.tendencia;
+      const cad = CRM.cadenciaDe(CRM.getPessoa(id));
+      return {
+        nome: f.nome, contexto,
+        cadenciaTexto: cad.nuncaContatada
+          ? cad.label + " · nenhum contato registrado"
+          : (cad.vencido
+              ? cad.label + " · " + cad.diasDeAtraso + (cad.diasDeAtraso === 1 ? " dia" : " dias")
+                + " além do intervalo de " + cad.intervalo
+              : cad.label + " · próximo contato em " + cad.diasAteOProximo
+                + (cad.diasAteOProximo === 1 ? " dia" : " dias")),
+        cadenciaCor: cad.vencido ? "#cf6b5c" : cad.cor,
+        perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + id,
+        waHref: CRM.waLink(f.whatsapp, ""),
+        opacidade: f.tocadaEstaSemana ? "0.6" : "1",
+        corBorda: f.motivos.length ? CRM.MOTIVOS_TOQUE[f.motivos[0]].cor : "#9ec970",
+        motivos: f.motivos.map(m => ({ label: CRM.MOTIVOS_TOQUE[m].label, cor: CRM.MOTIVOS_TOQUE[m].cor })),
+
+        satisfacaoValor: f.satisfacao.media === null ? "—" : f.satisfacao.media + " de 5",
+        satisfacaoCor: f.satisfacao.nivel === "alta" ? "#5a9e4b"
+          : (f.satisfacao.nivel === "media" ? "#d4a574"
+          : (f.satisfacao.nivel === "baixa" ? "#cf6b5c" : "#b3a693")),
+        satisfacaoSub: f.satisfacao.n
+          ? f.satisfacao.n + (f.satisfacao.n === 1 ? " nota" : " notas")
+            + (f.satisfacao.tendencia > 0 ? " · subindo" : (f.satisfacao.tendencia < 0 ? " · caindo" : ""))
+          : "ainda não avaliou",
+        desenvValor: f.desenvolvimento.indice === null ? "—" : f.desenvolvimento.indice + "%",
+        desenvCor: f.desenvolvimento.nivel === "alto" ? "#5a9e4b"
+          : (f.desenvolvimento.nivel === "medio" ? "#d4a574"
+          : (f.desenvolvimento.nivel === "baixo" ? "#cf6b5c" : "#b3a693")),
+        desenvSub: [
+          f.desenvolvimento.frequencia === null ? "" : "presença " + f.desenvolvimento.frequencia + "%",
+          f.desenvolvimento.tarefas === null ? "" : "tarefa " + f.desenvolvimento.tarefas + "%",
+          f.desenvolvimento.cicloTotal ? "aula " + f.desenvolvimento.cicloFeitas + " de " + f.desenvolvimento.cicloTotal : ""
+        ].filter(Boolean).join(" · ") || "sem chamada ainda",
+        pulsoLabel: f.pulso ? (CRM.pulsoMeta(f.pulso.nota).label + (tend > 0 ? " ↑" : (tend < 0 ? " ↓" : ""))) : "Sem avaliação",
+        pulsoCor: f.pulso ? CRM.pulsoMeta(f.pulso.nota).cor : "#b8ada0",
+        pulsoQuando: f.pulso ? CRM.ddmm(f.pulso.data) : "—",
+
+        toqueLabel: f.diasSemToque === null ? "Nenhum"
+          : (f.diasSemToque === 0 ? "Hoje" : "Há " + f.diasSemToque + (f.diasSemToque === 1 ? " dia" : " dias")),
+        toqueCor: f.diasSemToque === null ? "#cf6b5c"
+          : (f.diasSemToque <= 7 ? "#348a8e" : (f.diasSemToque <= 21 ? "#d4a574" : "#cf6b5c")),
+        toqueTipo: f.ultimoToque
+          ? (CRM.TOQUE_TIPOS.filter(t => t.id === f.ultimoToque.tipo)[0] || {}).label || "" : "",
+
+        aberto,
+        abrirLabel: aberto ? "Fechar" : "Registrar",
+        abrirBg: aberto ? "#f6eee4" : "#fff",
+        abrirFg: aberto ? "#9c6f56" : "#164951",
+        onAbrir: () => this.setState(s => ({ abertoId: s.abertoId === id ? null : id })),
+
+        tipos: CRM.TOQUE_TIPOS.map(t => Object.assign(
+          { label: t.label, desc: t.desc,
+            onClick: () => this.setState(s => ({ tipoSel: Object.assign({}, s.tipoSel, { [id]: t.id }) })) },
+          this.pill(tipoSel === t.id, t.cor))),
+        notaRef: this.notaRefs[id],
+        onRegistrarToque: () => {
+          const nota = (this.notaRefs[id].current && this.notaRefs[id].current.value || "").trim();
+          CRM.registrarToque(id, tipoSel, nota);
+          if (this.notaRefs[id].current) this.notaRefs[id].current.value = "";
+          this.bump();
+        },
+
+        pulsos: CRM.PULSO_META.map(p => Object.assign(
+          { label: p.nota + " · " + p.label,
+            onClick: () => this.setState(s => ({ pulsoSel: Object.assign({}, s.pulsoSel, { [id]: p.nota }) })) },
+          this.pill(pulsoSel === p.nota, p.cor))),
+        pulsoNotaRef: this.pulsoNotaRefs[id],
+        onRegistrarPulso: () => {
+          if (!pulsoSel) return;
+          const c = (this.pulsoNotaRefs[id].current && this.pulsoNotaRefs[id].current.value || "").trim();
+          CRM.registrarPulso(id, pulsoSel, c);
+          if (this.pulsoNotaRefs[id].current) this.pulsoNotaRefs[id].current.value = "";
+          this.setState(s => ({ pulsoSel: Object.assign({}, s.pulsoSel, { [id]: 0 }) }));
+        },
+
+        historico: CRM.toquesDe(id).slice(0, 5).map(t => {
+          const meta2 = CRM.TOQUE_TIPOS.filter(x => x.id === t.tipo)[0] || {};
+          return { data: CRM.ddmm(t.data), tipo: meta2.label || t.tipo, cor: meta2.cor || "#8a7c6b", nota: t.nota || "" };
+        }),
+        temHistorico: CRM.toquesDe(id).length > 0
+      };
+    });
+
+    return {
+      tocadas: String(tocadas), meta: String(meta),
+      larguraSemana: pct + "%",
+      corSemana: pct >= 100 ? "#9ec970" : (pct >= 50 ? "#d4a574" : "#e07856"),
+      fraseSemana: tocadas >= meta
+        ? "Contatos da semana em dia."
+        : ((meta - tocadas === 1 ? "Falta 1 contato" : "Faltam " + (meta - tocadas) + " contatos")
+           + " para fechar a semana."),
+      pulsoEscola: media ? media.toFixed(1) : "—",
+      pulsoEscolaCor: mediaMeta ? mediaMeta.cor : "rgba(255,255,255,0.5)",
+      pulsoEscolaNota: comPulso.length
+        ? (comPulso.length + " de " + toda.length + (comPulso.length === 1 ? " respondeu" : " responderam"))
+        : "Nenhuma avaliação registrada",
+      // Antes de mexer em tela: se ninguém abre o app, o problema não é o card
+      ...(function () {
+        const u = CRM.usoDoApp ? CRM.usoDoApp(30) : null;
+        if (!u) return { usoNumero: "—", usoFrase: "", usoCor: "#164951", usoBg: "#fdfbf8", usoBorda: "#eee3d6" };
+        const ruim = u.pct < 40;
+        return {
+          usoNumero: u.abriram + " de " + u.total + " abriram",
+          usoCor: ruim ? "#cf6b5c" : "#348a8e",
+          usoBg: ruim ? "#fdf0ee" : "#fdfbf8",
+          usoBorda: ruim ? "#ecc9c2" : "#eee3d6",
+          usoFrase: u.nunca
+            ? u.nunca + (u.nunca === 1 ? " aluna nunca abriu o app" : " alunas nunca abriram o app")
+              + ". Sem uso do app não há avaliação de aula, e o indicador de satisfação fica sem dados."
+            : "Todas já abriram o app pelo menos uma vez."
+        };
+      }).call(this),
+      filtros, fila, filaVazia: fila.length === 0,
+
+      // ── a tela abre dizendo o que fazer, não com números ──
+      // Antes ela empilhava avaliação, cadência, filtros e histórico sem
+      // nunca dizer por onde começar.
+      chamada: (() => {
+        const vencidas = toda.filter(f => !f.tocadaEstaSemana && f.motivos.length);
+        if (!toda.length) return "Nenhuma aluna ativa no momento.";
+        if (!vencidas.length) return "Nenhum contato pendente agora.";
+        const n = Math.min(3, vencidas.length);
+        return n === 1 ? "1 aluna com contato pendente hoje." : n + " alunas com contato pendente hoje.";
+      })(),
+      chamadaDetalhe: (() => {
+        const vencidas = toda.filter(f => !f.tocadaEstaSemana && f.motivos.length);
+        if (!toda.length) return "";
+        if (!vencidas.length)
+          return "Cadência da semana em dia. As alunas voltam a esta lista conforme o intervalo do segmento.";
+        return vencidas.length + (vencidas.length === 1 ? " aluna está" : " alunas estão")
+          + " fora da cadência. A lista completa fica abaixo, com o motivo de cada uma.";
+      })(),
+      proximas: toda.filter(f => !f.tocadaEstaSemana && f.motivos.length).slice(0, 3).map(f => ({
+        nome: f.nome,
+        porque: f.sinais && f.sinais.length ? f.sinais[0].label.toLowerCase() : "contato periódico",
+        onClick: () => this.setState({ abertoId: f.pessoaId, filtro: "pendentes" })
+      })),
+      temProximas: toda.some(f => !f.tocadaEstaSemana && f.motivos.length),
+
+      detalhesAbertos: this.state.detalhes,
+      detLabel: this.state.detalhes ? "Ocultar números" : "Ver números",
+      detBg: this.state.detalhes ? "#f6eee4" : "#fff",
+      detFg: this.state.detalhes ? "#9c6f56" : "#164951",
+      onDetalhes: () => this.setState(s => ({ detalhes: !s.detalhes })),
+
+      segmentos,
+      cargaSemana: String(carga.porSemana).replace(".", ","),
+      cargaDia: String(carga.porDiaUtil).replace(".", ","),
+      vencidas: String(carga.vencidas),
+      vencidasCor: carga.vencidas === 0 ? "#4f9a5e" : (carga.vencidas > carga.total / 3 ? "#cf6b5c" : "#d4a574"),
+      editandoCadencia: this.state.editandoCadencia,
+      cadLabel: this.state.editandoCadencia ? "Fechar" : "Ajustar intervalos",
+      cadBg: this.state.editandoCadencia ? "#f6eee4" : "#fff",
+      cadFg: this.state.editandoCadencia ? "#9c6f56" : "#164951",
+      onEditarCadencia: () => this.setState(s => ({ editandoCadencia: !s.editandoCadencia })),
+      onSalvarCadencia: () => {
+        Object.keys(this.cadRefs).forEach(id => {
+          const v = ((this.cadRefs[id].current && this.cadRefs[id].current.value) || "").trim();
+          if (v) CRM.setCadencia(id, v);
+        });
+        this.setState({ editandoCadencia: false });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

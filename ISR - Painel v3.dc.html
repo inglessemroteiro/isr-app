@@ -370,6 +370,9 @@ class Component extends DCLogic {
   turmaParam() {
     try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
   }
+  profParam() {
+    try { return new URLSearchParams(window.location.search).get("prof") || ""; } catch (e) { return ""; }
+  }
   eventoParam() {
     try { return new URLSearchParams(window.location.search).get("evento") || ""; } catch (e) { return ""; }
   }
@@ -478,6 +481,13 @@ class Component extends DCLogic {
     const tpTurma = tp ? ocup.filter(u => u.label === tp)[0] : null;
     let teacher = this.state.teacher;
     if (!teacher && tpTurma) teacher = tpTurma.teacher;
+    // ?prof= vem do bloco de aulas sem chamada da Central. Sem ler o
+    // parâmetro, "Abrir o painel" da Carla abria o painel de quem
+    // clicou, e a conferência era feita na pessoa errada.
+    if (!teacher) {
+      const pp = this.profParam();
+      if (pp && nomes.indexOf(pp) >= 0) teacher = pp;
+    }
     if (!teacher) teacher = (user && nomes.indexOf(user.nome) >= 0) ? user.nome : nomes[0];
 
     const turmasProfOcup = ocup.filter(u => u.teacher === teacher);
@@ -1096,7 +1106,7 @@ class Component extends DCLogic {
       },
 
       turmasProf: turmasProfOcup.map(u => ({
-        turmaHref: "ISR%20-%20Turma.dc.html?id=" + u.id,
+        turmaHref: "ISR%20-%20Turma%20v3.dc.html?id=" + u.id,
         nivel: u.nivel, turma: u.turma,
         projeto: u.projeto || "—",
         ocupLabel: u.ocupadas + "/" + u.capacidade,

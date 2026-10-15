@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Mural da equipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:#164951}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: #164951;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">mural · o que a equipe precisa saber</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Mural da equipe</h1>
+      </div>
+      
+    </header>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #1d5a63; line-height: 1.6;">Mensagens da equipe por assunto, visíveis para toda a equipe. A entrega acompanha a sincronização do banco central — a mensagem chega aos outros aparelhos em até 5 minutos. Qualquer mensagem pode ser convertida em pendência com responsável.</p>
+
+    <!-- ESCREVER -->
+    <div style="background: #fff; border-radius: 24px; padding: 14px 16px; margin-bottom: 16px;">
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+        <sc-for list="{{ assuntosEscrever }}" as="ae" hint-placeholder-count="4">
+          <button onclick="{{ ae.onPick }}" style="border: 1px solid {{ ae.borda }}; background: {{ ae.bg }}; color: {{ ae.fg }}; font-size: 11px; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ae.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
+        <textarea ref="{{ msgRef }}" onkeydown="{{ onMsgKey }}" placeholder="Escreva para a equipe (Enter envia; Shift+Enter quebra linha)" style="flex: 1; min-width: 220px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3; resize: vertical;"></textarea>
+        <button onclick="{{ onEnviar }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12.5px; font-weight: 600; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Enviar</button>
+      </div>
+    </div>
+
+    <!-- FILTRO -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+      <sc-for list="{{ assuntosFiltro }}" as="af" hint-placeholder-count="5">
+        <button onclick="{{ af.onPick }}" style="border: 1px solid {{ af.borda }}; background: {{ af.bg }}; color: {{ af.fg }}; font-size: 11px; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ af.label }}</button>
+      </sc-for>
+      <span style="font-size: 11.5px; color: #8a7465;">{{ contagem }}</span>
+    </div>
+
+    <!-- MENSAGENS -->
+    <sc-if value="{{ vazio }}">
+      <div style="background: #fff; border-radius: 24px; text-align: center; padding: 40px 20px; color: #8a7465;">
+        <p style="margin: 0; font-size: 13px;">Nenhuma mensagem neste assunto.</p>
+      </div>
+    </sc-if>
+    <sc-for list="{{ mensagens }}" as="m" hint-placeholder-count="6">
+      <div style="background: #fff; border-radius: 24px; padding: 13px 16px; margin-bottom: 10px;">
+        <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+          <strong style="font-size: 13px; color: #164951;">{{ m.autor }}</strong>
+          <span style="background: {{ m.assuntoBg }}; color: {{ m.assuntoFg }}; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 8px; border-radius: 999px;">{{ m.assunto }}</span>
+          <span style="font-size: 11px; color: #b3a693;">{{ m.quando }}</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #164951; line-height: 1.6; white-space: pre-wrap;">{{ m.texto }}</p>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px;">
+          <sc-if value="{{ m.virando }}">
+            <select ref="{{ viraDonoRef }}" style="padding: 7px 10px; font-size: 11.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
+              <sc-for list="{{ m.donos }}" as="dn" hint-placeholder-count="4"><option value="{{ dn.id }}">{{ dn.label }}</option></sc-for>
+            </select>
+            <button onclick="{{ m.onConfirmarPendencia }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 11px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar a pendência</button>
+            <button onclick="{{ m.onCancelarPendencia }}" style="border: none; background: transparent; color: #9c6f56; font-size: 11px; font-weight: 600; cursor: pointer; padding: 6px; font-family: inherit;">cancelar</button>
+          </sc-if>
+          <sc-if value="{{ m.parada }}">
+            <button onclick="{{ m.onVirarPendencia }}" style="border: 0; background: #e5f2f6; color: #348a8e; font-size: 10.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Criar pendência</button>
+            <button onclick="{{ m.onRemover }}" style="border: 1px solid {{ m.remBorda }}; background: {{ m.remBg }}; color: #cf6b5c; font-size: 10.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ m.remLabel }}</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { assuntoEscrever: "Geral", filtro: "", tick: 0,
+            virandoId: null, removendoId: null };
+  msgRef = React.createRef();
+  viraDonoRef = React.createRef();
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  // o puxe do banco (a cada 5 min) traz mensagens novas; o redesenho
+  // periódico faz a tela refletir sem ninguém recarregar
+  _ouvinteNovos = (() => { try {
+    window.addEventListener("isr-dados-novos", () => this.bump());
+    setInterval(() => this.bump(), 60 * 1000);
+    // o puxe do boot chega logo depois do primeiro render: sem estes
+    // redesenhos, quem abre a tela vê vazio até o próximo minuto
+    setTimeout(() => this.bump(), 2500);
+    setTimeout(() => this.bump(), 7000);
+  } catch (e) {} })();
+
+  quando(isoStr) {
+    try {
+      const d = new Date(isoStr);
+      const dia = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+      const hora = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      const hoje = new Date();
+      const ehHoje = d.toDateString() === hoje.toDateString();
+      return (ehHoje ? "hoje" : dia) + " às " + hora;
+    } catch (e) { return ""; }
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { assuntosEscrever: [], assuntosFiltro: [], mensagens: [], vazio: true,
+      contagem: "", msgRef: this.msgRef, viraDonoRef: this.viraDonoRef,
+      onEnviar: () => {}, onMsgKey: () => {} };
+    const user = CRM.gestaoUser();
+    const CORES = { "Geral": ["#f2ebe3", "#8a7c6b"], "Pedagógico": ["rgba(107,91,149,0.14)", "#6b5b95"],
+      "Comercial": ["rgba(224,120,86,0.14)", "#c8622f"], "Operação": ["rgba(42,157,143,0.14)", "#2a9d8f"] };
+
+    const enviar = () => {
+      const t = ((this.msgRef.current && this.msgRef.current.value) || "").trim();
+      if (!t) return;
+      CRM.muralPost(t, this.state.assuntoEscrever, (user && user.nome) || "");
+      this.msgRef.current.value = "";
+      this.bump();
+    };
+
+    const todas = CRM.muralLista();
+    const doFiltro = this.state.filtro
+      ? todas.filter(m => m.assunto === this.state.filtro) : todas;
+    const equipeNomes = CRM.equipeLista()
+      .filter(mb => (mb.papeis || []).length && (mb.papeis || []).indexOf("prestadora") < 0)
+      .map(mb => mb.nome);
+
+    return {
+      msgRef: this.msgRef, viraDonoRef: this.viraDonoRef,
+      onEnviar: enviar,
+      onMsgKey: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); } },
+      assuntosEscrever: CRM.ASSUNTOS_MURAL.map(a => {
+        const on = this.state.assuntoEscrever === a;
+        return { label: a, borda: on ? "#164951" : "#e5dccf",
+          bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#8a7c6b",
+          onPick: () => this.setState({ assuntoEscrever: a }) };
+      }),
+      assuntosFiltro: [{ id: "", label: "Todas" }]
+        .concat(CRM.ASSUNTOS_MURAL.map(a => ({ id: a, label: a })))
+        .map(a => {
+          const on = this.state.filtro === a.id;
+          return { label: a.label, borda: on ? "#164951" : "#e5dccf",
+            bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#8a7c6b",
+            onPick: () => this.setState({ filtro: a.id }) };
+        }),
+      contagem: doFiltro.length === 1 ? "1 mensagem" : doFiltro.length + " mensagens",
+      vazio: doFiltro.length === 0,
+      mensagens: doFiltro.map(m => {
+        const cores = CORES[m.assunto] || CORES["Geral"];
+        const virando = this.state.virandoId === m.id;
+        const removendo = this.state.removendoId === m.id;
+        return {
+          autor: m.autor || "—", assunto: m.assunto, texto: m.texto,
+          quando: this.quando(m.em),
+          assuntoBg: cores[0], assuntoFg: cores[1],
+          virando,
+          parada: !virando,
+          donos: equipeNomes.map(n => ({ id: n, label: n })),
+          onVirarPendencia: () => this.setState({ virandoId: m.id, removendoId: null }),
+          onCancelarPendencia: () => this.setState({ virandoId: null }),
+          onConfirmarPendencia: () => {
+            const dono = (this.viraDonoRef.current && this.viraDonoRef.current.value) || "Gabi";
+            CRM.addTarefa({ titulo: m.texto.slice(0, 90), dono,
+              detalhe: "Do mural (" + (m.autor || "equipe") + "): " + m.texto.slice(0, 300),
+              por: (user && user.nome) || "" });
+            this.setState({ virandoId: null });
+          },
+          remLabel: removendo ? "Confirmar remoção" : "remover",
+          remBorda: removendo ? "#cf6b5c" : "#e5dccf",
+          remBg: removendo ? "#fdece9" : "#fff",
+          onRemover: () => {
+            if (!removendo) { this.setState({ removendoId: m.id, virandoId: null }); return; }
+            CRM.muralRemover(m.id);
+            this.setState({ removendoId: null });
+            this.bump();
+          }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
