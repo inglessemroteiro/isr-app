@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-e",
+  numero: "2026.10.16-f",
   data: "16/10/2026",
-  nota: "Cada chamada passa a guardar quem mexeu nela, quando e o quê — a lista inteira, não só a última correção. Aparece no Painel do professor, embaixo da grade"
+  nota: "Os clubes entram no sistema: quem está em cada um, vaga, lista de espera, e a regra de que os dois primeiros vêm no plano e do terceiro em diante a aluna paga"
 };
