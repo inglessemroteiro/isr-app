@@ -421,13 +421,20 @@
   // metas), para nada quebrar em quem ainda não configurou os
   // outros. Os outros dois ficam na lista de ciclos, marcados com
   // tipo e com "atual".
+  // A aula particular NÃO entra aqui. Cada uma depende da aluna: ela é
+  // marcada numa data, dentro do contrato daquela pessoa, e não existe
+  // um começo e um fim que valham para todas. Calendário de escola
+  // para aula particular não é só inútil — é perigoso, porque
+  // descartaria da conferência aula que aconteceu fora dele.
   var TIPOS_CICLO = [
     { id: "online", nome: "Turmas online" },
-    { id: "presencial", nome: "Turma presencial" },
-    { id: "particular", nome: "Aulas particulares" }
+    { id: "presencial", nome: "Turma presencial" }
   ];
+  // "particular" continua sendo um id reconhecido para que um ciclo
+  // gravado antes desta decisão não seja lido como se fosse online.
+  var TIPOS_CICLO_IDS = ["online", "presencial", "particular"];
   function tipoCicloValido(t) {
-    return TIPOS_CICLO.some(function (x) { return x.id === t; }) ? t : "online";
+    return TIPOS_CICLO_IDS.indexOf(t) >= 0 ? t : "online";
   }
   // De que calendário é esta turma. O nome da turma é o que a escola
   // escreve, e "PRESENCIAL" está escrito nele.
@@ -529,13 +536,17 @@
       });
     }
     if (!tipo) {
+      // o calendário geral é a união dos calendários DE ESCOLA. Um
+      // ciclo "particular" gravado antes de a decisão mudar não entra:
+      // ele diria que há aula numa semana em que não há, e a agenda
+      // geraria aula de turma nela.
       var tudo = [];
-      Object.keys(janelasCache).forEach(function (k) { tudo = tudo.concat(janelasCache[k]); });
+      TIPOS_CICLO.forEach(function (t) { tudo = tudo.concat(janelasCache[t.id] || []); });
       return tudo;
     }
     return janelasCache[tipoCicloValido(tipo)] || [];
   }
-  // tipo: "online", "presencial" ou "particular". Quem não configurou o
+  // tipo: "online" ou "presencial". Quem não configurou o
   // calendário daquele tipo cai no calendário geral — é o que mantém a
   // agenda de quem nunca mexeu nisso exatamente como estava.
   function temAulaEm(data, tipo) {
@@ -7618,16 +7629,13 @@
     });
 
     // particulares: a série diz quando cada aula foi marcada
-    var temCicloParticular = janelasDeAula("particular").length > 0;
     aulasParticularesAgendadas(desde, hoje, professora).forEach(function (a) {
       if (a.data >= hoje || a.estado === "feita") return;
-      // Fora do ciclo das particulares a aula não é cobrada — mas só
-      // quando esse ciclo existe. Sem ele, temAulaEm cairia na união
-      // das janelas dos outros tipos e esconderia da conferência uma
-      // aula particular marcada fora delas. Esconder aula que
-      // aconteceu é o defeito que esta conferência existe para
-      // evitar, então aqui o padrão é não filtrar.
-      if (temCicloParticular && !temAulaEm(a.data, "particular")) return;
+      // Nenhuma janela de escola filtra aula particular. Cada uma
+      // depende da aluna — é marcada numa data, dentro do contrato
+      // dela — e a aula existe porque alguém a marcou, não porque um
+      // calendário a gerou. Filtrar aqui só esconderia aula que
+      // aconteceu.
       var label = "Particular · " + a.nome;
       if (getChamada(label, a.data)) return;
       out.push({ tipo: "particular", label: label, data: a.data, hora: a.hora || "",

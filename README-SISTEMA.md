@@ -371,37 +371,39 @@ quem souber um e-mail da equipe ainda entra. Assim que as quatro
 contas existirem, o bloco marcado `PORTA DE TRANSIÇÃO` em `gestao.html`
 sai do código.
 
-### Os três calendários
+### Os calendários de escola
 
-A escola não tem **um** ciclo, tem três: as turmas online, a turma
-presencial e as aulas particulares começam e terminam em datas
-diferentes. Enquanto havia uma janela só, a agenda gerava aula
-presencial em semana sem aula presencial, e a conferência cobrava
-chamada de aula que não houve.
-
-Cada tipo tem seu calendário, na Central:
+A escola não tem **um** ciclo. As turmas online e a turma presencial
+começam e terminam em datas diferentes. Enquanto havia uma janela só,
+a agenda gerava aula presencial em semana sem aula presencial, e a
+conferência cobrava chamada de aula que não houve.
 
 | Tipo | Onde o ciclo em vigor mora | Como a aula é reconhecida |
 |---|---|---|
 | Turmas online | nas metas (`cicloLabel/Inicio/Fim`) | o padrão |
 | Turma presencial | na lista de ciclos, com `tipo` e `atual` | "PRESENCIAL" no nome da turma |
-| Aulas particulares | idem | a aula é marcada na série da aluna |
 
 Quem não informa um calendário próprio não muda de comportamento: o
 tipo cai no calendário geral da escola, como sempre foi. É por isso
-que o presencial e o particular nascem como "sem calendário próprio"
-em vez de nascerem vazios — vazio pareceria "não há aula".
+que o presencial nasce como "sem calendário próprio" em vez de nascer
+vazio — vazio pareceria "não há aula".
 
-A aula particular não é gerada por janela nenhuma (cada uma é marcada
-numa data), então o calendário das particulares serve para **não
-cobrar chamada** de aula fora do ciclo delas. Enquanto esse
-calendário não existir, nenhuma aula particular é descartada da
-conferência — cair na união das janelas dos outros tipos esconderia
-aula que aconteceu, que é justamente o defeito que a conferência
-existe para evitar.
+**A aula particular não tem calendário de escola.** Cada uma depende
+da aluna: é marcada numa data, dentro do contrato daquela pessoa, e
+não existe um começo e um fim que valham para todas. Por isso:
 
-Com três calendários, a conferência deixou de poder nomear **um**
-ciclo: ela varre os três, e o nome escolhido seria o de um só. A tela
+- nenhuma janela filtra aula particular, e a chamada dela é cobrada
+  em qualquer semana — inclusive no intervalo entre dois ciclos;
+- a Central não oferece esse calendário, e diz por quê. Ausência
+  silenciosa pareceria esquecimento;
+- `particular` continua sendo um `tipo` reconhecido, para que um
+  ciclo gravado antes desta decisão não seja lido como se fosse
+  online. Esses ciclos ficam fora da união das janelas: um deles
+  diria que há aula numa semana em que não há, e a agenda geraria
+  aula de turma nela.
+
+Com mais de um calendário, a conferência deixou de poder nomear **um**
+ciclo: ela varre todos, e o nome escolhido seria o de um só. A tela
 diz o período de verdade — "Desde 01/07" — em vez de "no ciclo
 4.2026, de 31/08 a 07/11" diante de aulas de julho.
 
