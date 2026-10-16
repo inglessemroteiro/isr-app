@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-o",
+  numero: "2026.10.16-p",
   data: "16/10/2026",
-  nota: "A Central fica só com o que o ISR Gestao v5 tem. O calendário dos ciclos foi para Matrículas do ciclo e as aulas sem chamada para o Painel do professor; a professora deixa de ter Central"
+  nota: "A Agenda fica como no v5: a tira dos sete dias com a contagem, a lista do dia escolhido e o Novo evento que abre o Google Agenda. Sem seletor de responsável — a agenda já é a de quem abriu"
 };
