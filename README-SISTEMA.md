@@ -442,6 +442,12 @@ contagem** (Todos, Alunas, Leads, Pausadas, Em risco), a **lista de
 quatro campos** (nome, situação, contexto, risco) e, acima dela, o que
 a escola opera.
 
+**A tela abre nas alunas ativas**, não em todo mundo: é a lista que a
+escola usa todo dia, e lead já tem o CRM. O cadastro inteiro continua a
+um clique, no chip Todos — o v5 abre em Todos, mas abrir numa lista de
+leads uma tela que a professora usa para achar aluna custa um clique em
+toda consulta.
+
 O contexto muda com a situação: para quem é aluna, turma e professora;
 para quem é lead, o estágio, o canal e desde quando. É a mesma linha —
 o que ela diz é que depende de quem é a pessoa.

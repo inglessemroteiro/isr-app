@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-r",
+  numero: "2026.10.16-s",
   data: "16/10/2026",
-  nota: "Alunas vira Pessoas: cadastro único, com lead e aluna na mesma lista, chips de situação com contagem e busca. O termômetro da turma e a retenção saem"
+  nota: "Pessoas abre nas alunas ativas; o cadastro inteiro fica no chip Todos"
 };
