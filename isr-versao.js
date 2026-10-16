@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-t",
+  numero: "2026.10.16-u",
   data: "16/10/2026",
-  nota: "O CRM fica só o funil: a vista Atividade sai e o estágio passa a mudar por chip dentro da lead. O menu volta a dizer Alunas"
+  nota: "Mensagens pelo v5: categoria em chips, a lista mostrando a primeira linha de cada modelo e o editor dizendo qual modelo para quem"
 };
