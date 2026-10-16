@@ -390,6 +390,40 @@ que espera há mais tempo vem antes.
 Junto, do v5: o rótulo **"filas da equipe"** antes dos chips, e o
 bloco das metas inteiro leva ao Marketing.
 
+### A Agenda, pelo v5
+
+A Agenda do v5 tem três coisas: a **tira dos sete dias** com a
+contagem de cada um, a **lista do dia escolhido** (hora, tipo,
+título, quem, e um link para o perfil ou a turma) e **"+ Novo
+evento"**, que abre o Google Agenda — o v5 não cria evento no
+sistema.
+
+Saíram: o seletor Lista/Semana, o seletor de responsável, o
+7/14/30 dias, a legenda por tipo com contagem, o aviso do ciclo e o
+bloco de configuração da **assinatura**.
+
+**O filtro virou regra, não controle.** No v5 cada evento carrega os
+papéis que o veem, e não há seletor. Aqui o equivalente é o nome:
+fora da gestão, a agenda mostra o que está no nome da pessoa — o que
+é de outra pessoa fica na agenda dela. Feriado aparece para todo
+mundo.
+
+**Três blocos ficaram, por decisão da escola**, ainda que o v5 não os
+tenha em lugar nenhum:
+
+- **aula extra** — é dela que sai a confirmação de presença no app da
+  aluna e a chamada com horas próprias. Sem ela a aluna perde o botão
+  de confirmar;
+- **feriados** — sem o cadastro, a agenda volta a gerar aula em
+  feriado e a escola cobra chamada de aula que não houve;
+- **Book Club** — a configuração da aula fixa.
+
+A **assinatura** saiu: é operação, não agenda.
+
+**Uma coisa que o v5 não tem e eu mantive:** as setas de semana. Sem
+elas a tela só mostraria a semana corrente, e a escola marca aula com
+semanas de antecedência.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
