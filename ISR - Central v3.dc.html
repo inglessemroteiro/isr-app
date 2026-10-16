@@ -287,6 +287,10 @@
   </sc-if>
 
   <!-- METAS DO CICLO -->
+  <!-- Matrícula e renovação são trabalho do comercial. A professora
+       não tem o que fazer com esses números, e número que a pessoa
+       não pode mover só ocupa o lugar do que ela precisa ver. -->
+  <sc-if value="{{ veMetas }}">
   <section style="background: #fff; border-radius: 24px; padding: 18px 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
     <sc-for list="{{ metas }}" as="m" hint-placeholder-count="2">
       <div>
@@ -296,6 +300,7 @@
       </div>
     </sc-for>
   </section>
+  </sc-if>
 
   <!-- CARTÕES POR ÁREA -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px;">
@@ -324,8 +329,14 @@
   <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: #348a8e;">
     <a href="ISR%20-%20Mural%20v3.dc.html" style="color: #348a8e; text-decoration: none;">Mural da equipe</a>
     <a href="ISR%20-%20Desafio%20v3.dc.html" style="color: #348a8e; text-decoration: none;">Desafio da semana</a>
-    <a href="https://docs.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">Atas (Google Docs)</a>
-    <a href="https://drive.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">ISR Financeiro (Excel)</a>
+    <!-- A ata da reunião de alinhamento e a planilha financeira são da
+         direção. Oferecer o atalho a quem não deve abrir é convite. -->
+    <sc-if value="{{ veAtas }}">
+      <a href="https://docs.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">Atas (Google Docs)</a>
+    </sc-if>
+    <sc-if value="{{ veLinksDaDirecao }}">
+      <a href="https://drive.google.com/" target="_blank" rel="noopener" style="color: #348a8e; text-decoration: none;">ISR Financeiro (Excel)</a>
+    </sc-if>
   </div>
 
 </main>
@@ -372,7 +383,8 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const vazio = { eyebrow: "", fila: [], filaCount: "0", filaVazia: true, filaSub: "",
-      equipe: [], temEquipe: false, donos: [], metas: [], areas: [], achados: [], buscando: false,
+      equipe: [], temEquipe: false, donos: [], metas: [], veMetas: false,
+      veAtas: false, veLinksDaDirecao: false, areas: [], achados: [], buscando: false,
       buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {}, filaVaziaTexto: "",
       semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "",
       veCiclo: false, ciclos: [],
@@ -402,6 +414,10 @@ class Component extends DCLogic {
     const perfil = user.perfil || "gestora";
     const meuNome = user.nome || "";
     const vePelaEscola = perfil === "gestora" || perfil === "operacao";
+    // papel vale tanto do perfil quanto da lista: quem dá aula e
+    // vende tem os dois, e perguntar só pelo perfil perde um deles
+    const temPapel = (...ps) => ps.some(x =>
+      x === perfil || (user.papeis || []).indexOf(x) >= 0);
 
     const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
     const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -561,7 +577,12 @@ class Component extends DCLogic {
     const pct = (a, b) => (b > 0 ? Math.min(100, Math.round(100 * a / b)) : 0) + "%";
 
     // ── números dos cartões ───────────────────────────────────
-    const alunas = CRM.alunasPainel() || [];
+    // Para a professora o número é o dela: "32 alunas em risco" numa
+    // escola em que ela dá aula para 9 não é informação, é ruído — e
+    // ainda parece cobrança de uma coisa que não está na mão dela.
+    const alunasTodas = CRM.alunasPainel() || [];
+    const alunas = vePelaEscola ? alunasTodas
+      : alunasTodas.filter(a => a.professora === meuNome);
     const emRisco = alunas.filter(a => (a.riscos || []).length).length;
     const ocup = CRM.ocupacaoTurmas() || [];
     const vagas = ocup.reduce((t, u) => t + Math.max(0, u.vagas || 0), 0);
@@ -599,10 +620,13 @@ class Component extends DCLogic {
             ? [{ label: "Caixa", href: "ISR%20-%20Caixa%20v3.dc.html" }] : []) },
       { titulo: "Pedagógico", faixa: "#9ec970", perfis: ["gestora", "professora", "operacao"],
         linhas: [
-          { k: "alunas em risco", v: String(emRisco), cor: emRisco ? "#a3392c" : "#3d6b22" },
-          { k: "aulas sem chamada", v: String(nAulas), cor: nAulas ? "#a3392c" : "#3d6b22" },
-          { k: "vagas abertas", v: String(vagas), cor: "#164951" }
-        ],
+          { k: vePelaEscola ? "alunas em risco" : "suas alunas em risco",
+            v: String(emRisco), cor: emRisco ? "#a3392c" : "#3d6b22" },
+          { k: vePelaEscola ? "aulas sem chamada" : "suas aulas sem chamada",
+            v: String(nAulas), cor: nAulas ? "#a3392c" : "#3d6b22" }
+        ].concat(vePelaEscola
+          // vaga aberta é conversa de matrícula, não de sala de aula
+          ? [{ k: "vagas abertas", v: String(vagas), cor: "#164951" }] : []),
         links: [{ label: "Turmas", href: "ISR%20-%20Turmas%20v3.dc.html" },
                 { label: "Painel do professor", href: "ISR%20-%20Painel%20v3.dc.html" }] },
       { titulo: "Marketing", faixa: "#e2c8b5", perfis: ["gestora", "comercial"],
@@ -811,8 +835,13 @@ class Component extends DCLogic {
       },
 
       temSemChamada: grupos.length > 0,
+      // para a professora o agrupamento por professora é ela mesma:
+      // dizer "1 professora" e repetir o nome dela é conversa da
+      // gestão vazando para quem só tem as próprias aulas a lançar
       semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
-        + " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras"),
+        + (vePelaEscola
+          ? " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras")
+          : " suas"),
       // dizer de qual ciclo: a conferência passou a ser do ciclo
       // inteiro, e um número grande sem período assusta sem informar
       // Nomear UM ciclo deixou de funcionar com três calendários: a
@@ -825,7 +854,7 @@ class Component extends DCLogic {
           ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo, e a frequência do certificado fica menor do que a real."
           : "Estas aulas suas aconteceram e ficaram sem chamada."),
       semChamada: grupos.map(g => ({
-        professora: g.professora,
+        professora: vePelaEscola ? g.professora : "As suas aulas",
         detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
           + " · a mais antiga em " + CRM.ddmm(g.maisAntiga),
         // avisar a professora: o aviso cai na Central dela, em
@@ -849,6 +878,12 @@ class Component extends DCLogic {
         }))
       })),
 
+      // matrícula e renovação são do comercial; a professora não vê
+      veMetas: temPapel("gestora", "operacao", "comercial"),
+      // a ata é da reunião de alinhamento, de quem está nela; a
+      // planilha financeira é só da direção
+      veAtas: temPapel("gestora", "operacao", "comercial"),
+      veLinksDaDirecao: vePelaEscola,
       metas: [
         { label: "Matrículas do ciclo " + (mc.ciclo || ""), valor: mc.feitas + " / " + mc.meta,
           pct: pct(mc.feitas, mc.meta), cor: "#fc9082",

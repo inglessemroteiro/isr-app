@@ -304,6 +304,43 @@ letras, que o que for gravado continua no nome de quem está ali.
 Sair da gestão limpa o ver como: quem entrar depois abriria o sistema
 já olhando pelos olhos de outra pessoa.
 
+### Cada tela na rotina de quem abriu
+
+O menu já escondia as telas que não são de quem entrou, mas **dentro**
+das telas a escola inteira continuava aparecendo. A professora abria a
+Central e via meta de matrícula, leads no funil e a planilha
+financeira; abria a Agenda e via follow-up do comercial, reunião de
+venda e a aula das colegas no meio das dela.
+
+Número que a pessoa não pode mover não é informação: ocupa o lugar do
+que ela precisa ver, e ainda parece cobrança.
+
+Na **Central**:
+
+- metas de matrícula e renovação, só para gestão e comercial;
+- o cartão Pedagógico conta **as alunas dela** ("suas alunas em
+  risco"), não as 32 da escola, e perde "vagas abertas", que é
+  conversa de matrícula;
+- o bloco de aulas sem chamada fala com ela ("47 aulas suas") em vez
+  de agrupar por professora e repetir o nome dela;
+- a planilha financeira é da direção; a ata é de quem está na reunião
+  de alinhamento, então o comercial continua com ela.
+
+Na **Agenda**:
+
+- o que entra na lista sai do papel: quem só dá aula vê aula, aula
+  extra, particular e feriado; quem vende vê também reunião,
+  matrícula, follow-up e renovação, porque a Carla faz as duas
+  coisas; gestão e operação veem tudo;
+- o filtro de responsável **abre no nome da pessoa**, e "Todos"
+  continua lá para quando ela precisa ver a aula de uma colega;
+- assinatura, Book Club e feriados são configuração da escola e
+  somem para quem não administra;
+- o aviso do ciclo deixa de mandar a professora "resolver na
+  Central" — o bloco do ciclo nem aparece para ela lá;
+- o bloco de aulas extras passa a respeitar o filtro de responsável,
+  que ele ignorava para todo mundo.
+
 ---
 
 ## Ligar as chaves · passo a passo

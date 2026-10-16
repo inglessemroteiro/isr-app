@@ -21,18 +21,29 @@
   <div style="display: flex; flex-direction: column; gap: 16px;">
 
     <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <!-- A agenda é a mesma tela para a escola inteira e para quem só
+           dá aula. Sem dizer de quem é a semana, a professora abria a
+           agenda da escola achando que era a dela. -->
       <div style="min-width: 0;">
-        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">pedagógico · a semana da escola</div>
-        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Agenda da escola</h1>
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ eyebrow }}</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">{{ titulo }}</h1>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button onclick="{{ onToggleAssinatura }}" style="font-family: inherit; border: 0; background: {{ asnBg }}; color: {{ asnFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Assinatura</button>
-        <button onclick="{{ onToggleBookclub }}" style="font-family: inherit; border: 0; background: {{ bcBg }}; color: {{ bcFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Book Club</button>
-        <button onclick="{{ onToggleFeriados }}" style="font-family: inherit; border: 0; background: {{ ferBg }}; color: {{ ferFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Feriados</button>
+        <!-- Assinatura, Book Club e feriados são configuração da
+             escola: quem dá aula não administra isso. -->
+        <sc-if value="{{ veAdmin }}">
+          <button onclick="{{ onToggleAssinatura }}" style="font-family: inherit; border: 0; background: {{ asnBg }}; color: {{ asnFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Assinatura</button>
+        </sc-if>
+        <sc-if value="{{ veAdmin }}">
+          <button onclick="{{ onToggleBookclub }}" style="font-family: inherit; border: 0; background: {{ bcBg }}; color: {{ bcFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Book Club</button>
+        </sc-if>
+        <sc-if value="{{ veAdmin }}">
+          <button onclick="{{ onToggleFeriados }}" style="font-family: inherit; border: 0; background: {{ ferBg }}; color: {{ ferFg }}; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer;">Feriados</button>
+        </sc-if>
         <button onclick="{{ onToggleNovo }}" style="font-family: inherit; border: none; background: {{ novoBg }}; color: {{ novoFg }}; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">{{ novoLabel }}</button>
       </div>
     </header>
-    <p style="margin: 0; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 760px;">Aulas, reuniões, matrículas, onboardings, pendências e renovações, por semana ou em lista, com categorização por cores segundo a natureza do evento.</p>
+    <p style="margin: 0; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 760px;">{{ subtitulo }}</p>
 
     <!-- A JANELA DO CICLO -->
     <!-- As aulas das turmas só existem dentro do ciclo. Sem este aviso,
@@ -42,7 +53,12 @@
       <div style="background: #fdf1e8; border-radius: 24px; padding: 13px 20px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
         <span style="font-size: 13px; font-weight: 600; color: #c98a3a;">{{ cicloTitulo }}</span>
         <span style="font-size: 13px; color: #1d5a63; flex: 1; min-width: 200px;">{{ cicloTexto }}</span>
-        <a href="central.html" class="lk" style="font-size: 12px; font-weight: 600; color: #164951;">resolver na Central</a>
+        <!-- O ciclo é aberto pela escola. Mandar a professora
+             "resolver na Central" é mandar para uma tela em que o
+             bloco do ciclo nem aparece para ela. -->
+        <sc-if value="{{ veAdmin }}">
+          <a href="central.html" class="lk" style="font-size: 12px; font-weight: 600; color: #164951;">resolver na Central</a>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -353,14 +369,16 @@
       </div>
     </sc-if>
 
-    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">As aulas das turmas são geradas pelo horário cadastrado em Turmas & Projetos. Reuniões vêm do CRM; check-ins e onboardings, dos perfis; pendências, da Central. Itens resolvidos na origem mudam de estado ou deixam de ser exibidos.</p>
+    <p style="margin: 14px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">{{ rodape }}</p>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1120px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { visao: "lista", tipo: "todos", resp: "Todos", dias: 14, semanaOffset: 0,
+  // resp começa nulo, e não em "Todos": quem decide o filtro inicial é
+  // o perfil de quem abriu, e isso só se sabe dentro do render
+  state = { visao: "lista", tipo: "todos", resp: null, dias: 14, semanaOffset: 0,
     novoAberto: false, feriadosAberto: false, bookclubAberto: false, assinaturaAberto: false, tick: 0, copiadoEv: "",
     asnPrevia: null, asnLoteMsg: "", copiadoAsn: false };
   bcTituloRef = React.createRef(); bcDiaRef = React.createRef();
@@ -437,7 +455,34 @@ class Component extends DCLogic {
       evVagasRef: this.evVagasRef, evTurmaRef: this.evTurmaRef, evDescRef: this.evDescRef,
       ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
     if (!CRM) return Object.assign({ legenda: [], grupos: [], resps: [], diasOpts: [], semanaDias: [], feriados: [], vazio: true, ehLista: true, ehSemana: false, novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "#164951", novoFg: "#fff", ferBg: "#fff", ferFg: "#164951", bcBg: "#fff", bcFg: "#164951", bookclubAberto: false, listaBg: "#164951", listaFg: "#fff", semanaBg: "transparent", semanaFg: "#1d5a63", semanaLabel: "", foraDaSemanaAtual: false,
-      cicloAvisa: false, cicloTitulo: "", cicloTexto: "" }, refs);
+      cicloAvisa: false, cicloTitulo: "", cicloTexto: "",
+      veAdmin: false, eyebrow: "pedagógico", titulo: "Agenda", subtitulo: "",
+      rodape: "" }, refs);
+
+    // ── de quem é esta semana ──
+    // A agenda mostrava a escola inteira para todo mundo: a professora
+    // via follow-up do comercial, reunião de venda e aula das colegas.
+    // Nada disso é rotina dela, e o que é dela ficava no meio.
+    const user = (CRM.gestaoVisao ? CRM.gestaoVisao() : null) || {};
+    const papeis = [user.perfil || "gestora"].concat(user.papeis || []);
+    const veAdmin = papeis.indexOf("gestora") >= 0 || papeis.indexOf("operacao") >= 0;
+    const meuNome = user.nome || "";
+    // o que é rotina de cada papel. Quem cuida da escola vê tudo;
+    // quem só dá aula não precisa do funil, e quem vende precisa dos
+    // dois, porque a Carla dá aula e fecha matrícula.
+    const TIPOS_DE_AULA = ["aula", "aula_extra", "particular", "feriado"];
+    const TIPOS_POR_PAPEL = {
+      professora: TIPOS_DE_AULA,
+      comercial: TIPOS_DE_AULA.concat(["reuniao", "reuniao_feita", "matricula",
+        "onboarding", "checkin", "followup", "renovacao", "tarefa"])
+    };
+    // sem papel conhecido não se tira nada: esconder por engano é pior
+    const tiposVisiveis = veAdmin ? null : papeis.reduce((acc, pp) => {
+      if (acc === null) return null;
+      if (!TIPOS_POR_PAPEL[pp]) return acc;
+      return acc.concat(TIPOS_POR_PAPEL[pp].filter(t => acc.indexOf(t) < 0));
+    }, []);
+    const podeVerTipo = (t) => !tiposVisiveis || !tiposVisiveis.length || tiposVisiveis.indexOf(t) >= 0;
 
     const ehSemana = this.state.visao === "semana";
     const iso = d => d.toISOString().slice(0, 10);
@@ -452,16 +497,26 @@ class Component extends DCLogic {
       todos = CRM.agendaItens(this.state.dias);
     }
 
+    // fora da gestão, a agenda é de aula: o resto é trabalho de outra
+    // pessoa, e aparecer aqui só esconde o que importa
+    todos = todos.filter(it => podeVerTipo(it.tipo));
+
     // responsáveis
     const nomes = ["Todos"];
     todos.forEach(it => { if (it.responsavel && nomes.indexOf(it.responsavel) < 0) nomes.push(it.responsavel); });
-    const respSel = this.state.resp;
+    if (!veAdmin && meuNome && nomes.indexOf(meuNome) < 0) nomes.push(meuNome);
+    // a professora abre já na própria semana; "Todos" continua ali
+    // para quando ela precisa ver a aula de uma colega
+    const respSel = this.state.resp !== null ? this.state.resp
+      : (veAdmin ? "Todos" : (meuNome && nomes.indexOf(meuNome) >= 0 ? meuNome : "Todos"));
     const porResp = todos.filter(it => respSel === "Todos" || it.responsavel === respSel);
 
     // legenda clicável = filtro por tipo
     const tipoAtivo = this.state.tipo;
     const legenda = [{ id: "todos", label: "Tudo", cor: "#164951" }].concat(
-      Object.keys(this.TIPO_META).map(k => ({ id: k, label: this.TIPO_META[k].label, cor: this.TIPO_META[k].cor })))
+      Object.keys(this.TIPO_META)
+        .filter(k => podeVerTipo(k))
+        .map(k => ({ id: k, label: this.TIPO_META[k].label, cor: this.TIPO_META[k].cor })))
       .map(l => {
         const on = l.id === tipoAtivo;
         const count = l.id === "todos" ? porResp.length : porResp.filter(x => x.tipo === l.id).length;
@@ -508,6 +563,10 @@ class Component extends DCLogic {
     const hojeIso2 = new Date().toISOString().slice(0, 10);
     const extras = CRM.eventosLista()
       .filter(e => e.data >= hojeIso2)
+      // o bloco já respeitava o filtro por tipo e ignorava o de
+      // responsável: filtrar por "Adrielly" na lista e continuar vendo
+      // a aula extra da Gabi aqui embaixo é o filtro mentindo
+      .filter(e => respSel === "Todos" || (e.responsavel || "") === respSel)
       .map(e => {
         const convidadas = CRM.convidadasAulaExtra(e);
         const confirmadas = CRM.confirmadasAulaExtra(e);
@@ -600,6 +659,15 @@ class Component extends DCLogic {
         : "Não há aula de turma na agenda desde então. Abra o próximo ciclo para as aulas voltarem.";
 
     return Object.assign({
+      veAdmin: veAdmin,
+      rodape: veAdmin
+        ? "As aulas das turmas são geradas pelo horário cadastrado em Turmas & Projetos. Reuniões vêm do CRM; check-ins e onboardings, dos perfis; pendências, da Central. Itens resolvidos na origem mudam de estado ou deixam de ser exibidos."
+        : "As aulas das turmas são geradas pelo horário cadastrado em Turmas & Projetos. Se uma aula sua não estiver aqui, o horário da turma é o lugar de corrigir.",
+      eyebrow: veAdmin ? "pedagógico · a semana da escola" : "pedagógico · a sua semana",
+      titulo: veAdmin ? "Agenda da escola" : "Sua agenda",
+      subtitulo: veAdmin
+        ? "Aulas, reuniões, matrículas, onboardings, pendências e renovações, por semana ou em lista, com categorização por cores segundo a natureza do evento."
+        : "O que está no seu nome esta semana, por semana ou em lista. O filtro abre em você; em \"Todos\" aparece também o que é das outras pessoas da equipe.",
       cicloAvisa: cicloAvisa, cicloTitulo: cicloTitulo, cicloTexto: cicloTexto,
       ehLista: !ehSemana, ehSemana,
       onVerLista: () => this.setState({ visao: "lista" }),
