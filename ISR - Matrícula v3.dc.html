@@ -17,14 +17,26 @@
 </head>
 <body>
 <x-dc>
-<main style="padding: 22px 24px 60px; max-width: 860px; color: #164951;">
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: #164951;">
   <div style="display: flex; flex-direction: column; gap: 16px;">
 
-    <sc-if value="{{ semPessoa }}">
-      <div style="background: #fff; border-radius: 24px; padding: 40px 22px; text-align: center;">
-        <div style="font-size: 15px; color: #1d5a63; margin-bottom: 12px;">Nenhuma pessoa selecionada para matrícula.</div>
-        <a href="ISR%20-%20CRM%20v3.dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 600; padding: 10px 20px; border-radius: 999px;">Ir para o CRM</a>
-      </div>
+    <!-- CONCLUÍDA · o cartão do v5 -->
+    <sc-if value="{{ concluida }}">
+      <section style="background: #164951; color: #fff; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 12px; font-weight: 600; color: #fc9082;">matrícula feita</div>
+        <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em;">{{ nome }} agora é aluna</div>
+        <div style="font-size: 14px; opacity: 0.85; line-height: 1.6;">{{ resumoFinal }}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{ checkpoints }}" as="cp" hint-placeholder-count="4">
+            <div style="flex: 1 1 160px; min-width: 0; background: rgba(255,255,255,0.1); border-radius: 14px; padding: 10px 12px; font-size: 13px; line-height: 1.4;"><b>{{ cp.quando }}</b> · {{ cp.data }}<br>{{ cp.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="{{ perfilHref }}" style="text-decoration: none; background: #fc9082; color: #164951; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 600;">Abrir perfil</a>
+          <a href="{{ boasVindasHref }}" style="text-decoration: none; background: rgba(255,255,255,0.14); color: #fff; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 600;">Enviar boas-vindas</a>
+          <a href="ISR%20-%20Matr%C3%ADcula%20v3.dc.html" style="text-decoration: none; color: #fff; opacity: 0.8; padding: 11px 8px; font-size: 14px; font-weight: 600;">Nova matrícula</a>
+        </div>
+      </section>
     </sc-if>
 
     <sc-if value="{{ ok }}">
@@ -32,253 +44,266 @@
       <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div style="min-width: 0;">
           <div style="font-size: 12px; font-weight: 600; color: #8a7465;">comercial · fechar a matrícula</div>
-          <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Matrícula de {{ nome }}</h1>
+          <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">{{ titulo }}</h1>
         </div>
         <a href="ISR%20-%20CRM%20v3.dc.html" style="flex: none; text-decoration: none; background: #fff; color: #164951; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px;">← Voltar ao CRM</a>
       </header>
-      <p style="margin: 0 0 20px; font-size: 13px; color: #1d5a63; line-height: 1.6;">Selecione os produtos contratados. É possível contratar mais de um.</p>
 
-      <!-- PASSO 0 · O PRODUTO -->
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">1 · O que ela contratou</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Selecione um ou mais. Os passos seguintes variam conforme a seleção.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
-          <sc-for list="{{ opcoesProduto }}" as="op" hint-placeholder-count="3">
-            <button onclick="{{ op.onPick }}" style="text-align: left; border: 1px solid {{ op.borda }}; background: {{ op.bg }}; padding: 13px 15px; border-radius: 12px; cursor: pointer; font-family: inherit;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="flex: none; width: 16px; height: 16px; border-radius: 5px; border: 2px solid {{ op.marcaBorda }}; background: {{ op.marcaBg }}; color: #fff; font-size: 11px; font-weight: 600; line-height: 13px; text-align: center;">{{ op.marca }}</span>
-                <span style="font-size: 13px; font-weight: 600; color: {{ op.fg }};">{{ op.nome }}</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
+
+        <!-- ══ COLUNA DOS PASSOS ══ -->
+        <div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+
+          <!-- 1 · QUEM -->
+          <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 12px; font-weight: 600; color: #8a7465;">1 · Quem</div>
+            <sc-if value="{{ escolhendoDoCadastro }}">
+              <!-- dezenas de pessoas no seletor: digitar três letras é
+                   mais rápido do que rolar a lista -->
+              <input value="{{ buscaPessoa }}" oninput="{{ onBuscaPessoa }}" placeholder="buscar pessoa…" style="width: 100%; box-sizing: border-box; border: 0; border-radius: 14px; padding: 11px 14px; font-size: 14px; font-family: inherit; color: #164951; background: #f2ebe3; outline: none;" />
+              <select onchange="{{ onPessoa }}" style="width: 100%; box-sizing: border-box; border: 1px solid #e2c8b5; border-radius: 14px; padding: 11px 14px; font-size: 15px; font-family: inherit; color: #164951; background: #fff; outline: none;">
+                <option value="">Escolha quem está matriculando…</option>
+                <sc-for list="{{ pessoaOpts }}" as="po" hint-placeholder-count="6">
+                  <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+                </sc-for>
+                <option value="__nova">+ Adicionar nova pessoa</option>
+              </select>
+              <sc-if value="{{ temPessoa }}">
+                <div style="background: #f5f5f0; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #1d5a63; line-height: 1.5;">{{ pessoaInfo }}</div>
+              </sc-if>
+              <button onclick="{{ onAbrirNova }}" style="align-self: flex-start; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #348a8e; cursor: pointer;">+ Adicionar nova pessoa (não passou pelo CRM)</button>
+            </sc-if>
+            <sc-if value="{{ pessoaNova }}">
+              <div style="background: #f5f5f0; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #1d5a63; line-height: 1.5;">Pessoa nova, fora do CRM. Os dados vão nos campos abaixo; ela entra no cadastro ao salvar.</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 12px; font-weight: 600; color: #8a7465; margin-right: 4px;">como chegou</span>
+                <sc-for list="{{ canaisNova }}" as="cn" hint-placeholder-count="5">
+                  <button onclick="{{ cn.onPick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: {{ cn.bg }}; color: {{ cn.fg }};">{{ cn.label }}</button>
+                </sc-for>
               </div>
-              <div style="font-size: 11px; color: {{ op.subCor }}; margin-top: 6px; line-height: 1.5;">{{ op.sub }}</div>
-            </button>
-          </sc-for>
-        </div>
-        <sc-if value="{{ semProduto }}">
-          <p style="margin: 10px 0 0; font-size: 11.5px; color: #cf6b5c; line-height: 1.5;">Escolha ao menos um produto para continuar.</p>
-        </sc-if>
-      </section>
+              <button onclick="{{ onVoltarCadastro }}" style="align-self: flex-start; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #8a7465; cursor: pointer;">← Escolher do cadastro</button>
+            </sc-if>
+          </section>
 
-      <!-- PASSO 2 · DADOS -->
-      <sc-if value="{{ mostraResto }}">
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">{{ nDados }}Dados da aluna</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Vieram do cadastro. Corrija o que estiver desatualizado.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nome completo</div>
-            <input ref="{{ nomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">WhatsApp</div>
-            <input ref="{{ zapRef }}" placeholder="{{ whatsapp }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">E-mail</div>
-            <input ref="{{ emailRef }}" placeholder="{{ email }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nível</div>
-            <input ref="{{ nivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-        </div>
-        <details style="margin-top: 12px; border-top: 1px solid #f4f1ec; padding-top: 12px;">
-          <summary style="font-size: 11.5px; color: #8a7465; cursor: pointer;">Documento e endereço (obrigatórios para o contrato)</summary>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
-            <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
+          <!-- 2 · O QUE CONTRATOU -->
+          <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 12px; font-weight: 600; color: #8a7465;">2 · O que ela contratou</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <sc-for list="{{ opcoesProduto }}" as="op" hint-placeholder-count="2">
+                <button onclick="{{ op.onPick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: {{ op.bg }}; color: {{ op.fg }};">{{ op.nome }}</button>
+              </sc-for>
+            </div>
+            <div style="font-size: 13px; color: #1d5a63; line-height: 1.5;">{{ produtoHint }}</div>
+          </section>
+
+          <sc-if value="{{ mostraResto }}">
+
+          <!-- 3 · DADOS -->
+          <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ nDados }}Dados da aluna</div>
+            <p style="margin: 0; font-size: 12px; color: #b3a693; line-height: 1.5;">{{ dadosNota }}</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
               <div>
-                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">{{ cd.label }}</div>
-                <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nome completo</div>
+                <input ref="{{ nomeRef }}" oninput="{{ onMuda }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">WhatsApp</div>
+                <input ref="{{ zapRef }}" oninput="{{ onMuda }}" placeholder="{{ whatsapp }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">E-mail</div>
+                <input ref="{{ emailRef }}" placeholder="{{ email }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+              <div>
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nível</div>
+                <input ref="{{ nivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+            </div>
+            <details style="border-top: 1px solid #f4f1ec; padding-top: 12px;">
+              <summary style="font-size: 12px; color: #8a7465; cursor: pointer;">Documento e endereço (obrigatórios para o contrato)</summary>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px;">
+                <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
+                  <div>
+                    <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">{{ cd.label }}</div>
+                    <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                  </div>
+                </sc-for>
+              </div>
+              <p style="margin: 10px 0 0; font-size: 11px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Guardados só no sistema e incluídos na exportação em Escola · Dados.</p>
+            </details>
+          </section>
+
+          <!-- 4 · TURMA · cartões com a vaga, como no v5 -->
+          <sc-if value="{{ querTurma }}">
+            <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ nTurma }}Turma · vagas agora</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+                <sc-for list="{{ turmaCards }}" as="tc" hint-placeholder-count="6">
+                  <button onclick="{{ tc.onPick }}" style="text-align: left; font-family: inherit; border: 0; border-radius: 16px; padding: 12px 14px; cursor: pointer; background: {{ tc.bg }}; color: {{ tc.fg }};">
+                    <div style="font-size: 14px; font-weight: 600;">{{ tc.nome }}</div>
+                    <div style="font-size: 12px; font-weight: 600; opacity: 0.85;">{{ tc.vagas }}</div>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="font-size: 13px; color: #1d5a63; line-height: 1.6;">{{ turmaInfo }}</div>
+              <sc-if value="{{ turmaLotada }}">
+                <div style="background: #fdece9; border-radius: 12px; padding: 10px 12px; font-size: 12.5px; color: #a3392c; line-height: 1.5;">Esta turma está sem vaga. A matrícula é possível, mas a turma passa da capacidade definida.</div>
+              </sc-if>
+              <sc-if value="{{ ehParticular }}">
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de aulas contratadas</div>
+                  <input ref="{{ aulasRef }}" type="number" placeholder="Ex. 12" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+              </sc-if>
+            </section>
+          </sc-if>
+
+          <!-- 5 · PACOTE DE AULAS PARTICULARES -->
+          <sc-if value="{{ querParticular }}">
+            <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ nParticular }}Aulas particulares</div>
+              <p style="margin: 0; font-size: 12px; color: #b3a693; line-height: 1.5;">O pacote tem número de aulas e valor próprios. As aulas dadas são registradas no perfil dela.</p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nº de aulas</div>
+                  <input ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor do pacote</div>
+                  <input ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+              </div>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #164951; cursor: pointer;">
+                <input type="checkbox" ref="{{ partPagoRef }}" style="width: 16px; height: 16px; accent-color: #348a8e;" />
+                Já pagou o pacote — lançar no Caixa
+              </label>
+            </section>
+          </sc-if>
+
+          <!-- 6 · INÍCIO DAS AULAS -->
+          <sc-if value="{{ temMensalidade }}">
+            <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ nInicio }}Início das aulas</div>
+              <p style="margin: 0; font-size: 12px; color: #b3a693; line-height: 1.5;">Dia da primeira aula desta matrícula. Define em qual ciclo a aluna entra e a partir de quando ela aparece na chamada da turma. Em branco, o sistema usa hoje.</p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Primeira aula em</div>
+                  <input ref="{{ desdeRef }}" type="date" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+                <div style="display: flex; align-items: flex-end; gap: 6px; flex-wrap: wrap;">
+                  <sc-for list="{{ atalhosInicio }}" as="ai" hint-placeholder-count="2">
+                    <button onclick="{{ ai.on }}" style="border: 0; background: #f2ebe3; color: #1d5a63; font-size: 11.5px; font-weight: 600; padding: 9px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ai.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <!-- 7 · CONTRATO -->
+          <sc-if value="{{ temMensalidade }}">
+            <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ nPagamento }}Contrato</span>
+                <a href="ISR%20-%20Calculadora%20v3.dc.html" style="font-size: 12px; font-weight: 600; color: #348a8e; text-decoration: none;">Abrir a calculadora</a>
+              </div>
+              <sc-if value="{{ temProposta }}">
+                <div style="background: #e5f2f6; border-radius: 12px; padding: 9px 12px; font-size: 12.5px; color: #1d5a63; line-height: 1.5;">Condições combinadas em {{ propostaEm }}: {{ propostaResumo }}</div>
+              </sc-if>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 13px; font-weight: 600; color: #8a7465; margin-right: 4px;">moeda</span>
+                <sc-for list="{{ moedas }}" as="mo" hint-placeholder-count="2">
+                  <button onclick="{{ mo.onPick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: {{ mo.bg }}; color: {{ mo.fg }};">{{ mo.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
+                  <select ref="{{ tipoRef }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
+                    <option value="Matrícula">Matrícula</option>
+                    <option value="Auto-matrícula">Auto-matrícula</option>
+                    <option value="Renovação">Renovação</option>
+                    <option value="Continuidade">Continuidade</option>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor de cada parcela</div>
+                  <input ref="{{ valorRef }}" oninput="{{ onMuda }}" placeholder="{{ valorPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de parcelas</div>
+                  <select ref="{{ parcelasRef }}" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
+                    <sc-for list="{{ parcelasOpts }}" as="po" hint-placeholder-count="12"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+                  </select>
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia de vencimento</div>
+                  <input ref="{{ vencRef }}" oninput="{{ onMuda }}" placeholder="{{ vencPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Sinal ou entrada</div>
+                  <input ref="{{ sinalRef }}" oninput="{{ onMuda }}" placeholder="{{ sinalPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                  <button onclick="{{ onSinalRecebido }}" style="width: 100%; border: 0; background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 12px; font-weight: 600; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ sinalLabel }}</button>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <!-- MATRÍCULA RETROATIVA -->
+          <sc-if value="{{ retroAberto }}">
+            <section style="background: #fff; border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465;">Aulas que já começaram</div>
+              <p style="margin: 0; font-size: 12px; color: #b3a693; line-height: 1.5;">A primeira aula é {{ retroEm }}, no passado. O contrato entra como matrícula retroativa: as parcelas começam no mês da primeira aula e as etapas de integração já vencidas entram concluídas.</p>
+              <div style="max-width: 220px;">
+                <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Parcelas já pagas</div>
+                <input ref="{{ pagasRef }}" type="number" oninput="{{ onMuda }}" placeholder="0" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+              </div>
+              <div style="font-size: 12.5px; color: #1d5a63; line-height: 1.6;">{{ retroResumo }}</div>
+            </section>
+          </sc-if>
+
+          </sc-if>
+        </div>
+
+        <!-- ══ RESUMO · fica à vista enquanto se preenche ══ -->
+        <section style="flex: 1 1 320px; min-width: 0; align-self: flex-start; position: sticky; top: 20px; background: #fff; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="font-size: 16px; font-weight: 800;">Resumo</div>
+          <sc-for list="{{ resumo }}" as="rs" hint-placeholder-count="6">
+            <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #f2ebe3;">
+              <span style="color: #8a7465; font-weight: 600;">{{ rs.k }}</span>
+              <b style="text-align: right;">{{ rs.v }}</b>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ mostraResto }}">
+            <div style="font-size: 12px; font-weight: 600; color: #8a7465; margin-top: 2px;">O que o sistema faz ao concluir</div>
+            <sc-for list="{{ efeitos }}" as="ef" hint-placeholder-count="5">
+              <div style="display: flex; gap: 9px; align-items: flex-start;">
+                <span style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: {{ ef.cor }}; margin-top: 6px;"></span>
+                <span style="font-size: 12.5px; color: #1d5a63; line-height: 1.6;">{{ ef.texto }}</span>
               </div>
             </sc-for>
-          </div>
-          <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.6;">Dados sensíveis. Armazenados apenas no sistema e incluídos na exportação em Escola · Dados.</p>
-        </details>
-      </section>
+          </sc-if>
 
-      <!-- PASSO 3 · TURMA -->
-      <sc-if value="{{ querTurma }}">
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">{{ nTurma }}Turma</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A professora e os materiais do ciclo são definidos pela turma selecionada.</p>
-        <select ref="{{ turmaRef }}" onchange="{{ onTurma }}" style="width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
-          <sc-for list="{{ turmas }}" as="t" hint-placeholder-count="6">
-            <option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option>
-          </sc-for>
-        </select>
-        <div style="font-size: 12px; color: #1d5a63; line-height: 1.6; margin-top: 8px;">{{ turmaInfo }}</div>
-        <sc-if value="{{ turmaLotada }}">
-          <div style="background: rgba(207,107,92,0.08); border: 1px solid rgba(207,107,92,0.25); border-radius: 12px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: #cf6b5c; line-height: 1.5;">Esta turma está sem vaga. A matrícula é possível, mas a turma passa da capacidade definida.</div>
-        </sc-if>
-        <sc-if value="{{ ehParticular }}">
-          <div style="margin-top: 10px;">
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de aulas contratadas</div>
-            <input ref="{{ aulasRef }}" type="number" placeholder="Ex. 12" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-        </sc-if>
-      </section>
-      </sc-if>
+          <sc-if value="{{ temFaltas }}">
+            <div style="background: #fdece9; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 13px; font-weight: 600; color: #a3392c;">{{ faltasTitulo }}</div>
+              <sc-for list="{{ faltas }}" as="fa" hint-placeholder-count="3">
+                <div style="font-size: 13px; color: #7a2a20; line-height: 1.5;">· {{ fa.texto }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
 
-      <!-- PASSO 4 · PACOTE DE AULAS PARTICULARES -->
-      <sc-if value="{{ querParticular }}">
-        <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">{{ nParticular }}Aulas particulares</div>
-          <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O pacote tem número de aulas e valor próprios. As aulas dadas são registradas no Perfil dela.</p>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-            <div>
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Nº de aulas</div>
-              <input ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-            </div>
-            <div>
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor do pacote</div>
-              <input ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-            </div>
-          </div>
-          <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: #164951; cursor: pointer;">
-            <input type="checkbox" ref="{{ partPagoRef }}" style="width: 16px; height: 16px; accent-color: #348a8e;" />
-            Já pagou o pacote — lançar no Caixa
-          </label>
+          <sc-if value="{{ temErro }}">
+            <div style="background: #fdece9; border-radius: 14px; padding: 12px 14px; font-size: 12.5px; color: #a3392c; line-height: 1.6;">{{ erro }}</div>
+          </sc-if>
+
+          <button onclick="{{ onConcluir }}" style="width: 100%; border: 0; background: {{ concluirBg }}; box-shadow: {{ concluirSombra }}; color: {{ concluirFg }}; font-size: 15px; font-weight: 600; padding: 17px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ concluirLabel }}</button>
+          <a href="ISR%20-%20CRM%20v3.dc.html" style="text-align: center; text-decoration: none; color: #8a7465; font-size: 12.5px; font-weight: 600; padding: 4px;">Cancelar</a>
         </section>
-      </sc-if>
 
-      <!-- INÍCIO DAS AULAS · define ciclo e entrada na chamada -->
-      <sc-if value="{{ temMensalidade }}">
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">{{ nInicio }}Início das aulas</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Dia da primeira aula desta matrícula. Define em qual ciclo a aluna entra e a partir de quando ela aparece na chamada da turma. Em branco, o sistema usa hoje.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Primeira aula em</div>
-            <input ref="{{ desdeRef }}" type="date" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div style="display: flex; align-items: flex-end; gap: 6px; flex-wrap: wrap;">
-            <sc-for list="{{ atalhosInicio }}" as="ai" hint-placeholder-count="2">
-              <button onclick="{{ ai.on }}" style="border: 0; background: #fff; color: #1d5a63; font-size: 11.5px; font-weight: 600; padding: 9px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ai.label }}</button>
-            </sc-for>
-          </div>
-        </div>
-        <div style="border-left: 3px solid #164951; padding: 3px 0 3px 12px; margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px;">
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #8a7465; font-weight: 500; margin-bottom: 2px;">Ciclo da matrícula</div>
-            <div style="font-size: 13.5px; font-weight: 600; color: #164951; line-height: 1.5;">{{ inicioCiclo }}</div>
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #8a7465; font-weight: 500; margin-bottom: 2px;">Entra na chamada</div>
-            <div style="font-size: 13.5px; font-weight: 600; color: #164951; line-height: 1.5;">{{ inicioChamada }}</div>
-          </div>
-        </div>
-      </section>
-      </sc-if>
-
-      <!-- PASSO 5 · PAGAMENTO DA MENSALIDADE -->
-      <sc-if value="{{ temMensalidade }}">
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500;">{{ nPagamento }}Condições de pagamento</span>
-          <a href="ISR%20-%20Calculadora%20v3.dc.html" style="font-size: 11px; font-weight: 600; color: #2a9d8f; text-decoration: none;">Abrir a calculadora</a>
-        </div>
-        <sc-if value="{{ temProposta }}">
-          <div style="background: rgba(52,138,142,0.07); border-radius: 12px; padding: 9px 12px; margin: 8px 0 0; font-size: 11.5px; color: #2a7a7e; line-height: 1.5;">Condições combinadas em {{ propostaEm }}: {{ propostaResumo }}</div>
-        </sc-if>
-        <p style="margin: 8px 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira parcela é lançada no mês da primeira aula. Sem data de início, no mês corrente — e no mês seguinte se o dia de vencimento já passou.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Tipo de contrato</div>
-            <select ref="{{ tipoRef }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
-              <option value="Matrícula">Matrícula</option>
-              <option value="Auto-matrícula">Auto-matrícula</option>
-              <option value="Renovação">Renovação</option>
-              <option value="Continuidade">Continuidade</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Moeda</div>
-            <select ref="{{ moedaRef }}" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
-              <option value="R$" selected="{{ moedaBrl }}">R$ (Brasil)</option>
-              <option value="€" selected="{{ moedaEur }}">€ (Europa)</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Valor de cada parcela</div>
-            <input ref="{{ valorRef }}" oninput="{{ onMuda }}" placeholder="{{ valorPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Número de parcelas</div>
-            <select ref="{{ parcelasRef }}" onchange="{{ onMuda }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
-              <sc-for list="{{ parcelasOpts }}" as="po" hint-placeholder-count="12"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
-            </select>
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Dia de vencimento</div>
-            <input ref="{{ vencRef }}" placeholder="{{ vencPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div>
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Sinal ou entrada</div>
-            <input ref="{{ sinalRef }}" oninput="{{ onMuda }}" placeholder="{{ sinalPh }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-          </div>
-          <div style="display: flex; align-items: flex-end;">
-            <button onclick="{{ onSinalRecebido }}" style="width: 100%; border: 1px solid {{ sinalBorda }}; background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 12px; font-weight: 600; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ sinalLabel }}</button>
-          </div>
-        </div>
-        <div style="border-left: 3px solid #164951; padding: 3px 0 3px 12px; margin-top: 14px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #8a7465; font-weight: 500; margin-bottom: 2px;">Plano de pagamento</div>
-          <div style="font-size: 14px; font-weight: 600; color: #164951; line-height: 1.6;">{{ plano }}</div>
-          <div style="font-size: 11.5px; color: #8a7465; line-height: 1.6; margin-top: 2px;">{{ planoMeses }}</div>
-        </div>
-      </section>
-
-      </sc-if>
-
-      <!-- MATRÍCULA RETROATIVA · aparece quando a data escolhida já passou -->
-      <sc-if value="{{ retroAberto }}">
-      <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">Aulas que já começaram</div>
-        <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A primeira aula é {{ retroEm }}, no passado. O contrato entra como matrícula retroativa: as parcelas começam no mês da primeira aula e as etapas de integração já vencidas entram concluídas.</p>
-        <div style="max-width: 220px;">
-          <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; margin-bottom: 3px;">Parcelas já pagas</div>
-          <input ref="{{ pagasRef }}" type="number" oninput="{{ onMuda }}" placeholder="0" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-        </div>
-        <div style="font-size: 11.5px; color: #1d5a63; line-height: 1.6; margin-top: 8px;">{{ retroResumo }}</div>
-      </section>
-      </sc-if>
-
-      <!-- PASSO 4 · O QUE ACONTECE -->
-      <section style="background: #faf7f2; border-radius: 18px; padding: 18px; margin-bottom: 16px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 10px;">{{ nResumo }}O que o sistema faz ao concluir</div>
-        <sc-for list="{{ efeitos }}" as="ef" hint-placeholder-count="5">
-          <div style="display: flex; gap: 9px; align-items: flex-start; padding: 5px 0;">
-            <span style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: {{ ef.cor }}; margin-top: 6px;"></span>
-            <span style="font-size: 12.5px; color: #164951; line-height: 1.6;">{{ ef.texto }}</span>
-          </div>
-        </sc-for>
-      </section>
-
-      </sc-if>
-
-      <sc-if value="{{ semProdutoAviso }}">
-        <div style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 16px; font-size: 13px; color: #8a7465; line-height: 1.6;">Escolha acima o que ela contratou. Os campos seguintes mudam conforme a escolha: turma e mensalidade só aparecem para quem estuda em turma ou tem pacote de aulas.</div>
-      </sc-if>
-
-      <sc-if value="{{ temErro }}">
-        <div style="background: rgba(207,107,92,0.09); border: 1px solid rgba(207,107,92,0.3); border-radius: 12px; padding: 12px 15px; margin-bottom: 12px; font-size: 12.5px; color: #b0523f; line-height: 1.6;">{{ erro }}</div>
-      </sc-if>
-
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <button onclick="{{ onConcluir }}" style="flex: 1; min-width: 220px; border: none; background: {{ concluirBg }}; box-shadow: {{ concluirSombra }}; color: {{ concluirFg }}; font-size: 14px; font-weight: 600; padding: 15px 22px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ concluirLabel }}</button>
-        <a href="ISR%20-%20CRM%20v3.dc.html" style="text-decoration: none; border: 0; background: #fff; color: #8a7465; font-size: 12.5px; font-weight: 600; padding: 14px 20px; border-radius: 999px;">Cancelar</a>
-      </div>
-    </sc-if>
-
-    <!-- CONCLUÍDA -->
-    <sc-if value="{{ concluida }}">
-      <div style="background: #fff; border: 1px solid rgba(90,158,75,0.35); border-radius: 18px; padding: 30px 24px; text-align: center;">
-        <div style="font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: #5a9e4b; margin-bottom: 8px;">Matrícula concluída</div>
-        <h1 style="margin: 0 0 6px; font-size: 24px; font-weight: 600; color: #164951; letter-spacing: -0.5px;">{{ nome }} agora é aluna</h1>
-        <p style="margin: 0 0 20px; font-size: 13px; color: #1d5a63; line-height: 1.7;">{{ resumoFinal }}</p>
-        <div style="display: flex; gap: 9px; justify-content: center; flex-wrap: wrap;">
-          <a href="ISR%20-%20Alunas%20v3.dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12.5px; font-weight: 600; padding: 12px 22px; border-radius: 999px;">Ver em Alunas</a>
-          <a href="{{ perfilHref }}" style="text-decoration: none; border: 1px solid #c9dede; color: #348a8e; font-size: 12.5px; font-weight: 600; padding: 12px 22px; border-radius: 999px;">Abrir o perfil</a>
-          <a href="ISR%20-%20CRM%20v3.dc.html" style="text-decoration: none; border: 0; color: #1d5a63; font-size: 12.5px; font-weight: 600; padding: 12px 22px; border-radius: 999px;">Voltar ao CRM</a>
-        </div>
       </div>
     </sc-if>
 
@@ -295,11 +320,14 @@ class Component extends DCLogic {
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
               uf: React.createRef(), pais: React.createRef() };
   // null = ainda não mexeu; o padrão é turma, que é o caminho mais comum
+  // pessoaId null = ainda não escolheu; "__nova" = pessoa de fora do CRM
   state = { tick: 0, sinalRecebido: null, turmaId: null, concluida: false, erro: "",
-            produtos: null };
+            produtos: null, pessoaId: null, canalNova: "Indicação", moeda: null,
+            buscaPessoa: "",
+            concluidaId: "" };
   nomeRef = React.createRef(); zapRef = React.createRef(); emailRef = React.createRef();
-  nivelRef = React.createRef(); turmaRef = React.createRef(); aulasRef = React.createRef();
-  tipoRef = React.createRef(); moedaRef = React.createRef(); valorRef = React.createRef();
+  nivelRef = React.createRef(); aulasRef = React.createRef();
+  tipoRef = React.createRef(); valorRef = React.createRef();
   parcelasRef = React.createRef(); vencRef = React.createRef(); sinalRef = React.createRef();
   desdeRef = React.createRef(); pagasRef = React.createRef();
 
@@ -312,44 +340,143 @@ class Component extends DCLogic {
     try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
   }
 
+  // Toda saída de renderVals precisa ter a mesma forma: o DC liga o
+  // template uma vez, e um campo que só existe numa das saídas pode
+  // nunca chegar a ser lido. Esta é a forma completa, inerte.
+  inertes() {
+    const nada = () => {};
+    const v = { semPessoa: false, ok: false, concluida: false, titulo: "Matrícula",
+      nome: "", whatsapp: "", email: "", nivel: "", dadosNota: "",
+      escolhendoDoCadastro: false, pessoaNova: false, temPessoa: false, pessoaInfo: "",
+      pessoaOpts: [], canaisNova: [], opcoesProduto: [], produtoHint: "", buscaPessoa: "",
+      turmaCards: [], turmaInfo: "", turmaLotada: false, ehParticular: false,
+      querTurma: false, querParticular: false, temMensalidade: false, mostraResto: false,
+      nDados: "", nTurma: "", nParticular: "", nInicio: "", nPagamento: "",
+      camposDoc: [], atalhosInicio: [], moedas: [], parcelasOpts: [],
+      temProposta: false, propostaEm: "", propostaResumo: "",
+      valorPh: "", vencPh: "", sinalPh: "",
+      sinalLabel: "", sinalBg: "#fff", sinalFg: "#8a7465",
+      retroAberto: false, retroEm: "", retroResumo: "",
+      resumo: [], efeitos: [], faltas: [], temFaltas: false, faltasTitulo: "",
+      temErro: false, erro: "", checkpoints: [],
+      perfilHref: "#", boasVindasHref: "#", resumoFinal: "",
+      concluirBg: "#164951", concluirSombra: "0 3px 0 #0e3339", concluirFg: "#fff",
+      concluirLabel: "Concluir matrícula",
+      nomeRef: null, zapRef: null, emailRef: null, nivelRef: null, aulasRef: null,
+      tipoRef: null, valorRef: null, parcelasRef: null, vencRef: null, sinalRef: null,
+      desdeRef: null, pagasRef: null, partAulasRef: null, partValorRef: null, partPagoRef: null };
+    ["onPessoa", "onAbrirNova", "onVoltarCadastro", "onMuda", "onSinalRecebido", "onBuscaPessoa",
+     "onConcluir"].forEach(k => { v[k] = nada; });
+    return v;
+  }
+
+  // quem pode ser matriculada: todo mundo que não está arquivado, lead
+  // na frente, porque é de lá que a matrícula costuma vir
+  // a mesma busca, com um texto que ainda não entrou no estado
+  opcoesDePessoaCom(CRM, texto) {
+    const q = (texto || "").toLowerCase().trim();
+    return (CRM.getPessoas() || [])
+      .filter(x => x.status !== "arquivada")
+      .filter(x => !q || (x.nome + " " + (x.turma || "")).toLowerCase().indexOf(q) >= 0);
+  }
+
+  opcoesDePessoa(CRM) {
+    const ordem = { lead: 0, pausada: 1, aluna: 2, mvs: 3 };
+    const q = (this.state.buscaPessoa || "").toLowerCase().trim();
+    return (CRM.getPessoas() || [])
+      .filter(x => x.status !== "arquivada")
+      .filter(x => !q || (x.nome + " " + (x.turma || "")).toLowerCase().indexOf(q) >= 0)
+      .slice()
+      .sort((a, b) => (ordem[a.status] === undefined ? 9 : ordem[a.status])
+        - (ordem[b.status] === undefined ? 9 : ordem[b.status])
+        || a.nome.localeCompare(b.nome, "pt-BR"))
+      .map(x => ({ id: x.id, label: x.nome + " · " + (x.status === "mvs" ? "MVS" : x.status)
+        + (x.turma ? " · " + x.turma : "") }));
+  }
+
   renderVals() {
     const CRM = window.ISRCRM;
-    const vazio = { semPessoa: true, ok: false, concluida: false, turmas: [], parcelasOpts: [], efeitos: [], atalhosInicio: [] };
+    const vazio = this.inertes();
     if (!CRM) return vazio;
 
-    const p = CRM.getPessoa(this.idParam());
-    if (!p) return vazio;
+    // Quem está sendo matriculada: o ?id= da URL continua valendo, mas
+    // agora o seletor manda. "__nova" é alguém que nunca passou pelo CRM
+    // e nasce no cadastro na hora de salvar.
+    const escolhido = this.state.pessoaId === null ? this.idParam() : this.state.pessoaId;
+    const pessoaNova = escolhido === "__nova";
+    const p = pessoaNova ? null : CRM.getPessoa(escolhido);
 
     if (this.state.concluida) {
-      const c = (p.contratos || [])[0] || {};
+      const feita = CRM.getPessoa(this.state.concluidaId);
+      if (!feita) return vazio;
+      const c = (feita.contratos || [])[0] || {};
       const meses = c.meses || [];
-      return {
-        semPessoa: false, ok: false, concluida: true,
-        nome: p.nome, turmas: [], parcelasOpts: [], efeitos: [], atalhosInicio: [],
-        perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + p.id,
-        resumoFinal: [p.turma, p.professora ? "com " + p.professora : "",
-          p.desde ? "aulas desde " + CRM.ddmm(p.desde) : "",
+      const QUANDO = { d0: "D0", d2: "D+2", d7: "D+7", d30: "D+30" };
+      return Object.assign(this.inertes(), {
+        ok: false, concluida: true,
+        nome: feita.nome,
+        perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + feita.id,
+        boasVindasHref: "ISR%20-%20Mensagens%20v3.dc.html?para=" + feita.id + "&tpl=aluno_boasvindas",
+        // os quatro checkpoints que a matrícula acabou de criar — no v5
+        // eles aparecem aqui, e é o que diz à Érika o que vem agora
+        checkpoints: (feita.onboarding || []).map(cp => ({
+          quando: QUANDO[cp.id] || cp.id, data: CRM.ddmm(cp.data), label: cp.label
+        })),
+        resumoFinal: [feita.turma, feita.professora ? "com " + feita.professora : "",
+          feita.desde ? "aulas desde " + CRM.ddmm(feita.desde) : "",
           meses.length ? meses.length + " parcelas de " + (c.parcelaValor || "") : "",
           meses.length ? "de " + meses[0].label + " a " + meses[meses.length - 1].label : ""]
-          .filter(Boolean).join(" · ") + ". A integração dos primeiros 30 dias já está na fila da equipe."
-      };
+          .filter(Boolean).join(" · ") + "."
+      });
     }
 
-    const pr = CRM.propostaDe(p.id);
+    if (!p && !pessoaNova) {
+      // ainda não escolheu: a tela abre no passo 1, sem o resto
+      return Object.assign(this.inertes(), {
+        ok: true, titulo: "Nova matrícula",
+        escolhendoDoCadastro: true, pessoaOpts: this.opcoesDePessoa(CRM),
+        buscaPessoa: this.state.buscaPessoa,
+        onBuscaPessoa: e => {
+          const v = e.target.value;
+          const achados = this.opcoesDePessoaCom(CRM, v);
+          this.setState(achados.length === 1
+            ? { buscaPessoa: v, pessoaId: achados[0].id, erro: "" }
+            : { buscaPessoa: v });
+        },
+        onPessoa: e => this.setState({ pessoaId: e.target.value, produtos: null, turmaId: null, erro: "" }),
+        onAbrirNova: () => this.setState({ pessoaId: "__nova", erro: "" }),
+        opcoesProduto: [], produtoHint: "Escolha quem está matriculando para continuar.",
+        resumo: [{ k: "Pessoa", v: "—" }],
+        concluirBg: "#d8d2c6", concluirSombra: "none", concluirFg: "#8a7465",
+        concluirLabel: "Escolha quem está matriculando",
+        onConcluir: () => this.setState({ erro: "Escolha quem está matriculando." })
+      });
+    }
+
+    const pr = p ? CRM.propostaDe(p.id) : null;
     const sinalRec = this.state.sinalRecebido === null
       ? !!(pr && pr.sinalRecebido) : this.state.sinalRecebido;
     const ocup = CRM.ocupacaoTurmas();
-    const pretendida = p.turmaInteresse || p.turma || "";
+    const pretendida = p ? (p.turmaInteresse || p.turma || "") : "";
     const turmaSel = this.state.turmaId
       || (pr && pr.turmaId)
       || (ocup.filter(t => t.label === pretendida)[0] || {}).id
       || (/^particular/i.test(pretendida) ? "particular" : "")
       || (ocup[0] ? ocup[0].id : "particular");
 
-    const turmas = ocup.map(t => ({
-      id: t.id, sel: t.id === turmaSel,
-      label: t.nivel + " · " + t.turma + " · " + (t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "sem vaga")
-    })).concat([{ id: "particular", sel: turmaSel === "particular", label: "Particular · aula individual" }]);
+    // no v5 a turma é um cartão com a vaga à vista, não uma linha de
+    // seletor: a vaga é o que decide, e precisa ser lida sem abrir nada
+    const cartao = (id, nome, vagas, cheia) => {
+      const on = id === turmaSel;
+      return { onPick: () => this.setState({ turmaId: id }),
+        nome, vagas,
+        bg: on ? "#164951" : (cheia ? "#fdece9" : "#f5f5f0"),
+        fg: on ? "#fff" : (cheia ? "#a3392c" : "#164951") };
+    };
+    const turmaCards = ocup.map(t => cartao(t.id, t.nivel + " · " + t.turma,
+      t.vagas > 0 ? t.vagas + (t.vagas === 1 ? " vaga" : " vagas") : "sem vaga",
+      t.vagas <= 0))
+      .concat([cartao("particular", "Particular", "aula individual", false)]);
 
     const unidade = ocup.filter(t => t.id === turmaSel)[0] || null;
     const ehParticular = turmaSel === "particular";
@@ -390,7 +517,11 @@ class Component extends DCLogic {
     }
 
     // ── plano de pagamento, recalculado a cada digitação ──
-    const moeda = this.val(this.moedaRef) || (pr ? pr.moeda : (p.moeda || "R$"));
+    const canalNova = this.state.canalNova || "Indicação";
+    // com pessoa nova não há cadastro ainda: o nome é o que está sendo
+    // digitado. Sem isto a tela inteira quebrava ao abrir "pessoa nova".
+    const nomePessoa = pessoaNova ? (this.val(this.nomeRef) || "a nova aluna") : p.nome;
+    const moeda = this.state.moeda || (pr ? pr.moeda : ((p && p.moeda) || "R$"));
     const valor = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
     const nParc = parseInt(this.val(this.parcelasRef), 10) || (pr ? parseInt(pr.parcelas, 10) : 3) || 3;
     const sinal = this.val(this.sinalRef) || (pr ? pr.sinalValor : "");
@@ -450,9 +581,23 @@ class Component extends DCLogic {
       return nPasso + " · ";
     };
 
+    // ── o que ainda falta para poder salvar ──
+    // O v5 lista os campos que faltam em vez de deixar o botão falhar
+    // depois do clique. A regra é a mesma do salvar.
+    const faltas = [];
+    if (pessoaNova && !this.val(this.nomeRef)) faltas.push("Nome da pessoa");
+    if (pessoaNova && !this.val(this.zapRef)) faltas.push("WhatsApp da pessoa");
+    if (nenhumProduto) faltas.push("O que ela contratou");
+    if (temMensalidade) {
+      const vAtual = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
+      if (!vAtual) faltas.push("Valor de cada parcela");
+      else if (isNaN(this.paraNumero(vAtual))) faltas.push("Valor da parcela em números, por exemplo 497,00");
+    }
+    if (querParticular && !this.val(this.partValorRef)) faltas.push("Valor do pacote de particulares");
+
     const efeitos = [];
     if (querTurma) efeitos.push.apply(efeitos, [
-      { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + p.nome
+      { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + nomePessoa
         + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
       { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e ocupa vaga na turma desde já."
         + (retro || desdeEfetivo === hojeIso
@@ -467,12 +612,56 @@ class Component extends DCLogic {
       texto: "O pacote de aulas particulares fica no perfil dela, com as aulas dadas contadas uma a uma." });
 
     return {
-      semPessoa: false, ok: true, concluida: false,
-      nome: p.nome, whatsapp: p.whatsapp || "—", email: p.email || "—", nivel: p.nivel || "—",
+      ...this.inertes(),
+      ok: true, concluida: false,
+      titulo: pessoaNova ? "Nova matrícula" : "Matrícula de " + nomePessoa,
+      nome: pessoaNova ? "Nome completo" : p.nome,
+      whatsapp: pessoaNova ? "+55 11 99999-0000" : (p.whatsapp || "—"),
+      email: pessoaNova ? "nome@email.com" : (p.email || "—"),
+      nivel: pessoaNova ? "Básico (A1)" : (p.nivel || "—"),
+      dadosNota: pessoaNova
+        ? "Pessoa nova: preencha ao menos o nome e o WhatsApp. Ela entra no cadastro ao salvar."
+        : "Vieram do cadastro. Corrija o que estiver desatualizado.",
+
+      // ── quem ──
+      escolhendoDoCadastro: !pessoaNova,
+      pessoaNova,
+      temPessoa: !pessoaNova,
+      pessoaInfo: pessoaNova ? "" : [
+        p.status === "mvs" ? "MVS" : p.status,
+        p.turmaInteresse ? "quer " + p.turmaInteresse : "",
+        p.origem && p.origem.canal ? "veio por " + p.origem.canal : "",
+        pr ? "condições combinadas em " + CRM.ddmm(pr.em) : ""
+      ].filter(Boolean).join(" · "),
+      buscaPessoa: this.state.buscaPessoa,
+      onBuscaPessoa: e => {
+        const v = e.target.value;
+        const achados = this.opcoesDePessoaCom(CRM, v);
+        // uma busca que acha uma pessoa só já escolhe ela
+        this.setState(achados.length === 1
+          ? { buscaPessoa: v, pessoaId: achados[0].id, produtos: null, turmaId: null, erro: "" }
+          : { buscaPessoa: v });
+      },
+      pessoaOpts: this.opcoesDePessoa(CRM).map(o => ({
+        id: o.id, label: o.label, sel: !pessoaNova && p && o.id === p.id
+      })),
+      onPessoa: e => {
+        const v = e.target.value;
+        this.setState({ pessoaId: v, produtos: null, turmaId: null, moeda: null,
+          sinalRecebido: null, erro: "" });
+      },
+      onAbrirNova: () => this.setState({ pessoaId: "__nova", produtos: null, turmaId: null, erro: "" }),
+      onVoltarCadastro: () => this.setState({ pessoaId: "", erro: "" }),
+      canaisNova: ["Indicação", "Instagram", "Formulário", "WhatsApp", "Outro"].map(c => ({
+        label: c,
+        bg: c === canalNova ? "#164951" : "#f2ebe3",
+        fg: c === canalNova ? "#fff" : "#164951",
+        onPick: () => this.setState({ canalNova: c })
+      })),
+
       nomeRef: this.nomeRef, zapRef: this.zapRef, emailRef: this.emailRef, nivelRef: this.nivelRef,
 
-      turmas, turmaRef: this.turmaRef,
-      onTurma: e => this.setState({ turmaId: e.target.value }),
+      turmaCards,
       turmaInfo: unidade
         ? [unidade.teacher ? "Professora: " + unidade.teacher : "",
            unidade.projeto ? "Projeto: " + unidade.projeto : "",
@@ -484,9 +673,14 @@ class Component extends DCLogic {
       temProposta: !!pr,
       propostaEm: pr ? CRM.ddmm(pr.em) : "",
       propostaResumo: pr ? CRM.resumoProposta(pr) : "",
-      tipoRef: this.tipoRef, moedaRef: this.moedaRef, valorRef: this.valorRef,
+      tipoRef: this.tipoRef, valorRef: this.valorRef,
       parcelasRef: this.parcelasRef, vencRef: this.vencRef, sinalRef: this.sinalRef,
-      moedaBrl: moeda !== "€", moedaEur: moeda === "€",
+      moedas: [{ id: "R$", label: "R$ · Brasil" }, { id: "€", label: "€ · Europa" }].map(m => ({
+        label: m.label,
+        bg: m.id === moeda ? "#164951" : "#f2ebe3",
+        fg: m.id === moeda ? "#fff" : "#164951",
+        onPick: () => this.setState({ moeda: m.id })
+      })),
       valorPh: pr && pr.valorParcela ? pr.valorParcela : "Ex. 497,00",
       vencPh: pr ? String(pr.vencDia) : "Ex. 10",
       sinalPh: pr && pr.sinalValor ? pr.sinalValor : "Opcional. Ex. 200,00",
@@ -500,7 +694,26 @@ class Component extends DCLogic {
       sinalFg: sinalRec ? "#fff" : "#8a7465",
       sinalBorda: sinalRec ? "#348a8e" : "transparent",
       onSinalRecebido: () => this.setState({ sinalRecebido: !sinalRec }),
-      plano, planoMeses, efeitos,
+      efeitos,
+
+      // ── o resumo, que fica à vista enquanto se preenche ──
+      resumo: [
+        { k: "Pessoa", v: nomePessoa },
+        { k: "Contratou", v: [querTurma ? "turma" : "", querParticular ? "particular" : ""]
+            .filter(Boolean).join(" + ") || "—" },
+        { k: "Turma", v: querTurma ? nomeTurma : "—" },
+        { k: "Primeira aula", v: temMensalidade
+            ? (desdeEscolhido ? CRM.ddmm(desdeEfetivo) : "hoje") : "—" },
+        { k: "Ciclo", v: temMensalidade ? cicloDe.label : "—" },
+        { k: "Contrato", v: temMensalidade ? plano : "—" },
+        { k: "Parcelas", v: temMensalidade && planoMeses ? planoMeses : "—" }
+      ],
+
+      // ── o que falta, como no v5: a lista some quando está completo ──
+      faltas: faltas.map(t => ({ texto: t })),
+      temFaltas: faltas.length > 0,
+      faltasTitulo: faltas.length === 1
+        ? "1 campo para completar" : faltas.length + " campos para completar",
 
       desdeRef: this.desdeRef, pagasRef: this.pagasRef,
       atalhosInicio,
@@ -536,7 +749,8 @@ class Component extends DCLogic {
         { id: "cidade", label: "Cidade", exemplo: "—" },
         { id: "uf", label: "Estado", exemplo: "SP" },
         { id: "pais", label: "País", exemplo: "Brasil" }
-      ].map(cx => ({ label: cx.label, ref: this.docRefs[cx.id], atual: p[cx.id] || cx.exemplo })),
+      ].map(cx => ({ label: cx.label, ref: this.docRefs[cx.id],
+        atual: (p && p[cx.id]) || cx.exemplo })),
 
       // A numeração acompanha o que está na tela: sem produto escolhido,
       // só existe o passo 1; escolhido, os passos seguintes se numeram
@@ -546,44 +760,49 @@ class Component extends DCLogic {
       nParticular: passo(querParticular),
       nInicio: passo(temMensalidade),
       nPagamento: passo(temMensalidade),
-      nResumo: passo(true),
       mostraResto: !nenhumProduto,
 
+      // o v5 pede um formato só; aqui dá para marcar os dois, porque a
+      // escola vende turma e pacote de particulares na mesma matrícula
       opcoesProduto: [
-        { id: "turma", nome: "Turma em grupo", sub: "Aulas semanais, contrato por ciclo", on: querTurma },
-        { id: "particular", nome: "Aulas particulares", sub: "Pacote de aulas individuais", on: querParticular }
+        { id: "turma", nome: "Turma em grupo", on: querTurma },
+        { id: "particular", nome: "Aulas particulares", on: querParticular }
       ].map(op => ({
-        nome: op.nome, sub: op.sub,
-        marca: op.on ? "\u2713" : "",
-        marcaBorda: op.on ? "#348a8e" : "#d8cfc2",
-        marcaBg: op.on ? "#348a8e" : "transparent",
-        borda: op.on ? "#348a8e" : "transparent",
-        bg: op.on ? "rgba(52,138,142,0.06)" : "#fff",
-        fg: op.on ? "#164951" : "#1d5a63",
-        subCor: op.on ? "#8a7465" : "#b3a693",
+        nome: op.nome,
+        bg: op.on ? "#164951" : "#f2ebe3",
+        fg: op.on ? "#fff" : "#164951",
         onPick: () => alternar(op.id)
       })),
-      semProduto: nenhumProduto, semProdutoAviso: nenhumProduto,
-      concluirBg: nenhumProduto ? "#d8d2c6" : "#164951",
-      concluirSombra: nenhumProduto ? "none" : "0 3px 0 #0e3339",
-      concluirFg: nenhumProduto ? "#8a7465" : "#fff",
-      concluirLabel: nenhumProduto ? "Escolha um produto acima" : "Concluir matrícula",
+      produtoHint: nenhumProduto
+        ? "Marque um ou os dois. Os passos seguintes mudam conforme a escolha."
+        : (querTurma && querParticular
+            ? "Turma e pacote de particulares: a matrícula cria os dois contratos."
+            : (querTurma ? "Aulas semanais, contrato por ciclo."
+                         : "Pacote de aulas individuais, com número de aulas e valor próprios.")),
+      concluirBg: faltas.length ? "#d8d2c6" : "#164951",
+      concluirSombra: faltas.length ? "none" : "0 3px 0 #0e3339",
+      concluirFg: faltas.length ? "#8a7465" : "#fff",
+      concluirLabel: "Salvar matrícula",
       querTurma, querParticular, temMensalidade,
       partAulasRef: this.partAulasRef, partValorRef: this.partValorRef, partPagoRef: this.partPagoRef,
 
       onConcluir: () => {
-        if (nenhumProduto) {
-          this.setState({ erro: "Escolha ao menos um produto: turma ou aulas particulares." });
+        if (faltas.length) {
+          this.setState({ erro: "Complete os campos indicados antes de salvar." });
           return;
         }
         const v = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
-        if (temMensalidade) {
-          if (!v) { this.setState({ erro: "Informe o valor de cada parcela antes de concluir." }); return; }
-          if (isNaN(this.paraNumero(v))) {
-            this.setState({ erro: "O valor da parcela não foi reconhecido. Use apenas números, por exemplo 497,00." });
-            return;
-          }
-        }
+
+        // Pessoa que nunca passou pelo CRM nasce agora, com o canal
+        // escolhido: sem isso a matrícula não teria em quem escrever.
+        const alvo = pessoaNova
+          ? CRM.novaPessoa({ nome: this.val(this.nomeRef),
+              whatsapp: this.val(this.zapRef),
+              email: this.val(this.emailRef),
+              canal: canalNova })
+          : p;
+        if (!alvo) { this.setState({ erro: "Não foi possível criar o cadastro desta pessoa." }); return; }
+
         // dados de cadastro: campo em branco mantém o que já estava
         const cad = {};
         if (this.val(this.nomeRef)) cad.nome = this.val(this.nomeRef);
@@ -594,11 +813,11 @@ class Component extends DCLogic {
           const vv = this.val(this.docRefs[k]);
           if (vv) cad[k] = vv;
         });
-        if (Object.keys(cad).length) CRM.atualizarCadastro(p.id, cad);
+        if (Object.keys(cad).length) CRM.atualizarCadastro(alvo.id, cad);
 
         // Turma ou pacote de particulares: os dois criam contrato.
         if (temMensalidade) {
-          CRM.matricular(p.id, {
+          CRM.matricular(alvo.id, {
             turmaId: querTurma ? turmaSel : "particular",
             tipo: this.val(this.tipoRef) || "Matrícula",
             moeda: moeda,
@@ -613,14 +832,14 @@ class Component extends DCLogic {
           });
         }
         if (querParticular) {
-          CRM.contratarParticular(p.id, {
+          CRM.contratarParticular(alvo.id, {
             aulas: this.val(this.partAulasRef),
             valor: this.val(this.partValorRef),
             moeda: moeda,
             pago: !!(this.partPagoRef.current && this.partPagoRef.current.checked)
           });
         }
-        this.setState({ concluida: true, erro: "" });
+        this.setState({ concluida: true, concluidaId: alvo.id, erro: "" });
       }
     };
   }

@@ -583,6 +583,41 @@ lista, e quando sobra uma pessoa só ela já é escolhida — é o que quem
 digitou o nome inteiro queria. Busca sem resultado avisa e **não troca
 o destinatário**: digitar não pode mandar a mensagem para outra pessoa.
 
+### A Matrícula, pelo v5
+
+O v5 põe a tela em **duas colunas**: os passos numa, e o **Resumo fixo**
+na outra — ele acompanha a rolagem, mostra o que já está preenchido e
+lista **o que falta** antes de deixar salvar. O botão parou de falhar
+depois do clique: enquanto houver campo em falta, ele está apagado e o
+resumo diz quais são.
+
+**A pessoa passou a ser escolhida aqui.** Antes a tela só abria pelo
+botão Matricular do CRM, com `?id=` na URL — quem fechou no boca a boca
+tinha que virar lead antes. Agora há um seletor do cadastro, com busca
+(digitar filtra; achando uma pessoa só, ela já é escolhida), e um
+**"+ adicionar nova pessoa"** para quem nunca passou pelo CRM: nome,
+WhatsApp, e-mail e **como chegou**. Ela nasce no cadastro na hora de
+salvar. O `?id=` continua valendo.
+
+Outras coisas que vieram do v5: a **turma virou cartão com a vaga à
+vista**, em vez de uma linha de seletor — a vaga é o que decide, e
+precisa ser lida sem abrir nada; **produto e moeda viraram chip**; e a
+tela de conclusão é o **cartão verde-escuro** com os **quatro
+checkpoints da integração** (D0, D+2, D+7, D+30) e três saídas: abrir
+perfil, enviar boas-vindas, nova matrícula.
+
+**Tudo o que a escola usa ficou**, ainda que o v5 não tenha: dados da
+aluna e documento/endereço (o contrato exige), **mais de um produto na
+mesma matrícula** (o v5 pede um formato só, a escola vende turma e
+pacote juntos), pacote de aulas particulares, tipo de contrato, início
+das aulas com o ciclo e a entrada na chamada, matrícula retroativa,
+sinal e a lista do que o sistema faz ao concluir — que no v5 é uma
+frase e aqui é a lista, dentro do Resumo.
+
+**Uma coisa do v5 que não entrou:** o contador de **ciclos** com −/+.
+O contrato aqui se conta em parcelas, não em ciclos, e trocar isso
+mexeria na cobrança inteira.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
