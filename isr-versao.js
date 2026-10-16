@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-u",
+  numero: "2026.10.16-v",
   data: "16/10/2026",
-  nota: "Mensagens pelo v5: categoria em chips, a lista mostrando a primeira linha de cada modelo e o editor dizendo qual modelo para quem"
+  nota: "Listas compridas viram página, com 10 por página e as setas. E o seletor de destinatário em Mensagens ganhou busca"
 };

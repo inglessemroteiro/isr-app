@@ -14,6 +14,7 @@
 <script src="./isr-versao.js"></script>
 <script src="./isr-shell.js"></script>
 <script src="./crm-data.js"></script>
+<script src="./isr-paginacao.js"></script>
 </head>
 <body>
 <x-dc>
@@ -184,6 +185,22 @@
             </div>
           </sc-if>
         </sc-for>
+        <!-- PAGINAÇÃO -->
+        <sc-if value="{{ pgPrecisa }}">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <sc-for list="{{ pgBotoes }}" as="pb" hint-placeholder-count="7">
+                <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+              </sc-for>
+            </div>
+            <span style="flex: 1; min-width: 4px;"></span>
+            <span style="font-size: 12px; color: #8a7465;">mostrar</span>
+            <select onchange="{{ pgOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: #164951; background: #f2ebe3;">
+              <sc-for list="{{ pgOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+            </select>
+            <span style="font-size: 12px; color: #8a7465;">por página · {{ pgResumo }}</span>
+          </div>
+        </sc-if>
       </div>
       <!-- ALUNAS SEM PLANO · ativas que não entram na cobrança -->
       <sc-if value="{{ temSemPlano }}">
@@ -253,6 +270,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0,
+    pagina: 1, porPagina: ISRPaginacao.PADRAO,
             periodo: "tudo", de: "", ate: "", prevAberta: false, linkAberto: false,
             busca: "" };
   linkRef = React.createRef(); buscaRef = React.createRef();
@@ -289,14 +307,14 @@ class Component extends DCLogic {
       const on = abaParcelas && f.id === active;
       return {
         label: f.label, count: counts[f.id],
-        onClick: () => this.setState({ aba: "parcelas", filtro: f.id, openId: null }),
+        onClick: () => this.setState({ aba: "parcelas", filtro: f.id, openId: null, pagina: 1 }),
         bg: on ? "#fff" : "#f2ebe3", fg: on ? "#164951" : "#8a7465",
         border: on ? "transparent" : "transparent", weight: on ? 600 : 500,
         countFg: on ? "#9c6f56" : "#b3a693", ml: "0"
       };
     }).concat([{
       label: "Renovações", count: renovsRaw.length,
-      onClick: () => this.setState({ aba: "renov", motivoId: null }),
+      onClick: () => this.setState({ aba: "renov", motivoId: null, pagina: 1 }),
       bg: !abaParcelas ? "#fff" : "#f2ebe3", fg: !abaParcelas ? "#164951" : "#8a7465",
       border: !abaParcelas ? "transparent" : "transparent", weight: !abaParcelas ? 600 : 500,
       countFg: !abaParcelas ? "#9c6f56" : "#b3a693", ml: "18px"
@@ -412,6 +430,11 @@ class Component extends DCLogic {
     const maiorMes = Math.max.apply(null, prev.meses.map(m => m.previstoReais).concat([1]));
     const mesAtual = CRM.mesAtualKey();
 
+    // a lista vira página: a cobrança de um mês inteiro é longa
+    const pg = ISRPaginacao.fatiar(items, this.state.pagina, this.state.porPagina,
+      (n, porPagina) => this.setState(porPagina === undefined
+        ? { pagina: n } : { pagina: n, porPagina }));
+
     return {
       // ── link de pagamento ──
       // Sem ele, a mensagem de cobrança sai mandando a aluna descobrir
@@ -482,7 +505,11 @@ class Component extends DCLogic {
         ? "Todas as cobranças."
         : visiveis.length + (visiveis.length === 1 ? " cobrança com parcela entre " : " cobranças com parcela entre ")
           + CRM.ddmm(janela.de) + " e " + CRM.ddmm(janela.ate),
-      abasTabs, items, renovs, mesLabel,
+      abasTabs, renovs, mesLabel,
+      items: pg.itens,
+      pgPrecisa: pg.precisa, pgBotoes: pg.botoes, pgOpcoes: pg.opcoes,
+      pgResumo: pg.resumo, pgOnPorPagina: pg.onPorPagina,
+
       abaParcelas: abaParcelas, abaRenov: !abaParcelas,
       vazio: items.length === 0, renovVazia: renovs.length === 0,
       // busca por aluna + quem está fora da cobrança por falta de plano

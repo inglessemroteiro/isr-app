@@ -58,12 +58,18 @@
     <!-- PARA -->
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
       <span style="font-size: 13px; font-weight: 600; color: #8a7465;">para</span>
+      <!-- a escola tem dezenas de pessoas no seletor: achar alguém
+           rolando a lista é pior do que digitar três letras -->
+      <input value="{{ buscaPara }}" oninput="{{ onBuscaPara }}" placeholder="buscar pessoa…" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 14px; font-family: inherit; color: #164951; background: #fff; outline: none; width: 170px;" />
       <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 14px; font-family: inherit; color: #164951; background: #fff; outline: none; max-width: 100%;">
         <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
           <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
         </sc-for>
       </select>
       <a href="{{ perfilHref }}" style="font-size: 13px; font-weight: 600; color: #348a8e; text-decoration: underline; text-underline-offset: 3px;">abrir perfil</a>
+      <sc-if value="{{ semPessoa }}">
+        <span style="font-size: 12.5px; color: #a3392c; font-weight: 600;">Ninguém com esse nome.</span>
+      </sc-if>
     </div>
 
     <!-- GERENCIAR MODELOS -->
@@ -144,7 +150,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { categoria: null, templateId: null, recipientId: null, msg: null, copied: false, veioDeContexto: false, enviadoPara: "", gerenciando: false, modeloSalvo: false };
+  state = { categoria: null, templateId: null, recipientId: null, msg: null, buscaPara: "", copied: false, veioDeContexto: false, enviadoPara: "", gerenciando: false, modeloSalvo: false };
   recipientRef = React.createRef();
   gerTituloRef = React.createRef(); gerCorpoRef = React.createRef();
   novoCatRef = React.createRef(); novoTituloRef = React.createRef(); novoCorpoRef = React.createRef();
@@ -204,14 +210,20 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { categorias: [], recipients: [], templates: [], msg: "", waLink: "#", copyLabel: "Copiar", recipientNome: "", semModelos: false, temDestacado: false };
+    if (!CRM) return { categorias: [], recipients: [], templates: [], msg: "", waLink: "#", copyLabel: "Copiar", recipientNome: "", semModelos: false, temDestacado: false, buscaPara: "", semPessoa: false };
 
     const cats = CRM.categorias();
     const categoria = this.state.categoria || cats[0];
 
-    const recs = CRM.recipients();
-    const recipientId = this.state.recipientId || (recs[0] && recs[0].id);
-    const rec = recs.filter(r => r.id === recipientId)[0] || recs[0];
+    const todosRecs = CRM.recipients();
+    // o filtro vale para a lista do seletor, não para quem já está
+    // escolhido: digitar não pode trocar o destinatário por baixo
+    const qPara = (this.state.buscaPara || "").toLowerCase().trim();
+    const recs = qPara
+      ? todosRecs.filter(r => (r.nome + " " + (r.turma || "")).toLowerCase().indexOf(qPara) >= 0)
+      : todosRecs;
+    const recipientId = this.state.recipientId || (recs[0] && recs[0].id) || (todosRecs[0] && todosRecs[0].id);
+    const rec = todosRecs.filter(r => r.id === recipientId)[0] || recs[0] || todosRecs[0];
 
     const tpls = CRM.templatesByCategoria(categoria);
 
@@ -233,6 +245,20 @@ class Component extends DCLogic {
         fg: c === categoria ? "#fff" : "#164951",
         onClick: () => this.setState({ categoria: c, templateId: null, msg: null })
       })),
+      buscaPara: this.state.buscaPara,
+      onBuscaPara: (e) => {
+        const v = e.target.value;
+        const q = v.toLowerCase().trim();
+        const achados = q
+          ? todosRecs.filter(r => (r.nome + " " + (r.turma || "")).toLowerCase().indexOf(q) >= 0)
+          : todosRecs;
+        // uma busca que acha uma pessoa só já escolhe ela: é o que a
+        // pessoa queria ao digitar o nome inteiro
+        this.setState(achados.length === 1
+          ? { buscaPara: v, recipientId: achados[0].id, msg: null }
+          : { buscaPara: v });
+      },
+      semPessoa: recs.length === 0,
       recipients: recs.map(r => ({
         id: r.id, selected: r.id === recipientId,
         label: r.nome + " · " + r.tipo + (r.turma ? " · " + r.turma : "")

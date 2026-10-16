@@ -14,6 +14,7 @@
 <script src="./isr-versao.js"></script>
 <script src="./isr-shell.js"></script>
 <script src="./crm-data.js"></script>
+<script src="./isr-paginacao.js"></script>
 </head>
 <body>
 <x-dc>
@@ -96,6 +97,23 @@
         </sc-if>
       </div>
     </sc-for>
+    <!-- PAGINAÇÃO -->
+    <sc-if value="{{ pgPrecisa }}">
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
+        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <sc-for list="{{ pgBotoes }}" as="pb" hint-placeholder-count="7">
+            <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+          </sc-for>
+        </div>
+        <span style="flex: 1; min-width: 4px;"></span>
+        <span style="font-size: 12px; color: #8a7465;">mostrar</span>
+        <select onchange="{{ pgOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: #164951; background: #f2ebe3;">
+          <sc-for list="{{ pgOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+        </select>
+        <span style="font-size: 12px; color: #8a7465;">por página · {{ pgResumo }}</span>
+      </div>
+    </sc-if>
+
   </section>
 
 </main>
@@ -105,7 +123,8 @@ class Component extends DCLogic {
   // o filtro da tela são os chips (situação), a busca e a turma.
   // A tela abre nas alunas ativas: é a lista que a escola usa todo dia.
   // Lead e pausada continuam a um clique, no chip.
-  state = { busca: "", turma: "", filtro: "aluna", tick: 0, loteFeito: 0 };
+  state = { busca: "", turma: "", filtro: "aluna", tick: 0, loteFeito: 0,
+            pagina: 1, porPagina: ISRPaginacao.PADRAO };
   buscaRef = React.createRef(); loteRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -140,7 +159,7 @@ class Component extends DCLogic {
       label, n: String(gente.filter(fn).length),
       bg: filtroAtivo === id ? "#164951" : "#fff",
       fg: filtroAtivo === id ? "#fff" : "#164951",
-      onClick: () => this.setState({ filtro: id })
+      onClick: () => this.setState({ filtro: id, pagina: 1 })
     }));
 
     // ── o seletor de turma ──
@@ -232,6 +251,11 @@ class Component extends DCLogic {
     });
     const confirmandoTodos = this.state.confirmandoMescla === "__todos__";
 
+    // a lista vira página: 45 nomes de uma vez é rolar para achar
+    const pg = ISRPaginacao.fatiar(pessoas, this.state.pagina, this.state.porPagina,
+      (n, porPagina) => this.setState(porPagina === undefined
+        ? { pagina: n } : { pagina: n, porPagina }));
+
     return {
       temDuplicadas: duplicadas.length > 0,
       duplicadasContagem: duplicadas.length === 1 ? "1 par" : duplicadas.length + " pares",
@@ -245,8 +269,11 @@ class Component extends DCLogic {
         CRM.mesclarTodasDuplicadas();
         this.setState({ confirmandoMescla: "", tick: this.state.tick + 1 });
       },
-      filtros, turmaOpts, pessoas,
+      filtros, turmaOpts,
+      pessoas: pg.itens,
       vazio: pessoas.length === 0,
+      pgPrecisa: pg.precisa, pgBotoes: pg.botoes, pgOpcoes: pg.opcoes,
+      pgResumo: pg.resumo, pgOnPorPagina: pg.onPorPagina,
       temAlunas: daLista.length > 0,
       loteRef: this.loteRef,
       // o lote só toca em quem é aluna: data de início não diz nada
@@ -274,8 +301,8 @@ class Component extends DCLogic {
         ? gente.length + (gente.length === 1 ? " pessoa" : " pessoas")
         : (filtradas.length + " de " + gente.length),
       buscaRef: this.buscaRef,
-      onBusca: e => this.setState({ busca: e.target.value }),
-      onTurma: e => this.setState({ turma: e.target.value })
+      onBusca: e => this.setState({ busca: e.target.value, pagina: 1 }),
+      onTurma: e => this.setState({ turma: e.target.value, pagina: 1 })
     };
   }
 }
