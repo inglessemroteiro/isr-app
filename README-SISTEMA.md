@@ -429,6 +429,50 @@ A **assinatura** saiu: é operação, não agenda.
 elas a tela só mostraria a semana corrente, e a escola marca aula com
 semanas de antecedência.
 
+### Pessoas, pelo v5
+
+No v5 esta tela se chama **Pessoas** e o subtítulo é **cadastro
+único**: lead, aluna, pausada e MVS na mesma lista, porque é a mesma
+pessoa em momentos diferentes. Antes a tela se chamava Alunas e só
+mostrava quem já era aluna — o lead vivia noutro lugar, e a mesma
+pessoa aparecia duas vezes no sistema conforme o dia.
+
+A tela tem quatro coisas: a **busca**, os **chips de situação com a
+contagem** (Todos, Alunas, Leads, Pausadas, Em risco), a **lista de
+quatro campos** (nome, situação, contexto, risco) e, acima dela, o que
+a escola opera.
+
+O contexto muda com a situação: para quem é aluna, turma e professora;
+para quem é lead, o estágio, o canal e desde quando. É a mesma linha —
+o que ela diz é que depende de quem é a pessoa.
+
+Saíram, pela regra de que o que não está no v5 não fica: o
+**termômetro da turma** (a faixa de números no topo — a contagem agora
+é o próprio chip), a **retenção por ciclo**, o **copiar lista** e o
+**copiar e-mails**, e os filtros de **professora** e de **etiqueta**.
+
+**Dois blocos ficaram, por decisão da escola:**
+
+- **registros duplicados** — a mesma pessoa cadastrada em dois
+  aparelhos antes de conectar. Sem o bloco, as duas cópias seguem
+  somando contrato e presença em separado;
+- **início das aulas em lote** — é o que põe a turma nova na chamada
+  de uma vez.
+
+**Duas coisas que o v5 não tem e eu mantive**, porque o bloco de lote
+não funciona sem elas: o **seletor de turma** (é ele que define em
+quem o lote escreve) e o **campo de início na linha de cada aluna**,
+que é onde a exceção se corrige depois do lote.
+
+**O lote conta só as alunas.** A lista agora traz lead junto, e data de
+início de aulas não quer dizer nada num lead — aplicar em todo mundo
+escreveria no registro errado. Por isso o botão diz "Aplicar às N
+alunas da lista", não "às N pessoas".
+
+O arquivo segue `ISR - Alunas v3.dc.html` e o endereço segue
+`/alunas.html`: renomear quebraria link já mandado. O que mudou foi o
+nome na tela e no menu.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
@@ -910,7 +954,7 @@ precisar da tela antiga a encontra no histórico do git.
 |---|---|---|
 | Central | `ISR - Central v3.dc.html` | `/central.html` |
 | Painel do professor | `ISR - Painel v3.dc.html` | `/professor.html` |
-| Alunas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
+| Pessoas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
 | CRM · Funil | `ISR - CRM v3.dc.html` | `/crm.html` |
 | Mensagens | `ISR - Mensagens v3.dc.html` | `/mensagens.html` |
 | Matrículas do ciclo | `ISR - Matriculas ciclo v3.dc.html` | `/ciclo.html` |
