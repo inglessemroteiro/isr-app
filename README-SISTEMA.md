@@ -7,6 +7,41 @@
 
 ---
 
+## Duas áreas, dados diferentes
+
+O sistema tem **duas** áreas, e elas não se misturam:
+
+| | Área de Gestão | Área da Aluna |
+|---|---|---|
+| quem entra | a equipe, por `gestao.html` (Netlify Identity) | a aluna, pelo endereço dela |
+| telas | tudo o que começa com `ISR - ` e não está na lista aberta | `/aluna.html` → `ISR - Aluna v4.dc.html` |
+| desenho | `ISR Gestao v4` (barra lateral fixa, `isr-shell.js`) | `Student Portal v3` (barra lateral no monitor, barra de baixo no celular) |
+
+A separação é feita em **um lugar só**, no `crm-data.js`: a lista
+`ABERTAS` diz quais telas são da aluna. Tudo o mais que comece com
+`ISR - ` é gestão, e quem não tem sessão da equipe é mandado para o
+`gestao.html`.
+
+**O que cada área lê.** A camada de dados é a mesma (`crm-data.js`,
+uma base só), mas as funções não se cruzam:
+
+- **da aluna** — `getPessoa`, `progressoDaAluna`, `progressoCiclo`,
+  `certificadoDaAluna`, `horasDaAluna`, `jornadaDaAluna`,
+  `presencasDe`, `tarefasDeCasa`, `agendaItens` (filtrada pela turma
+  dela), `clubesParaAluna`/`clubeEntrar`/`clubeSair`,
+  `gravacoesParaAluna`, `moedasDe`/`recompensasDaAluna`,
+  `contratoVigente`, `rsvpEvento`, `registrarPulso`,
+  `programaDaAluna` e `trilhaDesafio`;
+- **da gestão** — `filaParaHoje`, `alunasPainel`, `ocupacaoTurmas`,
+  `cobrancaResumo`, `folhaDoMes`, `getLeads`, `funilResumo`,
+  `equipeLista`, `matriculasDoCiclo`, `chamadasPendentesPorProfessora`,
+  `salvarChamada`, `clubesResumo`, `abrirCiclo` e as demais.
+
+O teste `test-aluna-v4.js` falha se uma função de gestão aparecer na
+tela da aluna.
+
+---
+
 ## Mapa de navegação
 
 ```
@@ -303,6 +338,38 @@ letras, que o que for gravado continua no nome de quem está ali.
 
 Sair da gestão limpa o ver como: quem entrar depois abriria o sistema
 já olhando pelos olhos de outra pessoa.
+
+### A Área da Aluna no desenho novo
+
+`ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
+escola. A casca é a do desenho: **barra lateral** escura no monitor
+(logo, nome e nível, menu por grupos, milhas no rodapé) e **barra de
+baixo** de quatro itens no celular; cabeçalho com assunto, título,
+seletor **PT / EN** e sino de avisos. O design system entra pelos
+tokens e pelo `_ds_bundle.js`, e o logo vem de `assets/`.
+
+Quatro páginas, com o dado que já existe:
+
+- **Início** — a próxima aula em destaque (professora, dia, hora e
+  projeto do ciclo), a semana de segunda a domingo com o que já
+  aconteceu marcado, e os cartões de progresso e de clubes;
+- **Meu progresso** — nível e próximo passo, quatro números
+  (presença, aulas, tarefas, carga horária), o projeto do ciclo, o
+  **certificado** com o que falta, e a linha da presença;
+- **Clubes** — Meus clubes e Todos os clubes, com encontros, material,
+  entrar, sair e lista de espera;
+- **Minha conta** — presença, parcelas do contrato e ISR Miles com
+  extrato.
+
+O **PT / EN** troca só as palavras da casca. Nome de turma, nível,
+professora e projeto são o dado da escola e não são traduzidos.
+
+Falta trazer do desenho: **Caderno** (plano da aula, palavras, tarefas
+ao vivo, homework), **Review** (cofre de palavras), **Perfil** da
+comunidade e a parte de **trocas** do Shop. Essas quatro dependem de
+dado que ainda não existe — e três delas começam do lado da
+professora, no Caderno. Até lá o app antigo (`ISR - Aluna.dc.html`)
+continua de pé, com Aulas, Materiais, Desafio e avaliação da aula.
 
 ### Cada tela na rotina de quem abriu
 

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Área da aluna</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/styles.css">
+<script src="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f2ebe3;font-family:Inter,system-ui,sans-serif;color:#164951}a{color:#348a8e}a:hover{color:#164951}*{box-sizing:border-box}textarea,input{font-family:inherit}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- A ÁREA DA ALUNA, NO DESENHO NOVO.
+     Casca do Student Portal v3: barra lateral no monitor, barra de
+     baixo no celular, cabeçalho com assunto, título, idioma e sino.
+     Os dados são os mesmos de sempre — a aluna, a turma, a chamada,
+     os clubes, o contrato. Nada aqui lê dado de gestão. -->
+
+<div style="min-height:100vh;display:flex">
+  <sc-if value="{{ wide }}">
+  <aside style="width:240px;flex:none;background:#164951;color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto">
+    <img src="assets/ISR_logo_white.png" alt="Inglês sem Roteiro" style="height:34px;width:auto;object-fit:contain;object-position:left">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:999px;background:#fc9082;color:#164951;display:grid;place-items:center;font-weight:800">{{ inicial }}</div>
+      <div style="min-width:0"><div style="font-weight:700;font-size:15px">{{ primeiroNome }}</div><div style="font-size:12px;opacity:.75">{{ subNome }}</div></div>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ navSections }}" as="sec" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <sc-if value="{{ sec.hasH }}"><div style="font-size:11px;font-weight:700;color:#fc9082;padding:4px 12px">{{ sec.h }}</div></sc-if>
+          <sc-for list="{{ sec.items }}" as="n">
+            <div onclick="{{ n.go }}" style="padding:9px 12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;background:{{ n.bg }};opacity:{{ n.op }}"><span>{{ n.label }}</span><span style="font-size:11px;color:#fc9082">{{ n.badge }}</span></div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </nav>
+    <div onclick="{{ goMiles }}" style="margin-top:auto;flex:none;background:rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;cursor:pointer"><div style="font-size:11px;font-weight:700;color:#fc9082">isr miles</div><div style="font-size:22px;font-weight:800;letter-spacing:-0.04em">{{ milesFmt }}</div><div style="font-size:12px;opacity:.85">{{ milesLinha }}</div></div>
+  </aside>
+  </sc-if>
+
+  <main style="flex:1;min-width:0;padding:{{ mainPad }};display:flex;flex-direction:column;gap:22px">
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#6b5749">{{ eyebrow }}</div><h1 style="margin:2px 0 0;font-size:{{ h1Size }};font-weight:800;letter-spacing:-0.035em;line-height:1.1">{{ title }}</h1></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <sc-if value="{{ narrow }}"><div onclick="{{ goMiles }}" style="background:#fff;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">{{ milesFmt }} mi</div></sc-if>
+        <div style="display:flex;background:#fff;border-radius:999px;padding:4px"><sc-for list="{{ langOpts }}" as="o"><span onclick="{{ o.pick }}" style="border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</span></sc-for></div>
+        <div onclick="{{ toggleNotif }}" style="background:{{ bellBg }};border-radius:999px;width:40px;height:40px;display:grid;place-items:center;position:relative;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#164951" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><sc-if value="{{ hasUnread }}"><span style="position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:999px;background:#fc9082;font-size:10px;font-weight:800;display:grid;place-items:center">{{ unread }}</span></sc-if></div>
+      </div>
+    </header>
+
+    <sc-if value="{{ hasSub }}"><div style="display:flex;gap:6px;background:#fff;border-radius:999px;padding:6px;align-self:flex-start;max-width:100%;overflow-x:auto"><sc-for list="{{ subTabs }}" as="t"><div onclick="{{ t.go }}" style="flex:none;white-space:nowrap;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div></sc-for></div></sc-if>
+
+    <!-- INÍCIO -->
+    <sc-if value="{{ isHome }}">
+      <div style="background:#164951;color:#fff;border-radius:24px;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#fc9082;letter-spacing:.04em">{{ classEyebrow }}</div><div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-top:4px">{{ classTitulo }}</div><div style="font-size:14px;opacity:.8;margin-top:4px">{{ classLinha }}</div></div>
+        <sc-if value="{{ temSala }}">
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><a href="{{ salaLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:#fc9082;color:#164951;border-radius:999px;padding:17px 28px;font-size:15px;font-weight:800;box-shadow:0 4px 0 #d9705f">{{ L.entrarSala }}</a></div>
+        </sc-if>
+      </div>
+
+      <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><div style="font-size:18px;font-weight:800;letter-spacing:-0.02em">{{ L.estaSemana }}</div><span style="font-size:12px;font-weight:700;color:#6b5749">{{ weekCount }}</span></div>
+        <div style="height:8px;border-radius:4px;background:#f2ebe3;overflow:hidden"><div style="height:8px;border-radius:4px;background:#9ec970;width:{{ weekPct }}"></div></div>
+        <sc-if value="{{ semSemana }}"><div style="font-size:14px;color:#1d5a63;line-height:1.5">{{ L.semSemana }}</div></sc-if>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ week }}" as="w" hint-placeholder-count="4">
+            <div style="display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #f2ebe3"><span style="width:34px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:14px;font-weight:800;flex:none;background:{{ w.dotBg }};color:{{ w.dotFg }}">{{ w.mark }}</span><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800">{{ w.t }}</div><div style="font-size:13px;color:#1d5a63">{{ w.sub }}</div></div><span style="flex:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;background:{{ w.stBg }};color:{{ w.stFg }}">{{ w.st }}</span></div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:stretch">
+        <section onclick="{{ goProgress }}" style="flex:1 1 280px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
+          <div style="font-size:12px;font-weight:700;color:#6b5749">{{ L.meuProgresso }}</div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ prog.level }}</div>
+          <div style="font-size:14px;color:#1d5a63;line-height:1.5">{{ prog.homeLinha }}</div>
+          <div style="display:flex;gap:4px"><sc-for list="{{ prog.barras }}" as="g" hint-placeholder-count="8"><span style="flex:1;height:8px;border-radius:4px;background:{{ g.bar }}"></span></sc-for></div>
+          <div style="font-size:13px;font-weight:700;color:#348a8e;margin-top:auto">{{ L.verProgresso }} →</div>
+        </section>
+
+        <section onclick="{{ goClubs }}" style="flex:1 1 280px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
+          <div style="font-size:12px;font-weight:700;color:#6b5749">{{ L.clubes }}</div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ clubesCartaoTitulo }}</div>
+          <div style="font-size:14px;color:#1d5a63;line-height:1.5">{{ clubesCartaoLinha }}</div>
+          <div style="font-size:13px;font-weight:700;color:#348a8e;margin-top:auto">{{ L.verClubes }} →</div>
+        </section>
+
+        <sc-if value="{{ temUltimaGravacao }}">
+          <a href="{{ ultimaGravacaoLink }}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;flex:1 1 280px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:#f2ebe3;display:grid;place-items:center;font-size:18px;flex:none">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#6b5749">{{ L.ultimaGravacao }}</div><div style="font-size:15px;font-weight:800;margin-top:2px">{{ ultimaGravacaoTitulo }}</div><div style="font-size:12px;color:#1d5a63;margin-top:2px">{{ ultimaGravacaoSub }}</div></div></a>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- PROGRESSO -->
+    <sc-if value="{{ isProgress }}">
+      <section style="background:#164951;color:#fff;border-radius:32px;padding:26px 28px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:12px;font-weight:700;color:#fc9082">{{ L.seuNivel }}</div>
+        <div style="font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-0.04em">{{ prog.level }}</div>
+        <div style="font-size:15px;line-height:1.5;color:#e5f2f6;max-width:560px">{{ prog.next }}</div>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ prog.stats }}" as="m" hint-placeholder-count="4"><section style="flex:1 1 150px;min-width:0;background:#fff;border-radius:24px;padding:18px 20px"><div style="font-size:26px;font-weight:800;letter-spacing:-0.035em;color:{{ m.color }}">{{ m.v }}</div><div style="font-size:12px;font-weight:700;color:#6b5749">{{ m.k }}</div><div style="font-size:12px;color:#1d5a63;margin-top:2px">{{ m.sub }}</div></section></sc-for></div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:stretch">
+        <section style="flex:1 1 340px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><div style="font-size:18px;font-weight:800">{{ prog.projTitle }}</div><span style="font-size:12px;font-weight:700;color:#6b5749">{{ prog.projCiclo }}</span></div>
+          <div style="font-size:14px;color:#1d5a63;line-height:1.55">{{ prog.projTexto }}</div>
+          <div style="font-size:12px;font-weight:700;color:#6b5749;margin-top:8px">{{ L.certificado }}</div>
+          <div style="font-size:15px;font-weight:800;color:{{ cert.cor }}">{{ cert.titulo }}</div>
+          <div style="font-size:13px;color:#1d5a63;line-height:1.55">{{ cert.texto }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:4px"><sc-for list="{{ cert.numeros }}" as="c" hint-placeholder-count="3"><div style="flex:1 1 110px;min-width:0"><div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ c.v }}</div><div style="font-size:12px;color:#1d5a63">{{ c.k }}</div><div style="font-size:11px;color:#6b5749">{{ c.sub }}</div></div></sc-for></div>
+          <sc-if value="{{ cert.pronto }}"><div style="margin-top:6px"><a href="{{ cert.href }}" target="_blank" rel="noopener" style="text-decoration:none;background:#348a8e;color:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;display:inline-block">{{ L.abrirCertificado }}</a></div></sc-if>
+        </section>
+
+        <section style="flex:1 1 280px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;font-weight:700;color:#6b5749">{{ L.presencaCiclo }}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ attendance }}" as="a" hint-placeholder-count="10"><span title="{{ a.title }}" style="flex:1 1 10px;min-width:10px;height:10px;border-radius:5px;background:{{ a.bar }}"></span></sc-for></div>
+          <div style="font-size:13px;color:#1d5a63;line-height:1.5">{{ presencaLinha }}</div>
+          <sc-if value="{{ temPassados }}">
+            <div style="font-size:12px;font-weight:700;color:#6b5749;margin-top:8px">{{ L.projetosFeitos }}</div>
+            <sc-for list="{{ passados }}" as="p" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f2ebe3;font-size:14px"><span><b>{{ p.t }}</b> · {{ p.c }}</span></div></sc-for>
+          </sc-if>
+        </section>
+      </div>
+    </sc-if>
+
+    <!-- CLUBES -->
+    <sc-if value="{{ isClubs }}">
+      <sc-if value="{{ cbRecado }}"><div style="background:#fff;border-radius:16px;padding:14px 18px;font-size:14px;font-weight:700">{{ cbRecado }}</div></sc-if>
+
+      <sc-if value="{{ showMine }}">
+        <sc-if value="{{ semMeus }}"><section style="background:#fff;border-radius:24px;padding:22px 24px;font-size:15px;color:#1d5a63;line-height:1.6">{{ L.semClube }}</section></sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+          <sc-for list="{{ myClubs }}" as="c" hint-placeholder-count="2">
+            <section style="flex:1 1 340px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><div style="flex:1;min-width:140px;font-size:18px;font-weight:800;letter-spacing:-0.02em">{{ c.name }}</div><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.planoBg }};color:{{ c.planoFg }}">{{ c.planoLabel }}</span></div>
+              <div style="font-size:13px;color:#1d5a63">{{ c.slot }}</div>
+              <sc-if value="{{ c.temEncontros }}">
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ c.meetings }}" as="m" hint-placeholder-count="4">
+                    <div style="display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid #f2ebe3"><div style="flex:none;width:52px;font-size:13px;font-weight:800;color:#348a8e">{{ m.date }}</div><div style="flex:1;min-width:0;font-size:14px">{{ m.topic }}</div></div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.temSala }}"><div><a href="{{ c.link }}" target="_blank" rel="noopener" style="text-decoration:none;background:#164951;color:#fff;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;display:inline-block">{{ L.entrarEncontro }}</a></div></sc-if>
+              <sc-if value="{{ c.temMateriais }}">
+                <div style="font-size:12px;font-weight:700;color:#6b5749;margin-top:4px">{{ L.material }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ c.mats }}" as="m" hint-placeholder-count="2"><a href="{{ m.href }}" target="_blank" rel="noopener" style="text-decoration:none;background:#f7f5f1;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:#164951">{{ m.t }}</a></sc-for></div>
+              </sc-if>
+              <div><span onclick="{{ c.sair }}" style="font-size:13px;font-weight:700;color:#6b5749;cursor:pointer">{{ L.sairClube }}</span></div>
+            </section>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCatalog }}">
+        <sc-if value="{{ semAbertos }}"><section style="background:#fff;border-radius:24px;padding:22px 24px;font-size:15px;color:#1d5a63;line-height:1.6">{{ L.semAberto }}</section></sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+          <sc-for list="{{ catalog }}" as="c" hint-placeholder-count="3">
+            <section style="flex:1 1 340px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:#e5f2f6;color:#1d5a63">{{ c.formatLabel }}</span><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.vagasBg }};color:{{ c.vagasFg }}">{{ c.spotsLabel }}</span></div>
+              <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ c.name }}</div>
+              <div style="font-size:14px;color:#1d5a63;line-height:1.55">{{ c.desc }}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ c.facts }}" as="k"><div style="flex:1 1 110px;min-width:0"><div style="font-size:11px;font-weight:700;color:#6b5749">{{ k.k }}</div><div style="font-size:14px;font-weight:700">{{ k.v }}</div></div></sc-for></div>
+              <div style="font-size:13px;color:#6b5749;line-height:1.55">{{ c.price }}</div>
+              <div><button onclick="{{ c.toggle }}" style="border:0;background:{{ c.btnBg }};color:#fff;border-radius:999px;padding:13px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.btn }}</button></div>
+            </section>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- CONTA -->
+    <sc-if value="{{ isAccount }}">
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 320px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div style="font-size:18px;font-weight:800">{{ L.presenca }}</div><div style="font-size:26px;font-weight:800;letter-spacing:-0.035em;color:{{ presencaCor }}">{{ presencaPct }}</div></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ attendance }}" as="a" hint-placeholder-count="10"><span title="{{ a.title }}" style="flex:1 1 10px;min-width:10px;height:10px;border-radius:5px;background:{{ a.bar }}"></span></sc-for></div>
+          <div style="font-size:13px;color:#1d5a63;line-height:1.5">{{ presencaLinha }}</div>
+        </section>
+
+        <section style="flex:1 1 320px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:18px;font-weight:800">{{ L.financeiro }}</div>
+          <sc-if value="{{ semContrato }}"><div style="font-size:14px;color:#1d5a63;line-height:1.55">{{ L.semContrato }}</div></sc-if>
+          <sc-if value="{{ temContrato }}">
+            <div style="font-size:13px;color:#1d5a63">{{ contratoLinha }}</div>
+            <sc-for list="{{ parcelas }}" as="i" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f2ebe3;font-size:14px"><span style="font-weight:700">{{ i.month }}</span><span>{{ i.amount }}</span><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ i.bg }};color:{{ i.fg }}">{{ i.st }}</span></div>
+            </sc-for>
+          </sc-if>
+          <div style="font-size:12px;color:#6b5749;line-height:1.55">{{ L.financeiroNota }}</div>
+        </section>
+
+        <section style="flex:1 1 320px;min-width:0;background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:18px;font-weight:800">{{ L.miles }}</div>
+          <div style="font-size:30px;font-weight:800;letter-spacing:-0.04em">{{ milesFmt }}</div>
+          <div style="font-size:13px;color:#1d5a63;line-height:1.5">{{ milesLinha }}</div>
+          <sc-for list="{{ milesExtrato }}" as="m" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #f2ebe3;font-size:13.5px"><span style="flex:1;min-width:0">{{ m.o }}</span><span style="font-weight:800;color:{{ m.cor }}">{{ m.v }}</span></div>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+<sc-if value="{{ narrow }}">
+  <div style="height:86px"></div>
+  <nav style="position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #e9e2d8;padding:10px 6px 22px;display:grid;grid-template-columns:repeat(4,1fr);font-size:11px;font-weight:700;text-align:center;z-index:10">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><div onclick="{{ t.go }}" style="cursor:pointer;color:{{ t.fg }}"><span style="display:block;font-size:17px;line-height:1.3">{{ t.icon }}</span>{{ t.label }}</div></sc-for>
+  </nav>
+</sc-if>
+
+<sc-if value="{{ notifOpen }}">
+  <div onclick="{{ closeNotif }}" style="position:fixed;inset:0;z-index:25"></div>
+  <div style="position:fixed;top:76px;right:{{ notifRight }};width:360px;max-width:calc(100vw - 32px);background:#fff;border-radius:24px;box-shadow:0 12px 40px rgba(22,73,81,.18);padding:14px;z-index:26;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 8px 10px"><div style="font-size:15px;font-weight:800">{{ L.avisos }}</div></div>
+    <sc-if value="{{ semAvisos }}"><div style="padding:6px 8px 10px;font-size:13.5px;color:#1d5a63;line-height:1.5">{{ L.semAviso }}</div></sc-if>
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4"><div style="display:flex;gap:10px;padding:10px 8px;border-radius:14px"><span style="flex:none;font-size:15px">{{ n.icon }}</span><div style="flex:1;min-width:0;font-size:13.5px;line-height:1.5;color:#1d5a63">{{ n.text }}<div style="font-size:11.5px;color:#6b5749;margin-top:2px">{{ n.when }}</div></div></div></sc-for>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // Duas áreas, dados diferentes. Esta tela é a da ALUNA: ela lê a
+  // pessoa, a turma dela, a chamada dela, os clubes dela e o contrato
+  // dela. Nenhuma função de gestão entra aqui — nem fila, nem funil,
+  // nem folha, nem caixa.
+  state = { page: "home", clubTab: "mine", lang: "pt", notif: false,
+            recado: "", w: 1180, tick: 0 };
+
+  componentDidMount() {
+    this.onR = () => this.setState({ w: window.innerWidth });
+    try { this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); } catch (e) {}
+  }
+  componentWillUnmount() { try { window.removeEventListener("resize", this.onR); } catch (e) {} }
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  alunaId() {
+    try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
+  }
+
+  // "ter 20/10", e "hoje"/"amanhã" quando é o caso
+  dia(iso) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const d = new Date(iso + "T12:00:00"); const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
+    const dif = Math.round((d0 - hoje) / 86400000);
+    const sem = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][d.getDay()];
+    const dm = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    if (dif === 0) return { label: this.T("today", "hoje"), hoje: true, dm };
+    if (dif === 1) return { label: this.T("tomorrow", "amanhã"), hoje: false, dm };
+    return { label: sem + " " + dm, hoje: false, dm };
+  }
+
+  T(en, pt) { return (this.state.lang === "en" ? en : pt); }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const T = (en, pt) => this.T(en, pt);
+    const wide = this.state.w >= 900;
+    const page = this.state.page;
+
+    // ── as palavras da casca, nos dois idiomas ──
+    const L = {
+      entrarSala: T("Join live room", "Entrar na sala"),
+      estaSemana: T("This week", "Esta semana"),
+      semSemana: T("No class with a date this week.", "Nenhuma aula marcada para esta semana."),
+      meuProgresso: T("my progress", "meu progresso"),
+      verProgresso: T("See my progress", "Ver meu progresso"),
+      clubes: T("clubs", "clubes"),
+      verClubes: T("See my clubs", "Ver os clubes"),
+      ultimaGravacao: T("last class recording", "gravação da última aula"),
+      seuNivel: T("your level now", "seu nível agora"),
+      presencaCiclo: T("attendance this cycle", "presença no ciclo"),
+      projetosFeitos: T("finished projects", "projetos concluídos"),
+      certificado: T("certificate", "certificado"),
+      abrirCertificado: T("Open my certificate", "Abrir o meu certificado"),
+      material: T("reference material", "material de consulta"),
+      entrarEncontro: T("Join live meeting", "Entrar no encontro"),
+      sairClube: T("leave this club", "sair deste clube"),
+      semClube: T("You are not in a club yet. In \"All clubs\" you can see what the school offers.",
+        "Você ainda não está em nenhum clube. Em \"Todos os clubes\" estão os que a escola oferece."),
+      semAberto: T("No other club is open right now.", "Não há outro clube aberto agora."),
+      presenca: T("Attendance", "Presença"),
+      financeiro: T("Financial", "Financeiro"),
+      semContrato: T("No open contract.", "Nenhum contrato em aberto."),
+      financeiroNota: T("Payment questions go to the school on WhatsApp.",
+        "Dúvida de pagamento é com a escola, no WhatsApp."),
+      miles: T("ISR Miles", "ISR Miles"),
+      avisos: T("Notifications", "Avisos"),
+      semAviso: T("Nothing new.", "Nada novo por aqui.")
+    };
+
+    const vazio = Object.assign({
+      wide, narrow: !wide, mainPad: wide ? "28px 32px 40px" : "18px 16px 30px",
+      h1Size: wide ? "30px" : "24px",
+      inicial: "—", primeiroNome: "—", subNome: "",
+      navSections: [], tabs: [], subTabs: [], hasSub: false,
+      eyebrow: "", title: "—",
+      milesFmt: "0", milesLinha: "", goMiles: () => {},
+      langOpts: [], toggleNotif: () => {}, bellBg: "#fff", hasUnread: false, unread: "",
+      notifOpen: false, closeNotif: () => {}, notifs: [], notifRight: "32px",
+      semAvisos: true, L,
+      isHome: true, isProgress: false, isClubs: false, isAccount: false,
+      classEyebrow: "", classTitulo: "", classLinha: "", temSala: false, salaLink: "#",
+      weekCount: "", weekPct: "0%", week: [], semSemana: true,
+      prog: { level: "—", next: "", homeLinha: "", barras: [], stats: [],
+        projTitle: "", projCiclo: "", projTexto: "" },
+      goProgress: () => {}, goClubs: () => {},
+      clubesCartaoTitulo: "", clubesCartaoLinha: "",
+      temUltimaGravacao: false, ultimaGravacaoLink: "#", ultimaGravacaoTitulo: "", ultimaGravacaoSub: "",
+      cert: { cor: "#164951", titulo: "", texto: "", numeros: [], pronto: false, href: "#" },
+      attendance: [], presencaLinha: "", presencaPct: "—", presencaCor: "#164951",
+      temPassados: false, passados: [],
+      cbRecado: "", showMine: true, showCatalog: false, semMeus: true, semAbertos: true,
+      myClubs: [], catalog: [],
+      semContrato: true, temContrato: false, contratoLinha: "", parcelas: [],
+      milesExtrato: []
+    });
+    if (!CRM) return vazio;
+
+    const p = CRM.getPessoa(this.alunaId());
+    if (!p) return vazio;
+
+    // marca que ela abriu o app hoje — é como a escola sabe se é usado
+    if (CRM.registrarAcessoAluna && !this._acesso) {
+      this._acesso = true;
+      try { CRM.registrarAcessoAluna(p.id); } catch (e) {}
+    }
+
+    // ── dados dela ──
+    const g = (CRM.progressoDaAluna && CRM.progressoDaAluna(p.id)) || null;
+    const ct = (CRM.certificadoDaAluna && CRM.certificadoDaAluna(p.id)) || null;
+    const cl = (CRM.clubesParaAluna && CRM.clubesParaAluna(p.id)) || { meus: [], abertos: [], incluidos: 2, usados: 0 };
+    const moedas = (CRM.moedasDe && CRM.moedasDe(p.id)) || { total: 0, lista: [] };
+    const turmaRaw = (CRM.turmasLista() || []).filter(u => u.nivel + " · " + u.turma === p.turma)[0] || null;
+
+    // ── a semana dela ──
+    // "Esta semana" é a semana de verdade, de segunda a domingo: a que
+    // já passou conta como feita, e é isso que a barra mostra. Uma
+    // barra sobre os "próximos 7 dias" nunca sairia do zero.
+    const hoje0 = new Date(); hoje0.setHours(0, 0, 0, 0);
+    const seg = new Date(hoje0);
+    seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    const isoDe = (d) => d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2)
+      + "-" + ("0" + d.getDate()).slice(-2);
+    const daSemana = (CRM.agendaItens(7, isoDe(seg)) || []).filter(it =>
+      (it.tipo === "aula" && turmaRaw && it.turmaId === turmaRaw.id)
+      || (it.tipo === "aula_extra" && String(it.titulo || "").toLowerCase()
+            .indexOf(CRM.firstName(p.nome).toLowerCase()) >= 0)
+      || (it.tipo === "particular" && it.pessoaId === p.id));
+    const feitasNaSemana = daSemana.filter(it => it.data < isoDe(hoje0)).length;
+
+    const seteDias = (CRM.agendaItens(7) || []).filter(it =>
+      (it.tipo === "aula" && turmaRaw && it.turmaId === turmaRaw.id)
+      || (it.tipo === "aula_extra" && String(it.titulo || "").toLowerCase()
+            .indexOf(CRM.firstName(p.nome).toLowerCase()) >= 0)
+      || (it.tipo === "particular" && it.pessoaId === p.id));
+    // a lista é a da semana inteira: o que já aconteceu fica marcado,
+    // como no desenho, e é isso que a barra em cima está contando
+    const week = daSemana.slice(0, 8).map(it => {
+      const d = this.dia(it.data);
+      const passou = it.data < isoDe(hoje0);
+      // o nome da turma já carrega o horário entre parênteses; repetir
+      // "(TUE 8h BR | 13h NL)" no título e na linha de baixo é ruído
+      const titulo = it.tipo === "aula" && turmaRaw ? turmaRaw.nivel
+        : String(it.titulo || "").replace(/^Aula( extra)? · /, "");
+      return {
+        mark: passou ? "✓" : d.hoje ? "●" : "·",
+        dotBg: passou ? "#9ec970" : d.hoje ? "#fc9082" : "#f2ebe3", dotFg: "#164951",
+        t: titulo,
+        sub: [d.label, it.hora, turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : ""]
+          .filter(Boolean).join(" · "),
+        st: passou ? T("done", "aconteceu") : d.hoje ? T("today", "hoje") : d.label,
+        stBg: passou ? "#e8f5dd" : d.hoje ? "#fde4df" : "#f2ebe3",
+        stFg: passou ? "#3d6b22" : "#164951"
+      };
+    });
+    const proxima = seteDias[0] || null;
+    const hojeAula = seteDias.filter(it => this.dia(it.data).hoje)[0] || null;
+    const aula = hojeAula || proxima;
+
+    // ── a aula em destaque ──
+    const dAula = aula ? this.dia(aula.data) : null;
+    const classTitulo = aula
+      ? (turmaRaw && aula.tipo === "aula" ? turmaRaw.nivel : String(aula.titulo || "").replace(/^Aula( extra)? · /, ""))
+      : T("No class scheduled", "Nenhuma aula marcada");
+    const classLinha = aula
+      ? [turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : "",
+         dAula.label, aula.hora, turmaRaw && turmaRaw.projeto ? turmaRaw.projeto : ""].filter(Boolean).join(" · ")
+      : T("When the school opens the next cycle, your classes come back here.",
+          "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.");
+
+    // ── gravações ──
+    const grav = (CRM.gravacoesParaAluna && CRM.gravacoesParaAluna(p.id)) || { turma: [], extras: [] };
+    const ultima = (grav.turma || [])[0] || (grav.extras || [])[0] || null;
+
+    // ── presença, do jeito que ela já lia ──
+    const COR = { presente: "#9ec970", atraso: "#f5d77a", falta: "#fc9082", justificada: "#d9d2c7" };
+    const QUE = { presente: T("present", "presente"), atraso: T("late", "chegou atrasada"),
+      falta: T("absent", "faltou"), justificada: T("justified", "ausência avisada") };
+    const attendance = g ? g.aulas.map(a => ({
+      bar: COR[a.estado] || "#d9d2c7",
+      title: CRM.ddmm(a.data) + " · " + (QUE[a.estado] || a.estado)
+    })) : [];
+    const pc = g ? g.presenca : { pct: null, presentes: 0, total: 0, minimo: 75, ok: null, justificadas: 0 };
+    const presencaLinha = pc.total
+      ? pc.presentes + T(" of ", " de ") + pc.total + (pc.total === 1 ? T(" class", " aula") : T(" classes", " aulas"))
+        + (pc.ok ? T(". Above the minimum.", ". Você está acima do mínimo.")
+                 : T(". Below the " + pc.minimo + "% needed for the certificate.",
+                     ". Abaixo do mínimo de " + pc.minimo + "% para o certificado."))
+      : T("No class with attendance in this cycle yet.", "Nenhuma aula com chamada neste ciclo ainda.");
+
+    // ── contrato e parcelas ──
+    const contrato = (CRM.contratoVigente && CRM.contratoVigente(p)) || null;
+    const meses = (contrato && contrato.meses) || [];
+    // o valor já vem escrito do contrato ("R$ 497,00"): formatar de
+    // novo quebrava a tela, porque não é número
+    const parcelas = meses.slice(0, 6).map(m => {
+      const pago = !!m.pago;
+      return { month: m.label || m.key, amount: m.valor || contrato.parcelaValor || "—",
+        st: pago ? T("paid", "pago") : T("open", "em aberto"),
+        bg: pago ? "#e8f5dd" : "#fdf3d6", fg: pago ? "#3d6b22" : "#7a5c00" };
+    });
+
+    // ── clubes ──
+    const PLANO = {
+      incluido: [T("in your plan", "no seu plano"), "rgba(158,201,112,0.25)", "#3d6b22"],
+      pago: [T("3rd club · paid", "3º clube · pago"), "rgba(158,201,112,0.25)", "#3d6b22"],
+      pendente: [T("3rd club · to pay", "3º clube · a pagar"), "rgba(252,144,130,0.25)", "#a3392c"]
+    };
+    const ondeDe = (c) => c.formato === "presencial"
+      ? (c.local ? T("In person · ", "Presencial · ") + c.local : T("In person", "Presencial"))
+      : T("Online", "Online");
+    const quandoDe = (c) => [c.dia, c.hora, c.duracao].filter(Boolean).join(" · ");
+    const myClubs = cl.meus.map(c => {
+      const pl = PLANO[c.plano] || PLANO.incluido;
+      return {
+        name: c.nome, planoLabel: pl[0], planoBg: pl[1], planoFg: pl[2],
+        slot: [c.professora ? T("with ", "com ") + c.professora : "", quandoDe(c), ondeDe(c)].filter(Boolean).join(" · "),
+        temEncontros: (c.encontros || []).length > 0,
+        meetings: (c.encontros || []).map(e => ({ date: e.quando || "—", topic: e.tema || "" })),
+        temSala: !!c.link, link: c.link || "#",
+        temMateriais: (c.materiais || []).length > 0,
+        mats: (c.materiais || []).map(m => ({ t: m.label || T("material", "material"), href: m.link || "#" })),
+        sair: () => {
+          CRM.clubeSair(c.id, p.id);
+          this.setState({ recado: T("You left ", "Você saiu do ") + c.nome + "." });
+          this.bump();
+        }
+      };
+    });
+    const catalog = cl.abertos.map(c => ({
+      name: c.nome,
+      formatLabel: ondeDe(c),
+      spotsLabel: c.lotado ? T("no spot now", "sem vaga agora")
+        : (c.livres === null ? T("open", "com vaga")
+          : c.livres + (c.livres === 1 ? T(" spot", " vaga") : T(" spots", " vagas"))),
+      vagasBg: c.lotado ? "#fde4df" : "#e8f5dd", vagasFg: c.lotado ? "#a3392c" : "#3d6b22",
+      desc: c.descricao || "",
+      facts: [
+        { k: T("when", "quando"), v: quandoDe(c) || "—" },
+        { k: T("teacher", "professora"), v: c.professora || "—" },
+        { k: T("meetings", "encontros"), v: String((c.encontros || []).length || 4) }
+      ],
+      price: c.naEspera
+        ? T("You are number ", "Você é a ") + c.posicaoEspera + T(" in the queue.", "ª da fila. Quando abrir vaga, você entra e a escola avisa.")
+        : c.cobra
+          ? T("This would be club number " + c.seria + ". From the third on, the school charges separately.",
+              "Este seria o seu " + c.seria + "º clube. Do terceiro em diante a escola cobra à parte — a inscrição fica registrada como a pagar.")
+          : T("In your plan: this would be club number " + c.seria + ".",
+              "Está no seu plano: este seria o seu " + c.seria + "º clube."),
+      btn: c.naEspera ? T("you are on the list", "você está na espera")
+        : c.lotado ? T("Join the waiting list", "Entrar na lista de espera")
+          : T("Join this club", "Entrar no clube"),
+      btnBg: c.naEspera ? "#9b8b7e" : c.lotado ? "#9c6f56" : "#348a8e",
+      toggle: () => {
+        if (c.naEspera) return;
+        const r = CRM.clubeEntrar(c.id, p.id);
+        this.setState({ recado: r.espera
+          ? T("You are on the waiting list for ", "Você entrou na lista de espera do ") + c.nome
+            + T(", position ", ", na ") + r.posicao + T(".", "ª posição.")
+          : r.plano === "pendente"
+            ? T("You are in ", "Pronto, você está no ") + c.nome
+              + T(". It is your club number " + r.ordem + ", so the school will charge separately.",
+                  ". Como é o seu " + r.ordem + "º clube, a escola vai cobrar à parte.")
+            : T("You are in ", "Pronto, você está no ") + c.nome + "." });
+        this.bump();
+      }
+    }));
+
+    // ── avisos: o que mudou para ela ──
+    const notifs = [];
+    if (ct && ct.pronto) notifs.push({ icon: "◆", text: T("Your certificate is ready.", "O seu certificado está pronto."), when: "" });
+    cl.meus.forEach(c => {
+      if (c.plano === "pendente") notifs.push({ icon: "◷",
+        text: T("The school will charge for ", "A escola vai cobrar à parte o ") + c.nome + ".", when: "" });
+    });
+    if (pc.ok === false) notifs.push({ icon: "▲",
+      text: T("Your attendance is below the minimum for the certificate.",
+        "A sua presença está abaixo do mínimo do certificado."), when: "" });
+
+    // ── as páginas ──
+    const PAGINAS = {
+      home: { label: T("Home", "Início"), icon: "⌂", eyebrow: T("your week", "a sua semana"),
+        title: T("Hello, ", "Olá, ") + CRM.firstName(p.nome) },
+      clubs: { label: T("Clubs", "Clubes"), icon: "◎", eyebrow: T("community", "comunidade"),
+        title: T("Clubs", "Clubes") },
+      progress: { label: T("Progress", "Progresso"), icon: "◔", eyebrow: T("me", "eu"),
+        title: T("My progress", "Meu progresso") },
+      account: { label: T("Account", "Conta"), icon: "◍", eyebrow: T("me", "eu"),
+        title: T("My account", "Minha conta") }
+    };
+    const GRUPOS = [
+      { h: "", ids: ["home"] },
+      { h: T("community", "comunidade"), ids: ["clubs"] },
+      { h: T("me", "eu"), ids: ["progress", "account"] }
+    ];
+    const item = (id) => ({
+      label: PAGINAS[id].label,
+      badge: id === "clubs" && cl.abertos.length ? String(cl.abertos.length) : "",
+      bg: page === id ? "rgba(255,255,255,.14)" : "transparent",
+      op: page === id ? 1 : 0.82,
+      go: () => { this.setState({ page: id, notif: false, recado: "" }); try { window.scrollTo(0, 0); } catch (e) {} }
+    });
+
+    const nivel = g ? (g.nivel || "—") : "—";
+
+    return {
+      wide, narrow: !wide,
+      mainPad: wide ? "28px 32px 40px" : "18px 16px 30px",
+      h1Size: wide ? "30px" : "24px",
+
+      inicial: (CRM.firstName(p.nome) || "?").slice(0, 1).toUpperCase(),
+      primeiroNome: CRM.firstName(p.nome),
+      subNome: [nivel !== "—" ? nivel : p.nivel, turmaRaw && turmaRaw.turma ? turmaRaw.turma : ""].filter(Boolean).join(" · "),
+
+      navSections: GRUPOS.map(gr => ({ hasH: !!gr.h, h: gr.h, items: gr.ids.map(item) })),
+      tabs: ["home", "clubs", "progress", "account"].map(id => ({
+        label: PAGINAS[id].label, icon: PAGINAS[id].icon,
+        fg: page === id ? "#164951" : "#9b8b7e",
+        go: item(id).go
+      })),
+      hasSub: page === "clubs",
+      subTabs: page === "clubs"
+        ? [["mine", T("My clubs", "Meus clubes")], ["catalog", T("All clubs", "Todos os clubes")]].map(([id, label]) => ({
+            label,
+            bg: (this.state.clubTab || "mine") === id ? "#164951" : "transparent",
+            fg: (this.state.clubTab || "mine") === id ? "#fff" : "#164951",
+            go: () => this.setState({ clubTab: id, recado: "" })
+          }))
+        : [],
+
+      eyebrow: PAGINAS[page].eyebrow, title: PAGINAS[page].title,
+
+      milesFmt: String(moedas.total || 0),
+      milesLinha: T("earned with class, homework and clubs", "ganhas com aula, tarefa e clube"),
+      goMiles: () => this.setState({ page: "account", notif: false }),
+
+      langOpts: [["pt", "PT"], ["en", "EN"]].map(([id, label]) => ({
+        label, bg: this.state.lang === id ? "#164951" : "transparent",
+        fg: this.state.lang === id ? "#fff" : "#164951",
+        pick: () => this.setState({ lang: id })
+      })),
+      toggleNotif: () => this.setState({ notif: !this.state.notif }),
+      bellBg: this.state.notif ? "#fde4df" : "#fff",
+      hasUnread: notifs.length > 0, unread: String(notifs.length),
+      notifOpen: !!this.state.notif, closeNotif: () => this.setState({ notif: false }),
+      notifs, semAvisos: notifs.length === 0, notifRight: wide ? "32px" : "16px",
+      L,
+
+      isHome: page === "home", isProgress: page === "progress",
+      isClubs: page === "clubs", isAccount: page === "account",
+
+      // ── início ──
+      classEyebrow: aula ? (dAula.hoje ? T("today", "hoje") : T("next class", "próxima aula")) : T("your class", "a sua aula"),
+      classTitulo, classLinha,
+      temSala: !!(turmaRaw && turmaRaw.meet), salaLink: (turmaRaw && turmaRaw.meet) || "#",
+      weekCount: daSemana.length
+        ? feitasNaSemana + T(" of ", " de ") + daSemana.length + T(" done", " já aconteceram")
+        : T("no class this week", "nenhuma aula esta semana"),
+      weekPct: (daSemana.length ? Math.round(100 * feitasNaSemana / daSemana.length) : 0) + "%",
+      semSemana: daSemana.length === 0,
+      week,
+
+      prog: {
+        level: nivel,
+        next: g && g.proximoNivel
+          ? T("Finishing this cycle with attendance, the next step is " + g.proximoNivel + ".",
+              "Terminando este ciclo com frequência, o próximo passo é " + g.proximoNivel + ".")
+          : T("You are at the most advanced level.", "Você está no nível mais avançado das turmas."),
+        homeLinha: pc.pct === null
+          ? T("No attendance in this cycle yet.", "Ainda sem chamada neste ciclo.")
+          : pc.pct + T("% attendance", "% de presença") + (g && g.projeto ? " · " + g.projeto : ""),
+        barras: attendance.slice(-8),
+        stats: [
+          { v: pc.pct === null ? "—" : pc.pct + "%", k: T("attendance", "presença"),
+            sub: T("minimum ", "mínimo ") + pc.minimo + "%",
+            color: pc.ok === null ? "#8a7465" : (pc.ok ? "#3d6b22" : "#a3392c") },
+          { v: pc.total ? pc.presentes + "/" + pc.total : "—", k: T("classes", "aulas"),
+            sub: pc.justificadas ? pc.justificadas + T(" justified", " justificada(s)") : T("this cycle", "neste ciclo"),
+            color: "#164951" },
+          { v: g && g.tarefas.pedidas ? g.tarefas.feitas + "/" + g.tarefas.pedidas : "—",
+            k: T("homework", "tarefas"), sub: T("handed in", "entregues"), color: "#164951" },
+          { v: ct ? ct.horas + "h" : "—", k: T("hours", "carga horária"),
+            sub: T("so far", "até agora"), color: "#164951" }
+        ],
+        projTitle: (g && g.projeto) || T("Project of the cycle", "Projeto do ciclo"),
+        projCiclo: g && g.ciclo ? T("cycle ", "ciclo ") + g.ciclo : "",
+        projTexto: g && g.projeto
+          ? T("This is what your class is building this cycle.", "É o que a sua turma está construindo neste ciclo.")
+          : T("No project registered for this cycle.", "Nenhum projeto registrado neste ciclo.")
+      },
+      goProgress: () => this.setState({ page: "progress", notif: false }),
+      goClubs: () => this.setState({ page: "clubs", notif: false }),
+
+      clubesCartaoTitulo: cl.meus.length
+        ? cl.meus.length + (cl.meus.length === 1 ? T(" club", " clube") : T(" clubs", " clubes"))
+        : T("No club yet", "Nenhum clube ainda"),
+      clubesCartaoLinha: cl.meus.length
+        ? cl.meus.map(c => c.nome).join(" · ")
+        : (cl.abertos.length
+            ? cl.abertos.length + (cl.abertos.length === 1 ? T(" club open", " clube aberto") : T(" clubs open", " clubes abertos"))
+            : T("Nothing open right now.", "Nada aberto agora.")),
+
+      temUltimaGravacao: !!ultima,
+      ultimaGravacaoLink: (ultima && ultima.url) || "#",
+      ultimaGravacaoTitulo: (ultima && (ultima.titulo || ultima.turma)) || "",
+      ultimaGravacaoSub: ultima && ultima.data ? CRM.ddmm(ultima.data) : "",
+
+      cert: {
+        cor: ct && ct.pronto ? "#3d6b22" : "#164951",
+        titulo: !ct ? "—" : ct.pronto ? T("Ready", "Pronto para emissão") : T("Not closed yet", "Ainda não fechou"),
+        texto: !ct ? "" : ct.pronto
+          ? T("You closed the cycle above the minimum attendance.",
+              "Você fechou o ciclo com presença acima do mínimo.")
+          : ct.falta,
+        numeros: !ct ? [] : [
+          { v: ct.horas + "h", k: T("hours", "carga horária"), sub: T("so far", "até agora") },
+          { v: ct.horasNoFimDoCiclo + "h", k: T("at the end", "no fim do ciclo"), sub: T("if you don't miss", "se você não faltar") },
+          { v: ct.frequencia === null ? "—" : ct.frequencia + "%", k: T("attendance", "presença"),
+            sub: T("needs ", "o certificado pede ") + (ct.minimo) + "%" }
+        ],
+        pronto: !!(ct && ct.pronto),
+        href: "ISR%20-%20Certificado.dc.html?id=" + encodeURIComponent(p.id) + "&de=app"
+      },
+
+      attendance, presencaLinha,
+      presencaPct: pc.pct === null ? "—" : pc.pct + "%",
+      presencaCor: pc.ok === null ? "#8a7465" : (pc.ok ? "#3d6b22" : "#a3392c"),
+      temPassados: !!(g && g.projetosPassados.length),
+      passados: g ? g.projetosPassados.map(x => ({ t: x.projeto, c: x.turma })) : [],
+
+      // ── clubes ──
+      cbRecado: this.state.recado || "",
+      showMine: (this.state.clubTab || "mine") === "mine",
+      showCatalog: (this.state.clubTab || "mine") === "catalog",
+      semMeus: myClubs.length === 0, semAbertos: catalog.length === 0,
+      myClubs, catalog,
+
+      // ── conta ──
+      semContrato: !contrato || !meses.length,
+      temContrato: !!(contrato && meses.length),
+      contratoLinha: contrato
+        ? [contrato.tipo || T("Enrollment", "Matrícula"),
+           contrato.inicio ? CRM.ddmm(contrato.inicio) : "",
+           contrato.fim ? T("to ", "até ") + CRM.ddmm(contrato.fim) : ""].filter(Boolean).join(" · ")
+        : "",
+      parcelas,
+      milesExtrato: (moedas.extrato || []).slice().reverse().slice(0, 6).map(m => ({
+        o: m.label + (m.em ? " · " + CRM.ddmm(m.em) : ""),
+        v: (m.valor > 0 ? "+" : "") + m.valor,
+        cor: m.valor > 0 ? "#3d6b22" : "#a3392c"
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
