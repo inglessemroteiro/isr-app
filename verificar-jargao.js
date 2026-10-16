@@ -29,7 +29,13 @@ var PROIBIDOS = [
   { re: /\bticket-alvo\b|\bticket m[ée]dio-alvo\b/i, por: "\"preço-alvo\"" },
   { re: /\bequival[êe]ncia mensal proporcional\b/i, por: "\"quanto fica por mês\"" },
   { re: /\bcarga semanal\b/i, por: "\"contatos por semana\"" },
-  { re: /\bdesfecho\b/i, por: "\"resultado\" ou \"o que aconteceu\"" }
+  { re: /\bdesfecho\b/i, por: "\"resultado\" ou \"o que aconteceu\"" },
+  // quem estuda aqui é aluna; quem ainda não fechou é lead. "Pessoa" é a
+  // palavra do banco de dados, não a da escola — e não diz quem é.
+  // Fica de fora onde a palavra não quer dizer aluna: a equipe, a folha
+  // e a agenda falam de quem trabalha aqui.
+  { re: /\bpessoas?\b/i, por: "\"aluna\", ou \"lead\" se ainda não fechou",
+    exceto: ["Equipe", "Folha", "Agenda"] }
 ];
 
 // A abertura da tela é um nome, não uma legenda. Corrigir o relatório
@@ -90,6 +96,7 @@ arquivos.forEach(function (f) {
   var texto = textoVisivel(html);
   erros += conferirAbertura(html, f);
   PROIBIDOS.forEach(function (p) {
+    if (p.exceto && p.exceto.some(function (x) { return f.indexOf(x) >= 0; })) return;
     var m = texto.match(p.re);
     if (!m) return;
     var i = texto.indexOf(m[0]);

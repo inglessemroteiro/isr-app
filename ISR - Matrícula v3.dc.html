@@ -60,21 +60,21 @@
             <sc-if value="{{ escolhendoDoCadastro }}">
               <!-- dezenas de pessoas no seletor: digitar três letras é
                    mais rápido do que rolar a lista -->
-              <input value="{{ buscaPessoa }}" oninput="{{ onBuscaPessoa }}" placeholder="buscar pessoa…" style="width: 100%; box-sizing: border-box; border: 0; border-radius: 14px; padding: 11px 14px; font-size: 14px; font-family: inherit; color: #164951; background: #f2ebe3; outline: none;" />
+              <input value="{{ buscaPessoa }}" oninput="{{ onBuscaPessoa }}" placeholder="buscar aluna ou lead…" style="width: 100%; box-sizing: border-box; border: 0; border-radius: 14px; padding: 11px 14px; font-size: 14px; font-family: inherit; color: #164951; background: #f2ebe3; outline: none;" />
               <select onchange="{{ onPessoa }}" style="width: 100%; box-sizing: border-box; border: 1px solid #e2c8b5; border-radius: 14px; padding: 11px 14px; font-size: 15px; font-family: inherit; color: #164951; background: #fff; outline: none;">
                 <option value="">Escolha quem está matriculando…</option>
                 <sc-for list="{{ pessoaOpts }}" as="po" hint-placeholder-count="6">
                   <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
                 </sc-for>
-                <option value="__nova">+ Adicionar nova pessoa</option>
+                <option value="__nova">+ Adicionar nova aluna</option>
               </select>
               <sc-if value="{{ temPessoa }}">
                 <div style="background: #f5f5f0; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #1d5a63; line-height: 1.5;">{{ pessoaInfo }}</div>
               </sc-if>
-              <button onclick="{{ onAbrirNova }}" style="align-self: flex-start; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #348a8e; cursor: pointer;">+ Adicionar nova pessoa (não passou pelo CRM)</button>
+              <button onclick="{{ onAbrirNova }}" style="align-self: flex-start; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #348a8e; cursor: pointer;">+ Adicionar nova aluna (não passou pelo CRM)</button>
             </sc-if>
             <sc-if value="{{ pessoaNova }}">
-              <div style="background: #f5f5f0; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #1d5a63; line-height: 1.5;">Pessoa nova, fora do CRM. Os dados vão nos campos abaixo; ela entra no cadastro ao salvar.</div>
+              <div style="background: #f5f5f0; border-radius: 12px; padding: 10px 12px; font-size: 13px; color: #1d5a63; line-height: 1.5;">Aluna nova, fora do CRM. Os dados vão nos campos abaixo; ela entra no cadastro ao salvar.</div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                 <span style="font-size: 12px; font-weight: 600; color: #8a7465; margin-right: 4px;">como chegou</span>
                 <sc-for list="{{ canaisNova }}" as="cn" hint-placeholder-count="5">
@@ -446,7 +446,7 @@ class Component extends DCLogic {
         onPessoa: e => this.setState({ pessoaId: e.target.value, produtos: null, turmaId: null, erro: "" }),
         onAbrirNova: () => this.setState({ pessoaId: "__nova", erro: "" }),
         opcoesProduto: [], produtoHint: "Escolha quem está matriculando para continuar.",
-        resumo: [{ k: "Pessoa", v: "—" }],
+        resumo: [{ k: "Aluna", v: "—" }],
         concluirBg: "#d8d2c6", concluirSombra: "none", concluirFg: "#8a7465",
         concluirLabel: "Escolha quem está matriculando",
         onConcluir: () => this.setState({ erro: "Escolha quem está matriculando." })
@@ -585,8 +585,8 @@ class Component extends DCLogic {
     // O v5 lista os campos que faltam em vez de deixar o botão falhar
     // depois do clique. A regra é a mesma do salvar.
     const faltas = [];
-    if (pessoaNova && !this.val(this.nomeRef)) faltas.push("Nome da pessoa");
-    if (pessoaNova && !this.val(this.zapRef)) faltas.push("WhatsApp da pessoa");
+    if (pessoaNova && !this.val(this.nomeRef)) faltas.push("Nome da aluna");
+    if (pessoaNova && !this.val(this.zapRef)) faltas.push("WhatsApp da aluna");
     if (nenhumProduto) faltas.push("O que ela contratou");
     if (temMensalidade) {
       const vAtual = this.val(this.valorRef) || (pr ? pr.valorParcela : "");
@@ -599,7 +599,7 @@ class Component extends DCLogic {
     if (querTurma) efeitos.push.apply(efeitos, [
       { cor: "#348a8e", texto: nomeTurma + " passa a ser a turma de " + nomePessoa
         + (unidade && unidade.teacher ? ", com " + unidade.teacher : "") + "." },
-      { cor: "#5a9e4b", texto: "A pessoa entra no cadastro de Alunas e ocupa vaga na turma desde já."
+      { cor: "#5a9e4b", texto: "Ela entra no cadastro de Alunas e ocupa vaga na turma desde já."
         + (retro || desdeEfetivo === hojeIso
             ? " Já aparece na chamada."
             : " Na chamada da turma ela aparece a partir de " + CRM.ddmm(desdeEfetivo) + "."
@@ -620,7 +620,7 @@ class Component extends DCLogic {
       email: pessoaNova ? "nome@email.com" : (p.email || "—"),
       nivel: pessoaNova ? "Básico (A1)" : (p.nivel || "—"),
       dadosNota: pessoaNova
-        ? "Pessoa nova: preencha ao menos o nome e o WhatsApp. Ela entra no cadastro ao salvar."
+        ? "Aluna nova: preencha ao menos o nome e o WhatsApp. Ela entra no cadastro ao salvar."
         : "Vieram do cadastro. Corrija o que estiver desatualizado.",
 
       // ── quem ──
@@ -698,7 +698,7 @@ class Component extends DCLogic {
 
       // ── o resumo, que fica à vista enquanto se preenche ──
       resumo: [
-        { k: "Pessoa", v: nomePessoa },
+        { k: "Aluna", v: nomePessoa },
         { k: "Contratou", v: [querTurma ? "turma" : "", querParticular ? "particular" : ""]
             .filter(Boolean).join(" + ") || "—" },
         { k: "Turma", v: querTurma ? nomeTurma : "—" },
@@ -801,7 +801,7 @@ class Component extends DCLogic {
               email: this.val(this.emailRef),
               canal: canalNova })
           : p;
-        if (!alvo) { this.setState({ erro: "Não foi possível criar o cadastro desta pessoa." }); return; }
+        if (!alvo) { this.setState({ erro: "Não foi possível criar o cadastro desta aluna." }); return; }
 
         // dados de cadastro: campo em branco mantém o que já estava
         const cad = {};

@@ -5839,7 +5839,7 @@
     var d;
     try { d = JSON.parse(texto); } catch (e) { return { ok: false, erro: "Arquivo não é um JSON válido." }; }
     if (!d || typeof d !== "object") return { ok: false, erro: "Arquivo vazio ou em formato inesperado." };
-    if (!d[PESSOAS_KEY]) return { ok: false, erro: "O arquivo não contém o cadastro de pessoas." };
+    if (!d[PESSOAS_KEY]) return { ok: false, erro: "O arquivo não contém o cadastro de alunas." };
     criarBackup("antes de importar arquivo");
     var n = 0;
     CHAVES_DADOS.forEach(function (k) {
@@ -6116,7 +6116,7 @@
   function payloadLocal() {
     return {
       // pessoas vai CRU (com as lápides): é o sync que espalha o
-      // "esta pessoa foi apagada" para os outros aparelhos
+      // "esta aluna foi apagada" para os outros aparelhos
       pessoas: loadPessoasRaw(), custos: custosLista(), templates: tplStore(),
       // turmas vai CRU (com as lápides): sem isto a marca de "apagada"
       // não subia ao banco e o puxe seguinte devolvia a turma

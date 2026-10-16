@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-w",
+  numero: "2026.10.16-x",
   data: "16/10/2026",
-  nota: "A Matrícula em duas colunas, com o resumo fixo. A pessoa passa a ser escolhida na própria tela, e dá para matricular quem nunca passou pelo CRM"
+  nota: "Pessoa sai do texto das telas: quem estuda é aluna, quem ainda não fechou é lead"
 };
