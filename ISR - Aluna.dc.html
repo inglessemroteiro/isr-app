@@ -379,6 +379,17 @@
               </button>
             </sc-if>
 
+            <!-- os clubes: ou os dela, ou o convite para entrar num -->
+            <sc-if value="{{ cbCartaoLinha }}">
+              <button onclick="{{ cbVer }}" class="isr-btn" style="display: flex; width: 100%; align-items: center; gap: 10px; margin-bottom: 14px; background: #f7f5f1; border: 0; border-radius: 12px; padding: 12px 14px; cursor: pointer; text-align: left; font-family: inherit;">
+                <span style="flex: 1; min-width: 0;">
+                  <span style="display: block; font-size: 13.5px; font-weight: 700; color: #164951;">Clubes</span>
+                  <span style="display: block; font-size: 12px; color: #6b6155; margin-top: 1px;">{{ cbCartaoLinha }}</span>
+                </span>
+                <span style="flex: none; font-size: 12.5px; font-weight: 700; color: #348a8e;">ver →</span>
+              </button>
+            </sc-if>
+
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
               <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="3">
                 <div style="background: #f7f5f1; border-radius: 10px; padding: 11px 6px; text-align: center;">
@@ -541,6 +552,99 @@
 
           <div style="margin-top: 14px;">
             <span onclick="{{ pgVoltar }}" style="font-size: 13px; font-weight: 700; color: #348a8e; cursor: pointer;">← voltar para o início</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ══════════ CLUBES ══════════ -->
+      <!-- Clube é encontro de conversa por tema, fora da aula. A
+           aluna não tinha onde ver os dela nem onde entrar num novo:
+           a inscrição era pedida por fora, e a escola perdia a
+           inscrição que ela faria sozinha. -->
+      <sc-if value="{{ tabClubes }}">
+        <div style="margin: 12px 0 20px;">
+          <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+            <sc-for list="{{ cbAbas }}" as="ca" hint-placeholder-count="2">
+              <button onclick="{{ ca.onClick }}" class="isr-btn" style="border: 0; background: {{ ca.bg }}; color: {{ ca.fg }}; border-radius: 999px; padding: 8px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit;">{{ ca.label }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ cbMeus }}">
+            <sc-if value="{{ cbSemMeus }}">
+              <section style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 18px;">
+                <div style="font-size: 14px; color: #6b6155; line-height: 1.6;">Você ainda não está em nenhum clube. Em "Todos os clubes" estão os que a escola oferece, e é por lá que você entra.</div>
+              </section>
+            </sc-if>
+            <sc-for list="{{ cbLista }}" as="cb" hint-placeholder-count="2">
+              <section style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
+                  <span style="flex: 1; min-width: 140px; font-size: 16px; font-weight: 700; color: #164951;">{{ cb.nome }}</span>
+                  <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: {{ cb.planoBg }}; color: {{ cb.planoFg }}; border-radius: 999px; padding: 3px 9px;">{{ cb.planoLabel }}</span>
+                </div>
+                <div style="font-size: 12.5px; color: #6b6155; margin-top: 3px;">{{ cb.linha }}</div>
+                <sc-if value="{{ cb.temOnde }}">
+                  <div style="font-size: 12.5px; color: #6b6155; margin-top: 2px;">{{ cb.onde }}</div>
+                </sc-if>
+                <sc-if value="{{ cb.temEncontros }}">
+                  <div style="margin-top: 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e;">os encontros</div>
+                    <sc-for list="{{ cb.encontros }}" as="ce" hint-placeholder-count="4">
+                      <div style="display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f2ebe3;">
+                        <span style="flex: none; width: 46px; font-size: 12px; font-weight: 700; color: #348a8e;">{{ ce.quando }}</span>
+                        <span style="flex: 1; font-size: 13px; color: #164951;">{{ ce.tema }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ cb.temMateriais }}">
+                  <div style="margin-top: 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8b7e;">material de consulta</div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px;">
+                      <sc-for list="{{ cb.materiais }}" as="cm" hint-placeholder-count="2">
+                        <a href="{{ cm.href }}" target="_blank" rel="noopener" style="text-decoration: none; background: #f7f5f1; border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 700; color: #164951;">{{ cm.label }}</a>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ cb.temSair }}">
+                  <div style="margin-top: 12px;">
+                    <span onclick="{{ cb.onSair }}" style="font-size: 12px; font-weight: 700; color: #9b8b7e; cursor: pointer;">{{ cb.sairLabel }}</span>
+                  </div>
+                </sc-if>
+              </section>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ cbTodos }}">
+            <sc-if value="{{ cbSemAbertos }}">
+              <section style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 18px;">
+                <div style="font-size: 14px; color: #6b6155; line-height: 1.6;">Não há outro clube aberto agora. Quando a escola abrir um novo, ele aparece aqui.</div>
+              </section>
+            </sc-if>
+            <sc-for list="{{ cbAbertos }}" as="cb" hint-placeholder-count="3">
+              <section style="background: #fff; border: 1px solid #e8e5e0; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;">
+                <div style="font-size: 16px; font-weight: 700; color: #164951;">{{ cb.nome }}</div>
+                <div style="font-size: 12.5px; color: #6b6155; margin-top: 3px;">{{ cb.linha }}</div>
+                <sc-if value="{{ cb.temDescricao }}">
+                  <div style="font-size: 13px; color: #6b6155; margin-top: 7px; line-height: 1.5;">{{ cb.descricao }}</div>
+                </sc-if>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px;">
+                  <button onclick="{{ cb.onEntrar }}" class="isr-btn" style="border: 0; background: {{ cb.botaoBg }}; color: #fff; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;">{{ cb.botao }}</button>
+                  <span style="font-size: 12px; color: #6b6155;">{{ cb.vagasLabel }}</span>
+                </div>
+                <div style="font-size: 12px; color: #9b8b7e; margin-top: 8px; line-height: 1.5;">{{ cb.aviso }}</div>
+              </section>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ cbRecado }}">
+            <div style="background: #f7f5f1; border-radius: 12px; padding: 12px 14px; font-size: 13px; font-weight: 700; color: #164951; margin-bottom: 12px;">{{ cbRecado }}</div>
+          </sc-if>
+
+          <p style="margin: 14px 0 0; font-size: 12px; color: #9b8b7e; line-height: 1.55;">{{ cbRegra }}</p>
+
+          <div style="margin-top: 14px;">
+            <span onclick="{{ cbVoltar }}" style="font-size: 13px; font-weight: 700; color: #348a8e; cursor: pointer;">← voltar para o início</span>
           </div>
         </div>
       </sc-if>
@@ -1166,7 +1270,8 @@ class Component extends DCLogic {
   state = { tab: "inicio", pedidoFeito: false, resgateMsg: "", tick: 0,
             missaoErro: "", missaoAberta: false, verGanhar: false,
             pulsoId: "", pulsoNota: 0, pulsoFeito: false, pulsoComentou: false,
-            perfilAberto: false, perfilSalvo: false, cancelandoAsn: false };
+            perfilAberto: false, perfilSalvo: false, cancelandoAsn: false,
+            clubeAba: "meus", clubeRecado: "" };
   corrTextoRef = React.createRef();
   missaoRef = React.createRef();
 
@@ -1524,6 +1629,93 @@ class Component extends DCLogic {
       tabInicio: tab === "inicio", tabAulas: tab === "aulas",
       tabMateriais: tab === "materiais",
       tabProgresso: !modoDesafio && tab === "progresso",
+      tabClubes: !modoDesafio && tab === "clubes",
+
+      // ── os clubes dela ──
+      // Clube é encontro de conversa por tema, fora da aula. Entrar
+      // num terceiro custa, e isso é dito antes do clique, não
+      // depois: a aluna não pode descobrir a cobrança pela fatura.
+      ...(() => {
+        const vazio = { cbAbas: [], cbMeus: true, cbTodos: false, cbLista: [],
+          cbAbertos: [], cbSemMeus: true, cbSemAbertos: true, cbRegra: "",
+          cbRecado: "", cbVoltar: () => {}, cbCartaoLinha: "", cbVer: () => {} };
+        if (!CRM.clubesParaAluna || !p || !p.id) return vazio;
+        const cl = CRM.clubesParaAluna(p.id);
+        const aba = this.state.clubeAba || "meus";
+        const PLANO = {
+          incluido: ["no seu plano", "rgba(158,201,112,0.2)", "#5a9a2e"],
+          pago: ["3º clube · pago", "rgba(158,201,112,0.2)", "#5a9a2e"],
+          pendente: ["3º clube · a pagar", "rgba(252,144,130,0.2)", "#c8622f"]
+        };
+        const onde = (c) => c.formato === "presencial"
+          ? (c.local ? "Presencial · " + c.local : "Presencial")
+          : "Online";
+        const quando = (c) => [c.dia, c.hora, c.duracao].filter(Boolean).join(" ");
+        return {
+          cbAbas: [{ id: "meus", label: "Meus clubes" }, { id: "todos", label: "Todos os clubes" }]
+            .map(x => ({ label: x.label,
+              bg: aba === x.id ? "#348a8e" : "#f7f5f1",
+              fg: aba === x.id ? "#fff" : "#164951",
+              onClick: () => this.setState({ clubeAba: x.id, clubeRecado: "" }) })),
+          cbMeus: aba === "meus", cbTodos: aba === "todos",
+          cbSemMeus: cl.meus.length === 0,
+          cbSemAbertos: cl.abertos.length === 0,
+          cbLista: cl.meus.map(c => {
+            const pl = PLANO[c.plano] || PLANO.incluido;
+            return {
+              nome: c.nome,
+              planoLabel: pl[0], planoBg: pl[1], planoFg: pl[2],
+              linha: [c.professora ? "com " + c.professora : "", quando(c)].filter(Boolean).join(" · "),
+              temOnde: true, onde: onde(c),
+              temEncontros: (c.encontros || []).length > 0,
+              encontros: (c.encontros || []).map(e => ({ quando: e.quando || "—", tema: e.tema || "" })),
+              temMateriais: (c.materiais || []).length > 0,
+              materiais: (c.materiais || []).map(m => ({ label: m.label || "material", href: m.link || "#" })),
+              temSair: true, sairLabel: "sair deste clube",
+              onSair: () => {
+                CRM.clubeSair(c.id, p.id);
+                this.setState({ clubeRecado: "Você saiu do " + c.nome + "." });
+                this.bump();
+              }
+            };
+          }),
+          cbAbertos: cl.abertos.map(c => ({
+            nome: c.nome,
+            linha: [c.professora ? "com " + c.professora : "", quando(c), onde(c)].filter(Boolean).join(" · "),
+            temDescricao: !!c.descricao, descricao: c.descricao,
+            botao: c.naEspera ? "você está na espera" : c.lotado ? "entrar na lista de espera" : "entrar no clube",
+            botaoBg: c.naEspera ? "#9b8b7e" : c.lotado ? "#9c6f56" : "#348a8e",
+            vagasLabel: c.lotado
+              ? "sem vaga agora"
+              : (c.livres === null ? "" : c.livres + (c.livres === 1 ? " vaga" : " vagas")),
+            aviso: c.naEspera
+              ? "Você é a " + c.posicaoEspera + "ª da fila. Quando abrir vaga, você entra e a escola avisa."
+              : c.cobra
+                ? "Este seria o seu " + c.seria + "º clube. Do terceiro em diante a escola cobra à parte — a inscrição fica registrada como a pagar."
+                : "Está no seu plano: este seria o seu " + c.seria + "º clube.",
+            onEntrar: () => {
+              if (c.naEspera) return;
+              const r = CRM.clubeEntrar(c.id, p.id);
+              this.setState({ clubeRecado: r.espera
+                ? "Você entrou na lista de espera do " + c.nome + ", na " + r.posicao + "ª posição."
+                : r.plano === "pendente"
+                  ? "Pronto, você está no " + c.nome + ". Como é o seu " + r.ordem + "º clube, a escola vai cobrar à parte."
+                  : "Pronto, você está no " + c.nome + "." });
+              this.bump();
+            }
+          })),
+          cbRecado: this.state.clubeRecado || "",
+          cbRegra: "Os seus " + cl.incluidos + " primeiros clubes vêm no plano. Do terceiro em diante a escola cobra à parte.",
+          cbVoltar: () => this.setState({ tab: "inicio", clubeRecado: "" }),
+          // o cartão que leva até aqui, no Início
+          cbCartaoLinha: cl.meus.length
+            ? cl.meus.map(c => c.nome).join(" · ")
+            : (cl.abertos.length
+                ? cl.abertos.length + (cl.abertos.length === 1 ? " clube aberto" : " clubes abertos") + " para entrar"
+                : ""),
+          cbVer: () => { this.setState({ tab: "clubes", clubeRecado: "" }); window.scrollTo(0, 0); }
+        };
+      })(),
 
       // ── meu progresso ──
       // Sem aba própria: a barra de baixo tem quatro, e uma quinta

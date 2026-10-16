@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-g",
+  numero: "2026.10.16-h",
   data: "16/10/2026",
-  nota: "A aluna passa a ver como está indo: nível, próximo passo, presença do ciclo com o mínimo do certificado, tarefas e o projeto. Entra por um cartão no Início"
+  nota: "A aluna vê os clubes dela e o catálogo, entra sozinha e sabe antes do clique que do terceiro em diante a escola cobra à parte. Clube lotado leva à lista de espera, com a posição"
 };

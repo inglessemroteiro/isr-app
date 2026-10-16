@@ -1056,9 +1056,29 @@
         descricao: "A vida na Holanda, em inglês." }
     ];
     var agora = Date.now();
+    var dd = function (n) {
+      var d = today(); d.setDate(d.getDate() + n);
+      return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    };
+    var TEMAS = {
+      clBook: ["Capítulos 1 e 2", "Capítulos 3 e 4", "Capítulos 5 e 6", "O final, e o que faríamos diferente"],
+      clMovie: ["O filme do mês", "As cenas que ficaram", "Um curta curto", "A escolha do próximo mês"],
+      clChef: ["Receita de casa de cada uma", "Mercado e ingredientes", "Cozinhar junto", "A mesa, e a conversa"],
+      clDutch: ["Morar fora", "Trabalho e burocracia", "Amizade na Holanda", "O que levamos de volta"]
+    };
+    var MATS = {
+      clBook: [{ label: "O livro do ciclo", link: "" }, { label: "Lista de palavras", link: "" }],
+      clMovie: [{ label: "Lista dos filmes", link: "" }],
+      clChef: [{ label: "As receitas", link: "" }],
+      clDutch: []
+    };
     base.forEach(function (c, k) {
       c.membros = []; c.espera = []; c.entrou = {}; c.pagos = {};
-      c.materiais = []; c.encontros = []; c.link = "";
+      c.link = "";
+      c.materiais = MATS[c.id] || [];
+      c.encontros = (TEMAS[c.id] || []).map(function (t, i) {
+        return { quando: dd(3 + i * 7 + k), tema: t };
+      });
       c.vagas = c.vagas || 0;
     });
     // as três primeiras alunas entram em dois clubes; a primeira entra
@@ -9951,6 +9971,46 @@
   }
   // O que a gestão precisa ver de uma vez: quanto, quantos e quem
   // está devendo o terceiro clube.
+  // O que a aluna vê: os clubes dela e os que ela ainda pode entrar.
+  // Só clube publicado aparece no catálogo — rascunho é da equipe.
+  function clubesParaAluna(pessoaId) {
+    var meus = clubesDaAluna(pessoaId);
+    var dentro = {};
+    meus.forEach(function (c) { dentro[c.id] = true; });
+    var completo = clubesLista();
+    var porId = {};
+    completo.forEach(function (c) { porId[c.id] = c; });
+    var abertos = completo.filter(function (c) {
+      return c.status === "publicado" && !dentro[c.id];
+    }).map(function (c) {
+      var livres = clubeVagasLivres(c);
+      return {
+        id: c.id, nome: c.nome, professora: c.professora, formato: c.formato,
+        dia: c.dia, hora: c.hora, duracao: c.duracao, local: c.local, link: c.link,
+        descricao: c.descricao, materiais: c.materiais, encontros: c.encontros,
+        vagas: c.vagas, livres: livres, lotado: livres === 0,
+        naEspera: c.espera.indexOf(pessoaId) >= 0,
+        posicaoEspera: c.espera.indexOf(pessoaId) + 1,
+        // entrar neste seria o enésimo clube dela
+        seria: meus.length + 1,
+        cobra: meus.length + 1 > CLUBES_INCLUIDOS
+      };
+    });
+    return {
+      meus: meus.map(function (c) {
+        var cl = porId[c.id] || {};
+        return Object.assign({}, c, {
+          duracao: cl.duracao || "", local: cl.local || "", link: cl.link || "",
+          descricao: cl.descricao || "", materiais: cl.materiais || [],
+          encontros: cl.encontros || [], vagas: cl.vagas || 0
+        });
+      }),
+      abertos: abertos,
+      incluidos: CLUBES_INCLUIDOS,
+      usados: meus.length
+    };
+  }
+
   function clubesResumo() {
     var cs = clubesLista();
     var publicados = cs.filter(function (c) { return c.status === "publicado"; });
@@ -13130,6 +13190,7 @@
     clubeRemover: clubeRemover, clubesDaAluna: clubesDaAluna, clubeEntrar: clubeEntrar,
     clubeSair: clubeSair, clubePagamentoFeito: clubePagamentoFeito,
     clubesResumo: clubesResumo, clubeVagasLivres: clubeVagasLivres,
+    clubesParaAluna: clubesParaAluna,
     CLUBES_INCLUIDOS: CLUBES_INCLUIDOS,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,
