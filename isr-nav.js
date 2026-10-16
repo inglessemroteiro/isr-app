@@ -86,7 +86,7 @@
       // Tudo sobre as pessoas que estudam aqui.
       id: "alunas", label: "Alunas", cor: "#fc9082",
       itens: [
-        { label: "Pessoas", desc: "Cadastro único: lead, aluna, pausada · o perfil, o certificado e o app da aluna abrem daqui", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Alunas", desc: "Cadastro único: lead, aluna, pausada · o perfil, o certificado e o app da aluna abrem daqui", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Acompanhamento", desc: "Quem precisa de contato, por satisfação e desenvolvimento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] }
       ]
     },
