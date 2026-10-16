@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-s",
+  numero: "2026.10.16-t",
   data: "16/10/2026",
-  nota: "Pessoas abre nas alunas ativas; o cadastro inteiro fica no chip Todos"
+  nota: "O CRM fica só o funil: a vista Atividade sai e o estágio passa a mudar por chip dentro da lead. O menu volta a dizer Alunas"
 };
