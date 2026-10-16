@@ -6703,7 +6703,9 @@
   // telas v3 do Painel e da Matrícula nasceram fora dela. Agora a regra
   // é a inversa — toda tela "ISR - ..." é de gestão, menos as que a
   // aluna precisa abrir.
-  var ABERTAS = ["ISR - Aluna.", "ISR - Certificado", "ISR - Login",
+  // As telas da ÁREA DA ALUNA. Tudo o que começa com "ISR - " e não
+  // está aqui é tela de gestão, e o portão manda para o gestao.html.
+  var ABERTAS = ["ISR - Aluna.", "ISR - Aluna v4.", "ISR - Certificado", "ISR - Login",
                  "ISR - Comunidade", "ISR - Tela de Aula", "ISR - Aulas."];
   function telaDeGestao(path) {
     if (path.indexOf("ISR - ") < 0) return false;
@@ -6898,7 +6900,41 @@
     if (v === false) return "falta";
     return v || "presente";
   }
-  function salvarChamada(turmaLabel, dataIso, presencas, por, tarefas) {
+  // ── O QUE VALIDA UMA AULA ─────────────────────────────────────
+  //
+  // Chamada marcada não era prova de que a aula aconteceu: dava para
+  // salvar presença de uma aula que não houve. O desenho novo pede
+  // duas coisas para a aula contar — a chamada E o tópico da lição —,
+  // e trata dois casos que existiam na vida e não no sistema:
+  //
+  //   no-show: ninguém apareceu. A aula conta, e a professora grava a
+  //            explicação no link da aula;
+  //   data real: a aula foi dada em outro dia (remarcada). A chamada
+  //            é da aula, a data real é de quando ela aconteceu.
+  function chamadaValidada(ch) {
+    if (!ch || !ch.salvoEm) return false;
+    return !!ch.noshow || !!String(ch.topico || "").trim();
+  }
+  // o estado de uma aula, do ponto de vista da folha e do painel
+  function chamadaEstado(turmaLabel, dataIso) {
+    var hoje = iso(today());
+    var ch = getChamada(turmaLabel, dataIso);
+    if (!ch || !ch.salvoEm) {
+      return dataIso > hoje ? "agendada" : "pendente";
+    }
+    if (ch.noshow) return "no-show";
+    return String(ch.topico || "").trim() ? "validada" : "sem_topico";
+  }
+  var CHAMADA_ESTADOS = {
+    validada: { label: "validada", bg: "#e8f5dd", fg: "#3d6b22" },
+    sem_topico: { label: "falta o tópico", bg: "#fdf3d6", fg: "#7a5c00" },
+    pendente: { label: "diário pendente", bg: "#fde4df", fg: "#a3392c" },
+    "no-show": { label: "no-show gravado", bg: "#e5f2f6", fg: "#1d5a63" },
+    agendada: { label: "agendada", bg: "#f2ebe3", fg: "#8a7465" }
+  };
+
+  function salvarChamada(turmaLabel, dataIso, presencas, por, tarefas, extra) {
+    extra = extra || {};
     var m = chamadasAll();
     var key = turmaLabel + "|" + dataIso;
     var velha = m[key] || null;
@@ -6929,10 +6965,20 @@
           o: "chamada corrigida" });
       }
     }
+    // o tópico e o no-show entram no histórico como qualquer mudança:
+    // é por eles que a aula passa a contar na folha
+    var topicoNovo = ("topico" in extra)
+      ? String(extra.topico || "").trim() : String((velha && velha.topico) || "");
+    var noshowNovo = ("noshow" in extra) ? !!extra.noshow : !!(velha && velha.noshow);
+    var mudouTopico = jaExistia && topicoNovo !== String((velha && velha.topico) || "");
+    var mudouNoshow = jaExistia && noshowNovo !== !!(velha && velha.noshow);
     hist.push({ por: por || "", em: agora,
-      o: !jaExistia ? "chamada salva"
-        : !mudancas ? "regravada sem mudança"
-        : mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas") });
+      o: !jaExistia ? (noshowNovo ? "no-show gravado" : "chamada salva")
+        : mudouNoshow ? (noshowNovo ? "no-show gravado" : "no-show desfeito")
+        : mudancas ? mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas")
+          + (mudouTopico ? " · tópico alterado" : "")
+        : mudouTopico ? "tópico alterado"
+        : "regravada sem mudança" });
     // uma chamada reaberta muitas vezes não pode crescer sem fim: a
     // primeira linha é a que conta a origem, as últimas é que dizem o
     // que mudou agora
@@ -6940,6 +6986,12 @@
 
     m[key] = { turma: turmaLabel, data: dataIso, presencas: presencas,
       tarefas: tarefas || {},
+      // o que valida a aula
+      topico: topicoNovo,
+      noshow: noshowNovo,
+      // só existe quando a aula foi dada em outro dia
+      dataReal: ("dataReal" in extra)
+        ? String(extra.dataReal || "") : ((velha && velha.dataReal) || ""),
       salvoEm: agora, por: por || "",
       criadaEm: (velha && velha.criadaEm) || agora,
       criadaPor: quemAntes || por || "",
@@ -13377,6 +13429,8 @@
     aulasParticularesAgendadas: aulasParticularesAgendadas,
     chamadasPendentes: chamadasPendentes, chamadasFeitas: chamadasFeitas,
     chamadaHistorico: chamadaHistorico,
+    chamadaValidada: chamadaValidada, chamadaEstado: chamadaEstado,
+    CHAMADA_ESTADOS: CHAMADA_ESTADOS,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
     chamadasPendentesPorProfessora: chamadasPendentesPorProfessora,

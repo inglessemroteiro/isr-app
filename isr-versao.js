@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-k",
+  numero: "2026.10.16-l",
   data: "16/10/2026",
-  nota: "O Painel do professor ganha as três abas do desenho novo: Resumo do dia, Chamada e Turmas e horas. O resumo diz a aula de agora, as entregas do mês e a fila, e o seletor de professora sai do painel de quem não é gestão"
+  nota: "A Área da Aluna ganha o desenho do Student Portal v3: barra lateral no monitor, barra de baixo no celular, PT/EN, e as páginas Início, Clubes, Meu progresso e Minha conta com os dados dela. Entra por /aluna.html"
 };
