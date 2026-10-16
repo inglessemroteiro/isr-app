@@ -308,10 +308,15 @@ Só a lista rola. O rodapé — sincronização, versão e sair — fica preso
 embaixo: a coluna agrupada passa de 1.100px e, rolando tudo junto, o
 "sair" sumia de qualquer tela de notebook.
 
-O **Mural da equipe** e o **Desafio da semana** saíram do menu. Estão
-no rodapé da Central e nos endereços `/mural.html` e
-`/programa.html` — tela que ninguém alcança é tela morta, e o Mural
-ainda é de onde saem pendências para a equipe.
+O **Mural da equipe** e a tela de gestão do **Desafio da semana**
+foram apagados: não existem no v5. Com o mural fora, o dado dele saiu
+junto — post no mural sem tela que o leia é arquivo que ninguém abre.
+As páginas semanais do desafio, o material da aluna em
+`/desafio.html` e o modo desafio no app continuam no ar: são
+produto, não tela de gestão.
+
+A seção do menu que se chamava "pessoas e vendas" passou a ser
+**"alunas e vendas"**.
 
 ### Ver como
 
@@ -908,7 +913,6 @@ precisar da tela antiga a encontra no histórico do git.
 | Alunas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
 | CRM · Funil | `ISR - CRM v3.dc.html` | `/crm.html` |
 | Mensagens | `ISR - Mensagens v3.dc.html` | `/mensagens.html` |
-| Mural da equipe | `ISR - Mural v3.dc.html` | `/mural.html` |
 | Matrículas do ciclo | `ISR - Matriculas ciclo v3.dc.html` | `/ciclo.html` |
 | Calculadora de preços | `ISR - Calculadora v3.dc.html` | `/precos.html` |
 | Acompanhamento | `ISR - Acompanhamento v3.dc.html` | `/acompanhamento.html` |
@@ -917,7 +921,6 @@ precisar da tela antiga a encontra no histórico do git.
 | Folha | `ISR - Folha v3.dc.html` | `/folha.html` |
 | Turmas e projetos | `ISR - Turmas v3.dc.html` | `/turmas.html` |
 | Clubes | `ISR - Clubes v3.dc.html` | `/clubes.html` |
-| Desafio da semana | `ISR - Desafio v3.dc.html` | `/programa.html` |
 | Agenda | `ISR - Agenda v3.dc.html` | `/agenda.html` |
 | Marketing | `ISR - Marketing v3.dc.html` | `/marketing.html` |
 | Importar | `ISR - Importar v3.dc.html` | `/importar.html` |
@@ -930,8 +933,8 @@ Fora do menu, abertas por clique: a matrícula
 pessoa (`ISR - Perfil v3.dc.html?id=`, `/perfil.html?id=`) e a página
 de uma turma (`ISR - Turma v3.dc.html?id=`, `/turma.html?id=`).
 
-`/desafio.html` **não** é esta tela: é o material da aluna, semana a
-semana. A tela da gestão é `/programa.html`.
+`/desafio.html` é o material da aluna, semana a semana. A tela de
+gestão do desafio foi apagada com o resto do que o v5 não tem.
 
 As telas das alunas — `ISR - Aluna`, `ISR - Aulas`, `ISR - Certificado`,
 `ISR - Comunidade`, `ISR - Tela de Aula` e o portal — não entraram no

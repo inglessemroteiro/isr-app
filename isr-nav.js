@@ -8,7 +8,7 @@
    A navegação é organizada por assunto, não por departamento nem por
    telas soltas — cada módulo abre um menu com as telas dele:
 
-     Central       → Central · Mural · Mensagens
+     Central       → Central · Mensagens
      CRM           → Leads · Matrícula · Calculadora · Importar leads
      Alunas        → Alunas · Perfil · Acompanhamento · Certificados · App
      Pedagógico    → Turmas · Painel · Agenda · Programa
@@ -68,7 +68,6 @@
       id: "central", label: "Central", cor: "#9ec970",
       itens: [
         { label: "Central", desc: "Tarefas, alertas e pendências de quem abriu", href: "ISR - Central v3.dc.html", perfis: null },
-        { label: "Mural da equipe", desc: "Recados da equipe por assunto, conversíveis em tarefa", href: "ISR - Mural v3.dc.html", perfis: null },
         { label: "Mensagens", desc: "Modelos de WhatsApp por situação", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] }
       ]
     },
@@ -99,7 +98,6 @@
         { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Painel do Professor", desc: "Aulas da semana, chamada e diário de classe", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
         { label: "Agenda", desc: "Calendário da escola, aulas extras e Book Club", href: "ISR - Agenda v3.dc.html", perfis: null },
-        { label: "Programa no WhatsApp", desc: "MVS e acompanhamento, semana a semana", href: "ISR - Desafio v3.dc.html", perfis: ["gestora", "professora", "operacao"] }
       ]
     },
     {

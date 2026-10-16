@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-p",
+  numero: "2026.10.16-q",
   data: "16/10/2026",
-  nota: "A Agenda fica como no v5: a tira dos sete dias com a contagem, a lista do dia escolhido e o Novo evento que abre o Google Agenda. Sem seletor de responsável — a agenda já é a de quem abriu"
+  nota: "O Mural da equipe e a tela de gestão do Desafio saem do sistema, com o dado do mural junto. A seção do menu passa a se chamar alunas e vendas"
 };
