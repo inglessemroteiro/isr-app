@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-i",
+  numero: "2026.10.16-j",
   data: "16/10/2026",
-  nota: "O certificado: a aluna vê nível, carga horária, frequência e o que falta, e abre o documento quando o ciclo fecha. A conta passa a ser uma só — antes a tela da gestão imprimia uma frequência diferente da que o app mostrava"
+  nota: "A Central e a Agenda passam a mostrar a rotina de quem abriu: a professora não vê mais meta de matrícula, funil, planilha financeira nem follow-up do comercial, e a agenda dela abre no próprio nome"
 };
