@@ -14,6 +14,7 @@
 <script src="./isr-versao.js"></script>
 <script src="./isr-shell.js"></script>
 <script src="./crm-data.js"></script>
+<script src="./isr-paginacao.js"></script>
 </head>
 <body>
 <x-dc>
@@ -237,6 +238,22 @@
         </sc-if>
       </div>
     </sc-for>
+    <!-- PAGINAÇÃO -->
+    <sc-if value="{{ pgPrecisa }}">
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
+        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <sc-for list="{{ pgBotoes }}" as="pb" hint-placeholder-count="7">
+            <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+          </sc-for>
+        </div>
+        <span style="flex: 1; min-width: 4px;"></span>
+        <span style="font-size: 12px; color: #8a7465;">mostrar</span>
+        <select onchange="{{ pgOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: #164951; background: #f2ebe3;">
+          <sc-for list="{{ pgOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+        </select>
+        <span style="font-size: 12px; color: #8a7465;">por página · {{ pgResumo }}</span>
+      </div>
+    </sc-if>
 
   </div>
 </main>
@@ -244,6 +261,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { abertoId: null, tipoSel: {}, pulsoSel: {}, filtro: "pendentes", tick: 0,
+    pagina: 1, porPagina: ISRPaginacao.PADRAO,
             editandoCadencia: false, detalhes: false };
   cadRefs = {};
   notaRefs = {}; pulsoNotaRefs = {};
@@ -317,7 +335,7 @@ class Component extends DCLogic {
     ];
     const filtros = opcoes.map(o => Object.assign(
       { label: o.label + " · " + toda.filter(testes[o.id]).length,
-        onClick: () => this.setState({ filtro: o.id }) },
+        onClick: () => this.setState({ filtro: o.id, pagina: 1 }) },
       this.pill(this.state.filtro === o.id, "#164951")));
 
     const filtrada = toda.filter(testes[this.state.filtro] || testes.todas);
@@ -425,6 +443,12 @@ class Component extends DCLogic {
       };
     });
 
+    // a fila vira página: trinta e seis cartões abertos são seis mil
+    // pixels de rolagem
+    const pg = ISRPaginacao.fatiar(fila, this.state.pagina, this.state.porPagina,
+      (n, porPagina) => this.setState(porPagina === undefined
+        ? { pagina: n } : { pagina: n, porPagina }));
+
     return {
       tocadas: String(tocadas), meta: String(meta),
       larguraSemana: pct + "%",
@@ -454,7 +478,9 @@ class Component extends DCLogic {
             : "Todas já abriram o app pelo menos uma vez."
         };
       }).call(this),
-      filtros, fila, filaVazia: fila.length === 0,
+      filtros, fila: pg.itens, filaVazia: fila.length === 0,
+      pgPrecisa: pg.precisa, pgBotoes: pg.botoes, pgOpcoes: pg.opcoes,
+      pgResumo: pg.resumo, pgOnPorPagina: pg.onPorPagina,
 
       // ── a tela abre dizendo o que fazer, não com números ──
       // Antes ela empilhava avaliação, cadência, filtros e histórico sem

@@ -548,6 +548,41 @@ modelos**. O × de limpar o destinatário saiu junto: o lugar dele no v5
   Fulana" quando se chega do CRM com `?para=&tpl=`, e a confirmação de
   que o contato entrou no histórico dela.
 
+### Listas que viram página
+
+`isr-paginacao.js` é a peça que faz toda lista comprida virar página do
+mesmo jeito. A tela chama uma função e recebe tudo pronto — a fatia, o
+rodapé com `« ‹ 1 2 3 › »`, o "mostrar 10 / 25 / 50 / todas por página"
+e o resumo "11–20 de 45".
+
+Três regras que a tela não precisa lembrar:
+
+- **lista curta não ganha rodapé.** Dez linhas com controle de página é
+  ruído, então o rodapé só aparece quando há mais de uma página;
+- **página que não existe cai na última.** Filtrar encolhe a lista, e a
+  página 4 de uma lista que agora tem 2 não existe — em vez de uma tela
+  vazia, mostra a última válida;
+- **mudar o filtro volta para a primeira página.** Cada tela faz isso no
+  seu próprio controle, porque é lá que ela sabe o que é "mudar de
+  assunto".
+
+**"todas" existe** porque conferir e imprimir pedem a lista inteira.
+
+Onde está ligada, e por quê: **Alunas** (45 pessoas), **CRM** (o estágio
+"Fechados" tem 36), **Cobrança** (33 parcelas num mês) e
+**Acompanhamento** (36 cartões abertos, seis mil pixels de rolagem — a
+tela mais alta do sistema; caiu para 2.400px). As outras ou têm listas
+de dez linhas ou menos, ou — como o **Caixa** — têm várias listas
+pequenas em vez de uma grande, e precisam de um passo próprio.
+
+### Buscar pessoa no compositor
+
+O seletor de destinatário em Mensagens listava as dezenas de pessoas da
+escola de uma vez. Ganhou um campo de busca ao lado: digitar filtra a
+lista, e quando sobra uma pessoa só ela já é escolhida — é o que quem
+digitou o nome inteiro queria. Busca sem resultado avisa e **não troca
+o destinatário**: digitar não pode mandar a mensagem para outra pessoa.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
