@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-v",
+  numero: "2026.10.16-w",
   data: "16/10/2026",
-  nota: "Listas compridas viram página, com 10 por página e as setas. E o seletor de destinatário em Mensagens ganhou busca"
+  nota: "A Matrícula em duas colunas, com o resumo fixo. A pessoa passa a ser escolhida na própria tela, e dá para matricular quem nunca passou pelo CRM"
 };
