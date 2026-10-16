@@ -341,6 +341,27 @@ Na **Agenda**:
 - o bloco de aulas extras passa a respeitar o filtro de responsável,
   que ele ignorava para todo mundo.
 
+No **Painel do professor**:
+
+- a tela era um rolo só — chamada do dia, histórico de chamadas,
+  turmas e horas, um embaixo do outro. Quem entrava para lançar a
+  chamada rolava por tudo. Viraram três abas, como no desenho:
+  **Resumo do dia**, **Chamada**, **Turmas e horas**;
+- o Resumo responde "o que eu tenho hoje?" antes de pedir qualquer
+  coisa: a aula de agora com o projeto do ciclo e o tamanho da turma,
+  as entregas do mês, a fila pedagógica e as próximas aulas;
+- quem chega por um **link de chamada** (a Central, a Turma, a
+  Agenda) abre direto na aba da chamada: já tem o que fazer;
+- o **seletor de professora** some para quem não é gestão. Ele abria
+  o painel das colegas — as aulas delas, as alunas delas, a chamada
+  delas —, e nem o `?prof=` na barra de endereço leva para lá agora.
+
+As **entregas do mês** contam só o que o sistema registra: aula com
+chamada salva, aula sem chamada, alunas nas turmas dela e clube dela.
+O desenho mostra também reunião pedagógica e slides apresentados, que
+não têm registro nenhum — número inventado é pior do que número
+ausente.
+
 ---
 
 ## Ligar as chaves · passo a passo
