@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-l",
+  numero: "2026.10.16-m",
   data: "16/10/2026",
-  nota: "A Área da Aluna ganha o desenho do Student Portal v3: barra lateral no monitor, barra de baixo no celular, PT/EN, e as páginas Início, Clubes, Meu progresso e Minha conta com os dados dela. Entra por /aluna.html"
+  nota: "A Área da Aluna fica igual ao desenho: menu com os oito itens nos quatro grupos, data no cabeçalho, busca, EN antes de PT, a aula pelo projeto e a sessão, e a semana com aula, tarefa e encontro de clube"
 };

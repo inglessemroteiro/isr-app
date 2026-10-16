@@ -62,7 +62,7 @@ var IGNORAR = [
   // telas de hoje, ainda sem dado real. Quando um deles virar tela do
   // sistema, sai desta lista e passa pela regra como as outras.
   "ISR Gestao v3.dc.html", "Student Portal v2.dc.html",
-  "ISR Gestao v4.dc.html", "Student Portal v3.dc.html"
+  "ISR Gestao v4.dc.html", "ISR Gestao v5.dc.html", "Student Portal v3.dc.html"
 ];
 function ignorado(arquivo) {
   var n = arquivo.normalize("NFC");

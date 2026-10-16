@@ -43,7 +43,7 @@
         </div>
       </sc-for>
     </nav>
-    <div onclick="{{ goMiles }}" style="margin-top:auto;flex:none;background:rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;cursor:pointer"><div style="font-size:11px;font-weight:700;color:#fc9082">isr miles</div><div style="font-size:22px;font-weight:800;letter-spacing:-0.04em">{{ milesFmt }}</div><div style="font-size:12px;opacity:.85">{{ milesLinha }}</div></div>
+    <div onclick="{{ goMiles }}" style="margin-top:auto;flex:none;background:rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;cursor:pointer"><div style="font-size:11px;font-weight:700;color:#fc9082">isr miles</div><div style="font-size:22px;font-weight:800;letter-spacing:-0.04em">{{ milesFmt }}</div><div style="font-size:12px;opacity:.85">{{ milesLinha }} →</div></div>
   </aside>
   </sc-if>
 
@@ -52,6 +52,7 @@
       <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#6b5749">{{ eyebrow }}</div><h1 style="margin:2px 0 0;font-size:{{ h1Size }};font-weight:800;letter-spacing:-0.035em;line-height:1.1">{{ title }}</h1></div>
       <div style="display:flex;align-items:center;gap:10px">
         <sc-if value="{{ narrow }}"><div onclick="{{ goMiles }}" style="background:#fff;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">{{ milesFmt }} mi</div></sc-if>
+        <sc-if value="{{ wide }}"><input value="{{ busca }}" oninput="{{ onBusca }}" placeholder="{{ L.buscar }}" style="background:#fff;border:0;border-radius:999px;padding:10px 16px;font-size:13px;color:#164951;width:220px;outline:none"></sc-if>
         <div style="display:flex;background:#fff;border-radius:999px;padding:4px"><sc-for list="{{ langOpts }}" as="o"><span onclick="{{ o.pick }}" style="border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</span></sc-for></div>
         <div onclick="{{ toggleNotif }}" style="background:{{ bellBg }};border-radius:999px;width:40px;height:40px;display:grid;place-items:center;position:relative;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#164951" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><sc-if value="{{ hasUnread }}"><span style="position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:999px;background:#fc9082;font-size:10px;font-weight:800;display:grid;place-items:center">{{ unread }}</span></sc-if></div>
       </div>
@@ -63,9 +64,12 @@
     <sc-if value="{{ isHome }}">
       <div style="background:#164951;color:#fff;border-radius:24px;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
         <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#fc9082;letter-spacing:.04em">{{ classEyebrow }}</div><div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;margin-top:4px">{{ classTitulo }}</div><div style="font-size:14px;opacity:.8;margin-top:4px">{{ classLinha }}</div></div>
-        <sc-if value="{{ temSala }}">
-          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><a href="{{ salaLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:#fc9082;color:#164951;border-radius:999px;padding:17px 28px;font-size:15px;font-weight:800;box-shadow:0 4px 0 #d9705f">{{ L.entrarSala }}</a></div>
-        </sc-if>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <sc-if value="{{ temSala }}">
+            <a href="{{ salaLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:#fc9082;color:#164951;border-radius:999px;padding:17px 28px;font-size:15px;font-weight:800;box-shadow:0 4px 0 #d9705f">{{ L.entrarSala }} →</a>
+          </sc-if>
+          <span onclick="{{ goNotebook }}" style="font-size:14px;font-weight:700;cursor:pointer;text-decoration:underline">{{ L.abrirCaderno }}</span>
+        </div>
       </div>
 
       <section style="background:#fff;border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
@@ -74,7 +78,7 @@
         <sc-if value="{{ semSemana }}"><div style="font-size:14px;color:#1d5a63;line-height:1.5">{{ L.semSemana }}</div></sc-if>
         <div style="display:flex;flex-direction:column">
           <sc-for list="{{ week }}" as="w" hint-placeholder-count="4">
-            <div style="display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #f2ebe3"><span style="width:34px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:14px;font-weight:800;flex:none;background:{{ w.dotBg }};color:{{ w.dotFg }}">{{ w.mark }}</span><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800">{{ w.t }}</div><div style="font-size:13px;color:#1d5a63">{{ w.sub }}</div></div><span style="flex:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;background:{{ w.stBg }};color:{{ w.stFg }}">{{ w.st }}</span></div>
+            <div style="display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #f2ebe3"><span style="width:34px;height:34px;border-radius:999px;display:grid;place-items:center;font-size:14px;font-weight:800;flex:none;background:{{ w.dotBg }};color:{{ w.dotFg }}">{{ w.mark }}</span><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;text-decoration:{{ w.deco }}">{{ w.t }}</div><div style="font-size:13px;color:#1d5a63">{{ w.sub }}</div></div><span style="flex:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;background:{{ w.stBg }};color:{{ w.stFg }}">{{ w.st }}</span></div>
           </sc-for>
         </div>
       </section>
@@ -180,6 +184,18 @@
       </sc-if>
     </sc-if>
 
+    <!-- O QUE AINDA NÃO ESTÁ AQUI -->
+    <!-- Caderno, Review, perfil e loja estão no desenho e dependem de
+         dado que ainda não existe. Ficam no menu, e a página diz o que
+         vai estar ali e de onde vem — sumir do menu seria fingir que o
+         desenho é menor do que é. -->
+    <sc-if value="{{ emObra }}">
+      <section style="background:#fff;border-radius:24px;padding:26px 28px;display:flex;flex-direction:column;gap:10px;max-width:640px">
+        <div style="font-size:12px;font-weight:700;color:#6b5749">{{ emObraTitulo }}</div>
+        <div style="font-size:15px;line-height:1.6;color:#1d5a63">{{ emObraTexto }}</div>
+      </section>
+    </sc-if>
+
     <!-- CONTA -->
     <sc-if value="{{ isAccount }}">
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
@@ -238,7 +254,7 @@ class Component extends DCLogic {
   // dela. Nenhuma função de gestão entra aqui — nem fila, nem funil,
   // nem folha, nem caixa.
   state = { page: "home", clubTab: "mine", lang: "pt", notif: false,
-            recado: "", w: 1180, tick: 0 };
+            recado: "", busca: "", w: 1180, tick: 0 };
 
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth });
@@ -273,6 +289,8 @@ class Component extends DCLogic {
 
     // ── as palavras da casca, nos dois idiomas ──
     const L = {
+      buscar: T("Search people / clubs…", "Buscar pessoas / clubes…"),
+      abrirCaderno: T("Open my notebook", "Abrir o meu caderno"),
       entrarSala: T("Join live room", "Entrar na sala"),
       estaSemana: T("This week", "Esta semana"),
       semSemana: T("No class with a date this week.", "Nenhuma aula marcada para esta semana."),
@@ -313,6 +331,8 @@ class Component extends DCLogic {
       notifOpen: false, closeNotif: () => {}, notifs: [], notifRight: "32px",
       semAvisos: true, L,
       isHome: true, isProgress: false, isClubs: false, isAccount: false,
+      emObra: false, emObraTexto: "", emObraTitulo: "",
+      busca: "", onBusca: () => {}, goNotebook: () => {},
       classEyebrow: "", classTitulo: "", classLinha: "", temSala: false, salaLink: "#",
       weekCount: "", weekPct: "0%", week: [], semSemana: true,
       prog: { level: "—", next: "", homeLinha: "", barras: [], stats: [],
@@ -343,8 +363,13 @@ class Component extends DCLogic {
     const g = (CRM.progressoDaAluna && CRM.progressoDaAluna(p.id)) || null;
     const ct = (CRM.certificadoDaAluna && CRM.certificadoDaAluna(p.id)) || null;
     const cl = (CRM.clubesParaAluna && CRM.clubesParaAluna(p.id)) || { meus: [], abertos: [], incluidos: 2, usados: 0 };
-    const moedas = (CRM.moedasDe && CRM.moedasDe(p.id)) || { total: 0, lista: [] };
+    const moedas = (CRM.moedasDe && CRM.moedasDe(p.id)) || { total: 0, extrato: [] };
+    const jornada = (CRM.jornadaDaAluna && CRM.jornadaDaAluna(p.id)) || { sequencia: 0 };
     const turmaRaw = (CRM.turmasLista() || []).filter(u => u.nivel + " · " + u.turma === p.turma)[0] || null;
+    // qual encontro do ciclo é o próximo: é assim que a aula se chama
+    // no desenho ("Traditions · Session 4"), e não pelo nível
+    const sessaoN = (g ? g.aulas.length : 0) + 1;
+    const projeto = (turmaRaw && turmaRaw.projeto) || "";
 
     // ── a semana dela ──
     // "Esta semana" é a semana de verdade, de segunda a domingo: a que
@@ -367,38 +392,95 @@ class Component extends DCLogic {
       || (it.tipo === "aula_extra" && String(it.titulo || "").toLowerCase()
             .indexOf(CRM.firstName(p.nome).toLowerCase()) >= 0)
       || (it.tipo === "particular" && it.pessoaId === p.id));
-    // a lista é a da semana inteira: o que já aconteceu fica marcado,
-    // como no desenho, e é isso que a barra em cima está contando
-    const week = daSemana.slice(0, 8).map(it => {
+    // ── a semana, como no desenho ──
+    // Não é só aula: é tudo o que a semana pede dela — a aula, a
+    // tarefa de casa e o encontro de clube. Era a diferença entre uma
+    // lista de horários e uma lista do que fazer.
+    const fim = new Date(seg); fim.setDate(fim.getDate() + 6);
+    const linha = (ordem, feito, t, sub, st, cor) => ({
+      ordem, feito,
+      mark: feito ? "✓" : "",
+      dotBg: feito ? "#9ec970" : "#f2ebe3", dotFg: "#164951",
+      deco: feito ? "line-through" : "none",
+      t, sub, st,
+      stBg: cor === "hoje" ? "#fde4df" : cor === "cobra" ? "#fdf3d6" : cor === "feito" ? "#e8f5dd" : "#e5f2f6",
+      stFg: cor === "cobra" ? "#7a5c00" : cor === "feito" ? "#3d6b22" : "#164951"
+    });
+    const week = [];
+    daSemana.forEach(it => {
       const d = this.dia(it.data);
       const passou = it.data < isoDe(hoje0);
-      // o nome da turma já carrega o horário entre parênteses; repetir
-      // "(TUE 8h BR | 13h NL)" no título e na linha de baixo é ruído
-      const titulo = it.tipo === "aula" && turmaRaw ? turmaRaw.nivel
+      // a sessão desta aula, não a da próxima: uma aula que já
+      // aconteceu tem o número dela
+      const nDesta = passou
+        ? ((g ? g.aulas : []).findIndex(a => a.data === it.data) + 1) || sessaoN
+        : sessaoN;
+      const titulo = it.tipo === "aula"
+        ? [T("Live class", "Aula ao vivo"), T("Session ", "Sessão ") + nDesta].join(" · ")
         : String(it.titulo || "").replace(/^Aula( extra)? · /, "");
-      return {
-        mark: passou ? "✓" : d.hoje ? "●" : "·",
-        dotBg: passou ? "#9ec970" : d.hoje ? "#fc9082" : "#f2ebe3", dotFg: "#164951",
-        t: titulo,
-        sub: [d.label, it.hora, turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : ""]
-          .filter(Boolean).join(" · "),
-        st: passou ? T("done", "aconteceu") : d.hoje ? T("today", "hoje") : d.label,
-        stBg: passou ? "#e8f5dd" : d.hoje ? "#fde4df" : "#f2ebe3",
-        stFg: passou ? "#3d6b22" : "#164951"
-      };
+      week.push(linha(it.data + "1", passou, titulo,
+        [d.label.charAt(0).toUpperCase() + d.label.slice(1), it.hora,
+         turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : ""].filter(Boolean).join(" · "),
+        passou ? T("done", "aconteceu") : d.hoje ? (it.hora ? T("today ", "hoje ") + it.hora : T("today", "hoje")) : d.label,
+        passou ? "feito" : d.hoje ? "hoje" : "dia"));
     });
+    // a tarefa da última aula com chamada: entregue ou a entregar
+    const tdc = (CRM.tarefasDeCasa && CRM.tarefasDeCasa(p.id, g ? "" : "")) || { entregues: 0, cobradas: 0 };
+    const ultimaCham = (CRM.presencasDe(p.id) || [])[0] || null;
+    const chObj = ultimaCham ? CRM.getChamada(ultimaCham.turma, ultimaCham.data) : null;
+    if (chObj && chObj.tarefas && (p.id in chObj.tarefas)) {
+      const entregue = chObj.tarefas[p.id] === true;
+      week.push(linha(ultimaCham.data + "2", entregue,
+        T("Homework", "Tarefa de casa") + " · " + CRM.ddmm(ultimaCham.data),
+        T("from your last class", "da sua última aula"),
+        entregue ? T("handed in", "entregue") : T("due before class", "antes da próxima aula"),
+        entregue ? "feito" : "cobra"));
+    }
+    // os encontros de clube que caem nesta semana
+    cl.meus.forEach(c => {
+      (c.encontros || []).forEach((e, i) => {
+        const m = /(\d{2})\/(\d{2})/.exec(e.quando || "");
+        if (!m) return;
+        const iso = hoje0.getFullYear() + "-" + m[2] + "-" + m[1];
+        if (iso < isoDe(seg) || iso > isoDe(fim)) return;
+        const passou = iso < isoDe(hoje0);
+        const d = this.dia(iso);
+        week.push(linha(iso + "3", passou,
+          c.nome + " · " + T("meeting ", "encontro ") + (i + 1),
+          [d.label.charAt(0).toUpperCase() + d.label.slice(1), c.hora, e.tema].filter(Boolean).join(" · "),
+          passou ? T("done", "aconteceu") : d.label,
+          passou ? "feito" : d.hoje ? "hoje" : "dia"));
+      });
+    });
+    week.sort((a, b) => (a.ordem < b.ordem ? -1 : a.ordem > b.ordem ? 1 : 0));
+    const feitosNaSemana = week.filter(w => w.feito).length;
     const proxima = seteDias[0] || null;
     const hojeAula = seteDias.filter(it => this.dia(it.data).hoje)[0] || null;
     const aula = hojeAula || proxima;
 
     // ── a aula em destaque ──
+    // Como no desenho: o nome é o do PROJETO e a sessão, não o nível.
+    // O nível já está na barra lateral; o que ela quer saber ao abrir
+    // é qual encontro é o de hoje.
     const dAula = aula ? this.dia(aula.data) : null;
     const classTitulo = aula
-      ? (turmaRaw && aula.tipo === "aula" ? turmaRaw.nivel : String(aula.titulo || "").replace(/^Aula( extra)? · /, ""))
+      ? (aula.tipo === "aula"
+          ? [projeto, T("Session ", "Sessão ") + sessaoN].filter(Boolean).join(" · ")
+          : String(aula.titulo || "").replace(/^Aula( extra)? · /, ""))
       : T("No class scheduled", "Nenhuma aula marcada");
+    // "hoje em 20 min" quando a aula é hoje e tem hora
+    const minutosAte = (() => {
+      if (!aula || !dAula || !dAula.hoje || !aula.hora) return null;
+      const m = /(\d{1,2})[h:](\d{2})?/.exec(aula.hora);
+      if (!m) return null;
+      const alvo = new Date(); alvo.setHours(+m[1], +(m[2] || 0), 0, 0);
+      const dif = Math.round((alvo - new Date()) / 60000);
+      return dif > 0 && dif <= 120 ? dif : null;
+    })();
     const classLinha = aula
       ? [turmaRaw && turmaRaw.teacher ? "Prof. " + CRM.firstName(turmaRaw.teacher) : "",
-         dAula.label, aula.hora, turmaRaw && turmaRaw.projeto ? turmaRaw.projeto : ""].filter(Boolean).join(" · ")
+         dAula.label.charAt(0).toUpperCase() + dAula.label.slice(1),
+         aula.hora, turmaRaw && turmaRaw.meet ? "Google Meet" : ""].filter(Boolean).join(" · ")
       : T("When the school opens the next cycle, your classes come back here.",
           "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.");
 
@@ -444,7 +526,10 @@ class Component extends DCLogic {
       ? (c.local ? T("In person · ", "Presencial · ") + c.local : T("In person", "Presencial"))
       : T("Online", "Online");
     const quandoDe = (c) => [c.dia, c.hora, c.duracao].filter(Boolean).join(" · ");
-    const myClubs = cl.meus.map(c => {
+    const myClubs = cl.meus.filter(c => {
+      const t = String(this.state.busca || "").trim().toLowerCase();
+      return !t || (c.nome + " " + (c.professora || "")).toLowerCase().indexOf(t) >= 0;
+    }).map(c => {
       const pl = PLANO[c.plano] || PLANO.incluido;
       return {
         name: c.nome, planoLabel: pl[0], planoBg: pl[1], planoFg: pl[2],
@@ -461,7 +546,10 @@ class Component extends DCLogic {
         }
       };
     });
-    const catalog = cl.abertos.map(c => ({
+    const q = String(this.state.busca || "").trim().toLowerCase();
+    const bate = (c) => !q || (c.nome + " " + (c.professora || "") + " " + (c.descricao || ""))
+      .toLowerCase().indexOf(q) >= 0;
+    const catalog = cl.abertos.filter(bate).map(c => ({
       name: c.nome,
       formatLabel: ondeDe(c),
       spotsLabel: c.lotado ? T("no spot now", "sem vaga agora")
@@ -511,25 +599,61 @@ class Component extends DCLogic {
       text: T("Your attendance is below the minimum for the certificate.",
         "A sua presença está abaixo do mínimo do certificado."), when: "" });
 
-    // ── as páginas ──
+    // ── as páginas, no menu do desenho ──
+    // Oito itens, nos quatro grupos. As quatro que ainda não têm dado
+    // ficam no menu e dizem, na própria página, o que vai estar ali e
+    // de onde vem — esconder do menu seria fingir que o desenho é
+    // menor do que é.
+    const DIAS_L = this.state.lang === "en"
+      ? ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+      : ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+    const MES_L = this.state.lang === "en"
+      ? ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+      : ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const hojeD = new Date();
+    const dataLonga = this.state.lang === "en"
+      ? DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " " + MES_L[hojeD.getMonth()]
+      : DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " de " + MES_L[hojeD.getMonth()];
+
     const PAGINAS = {
-      home: { label: T("Home", "Início"), icon: "⌂", eyebrow: T("your week", "a sua semana"),
-        title: T("Hello, ", "Olá, ") + CRM.firstName(p.nome) },
+      home: { label: T("Home", "Início"), icon: "⌂", eyebrow: dataLonga,
+        title: T("Hello, ", "Olá, ") + CRM.firstName(p.nome) + "!" },
+      notebook: { label: T("My Notebook", "Meu caderno"), icon: "✎", eyebrow: T("study", "estudar"),
+        title: T("My Notebook", "Meu caderno") },
+      review: { label: T("Review", "Review"), icon: "↻", eyebrow: T("study", "estudar"),
+        title: T("Review", "Review") },
       clubs: { label: T("Clubs", "Clubes"), icon: "◎", eyebrow: T("community", "comunidade"),
         title: T("Clubs", "Clubes") },
-      progress: { label: T("Progress", "Progresso"), icon: "◔", eyebrow: T("me", "eu"),
+      profile: { label: T("My Profile", "Meu perfil"), icon: "☺", eyebrow: T("community", "comunidade"),
+        title: T("My Profile", "Meu perfil") },
+      progress: { label: T("My progress", "Meu progresso"), icon: "◔", eyebrow: T("me", "eu"),
         title: T("My progress", "Meu progresso") },
+      shop: { label: T("Miles shop", "Loja de milhas"), icon: "◆", eyebrow: T("me", "eu"),
+        title: T("Miles shop", "Loja de milhas") },
       account: { label: T("Account", "Conta"), icon: "◍", eyebrow: T("me", "eu"),
         title: T("My account", "Minha conta") }
     };
     const GRUPOS = [
       { h: "", ids: ["home"] },
-      { h: T("community", "comunidade"), ids: ["clubs"] },
-      { h: T("me", "eu"), ids: ["progress", "account"] }
+      { h: T("study", "estudar"), ids: ["notebook", "review"] },
+      { h: T("community", "comunidade"), ids: ["clubs", "profile"] },
+      { h: T("me", "eu"), ids: ["progress", "shop", "account"] }
     ];
+    // as quatro que ainda não têm dado, e de onde o dado virá
+    const EM_OBRA = {
+      notebook: T("The lesson notebook comes from the teacher's lesson plan. The plan is being built on her side first.",
+        "O caderno da aula vem do plano que a professora monta. O plano está sendo feito primeiro do lado dela."),
+      review: T("The word vault is filled from the notebook of each class. It opens when the notebook does.",
+        "O cofre de palavras se enche com o caderno de cada aula. Abre junto com o caderno."),
+      profile: T("The community profile — photo, bio and links — is not in the school's records yet.",
+        "O perfil da comunidade — foto, bio e links — ainda não existe no cadastro da escola."),
+      shop: T("Your miles are already counted, in Account. The shop and the swap board come next.",
+        "As suas milhas já são contadas, na Conta. A loja e o mural de trocas vêm em seguida.")
+    };
     const item = (id) => ({
       label: PAGINAS[id].label,
-      badge: id === "clubs" && cl.abertos.length ? String(cl.abertos.length) : "",
+      badge: id === "clubs" && cl.abertos.length
+        ? cl.abertos.length + T(" open", " aberto" + (cl.abertos.length === 1 ? "" : "s")) : "",
       bg: page === id ? "rgba(255,255,255,.14)" : "transparent",
       op: page === id ? 1 : 0.82,
       go: () => { this.setState({ page: id, notif: false, recado: "" }); try { window.scrollTo(0, 0); } catch (e) {} }
@@ -546,6 +670,11 @@ class Component extends DCLogic {
       primeiroNome: CRM.firstName(p.nome),
       subNome: [nivel !== "—" ? nivel : p.nivel, turmaRaw && turmaRaw.turma ? turmaRaw.turma : ""].filter(Boolean).join(" · "),
 
+      busca: this.state.busca || "",
+      onBusca: (e) => {
+        const v = e.target.value;
+        this.setState(st => ({ busca: v, page: v ? "clubs" : st.page, clubTab: v ? "catalog" : st.clubTab }));
+      },
       navSections: GRUPOS.map(gr => ({ hasH: !!gr.h, h: gr.h, items: gr.ids.map(item) })),
       tabs: ["home", "clubs", "progress", "account"].map(id => ({
         label: PAGINAS[id].label, icon: PAGINAS[id].icon,
@@ -565,10 +694,12 @@ class Component extends DCLogic {
       eyebrow: PAGINAS[page].eyebrow, title: PAGINAS[page].title,
 
       milesFmt: String(moedas.total || 0),
-      milesLinha: T("earned with class, homework and clubs", "ganhas com aula, tarefa e clube"),
-      goMiles: () => this.setState({ page: "account", notif: false }),
+      milesLinha: jornada.sequencia
+        ? jornada.sequencia + T(" classes in a row · open shop", " aulas seguidas · abrir a loja")
+        : T("open shop", "abrir a loja"),
+      goMiles: () => this.setState({ page: "shop", notif: false }),
 
-      langOpts: [["pt", "PT"], ["en", "EN"]].map(([id, label]) => ({
+      langOpts: [["en", "EN"], ["pt", "PT"]].map(([id, label]) => ({
         label, bg: this.state.lang === id ? "#164951" : "transparent",
         fg: this.state.lang === id ? "#fff" : "#164951",
         pick: () => this.setState({ lang: id })
@@ -582,16 +713,22 @@ class Component extends DCLogic {
 
       isHome: page === "home", isProgress: page === "progress",
       isClubs: page === "clubs", isAccount: page === "account",
+      emObra: !!EM_OBRA[page], emObraTexto: EM_OBRA[page] || "",
+      emObraTitulo: T("Not here yet", "Ainda não está aqui"),
 
       // ── início ──
-      classEyebrow: aula ? (dAula.hoje ? T("today", "hoje") : T("next class", "próxima aula")) : T("your class", "a sua aula"),
+      classEyebrow: !aula ? T("your class", "a sua aula")
+        : minutosAte !== null
+          ? T("next class · today in " + minutosAte + " min", "próxima aula · hoje em " + minutosAte + " min")
+          : dAula.hoje ? T("next class · today", "próxima aula · hoje") : T("next class", "próxima aula"),
+      goNotebook: () => this.setState({ page: "notebook", notif: false }),
       classTitulo, classLinha,
       temSala: !!(turmaRaw && turmaRaw.meet), salaLink: (turmaRaw && turmaRaw.meet) || "#",
-      weekCount: daSemana.length
-        ? feitasNaSemana + T(" of ", " de ") + daSemana.length + T(" done", " já aconteceram")
-        : T("no class this week", "nenhuma aula esta semana"),
-      weekPct: (daSemana.length ? Math.round(100 * feitasNaSemana / daSemana.length) : 0) + "%",
-      semSemana: daSemana.length === 0,
+      weekCount: week.length
+        ? feitosNaSemana + T(" of ", " de ") + week.length + T(" done", " feitos")
+        : T("nothing this week", "nada esta semana"),
+      weekPct: (week.length ? Math.round(100 * feitosNaSemana / week.length) : 0) + "%",
+      semSemana: week.length === 0,
       week,
 
       prog: {
