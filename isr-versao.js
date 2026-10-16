@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-n",
+  numero: "2026.10.16-o",
   data: "16/10/2026",
-  nota: "A fila da Central passa a dizer há quanto tempo cada item espera, e a regra que o acendeu. Dentro da mesma urgência, o que espera há mais tempo vem antes"
+  nota: "A Central fica só com o que o ISR Gestao v5 tem. O calendário dos ciclos foi para Matrículas do ciclo e as aulas sem chamada para o Painel do professor; a professora deixa de ter Central"
 };

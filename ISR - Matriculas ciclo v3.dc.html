@@ -52,6 +52,55 @@
       </sc-if>
     </div>
 
+    <!-- O CICLO · quando as aulas acontecem -->
+    <!-- A agenda gera aula pelo dia da semana escrito no nome da turma.
+         É o começo e o fim do ciclo que dizem até quando. Este bloco
+         fica sempre à vista para quem cuida da escola: quieto quando
+         está tudo certo, aceso quando falta data ou o ciclo acabou — e
+         com o formulário sempre ao alcance. Escondê-lo quando não há
+         problema foi erro: quem quisesse só corrigir a data não achava
+         onde. -->
+    <!-- São três calendários, não um: as turmas online, a turma
+         presencial e as aulas particulares começam e terminam em datas
+         diferentes. Com uma janela só, a agenda punha aula presencial
+         em semana sem aula presencial. -->
+    <sc-if value="{{ veCiclo }}">
+      <sc-for list="{{ ciclos }}" as="cc" hint-placeholder-count="2">
+        <section style="background: {{ cc.bg }}; border-radius: 24px; padding: 16px 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+            <div style="min-width: 0;">
+              <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465;">{{ cc.tipoNome }}</div>
+              <div style="font-size: 15px; font-weight: 600; color: {{ cc.cor }}; margin-top: 2px;">{{ cc.titulo }}</div>
+            </div>
+            <button onclick="{{ cc.onMudar }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ cc.botao }}</button>
+          </div>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #1d5a63; line-height: 1.55; max-width: 720px;">{{ cc.texto }}</p>
+          <sc-if value="{{ cc.editando }}">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 14px;">
+              <div>
+                <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Ciclo</div>
+                <input value="{{ cfLabel }}" oninput="{{ onCfLabel }}" title="Nome do ciclo, como 4.2026" style="width: 110px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+              </div>
+              <div>
+                <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Primeira aula</div>
+                <input value="{{ cfInicio }}" oninput="{{ onCfInicio }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+              </div>
+              <div>
+                <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 4px;">Última aula</div>
+                <input value="{{ cfFim }}" oninput="{{ onCfFim }}" type="date" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #fff;" />
+              </div>
+              <button onclick="{{ onGravarCiclo }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Gravar</button>
+              <span style="font-size: 12px; font-weight: 600; color: #a3392c;">{{ cicloErro }}</span>
+            </div>
+            <p style="margin: 10px 0 0; font-size: 12px; color: #8a7465; line-height: 1.5; max-width: 720px;">{{ cc.ajuda }}</p>
+          </sc-if>
+        </section>
+      </sc-for>
+      <!-- A ausência de um calendário das particulares é uma decisão, e
+           decisão silenciosa parece esquecimento. -->
+      <p style="margin: 0; font-size: 12.5px; color: #8a7465; line-height: 1.55; max-width: 760px;">A aula particular não tem calendário de escola: cada uma depende da aluna, marcada numa data dentro do contrato dela. Por isso a chamada de aula particular é sempre cobrada, em qualquer semana.</p>
+    </sc-if>
+
     <!-- PLACAR -->
     <div style="background: #164951; border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;">
       <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
@@ -225,7 +274,11 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0, loteFeito: 0 };
+  // cicloForm: null quando fechado; { tipo, label, inicio, fim } ao
+  // editar. Guardar no estado, e não em refs, é o que permite abrir
+  // o formulário já preenchido com o que está gravado.
+  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0, loteFeito: 0,
+    cicloErro: "", cicloForm: null };
   cicloRef = React.createRef(); inicioRef = React.createRef(); fimRef = React.createRef();
   loteRef = React.createRef();
   metaRef = React.createRef(); metaMesRef = React.createRef();
@@ -256,6 +309,8 @@ class Component extends DCLogic {
       loteRef: this.loteRef, loteLabel: "Aplicar", loteNota: "", loteCor: "#8a7465",
       onLote: () => {},
       onCopiar: () => {}, copiarLabel: "Copiar lista",
+      veCiclo: false, ciclos: [], cicloErro: "", cfLabel: "", cfInicio: "", cfFim: "",
+      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {}, onGravarCiclo: () => {},
       comoUsarAberto: false, comoUsarFechado: true, comoUsarLabel: "ver",
       onComoUsar: () => {}, passos: [], proximoPasso: "" };
 
@@ -326,7 +381,105 @@ class Component extends DCLogic {
     const precisaConfigurar = !d.meta || d.semFim;
     const comoUsarAberto = this.state.comoUsar === null ? precisaConfigurar : this.state.comoUsar;
 
+    // quem cuida da escola é quem mexe no calendário
+    const userMC = (CRM.gestaoVisao ? CRM.gestaoVisao() : (CRM.gestaoUser ? CRM.gestaoUser() : {})) || {};
+    const perfilMC = userMC.perfil || "gestora";
+    const vePelaEscola = perfilMC === "gestora" || perfilMC === "operacao";
+
+    // ── os ciclos: quando as aulas acontecem ──────────────────
+    // Só quem cuida da escola mexe nisso. Para a professora o bloco
+    // não aparece — ela não tem o que resolver aqui.
+    //
+    // São três calendários. O das turmas online é o que já existia; o
+    // presencial e o das particulares começam vazios, e vazio quer
+    // dizer "segue o calendário geral", não "não há aula".
+    const dd = (iso) => (iso ? CRM.ddmm(iso) : "");
+    const dias = (n) => n + (n === 1 ? " dia" : " dias");
+    const formCiclo = this.state.cicloForm;
+    const campo = (nome) => (e) => {
+      const v = e.target.value;
+      this.setState((st) => ({ cicloForm: Object.assign({}, st.cicloForm, { [nome]: v }) }));
+    };
+
+    const TIPOS = (CRM.TIPOS_CICLO || [{ id: "online", nome: "Turmas online" }]);
+    const labelOnline = (CRM.cicloJanela ? CRM.cicloJanela("online").label : "") || "";
+    const ciclos = TIPOS.map((t) => {
+      const jan = CRM.cicloJanela ? CRM.cicloJanela(t.id) : { estado: "sem_fim", label: "" };
+      const diasFim = jan.diasAteOFim;
+      const diasIni = jan.diasAteOInicio;
+      const acabando = diasFim !== null && diasFim >= 0 && diasFim <= 21;
+      const porComecar = jan.estado === "por_comecar";
+      const semCiclo = jan.estado === "sem_ciclo";
+      const comProblema = jan.estado === "sem_fim" || jan.estado === "terminado" || acabando;
+      const editando = !!formCiclo && formCiclo.tipo === t.id;
+      const oQue = t.id === "particular" ? "aulas particulares"
+        : t.id === "presencial" ? "aulas presenciais" : "aulas das turmas online";
+      const titulo = semCiclo
+        ? "Sem calendário próprio"
+        : jan.estado === "sem_fim"
+          ? "O ciclo " + jan.label + " não tem data de fim"
+          : jan.estado === "terminado"
+            ? "O ciclo " + jan.label + " terminou em " + dd(jan.fim)
+            : porComecar
+              ? "Ciclo " + jan.label + " · começa em " + dd(jan.inicio)
+              : "Ciclo " + jan.label + " · de " + dd(jan.inicio) + " a " + dd(jan.fim);
+      const texto = semCiclo
+        ? "As " + oQue + " seguem o calendário geral da escola. Se elas começam e terminam em datas próprias, informe aqui — e só elas passam a obedecer estas datas."
+        : jan.estado === "sem_fim"
+          ? "A agenda gera aula toda semana pelo dia escrito no nome da turma. Sem data de fim ela não para, e a escola continua pedindo chamada de aula que não aconteceu. Informe o último dia de aula deste ciclo."
+          : jan.estado === "terminado"
+            ? "Não há " + oQue + " na agenda desde então, e nenhuma chamada é cobrada. Para as aulas voltarem, troque o nome e as datas pelo ciclo novo."
+            // férias entre um ciclo e outro: a agenda vazia é o certo,
+            // e precisa estar escrito, senão parece defeito
+            : porComecar
+              ? (diasIni === 1 ? "A primeira aula é amanhã." : "Faltam " + dias(diasIni) + " para a primeira aula.")
+                + " Até lá não há " + oQue + " na agenda e nenhuma chamada é cobrada — é o intervalo entre os ciclos."
+              : acabando
+                ? (diasFim === 0 ? "Hoje é o último dia de aula." : "Faltam " + dias(diasFim) + " para o último dia de aula.")
+                  + " Depois disso não há " + oQue + " na agenda até você abrir o próximo ciclo."
+                : "É esta janela que decide quais " + oQue + " entram na agenda e de quais a chamada é cobrada.";
+      return {
+        tipoNome: t.nome,
+        titulo: titulo, texto: texto,
+        bg: comProblema ? "#fdf1e8" : "#fff",
+        cor: comProblema ? "#c98a3a" : (semCiclo ? "#8a7465" : "#164951"),
+        botao: editando ? "fechar" : (semCiclo ? "informar as datas" : "mudar as datas"),
+        editando: editando,
+        ajuda: "Depois da última aula a agenda para de gerar " + oQue
+          + ", e a chamada deixa de ser cobrada. Para começar um ciclo novo, troque o nome e as duas datas.",
+        // abre já preenchido com o que está gravado: quem só quer
+        // corrigir uma data não deve ter de redigitar o resto.
+        // Tipo que ainda não tem ciclo herda o nome do ciclo das
+        // turmas online: a escola numera os ciclos de um jeito só, e
+        // obrigar a inventar um nome para informar duas datas é
+        // atrito no exato momento em que a pessoa já está resolvendo.
+        onMudar: () => this.setState({
+          cicloErro: "",
+          cicloForm: editando ? null
+            : { tipo: t.id, label: jan.label || labelOnline || "",
+                inicio: jan.inicio || "", fim: jan.fim || "" }
+        })
+      };
+    });
+
     return {
+      veCiclo: vePelaEscola,
+      ciclos: ciclos,
+      cicloErro: this.state.cicloErro,
+      cfLabel: (formCiclo && formCiclo.label) || "",
+      cfInicio: (formCiclo && formCiclo.inicio) || "",
+      cfFim: (formCiclo && formCiclo.fim) || "",
+      onCfLabel: campo("label"), onCfInicio: campo("inicio"), onCfFim: campo("fim"),
+      onGravarCiclo: () => {
+        const fc = this.state.cicloForm || {};
+        if (!CRM.abrirCiclo({ tipo: fc.tipo, label: (fc.label || "").trim(),
+                              inicio: fc.inicio, fim: fc.fim })) {
+          this.setState({ cicloErro: "Confira o nome e as duas datas — a última aula não pode ser antes da primeira." });
+          return;
+        }
+        this.setState({ cicloErro: "", cicloForm: null });
+        this.bump();
+      },
       comoUsarAberto, comoUsarFechado: !comoUsarAberto,
       comoUsarLabel: comoUsarAberto ? "fechar" : "ver",
       onComoUsar: () => this.setState({ comoUsar: !comoUsarAberto }),
