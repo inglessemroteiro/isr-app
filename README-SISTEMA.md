@@ -618,6 +618,30 @@ frase e aqui é a lista, dentro do Resumo.
 O contrato aqui se conta em parcelas, não em ciclos, e trocar isso
 mexeria na cobrança inteira.
 
+### "Pessoa" é palavra de banco de dados
+
+No código o registro se chama `pessoa`, porque ele cobre tanto quem
+estuda quanto quem ainda não fechou. Na tela isso não ajuda: quem
+estuda é **aluna**, quem ainda não fechou é **lead**, e "pessoa" não
+diz qual dos dois.
+
+A palavra saiu de 36 lugares no texto que a escola lê — busca, lista
+vazia, contagem, rótulo de resumo, aviso de exclusão, rodapé de
+cobrança, cartão de dados. Onde o texto cobre os dois, ele diz os dois
+("buscar aluna ou lead…", "45 no cadastro, entre alunas e leads") em
+vez de apagar a diferença.
+
+Nos **nomes de código** ela fica: `getPessoas`, `pessoaId`,
+`novaPessoa`. Renomear a camada de dados inteira é risco sem ganho, e
+ninguém lê isso na tela.
+
+E fica também onde não quer dizer aluna: **Equipe** e **Folha** falam
+de quem trabalha aqui, a **Agenda** fala de quem é dona do evento, e
+"dados pessoais" e "conta pessoal" são outra palavra.
+
+O `verificar-jargao.js` passou a barrar `pessoa` no texto visível, com
+exceção dessas três telas — se a palavra voltar, a conferência falha.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da

@@ -45,7 +45,7 @@
         <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500;">Cópias de segurança</span>
         <button onclick="{{ onCriar }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 11.5px; font-weight: 600; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Copiar agora</button>
       </div>
-      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">São guardadas as cinco mais recentes, no próprio navegador. Uma cópia é criada automaticamente antes de importar arquivo, apagar pessoa ou restaurar.</p>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">São guardadas as cinco mais recentes, no próprio navegador. Uma cópia é criada automaticamente antes de importar arquivo, apagar uma aluna ou restaurar.</p>
       <sc-if value="{{ semBackups }}">
         <div style="font-size: 12.5px; color: #b8ada0; line-height: 1.6;">Nenhuma cópia ainda. A primeira cópia é criada na próxima operação de risco, ou pelo botão "Copiar agora".</div>
       </sc-if>
@@ -67,7 +67,7 @@
     <!-- EXPORTAR / IMPORTAR -->
     <section style="background: #fff; border-radius: 24px; padding: 18px; margin-bottom: 12px;">
       <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 4px;">Exportar dados</div>
-      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O arquivo contém tudo: pessoas, contratos, turmas, chamadas, contatos, avaliações, financeiro e configurações. Guarde o arquivo fora deste computador: ele permite restaurar os dados em outro aparelho.</p>
+      <p style="margin: 0 0 12px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">O arquivo contém tudo: alunas e leads, contratos, turmas, chamadas, contatos, avaliações, financeiro e configurações. Guarde o arquivo fora deste computador: ele permite restaurar os dados em outro aparelho.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <button onclick="{{ onExportar }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Baixar arquivo</button>
         <button onclick="{{ onCopiar }}" style="border: 0; background: #fff; color: #1d5a63; font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ copiarLabel }}</button>
@@ -218,7 +218,7 @@ class Component extends DCLogic {
       })(this),
 
       numeros: [
-        { valor: String(pessoas.length), label: "pessoas no cadastro", cor: "#164951" },
+        { valor: String(pessoas.length), label: "no cadastro, entre alunas e leads", cor: "#164951" },
         { valor: String(pessoas.filter(p => p.status === "aluna" || p.status === "mvs").length),
           label: "alunas ativas", cor: "#348a8e" },
         { valor: String(bks.length), label: bks.length === 1 ? "cópia guardada" : "cópias guardadas",
@@ -269,7 +269,7 @@ class Component extends DCLogic {
         const r = CRM.importarTudo(txt);
         if (!r.ok) { this.setState({ erro: r.erro, aviso: "" }); return; }
         if (this.importRef.current) this.importRef.current.value = "";
-        this.setState({ erro: "", aviso: "Arquivo importado: " + r.pessoas + " pessoas em " + r.blocos + " blocos de dados." });
+        this.setState({ erro: "", aviso: "Arquivo importado: " + r.pessoas + " no cadastro, em " + r.blocos + " blocos de dados." });
         this.bump();
       },
       temAviso: !!this.state.aviso, aviso: this.state.aviso,
