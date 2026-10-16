@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-q",
+  numero: "2026.10.16-r",
   data: "16/10/2026",
-  nota: "O Mural da equipe e a tela de gestão do Desafio saem do sistema, com o dado do mural junto. A seção do menu passa a se chamar alunas e vendas"
+  nota: "Alunas vira Pessoas: cadastro único, com lead e aluna na mesma lista, chips de situação com contagem e busca. O termômetro da turma e a retenção saem"
 };
