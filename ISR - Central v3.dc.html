@@ -107,6 +107,7 @@
          agora filtram. -->
     <sc-if value="{{ temEquipe }}">
       <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
+        <span style="font-size: 12px; font-weight: 600; color: #8a7465; margin-right: 2px;">filas da equipe</span>
         <sc-for list="{{ donos }}" as="dn" hint-placeholder-count="4">
           <button onclick="{{ dn.onClick }}" style="font-family: inherit; border: 0; background: {{ dn.bg }}; color: {{ dn.fg }}; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: {{ dn.peso }}; cursor: pointer;">{{ dn.label }}</button>
         </sc-for>
@@ -127,6 +128,12 @@
                 <span style="font-size: 15px; font-weight: 700; color: {{ q.nomeCor }};">{{ q.nome }}</span>
               </sc-if>
               <span title="responsável" style="font-size: 11px; font-weight: 600; color: #8a7465;">{{ q.dono }}</span>
+              <!-- Há quanto tempo espera. A fila dizia o que fazer e
+                   não há quanto tempo: um follow-up de hoje e um de
+                   duas semanas tinham a mesma cara, e é o antigo que
+                   custa caro. -->
+              <span title="{{ q.regraTitulo }}" style="font-size: 11px; font-weight: 600; color: #b3a693;">{{ q.regra }}</span>
+              <span style="font-size: 11px; font-weight: 700; color: {{ q.idadeCor }};">{{ q.idade }}</span>
             </div>
             <div style="font-size: 14px; color: #1d5a63; margin-top: 2px;">{{ q.motivo }}</div>
           </div>
@@ -291,7 +298,9 @@
        não tem o que fazer com esses números, e número que a pessoa
        não pode mover só ocupa o lugar do que ela precisa ver. -->
   <sc-if value="{{ veMetas }}">
-  <section style="background: #fff; border-radius: 24px; padding: 18px 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+  <!-- O bloco inteiro leva ao Marketing: é lá que a meta é explicada,
+       e quem olha o número quer saber de onde ele vem. -->
+  <section onclick="{{ onMetas }}" style="background: #fff; border-radius: 24px; padding: 18px 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; cursor: pointer;">
     <sc-for list="{{ metas }}" as="m" hint-placeholder-count="2">
       <div>
         <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;"><span>{{ m.label }}</span><span>{{ m.valor }}</span></div>
@@ -383,7 +392,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     const vazio = { eyebrow: "", fila: [], filaCount: "0", filaVazia: true, filaSub: "",
-      equipe: [], temEquipe: false, donos: [], metas: [], veMetas: false,
+      equipe: [], temEquipe: false, donos: [], metas: [], veMetas: false, onMetas: () => {},
       veAtas: false, veLinksDaDirecao: false, areas: [], achados: [], buscando: false,
       buscaResumo: "", buscaRef: this.buscaRef, onBusca: () => {}, filaVaziaTexto: "",
       semChamada: [], temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "",
@@ -447,16 +456,24 @@ class Component extends DCLogic {
       : quem ? filaBruta.filter(x => x.dono === quem)
       : filaBruta.filter(minha);
     const LIMITE = 12;
-    const fila = (this.state.verTodos ? filaAll : filaAll.slice(0, LIMITE)).map(item => {
+    // a ordem já vem do dado: urgência primeiro, e dentro dela o que
+    // espera há mais tempo
+    const idade = (x) => (CRM.idadeNaFila ? CRM.idadeNaFila(x) : { dias: null, label: "", velho: false });
+    const filaOrd = filaAll;
+    const fila = (this.state.verTodos ? filaOrd : filaOrd.slice(0, LIMITE)).map(item => {
       const tom = TOM[item.sinal] || ["#f2ebe3", "•"];
       const ehPessoa = item.pessoaId && String(item.pessoaId).indexOf(":") < 0;
       // a pendência (regra RT) não é de uma pessoa, mas fecha: antes o
       // botão "Concluir" apontava para # e a pendência ficava na fila
       // para sempre, sem jeito nenhum de dar por encerrada
       const ehPendencia = item.regra === "RT" && item.tarefaId;
+      const id = idade(item);
       return {
         nome: item.nome, motivo: item.motivo,
         dono: perfil === "gestora" && item.dono ? item.dono : "",
+        regra: item.regra || "", regraTitulo: "regra " + (item.regra || ""),
+        idade: id.label,
+        idadeCor: id.velho ? "#a3392c" : "#8a7465",
         tint: tom[0], icone: tom[1],
         nomeCor: ehPessoa ? "#348a8e" : "#164951",
         temPerfil: !!ehPessoa, semPerfil: !ehPessoa,
@@ -479,7 +496,7 @@ class Component extends DCLogic {
         onAdiar: () => { CRM.adiarItem(item.sinal || item.regra, item.pessoaId); this.bump(); }
       };
     });
-    const escondidas = Math.max(0, filaAll.length - LIMITE);
+    const escondidas = Math.max(0, filaOrd.length - LIMITE);
 
     // filas da equipe: quem vê a escola inteira precisa saber se a fila
     // de alguém está crescendo sem ninguém olhar
@@ -880,6 +897,7 @@ class Component extends DCLogic {
 
       // matrícula e renovação são do comercial; a professora não vê
       veMetas: temPapel("gestora", "operacao", "comercial"),
+      onMetas: () => { try { window.location.href = "ISR%20-%20Marketing%20v3.dc.html"; } catch (e) {} },
       // a ata é da reunião de alinhamento, de quem está nela; a
       // planilha financeira é só da direção
       veAtas: temPapel("gestora", "operacao", "comercial"),
