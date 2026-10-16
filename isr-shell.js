@@ -101,11 +101,6 @@
   // coluna lisa viram uma lista para ler inteira toda vez; com
   // título em cima de cada grupo, a pessoa pula direto para o pedaço
   // do dia em que está.
-  //
-  // O Mural e o Desafio da semana saíram do menu por decisão da
-  // escola. Continuam no ar, pelos endereços /mural.html e
-  // /programa.html, e com link no rodapé da Central — tela que
-  // ninguém alcança é tela morta.
   var ITENS = [
     // A Central é de quem cuida da escola. No v5 a professora nem
     // aparece nela: a casa dela é o Painel do professor, que é onde a
@@ -113,12 +108,12 @@
     { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
 
-    { id: "alunas", sec: "pessoas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "crm", sec: "pessoas e vendas", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-    { id: "mensagens", sec: "pessoas e vendas", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
-    { id: "matricula", sec: "pessoas e vendas", icone: "+", label: "Matrícula", href: "ISR - Matrícula v3.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "mciclo", sec: "pessoas e vendas", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matriculas ciclo v3.dc.html", perfis: ["gestora", "comercial"] },
-    { id: "calc", sec: "pessoas e vendas", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "alunas", sec: "alunas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    { id: "crm", sec: "alunas e vendas", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "mensagens", sec: "alunas e vendas", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "matricula", sec: "alunas e vendas", icone: "+", label: "Matrícula", href: "ISR - Matrícula v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "mciclo", sec: "alunas e vendas", icone: "▤", label: "Matrículas do ciclo", href: "ISR - Matriculas ciclo v3.dc.html", perfis: ["gestora", "comercial"] },
+    { id: "calc", sec: "alunas e vendas", icone: "±", label: "Calculadora de preços", href: "ISR - Calculadora v3.dc.html", perfis: ["gestora", "comercial"] },
 
     { id: "cobranca", sec: "financeiro", icone: "€", label: "Contas a receber", href: "ISR - Cobrança v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "caixa", sec: "financeiro", icone: "⇅", label: "Caixa", href: "ISR - Caixa v3.dc.html", perfis: ["gestora", "operacao"] },
@@ -135,7 +130,7 @@
     { id: "importar", sec: "escola", icone: "↧", label: "Importar", href: "ISR - Importar v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "conexao", sec: "escola", icone: "⟳", label: "Conexão", href: "gestao.html?config", perfis: ["gestora"] }
   ];
-  var SECOES = ["hoje", "pessoas e vendas", "financeiro", "pedagógico", "escola"];
+  var SECOES = ["hoje", "alunas e vendas", "financeiro", "pedagógico", "escola"];
 
   function visivel(item) {
     if (!item.perfis) return true;
