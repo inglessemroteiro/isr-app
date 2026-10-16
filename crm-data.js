@@ -9244,6 +9244,61 @@
       desde: desde };
   }
 
+  // ── O CERTIFICADO, NUM LUGAR SÓ ───────────────────────────────
+  //
+  // O documento diz nível, carga horária, período e frequência. Esses
+  // quatro números saíam de contas espalhadas, e a frequência saía de
+  // uma conta que punha a ausência avisada contra a aluna — enquanto o
+  // app dizia a ela que ausência avisada não conta. Dizer um número à
+  // aluna e imprimir outro no documento é o defeito a não ter.
+  //
+  // Aqui a conta é uma só, e é a mesma que a aluna lê no app: presença
+  // do curso inteiro, com a ausência avisada fora do total.
+  function certificadoDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var h = horasDaAluna(pessoaId) || {};
+    var pc = progressoCiclo(pessoaId) || { restam: 0, dadas: 0, total: 0 };
+
+    var todas = presencasDe(pessoaId);
+    var contam = todas.filter(function (x) { return x.estado !== "justificada"; });
+    var presentes = contam.filter(function (x) {
+      return x.estado === "presente" || x.estado === "atraso"; }).length;
+    var pct = contam.length ? Math.round(100 * presentes / contam.length) : null;
+
+    // o nível do curso é o da turma; o campo do cadastro guarda como a
+    // escola conversa ("Básico"), que não é o degrau do caminho
+    var turmas = turmasLista() || [];
+    var turma = turmas.filter(function (u) {
+      return u.nivel + " · " + u.turma === p.turma; })[0];
+    var nivel = (turma && turma.nivel) || p.nivel || "";
+
+    var frequenciaOk = pct !== null && pct >= FREQUENCIA_MINIMA;
+    var cicloFechado = pc.restam === 0 && pc.dadas > 0;
+    var pronto = frequenciaOk && cicloFechado;
+
+    // o que falta é dito na ordem em que a aluna pode agir
+    var falta = "";
+    if (!contam.length) falta = "Nenhuma aula com chamada ainda. O certificado sai quando o ciclo fechar.";
+    else if (!frequenciaOk) falta = "A sua presença está em " + pct + "%, e o certificado pede "
+      + FREQUENCIA_MINIMA + "%.";
+    else if (!cicloFechado) falta = pc.restam === 1
+      ? "Falta a última aula do ciclo."
+      : "Faltam " + pc.restam + " aulas para o ciclo fechar.";
+
+    return {
+      nome: p.nome, nivel: nivel,
+      horas: h.horasTotais || 0,
+      horasNoFimDoCiclo: Math.round(((h.horasTotais || 0) + (h.faltamHoras || 0)) * 10) / 10,
+      presentes: presentes, aulas: contam.length,
+      justificadas: todas.length - contam.length,
+      frequencia: pct, minimo: FREQUENCIA_MINIMA, frequenciaOk: frequenciaOk,
+      desde: p.desde || "", ultima: todas[0] ? todas[0].data : "",
+      aulasQueFaltam: pc.restam, cicloFechado: cicloFechado,
+      pronto: pronto, falta: falta
+    };
+  }
+
   // A lista do que a pessoa tem contratado agora, produto a produto.
   // ── ASSINATURA (produto recorrente: Book Club, desafios, plantão) ──
   function ativarAssinatura(pessoaId, cfg) {
@@ -13312,7 +13367,7 @@
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
     diarioDaTurma: diarioDaTurma,
     MINIMO_TURMA: MINIMO_TURMA, turmasAbaixoDoMinimo: turmasAbaixoDoMinimo,
-    progressoCiclo: progressoCiclo,
+    progressoCiclo: progressoCiclo, certificadoDaAluna: certificadoDaAluna,
     contratarParticular: contratarParticular, encerrarParticular: encerrarParticular,
     CADENCIAS_PARTICULAR: CADENCIAS, LIMITE_REMARCACAO_MES: LIMITE_REMARCACAO_MES,
     agendaParticular: agendaParticular, agendarSerieParticular: agendarSerieParticular,

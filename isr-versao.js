@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-h",
+  numero: "2026.10.16-i",
   data: "16/10/2026",
-  nota: "A aluna vê os clubes dela e o catálogo, entra sozinha e sabe antes do clique que do terceiro em diante a escola cobra à parte. Clube lotado leva à lista de espera, com a posição"
+  nota: "O certificado: a aluna vê nível, carga horária, frequência e o que falta, e abre o documento quando o ciclo fecha. A conta passa a ser uma só — antes a tela da gestão imprimia uma frequência diferente da que o app mostrava"
 };

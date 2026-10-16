@@ -499,6 +499,28 @@ caminho do desenho.
 Os projetos que já passaram saem das turmas em que ela teve chamada.
 É o único registro de onde ela esteve, e é verdade.
 
+#### O certificado
+
+"Já dá para tirar o meu certificado?" era pergunta de WhatsApp, e a
+resposta saía de uma conta feita à mão. `certificadoDaAluna(pessoaId)`
+responde, e responde **uma vez só para os dois lados**: é a mesma
+função que a tela da gestão usa para imprimir o documento.
+
+Isso corrigiu um defeito: a tela do certificado contava a frequência
+de um jeito (ausência avisada contra a aluna, curso inteiro) e o app
+dizia a ela outro (avisada fora da conta). Dizer um número à aluna e
+imprimir outro no documento é pior do que não dizer nada.
+
+No cartão ela vê os quatro números que o documento traz — nível,
+carga horária agora, carga horária no fim do ciclo, frequência — e o
+que falta, na ordem em que dá para agir: primeiro a presença, que ela
+muda; depois as aulas que faltam para o ciclo fechar, que ela espera.
+
+O documento só abre quando os dois estão cumpridos: **presença acima
+do mínimo e ciclo fechado**. Aberto pela aluna (`&de=app`), o
+certificado não mostra o caminho de volta para a lista de alunas da
+escola — só imprimir ou salvar em PDF.
+
 ### Os clubes
 
 Clube é encontro de conversa por tema, fora da aula: Book Club,
