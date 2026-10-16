@@ -29,11 +29,10 @@
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <button onclick="{{ onLinkCadastro }}" title="Copiar o link público de cadastro + sinal" style="border: 0; background: #fff; color: #164951; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ linkCadastroLabel }}</button>
-        <a href="ISR%20-%20Mensagens%20v3.dc.html" style="text-decoration: none; background: #fff; border: 0; color: #164951; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px;">Mensagens prontas</a>
         <button onclick="{{ onNovoLead }}" style="font-family: inherit; border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 730px;">Funil de leads, do primeiro contato ao fechamento. Proposta enviada: valor e parcelas enviados, aguardando resposta. Fechado: abre a tela de matrícula e converte o lead em aluna. A vista Atividade lista os mesmos registros por data.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 730px;">Funil de leads, do primeiro contato ao fechamento. Proposta enviada: valor e parcelas enviados, aguardando resposta. Fechado: abre a tela de matrícula e converte o lead em aluna.</p>
 
     <!-- REUNIÕES: quantas estão marcadas, quantas viraram matrícula -->
     <div style="background: #fff; border-radius: 24px; padding: 14px 18px; margin-bottom: 16px;">
@@ -97,16 +96,20 @@
       </div>
     </sc-if>
 
-    <!-- NOTIFICAÇÃO NOVAS INSCRIÇÕES -->
-    <sc-if value="{{ temNovas }}">
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fdf3ec; border: 1px solid #f0d9c8; border-radius: 12px; padding: 11px 14px; margin-bottom: 14px;">
-        <span style="width: 9px; height: 9px; border-radius: 50%; background: #e07856; flex: none;"></span>
-        <span style="font-size: 13px; color: #164951;"><strong>{{ novasCount }}</strong> {{ novasLabel }}:</span>
+    <!-- INSCRIÇÃO NOVA · a faixa do v5 -->
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
+      <sc-if value="{{ temNovas }}">
+        <span style="background: #fc9082; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #164951;">{{ novasCount }} {{ novasLabel }}</span>
+        <!-- o v5 mostra só a contagem porque tem a fila do Jotform logo
+             abaixo; aqui a inscrição já virou lead, então o nome é o que
+             leva a pessoa até ela -->
         <sc-for list="{{ novasLeads }}" as="nv" hint-placeholder-count="2">
-          <button onclick="{{ nv.onAbrir }}" style="border: 1px solid #e0c3b6; background: #fff; color: #c8622f; font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ nv.nome }}</button>
+          <button onclick="{{ nv.onAbrir }}" style="border: 0; background: #fff; color: #164951; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ nv.nome }}</button>
         </sc-for>
-      </div>
-    </sc-if>
+      </sc-if>
+      <span style="flex: 1; min-width: 4px;"></span>
+      <a href="ISR%20-%20Mensagens%20v3.dc.html" style="text-decoration: none; background: #fff; color: #164951; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 999px;">Mensagens</a>
+    </div>
 
     <!-- MATRÍCULA CONCLUÍDA -->
     <sc-if value="{{ temMatriculada }}">
@@ -116,21 +119,11 @@
       </div>
     </sc-if>
 
-    <!-- VISTA -->
-    <div style="display: flex; gap: 3px; margin-bottom: 16px; background: #f2ebe3; border-radius: 999px; padding: 3px; width: fit-content;">
-      <sc-for list="{{ vistas }}" as="vi" hint-placeholder-count="2">
-        <button onclick="{{ vi.onPick }}" style="border: none; background: {{ vi.bg }}; color: {{ vi.fg }}; font-size: 12.5px; font-weight: 600; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ vi.label }}</button>
-      </sc-for>
-    </div>
-
-    <sc-if value="{{ vistaFunil }}">
     <div>
-      <!-- ABAS ESTILO TABS -->
-      <div style="display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 0 6px;">
+      <!-- ESTÁGIOS · os chips do v5, com a contagem de cada um -->
+      <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px;">
         <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="8">
-          <button onclick="{{ tab.onClick }}" style="font-family: inherit; flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 16px 9px; border-radius: 12px 10px 0 0; display: flex; align-items: center; gap: 6px; margin-left: {{ tab.ml }};">
-            <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
-          </button>
+          <button onclick="{{ tab.onClick }}" style="font-family: inherit; flex: none; border: 0; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 999px;">{{ tab.label }} · {{ tab.count }}</button>
         </sc-for>
       </div>
 
@@ -148,57 +141,52 @@
         </div>
       </sc-if>
 
-      <!-- TABELA -->
-      <div style="background: #fff; border-radius: 0 18px 18px 18px; overflow-x: auto;">
+      <!-- A LISTA -->
+      <div style="background: #fff; border-radius: 24px; padding: 6px 20px;">
 
-        <!-- CABEÇALHO DE COLUNAS -->
-        <div style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 11px 18px; background: #faf7f2; min-width: 700px;">
-          <span style="display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;"><input type="checkbox" checked="{{ todosMarcados }}" onchange="{{ onSelTodos }}" title="Marcar todos desta visão" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0;" /> Lead <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Entrou <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Turma <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Origem <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Estágio <span style="opacity:.5;">⌄</span></span>
-        </div>
+        <!-- marcar todos: o par do lote, sem o cabeçalho de colunas do v3 -->
+        <sc-if value="{{ temLeads }}">
+          <label style="display: flex; align-items: center; gap: 8px; padding: 10px 0 6px; font-size: 11.5px; font-weight: 600; color: #8a7465; cursor: pointer;">
+            <input type="checkbox" checked="{{ todosMarcados }}" onchange="{{ onSelTodos }}" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0;" /> marcar todos deste estágio
+          </label>
+        </sc-if>
 
         <sc-if value="{{ vazio }}">
-          <div style="text-align: center; padding: 44px 20px; color: #8a7465;">
-            <div style="height: 4px;"></div>
-            <p style="margin: 0; font-size: 13px;">Nenhum lead neste estágio.</p>
-          </div>
+          <div style="padding: 22px 0; font-size: 14px; color: #1d5a63;">Nenhuma lead neste estágio.</div>
         </sc-if>
 
         <sc-for list="{{ leads }}" as="lead" hint-placeholder-count="3">
-          <!-- LINHA -->
-          <div onclick="{{ lead.onToggle }}" style="display: grid; grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1.25fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; cursor: pointer; background: {{ lead.rowBg }}; min-width: 700px;">
-            <div style="min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 7px;">
+          <div style="border-bottom: 1px solid #f2ebe3;">
+            <!-- LINHA · nome, estágio, entrou, interesse, canal -->
+            <div onclick="{{ lead.onToggle }}" style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 0; cursor: pointer;">
+              <div style="flex: 1 1 160px; min-width: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <input type="checkbox" checked="{{ lead.marcado }}" onclick="{{ lead.onSelClick }}" onchange="{{ lead.onMarcar }}" title="Selecionar para ações em lote" style="width: 15px; height: 15px; accent-color: #348a8e; cursor: pointer; margin: 0; flex: none;" />
-                <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 14.5px; font-weight: 600; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ lead.nome }}</a>
-                <span style="color: #b3a693; font-size: 11px;">{{ lead.caret }}</span>
+                <span style="width: 10px; height: 10px; border-radius: 999px; background: {{ lead.stageColor }}; flex: none;"></span>
+                <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 15px; font-weight: 600; color: #348a8e; text-decoration: underline; text-underline-offset: 3px;">{{ lead.nome }}</a>
+                <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: #f2ebe3; color: #164951;">{{ lead.stageLabel }}</span>
+                <sc-if value="{{ lead.temReuniao }}">
+                  <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: rgba(107,91,149,0.13); color: #6b5b95;">Conversa {{ lead.reuniaoInfo }}</span>
+                </sc-if>
+                <sc-if value="{{ lead.badge }}">
+                  <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }};">{{ lead.badge }}</span>
+                </sc-if>
               </div>
-              <div style="font-size: 11.5px; color: #8a7465; margin-top: 3px;">{{ lead.telefone }}</div>
-              <sc-if value="{{ lead.temReuniao }}">
-                <span style="display: inline-block; margin-top: 5px; margin-right: 5px; background: rgba(107,91,149,0.13); color: #6b5b95; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 5px;">Conversa {{ lead.reuniaoInfo }}</span>
-              </sc-if>
-              <sc-if value="{{ lead.badge }}">
-                <span style="display: inline-block; margin-top: 5px; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }}; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 5px;">{{ lead.badge }}</span>
-              </sc-if>
+              <div style="flex: 1 1 130px; min-width: 0; font-size: 13px; font-weight: 600; color: {{ lead.entrouColor }};">entrou {{ lead.entrouRel }} {{ lead.entrouWarn }}</div>
+              <div style="flex: 1 1 130px; min-width: 0; font-size: 13px; color: #1d5a63;">{{ lead.turmaLabel }}</div>
+              <div style="flex: 1 1 110px; min-width: 0;"><span style="background: #e5f2f6; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #1d5a63;">{{ lead.canal }}</span></div>
             </div>
-            <div style="font-size: 13px; color: {{ lead.entrouColor }}; font-weight: {{ lead.entrouWeight }};">{{ lead.entrouRel }} {{ lead.entrouWarn }}</div>
-            <div style="font-size: 13px; color: #1d5a63;">{{ lead.turmaLabel }}</div>
-            <div><span style="display: inline-block; background: #f4e4d9; color: #9c6f56; font-size: 11.5px; font-weight: 600; padding: 4px 12px; border-radius: 999px;">{{ lead.canal }}</span></div>
-            <div>
-              <select onclick="{{ lead.onSelClick }}" onchange="{{ lead.onStageChange }}" style="width: 100%; appearance: auto; border: 1px solid {{ lead.stageColor }}33; background: {{ lead.stageBg }}; color: {{ lead.stageColor }}; font-size: 12px; font-weight: 600; padding: 8px 10px; border-radius: 12px; cursor: pointer; font-family: inherit;">
-                <sc-for list="{{ lead.stageOpts }}" as="so" hint-placeholder-count="7">
-                  <option value="{{ so.id }}" selected="{{ so.sel }}">{{ so.label }}</option>
-                </sc-for>
-              </select>
-            </div>
-          </div>
 
-          <!-- PAINEL EXPANDIDO -->
-          <sc-if value="{{ lead.open }}">
-            <div style="border-top: 1px solid #f2e9dd; background: #faf7f2; padding: 20px 18px;">
+            <!-- PAINEL EXPANDIDO -->
+            <sc-if value="{{ lead.open }}">
+              <div style="background: #f5f5f0; border-radius: 18px; padding: 16px; margin-bottom: 14px;">
+
+                <!-- ESTÁGIO · no v5 o estágio muda aqui, por chip -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
+                  <span style="font-size: 12px; font-weight: 600; color: #8a7465; margin-right: 4px;">estágio</span>
+                  <sc-for list="{{ lead.stages }}" as="g" hint-placeholder-count="7">
+                    <button onclick="{{ g.onPick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; background: {{ g.bg }}; color: {{ g.fg }};">{{ g.label }}</button>
+                  </sc-for>
+                </div>
 
               <!-- AGENDAR A CONVERSA DE MATRÍCULA -->
               <sc-if value="{{ lead.agendandoReuniao }}">
@@ -420,8 +408,9 @@
                 <button onclick="{{ lead.onExcluir }}" style="font-family: inherit; border: none; background: transparent; color: #cf6b5c; font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer;">Excluir</button>
               </div>
 
-            </div>
-          </sc-if>
+              </div>
+            </sc-if>
+          </div>
         </sc-for>
       </div>
 
@@ -443,113 +432,6 @@
         </div>
       </div>
     </div>
-    </sc-if>
-
-    <!-- ATIVIDADE -->
-    <sc-if value="{{ vistaAtividade }}">
-    <div>
-
-      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;">
-        <sc-for list="{{ periodos }}" as="pd" hint-placeholder-count="4">
-          <button onclick="{{ pd.onPick }}" style="border: 0; background: {{ pd.bg }}; color: {{ pd.fg }}; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.label }}</button>
-        </sc-for>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px;">
-        <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="5">
-          <div style="background: #fff; border-radius: 14px; padding: 15px 17px;">
-            <div style="font-size: 25px; font-weight: 600; color: {{ nu.cor }}; letter-spacing: -0.6px; line-height: 1;">{{ nu.valor }}</div>
-            <div style="font-size: 11px; color: #8a7465; margin-top: 6px; line-height: 1.4;">{{ nu.label }}</div>
-          </div>
-        </sc-for>
-      </div>
-
-      <div style="background: #164951; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;">
-        <div style="font-size: 10px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: #9ec970; margin-bottom: 6px;">Resumo do período</div>
-        <div style="font-size: 14px; color: #fff; line-height: 1.6;">{{ leitura }}</div>
-        <sc-if value="{{ temAlerta }}">
-          <div style="font-size: 13px; color: #fc9082; line-height: 1.6; margin-top: 8px;">{{ alerta }}</div>
-        </sc-if>
-      </div>
-
-      <!-- EXTRATO: um lançamento por linha, do mais recente para o mais antigo -->
-      <div style="background: #fff; border-radius: 14px; padding: 18px;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-          <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 600;">Extrato</span>
-          <span style="flex: none; font-size: 11.5px; color: #8a7465;">{{ extratoResumo }}</span>
-        </div>
-
-        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px;">
-          <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="5">
-            <button onclick="{{ ft.onPick }}" style="border: 1px solid {{ ft.borda }}; background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 11.5px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ft.label }}</button>
-          </sc-for>
-        </div>
-
-        <sc-if value="{{ extratoVazio }}">
-          <div style="font-size: 13px; color: #b3a693; line-height: 1.6; padding: 12px 0;">Nenhum registro deste tipo no período.</div>
-        </sc-if>
-
-        <sc-for list="{{ extrato }}" as="dia" hint-placeholder-count="12">
-          <div style="border-top: 1px solid #f2e9dd;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 11px 0 6px;">
-              <span style="font-size: 11.5px; font-weight: 600; color: #164951;">{{ dia.titulo }}</span>
-              <span style="flex: none; font-size: 11px; color: #b3a693;">{{ dia.contagem }}</span>
-            </div>
-            <sc-for list="{{ dia.itens }}" as="it" hint-placeholder-count="4">
-              <div style="display: flex; align-items: flex-start; gap: 10px; padding: 7px 0 9px;">
-                <span style="flex: none; background: {{ it.tagBg }}; color: {{ it.tagFg }}; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 9px; border-radius: 999px; white-space: nowrap; margin-top: 1px;">{{ it.tag }}</span>
-                <div style="flex: 1; min-width: 0;">
-                  <a href="{{ it.href }}" style="font-size: 13px; font-weight: 600; color: #164951; text-decoration: none;">{{ it.nome }}</a>
-                  <div style="font-size: 11.5px; color: #8a7465; margin-top: 2px; line-height: 1.5;">{{ it.detalhe }}</div>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-        </sc-for>
-
-        <sc-if value="{{ temMais }}">
-          <div style="border-top: 1px solid #f2e9dd; padding-top: 12px; margin-top: 4px;">
-            <button onclick="{{ onVerMais }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 12px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ verMaisLabel }}</button>
-          </div>
-        </sc-if>
-      </div>
-
-      <div style="background: #fff; border-radius: 14px; padding: 18px; margin-top: 16px;">
-        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 600; margin-bottom: 4px;">Por pessoa da equipe</div>
-        <p style="margin: 0 0 14px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Contatos e reuniões registrados no período.</p>
-        <sc-if value="{{ semPessoas }}">
-          <div style="font-size: 13px; color: #b3a693; line-height: 1.6;">Sem contatos no período. Os contatos entram quando a equipe usa os botões de mensagem no CRM ou no Perfil.</div>
-        </sc-if>
-        <sc-for list="{{ pessoas }}" as="pe" hint-placeholder-count="3">
-          <div style="padding: 11px 0; border-bottom: 1px solid #f4f1ec;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px;">
-              <span style="font-size: 13px; font-weight: 600; color: #164951;">{{ pe.nome }}</span>
-              <span style="flex: none; font-size: 11.5px; color: #8a7465;">{{ pe.resumo }}</span>
-            </div>
-            <div style="height: 7px; border-radius: 999px; background: #f0ede8; overflow: hidden;">
-              <div style="height: 7px; border-radius: 999px; background: #2a9d8f; width: {{ pe.pct }};"></div>
-            </div>
-          </div>
-        </sc-for>
-      </div>
-
-      <div style="background: #fff; border-radius: 14px; padding: 18px; margin-top: 16px;">
-        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 600; margin-bottom: 4px;">Por dia da semana</div>
-        <p style="margin: 0 0 16px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">Distribuição dos registros no período.</p>
-        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; min-height: 118px; padding-bottom: 4px;">
-          <sc-for list="{{ semana }}" as="sm" hint-placeholder-count="7">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-              <span style="font-size: 12px; font-weight: 600; color: {{ sm.cor }};">{{ sm.n }}</span>
-              <div style="width: 100%; height: {{ sm.altura }}; border-radius: 6px 6px 0 0; background: {{ sm.cor }};"></div>
-              <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #b8ada0; font-weight: 600;">{{ sm.dia }}</span>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-
-    </div>
-    </sc-if>
-
 
     <p style="margin: 18px 0 0; text-align: right;"><button onclick="{{ resetDemo }}" style="font-family: inherit; border: none; background: transparent; color: #c9c1b6; font-size: 11px; cursor: pointer;">↺ restaurar dados de demonstração</button></p>
   </div>
@@ -559,7 +441,7 @@
 class Component extends DCLogic {
   state = { tab: "para_hoje", openId: null, perdendoId: null, matriculandoId: null, agendandoReuniaoId: null, novoLead: false, nlErro: "", linkCopiado: false, tick: 0,
     sinalRecebido: false, negociandoId: null, pSinalRecebido: false, matriculada: "", erroReuniao: "",
-    vista: "funil", dias: 30, filtro: "tudo", extratoN: 0, selecao: {} };
+    selecao: {} };
   // inscrição nova que chega pelo cadastro online (puxada a cada 5 min
   // pela camada de dados) redesenha o funil sem precisar recarregar
   _ouvinteNovos = (() => { try { window.addEventListener("isr-dados-novos", () => this.bump()); } catch (e) {} })();
@@ -635,138 +517,9 @@ class Component extends DCLogic {
     return "ISR%20-%20Mensagens%20v3.dc.html?para=" + lead.id + "&tpl=" + this.stageTemplate(lead.estagio);
   }
 
-  // O que foi executado no período, por data. Alimenta a vista "Atividade".
-  vistaDeAtividade(CRM) {
-    const vazio = { periodos: [], numeros: [], extrato: [], filtros: [],
-      pessoas: [], semana: [], leitura: "", alerta: "", temAlerta: false,
-      extratoVazio: true, extratoResumo: "", temMais: false, semPessoas: true };
-    if (!CRM.agendaComercial) return vazio;
-
-    const ag = CRM.agendaComercial(this.state.dias);
-    const t = ag.totais;
-    const CORES = { entrada: "#e07856", contato: "#2a9d8f", reuniao: "#6b5b95", matricula: "#5a9e4b" };
-
-    // ── extrato: um lançamento por linha, do mais recente para o mais antigo ──
-    const TIPOS = {
-      entrada:   { tag: "entrou",    bg: "rgba(224,120,86,0.14)",  fg: "#c96a48" },
-      contato:   { tag: "contato",   bg: "rgba(42,157,143,0.14)",  fg: "#2a9d8f" },
-      reuniao:   { tag: "conversa",  bg: "rgba(107,91,149,0.14)",  fg: "#6b5b95" },
-      matricula: { tag: "matrícula", bg: "rgba(90,158,75,0.14)",   fg: "#4a8a3d" }
-    };
-    const filtro = this.state.filtro || "tudo";
-    const cabe = tipo => filtro === "tudo" || filtro === tipo;
-
-    const linhaDe = (tipo, x) => ({
-      tag: TIPOS[tipo].tag, tagBg: TIPOS[tipo].bg, tagFg: TIPOS[tipo].fg,
-      nome: x.nome,
-      href: "ISR%20-%20Perfil%20v3.dc.html?id=" + x.id,
-      detalhe:
-        tipo === "matricula" ? "Matriculada" + (x.turma ? " · " + x.turma : "")
-      : tipo === "reuniao"   ? "Conversa de matrícula" + (x.hora ? " às " + x.hora : "")
-                               + (x.dono ? " · " + x.dono : "") + (x.feita ? " · feita" : " · marcada")
-      : tipo === "contato"   ? "Contato registrado" + (x.por ? " por " + x.por : "")
-      :                        "Entrou como lead" + (x.canal ? " · " + x.canal : "")
-    });
-
-    // do dia mais recente para o mais antigo, só os dias que têm algo
-    const todosOsDias = ag.dias.slice().reverse().map(d => {
-      const itens = [];
-      if (cabe("matricula")) d.matriculas.forEach(x => itens.push(linhaDe("matricula", x)));
-      if (cabe("reuniao"))   d.reunioes.forEach(x => itens.push(linhaDe("reuniao", x)));
-      if (cabe("contato"))   d.contatos.forEach(x => itens.push(linhaDe("contato", x)));
-      if (cabe("entrada"))   d.entradas.forEach(x => itens.push(linhaDe("entrada", x)));
-      return {
-        titulo: CRM.ddmm(d.data) + " · " + d.diaSemana,
-        contagem: itens.length + (itens.length === 1 ? " registro" : " registros"),
-        itens
-      };
-    }).filter(d => d.itens.length);
-
-    // um extrato longo abre curto e cresce sob demanda
-    const PASSO = 10;
-    const mostrar = this.state.extratoN || PASSO;
-    const extrato = todosOsDias.slice(0, mostrar);
-    const nLancamentos = todosOsDias.reduce((s, d) => s + d.itens.length, 0);
-
-    let leitura;
-    if (t.contatos === 0 && t.entradas === 0) {
-      leitura = "Sem registros comerciais no período.";
-    } else {
-      const co = ag.coorte || { entraram: 0, fecharam: 0 };
-      leitura = t.entradas + (t.entradas === 1 ? " lead entrou" : " leads entraram")
-        + " no período"
-        + (co.entraram ? ", " + co.fecharam + (co.fecharam === 1 ? " já fechou" : " já fecharam") : "")
-        + ". " + t.contatos + (t.contatos === 1 ? " contato" : " contatos")
-        + ", " + ag.porDiaUtil + " por dia útil"
-        + (t.matriculas ? ". " + t.matriculas + (t.matriculas === 1 ? " matrícula fechada" : " matrículas fechadas")
-           + " no período, contando quem entrou antes" : "")
-        + ".";
-    }
-    const alerta = ag.diasSemNada > 0
-      ? ag.diasSemNada + " de " + ag.diasUteis + " dias úteis sem nenhum registro."
-      : "";
-
-    const totalPessoa = ag.porPessoa.reduce((a, x) => a + x.contatos + x.reunioes, 0) || 1;
-    const maiorSemana = Math.max.apply(null, ag.porDiaSemana.map(x => x.n).concat([1]));
-
-    return {
-      periodos: [{ d: 7, label: "7 dias" }, { d: 14, label: "14 dias" },
-        { d: 30, label: "30 dias" }, { d: 90, label: "90 dias" }]
-        .map(x => ({
-          label: x.label,
-          bg: this.state.dias === x.d ? "#164951" : "#fff",
-          fg: this.state.dias === x.d ? "#fff" : "#164951",
-          onPick: () => this.setState({ dias: x.d, extratoN: 0 })
-        })),
-      numeros: [
-        { valor: String(t.entradas), label: "leads entraram", cor: CORES.entrada },
-        { valor: String(t.contatos), label: "contatos feitos", cor: CORES.contato },
-        { valor: String(t.reunioes), label: "conversas de matrícula", cor: CORES.reuniao },
-        { valor: String(t.matriculas), label: "matrículas", cor: CORES.matricula },
-        { valor: ag.conversao === null ? "—" : ag.conversao + "%",
-          label: "de conversão no período", cor: "#164951" }
-      ],
-      leitura, alerta, temAlerta: !!alerta,
-      extrato, extratoVazio: extrato.length === 0,
-      extratoResumo: nLancamentos + (nLancamentos === 1 ? " lançamento em " : " lançamentos em ")
-        + todosOsDias.length + (todosOsDias.length === 1 ? " dia" : " dias"),
-      temMais: todosOsDias.length > extrato.length,
-      verMaisLabel: "Ver mais " + Math.min(PASSO, todosOsDias.length - extrato.length) + " dias",
-      onVerMais: () => this.setState({ extratoN: mostrar + PASSO }),
-      filtros: [
-        { id: "tudo", label: "Tudo" },
-        { id: "entrada", label: "Entraram" },
-        { id: "contato", label: "Contatos" },
-        { id: "reuniao", label: "Conversas" },
-        { id: "matricula", label: "Matrículas" }
-      ].map(x => ({
-        label: x.label,
-        bg: filtro === x.id ? "#164951" : "#fff",
-        fg: filtro === x.id ? "#fff" : "#8a7465",
-        borda: filtro === x.id ? "#164951" : "transparent",
-        onPick: () => this.setState({ filtro: x.id, extratoN: PASSO })
-      })),
-
-      pessoas: ag.porPessoa.map(x => ({
-        nome: x.nome,
-        resumo: x.contatos + (x.contatos === 1 ? " contato" : " contatos")
-          + (x.reunioes ? " · " + x.reunioes + (x.reunioes === 1 ? " conversa" : " conversas") : ""),
-        pct: Math.round(((x.contatos + x.reunioes) / totalPessoa) * 100) + "%"
-      })),
-      semPessoas: ag.porPessoa.length === 0,
-      semana: ag.porDiaSemana.map(x => ({
-        dia: x.dia, n: String(x.n),
-        altura: Math.max(4, Math.round((x.n / maiorSemana) * 76)) + "px",
-        cor: x.n === 0 ? "#e8e2d8" : (x.n === maiorSemana ? "#164951" : "#7fb8be")
-      }))
-    };
-  }
-
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, temNovas: false,
-      vistas: [], vistaFunil: true, vistaAtividade: false, periodos: [], numeros: [],
-      extrato: [], filtros: [], pessoas: [], semana: [] };
+    if (!CRM) return { tabs: [], leads: [], reativacao: [], vazio: true, temNovas: false };
 
     const counts = CRM.tabCounts();
     const active = this.state.tab;
@@ -793,17 +546,42 @@ class Component extends DCLogic {
       const open = l.id === openId;
       const warn = CRM.isStale(l.entrouEm);
       const badgeIncompleta = l.estagio === "incompleta";
+
+      // Contrato, matrícula, reunião e perda abrem um formulário: são
+      // intenções, não mudanças. O estágio só muda quando o formulário
+      // confirma — senão a lista mostra "Matriculada" para quem continua
+      // lead, e quem fechou o formulário sai achando que matriculou.
+      const mudarEstagio = (val) => {
+        const abreFormulario = { reuniao: 1, contrato: 1, matriculado: 1, perdido: 1 };
+        if (abreFormulario[val]) {
+          const prv = CRM.propostaDe(l.id);
+          if (val === "reuniao") {
+            // reunião sem dia e hora não vai para agenda nenhuma
+            this.abrirForm({ openId: l.id, agendandoReuniaoId: l.id,
+              negociandoId: null, matriculandoId: null, perdendoId: null });
+          } else if (val === "contrato") {
+            this.abrirForm({ openId: l.id, negociandoId: l.id, matriculandoId: null,
+              perdendoId: null, pSinalRecebido: !!(prv && prv.sinalRecebido) });
+          } else if (val === "matriculado") {
+            // matrícula tem tela própria: os dados não cabem num formulário
+            // espremido dentro do card, entre histórico, notas e origem
+            window.location.href = "ISR%20-%20Matr%C3%ADcula%20v3.dc.html?id=" + l.id;
+          } else {
+            this.setState({ openId: l.id, perdendoId: l.id, matriculandoId: null, negociandoId: null });
+          }
+          return;
+        }
+        CRM.setStage(l.id, val); this.bump();
+      };
+
       const out = {
         id: l.id, nome: l.nome, telefone: l.telefone || "—",
         badge: l.badge || "", canal: l.canal || "—",
         badgeBg: badgeIncompleta ? "#f9dfc6" : "#dde6f2",
         badgeFg: badgeIncompleta ? "#b0722c" : "#5b7395",
-        caret: open ? "▲" : "▼",
-        rowBg: open ? "#faf7f2" : "#fff",
-        stageColor: stage.color, stageBg: stage.bg,
+        stageColor: stage.color,
         entrouRel: CRM.relativeDays(l.entrouEm), entrouWarn: warn ? "· parado" : "",
         entrouColor: warn ? "#ad5a6b" : "#1d5a63",
-        entrouWeight: warn ? 600 : 400,
         turmaLabel: l.turma || "—",
         open: open,
         perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + l.id,
@@ -818,36 +596,19 @@ class Component extends DCLogic {
         onNomeClick: (e) => e.stopPropagation(),
         onSelClick: (e) => e.stopPropagation(),
         onToggle: () => this.setState({ openId: open ? null : l.id, perdendoId: null, matriculandoId: null, negociandoId: null }),
-        // dropdown de estágio na linha (formato da mentora)
-        stageOpts: CRM.STAGES.map(s => ({ id: s.id, label: s.label, sel: s.id === l.estagio })),
-        onStageChange: (e) => {
-          const val = e.target.value;
-          // Contrato, matrícula e perda abrem um formulário: são intenções, não
-          // mudanças. O seletor precisa voltar ao estágio real na hora, senão
-          // mostra "Matriculada" enquanto a pessoa continua lead — e quem
-          // fecha o formulário sai achando que matriculou.
-          const abreFormulario = { reuniao: 1, contrato: 1, matriculado: 1, perdido: 1 };
-          if (abreFormulario[val]) {
-            e.target.value = l.estagio;
-            const prv = CRM.propostaDe(l.id);
-            if (val === "reuniao") {
-              // reunião sem dia e hora não vai para agenda nenhuma
-              this.abrirForm({ openId: l.id, agendandoReuniaoId: l.id,
-                negociandoId: null, matriculandoId: null, perdendoId: null });
-            } else if (val === "contrato") {
-              this.abrirForm({ openId: l.id, negociandoId: l.id, matriculandoId: null, perdendoId: null,
-                pSinalRecebido: !!(prv && prv.sinalRecebido) });
-            } else if (val === "matriculado") {
-              // matrícula tem tela própria: os dados não cabem num formulário
-              // espremido dentro do card, entre histórico, notas e origem
-              window.location.href = "ISR%20-%20Matr%C3%ADcula%20v3.dc.html?id=" + l.id;
-            } else {
-              this.setState({ openId: l.id, perdendoId: l.id, matriculandoId: null, negociandoId: null });
-            }
-            return;
-          }
-          CRM.setStage(l.id, val); this.bump();
-        }
+        // a conversa marcada aparece na linha, aberta ou fechada.
+        // com hora, nos dois fusos — evita o "era 14h de onde?"
+        temReuniao: !!(l.reuniao && !l.reuniao.feita),
+        reuniaoInfo: l.reuniao ? (CRM.ddmm(l.reuniao.data)
+          + (l.reuniao.hora ? " · " + (CRM.horaBRNL ? CRM.horaBRNL(l.reuniao.data, l.reuniao.hora) : l.reuniao.hora) : "")) : "",
+        // o estágio, como no v5: o nome na linha e os chips no painel
+        stageLabel: stage.label,
+        stages: CRM.STAGES.map(st => ({
+          label: st.label,
+          bg: st.id === l.estagio ? "#164951" : "#fff",
+          fg: st.id === l.estagio ? "#fff" : "#164951",
+          onPick: () => mudarEstagio(st.id)
+        }))
       };
       if (open) {
         const pr = CRM.propostaDe(l.id);
@@ -881,10 +642,6 @@ class Component extends DCLogic {
         out.onRegistrar = () => { CRM.registrarContato(l.id); this.bump(); };
         out.agendandoReuniao = this.state.agendandoReuniaoId === l.id;
         out.semReuniao = !(l.reuniao && !l.reuniao.feita) && this.state.agendandoReuniaoId !== l.id;
-        out.temReuniao = !!(l.reuniao && !l.reuniao.feita);
-        // com hora, mostra nos dois fusos — evita o "era 14h de onde?"
-        out.reuniaoInfo = l.reuniao ? (CRM.ddmm(l.reuniao.data)
-          + (l.reuniao.hora ? " · " + (CRM.horaBRNL ? CRM.horaBRNL(l.reuniao.data, l.reuniao.hora) : l.reuniao.hora) : "")) : "";
         out.reuDataRef = this.reuDataRef; out.reuHoraRef = this.reuHoraRef;
         out.onAgendar = () => this.setState({ agendandoReuniaoId: l.id, matriculandoId: null, perdendoId: null });
         out.onAgendarCancela = () => this.setState({ agendandoReuniaoId: null, erroReuniao: "" });
@@ -1070,7 +827,6 @@ class Component extends DCLogic {
     //
     // O calendário do comercial vive aqui, não numa aba separada: é a
     // mesma informação do funil, olhada por data em vez de por estágio.
-    const ativ = this.vistaDeAtividade(CRM);
 
     // ── SELEÇÃO EM MASSA ──────────────────────────────────────────
     //
@@ -1110,18 +866,7 @@ class Component extends DCLogic {
       selResumo: selCount + (selCount === 1 ? " lead selecionado" : " leads selecionados"),
       selApagarLabel: selCount === 1 ? "Apagar este lead" : "Apagar estes " + selCount + " leads",
       onSelTodos, onSelLimpar, onSelApagar, selStageOpts, onSelStage,
-      ...ativ,
-      vistas: [
-        { id: "funil", label: "Funil" }, { id: "atividade", label: "Atividade" }
-      ].map(v => ({
-        label: v.label,
-        bg: this.state.vista === v.id ? "#164951" : "transparent",
-        fg: this.state.vista === v.id ? "#fff" : "#8a7465",
-        onPick: () => this.setState({ vista: v.id })
-      })),
-      vistaFunil: this.state.vista === "funil",
-      vistaAtividade: this.state.vista === "atividade",
-      tabs, leads, reativacao,
+      tabs, leads, reativacao, temLeads: leads.length > 0,
       reuNumeros, reuProximas, temReuProximas: reuProximas.length > 0,
       vazio: rawLeads.length === 0,
       temNovas: novas > 0,

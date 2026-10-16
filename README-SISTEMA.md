@@ -429,13 +429,13 @@ A **assinatura** saiu: é operação, não agenda.
 elas a tela só mostraria a semana corrente, e a escola marca aula com
 semanas de antecedência.
 
-### Pessoas, pelo v5
+### Alunas, pelo v5
 
-No v5 esta tela se chama **Pessoas** e o subtítulo é **cadastro
-único**: lead, aluna, pausada e MVS na mesma lista, porque é a mesma
-pessoa em momentos diferentes. Antes a tela se chamava Alunas e só
-mostrava quem já era aluna — o lead vivia noutro lugar, e a mesma
-pessoa aparecia duas vezes no sistema conforme o dia.
+No v5 esta tela se chama Pessoas e o subtítulo é **cadastro único**:
+lead, aluna, pausada e MVS vivem no mesmo registro, porque é a mesma
+pessoa em momentos diferentes. O cadastro único ficou; o nome, não — no
+menu e no título ela continua **Alunas**, que é o que a escola chama e
+o que a tela mostra ao abrir.
 
 A tela tem quatro coisas: a **busca**, os **chips de situação com a
 contagem** (Todos, Alunas, Leads, Pausadas, Em risco), a **lista de
@@ -476,8 +476,49 @@ escreveria no registro errado. Por isso o botão diz "Aplicar às N
 alunas da lista", não "às N pessoas".
 
 O arquivo segue `ISR - Alunas v3.dc.html` e o endereço segue
-`/alunas.html`: renomear quebraria link já mandado. O que mudou foi o
-nome na tela e no menu.
+`/alunas.html`.
+
+### O CRM, pelo v5
+
+O CRM do v5 é **só o funil**: chips de estágio com a contagem, uma
+lista de quatro campos (nome e estágio, quando entrou, interesse,
+canal) e, ao abrir uma lead, a régua de estágios, o follow-up, o
+histórico e a origem.
+
+**Saiu a vista Atividade** — os números do período, o extrato dia a
+dia, o por pessoa da equipe e o por dia da semana. Eram ~250 linhas de
+relatório no meio da tela em que se vende; quem olha número olha em
+Marketing.
+
+**Saiu o cabeçalho de colunas** com as setinhas de ordenar, que não
+ordenavam nada: eram enfeite.
+
+**O estágio mudou de lugar.** Era um `<select>` em cada linha; agora é
+a régua de chips dentro da lead aberta, como no v5. A regra não mudou:
+reunião, contrato, matrícula e perda **abrem um formulário** em vez de
+mudar o estágio na hora — é o que impede alguém de marcar "Matriculada"
+sem matrícula. Mudança simples de estágio continua valendo no clique.
+
+**Tudo o mais ficou, por decisão da escola**, ainda que o v5 não tenha:
+conversas de matrícula (marcar, convidar, dar por feita, e o bloco de
+30 dias no topo), novo lead manual e link público de cadastro,
+reativação de ex-alunas, seleção em massa, condições combinadas — que é
+o que pré-preenche a tela de Matrícula —, motivo de perda, nota, e a
+ficha da inscrição com contato e preferências.
+
+**Um defeito que apareceu no porte:** a conversa marcada só aparecia na
+linha quando a lead estava aberta, e a lista abre com todas fechadas.
+Na prática, nunca aparecia. Agora é da linha.
+
+**O que o v5 tem e não entrou:** a fila de revisão das inscrições do
+Jotform — onde cada inscrição espera confirmação antes de virar lead, e
+o sistema oferece juntar com um cadastro de mesmo WhatsApp. Aqui a
+inscrição já vira lead sozinha, a cada cinco minutos, e os duplicados
+se resolvem no bloco de registros duplicados em Alunas. Trocar isso é
+mudar como uma lead nasce, não como ela aparece — fica para uma decisão
+à parte. Também não entrou o **somente leitura**, que no v5 limita
+quem pode mexer no funil: aqui definiria o que a operação pode fazer, e
+isso é escolha da escola, não do desenho.
 
 ### A Área da Aluna no desenho novo
 
@@ -960,7 +1001,7 @@ precisar da tela antiga a encontra no histórico do git.
 |---|---|---|
 | Central | `ISR - Central v3.dc.html` | `/central.html` |
 | Painel do professor | `ISR - Painel v3.dc.html` | `/professor.html` |
-| Pessoas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
+| Alunas | `ISR - Alunas v3.dc.html` | `/alunas.html` |
 | CRM · Funil | `ISR - CRM v3.dc.html` | `/crm.html` |
 | Mensagens | `ISR - Mensagens v3.dc.html` | `/mensagens.html` |
 | Matrículas do ciclo | `ISR - Matriculas ciclo v3.dc.html` | `/ciclo.html` |
