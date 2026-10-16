@@ -107,7 +107,10 @@
   // /programa.html, e com link no rodapé da Central — tela que
   // ninguém alcança é tela morta.
   var ITENS = [
-    { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: null },
+    // A Central é de quem cuida da escola. No v5 a professora nem
+    // aparece nela: a casa dela é o Painel do professor, que é onde a
+    // fila pedagógica e as aulas sem chamada passaram a morar.
+    { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
 
     { id: "alunas", sec: "pessoas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },

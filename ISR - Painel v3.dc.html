@@ -76,6 +76,60 @@
       <p style="margin: 10px 0 0; font-size: 12px; color: #b3a693; line-height: 1.55;">{{ entregasNota }}</p>
     </section>
 
+    <!-- AULAS SEM CHAMADA -->
+    <sc-if value="{{ temSemChamada }}">
+      <section style="background: #fdf6ec; border-radius: 24px; padding: 18px 22px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <div style="font-size: 16px; font-weight: 600; color: #c98a3a;">Aulas sem chamada</div>
+          <span style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ semChamadaResumo }}</span>
+        </div>
+        <p style="margin: 4px 0 10px; font-size: 13px; color: #1d5a63; line-height: 1.55;">{{ semChamadaTexto }}</p>
+        <!-- A pilha acumulada não se resolve clicando uma por uma, e a
+             alternativa real não é "fazer com calma", é não fazer. Duas
+             etapas: a primeira conta o que vai escrever, a segunda
+             escreve. Nada que já tem chamada é tocado. -->
+        <sc-if value="{{ podeLote }}">
+          <div style="background: #fff; border-radius: 16px; padding: 13px 16px; margin-bottom: 12px;">
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 220px; font-size: 13px; color: #1d5a63; line-height: 1.5;">{{ loteTexto }}</div>
+              <sc-if value="{{ loteConfirmar }}">
+                <span onclick="{{ onLoteCancelar }}" style="font-size: 12px; font-weight: 600; color: #8a7465; cursor: pointer;">cancelar</span>
+              </sc-if>
+              <button onclick="{{ onLote }}" style="border: 0; background: {{ loteBg }}; color: #fff; box-shadow: 0 3px 0 {{ loteSombra }}; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ loteBotao }}</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-for list="{{ semChamada }}" as="sc" hint-placeholder-count="3">
+          <div style="padding: 10px 0; border-top: 1px solid #f0dcc0;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 160px;">
+                <div style="font-size: 14px; font-weight: 600;">{{ sc.professora }}</div>
+                <div style="font-size: 12.5px; color: #8a7465; margin-top: 2px;">{{ sc.detalhe }}</div>
+              </div>
+              <a href="{{ sc.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: #a4783a;">Abrir o painel</a>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+              <sc-for list="{{ sc.aulas }}" as="au" hint-placeholder-count="3">
+                <a href="{{ au.href }}" style="text-decoration: none; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #6b6155;">{{ au.label }}</a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <!-- O QUE O LOTE GRAVOU -->
+    <!-- Fora do bloco de chamada de propósito: depois de lançar, aquele
+         bloco some (não há mais aula sem chamada) e levaria embora a
+         única confirmação do que foi feito. -->
+    <sc-if value="{{ loteResultado }}">
+      <section style="background: #eaf3e2; border-radius: 24px; padding: 14px 22px;">
+        <div style="font-size: 14px; font-weight: 600; color: #3d6b22;">{{ loteResultado }}</div>
+        <p style="margin: 4px 0 0; font-size: 13px; color: #1d5a63; line-height: 1.5;">Quem faltou precisa ser corrigido na chamada do dia, pelo Painel do professor. O lote ficou registrado no mural da equipe.</p>
+      </section>
+    </sc-if>
+
+
     <!-- A fila da professora já existia na Central. Ela mora aqui
          também porque é daqui que a professora não sai. -->
     <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
@@ -438,7 +492,7 @@
 class Component extends DCLogic {
   // aba nula = ainda não escolhida: quem chega por um link de chamada
   // cai na chamada, e quem abre o painel pelo menu cai no resumo
-  state = { aba: null, teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
+  state = { aba: null, loteConfirmar: false, loteResultado: "", avisou: "", teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
             escolhendoData: null, linhaAberta: null,
             novaExtraAberta: false, neFeito: "" };
@@ -542,6 +596,9 @@ class Component extends DCLogic {
       eyebrow: "painel do professor", heroQuando: "", heroTitulo: "", heroDetalhe: "",
       heroAcoes: [], entregas: [], entregasTitulo: "", entregasNota: "",
       fila: [], filaVazia: true, filaCount: "0",
+      temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "", semChamada: [],
+      podeLote: false, loteTexto: "", loteBotao: "", loteBg: "#164951", loteSombra: "#0e3339",
+      loteConfirmar: false, loteResultado: "", onLote: () => {}, onLoteCancelar: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada",
       temHistorico: false, historico: [],
@@ -878,6 +935,27 @@ class Component extends DCLogic {
     const clubesDela = (CRM.clubesLista ? CRM.clubesLista() : [])
       .filter(c => c.professora === teacher && c.status === "publicado").length;
 
+    // ── aulas sem chamada ─────────────────────────────────────
+    // Veio da Central: o v5 não tem este bloco lá, e o lugar dele é
+    // aqui, onde a chamada é lançada. A gestão vê todas as
+    // professoras; a professora vê as aulas dela.
+    const grupos = (CRM.chamadasPendentesPorProfessora ? CRM.chamadasPendentesPorProfessora() : [])
+      .filter(g => g.professora)
+      .filter(g => podeTrocar || g.professora === teacher);
+    const nAulas = grupos.reduce((t, g) => t + g.n, 0);
+    const maisAntiga = grupos.map(g => g.maisAntiga).filter(Boolean).sort()[0] || "";
+    // A pilha acumulada não se resolve uma por uma. Duas etapas: o
+    // primeiro clique conta o que seria escrito, o segundo escreve.
+    // Só quem cuida da escola, e nunca por cima de chamada que existe.
+    const lote = (podeTrocar && CRM.presencaParaTodos && nAulas)
+      ? CRM.presencaParaTodos({ simular: true }) : null;
+    const confirmando = !!this.state.loteConfirmar;
+    const plural = (n, um, mais) => n + " " + (n === 1 ? um : mais);
+    const linkDaAula = (a) => a.tipo === "extra" && a.eventoId
+      ? "ISR%20-%20Painel%20v3.dc.html?evento=" + encodeURIComponent(a.eventoId)
+      : "ISR%20-%20Painel%20v3.dc.html?turma=" + encodeURIComponent(a.label)
+        + "&data=" + a.data + "&retro=1";
+
     // ── a fila dela ──
     const filaDela = (CRM.filaParaHoje ? CRM.filaParaHoje("professora", teacher) : []) || [];
 
@@ -926,6 +1004,64 @@ class Component extends DCLogic {
         { v: String(clubesDela), k: clubesDela === 1 ? "clube seu" : "clubes seus", cor: "#164951" }
       ],
       entregasNota: "A conta é das aulas das suas turmas. Aula sem chamada é aula que aconteceu e ficou sem registro: sem ela a aluna não tem presença nem falta no ciclo.",
+
+      podeLote: !!(lote && lote.aulas),
+      loteTexto: !lote ? ""
+        : confirmando
+          ? "Vai ficar gravado: " + plural(lote.presencas, "presença", "presenças")
+            + " em " + plural(lote.aulas, "aula", "aulas")
+            + ". Quem faltou você corrige depois, abrindo a chamada do dia."
+          : "Dar presença a todas nas " + plural(lote.aulas, "aula", "aulas")
+            + " de uma vez. Chamada que já existe não é tocada"
+            + (lote.extras ? "; " + plural(lote.extras, "aula extra fica", "aulas extras ficam")
+                + " de fora, porque aula extra não tem lista de alunas" : "")
+            + (lote.semAluna ? "; " + plural(lote.semAluna, "aula fica", "aulas ficam")
+                + " de fora por não ter aluna na turma" : "") + ".",
+      loteBotao: confirmando ? "Sim, gravar" : "Dar presença a todas",
+      loteBg: confirmando ? "#a3392c" : "#164951",
+      loteSombra: confirmando ? "#7d2b21" : "#0e3339",
+      loteConfirmar: confirmando,
+      loteResultado: this.state.loteResultado || "",
+      onLoteCancelar: () => this.setState({ loteConfirmar: false }),
+      onLote: () => {
+        if (!confirmando) { this.setState({ loteConfirmar: true, loteResultado: "" }); return; }
+        const r = CRM.presencaParaTodos({});
+        this.setState({ loteConfirmar: false,
+          loteResultado: plural(r.presencas, "presença gravada", "presenças gravadas")
+            + " em " + plural(r.aulas, "aula", "aulas") + "." });
+        this.bump();
+      },
+
+      temSemChamada: grupos.length > 0,
+      // para a professora o agrupamento por professora é ela mesma:
+      // dizer "1 professora" e repetir o nome dela é conversa da
+      // gestão vazando para quem só tem as próprias aulas a lançar
+      semChamadaResumo: nAulas + (nAulas === 1 ? " aula" : " aulas")
+        + (podeTrocar
+          ? " · " + grupos.length + (grupos.length === 1 ? " professora" : " professoras")
+          : " suas"),
+      // dizer de qual ciclo: a conferência passou a ser do ciclo
+      // inteiro, e um número grande sem período assusta sem informar
+      // Nomear UM ciclo deixou de funcionar com três calendários: a
+      // conferência varre os três, e o nome escolhido seria o de um
+      // só — que é o que a tela fez até agora, e dizia "no ciclo
+      // 4.2026, de 31/08 a 07/11" diante de aulas de julho. O período
+      // de verdade é o da aula mais antiga que falta até hoje.
+      semChamadaTexto: (maisAntiga ? "Desde " + CRM.ddmm(maisAntiga) + ". " : "")
+        + (podeTrocar
+          ? "A aula aconteceu e a chamada não foi salva. Sem ela a aluna não tem presença nem falta no ciclo, e a frequência do certificado fica menor do que a real."
+          : "Estas aulas suas aconteceram e ficaram sem chamada."),
+      semChamada: grupos.map(g => ({
+        professora: podeTrocar ? g.professora : "As suas aulas",
+        detalhe: g.n + (g.n === 1 ? " aula sem chamada" : " aulas sem chamada")
+          + " · a mais antiga em " + CRM.ddmm(g.maisAntiga),
+        href: "ISR%20-%20Painel%20v3.dc.html?prof=" + encodeURIComponent(g.professora),
+        aulas: g.aulas.slice(0, 4).map(a => ({
+          label: CRM.ddmm(a.data) + " · " + (a.tipo === "particular" ? a.quem : String(a.label).split("·")[0].trim()),
+          href: linkDaAula(a)
+        }))
+      })),
+
 
       filaCount: String(filaDela.length),
       filaVazia: filaDela.length === 0,

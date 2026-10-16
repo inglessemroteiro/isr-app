@@ -339,7 +339,32 @@ letras, que o que for gravado continua no nome de quem está ali.
 Sair da gestão limpa o ver como: quem entrar depois abriria o sistema
 já olhando pelos olhos de outra pessoa.
 
-### A fila da Central, pelo v5
+### A Central, pelo v5
+
+A regra é a da Gabi: **o que não está no v5 não fica na versão
+final**. A Central do v5 tem quatro coisas, e só elas: a fila do
+dia, as metas do ciclo, os cartões por área e dois links da direção.
+
+**O que saiu, e para onde:**
+
+| saiu da Central | foi para |
+|---|---|
+| o calendário dos três ciclos | **Matrículas do ciclo**, que é onde o v5 põe começo e fim do ciclo |
+| aulas sem chamada e o lote de presença | **Painel do professor**, onde o v5 mostra o diário pendente |
+| a busca de pessoa | já existia em **Alunas** |
+| criar pendência à mão | saiu: o v5 não tem |
+| o bloco de avisos da equipe | saiu: o v5 não tem |
+| ajustes no cadastro | saiu: o v5 não tem |
+| os links Mural e Desafio no rodapé | saíram: o v5 tem só Atas e Financeiro |
+
+Com os avisos fora, o botão **avisar a professora** virou um botão
+que escreve num arquivo que ninguém abre. Saiu junto.
+
+**A professora deixa de ter Central.** No v5 ela nem aparece lá: a
+casa dela é o Painel do professor, que é justamente onde a fila
+pedagógica e as aulas sem chamada passaram a morar.
+
+#### A fila: há quanto tempo cada item espera
 
 A fila dizia **o que** fazer e não **há quanto tempo** espera. Um
 follow-up vencido hoje e um vencido há duas semanas tinham exatamente
