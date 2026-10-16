@@ -48,48 +48,22 @@
       </div>
     </sc-if>
 
-    <!-- FAIXA "PARA HOJE" — a fila te diz quem chamar -->
-    <sc-if value="{{ temFila }}">
-      <div style="margin-bottom: 16px;">
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; font-weight: 500; margin-bottom: 8px;">Para hoje · selecione para preencher a mensagem</div>
-        <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;">
-          <sc-for list="{{ fila }}" as="f" hint-placeholder-count="5">
-            <button onclick="{{ f.onClick }}" style="flex: none; display: flex; align-items: center; gap: 8px; border: 1px solid {{ f.border }}; background: {{ f.bg }}; border-radius: 999px; padding: 8px 14px; cursor: pointer;">
-              <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ f.cor }}; flex: none;"></span>
-              <span style="font-size: 12px; font-weight: 600; color: #164951;">{{ f.nome }}</span>
-              <span style="font-size: 11px; color: #8a7465;">{{ f.acao }}</span>
-            </button>
-          </sc-for>
-        </div>
-      </div>
-    </sc-if>
+    <!-- CATEGORIAS · chips, como no v5 -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+      <sc-for list="{{ categorias }}" as="cat" hint-placeholder-count="7">
+        <button onclick="{{ cat.onClick }}" style="font-family: inherit; border: 0; cursor: pointer; border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; background: {{ cat.bg }}; color: {{ cat.fg }};">{{ cat.label }}</button>
+      </sc-for>
+    </div>
 
-    <!-- O cartão branco. A tela antiga não tinha cartão nenhum: os
-         campos ficavam soltos no fundo da página, e no desenho novo
-         (campo bege, sem borda) um campo solto no fundo bege some. -->
-    <section style="background: #fff; border-radius: 24px; padding: 20px 22px;">
-
-    <!-- CONTROLES: CATEGORIA + PARA -->
-    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 16px; margin-bottom: 14px;">
-      <div>
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; font-weight: 500; margin-bottom: 7px;">Categoria</div>
-        <select onchange="{{ onCategoria }}" style="width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;">
-          <sc-for list="{{ categorias }}" as="cat" hint-placeholder-count="7">
-            <option value="{{ cat.id }}" selected="{{ cat.sel }}">{{ cat.label }}</option>
-          </sc-for>
-        </select>
-      </div>
-      <div>
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; font-weight: 500; margin-bottom: 7px;">Para</div>
-        <div style="display: flex; align-items: center; gap: 0;  border-radius: 12px; background: #f2ebe3; padding-right: 10px;">
-          <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="flex: 1; padding: 12px 14px; font-size: 14px; font-family: inherit; color: #164951; border: none; border-radius: 12px; background: transparent; outline: none;">
-            <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
-              <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
-            </sc-for>
-          </select>
-          <button onclick="{{ onClearRecipient }}" title="Limpar destinatário" style="border: none; background: transparent; color: #b3a693; font-size: 15px; cursor: pointer; padding: 4px 6px;">×</button>
-        </div>
-      </div>
+    <!-- PARA -->
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 13px; font-weight: 600; color: #8a7465;">para</span>
+      <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 14px; font-family: inherit; color: #164951; background: #fff; outline: none; max-width: 100%;">
+        <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
+          <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
+        </sc-for>
+      </select>
+      <a href="{{ perfilHref }}" style="font-size: 13px; font-weight: 600; color: #348a8e; text-decoration: underline; text-underline-offset: 3px;">abrir perfil</a>
     </div>
 
     <!-- GERENCIAR MODELOS -->
@@ -127,59 +101,50 @@
     </sc-if>
 
     <!-- CORPO: LISTA + EDITOR -->
-    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start;">
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
 
-      <!-- LISTA DE MODELOS -->
-      <div>
-        <input value="{{ search }}" oninput="{{ onSearch }}" placeholder="Buscar modelo..." style="width: 100%; box-sizing: border-box; border: 0; background: #f2ebe3; color: #164951; font-size: 13px; padding: 12px 14px; border-radius: 12px; font-family: inherit; margin-bottom: 10px;" />
-        <div style="background: #faf7f2; border-radius: 12px; overflow: hidden; max-height: 520px; overflow-y: auto;">
-          <sc-for list="{{ templates }}" as="tpl" hint-placeholder-count="8">
-            <div onclick="{{ tpl.onClick }}" style="padding: 14px 15px; border-bottom: 1px solid #f2e9dd; cursor: pointer; background: {{ tpl.bg }};">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: {{ tpl.weight }}; color: #164951; line-height: 1.35;">{{ tpl.titulo }}</span>
-                <sc-if value="{{ tpl.tag }}">
-                  <span style="background: #ece5f3; color: #7b689a; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px;">{{ tpl.tag }}</span>
-                </sc-if>
-              </div>
+      <!-- LISTA DE MODELOS · título e a primeira linha do texto, como no v5 -->
+      <section style="flex: 1 1 280px; min-width: 0; background: #fff; border-radius: 24px; padding: 12px; display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ templates }}" as="tpl" hint-placeholder-count="8">
+          <div onclick="{{ tpl.onClick }}" style="border-radius: 14px; padding: 12px 14px; cursor: pointer; background: {{ tpl.bg }};">
+            <div style="display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+              <span style="font-size: 14px; font-weight: 600; color: {{ tpl.fg }};">{{ tpl.titulo }}</span>
+              <sc-if value="{{ tpl.tag }}">
+                <!-- o par de "Gerenciar modelos": diz quais são seus e
+                     quais você mudou -->
+                <span style="background: #ece5f3; color: #7b689a; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px;">{{ tpl.tag }}</span>
+              </sc-if>
             </div>
-          </sc-for>
-          <sc-if value="{{ semModelos }}">
-            <div style="padding: 20px; text-align: center; font-size: 12px; color: #8a7465;">Nenhum modelo encontrado.</div>
-          </sc-if>
-        </div>
-      </div>
+            <div style="font-size: 12px; color: {{ tpl.sub }}; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ tpl.preview }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ semModelos }}">
+          <div style="padding: 20px; font-size: 13px; color: #1d5a63;">Nenhum modelo nesta categoria.</div>
+        </sc-if>
+      </section>
 
       <!-- EDITOR -->
-      <div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px;">
-          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; font-weight: 500;">Mensagem <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: #b3a693;">· variáveis preenchidas</span></div>
-          <span style="font-size: 12px; color: #9c6f56;">Editar texto</span>
-        </div>
-        <textarea value="{{ msg }}" oninput="{{ onMsgInput }}" style="width: 100%; box-sizing: border-box; min-height: 240px; border: 0; border-radius: 18px; background: #f2ebe3; color: #164951; font-size: 14px; line-height: 1.7; padding: 16px 18px; font-family: inherit; resize: vertical;"></textarea>
-
+      <section style="flex: 1 1 280px; min-width: 0; background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ tplNome }} · para {{ recipientNome }}</div>
+        <textarea value="{{ msg }}" oninput="{{ onMsgInput }}" rows="7" style="border: 1px solid #e2c8b5; border-radius: 16px; padding: 14px 16px; font-size: 15px; line-height: 1.55; font-family: inherit; color: #164951; outline: none; resize: vertical; background: #f5f5f0;"></textarea>
         <sc-if value="{{ temDestacado }}">
-          <div style="display: flex; align-items: center; gap: 8px; background: #fdf1e8; border: 1px solid #f2ddc9; border-radius: 12px; padding: 9px 13px; margin-top: 10px;">
-            <span style="font-size: 12.5px; color: #b0722c;">Complete os trechos <strong>[DESTACADO]</strong> antes de enviar.</span>
-          </div>
+          <div style="background: #fdf3d6; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: #164951;">Complete os campos [DESTACADO] antes de enviar.</div>
         </sc-if>
-
-        <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center;">
-          <a href="{{ waLink }}" target="_blank" rel="noopener" onclick="{{ onEnviar }}" style="text-decoration: none; background: #348a8e; color: #fff; font-size: 14px; font-weight: 600; padding: 13px 26px; border-radius: 999px; box-shadow: 0 2px 10px rgba(52,138,142,0.25);">Enviar no WhatsApp →</a>
-          <button onclick="{{ onCopy }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 14px; font-weight: 600; padding: 13px 24px; border-radius: 999px; cursor: pointer;">⧉ {{ copyLabel }}</button>
-          <span style="font-size: 12px; color: #8a7465;">para <strong style="color: #164951;">{{ recipientNome }}</strong></span>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="{{ waLink }}" target="_blank" rel="noopener" onclick="{{ onEnviar }}" style="text-decoration: none; background: #25D366; color: #0b3d1f; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-weight: 600; box-shadow: 0 3px 0 #1a9e4b;">Enviar no WhatsApp</a>
+          <button onclick="{{ onCopy }}" style="font-family: inherit; border: 0; background: #f2ebe3; color: #164951; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;">{{ copyLabel }}</button>
         </div>
-        <p style="margin: 12px 0 0; font-size: 12.5px; color: #8a7465; line-height: 1.55;">Abre o WhatsApp já com a mensagem escrita para o número da pessoa. Nada é enviado automaticamente: o envio é confirmado no WhatsApp. Enviar (ou copiar) registra um contato no histórico da pessoa.</p>
-      </div>
+        <div style="font-size: 12px; color: #1d5a63; line-height: 1.55;">Nada é enviado automaticamente. O WhatsApp abre com o texto e o contato fica registrado no histórico.</div>
+      </section>
     </div>
 
-    </section>
 
   </div>
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { categoria: null, templateId: null, recipientId: null, msg: null, search: "", copied: false, veioDeContexto: false, enviadoPara: "", gerenciando: false, modeloSalvo: false };
+  state = { categoria: null, templateId: null, recipientId: null, msg: null, copied: false, veioDeContexto: false, enviadoPara: "", gerenciando: false, modeloSalvo: false };
   recipientRef = React.createRef();
   gerTituloRef = React.createRef(); gerCorpoRef = React.createRef();
   novoCatRef = React.createRef(); novoTituloRef = React.createRef(); novoCorpoRef = React.createRef();
@@ -239,7 +204,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { categorias: [], recipients: [], templates: [], msg: "", waLink: "#", copyLabel: "Copiar", recipientNome: "", semModelos: false, temDestacado: false, search: "" };
+    if (!CRM) return { categorias: [], recipients: [], templates: [], msg: "", waLink: "#", copyLabel: "Copiar", recipientNome: "", semModelos: false, temDestacado: false };
 
     const cats = CRM.categorias();
     const categoria = this.state.categoria || cats[0];
@@ -248,9 +213,7 @@ class Component extends DCLogic {
     const recipientId = this.state.recipientId || (recs[0] && recs[0].id);
     const rec = recs.filter(r => r.id === recipientId)[0] || recs[0];
 
-    const q = (this.state.search || "").toLowerCase().trim();
-    let tpls = CRM.templatesByCategoria(categoria);
-    if (q) tpls = tpls.filter(t => t.titulo.toLowerCase().indexOf(q) >= 0);
+    const tpls = CRM.templatesByCategoria(categoria);
 
     let templateId = this.state.templateId;
     if (!templateId || !tpls.filter(t => t.id === templateId)[0]) templateId = tpls[0] && tpls[0].id;
@@ -259,49 +222,43 @@ class Component extends DCLogic {
     const filled = tpl ? CRM.fillTemplate(tpl.corpo, this.recipientData(rec)) : "";
     const curMsg = this.state.msg !== null ? this.state.msg : filled;
 
-    // fila "Para hoje" como atalhos do compositor
-    const filaRaw = CRM.filaParaHoje("gestora").slice(0, 10);
-    const urgCor = { R3: "#ecc9c2", R1: "#f2ddc9", R2: "#f2ddc9", R4: "#f2ddc9", R5: "#ddd4e8", R12: "#c9dede" };
-    const fila = filaRaw.map(f => ({
-      cor: f.cor || "#c9c1b6", nome: CRM.firstName(f.nome), acao: f.acao,
-      border: urgCor[f.regra] || "#e5dccf",
-      bg: f.regra === "R3" ? "#fdf0ee" : "#fff",
-      onClick: () => {
-        const t = CRM.TEMPLATES.filter(x => x.id === f.tpl)[0];
-        this.setState({ recipientId: f.pessoaId, templateId: f.tpl, categoria: t ? t.categoria : null, msg: null, veioDeContexto: false });
-      }
-    }));
-
     return {
       temContexto: this.state.veioDeContexto && !!rec && !!tpl,
       ctxNome: rec ? rec.nome : "", ctxModelo: tpl ? tpl.titulo : "",
       onLimparContexto: () => this.setState({ veioDeContexto: false }),
       enviadoPara: this.state.enviadoPara,
-      temFila: fila.length > 0, fila,
-      categorias: cats.map(c => ({ id: c, label: c, sel: c === categoria })),
-      onCategoria: (e) => this.setState({ categoria: e.target.value, templateId: null, msg: null, search: "" }),
+      categorias: cats.map(c => ({
+        label: c,
+        bg: c === categoria ? "#164951" : "#fff",
+        fg: c === categoria ? "#fff" : "#164951",
+        onClick: () => this.setState({ categoria: c, templateId: null, msg: null })
+      })),
       recipients: recs.map(r => ({
         id: r.id, selected: r.id === recipientId,
         label: r.nome + " · " + r.tipo + (r.turma ? " · " + r.turma : "")
       })),
       onRecipient: (e) => this.setState({ recipientId: e.target.value, msg: null }),
-      onClearRecipient: () => this.setState({ recipientId: recs[0] && recs[0].id, msg: null }),
+      perfilHref: rec ? "ISR%20-%20Perfil%20v3.dc.html?id=" + rec.id : "ISR%20-%20Alunas%20v3.dc.html",
       templates: tpls.map(t => {
         const on = t.id === templateId;
-        return { titulo: t.titulo, tag: t.tag || "",
+        // a primeira linha do modelo, já com os campos de quem está
+        // escolhido: é o que diz qual é qual sem precisar abrir
+        const linha1 = CRM.fillTemplate(t.corpo, this.recipientData(rec))
+          .split("\n").filter(x => x.trim())[0] || "";
+        return { titulo: t.titulo, tag: t.tag || "", preview: linha1,
           onClick: () => { this.setState({ templateId: t.id, msg: null, modeloSalvo: false }); if (this.state.gerenciando) this.syncGer(t.id); },
-          bg: on ? "#f8efe4" : "#fff", weight: on ? 700 : 600 };
+          bg: on ? "#f8efe4" : "#fff", fg: on ? "#164951" : "#1d5a63",
+          sub: on ? "#8a7465" : "#b3a693" };
       }),
-      search: this.state.search,
-      onSearch: (e) => this.setState({ search: e.target.value }),
       onMsgInput: (e) => this.setState({ msg: e.target.value, copied: false }),
       msg: curMsg,
+      tplNome: tpl ? tpl.titulo : "Sem modelo",
       recipientNome: rec ? rec.nome : "—",
       waLink: rec ? CRM.waLink(rec.telefone, curMsg) : "#",
       onEnviar: () => { if (rec) { CRM.registrarContato(rec.id, "mensagem enviada · " + (tpl ? tpl.titulo : "texto livre")); this.aposEnviar(rec.nome); } },
       temDestacado: curMsg.indexOf("[DESTACADO") >= 0,
       semModelos: tpls.length === 0,
-      copyLabel: this.state.copied ? "✓ Copiado" : "Copiar",
+      copyLabel: this.state.copied ? "Copiado" : "Copiar",
       // gerenciar modelos
       gerenciando: this.state.gerenciando,
       gerBorder: this.state.gerenciando ? "#164951" : "#e5dccf",

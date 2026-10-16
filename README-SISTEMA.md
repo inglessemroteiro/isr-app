@@ -520,6 +520,34 @@ mudar como uma lead nasce, não como ela aparece — fica para uma decisão
 quem pode mexer no funil: aqui definiria o que a operação pode fazer, e
 isso é escolha da escola, não do desenho.
 
+### Mensagens, pelo v5
+
+Quatro coisas: os **chips de categoria**, o **para** (quem recebe, com
+um atalho para o perfil dela), a **lista de modelos** e o **editor**.
+
+A categoria era um `<select>`; virou chip, como no v5. Cada modelo da
+lista passa a mostrar o **título e a primeira linha do texto**, já com
+o nome e os dados de quem está escolhido — é o que diz qual é qual sem
+precisar abrir um por um. O editor passa a dizer, no topo, **qual
+modelo para quem**. O botão do WhatsApp é verde (#25D366), como no v5,
+em vez do verde-água da casa: ele abre outro aplicativo, e isso é o que
+a cor diz.
+
+**Saíram:** a faixa **"Para hoje"** — os atalhos da fila da Central,
+que davam ao compositor uma segunda porta de entrada — e a **busca de
+modelos**. O × de limpar o destinatário saiu junto: o lugar dele no v5
+é o atalho "abrir perfil".
+
+**Ficaram, por decisão da escola:**
+
+- **gerenciar modelos** — editar título e texto, restaurar o padrão,
+  apagar e criar. O v5 não tem nada disso: sem o bloco, um erro de
+  texto num modelo só se corrige no código. A etiqueta de "seu" e
+  "editado" na lista é o par dele;
+- **o aviso de contexto e o de envio** — a faixa "mensagem pronta para
+  Fulana" quando se chega do CRM com `?para=&tpl=`, e a confirmação de
+  que o contato entrou no histórico dela.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
