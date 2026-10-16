@@ -90,6 +90,18 @@
           <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">descrição para as alunas</div>
           <textarea ref="{{ fDescRef }}" placeholder="Do que é o clube, em duas linhas." style="width: 100%; min-height: 70px; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 14px; font-family: inherit; color: #164951; resize: vertical;"></textarea>
         </label>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+          <label style="flex: 1 1 300px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">os encontros · um por linha</div>
+            <textarea ref="{{ fEncontrosRef }}" placeholder="06/11 · Comida de casa&#10;13/11 · Receita de família" style="width: 100%; min-height: 70px; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 13.5px; font-family: inherit; color: #164951; resize: vertical;"></textarea>
+          </label>
+          <label style="flex: 1 1 300px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7465; margin-bottom: 5px;">material de consulta · nome e link</div>
+            <textarea ref="{{ fMateriaisRef }}" placeholder="Lista de palavras · https://docs.google.com/…" style="width: 100%; min-height: 70px; border: 0; background: #f2ebe3; border-radius: 12px; padding: 11px 13px; font-size: 13.5px; font-family: inherit; color: #164951; resize: vertical;"></textarea>
+          </label>
+        </div>
+        <p style="margin: 8px 0 0; font-size: 12.5px; color: #8a7465; line-height: 1.5;">Os dois aparecem para as alunas inscritas, na página do clube no app delas.</p>
+
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px;">
           <button onclick="{{ onGravarRascunho }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar rascunho</button>
           <button onclick="{{ onPublicar }}" style="border: 0; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Publicar para as alunas</button>
@@ -221,6 +233,7 @@ class Component extends DCLogic {
   fHoraRef = React.createRef(); fDuracaoRef = React.createRef();
   fVagasRef = React.createRef(); fLocalRef = React.createRef();
   fDescRef = React.createRef();
+  fEncontrosRef = React.createRef(); fMateriaisRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -245,6 +258,10 @@ class Component extends DCLogic {
       por(this.fVagasRef, c.vagas ? String(c.vagas) : "");
       por(this.fLocalRef, c.formato === "presencial" ? c.local : c.link);
       por(this.fDescRef, c.descricao);
+      por(this.fEncontrosRef, (c.encontros || []).map(e =>
+        [e.quando, e.tema].filter(Boolean).join(" · ")).join("\n"));
+      por(this.fMateriaisRef, (c.materiais || []).map(m =>
+        [m.label, m.link].filter(Boolean).join(" · ")).join("\n"));
     }, 0);
   }
 
@@ -255,6 +272,17 @@ class Component extends DCLogic {
     return { nome: v(this.fNomeRef), professora: v(this.fProfRef), formato: formato,
       dia: v(this.fDiaRef), hora: v(this.fHoraRef), duracao: v(this.fDuracaoRef),
       vagas: v(this.fVagasRef), descricao: v(this.fDescRef),
+      // uma linha por item, separando o rótulo do resto por " · ".
+      // Formulário com campo por linha seria mais bonito e mais lento
+      // de preencher do que colar quatro linhas de uma vez.
+      encontros: v(this.fEncontrosRef).split("\n").map(l => l.trim()).filter(Boolean)
+        .map(l => { const i = l.indexOf("·");
+          return i < 0 ? { quando: "", tema: l }
+            : { quando: l.slice(0, i).trim(), tema: l.slice(i + 1).trim() }; }),
+      materiais: v(this.fMateriaisRef).split("\n").map(l => l.trim()).filter(Boolean)
+        .map(l => { const i = l.indexOf("·");
+          return i < 0 ? { label: l, link: "" }
+            : { label: l.slice(0, i).trim(), link: l.slice(i + 1).trim() }; }),
       local: formato === "presencial" ? localOuLink : "",
       link: formato === "presencial" ? "" : localOuLink };
   }
@@ -281,6 +309,7 @@ class Component extends DCLogic {
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
       onNovo: () => {}, onFormato: () => {}, onGravarRascunho: () => {}, onPublicar: () => {} };
     if (!CRM || !CRM.clubesLista) return vazio;
 
@@ -329,6 +358,7 @@ class Component extends DCLogic {
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
       onFormato: (e) => this.setState({ formato: e.target.value }),
       onGravarRascunho: () => this.gravar("rascunho"),
       onPublicar: () => this.gravar("publicado"),

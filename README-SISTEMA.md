@@ -531,6 +531,30 @@ notar.
 segurança. Os ciclos fechados (`isr_ciclos_v1`) também — estavam de
 fora, e são o arquivo de cinco anos.
 
+#### O lado da aluna
+
+A inscrição era pedida por fora — no WhatsApp, para quem lembrasse de
+pedir. A aluna não via em que clubes estava, nem o que havia aberto,
+e a escola perdia a inscrição que ela faria sozinha.
+
+No app da aluna, `Clubes` entra por um cartão no Início (a barra de
+baixo tem quatro abas; uma quinta aperta tudo no celular) e abre em
+duas:
+
+- **Meus clubes** — cada clube com dia, hora, onde, os encontros com
+  data e tema, o material de consulta e `sair deste clube`. O selo diz
+  o que é: *no seu plano*, *3º clube · pago*, *3º clube · a pagar*;
+- **Todos os clubes** — só o que está publicado. Cada um traz o botão,
+  as vagas que sobram e uma linha que diz, **antes do clique**, se
+  aquele seria o 1º, o 2º ou o 3º clube dela: *"Do terceiro em diante a
+  escola cobra à parte"*. A aluna não pode descobrir a cobrança pela
+  fatura.
+
+Clube lotado não esconde o botão: ele vira `entrar na lista de espera`,
+e depois do clique ela sabe em que posição ficou. Entrar num terceiro
+registra a inscrição como **a pagar**, e ela aparece na hora no bloco
+de pendentes da tela de Clubes da gestão.
+
 ### O histórico de uma chamada
 
 Cada gravação de chamada acrescenta uma linha a `hist`, dentro do
