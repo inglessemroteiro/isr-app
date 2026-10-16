@@ -22,16 +22,76 @@
   <!-- CABEÇALHO -->
   <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
     <div style="min-width: 0;">
-      <div style="font-size: 12px; font-weight: 600; color: #8a7465;">painel do professor · aulas dos próximos 7 dias</div>
+      <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ eyebrow }}</div>
       <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Painel do professor</h1>
     </div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      <select onchange="{{ onTeacher }}" style="background: #fff; border: 0; border-radius: 999px; padding: 11px 15px; font-size: 13px; font-family: inherit; color: #164951; cursor: pointer;">
-        <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="4"><option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option></sc-for>
-      </select>
+      <!-- Trocar de professora é conferência da escola. Para a
+           professora o seletor abria o painel das colegas: as aulas
+           delas, as alunas delas, a chamada delas. -->
+      <sc-if value="{{ podeTrocar }}">
+        <select onchange="{{ onTeacher }}" style="background: #fff; border: 0; border-radius: 999px; padding: 11px 15px; font-size: 13px; font-family: inherit; color: #164951; cursor: pointer;">
+          <sc-for list="{{ teachers }}" as="t" hint-placeholder-count="4"><option value="{{ t.id }}" selected="{{ t.sel }}">{{ t.label }}</option></sc-for>
+        </select>
+      </sc-if>
       <button onclick="{{ onToggleNovaExtra }}" style="border: 0; background: {{ neBg }}; color: {{ neFg }}; font-size: 12.5px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ neLabel }}</button>
     </div>
   </header>
+
+  <!-- AS TRÊS COISAS QUE A PROFESSORA FAZ AQUI -->
+  <!-- O painel era um rolo só: a chamada do dia, o histórico de
+       chamadas, as turmas e as horas, um embaixo do outro. Quem
+       entrava para lançar a chamada do dia rolava por tudo. No
+       desenho são abas, e a primeira responde "o que eu tenho
+       hoje?" antes de pedir qualquer coisa. -->
+  <div style="display: flex; gap: 6px; background: #fff; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap;">
+    <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="3">
+      <button onclick="{{ ab.onClick }}" style="border: 0; border-radius: 999px; padding: 10px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; background: {{ ab.bg }}; color: {{ ab.fg }};">{{ ab.label }}</button>
+    </sc-for>
+  </div>
+
+  <!-- RESUMO DO DIA -->
+  <sc-if value="{{ ptResumo }}">
+    <section style="background: #164951; color: #fff; border-radius: 24px; padding: 22px 24px;">
+      <div style="font-size: 12px; font-weight: 600; color: #fc9082;">{{ heroQuando }}</div>
+      <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.035em; margin-top: 3px;">{{ heroTitulo }}</div>
+      <div style="font-size: 13px; color: rgba(255,255,255,0.78); margin-top: 5px; line-height: 1.5;">{{ heroDetalhe }}</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
+        <sc-for list="{{ heroAcoes }}" as="ha" hint-placeholder-count="2">
+          <button onclick="{{ ha.onClick }}" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: {{ ha.bg }}; color: {{ ha.fg }};">{{ ha.label }}</button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
+      <div style="font-size: 16px; font-weight: 600;">{{ entregasTitulo }}</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px;">
+        <sc-for list="{{ entregas }}" as="en" hint-placeholder-count="4">
+          <div style="flex: 1 1 120px; min-width: 0;">
+            <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
+            <div style="font-size: 12.5px; color: #1d5a63;">{{ en.k }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 12px; color: #b3a693; line-height: 1.55;">{{ entregasNota }}</p>
+    </section>
+
+    <!-- A fila da professora já existia na Central. Ela mora aqui
+         também porque é daqui que a professora não sai. -->
+    <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
+      <div style="font-size: 16px; font-weight: 600;">Fila pedagógica · {{ filaCount }}</div>
+      <sc-if value="{{ filaVazia }}">
+        <p style="margin: 6px 0 0; font-size: 13px; color: #1d5a63; line-height: 1.6;">Nada esperando por você agora. Falta de aluna, avaliação baixa e tarefa não entregue acendem um item aqui.</p>
+      </sc-if>
+      <sc-for list="{{ fila }}" as="fi" hint-placeholder-count="3">
+        <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid #f2ebe3;">
+          <a href="{{ fi.href }}" class="lk" style="font-size: 14px; font-weight: 600; color: #348a8e; min-width: 150px;">{{ fi.nome }}</a>
+          <span style="flex: 1; min-width: 180px; font-size: 13px; color: #1d5a63;">{{ fi.motivo }}</span>
+          <span style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ fi.acao }}</span>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
 
   <!-- NOVA AULA EXTRA -->
   <sc-if value="{{ novaExtraAberta }}">
@@ -61,6 +121,7 @@
   </sc-if>
 
   <!-- PRÓXIMAS AULAS -->
+  <sc-if value="{{ ptResumo }}">
   <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
     <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
       <div style="font-size: 16px; font-weight: 600;">Próximas aulas · 7 dias</div>
@@ -81,8 +142,10 @@
       </div>
     </sc-for>
   </section>
+  </sc-if>
 
   <!-- CHAMADA -->
+  <sc-if value="{{ ptChamada }}">
   <section ref="{{ chamadaRef }}" style="background: #fff; border-radius: 24px; padding: 18px 22px; scroll-margin-top: 20px;">
     <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25;">{{ tituloChamada }}</div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; margin-bottom: 14px;">
@@ -329,8 +392,10 @@
       </div>
     </sc-if>
   </section>
+  </sc-if>
 
   <!-- TURMAS DA PROFESSORA -->
+  <sc-if value="{{ ptTurmas }}">
   <section style="background: #fff; border-radius: 24px; padding: 18px 22px;">
     <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px;">Turmas</div>
     <sc-if value="{{ turmasVazio }}">
@@ -361,17 +426,19 @@
     <div style="font-size: 14px; color: #1d5a63; margin-top: 4px;">{{ horasLabel }}</div>
     <p style="margin: 6px 0 0; font-size: 12.5px; color: #b3a693; line-height: 1.55;">A contagem considera apenas aulas extras com chamada salva.</p>
   </section>
+  </sc-if>
 
+  <sc-if value="{{ ptChamada }}">
   <p style="margin: 0; font-size: 12.5px; color: #b3a693; line-height: 1.6;">A chamada é registrada por turma e data. As ausências são lançadas na linha do tempo da aluna e consideradas no acompanhamento. Na aula extra, a lista parte de quem confirmou presença e admite inclusão manual.</p>
-
-  <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; font-weight: 600;">
-  </div>
+  </sc-if>
 
 </main>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
+  // aba nula = ainda não escolhida: quem chega por um link de chamada
+  // cai na chamada, e quem abre o painel pelo menu cai no resumo
+  state = { aba: null, teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
             escolhendoData: null, linhaAberta: null,
             novaExtraAberta: false, neFeito: "" };
@@ -471,7 +538,11 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
+    if (!CRM) return { abas: [], ptResumo: true, ptChamada: false, ptTurmas: false,
+      eyebrow: "painel do professor", heroQuando: "", heroTitulo: "", heroDetalhe: "",
+      heroAcoes: [], entregas: [], entregasTitulo: "", entregasNota: "",
+      fila: [], filaVazia: true, filaCount: "0",
+      podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada",
       temHistorico: false, historico: [],
       temFeitas: false, feitas: [], feitasResumo: "",
@@ -509,6 +580,13 @@ class Component extends DCLogic {
     }
     if (!teacher) teacher = (user && nomes.indexOf(user.nome) >= 0) ? user.nome : nomes[0];
 
+    // quem cuida da escola confere o painel de qualquer professora; a
+    // professora fica no próprio, e nem o ?prof= na barra de endereço
+    // a leva para o de outra pessoa
+    const papeis = [user.perfil || "gestora"].concat(user.papeis || []);
+    const podeTrocar = papeis.indexOf("gestora") >= 0 || papeis.indexOf("operacao") >= 0;
+    if (!podeTrocar && user.nome && nomes.indexOf(user.nome) >= 0) teacher = user.nome;
+
     const turmasProfOcup = ocup.filter(u => u.teacher === teacher);
 
     // ── próximas aulas (7 dias) ──
@@ -520,8 +598,17 @@ class Component extends DCLogic {
         const daTurma = turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0 && it.titulo.indexOf(u.turma) >= 0)[0];
         const ev = it.eventoId ? CRM.getEvento(it.eventoId) : null;
         const alunaPart = it.tipo === "particular" ? CRM.getPessoa(it.pessoaId) : null;
+        const rotulo = alunaPart ? "Particular · " + alunaPart.nome
+          : ev ? CRM.aulaExtraLabel(ev) : (daTurma ? daTurma.label : "");
         return {
           dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
+          temChamada: !!(rotulo && CRM.getChamada(rotulo, it.data)),
+          // para o resumo do dia: o nome curto, o projeto e o tamanho
+          nivel: daTurma ? daTurma.nivel
+            : (alunaPart ? "Aula particular · " + CRM.firstName(alunaPart.nome)
+              : it.titulo.replace(/^Aula( extra)? · /, "")),
+          projeto: daTurma ? (daTurma.projeto || "") : "",
+          quantas: daTurma ? daTurma.ocupadas : 0,
           quando: dl.label + (it.hora ? " · " + it.hora : ""),
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
           gcal: ev ? CRM.gcalLinkEvento(ev) : CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
@@ -539,8 +626,13 @@ class Component extends DCLogic {
               this.setState({ eventoChamada: null, particularChamada: null, turmaChamada: daTurma.label, chamadaData: it.data,
                 presencas: this.carregarChamada(daTurma.label, it.data), tarefas: null, salvouAgora: false });
             }
-            const el = this.chamadaRef.current;
-            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            // a chamada agora é uma aba: sem trocar de aba, o clique
+            // rolava para um bloco que não está na tela
+            this.setState({ aba: "chamada" });
+            setTimeout(() => {
+              const el = this.chamadaRef.current;
+              if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 60);
           }
         };
       });
@@ -748,7 +840,103 @@ class Component extends DCLogic {
     const conta = est => alunas.filter(p => CRM.estadoPresenca(presAtual[p.id]) === est).length;
     const nPres = conta("presente") + conta("atraso"), nAtr = conta("atraso"), nFal = conta("falta"), nJus = conta("justificada");
 
+    // ── as abas ──
+    // Quem chega por um link de chamada (a Central, a Turma, a Agenda)
+    // já tem o que fazer: abrir no resumo seria um passo a mais.
+    const veioParaChamada = !!(this.turmaParam() || this.dataParam()
+      || this.eventoParam() || this.retroParam());
+    const aba = this.state.aba || (veioParaChamada ? "chamada" : "resumo");
+    const ABAS = [["resumo", "Resumo do dia"], ["chamada", "Chamada"], ["turmas", "Turmas e horas"]];
+
+    // ── o resumo do dia ──
+    const hojeAgora = this.hojeIso();
+    const deHoje = aulas.filter(a => a.dia === "Hoje");
+    // a aula de agora é a próxima de hoje; sem aula hoje, a próxima que houver
+    const aulaDoDia = deHoje[0] || aulas[0] || null;
+    const chamadaDeHoje = deHoje.filter(a => a.temChamada).length;
+
+    // ── entregas do mês ──
+    // O que a professora entrega, contado do que já existe: aula com
+    // chamada salva, aula sem chamada, alunas e clube. Reunião
+    // pedagógica e slides estão no desenho e não têm registro no
+    // sistema — número inventado é pior do que número ausente.
+    const mes = hojeAgora.slice(0, 7);
+    const labelsDela = turmasProfOcup.map(u => u.label);
+    const todasCham = CRM.chamadasAll ? CRM.chamadasAll() : {};
+    let comChamada = 0;
+    Object.keys(todasCham).forEach(k => {
+      const ch = todasCham[k];
+      if (!ch || !ch.data || ch.data.slice(0, 7) !== mes) return;
+      if (labelsDela.indexOf(ch.turma) < 0) return;
+      comChamada++;
+    });
+    const pendentesDela = (CRM.chamadasPendentesPorProfessora
+      ? CRM.chamadasPendentesPorProfessora() : [])
+      .filter(g => g.professora === teacher)[0];
+    const semChamada = pendentesDela ? pendentesDela.n : 0;
+    const nAlunas = turmasProfOcup.reduce((t, u) => t + (u.ocupadas || 0), 0);
+    const clubesDela = (CRM.clubesLista ? CRM.clubesLista() : [])
+      .filter(c => c.professora === teacher && c.status === "publicado").length;
+
+    // ── a fila dela ──
+    const filaDela = (CRM.filaParaHoje ? CRM.filaParaHoje("professora", teacher) : []) || [];
+
     return {
+      abas: ABAS.map(([id, label]) => ({ label,
+        bg: aba === id ? "#164951" : "transparent",
+        fg: aba === id ? "#fff" : "#164951",
+        onClick: () => this.setState({ aba: id }) })),
+      ptResumo: aba === "resumo", ptChamada: aba === "chamada", ptTurmas: aba === "turmas",
+      eyebrow: aba === "chamada" ? "painel do professor · chamada por turma e data"
+        : aba === "turmas" ? "painel do professor · as suas turmas"
+          : "painel do professor · o seu dia",
+
+      heroQuando: aulaDoDia
+        ? (aulaDoDia.dia === "Hoje" ? "hoje" : aulaDoDia.dia.toLowerCase()) + (aulaDoDia.hora !== "—" ? " · " + aulaDoDia.hora : "")
+        : "sem aula marcada",
+      heroTitulo: aulaDoDia ? aulaDoDia.nivel : "Nenhuma aula nos próximos 7 dias",
+      heroDetalhe: aulaDoDia
+        ? [
+            aulaDoDia.projeto ? "Projeto do ciclo: " + aulaDoDia.projeto : "",
+            aulaDoDia.quantas ? aulaDoDia.quantas + (aulaDoDia.quantas === 1 ? " aluna" : " alunas") : "",
+            aulaDoDia.dia === "Hoje"
+              ? (chamadaDeHoje === deHoje.length
+                  ? "as chamadas de hoje já estão salvas"
+                  : "a chamada abre em um clique")
+              : "nada hoje — esta é a sua próxima aula"
+          ].filter(Boolean).join(" · ")
+        : "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.",
+      heroAcoes: (aulaDoDia ? [
+        { label: "Fazer a chamada", bg: "#fc9082", fg: "#164951", onClick: aulaDoDia.onChamada },
+        { label: "Chamada de outra data", bg: "rgba(255,255,255,0.12)", fg: "#fff",
+          onClick: () => this.setState({ aba: "chamada", escolhendoData: true }) },
+        { label: "As suas turmas", bg: "rgba(255,255,255,0.12)", fg: "#fff",
+          onClick: () => this.setState({ aba: "turmas" }) }
+      ] : [
+        { label: "Chamada de outra data", bg: "#fc9082", fg: "#164951",
+          onClick: () => this.setState({ aba: "chamada", escolhendoData: true }) }
+      ]),
+
+      entregasTitulo: "Entregas do mês · " + this.MES_LONGO[new Date().getMonth()],
+      entregas: [
+        { v: String(comChamada), k: comChamada === 1 ? "aula com chamada" : "aulas com chamada", cor: "#164951" },
+        { v: String(semChamada), k: semChamada === 1 ? "aula sem chamada" : "aulas sem chamada",
+          cor: semChamada ? "#a3392c" : "#3d6b22" },
+        { v: String(nAlunas), k: nAlunas === 1 ? "aluna nas suas turmas" : "alunas nas suas turmas", cor: "#164951" },
+        { v: String(clubesDela), k: clubesDela === 1 ? "clube seu" : "clubes seus", cor: "#164951" }
+      ],
+      entregasNota: "A conta é das aulas das suas turmas. Aula sem chamada é aula que aconteceu e ficou sem registro: sem ela a aluna não tem presença nem falta no ciclo.",
+
+      filaCount: String(filaDela.length),
+      filaVazia: filaDela.length === 0,
+      fila: filaDela.slice(0, 8).map(it => ({
+        nome: it.nome,
+        motivo: it.motivo || "",
+        acao: it.acao || "",
+        href: it.pessoaId ? "ISR%20-%20Perfil%20v3.dc.html?id=" + it.pessoaId : "#"
+      })),
+
+      podeTrocar: podeTrocar,
       teachers: nomes.map(n => ({ id: n, label: n, sel: n === teacher })),
       onTeacher: (e) => this.setState({ teacher: e.target.value, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null, salvouAgora: false, novaExtraAberta: false }),
 
@@ -927,7 +1115,7 @@ class Component extends DCLogic {
         const chipsPart = particularesProf.map(px => {
           const marcada = !!partSel && partSel.id === px.id;
           const r = CRM.resumoParticular(px.id);
-          const prox = r && r.proxima;
+          const prox = r && r.aulaDoDia;
           const dia = prox ? this.diaLabel(prox.data) : null;
           const atrasadas = r ? r.atrasadas : 0;
           return {
@@ -939,7 +1127,7 @@ class Component extends DCLogic {
               ? r.cadenciaLabel + (r.diaSemana ? " · " + r.diaSemana : "")
                 + (r.hora ? " · " + r.hora : "")
               : "—",
-            proxima: dia ? dia.label + (prox.hora ? " · " + prox.hora : "") : "—",
+            aulaDoDia: dia ? dia.label + (prox.hora ? " · " + prox.hora : "") : "—",
             aviso: atrasadas
               ? atrasadas + (atrasadas === 1 ? " aula sem chamada" : " aulas sem chamada")
               : (r && r.semAgenda ? "sem aulas marcadas" : ""),

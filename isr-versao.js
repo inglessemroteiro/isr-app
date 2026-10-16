@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-j",
+  numero: "2026.10.16-k",
   data: "16/10/2026",
-  nota: "A Central e a Agenda passam a mostrar a rotina de quem abriu: a professora não vê mais meta de matrícula, funil, planilha financeira nem follow-up do comercial, e a agenda dela abre no próprio nome"
+  nota: "O Painel do professor ganha as três abas do desenho novo: Resumo do dia, Chamada e Turmas e horas. O resumo diz a aula de agora, as entregas do mês e a fila, e o seletor de professora sai do painel de quem não é gestão"
 };
