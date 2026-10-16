@@ -339,6 +339,32 @@ letras, que o que for gravado continua no nome de quem está ali.
 Sair da gestão limpa o ver como: quem entrar depois abriria o sistema
 já olhando pelos olhos de outra pessoa.
 
+### A fila da Central, pelo v5
+
+A fila dizia **o que** fazer e não **há quanto tempo** espera. Um
+follow-up vencido hoje e um vencido há duas semanas tinham exatamente
+a mesma cara, e é o antigo que custa caro.
+
+Cada sinal passa a guardar um `desde` — e só quando a data existe de
+verdade: o vencimento da parcela atrasada, o dia da última falta, a
+data da avaliação baixa, o dia do check-in, o `proximoFollowup` do
+lead, a data em que a ex-aluna ficou elegível para reativação (a
+saída mais seis meses, não o dia em que ela saiu). Sinal sem data não
+ganha uma inventada: `idadeNaFila` devolve `null` e a tela não mostra
+nada.
+
+Na linha, ao lado do nome: a **regra** que acendeu o item e **há
+quanto tempo** ele espera, em vermelho a partir de três dias.
+
+**A ordem é urgência primeiro, idade depois.** O desenho ordena só
+por idade, o que funciona na fila de exemplo, onde tudo é do mesmo
+tipo; com os dados reais isso põe uma reativação elegível há 104 dias
+em cima de uma parcela que venceu hoje. Dentro da mesma urgência, o
+que espera há mais tempo vem antes.
+
+Junto, do v5: o rótulo **"filas da equipe"** antes dos chips, e o
+bloco das metas inteiro leva ao Marketing.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da

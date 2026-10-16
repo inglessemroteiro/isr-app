@@ -2096,17 +2096,29 @@
   function sinaisDe(p, sit) {
     var s = sit || situacaoDe(p);
     var out = [];
-    var add = function (id, detalhe) {
+    // DESDE QUANDO o sinal está aceso. A fila mostrava o que fazer e
+    // não há quanto tempo espera: um follow-up de hoje e um de duas
+    // semanas atrás tinham exatamente a mesma cara, e o antigo é o
+    // que custa caro. Só entra data que existe de verdade — sinal sem
+    // data não ganha uma inventada.
+    var add = function (id, detalhe, desde) {
       var m = sinalMeta(id);
       if (m) out.push({ id: id, label: m.label, cor: m.cor, peso: m.peso, dono: m.dono,
         acao: m.acao, tpl: m.tpl, tipo: m.tipo, urg: m.urg, naCentral: m.naCentral,
-        risco: m.risco, toque: m.toque, detalhe: detalhe || m.label });
+        risco: m.risco, toque: m.toque, detalhe: detalhe || m.label,
+        desde: desde || "" });
+    };
+    var diaVenc = parseInt((s.contrato || {}).vencDia, 10);
+    if (isNaN(diaVenc)) diaVenc = 10;
+    var vencDe = function (mes) {
+      return mes && mes.key ? mes.key + "-" + (diaVenc < 10 ? "0" : "") + diaVenc : "";
     };
     if (s.atrasadasN) {
       var pri = s.atrasadas[0];
       add("parcela_atrasada", s.atrasadasN === 1
         ? "Parcela de " + pri.label + " atrasada (" + (pri.valor || "") + ")"
-        : s.atrasadasN + " parcelas atrasadas (desde " + pri.label + ")");
+        : s.atrasadasN + " parcelas atrasadas (desde " + pri.label + ")",
+        vencDe(pri));
     } else if (s.diasProxVenc !== null && s.diasProxVenc <= LIMIARES.diasParcelaAVencer) {
       add("parcela_a_vencer", s.diasProxVenc === 0
         ? "Parcela vence hoje (" + (s.mesAtual.valor || "") + ")"
@@ -2118,9 +2130,11 @@
     var faltaSemContato = s.faltas >= LIMIARES.faltas
       && (!s.ultimoToqueEm || !s.ultimaFaltaEm || s.ultimoToqueEm < s.ultimaFaltaEm);
     if (faltaSemContato)
-      add("falta_recente", s.faltas + (s.faltas === 1 ? " ausência no ciclo" : " ausências no ciclo"));
+      add("falta_recente", s.faltas + (s.faltas === 1 ? " ausência no ciclo" : " ausências no ciclo"),
+        s.ultimaFaltaEm || "");
     if (s.pulso && s.pulso.nota <= LIMIARES.avaliacaoBaixa)
-      add("avaliacao_baixa", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
+      add("avaliacao_baixa", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label,
+        s.pulso.data || "");
     if (s.tendencia < 0)
       add("avaliacao_caiu", "Avaliação caiu " + Math.abs(s.tendencia)
         + (Math.abs(s.tendencia) === 1 ? " ponto" : " pontos"));
@@ -2132,9 +2146,10 @@
       });
       if (travado.length)
         add("onboarding_travado", "Integração parada há " + daysBetween(parseISO(travado[0].data), today())
-          + " dias em: " + travado[0].label);
+          + " dias em: " + travado[0].label, travado[0].data || "");
       else
-        add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label);
+        add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label,
+          s.onboardingAtrasado[0].data || "");
     }
     if (s.diasDeCasa <= LIMIARES.diasContratoNovo)
       add("contrato_novo", "Entrou há " + s.diasDeCasa + (s.diasDeCasa === 1 ? " dia" : " dias"));
@@ -2148,7 +2163,8 @@
     if (s.diasSemToque === null || s.diasSemToque > intervalo)
       add("sem_contato", s.diasSemToque === null ? "Nenhum contato registrado"
         : "Sem contato há " + s.diasSemToque + " dias · a cadência pede a cada " + intervalo);
-    if (s.checkinVencido) add("checkin_agendado", "Check-in agendado para " + ddmm(p.proximoCheckin));
+    if (s.checkinVencido) add("checkin_agendado", "Check-in agendado para " + ddmm(p.proximoCheckin),
+      p.proximoCheckin || "");
     if (!out.length && s.pulso && s.pulso.nota >= LIMIARES.avaliacaoAlta)
       add("evolucao_positiva", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
     return out.sort(function (a, b) { return b.peso - a.peso; });
@@ -3634,6 +3650,21 @@
     { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "RT"] },
     { id: "professora", label: "Professora", regras: ["RT"] }
   ];
+  // Há quanto tempo o item espera. Três dias é o limiar em que a
+  // escola passa a perder a conversa: parcela atrasada que ninguém
+  // tocou, aluna que faltou e ninguém procurou. Item sem data não
+  // inventa idade — devolve null, e a tela não mostra nada.
+  var FILA_VELHO_DIAS = 3;
+  function idadeNaFila(item) {
+    var d = item && item.desde ? parseISO(item.desde) : null;
+    if (!d) return { dias: null, label: "", velho: false };
+    var n = daysBetween(d, today());
+    if (n < 0) return { dias: 0, label: "hoje", velho: false };
+    return { dias: n,
+      label: n === 0 ? "hoje" : n === 1 ? "há 1 dia" : "há " + n + " dias",
+      velho: n >= FILA_VELHO_DIAS };
+  }
+
   function filaParaHoje(perfilId, donoNome) {
     var itens = [];
     var pessoas = loadPessoas();
@@ -3647,7 +3678,8 @@
             itens.push({ regra: "R1", sinal: "followup_lead", dono: "Carla", urg: 1, icon: "", cor: "#348a8e",
               pessoaId: p.id, nome: p.nome,
               motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
-              acao: "Mensagem do estágio", tpl: "lead_followup" });
+              acao: "Mensagem do estágio", tpl: "lead_followup",
+              desde: p.proximoFollowup || "" });
           }
         }
         // Inscrição incompleta não entra na fila: o estágio é um
@@ -3663,7 +3695,8 @@
           if (!sn.naCentral) return;
           itens.push({ regra: mapaRegra[sn.id] || sn.id, sinal: sn.id, dono: sn.dono, urg: sn.urg,
             icon: "", cor: sn.cor, pessoaId: p.id, nome: p.nome,
-            motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl, toque: sn.toque || "" });
+            motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl, toque: sn.toque || "",
+            desde: sn.desde || "" });
         });
       }
 
@@ -3675,7 +3708,10 @@
             pessoaId: p.id, nome: p.nome,
             motivo: "Saiu há " + Math.floor(m6 / 30) + " meses"
               + (p.motivoPerda ? " (" + p.motivoPerda.toLowerCase() + ")" : "") + " · elegível para reativação",
-            acao: "Reativar", tpl: "renov_abrir" });
+            // a espera começa quando ela ficou elegível (6 meses depois
+            // da saída), não no dia em que saiu
+            acao: "Reativar", tpl: "renov_abrir",
+            desde: p.saidaEm ? somaDias(p.saidaEm, 180) : "" });
         }
       }
     });
@@ -3751,7 +3787,19 @@
     // adiar hoje tira da fila até amanhã — e vale também no Acompanhamento
     itens = itens.filter(function (i) { return !estaAdiado(i.sinal || i.regra, i.pessoaId); });
 
-    itens.sort(function (a, b) { return a.urg - b.urg; });
+    // Urgência primeiro, idade depois. Ordenar só por idade — como no
+    // desenho, onde a fila de exemplo é toda do mesmo tipo — põe uma
+    // reativação elegível há 104 dias em cima de uma parcela que
+    // venceu hoje. Dentro da mesma urgência, o que espera há mais
+    // tempo vem antes: é o que a escola perde se continuar esperando.
+    itens.sort(function (a, b) {
+      if (a.urg !== b.urg) return a.urg - b.urg;
+      var da = idadeNaFila(a).dias, db = idadeNaFila(b).dias;
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return db - da;
+    });
     return itens;
   }
   // Adiar é uma decisão sobre o sinal, não sobre a tela: some da Central
@@ -13236,7 +13284,8 @@
     // renovações
     renovacoes: renovacoes, setRenovacao: setRenovacao, taxaRenovacao: taxaRenovacao,
     // fila + metas
-    filaParaHoje: filaParaHoje, adiarItem: adiarItem, progressoMetas: progressoMetas,
+    filaParaHoje: filaParaHoje, idadeNaFila: idadeNaFila,
+    adiarItem: adiarItem, progressoMetas: progressoMetas,
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
     cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
     ciclosLista: ciclosLista, ciclosTodos: ciclosTodos, cicloDeAuditoria: cicloDeAuditoria,
