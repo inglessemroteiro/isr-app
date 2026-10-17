@@ -642,6 +642,50 @@ de quem trabalha aqui, a **Agenda** fala de quem é dona do evento, e
 O `verificar-jargao.js` passou a barrar `pessoa` no texto visível, com
 exceção dessas três telas — se a palavra voltar, a conferência falha.
 
+### Matrículas do ciclo, pelo v5
+
+O placar verde-escuro com o número grande deu lugar aos **cartões
+brancos de número** do v5 — faltam, ritmo atual, ritmo necessário,
+contratado, mensalidade somada. O "N de M", a porcentagem e a barra
+desceram para o bloco **Meta do ciclo**, que é onde o v5 os põe.
+
+**A linha escura na barra** é a melhor ideia do v5 nesta tela: ela
+marca onde a escola estaria hoje se as matrículas entrassem no mesmo
+passo do ciclo. Sem ela a barra diz quanto falta, mas não se está
+atrasada. Ela só aparece quando há data de fim — sem fim não há passo
+a comparar, e a tela não promete o que não sabe.
+
+**Mês a mês, De onde vieram e Por nível** viraram três cartões de
+barra, lado a lado. A barra mede contra o maior do próprio corte: o
+que se compara ali é um mês com os outros meses, não com a meta.
+
+**Saíram:** o bloco "Como usar esta tela" (nenhuma outra tela explica
+a si mesma), o **copiar a lista**, e o **início das aulas em lote** —
+esse ficou em Alunas, que é de onde a escola trabalha a turma inteira.
+A coluna de início continua em cada linha, que é onde a exceção se
+corrige.
+
+**Ficou a tabela de nove colunas**, por decisão da escola: fechou,
+aluna, veio de, nível, turma, início, pacote, mensalidade, parcelas. O
+v5 mostra cinco campos, e cinco não bastam para conferir um ciclo.
+
+**Duas coisas em aberto nesta tela**, que não resolvi porque são
+decisão sua: as datas do ciclo podem ser editadas em dois lugares — no
+bloco Meta do ciclo e nos três calendários — e o significado não é o
+mesmo; e o v5 tem um `mcCanEdit` que limita quem edita a meta, que
+aqui ninguém limita.
+
+### Uma gravação que ninguém ouvia
+
+Cinco telas — Agenda, Central, Clubes, Turmas e Matrículas do ciclo —
+escutavam o evento `isr-dados` para se redesenhar quando o dado muda.
+**Ninguém nunca disparou esse evento.** As cinco ficavam velhas até
+alguém recarregar a página.
+
+O aviso passou a sair de `agendarSync()`, que é por onde toda gravação
+passa — com banco central configurado ou sem ele. Uma linha, cinco
+telas que voltam a se atualizar sozinhas.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
