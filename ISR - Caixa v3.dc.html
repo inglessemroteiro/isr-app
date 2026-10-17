@@ -14,6 +14,7 @@
 <script src="./isr-versao.js"></script>
 <script src="./isr-shell.js"></script>
 <script src="./crm-data.js"></script>
+<script src="./isr-paginacao.js"></script>
 </head>
 <body>
 <x-dc>
@@ -31,7 +32,7 @@
         <a href="ISR%20-%20Cobran%C3%A7a%20v3.dc.html" style="text-decoration: none; background: #164951; color: #fff; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; box-shadow: 0 3px 0 #0e3339;">Cobrança</a>
       </div>
     </header>
-    <p style="margin: 0 0 18px; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 720px;"><strong>O dinheiro do mês.</strong> Em <em>O mês</em>: conciliação, revisão e lançamentos. Em <em>Planejamento</em>: metas, custos fixos e câmbio. Real e euro aparecem separados; onde são somados, o câmbio está escrito.</p>
+    <p style="margin: 0 0 18px; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 720px;"><strong>O dinheiro do mês.</strong> Em <em>O mês</em>: conciliação, revisão e lançamentos. Em <em>Planejamento</em>: metas e custos fixos. Real e euro aparecem separados; onde são somados, o câmbio está escrito.</p>
 
     <!-- NAVEGADOR DE MÊS -->
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -57,6 +58,53 @@
 
     <sc-if value="{{ abaMes }}">
       <div>
+    <!-- ENTRADAS PREVISTAS × CUSTO FIXO · o gráfico do v5 -->
+    <section style="background: #fff; border-radius: 24px; padding: 20px 22px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 800;">Entradas previstas × custo fixo</div>
+        <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 600; color: #1d5a63;">
+          <span style="color: #348a8e;">€</span>
+          <span style="color: #4f8c42;">R$</span>
+          <span>▬ custo fixo</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end;">
+        <sc-for list="{{ projMeses }}" as="pm" hint-placeholder-count="3">
+          <div onclick="{{ pm.onAbrir }}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; border-radius: 18px; padding: 10px 6px; background: {{ pm.bg }};">
+            <div style="font-size: 12px; font-weight: 600; text-align: center; line-height: 1.4;">
+              <span style="color: {{ pm.corE }};">{{ pm.resE }}</span><br>
+              <span style="color: {{ pm.corR }};">{{ pm.resR }}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: flex-end; height: 200px;">
+              <div style="width: 34px; border-radius: 10px 10px 4px 4px; background: #348a8e; position: relative; height: {{ pm.alturaE }};">
+                <div style="position: absolute; left: -6px; right: -6px; height: 3px; background: #164951; bottom: {{ pm.corteE }};"></div>
+              </div>
+              <div style="width: 34px; border-radius: 10px 10px 4px 4px; background: #9ec970; position: relative; height: {{ pm.alturaR }};">
+                <div style="position: absolute; left: -6px; right: -6px; height: 3px; background: #164951; bottom: {{ pm.corteR }};"></div>
+              </div>
+            </div>
+            <div style="font-size: 14px; font-weight: 600;">{{ pm.mes }} {{ pm.aviso }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ projAberto }}">
+        <div style="background: #f5f5f0; border-radius: 18px; padding: 16px; display: flex; flex-wrap: wrap; gap: 16px;">
+          <sc-for list="{{ projDetalhe }}" as="pd" hint-placeholder-count="2">
+            <div style="flex: 1 1 240px; min-width: 0;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465; margin-bottom: 6px;">{{ pd.moeda }}</div>
+              <sc-for list="{{ pd.linhas }}" as="pl" hint-placeholder-count="4">
+                <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 4px 0; border-bottom: 1px solid #ece5db;">
+                  <span style="color: #8a7465;">{{ pl.k }}</span>
+                  <b style="color: {{ pl.cor }};">{{ pl.v }}</b>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <div style="font-size: 12px; color: #1d5a63; line-height: 1.55;">A linha escura é o custo fixo do mês. Barra abaixo dela: o mês não se paga.</div>
+    </section>
+
     <!-- O MÊS, MOEDA POR MOEDA — somar real e euro num número só escondia o
          que importa: a operação em real pode estar no vermelho enquanto o
          euro do gateway cobre o buraco. Cada moeda responde por si. -->
@@ -431,6 +479,22 @@
             </sc-if>
           </div>
         </sc-for>
+        <!-- PAGINAÇÃO -->
+        <sc-if value="{{ entPrecisa }}">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <sc-for list="{{ entBotoes }}" as="pb" hint-placeholder-count="7">
+                <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+              </sc-for>
+            </div>
+            <span style="flex: 1; min-width: 4px;"></span>
+            <span style="font-size: 12px; color: #8a7465;">mostrar</span>
+            <select onchange="{{ entOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: #164951; background: #f2ebe3;">
+              <sc-for list="{{ entOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+            </select>
+            <span style="font-size: 12px; color: #8a7465;">por página · {{ entResumo }}</span>
+          </div>
+        </sc-if>
 
         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
           <input ref="{{ entDescRef }}" placeholder="Descrição da receita (ex. workshop)" style="flex: 1; min-width: 130px; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
@@ -509,6 +573,22 @@
           <input ref="{{ saiFatRef }}" placeholder="Link da fatura no Drive (opcional)" style="flex-basis: 100%; padding: 8px 11px; font-size: 11.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
           <button onclick="{{ onAddSaida }}" style="border: none; background: #cf6b5c; color: #fff; font-size: 11.5px; font-weight: 600; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar despesa</button>
         </div>
+        <!-- PAGINAÇÃO -->
+        <sc-if value="{{ saiPrecisa }}">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <sc-for list="{{ saiBotoes }}" as="pb" hint-placeholder-count="7">
+                <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+              </sc-for>
+            </div>
+            <span style="flex: 1; min-width: 4px;"></span>
+            <span style="font-size: 12px; color: #8a7465;">mostrar</span>
+            <select onchange="{{ saiOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: #164951; background: #f2ebe3;">
+              <sc-for list="{{ saiOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+            </select>
+            <span style="font-size: 12px; color: #8a7465;">por página · {{ saiResumo }}</span>
+          </div>
+        </sc-if>
         <p style="margin: 9px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Custos fixos são aplicados todos os meses e podem ser editados abaixo. Aqui registram-se apenas as despesas específicas deste mês. Para anexar a fatura (PDF), guarde o arquivo no Drive e cole o link: o lançamento ganha o botão "fatura".</p>
 
         <div style="border-top: 1px solid #f2e9dd; margin-top: 14px; padding-top: 12px;">
@@ -684,7 +764,15 @@
           </div>
         </sc-for>
       </div>
-      <p style="margin: 10px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Valores em R$, com o € convertido a {{ cambioLabel }} apenas para leitura consolidada. Valores estimados, sem finalidade contábil. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
+      <!-- a taxa tinha um bloco só dela no fim da tela. O número é lido
+           aqui e no previsto × realizado; editá-lo aqui é onde ele faz
+           sentido, e a tela perde um bloco. -->
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+        <span style="font-size: 10.5px; color: #b3a693;">Valores em R$, com o € convertido a</span>
+        <input ref="{{ cambioRef }}" placeholder="{{ cambioValor }}" style="width: 80px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
+        <button onclick="{{ onSalvarCambio }}" style="border: 0; background: #f2ebe3; color: #164951; font-size: 11.5px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar taxa</button>
+      </div>
+      <p style="margin: 8px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Conversão apenas para leitura consolidada. Valores estimados, sem finalidade contábil. Meses anteriores ao primeiro pagamento registrado não são exibidos.</p>
     </div>
 
     <!-- EXPECTATIVA -->
@@ -758,15 +846,6 @@
       </div>
     </div>
 
-    <!-- CÂMBIO -->
-    <div style="background: #fff; border-radius: 24px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <div style="flex: 1; min-width: 220px;">
-        <div style="font-size: 12.5px; font-weight: 600; color: #164951;">Taxa de conversão cambial</div>
-        <div style="font-size: 11px; color: #8a7465; line-height: 1.5;">Usada no gráfico de evolução e sempre que real e euro precisam virar um número só. Nos demais lugares, cada moeda aparece separada.</div>
-      </div>
-      <input ref="{{ cambioRef }}" placeholder="{{ cambioValor }}" style="width: 90px; padding: 9px 12px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-      <button onclick="{{ onSalvarCambio }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
-    </div>
       </div>
     </sc-if>
 
@@ -775,7 +854,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { offset: 0, moedaExtrato: "€", contaExtrato: "", contasAberto: false, erroConta: "",
+  state = { offset: 0, projAberto: null,
+    pagEnt: 1, porPagEnt: ISRPaginacao.PADRAO,
+    pagSai: 1, porPagSai: ISRPaginacao.PADRAO, moedaExtrato: "€", contaExtrato: "", contasAberto: false, erroConta: "",
     buscandoApi: false, erroApi: "", analise: null, conciliadas: {}, lancadas: {},
             editandoMeta: false, copiado: false, custoVigencia: null, tick: 0,
             catsAberto: false, erroCat: "", confAberta: false, orcEditando: false,
@@ -879,10 +960,69 @@ class Component extends DCLogic {
     this.setState({ analise: a, conciliadas: {}, lancadas: {}, trocas: {}, moedaExtrato: moeda });
   }
 
+  // O gráfico do v5: três meses, uma barra por moeda, e a linha do
+  // custo fixo atravessando a barra. Cada moeda tem escala própria —
+  // € e R$ não se comparam em altura, e somar os dois esconderia qual
+  // das duas operações não se paga.
+  projecao(CRM) {
+    const meses = CRM.projecaoCaixa ? CRM.projecaoCaixa() : [];
+    if (!meses.length) return { projMeses: [], projAberto: false, projDetalhe: [] };
+    const $ = (m, v) => CRM.fmtMoney(m, v);
+    const teto = (moeda) => Math.max.apply(null,
+      meses.map(m => Math.max(m.esperado[moeda] || 0, m.custos[moeda] || 0)).concat([1]));
+    const tetoE = teto("€"), tetoR = teto("R$");
+    const ALTURA = 200;
+    const barra = (v, t) => Math.max(4, Math.round((v / t) * ALTURA)) + "px";
+    // a linha fica na altura do custo dentro da barra; custo maior que a
+    // entrada prevista encosta no topo, e o mês ganha o aviso
+    const corte = (custo, esperado, t) => {
+      const hBarra = Math.max(4, (esperado / t) * ALTURA);
+      const hCusto = (custo / t) * ALTURA;
+      return Math.min(hBarra - 3, Math.max(0, hCusto)) + "px";
+    };
+    const aberto = this.state.projAberto;
+
+    const projMeses = meses.map(m => {
+      const faltaE = (m.esperado["€"] || 0) < (m.custos["€"] || 0);
+      const faltaR = (m.esperado["R$"] || 0) < (m.custos["R$"] || 0);
+      const on = aberto === m.key;
+      return {
+        mes: m.curto || m.label, aviso: (faltaE || faltaR) ? "⚠︎" : "",
+        resE: $("€", m.resultado["€"]), resR: $("R$", m.resultado["R$"]),
+        corE: faltaE ? "#a3392c" : "#348a8e",
+        corR: faltaR ? "#a3392c" : "#4f8c42",
+        alturaE: barra(m.esperado["€"] || 0, tetoE),
+        alturaR: barra(m.esperado["R$"] || 0, tetoR),
+        corteE: corte(m.custos["€"] || 0, m.esperado["€"] || 0, tetoE),
+        corteR: corte(m.custos["R$"] || 0, m.esperado["R$"] || 0, tetoR),
+        bg: on ? "#f5f5f0" : "transparent",
+        onAbrir: () => this.setState({ projAberto: on ? null : m.key })
+      };
+    });
+
+    const mAberto = meses.filter(m => m.key === aberto)[0];
+    const detalhe = !mAberto ? [] : ["€", "R$"].map(moeda => ({
+      moeda: moeda + " · " + mAberto.label,
+      linhas: [
+        { k: "Já recebido", v: $(moeda, mAberto.recebido[moeda] || 0), cor: "#164951" },
+        { k: "A receber", v: $(moeda, mAberto.previsto[moeda] || 0), cor: "#164951" },
+        { k: "Entradas previstas", v: $(moeda, mAberto.esperado[moeda] || 0), cor: "#164951" },
+        { k: "Custo fixo", v: $(moeda, mAberto.custos[moeda] || 0), cor: "#a3392c" },
+        { k: "Resultado", v: $(moeda, mAberto.resultado[moeda] || 0),
+          cor: (mAberto.resultado[moeda] || 0) < 0 ? "#a3392c" : "#4f8c42" }
+      ]
+    }));
+
+    return { projMeses, projAberto: !!mAberto, projDetalhe: detalhe };
+  }
+
   renderVals() {
     const CRM = window.ISRCRM;
     const vazio = { abas: [], regimes: [], saldoCampos: [], curva: [], numeros: [], metas: [], serie: [], catsEntrada: [], catsSaida: [], entradas: [], porMoeda: [], notas: [], resContas: [], contasOpts: [], contasSimples: [], contasCad: [],
-      saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [] };
+      saidas: [], camadas: [], custos: [], opcoesCatSaida: [], sugestoes: [], semMatch: [],
+      projMeses: [], projAberto: false, projDetalhe: [],
+      entPrecisa: false, entBotoes: [], entOpcoes: [], entResumo: "", entOnPorPagina: () => {},
+      saiPrecisa: false, saiBotoes: [], saiOpcoes: [], saiResumo: "", saiOnPorPagina: () => {} };
     if (!CRM) return vazio;
 
     const mes = CRM.mesOffset(this.state.offset);
@@ -1090,7 +1230,7 @@ class Component extends DCLogic {
       const futuro = s.key > atualKey;
       const selecionado = s.key === mes.key;
       return {
-        curto: s.curto, onClick: () => this.setState({ offset: s.offset, analise: null }),
+        curto: s.curto, onClick: () => this.setState({ pagEnt: 1, pagSai: 1, offset: s.offset, analise: null }),
         titulo: s.label + " · entrou " + CRM.fmtMoney("R$", s.recebidoReais) + " · saiu " + CRM.fmtMoney("R$", s.saiuReais),
         alturaBar: Math.max(2, Math.round(100 * base / maxSerie)) + "%",
         cor: selecionado ? "#164951" : (futuro ? "#d9cfc0" : (s.resultadoReais >= 0 ? "#348a8e" : "#cf6b5c")),
@@ -1215,6 +1355,13 @@ class Component extends DCLogic {
       this.bump();
     };
     const mesLabelDe = k => { const p = (k || "").split("-"); return p.length === 2 ? (p[1] + "/" + p[0].slice(2)) : k; };
+    const pgEnt = ISRPaginacao.fatiar(entradas, this.state.pagEnt, this.state.porPagEnt,
+      (n, porPagina) => this.setState(porPagina === undefined
+        ? { pagEnt: n } : { pagEnt: n, porPagEnt: porPagina }));
+    const pgSai = ISRPaginacao.fatiar(saidas, this.state.pagSai, this.state.porPagSai,
+      (n, porPagina) => this.setState(porPagina === undefined
+        ? { pagSai: n } : { pagSai: n, porPagSai: porPagina }));
+
     const custos = CRM.CUSTOS_FIXOS.map((c, i) => {
       const vigente = CRM.vigenteNoMes(c, mes.key);
       let vigencia;
@@ -1721,6 +1868,7 @@ class Component extends DCLogic {
       // ── abas ──
       // o mês abre no que precisa de decisão; o que se ajusta uma vez por ano
       // fica na segunda aba, e não mais no caminho
+      ...this.projecao(CRM),
       abas: [umaAba("mes", "O mês"), umaAba("plano", "Planejamento")],
       abaMes: aba === "mes",
       abaPlano: aba === "plano",
@@ -1732,7 +1880,7 @@ class Component extends DCLogic {
       naoEhAtual: this.state.offset !== 0,
       onMesAnterior: () => this.setState(s => ({ offset: s.offset - 1, analise: null })),
       onMesProximo: () => this.setState(s => ({ offset: s.offset + 1, analise: null })),
-      onHoje: () => this.setState({ offset: 0, analise: null }),
+      onHoje: () => this.setState({ pagEnt: 1, pagSai: 1, offset: 0, analise: null }),
 
       numeros, metas, serie, camadas,
 
@@ -1971,7 +2119,11 @@ class Component extends DCLogic {
 
       catsEntrada: barras(f.porCatEntrada, CRM.CAT_ENTRADA),
       catsSaida: barras(f.porCatSaida, CRM.catsSaida()),
-      entradas, saidas, custos, opcoesCatSaida,
+      entradas: pgEnt.itens, saidas: pgSai.itens, custos, opcoesCatSaida,
+      entPrecisa: pgEnt.precisa, entBotoes: pgEnt.botoes, entOpcoes: pgEnt.opcoes,
+      entResumo: pgEnt.resumo, entOnPorPagina: pgEnt.onPorPagina,
+      saiPrecisa: pgSai.precisa, saiBotoes: pgSai.botoes, saiOpcoes: pgSai.opcoes,
+      saiResumo: pgSai.resumo, saiOnPorPagina: pgSai.onPorPagina,
 
       catsAberto: this.state.catsAberto,
       catsLabel: this.state.catsAberto ? "Fechar" : "Gerenciar",
