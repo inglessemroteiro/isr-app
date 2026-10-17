@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-e",
+  numero: "2026.10.17-f",
   data: "17/10/2026",
-  nota: "Os tons de estado adotam os semânticos do design system, que ganhou o terceiro degrau que faltava em cada um. 307 textos ficaram mais legíveis"
+  nota: "Botão, cartão, selo e campo passam a vir de uma camada de componentes escrita em tokens: 718 elementos, 2.962 declarações de estilo a menos, zero pixel mudado"
 };

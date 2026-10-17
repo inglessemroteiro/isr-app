@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
 <style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
 <script src="./support.js"></script>
 <script src="./isr-versao.js"></script>
@@ -21,7 +22,7 @@
   <div class="pf-pagina" style="display: flex; flex-direction: column; gap: 16px;">
 
     <sc-if value="{{ naoEncontrada }}">
-      <div style="text-align: center; padding: 60px 20px; background: var(--color-neutral-0); border-radius: 24px; color: var(--color-tertiary-500);">
+      <div class="isr-cartao" style="text-align: center; padding: 60px 20px; color: var(--color-tertiary-500)">
         <p style="margin: 0; font-size: 14px;">Cadastro não encontrado. Volte à Central e abra um perfil pelo nome.</p>
       </div>
     </sc-if>
@@ -31,22 +32,22 @@
       <header style="background: var(--color-neutral-0);  border-left: 5px solid {{ statusColor }}; border-radius: 18px; padding: 20px; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
           <h1 style="margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">{{ nome }}</h1>
-          <span style="background: {{ statusBg }}; color: {{ statusColor }}; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px; border-radius: 999px;">{{ statusLabel }}</span>
+          <span class="isr-selo" style="background: {{ statusBg }}; color: {{ statusColor }}; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px">{{ statusLabel }}</span>
           <sc-if value="{{ estagioBadge }}">
-            <span style="background: {{ estagioBg }}; color: {{ estagioFg }}; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px; border-radius: 999px;">{{ estagioBadge }}</span>
+            <span class="isr-selo" style="background: {{ estagioBg }}; color: {{ estagioFg }}; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 11px">{{ estagioBadge }}</span>
           </sc-if>
-          <span style="background: var(--color-button-secondary); color: var(--color-primary-800); font-size: 10px; font-weight: 600; padding: 4px 11px; border-radius: 999px;">{{ moeda }}</span>
+          <span class="isr-selo" style="background: var(--color-button-secondary); color: var(--color-primary-800); font-size: 10px; padding: 4px 11px">{{ moeda }}</span>
         </div>
         <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
           <p style="margin: 0; flex: 1; min-width: 200px; font-size: 13px; color: var(--color-primary-800);">{{ contexto }}</p>
           <a href="{{ waDireto }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 11px; font-weight: 600; padding: 7px 15px; border-radius: 999px; box-shadow: 0 3px 0 var(--color-primary-950);">WhatsApp</a>
-          <button onclick="{{ onEditarCadastro }}" style="flex: none; border: 0; background: {{ edCadBg }}; color: {{ edCadFg }}; font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edCadLabel }}</button>
+          <button class="isr-botao" onclick="{{ onEditarCadastro }}" style="flex: none; background: {{ edCadBg }}; color: {{ edCadFg }}; font-size: 11px; padding: 6px 14px">{{ edCadLabel }}</button>
         </div>
         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px;">
           <sc-for list="{{ tags }}" as="tg" hint-placeholder-count="3">
-            <span style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 11px; font-weight: 600; padding: 5px 6px 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;">{{ tg.nome }}<button onclick="{{ tg.onRemove }}" title="Remover etiqueta" style="font-family: inherit; border: none; background: transparent; color: var(--color-tertiary-200); font-size: 13px; cursor: pointer; padding: 0 3px;">×</button></span>
+            <span class="isr-selo" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 11px; padding: 5px 6px 5px 12px; display: inline-flex; align-items: center; gap: 5px">{{ tg.nome }}<button onclick="{{ tg.onRemove }}" title="Remover etiqueta" style="font-family: inherit; border: none; background: transparent; color: var(--color-tertiary-200); font-size: 13px; cursor: pointer; padding: 0 3px;">×</button></span>
           </sc-for>
-          <input ref="{{ tagRef }}" onkeydown="{{ onTagKey }}" list="isr-tags" placeholder="+ etiqueta" style="width: 130px; padding: 6px 11px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 1px dashed var(--color-tertiary-100); border-radius: 999px; background: transparent;" />
+          <input class="isr-campo" ref="{{ tagRef }}" onkeydown="{{ onTagKey }}" list="isr-tags" placeholder="+ etiqueta" style="width: 130px; padding: 6px 11px; font-size: 11.5px; border: 1px dashed var(--color-tertiary-100); border-radius: 999px; background: transparent" />
           <datalist id="isr-tags">
             <sc-for list="{{ tagsSugeridas }}" as="ts" hint-placeholder-count="8"><option value="{{ ts.v }}"></option></sc-for>
           </datalist>
@@ -68,21 +69,21 @@
         <sc-if value="{{ editandoCadastro }}">
           <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-button-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nome</div>
-              <input ref="{{ cadNomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+              <input class="isr-campo" ref="{{ cadNomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">WhatsApp</div>
-              <input ref="{{ cadZapRef }}" placeholder="{{ whatsappAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+              <input class="isr-campo" ref="{{ cadZapRef }}" placeholder="{{ whatsappAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">E-mail</div>
-              <input ref="{{ cadEmailRef }}" placeholder="{{ emailAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+              <input class="isr-campo" ref="{{ cadEmailRef }}" placeholder="{{ emailAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
               <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">{{ cd.label }}</div>
-                <input ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                <input class="isr-campo" ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             </sc-for>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Turma</div>
-              <select ref="{{ cadTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);">
+              <select class="isr-campo" ref="{{ cadTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px">
                 <sc-for list="{{ cadTurmaOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.id }}">{{ to.label }}</option></sc-for>
               </select></div>
             <div style="display: flex; align-items: flex-end;">
-              <button onclick="{{ onSalvarCadastro }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+              <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarCadastro }}" style="font-size: 12px; padding: 10px 20px">Salvar</button>
             </div>
           </div>
           <p style="margin: 10px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.6;">Dados sensíveis. Usados na emissão do contrato e incluídos na exportação em Escola · Dados.</p>
@@ -117,7 +118,7 @@
       <sc-if value="{{ temAbas }}">
         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
           <sc-for list="{{ abasFicha }}" as="ab" hint-placeholder-count="4">
-            <button onclick="{{ ab.onClick }}" style="border: 1px solid {{ ab.borda }}; background: {{ ab.bg }}; color: {{ ab.fg }}; font-size: 12px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ab.label }}</button>
+            <button class="isr-botao" onclick="{{ ab.onClick }}" style="border: 1px solid {{ ab.borda }}; background: {{ ab.bg }}; color: {{ ab.fg }}; font-size: 12px; padding: 9px 18px">{{ ab.label }}</button>
           </sc-for>
         </div>
       </sc-if>
@@ -127,7 +128,7 @@
 
         <!-- ═══ COLUNA ESQUERDA · A RELAÇÃO ═══ -->
         <div>
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 12px;">Linha do tempo</div>
             <sc-for list="{{ timeline }}" as="h" hint-placeholder-count="6">
               <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
@@ -136,8 +137,8 @@
               </div>
             </sc-for>
             <div style="display: flex; gap: 6px; margin-top: 14px; border-top: 1px solid var(--color-button-secondary); padding-top: 14px;">
-              <input ref="{{ noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ onNoteKey }}" style="border: 0; flex: 1;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; padding: 9px 11px; border-radius: 12px; font-family: inherit;" />
-              <button onclick="{{ onNoteSave }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 12px; cursor: pointer;">Salvar</button>
+              <input class="isr-campo" ref="{{ noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ onNoteKey }}" style="flex: 1; font-size: 12px; padding: 9px 11px" />
+              <button class="isr-botao isr-botao--escuro" onclick="{{ onNoteSave }}" style="font-size: 12px; padding: 9px 14px; border-radius: 12px">Salvar</button>
             </div>
           </div>
         </div>
@@ -147,11 +148,11 @@
 
           <!-- LEAD: PAINEL DO FUNIL -->
           <sc-if value="{{ ehLead }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 10px;">Funil</div>
               <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;">
                 <sc-for list="{{ stageOptions }}" as="opt" hint-placeholder-count="7">
-                  <button onclick="{{ opt.onPick }}" style="font-family: inherit; border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 999px; cursor: pointer;">{{ opt.label }}</button>
+                  <button class="isr-botao" onclick="{{ opt.onPick }}" style="border: 1px solid {{ opt.border }}; background: {{ opt.bg }}; color: {{ opt.fg }}; font-size: 10px; padding: 4px 9px">{{ opt.label }}</button>
                 </sc-for>
               </div>
               <div style="font-size: 10px; color: var(--color-tertiary-500); margin-bottom: 6px;">Próximo follow-up: <strong style="color: var(--color-primary-900);">{{ followupAtual }}</strong></div>
@@ -160,7 +161,7 @@
                   <button onclick="{{ fu.onClick }}" style="font-family: inherit;  background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 12px; cursor: pointer;">{{ fu.label }}</button>
                 </sc-for>
                 <span style="font-size: 10px; color: var(--color-tertiary-500);">ou na data:</span>
-                <input type="date" onchange="{{ onFollowupData }}" style="border: 0;  background: var(--color-button-secondary); color: var(--color-primary-800); font-size: 11px; padding: 5px 8px; border-radius: 12px; font-family: inherit;" />
+                <input class="isr-campo" type="date" onchange="{{ onFollowupData }}" style="color: var(--color-primary-800); font-size: 11px; padding: 5px 8px" />
               </div>
               <p style="margin: 8px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">{{ avisoFunil }}</p>
               <sc-if value="{{ marcandoReuniao }}">
@@ -170,14 +171,14 @@
                   <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: flex-end;">
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-200); margin-bottom: 3px;">Dia</div>
-                      <input ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+                      <input class="isr-campo" ref="{{ reuDataRef }}" type="date" style="padding: 9px 11px; font-size: 12px" />
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-200); margin-bottom: 3px;">Hora · Brasília</div>
-                      <input ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+                      <input class="isr-campo" ref="{{ reuHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px" />
                     </div>
-                    <button onclick="{{ onMarcarConfirma }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
-                    <button onclick="{{ onMarcarCancela }}" style="border: 0; background: var(--color-neutral-0); color: var(--color-tertiary-500); font-size: 12px; font-weight: 600; padding: 10px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ onMarcarConfirma }}" style="font-size: 12px; padding: 10px 16px">Marcar conversa</button>
+                    <button class="isr-botao" onclick="{{ onMarcarCancela }}" style="background: var(--color-neutral-0); color: var(--color-tertiary-500); font-size: 12px; padding: 10px 14px">Cancelar</button>
                   </div>
                   <sc-if value="{{ erroReuniao }}">
                     <p style="margin: 9px 0 0; font-size: 11px; color: var(--color-error); line-height: 1.5;">{{ erroReuniao }}</p>
@@ -190,8 +191,8 @@
                   </sc-if>
                   <sc-if value="{{ semBooking }}">
                     <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--color-tertiary-50);">
-                      <input ref="{{ bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 200px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                      <button onclick="{{ onSalvarBooking }}" style="border: 0; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
+                      <input class="isr-campo" ref="{{ bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 200px; padding: 8px 10px; font-size: 11px" />
+                      <button class="isr-botao" onclick="{{ onSalvarBooking }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 11px; padding: 8px 12px">Guardar</button>
                     </div>
                   </sc-if>
                 </div>
@@ -204,7 +205,7 @@
                 </div>
               </sc-if>
               <div style="font-size: 10px; color: var(--color-tertiary-500); margin: 12px 0 6px;">Turma de interesse <span style="color: var(--color-tertiary-200);">(vira sugestão na matrícula)</span></div>
-              <select onchange="{{ onTurmaInteresse }}" style="border: 0; width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900);  border-radius: 12px; background: var(--color-button-secondary);">
+              <select class="isr-campo" onchange="{{ onTurmaInteresse }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px">
                 <sc-for list="{{ turmasInteresse }}" as="ti" hint-placeholder-count="6">
                   <option value="{{ ti.id }}" selected="{{ ti.sel }}">{{ ti.label }}</option>
                 </sc-for>
@@ -220,16 +221,16 @@
           <!-- REGISTRAR CONTATO · mensagem já mandada (Whats, e-mail,
                conversa) entra aqui, inclusive com data passada — é o que
                zera o "sem contato há N dias" e o aviso de ausências -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Registrar contato</div>
             <div style="font-size: 11px; color: var(--color-tertiary-500); margin-bottom: 10px;">{{ ultimoContatoFrase }}</div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <select ref="{{ rcTipoRef }}" style="border: 0; flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900);  border-radius: 12px; background: var(--color-button-secondary);">
+              <select class="isr-campo" ref="{{ rcTipoRef }}" style="flex: 1; min-width: 130px; padding: 8px 10px; font-size: 11.5px">
                 <sc-for list="{{ rcTipos }}" as="rt" hint-placeholder-count="5"><option value="{{ rt.id }}">{{ rt.label }}</option></sc-for>
               </select>
-              <input ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="border: 0; padding: 7px 9px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900);  border-radius: 12px; background: var(--color-button-secondary);" />
-              <input ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="border: 0; flex-basis: 100%; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900);  border-radius: 12px; background: var(--color-button-secondary);" />
-              <button onclick="{{ onRegistrarContatoManual }}" style="border: none; background: var(--color-text-light); color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 9px 16px; border-radius: 12px; cursor: pointer; font-family: inherit;">Registrar</button>
+              <input class="isr-campo" ref="{{ rcDataRef }}" type="date" title="Quando foi — em branco vale hoje" style="padding: 7px 9px; font-size: 11.5px" />
+              <input class="isr-campo" ref="{{ rcNotaRef }}" placeholder="Nota (ex. respondi por e-mail)" style="flex-basis: 100%; padding: 8px 10px; font-size: 11.5px" />
+              <button class="isr-botao" onclick="{{ onRegistrarContatoManual }}" style="background: var(--color-text-light); color: var(--color-neutral-0); font-size: 11.5px; padding: 9px 16px; border-radius: 12px">Registrar</button>
               <sc-if value="{{ rcFeito }}">
                 <span style="font-size: 11.5px; font-weight: 600; color: var(--color-success); align-self: center;">Contato registrado.</span>
               </sc-if>
@@ -238,7 +239,7 @@
           </div>
 
           <!-- AÇÕES RÁPIDAS -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 10px;">Ações rápidas · WhatsApp</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px;">
               <sc-for list="{{ acoes }}" as="a" hint-placeholder-count="4">
@@ -250,19 +251,19 @@
 
           <!-- ALUNA: ACOMPANHAMENTO · CHECK-IN -->
           <sc-if value="{{ ehAluna }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 10px;">Acompanhamento · check-in</div>
               <div style="font-size: 12px; color: var(--color-primary-800); margin-bottom: 10px;">Próximo check-in: <strong style="color: var(--color-primary-900);">{{ checkinAtual }}</strong></div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px;">
                 <button onclick="{{ onCheckin7 }}" style="font-family: inherit;  background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 12px; cursor: pointer;">Em 1 semana</button>
                 <button onclick="{{ onCheckin30 }}" style="font-family: inherit;  background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 12px; cursor: pointer;">Em 1 mês</button>
-                <input ref="{{ checkinDateRef }}" type="date" style="border: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 6px 8px; border-radius: 12px; font-family: inherit;" />
-                <button onclick="{{ onCheckinData }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11px; font-weight: 600; padding: 7px 12px; border-radius: 12px; cursor: pointer;">Agendar</button>
+                <input class="isr-campo" ref="{{ checkinDateRef }}" type="date" style="font-size: 11px; padding: 6px 8px" />
+                <button class="isr-botao isr-botao--escuro" onclick="{{ onCheckinData }}" style="font-size: 11px; padding: 7px 12px; border-radius: 12px">Agendar</button>
               </div>
               <sc-if value="{{ temCheckin }}">
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid var(--color-bg-default); padding-top: 10px;">
                   <a href="{{ checkinGcal }}" target="_blank" rel="noopener" style="text-decoration: none; border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 11px; font-weight: 600; padding: 7px 12px; border-radius: 12px;">+ Google Agenda</a>
-                  <button onclick="{{ onCheckinFeito }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11px; font-weight: 600; padding: 7px 12px; border-radius: 12px; cursor: pointer;">Check-in feito</button>
+                  <button class="isr-botao isr-botao--escuro" onclick="{{ onCheckinFeito }}" style="font-size: 11px; padding: 7px 12px; border-radius: 12px">Check-in feito</button>
                 </div>
               </sc-if>
               <p style="margin: 9px 0 0; font-size: 10px; color: var(--color-tertiary-200);">O check-in agendado aparece na Central e na Agenda da escola.</p>
@@ -271,7 +272,7 @@
 
           <!-- MOEDAS DA ALUNA -->
           <sc-if value="{{ ehAluna }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Moedas</span>
                 <span style="display: inline-flex; align-items: center; gap: 6px;">
@@ -280,16 +281,16 @@
                 </span>
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-                <select ref="{{ moedasBonusRef }}" style="border: 0; flex: 1; min-width: 150px; padding: 8px 10px; font-size: 11px; font-family: inherit; color: var(--color-primary-900);  border-radius: 12px; background: var(--color-button-secondary);">
+                <select class="isr-campo" ref="{{ moedasBonusRef }}" style="flex: 1; min-width: 150px; padding: 8px 10px; font-size: 11px">
                   <sc-for list="{{ bonusOpts }}" as="bo" hint-placeholder-count="8">
                     <option value="{{ bo.id }}">{{ bo.label }}</option>
                   </sc-for>
                 </select>
-                <button onclick="{{ onAplicarBonus }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11px; font-weight: 600; padding: 8px 13px; border-radius: 12px; cursor: pointer;">Aplicar</button>
+                <button class="isr-botao isr-botao--escuro" onclick="{{ onAplicarBonus }}" style="font-size: 11px; padding: 8px 13px; border-radius: 12px">Aplicar</button>
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <input ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="border: 0; width: 80px;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
-                <input ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="border: 0; flex: 1; min-width: 130px;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
+                <input class="isr-campo" ref="{{ moedasValorRef }}" type="number" placeholder="+50 / -30" style="width: 80px; font-size: 11px; padding: 8px 10px" />
+                <input class="isr-campo" ref="{{ moedasMotivoRef }}" placeholder="Motivo (ex. indicou a Renata / resgate)" style="flex: 1; min-width: 130px; font-size: 11px; padding: 8px 10px" />
                 <button onclick="{{ onAddMoedas }}" style="font-family: inherit;  background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 12px; cursor: pointer;">Ajustar</button>
               </div>
               <p style="margin: 8px 0 0; font-size: 10px; color: var(--color-tertiary-200);">Presença, parcela em dia e onboarding são pontuados automaticamente. Este campo registra bônus (indicação, desafios) e resgates (valor negativo).</p>
@@ -300,27 +301,27 @@
           <sc-if value="{{ abaFinanceiro }}">
           <!-- ALUNA: CONTRATO VIGENTE -->
           <sc-if value="{{ temContrato }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
                 <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Contrato vigente</span>
-                <button onclick="{{ onEditarContrato }}" style="border: 0; background: {{ edCtrBg }}; color: {{ edCtrFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edCtrLabel }}</button>
+                <button class="isr-botao" onclick="{{ onEditarContrato }}" style="background: {{ edCtrBg }}; color: {{ edCtrFg }}; font-size: 10px; padding: 5px 12px">{{ edCtrLabel }}</button>
               </div>
               <sc-if value="{{ editandoContrato }}">
                 <div style="background: var(--color-bg-default); border-radius: 12px; padding: 12px; margin-bottom: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Tipo</div>
-                    <input ref="{{ ctrTipoRef }}" placeholder="{{ contratoTipo }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrTipoRef }}" placeholder="{{ contratoTipo }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Ciclos</div>
-                    <input ref="{{ ctrCiclosRef }}" placeholder="{{ contratoCiclos }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrCiclosRef }}" placeholder="{{ contratoCiclos }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Valor da parcela</div>
-                    <input ref="{{ ctrValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Dia de vencimento</div>
-                    <input ref="{{ ctrVencRef }}" placeholder="{{ vencDiaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrVencRef }}" placeholder="{{ vencDiaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nº de parcelas</div>
-                    <input ref="{{ ctrParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                   <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Início do ciclo (mês)</div>
-                    <input ref="{{ ctrInicioRef }}" type="month" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                    <input class="isr-campo" ref="{{ ctrInicioRef }}" type="month" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px" /></div>
                   <div style="display: flex; align-items: flex-end;">
-                    <button onclick="{{ onSalvarContrato }}" style="width: 100%; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarContrato }}" style="width: 100%; font-size: 12px; padding: 9px 14px">Salvar</button>
                   </div>
                   <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">Campos em branco permanecem como estão. Parcelas pagas não são alteradas; reduzir o número remove apenas parcelas em aberto no fim do contrato. Alterar o início do ciclo desloca todas as parcelas para o mês escolhido (uso: mensalidades retroativas).</p>
                 </div>
@@ -329,27 +330,27 @@
               <div style="font-size: 12px; color: var(--color-primary-800); margin-bottom: 12px;">{{ contratoParcela }} · {{ contratoVenc }} · termina {{ contratoFim }}</div>
               <sc-if value="{{ temSinal }}">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                  <span style="background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 10px; font-weight: 500; text-transform: uppercase; padding: 4px 11px; border-radius: 999px;">{{ sinalLabel }}</span>
+                  <span class="isr-selo" style="background: {{ sinalBg }}; color: {{ sinalFg }}; font-size: 10px; font-weight: 500; text-transform: uppercase; padding: 4px 11px">{{ sinalLabel }}</span>
                   <sc-if value="{{ sinalPendente }}">
-                    <button onclick="{{ onSinalRecebido }}" style="font-family: inherit; border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer;">marcar recebido</button>
+                    <button class="isr-botao" onclick="{{ onSinalRecebido }}" style="background: var(--color-primary-50); color: var(--color-primary-500); font-size: 10px; padding: 4px 10px">marcar recebido</button>
                   </sc-if>
                 </div>
               </sc-if>
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
                 <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-tertiary-500);">Parcelas · clique para marcar paga</span>
-                <button onclick="{{ onAjustar }}" style="border: 1px solid {{ ajusteBorda }}; background: {{ ajusteBg }}; color: {{ ajusteFg }}; font-size: 10.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ajusteLabel }}</button>
+                <button class="isr-botao" onclick="{{ onAjustar }}" style="border: 1px solid {{ ajusteBorda }}; background: {{ ajusteBg }}; color: {{ ajusteFg }}; font-size: 10.5px; padding: 5px 12px">{{ ajusteLabel }}</button>
               </div>
 
               <sc-if value="{{ ajustando }}">
-                <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 14px 16px; margin-bottom: 12px;">
+                <div class="isr-cartao" style="padding: 14px 16px; margin-bottom: 12px">
                   <div style="font-size: 11.5px; color: var(--color-primary-800); line-height: 1.6; margin-bottom: 12px;">Nem toda renovação tem parcelas iguais. Ajuste o valor de cada uma e, se houver sinal, a data em que ele vence e se ele abate a primeira parcela.</div>
 
                   <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-tertiary-500); margin-bottom: 6px;">Sinal</div>
                   <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
-                    <input ref="{{ sinalValorRef }}" placeholder="{{ sinalValorPh }}" style="width: 110px; padding: 8px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                    <input ref="{{ sinalVencRef }}" type="date" style="padding: 8px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                    <button onclick="{{ onAbatido }}" title="O sinal é a primeira parte de uma parcela, e não um valor a mais" style="border: 1px solid {{ abatidoBorda }}; background: {{ abatidoBg }}; color: {{ abatidoFg }}; font-size: 10.5px; font-weight: 600; padding: 7px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ abatidoLabel }}</button>
-                    <button onclick="{{ onSalvarSinal }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar sinal</button>
+                    <input class="isr-campo" ref="{{ sinalValorRef }}" placeholder="{{ sinalValorPh }}" style="width: 110px; padding: 8px 11px; font-size: 12px" />
+                    <input class="isr-campo" ref="{{ sinalVencRef }}" type="date" style="padding: 8px 11px; font-size: 12px" />
+                    <button class="isr-botao" onclick="{{ onAbatido }}" title="O sinal é a primeira parte de uma parcela, e não um valor a mais" style="border: 1px solid {{ abatidoBorda }}; background: {{ abatidoBg }}; color: {{ abatidoFg }}; font-size: 10.5px; padding: 7px 12px">{{ abatidoLabel }}</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarSinal }}" style="font-size: 11.5px; padding: 8px 15px">Salvar sinal</button>
                   </div>
 
                   <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-tertiary-500); margin-bottom: 6px;">Valor de cada parcela</div>
@@ -357,11 +358,11 @@
                     <div style="display: flex; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--color-button-secondary); flex-wrap: wrap;">
                       <span style="flex: 1; min-width: 96px; font-size: 12px; font-weight: 600; color: var(--color-primary-900);">{{ ap.label }}</span>
                       <span style="flex: none; font-size: 11px; color: var(--color-tertiary-500);">{{ ap.hoje }}</span>
-                      <input ref="{{ ap.ref }}" placeholder="novo valor" style="flex: none; width: 104px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+                      <input class="isr-campo" ref="{{ ap.ref }}" placeholder="novo valor" style="flex: none; width: 104px; padding: 7px 10px; font-size: 12px" />
                     </div>
                   </sc-for>
                   <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap;">
-                    <button onclick="{{ onSalvarParcelas }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar parcelas</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarParcelas }}" style="font-size: 11.5px; padding: 8px 16px">Salvar parcelas</button>
                     <span style="font-size: 11.5px; color: var(--color-primary-800);">{{ totalContrato }}</span>
                   </div>
                 </div>
@@ -369,7 +370,7 @@
 
               <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <sc-for list="{{ mesesView }}" as="m" hint-placeholder-count="6">
-                  <button onclick="{{ m.onClick }}" title="Clique para marcar paga/pendente" style="font-family: inherit; border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 9px; font-weight: 600; padding: 7px 8px; border-radius: 12px; cursor: pointer; min-width: 64px; text-align: center;">
+                  <button class="isr-botao" onclick="{{ m.onClick }}" title="Clique para marcar paga/pendente" style="border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 9px; padding: 7px 8px; border-radius: 12px; min-width: 64px; text-align: center">
                     <div style="font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.75;">{{ m.label }}</div>
                     <div style="margin-top: 1px;">{{ m.valor }}</div>
                     <div style="font-size: 8px; margin-top: 1px;">{{ m.icon }}</div>
@@ -384,7 +385,7 @@
                   <sc-for list="{{ acertosView }}" as="ac" hint-placeholder-count="2">
                     <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-primary-900); padding: 3px 0;">
                       <span style="flex: 1;">{{ ac.label }}</span>
-                      <button onclick="{{ ac.onRemover }}" style="border: 1px solid {{ ac.borda }}; background: {{ ac.bg }}; color: var(--color-error); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ac.btLabel }}</button>
+                      <button class="isr-botao" onclick="{{ ac.onRemover }}" style="border: 1px solid {{ ac.borda }}; background: {{ ac.bg }}; color: var(--color-error); font-size: 10px; padding: 4px 10px">{{ ac.btLabel }}</button>
                     </div>
                   </sc-for>
                   <p style="margin: 4px 0 0; font-size: 10px; color: var(--color-tertiary-300); line-height: 1.5;">Remover um acerto também remove o lançamento correspondente do Caixa e refaz o Total investido.</p>
@@ -392,18 +393,18 @@
               </sc-if>
               <sc-if value="{{ podeRegistrarAcerto }}">
                 <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
-                  <select ref="{{ acTipoRef }}" style="padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);">
+                  <select class="isr-campo" ref="{{ acTipoRef }}" style="padding: 8px 10px; font-size: 11.5px">
                     <option value="acerto">Acerto recebido</option>
                     <option value="devolucao">Devolução feita</option>
                   </select>
-                  <input ref="{{ acValorRef }}" placeholder="Valor (ex. 20,00)" style="flex: 1; min-width: 110px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                  <button onclick="{{ onRegistrarAcerto }}" style="border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 11px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar</button>
+                  <input class="isr-campo" ref="{{ acValorRef }}" placeholder="Valor (ex. 20,00)" style="flex: 1; min-width: 110px; padding: 8px 10px; font-size: 11.5px" />
+                  <button class="isr-botao" onclick="{{ onRegistrarAcerto }}" style="background: var(--color-primary-50); color: var(--color-primary-500); font-size: 11px; padding: 8px 14px">Registrar</button>
                 </div>
               </sc-if>
               <div style="margin-top: 12px; border-top: 1px solid var(--color-bg-default); padding-top: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px;">
                   <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Renegociar</span>
-                  <button onclick="{{ onToggleReneg }}" style="border: 0; background: {{ renegBg }}; color: {{ renegFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ renegLabel }}</button>
+                  <button class="isr-botao" onclick="{{ onToggleReneg }}" style="background: {{ renegBg }}; color: {{ renegFg }}; font-size: 10px; padding: 5px 12px">{{ renegLabel }}</button>
                 </div>
 
                 <sc-if value="{{ renegAberto }}">
@@ -416,13 +417,13 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0;">
-                      <input ref="{{ renegNovoRef }}" oninput="{{ onRenegCalc }}" placeholder="Novo ciclo (opcional)" style="border: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11.5px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
-                      <input ref="{{ renegDescRef }}" oninput="{{ onRenegCalc }}" placeholder="Desconto (opcional)" style="border: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11.5px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
+                      <input class="isr-campo" ref="{{ renegNovoRef }}" oninput="{{ onRenegCalc }}" placeholder="Novo ciclo (opcional)" style="font-size: 11.5px; padding: 8px 10px" />
+                      <input class="isr-campo" ref="{{ renegDescRef }}" oninput="{{ onRenegCalc }}" placeholder="Desconto (opcional)" style="font-size: 11.5px; padding: 8px 10px" />
                     </div>
 
                     <div style="display: flex; gap: 6px; margin-bottom: 8px;">
                       <sc-for list="{{ renegCiclos }}" as="rc" hint-placeholder-count="2">
-                        <button onclick="{{ rc.onPick }}" style="flex: 1; border: 1px solid {{ rc.borda }}; background: {{ rc.bg }}; color: {{ rc.fg }}; font-size: 11px; font-weight: 600; padding: 7px 10px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ rc.label }}</button>
+                        <button class="isr-botao" onclick="{{ rc.onPick }}" style="flex: 1; border: 1px solid {{ rc.borda }}; background: {{ rc.bg }}; color: {{ rc.fg }}; font-size: 11px; padding: 7px 10px; border-radius: 12px">{{ rc.label }}</button>
                       </sc-for>
                     </div>
 
@@ -433,12 +434,12 @@
 
                     <div style="display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0;">
                       <sc-for list="{{ renegOpcoes }}" as="ro" hint-placeholder-count="7">
-                        <button onclick="{{ ro.onPick }}" style="border: 1px solid {{ ro.borda }}; background: {{ ro.bg }}; color: {{ ro.fg }}; font-size: 11px; font-weight: 600; padding: 7px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ro.label }}</button>
+                        <button class="isr-botao" onclick="{{ ro.onPick }}" style="border: 1px solid {{ ro.borda }}; background: {{ ro.bg }}; color: {{ ro.fg }}; font-size: 11px; padding: 7px 11px">{{ ro.label }}</button>
                       </sc-for>
                     </div>
 
                     <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                      <button onclick="{{ onAplicarReneg }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Aplicar renegociação</button>
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ onAplicarReneg }}" style="font-size: 11.5px; padding: 9px 16px">Aplicar renegociação</button>
                       <span style="font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">{{ renegAviso }}</span>
                     </div>
                     <sc-if value="{{ renegErro }}">
@@ -450,17 +451,17 @@
               <div style="margin-top: 12px; border-top: 1px solid var(--color-bg-default); padding-top: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px;">
                   <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Renovação</span>
-                  <button onclick="{{ onToggleRenovar }}" style="border: 0; background: {{ renovarBg }}; color: {{ renovarFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ renovarLabel }}</button>
+                  <button class="isr-botao" onclick="{{ onToggleRenovar }}" style="background: {{ renovarBg }}; color: {{ renovarFg }}; font-size: 10px; padding: 5px 12px">{{ renovarLabel }}</button>
                 </div>
                 <div style="font-size: 11.5px; color: {{ renovacaoCor }}; line-height: 1.5;">{{ renovacaoStatus }}</div>
                 <sc-if value="{{ renovando }}">
                   <div style="background: var(--color-bg-default); border-radius: 12px; padding: 12px; margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nº de parcelas</div>
-                      <input ref="{{ renParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ renParcelasRef }}" placeholder="{{ nParcelasAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Valor da parcela</div>
-                      <input ref="{{ renValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ renValorRef }}" placeholder="{{ contratoParcela }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div style="display: flex; align-items: flex-end;">
-                      <button onclick="{{ onRenovar }}" style="width: 100%; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar renovação</button>
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ onRenovar }}" style="width: 100%; font-size: 12px; padding: 9px 14px">Registrar renovação</button>
                     </div>
                     <sc-if value="{{ temRenovPendencia }}">
                       <div style="grid-column: 1 / -1; background: rgba(207,107,92,0.10); border-radius: 12px; padding: 10px 12px; font-size: 11px; color: var(--color-error); line-height: 1.55;">{{ renovPendencia }}</div>
@@ -476,7 +477,7 @@
 
           <!-- O QUE ELA CONTRATOU -->
           <sc-if value="{{ ehCliente }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 18px; margin-bottom: 14px;">
+            <div class="isr-cartao" style="padding: 16px 18px; margin-bottom: 14px">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 8px;">Produtos</div>
 
               <sc-for list="{{ produtos }}" as="pd" hint-placeholder-count="3">
@@ -488,9 +489,9 @@
                       <div style="font-size: 11.5px; color: {{ pd.detCor }}; margin-top: 2px; line-height: 1.5;">{{ pd.detalhe }}</div>
                     </div>
                     <sc-if value="{{ pd.temPago }}">
-                      <button onclick="{{ pd.onPago }}" title="{{ pd.pagoTitle }}" style="flex: none; border: 1px solid {{ pd.pagoBorda }}; background: {{ pd.pagoBg }}; color: {{ pd.pagoFg }}; font-size: 10px; font-weight: 600; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.pagoLabel }}</button>
+                      <button class="isr-botao" onclick="{{ pd.onPago }}" title="{{ pd.pagoTitle }}" style="flex: none; border: 1px solid {{ pd.pagoBorda }}; background: {{ pd.pagoBg }}; color: {{ pd.pagoFg }}; font-size: 10px; padding: 5px 10px">{{ pd.pagoLabel }}</button>
                     </sc-if>
-                    <button onclick="{{ pd.onAcao }}" style="flex: none; border: 0; background: {{ pd.acaoBg }}; color: {{ pd.acaoFg }}; font-size: 10.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pd.acaoLabel }}</button>
+                    <button class="isr-botao" onclick="{{ pd.onAcao }}" style="flex: none; background: {{ pd.acaoBg }}; color: {{ pd.acaoFg }}; font-size: 10.5px; padding: 6px 12px">{{ pd.acaoLabel }}</button>
                   </div>
                 </div>
               </sc-for>
@@ -501,11 +502,11 @@
                   <div style="font-size: 11px; font-weight: 600; color: var(--color-primary-900); margin-bottom: 9px;">Pacote de aulas particulares</div>
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nº de aulas</div>
-                      <input ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ partAulasRef }}" placeholder="ex. 8" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Valor do pacote</div>
-                      <input ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ partValorRef }}" placeholder="ex. 800,00" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div style="display: flex; align-items: flex-end;">
-                      <button onclick="{{ onSalvarParticular }}" style="width: 100%; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 12px; cursor: pointer; font-family: inherit;">Contratar</button>
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarParticular }}" style="width: 100%; font-size: 11.5px; padding: 9px 12px; border-radius: 12px">Contratar</button>
                     </div>
                   </div>
                   <label style="display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 11.5px; color: var(--color-primary-800); cursor: pointer;">
@@ -524,7 +525,7 @@
                   </sc-if>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <sc-for list="{{ programasOpts }}" as="pgm" hint-placeholder-count="2">
-                      <button onclick="{{ pgm.onAdd }}" style="border: 0; background: var(--color-primary-50); color: var(--color-primary-900); font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ pgm.label }}</button>
+                      <button class="isr-botao" onclick="{{ pgm.onAdd }}" style="background: var(--color-primary-50); color: var(--color-primary-900); font-size: 12px; padding: 8px 14px">{{ pgm.label }}</button>
                     </sc-for>
                   </div>
                 </div>
@@ -534,31 +535,31 @@
 
           <!-- ENCERRAR / REABRIR MATRÍCULA · fora do bloco de contrato: aluna particular sem contrato registrado também encerra -->
           <sc-if value="{{ podeEncerrar }}">
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
               <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Encerrar matrícula</span>
-              <button onclick="{{ onToggleSaida }}" style="border: 0; background: {{ saidaBg }}; color: {{ saidaFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ saidaLabel }}</button>
+              <button class="isr-botao" onclick="{{ onToggleSaida }}" style="background: {{ saidaBg }}; color: {{ saidaFg }}; font-size: 10px; padding: 5px 12px">{{ saidaLabel }}</button>
             </div>
             <sc-if value="{{ encerrando }}">
               <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
                 <sc-for list="{{ tiposSaida }}" as="ts" hint-placeholder-count="3">
-                  <button onclick="{{ ts.onClick }}" title="{{ ts.desc }}" style="border: 1px solid {{ ts.borda }}; background: {{ ts.bg }}; color: {{ ts.fg }}; font-size: 11px; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ts.label }}</button>
+                  <button class="isr-botao" onclick="{{ ts.onClick }}" title="{{ ts.desc }}" style="border: 1px solid {{ ts.borda }}; background: {{ ts.bg }}; color: {{ ts.fg }}; font-size: 11px; padding: 6px 13px">{{ ts.label }}</button>
                 </sc-for>
               </div>
-              <select ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;">
+              <select class="isr-campo" ref="{{ saidaMotivoRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; margin-bottom: 8px">
                 <sc-for list="{{ motivosSaida }}" as="ms" hint-placeholder-count="8"><option value="{{ ms.v }}">{{ ms.v }}</option></sc-for>
               </select>
-              <input ref="{{ saidaDetalheRef }}" placeholder="Relato da aluna (opcional)" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;" />
+              <input class="isr-campo" ref="{{ saidaDetalheRef }}" placeholder="Relato da aluna (opcional)" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; margin-bottom: 8px" />
               <!-- acerto final: parcelas em aberto + valores do caso -->
-              <select ref="{{ saidaParcelasRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;">
+              <select class="isr-campo" ref="{{ saidaParcelasRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; margin-bottom: 8px">
                 <option value="cancelar">Cancelar as parcelas em aberto (padrão)</option>
                 <option value="manter">Manter as parcelas vencidas para cobrança</option>
               </select>
               <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px;">
-                <input ref="{{ saidaAcertoRef }}" placeholder="Acerto final recebido (opcional, ex. 20,00)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                <input ref="{{ saidaDevolucaoRef }}" placeholder="Devolução feita (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+                <input class="isr-campo" ref="{{ saidaAcertoRef }}" placeholder="Acerto final recebido (opcional, ex. 20,00)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px" />
+                <input class="isr-campo" ref="{{ saidaDevolucaoRef }}" placeholder="Devolução feita (opcional)" style="flex: 1; min-width: 150px; padding: 9px 11px; font-size: 12px" />
               </div>
-              <button onclick="{{ onEncerrar }}" style="border: none; background: var(--color-error); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Encerrar</button>
+              <button class="isr-botao" onclick="{{ onEncerrar }}" style="background: var(--color-error); color: var(--color-neutral-0); font-size: 12px; padding: 10px 18px">Encerrar</button>
               <p style="margin: 8px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">O motivo alimenta a análise de retenção. Acerto e devolução são lançados no contrato e no Caixa; o Total investido reflete o valor efetivamente pago. Parcelas futuras são sempre canceladas.</p>
             </sc-if>
           </div>
@@ -569,7 +570,7 @@
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 6px;">Matrícula encerrada</div>
             <div style="font-size: 14px; font-weight: 600; color: {{ saidaCor }};">{{ saidaTipoLabel }} · {{ saidaMotivo }}</div>
             <div style="font-size: 12px; color: var(--color-primary-800); line-height: 1.6; margin-top: 3px;">{{ saidaContexto }}</div>
-            <button onclick="{{ onReabrir }}" style="margin-top: 12px; border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 11.5px; font-weight: 600; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Reabrir matrícula</button>
+            <button class="isr-botao" onclick="{{ onReabrir }}" style="margin-top: 12px; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 11.5px; padding: 8px 16px">Reabrir matrícula</button>
           </div>
           </sc-if>
 
@@ -590,25 +591,25 @@
 
           <sc-if value="{{ abaAulas }}">
           <!-- PEDAGÓGICO · fora do bloco de contrato: toda aluna, antiga ou nova, edita turma e professora -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
               <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Pedagógico</span>
-              <button onclick="{{ onEditarTurma }}" style="border: 0; background: {{ edTurBg }}; color: {{ edTurFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ edTurLabel }}</button>
+              <button class="isr-botao" onclick="{{ onEditarTurma }}" style="background: {{ edTurBg }}; color: {{ edTurFg }}; font-size: 10px; padding: 5px 12px">{{ edTurLabel }}</button>
             </div>
             <sc-if value="{{ editandoTurma }}">
               <div style="background: var(--color-bg-default); border-radius: 12px; padding: 12px; margin-bottom: 12px;">
                 <div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Turma</div>
-                <select ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;">
+                <select class="isr-campo" ref="{{ turSelRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; margin-bottom: 8px">
                   <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="8"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
                 </select>
                 <div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Professora</div>
-                <select ref="{{ turProfRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;">
+                <select class="isr-campo" ref="{{ turProfRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; margin-bottom: 8px">
                   <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
                 </select>
                 <div style="display: flex; gap: 8px; align-items: flex-end;">
                   <div style="flex: 1;"><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nível</div>
-                    <input ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
-                  <button onclick="{{ onSalvarTurma }}" style="flex: none; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
+                    <input class="isr-campo" ref="{{ turNivelRef }}" placeholder="{{ nivel }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
+                  <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarTurma }}" style="flex: none; font-size: 12px; padding: 10px 20px">Salvar</button>
                 </div>
                 <p style="margin: 8px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">Em "Automática", a professora vem da turma escolhida. Para aula particular (ou exceção), escolha a professora na lista.</p>
               </div>
@@ -622,7 +623,7 @@
               <div style="grid-column: 1 / -1; border-top: 1px solid var(--color-bg-default); padding-top: 10px; margin-top: 2px;">
                 <div style="font-size: 8px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 4px;">Início das aulas</div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <input type="date" value="{{ inicioAulasIso }}" onchange="{{ onInicioAulas }}" style="padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+                  <input class="isr-campo" type="date" value="{{ inicioAulasIso }}" onchange="{{ onInicioAulas }}" style="padding: 8px 10px; font-size: 12.5px" />
                   <span style="font-size: 11.5px; font-weight: 600; color: var(--color-primary-800);">{{ inicioAulasNota }}</span>
                 </div>
                 <p style="margin: 6px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">A aluna aparece na chamada da turma a partir deste dia. A data é gravada na hora e não altera as parcelas do contrato.</p>
@@ -632,7 +633,7 @@
 
           <!-- PRESENÇAS · chamada a chamada, para o acompanhamento fazer
                contato ("a Franciny faltou 2 aulas seguidas") -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;">
               <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Presenças</span>
               <span style="font-size: 10.5px; font-weight: 600; color: {{ presencasCor }};">{{ presencasResumo }}</span>
@@ -651,7 +652,7 @@
 
           <!-- AULAS PARTICULARES · PACOTE -->
           <sc-if value="{{ ehParticular }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Aulas particulares · pacote</span>
                 <span style="font-size: 11px; font-weight: 600; color: {{ pacoteCor }};">{{ pacoteResumo }}</span>
@@ -669,19 +670,19 @@
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                 <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Dia da aula</div>
-                  <input ref="{{ aulaDataRef }}" type="date" title="O dia em que a aula aconteceu. Em branco, hoje." style="border: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 7px 10px; border-radius: 12px; font-family: inherit;" /></div>
-                <button onclick="{{ onAulaDada }}" style="font-family: inherit; align-self: flex-end; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11px; font-weight: 600; padding: 8px 14px; border-radius: 12px; cursor: pointer;">+ Registrar aula realizada</button>
-                <input ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="border: 0; width: 90px;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
+                  <input class="isr-campo" ref="{{ aulaDataRef }}" type="date" title="O dia em que a aula aconteceu. Em branco, hoje." style="font-size: 11px; padding: 7px 10px" /></div>
+                <button class="isr-botao isr-botao--escuro" onclick="{{ onAulaDada }}" style="align-self: flex-end; font-size: 11px; padding: 8px 14px; border-radius: 12px">+ Registrar aula realizada</button>
+                <input class="isr-campo" ref="{{ pacAulasRef }}" type="number" placeholder="Total: {{ pacoteTotal }}" style="width: 90px; font-size: 11px; padding: 8px 10px" />
                 <button onclick="{{ onPacoteTotal }}" style="font-family: inherit;  background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; font-weight: 600; padding: 8px 12px; border-radius: 12px; cursor: pointer;">Ajustar total</button>
               </div>
               <p style="margin: 9px 0 0; font-size: 10px; color: var(--color-tertiary-200);">A data é a do dia da aula — é o mês dela que entra na folha de quem deu. Em branco, hoje. Feriados não são contabilizados.</p>
             </div>
 
             <!-- AULAS PARTICULARES · AGENDA DA SÉRIE -->
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px;">
                 <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Aulas agendadas</span>
-                <button onclick="{{ onToggleSerie }}" style="border: 0; background: {{ serieBg }}; color: {{ serieFg }}; font-size: 10px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ serieLabel }}</button>
+                <button class="isr-botao" onclick="{{ onToggleSerie }}" style="background: {{ serieBg }}; color: {{ serieFg }}; font-size: 10px; padding: 5px 12px">{{ serieLabel }}</button>
               </div>
 
               <sc-if value="{{ temProximaAula }}">
@@ -695,17 +696,17 @@
                 <div style="background: var(--color-bg-default); border-radius: 12px; padding: 12px; margin-bottom: 10px;">
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;">
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Primeira aula</div>
-                      <input ref="{{ serDataRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ serDataRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Horário</div>
-                      <input ref="{{ serHoraRef }}" placeholder="ex. 10h" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ serHoraRef }}" placeholder="ex. 10h" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Frequência</div>
-                      <select ref="{{ serCadRef }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);">
+                      <select class="isr-campo" ref="{{ serCadRef }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px">
                         <sc-for list="{{ cadenciasOpts }}" as="cd" hint-placeholder-count="3"><option value="{{ cd.id }}" selected="{{ cd.sel }}">{{ cd.label }}</option></sc-for>
                       </select></div>
                     <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Quantidade</div>
-                      <input ref="{{ serQtdRef }}" type="number" placeholder="{{ serQtdSugerida }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" /></div>
+                      <input class="isr-campo" ref="{{ serQtdRef }}" type="number" placeholder="{{ serQtdSugerida }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px" /></div>
                     <div style="display: flex; align-items: flex-end;">
-                      <button onclick="{{ onMarcarSerie }}" style="width: 100%; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 9px 12px; border-radius: 12px; cursor: pointer; font-family: inherit;">Agendar</button>
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ onMarcarSerie }}" style="width: 100%; font-size: 11.5px; padding: 9px 12px; border-radius: 12px">Agendar</button>
                     </div>
                   </div>
                   <sc-if value="{{ serErro }}">
@@ -726,7 +727,7 @@
                     <span style="flex: none; font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ sa.quando }}</span>
                     <span style="flex: 1; min-width: 60px; font-size: 11px; color: {{ sa.estadoCor }};">{{ sa.estado }}</span>
                     <sc-if value="{{ sa.editavel }}">
-                      <button onclick="{{ sa.onRemarcar }}" style="flex: none; border: 0; background: {{ sa.remarcarBg }}; color: var(--color-primary-800); font-size: 10.5px; font-weight: 600; padding: 5px 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ sa.remarcarLabel }}</button>
+                      <button class="isr-botao" onclick="{{ sa.onRemarcar }}" style="flex: none; background: {{ sa.remarcarBg }}; color: var(--color-primary-800); font-size: 10.5px; padding: 5px 11px">{{ sa.remarcarLabel }}</button>
                       <button onclick="{{ sa.onCancelar }}" title="Cancelar esta aula" style="font-family: inherit; flex: none; border: none; background: transparent; color: var(--color-tertiary-200); font-size: 13px; cursor: pointer; padding: 2px 4px;">×</button>
                     </sc-if>
                   </div>
@@ -735,10 +736,10 @@
                   </sc-if>
                   <sc-if value="{{ sa.remarcando }}">
                     <div style="background: var(--color-bg-default); border-radius: 12px; padding: 10px; margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                      <input ref="{{ reDataRef }}" type="date" style="padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                      <input ref="{{ reHoraRef }}" placeholder="{{ sa.horaAtual }}" style="width: 80px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                      <input ref="{{ reMotivoRef }}" placeholder="Motivo (opcional)" style="flex: 1; min-width: 120px; padding: 8px 10px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
-                      <button onclick="{{ sa.onConfirmarRemarcacao }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Remarcar</button>
+                      <input class="isr-campo" ref="{{ reDataRef }}" type="date" style="padding: 8px 10px; font-size: 11.5px" />
+                      <input class="isr-campo" ref="{{ reHoraRef }}" placeholder="{{ sa.horaAtual }}" style="width: 80px; padding: 8px 10px; font-size: 11.5px" />
+                      <input class="isr-campo" ref="{{ reMotivoRef }}" placeholder="Motivo (opcional)" style="flex: 1; min-width: 120px; padding: 8px 10px; font-size: 11.5px" />
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ sa.onConfirmarRemarcacao }}" style="font-size: 11.5px; padding: 9px 16px">Remarcar</button>
                     </div>
                   </sc-if>
                 </div>
@@ -750,7 +751,7 @@
 
           <!-- ONBOARDING · PRIMEIROS 30 DIAS -->
           <sc-if value="{{ temOnboarding }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Onboarding · primeiros 30 dias</span>
                 <span style="font-size: 10px; font-weight: 600; color: {{ obResumoCor }};">{{ obResumo }}</span>
@@ -763,7 +764,7 @@
                 </button>
                 <div style="display: flex; align-items: center; gap: 8px; padding: 0 0 8px 26px;">
                   <span style="font-size: 10px; color: var(--color-tertiary-200);">Previsto para</span>
-                  <input type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="border: 0; padding: 5px 8px; font-size: 11px; font-family: inherit; color: var(--color-primary-800);  border-radius: 7px; background: var(--color-button-secondary);" />
+                  <input class="isr-campo" type="date" value="{{ ob.data }}" onchange="{{ ob.onData }}" style="padding: 5px 8px; font-size: 11px; color: var(--color-primary-800); border-radius: 7px" />
                 </div>
               </sc-for>
               <p style="margin: 9px 0 0; font-size: 10px; color: var(--color-tertiary-200);">Cada etapa concluída entra na linha do tempo. Etapas pendentes aparecem na fila do perfil Operação.</p>
@@ -772,7 +773,7 @@
 
           <!-- CERTIFICADO E APP -->
           <sc-if value="{{ ehAluna }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px; margin-bottom: 12px;">
+            <div class="isr-cartao" style="padding: 16px; margin-bottom: 12px">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Certificado</div>
               <p style="margin: 0 0 10px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ certResumo }}</p>
               <div style="display: flex; gap: 7px; flex-wrap: wrap;">
@@ -787,7 +788,7 @@
           <sc-if value="{{ abaCadastro }}">
           <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
           <sc-if value="{{ temInscricao }}">
-            <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+            <div class="isr-cartao" style="padding: 16px">
               <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 6px;">Ficha da inscrição</div>
               <sc-for list="{{ inscricao }}" as="q" hint-placeholder-count="3">
                 <div style="padding: 8px 0; border-bottom: 1px solid var(--color-bg-default);">
@@ -801,7 +802,7 @@
           </sc-if>
 
           <!-- DOCUMENTOS -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 10px;">Documentos</div>
             <sc-for list="{{ documentos }}" as="doc" hint-placeholder-count="1">
               <a href="{{ doc.link }}" target="_blank" rel="noopener" style="display: block; text-decoration: none; font-size: 12px; color: var(--color-text-light); font-weight: 600; padding: 6px 0; border-bottom: 1px solid var(--color-bg-default);">{{ doc.nome }}</a>
@@ -810,17 +811,17 @@
               <div style="font-size: 11px; color: var(--color-tertiary-200); margin-bottom: 4px;">Nenhum documento ainda.</div>
             </sc-if>
             <div style="display: flex; gap: 6px; margin-top: 10px;">
-              <input ref="{{ docNomeRef }}" placeholder="Nome (ex. Contrato 3.2026)" style="border: 0; flex: 1; min-width: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
-              <input ref="{{ docLinkRef }}" placeholder="Link do Drive" style="border: 0; flex: 1; min-width: 0;  background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 8px 10px; border-radius: 12px; font-family: inherit;" />
-              <button onclick="{{ onAddDoc }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 12px; cursor: pointer;">+</button>
+              <input class="isr-campo" ref="{{ docNomeRef }}" placeholder="Nome (ex. Contrato 3.2026)" style="flex: 1; min-width: 0; font-size: 11px; padding: 8px 10px" />
+              <input class="isr-campo" ref="{{ docLinkRef }}" placeholder="Link do Drive" style="flex: 1; min-width: 0; font-size: 11px; padding: 8px 10px" />
+              <button class="isr-botao isr-botao--escuro" onclick="{{ onAddDoc }}" style="font-size: 12px; padding: 8px 12px; border-radius: 12px">+</button>
             </div>
           </div>
 
           <!-- APAGAR DO SISTEMA · fora do bloco de contrato: leads também -->
-          <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px;">
+          <div class="isr-cartao" style="padding: 16px">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
               <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Apagar do sistema</span>
-              <button onclick="{{ onApagarPessoa }}" style="border: 1px solid {{ apagarPesBorda }}; background: {{ apagarPesBg }}; color: var(--color-error); font-size: 10.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ apagarPesLabel }}</button>
+              <button class="isr-botao" onclick="{{ onApagarPessoa }}" style="border: 1px solid {{ apagarPesBorda }}; background: {{ apagarPesBg }}; color: var(--color-error); font-size: 10.5px; padding: 6px 12px">{{ apagarPesLabel }}</button>
             </div>
             <p style="margin: 8px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">{{ apagarPesAviso }}</p>
           </div>

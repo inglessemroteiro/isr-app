@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
 <style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
 <script src="./support.js"></script>
 <script src="./isr-versao.js"></script>
@@ -31,7 +32,7 @@
     <!-- MÊS -->
     <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;">
       <sc-for list="{{ meses }}" as="ms" hint-placeholder-count="4">
-        <button onclick="{{ ms.onPick }}" style="border: 0; background: {{ ms.bg }}; color: {{ ms.fg }}; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ ms.label }}</button>
+        <button class="isr-botao" onclick="{{ ms.onPick }}" style="background: {{ ms.bg }}; color: {{ ms.fg }}; font-size: 12px; padding: 9px 16px">{{ ms.label }}</button>
       </sc-for>
     </div>
 
@@ -61,7 +62,7 @@
               <div style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ sc.nome }}</div>
               <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 2px;">{{ sc.detalhe }}</div>
             </div>
-            <button onclick="{{ sc.onCadastrar }}" style="flex: none; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cadastrar na equipe</button>
+            <button class="isr-botao isr-botao--escuro" onclick="{{ sc.onCadastrar }}" style="flex: none; font-size: 11.5px; padding: 8px 16px">Cadastrar na equipe</button>
           </div>
         </sc-for>
       </div>
@@ -86,11 +87,11 @@
 
     <!-- PROFESSORAS -->
     <sc-if value="{{ semLinhas }}">
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px; margin-bottom: 16px; font-size: 13px; color: var(--color-tertiary-500); line-height: 1.6;">Nenhuma professora com turma neste mês.</div>
+      <div class="isr-cartao" style="padding: 20px; margin-bottom: 16px; font-size: 13px; color: var(--color-tertiary-500); line-height: 1.6">Nenhuma professora com turma neste mês.</div>
     </sc-if>
 
     <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="3">
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px; margin-bottom: 12px;">
+      <div class="isr-cartao" style="padding: 18px 20px; margin-bottom: 12px">
         <!-- no v5 a pessoa é uma linha que abre: o cálculo de todas de
              uma vez é uma parede de número -->
         <div onclick="{{ ln.onAbrir }}" style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; cursor: pointer; margin-bottom: {{ ln.margem }};">
@@ -98,18 +99,18 @@
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span style="font-size: 17px; font-weight: 600; color: var(--color-primary-900);">{{ ln.nome }}</span>
               <sc-if value="{{ ln.foraDoCadastro }}">
-                <span style="flex: none; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-warning); background: var(--color-error-light); border: 1px solid var(--color-error-light); padding: 3px 9px; border-radius: 999px;">Sem cadastro</span>
+                <span class="isr-selo" style="flex: none; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-warning); background: var(--color-error-light); border: 1px solid var(--color-error-light); padding: 3px 9px">Sem cadastro</span>
               </sc-if>
             </div>
             <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px;">{{ ln.resumo }}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="background: {{ ln.estadoBg }}; color: {{ ln.estadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px; border-radius: 999px;">{{ ln.estadoLabel }}</span>
+            <span class="isr-selo" style="background: {{ ln.estadoBg }}; color: {{ ln.estadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px">{{ ln.estadoLabel }}</span>
             <div style="text-align: right;">
               <div style="font-size: 22px; font-weight: 600; color: var(--color-primary-900); letter-spacing: -0.5px;">{{ ln.total }}</div>
               <div style="font-size: 11px; color: var(--color-tertiary-300); margin-top: 2px;">{{ ln.pctLabel }}</div>
             </div>
-            <button onclick="{{ ln.onPagar }}" style="border: 1px solid {{ ln.btnBorda }}; background: {{ ln.btnBg }}; color: {{ ln.btnFg }}; font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ ln.btnLabel }}</button>
+            <button class="isr-botao" onclick="{{ ln.onPagar }}" style="border: 1px solid {{ ln.btnBorda }}; background: {{ ln.btnBg }}; color: {{ ln.btnFg }}; font-size: 11.5px; padding: 8px 14px; white-space: nowrap">{{ ln.btnLabel }}</button>
           </div>
         </div>
 
@@ -130,7 +131,7 @@
               </div>
               <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
                 <sc-for list="{{ it.alertas }}" as="al" hint-placeholder-count="3">
-                  <span style="background: {{ al.bg }}; color: {{ al.fg }}; font-size: 9.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px;">{{ al.label }}</span>
+                  <span class="isr-selo" style="background: {{ al.bg }}; color: {{ al.fg }}; font-size: 9.5px; padding: 3px 9px">{{ al.label }}</span>
                 </sc-for>
               </div>
             </div>
@@ -143,38 +144,38 @@
 
     <!-- VALOR FIXO NO CADASTRO -->
     <sc-for list="{{ fixos }}" as="fx" hint-placeholder-count="2">
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px; margin-bottom: 12px;">
+      <div class="isr-cartao" style="padding: 18px 20px; margin-bottom: 12px">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap;">
           <div>
             <div style="font-size: 17px; font-weight: 600; color: var(--color-primary-900);">{{ fx.nome }}</div>
             <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px;">{{ fx.resumo }}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="background: {{ fx.estadoBg }}; color: {{ fx.estadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px; border-radius: 999px;">{{ fx.estadoLabel }}</span>
+            <span class="isr-selo" style="background: {{ fx.estadoBg }}; color: {{ fx.estadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px">{{ fx.estadoLabel }}</span>
             <div style="text-align: right;">
               <div style="font-size: 22px; font-weight: 600; color: var(--color-primary-900); letter-spacing: -0.5px;">{{ fx.total }}</div>
               <div style="font-size: 11px; color: var(--color-tertiary-300); margin-top: 2px;">{{ fx.pctLabel }}</div>
             </div>
-            <button onclick="{{ fx.onPagar }}" style="border: 1px solid {{ fx.btnBorda }}; background: {{ fx.btnBg }}; color: {{ fx.btnFg }}; font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ fx.btnLabel }}</button>
+            <button class="isr-botao" onclick="{{ fx.onPagar }}" style="border: 1px solid {{ fx.btnBorda }}; background: {{ fx.btnBg }}; color: {{ fx.btnFg }}; font-size: 11.5px; padding: 8px 14px; white-space: nowrap">{{ fx.btnLabel }}</button>
           </div>
         </div>
       </div>
     </sc-for>
 
     <!-- COMERCIAL -->
-    <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px; margin-bottom: 12px;">
+    <div class="isr-cartao" style="padding: 18px 20px; margin-bottom: 12px">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
           <div style="font-size: 17px; font-weight: 600; color: var(--color-primary-900);">Comercial</div>
           <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px;">{{ comercialResumo }}</div>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span style="background: {{ comEstadoBg }}; color: {{ comEstadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px; border-radius: 999px;">{{ comEstadoLabel }}</span>
+          <span class="isr-selo" style="background: {{ comEstadoBg }}; color: {{ comEstadoFg }}; font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 11px">{{ comEstadoLabel }}</span>
           <div style="text-align: right;">
             <div style="font-size: 22px; font-weight: 600; color: var(--color-primary-900); letter-spacing: -0.5px;">{{ comercialTotal }}</div>
             <div style="font-size: 11px; color: var(--color-tertiary-300); margin-top: 2px;">{{ comercialCac }}</div>
           </div>
-          <button onclick="{{ onPagarComercial }}" style="border: 1px solid {{ comBtnBorda }}; background: {{ comBtnBg }}; color: {{ comBtnFg }}; font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ comBtnLabel }}</button>
+          <button class="isr-botao" onclick="{{ onPagarComercial }}" style="border: 1px solid {{ comBtnBorda }}; background: {{ comBtnBg }}; color: {{ comBtnFg }}; font-size: 11.5px; padding: 8px 14px; white-space: nowrap">{{ comBtnLabel }}</button>
         </div>
       </div>
       <sc-for list="{{ comercialItens }}" as="ci" hint-placeholder-count="4">
@@ -225,13 +226,13 @@
     </div>
 
     <!-- REGRAS -->
-    <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px;">
+    <div class="isr-cartao" style="padding: 18px 20px">
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
         <div>
           <div style="font-size: 15px; font-weight: 600; color: var(--color-primary-900);">Regras do pagamento</div>
           <p style="margin: 3px 0 0; font-size: 12px; color: var(--color-tertiary-500); line-height: 1.5;">Fixo, porcentagem da turma, piso por aula, metas, teto, câmbio, data de pagamento e faixas da comissão.</p>
         </div>
-        <button onclick="{{ onVerRegras }}" style="flex: none; border: 1px solid var(--color-primary-900); background: {{ regrasBtnBg }}; color: {{ regrasBtnFg }}; font-size: 12.5px; font-weight: 600; padding: 9px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ verRegrasLabel }}</button>
+        <button class="isr-botao" onclick="{{ onVerRegras }}" style="flex: none; border: 1px solid var(--color-primary-900); background: {{ regrasBtnBg }}; color: {{ regrasBtnFg }}; font-size: 12.5px; padding: 9px 18px">{{ verRegrasLabel }}</button>
       </div>
       <sc-if value="{{ verRegras }}">
         <p style="margin: 14px 0 12px; font-size: 12px; color: var(--color-tertiary-500); line-height: 1.6;">Alterações recalculam o mês inteiro. O piso define o valor mínimo por hora de aula. O percentual incide sobre as matrículas ativas; parcela em aberto não reduz o pagamento da professora. Mensalidade em euro entra na folha convertida pela taxa abaixo. O teto limita o custo da professora como percentual da receita das turmas dela.</p>
@@ -239,12 +240,12 @@
           <sc-for list="{{ campos }}" as="cp" hint-placeholder-count="13">
             <div>
               <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-200); margin-bottom: 3px;">{{ cp.label }}</div>
-              <input ref="{{ cp.ref }}" placeholder="{{ cp.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+              <input class="isr-campo" ref="{{ cp.ref }}" placeholder="{{ cp.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" />
               <div style="font-size: 10px; color: var(--color-tertiary-300); margin-top: 3px; line-height: 1.4;">{{ cp.ajuda }}</div>
             </div>
           </sc-for>
           <div style="display: flex; align-items: flex-end;">
-            <button onclick="{{ onSalvarRegras }}" style="width: 100%; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12.5px; font-weight: 600; padding: 11px 16px; border-radius: 12px; cursor: pointer; font-family: inherit;">Salvar regras</button>
+            <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarRegras }}" style="width: 100%; font-size: 12.5px; padding: 11px 16px; border-radius: 12px">Salvar regras</button>
           </div>
         </div>
 
@@ -262,15 +263,15 @@
 
           <sc-for list="{{ faixas }}" as="fa" hint-placeholder-count="7">
             <div style="display: grid; grid-template-columns: 1.2fr 0.7fr 0.9fr 1.2fr; gap: 8px; margin-bottom: 6px;">
-              <input ref="{{ fa.deRef }}" placeholder="{{ fa.de }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 1px solid {{ fa.borda }}; border-radius: 12px; background: {{ fa.bg }};" />
-              <input ref="{{ fa.pctRef }}" placeholder="{{ fa.pct }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 1px solid {{ fa.borda }}; border-radius: 12px; background: {{ fa.bg }};" />
-              <input ref="{{ fa.bonusRef }}" placeholder="{{ fa.bonus }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 1px solid {{ fa.borda }}; border-radius: 12px; background: {{ fa.bg }};" />
-              <input ref="{{ fa.nomeRef }}" placeholder="{{ fa.situacao }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); border: 1px solid {{ fa.borda }}; border-radius: 12px; background: {{ fa.bg }};" />
+              <input class="isr-campo" ref="{{ fa.deRef }}" placeholder="{{ fa.de }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; border: 1px solid {{ fa.borda }}; background: {{ fa.bg }}" />
+              <input class="isr-campo" ref="{{ fa.pctRef }}" placeholder="{{ fa.pct }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; border: 1px solid {{ fa.borda }}; background: {{ fa.bg }}" />
+              <input class="isr-campo" ref="{{ fa.bonusRef }}" placeholder="{{ fa.bonus }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; border: 1px solid {{ fa.borda }}; background: {{ fa.bg }}" />
+              <input class="isr-campo" ref="{{ fa.nomeRef }}" placeholder="{{ fa.situacao }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px; border: 1px solid {{ fa.borda }}; background: {{ fa.bg }}" />
             </div>
           </sc-for>
 
           <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
-            <button onclick="{{ onSalvarFaixas }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12.5px; font-weight: 600; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: inherit;">Salvar faixas</button>
+            <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarFaixas }}" style="font-size: 12.5px; padding: 10px 20px; border-radius: 12px">Salvar faixas</button>
             <span style="font-size: 11.5px; color: var(--color-tertiary-300);">{{ faixaAtualLabel }}</span>
           </div>
         </div>

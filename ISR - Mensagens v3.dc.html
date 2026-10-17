@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
 <style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
 <script src="./support.js"></script>
 <script src="./isr-versao.js"></script>
@@ -51,7 +52,7 @@
     <!-- CATEGORIAS · chips, como no v5 -->
     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
       <sc-for list="{{ categorias }}" as="cat" hint-placeholder-count="7">
-        <button onclick="{{ cat.onClick }}" style="font-family: inherit; border: 0; cursor: pointer; border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; background: {{ cat.bg }}; color: {{ cat.fg }};">{{ cat.label }}</button>
+        <button class="isr-botao" onclick="{{ cat.onClick }}" style="padding: 9px 14px; font-size: 13px; background: {{ cat.bg }}; color: {{ cat.fg }}">{{ cat.label }}</button>
       </sc-for>
     </div>
 
@@ -60,8 +61,8 @@
       <span style="font-size: 13px; font-weight: 600; color: var(--color-tertiary-500);">para</span>
       <!-- a escola tem dezenas de pessoas no seletor: achar alguém
            rolando a lista é pior do que digitar três letras -->
-      <input value="{{ buscaPara }}" oninput="{{ onBuscaPara }}" placeholder="buscar aluna ou lead…" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 14px; font-family: inherit; color: var(--color-primary-900); background: var(--color-neutral-0); outline: none; width: 170px;" />
-      <select ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="border: 0; border-radius: 999px; padding: 11px 16px; font-size: 14px; font-family: inherit; color: var(--color-primary-900); background: var(--color-neutral-0); outline: none; max-width: 100%;">
+      <input class="isr-campo" value="{{ buscaPara }}" oninput="{{ onBuscaPara }}" placeholder="buscar aluna ou lead…" style="border-radius: 999px; padding: 11px 16px; font-size: 14px; background: var(--color-neutral-0); outline: none; width: 170px" />
+      <select class="isr-campo" ref="{{ recipientRef }}" onchange="{{ onRecipient }}" style="border-radius: 999px; padding: 11px 16px; font-size: 14px; background: var(--color-neutral-0); outline: none; max-width: 100%">
         <sc-for list="{{ recipients }}" as="r" hint-placeholder-count="4">
           <option value="{{ r.id }}" selected="{{ r.selected }}">{{ r.label }}</option>
         </sc-for>
@@ -74,10 +75,10 @@
 
     <!-- GERENCIAR MODELOS -->
     <sc-if value="{{ gerenciando }}">
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 18px; margin-bottom: 16px;">
+      <div class="isr-cartao" style="padding: 16px 18px; margin-bottom: 16px">
         <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 10px;">✎ Editando o modelo selecionado <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--color-tertiary-300);">· variáveis (entre chaves duplas): primeiroNome · turma · nivel · valor · vencimento · link</span></div>
-        <input ref="{{ gerTituloRef }}" placeholder="Título do modelo" style="width: 100%; box-sizing: border-box; padding: 11px 13px; font-size: 13px; font-weight: 600; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); margin-bottom: 8px;" />
-        <textarea ref="{{ gerCorpoRef }}" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px 14px; font-size: 13px; line-height: 1.6; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); resize: vertical;"></textarea>
+        <input class="isr-campo" ref="{{ gerTituloRef }}" placeholder="Título do modelo" style="width: 100%; box-sizing: border-box; padding: 11px 13px; font-size: 13px; font-weight: 600; margin-bottom: 8px" />
+        <textarea class="isr-campo" ref="{{ gerCorpoRef }}" style="width: 100%; box-sizing: border-box; min-height: 140px; padding: 12px 14px; font-size: 13px; line-height: 1.6; resize: vertical"></textarea>
         <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
           <button onclick="{{ onSalvarModelo }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 999px; cursor: pointer;">Salvar</button>
           <sc-if value="{{ ehEditado }}">
@@ -93,14 +94,14 @@
         <div style="border-top: 1px solid var(--color-button-secondary); margin-top: 14px; padding-top: 14px;">
           <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 10px;">Criar modelo novo</div>
           <div style="display: grid; grid-template-columns: 200px 1fr; gap: 8px; margin-bottom: 8px;">
-            <select ref="{{ novoCatRef }}" style="padding: 11px 13px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);">
+            <select class="isr-campo" ref="{{ novoCatRef }}" style="padding: 11px 13px; font-size: 13px">
               <sc-for list="{{ catsNovo }}" as="cn" hint-placeholder-count="7">
                 <option value="{{ cn.id }}">{{ cn.label }}</option>
               </sc-for>
             </select>
-            <input ref="{{ novoTituloRef }}" placeholder="Título do novo modelo (ex. Aviso de feriado)" style="padding: 11px 13px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary);" />
+            <input class="isr-campo" ref="{{ novoTituloRef }}" placeholder="Título do novo modelo (ex. Aviso de feriado)" style="padding: 11px 13px; font-size: 13px" />
           </div>
-          <textarea ref="{{ novoCorpoRef }}" placeholder="Texto do modelo… escreva as variáveis entre chaves duplas: primeiroNome, turma, valor etc." style="width: 100%; box-sizing: border-box; min-height: 90px; padding: 12px 14px; font-size: 13px; line-height: 1.6; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-button-secondary); resize: vertical;"></textarea>
+          <textarea class="isr-campo" ref="{{ novoCorpoRef }}" placeholder="Texto do modelo… escreva as variáveis entre chaves duplas: primeiroNome, turma, valor etc." style="width: 100%; box-sizing: border-box; min-height: 90px; padding: 12px 14px; font-size: 13px; line-height: 1.6; resize: vertical"></textarea>
           <button onclick="{{ onCriarModelo }}" style="margin-top: 10px; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 999px; cursor: pointer;">+ Criar modelo</button>
         </div>
       </div>
@@ -118,7 +119,7 @@
               <sc-if value="{{ tpl.tag }}">
                 <!-- o par de "Gerenciar modelos": diz quais são seus e
                      quais você mudou -->
-                <span style="background: #ece5f3; color: #7b689a; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px;">{{ tpl.tag }}</span>
+                <span class="isr-selo" style="background: #ece5f3; color: #7b689a; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px">{{ tpl.tag }}</span>
               </sc-if>
             </div>
             <div style="font-size: 12px; color: {{ tpl.sub }}; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ tpl.preview }}</div>
@@ -132,13 +133,13 @@
       <!-- EDITOR -->
       <section style="flex: 1 1 280px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
         <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ tplNome }} · para {{ recipientNome }}</div>
-        <textarea value="{{ msg }}" oninput="{{ onMsgInput }}" rows="7" style="border: 1px solid var(--color-tertiary-100); border-radius: 16px; padding: 14px 16px; font-size: 15px; line-height: 1.55; font-family: inherit; color: var(--color-primary-900); outline: none; resize: vertical; background: var(--color-bg-default);"></textarea>
+        <textarea class="isr-campo" value="{{ msg }}" oninput="{{ onMsgInput }}" rows="7" style="border: 1px solid var(--color-tertiary-100); border-radius: 16px; padding: 14px 16px; font-size: 15px; line-height: 1.55; outline: none; resize: vertical; background: var(--color-bg-default)"></textarea>
         <sc-if value="{{ temDestacado }}">
           <div style="background: var(--color-warning-light); border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--color-primary-900);">Complete os campos [DESTACADO] antes de enviar.</div>
         </sc-if>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <a href="{{ waLink }}" target="_blank" rel="noopener" onclick="{{ onEnviar }}" style="text-decoration: none; background: #25D366; color: #0b3d1f; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-weight: 600; box-shadow: 0 3px 0 #1a9e4b;">Enviar no WhatsApp</a>
-          <button onclick="{{ onCopy }}" style="font-family: inherit; border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); border-radius: 999px; padding: 12px 18px; font-size: 14px; font-weight: 600; cursor: pointer;">{{ copyLabel }}</button>
+          <button class="isr-botao" onclick="{{ onCopy }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); padding: 12px 18px; font-size: 14px">{{ copyLabel }}</button>
         </div>
         <div style="font-size: 12px; color: var(--color-primary-800); line-height: 1.55;">Nada é enviado automaticamente. O WhatsApp abre com o texto e o contato fica registrado no histórico.</div>
       </section>

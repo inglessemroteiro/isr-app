@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
 <style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
 <script src="./support.js"></script>
 <script src="./isr-versao.js"></script>
@@ -29,14 +30,14 @@
         <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">CRM · Funil de leads</h1>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <button onclick="{{ onLinkCadastro }}" title="Copiar o link público de cadastro + sinal" style="border: 0; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ linkCadastroLabel }}</button>
-        <button onclick="{{ onNovoLead }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">+ Novo lead</button>
+        <button class="isr-botao" onclick="{{ onLinkCadastro }}" title="Copiar o link público de cadastro + sinal" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 12px; padding: 9px 14px">{{ linkCadastroLabel }}</button>
+        <button class="isr-botao isr-botao--escuro" onclick="{{ onNovoLead }}" style="font-size: 12px; padding: 9px 16px">+ Novo lead</button>
       </div>
     </header>
     <p style="margin: 0 0 18px; font-size: 13px; color: var(--color-primary-800); line-height: 1.6; max-width: 730px;">Funil de leads, do primeiro contato ao fechamento. Proposta enviada: valor e parcelas enviados, aguardando resposta. Fechado: abre a tela de matrícula e converte o lead em aluna.</p>
 
     <!-- REUNIÕES: quantas estão marcadas, quantas viraram matrícula -->
-    <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 14px 18px; margin-bottom: 16px;">
+    <div class="isr-cartao" style="padding: 14px 18px; margin-bottom: 16px">
       <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: center;">
         <div style="flex: none;">
           <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Conversas de matrícula · 30 dias</div>
@@ -56,7 +57,7 @@
             <span style="display: inline-flex; align-items: center; gap: 4px;">
               <a href="{{ rp.href }}" style="text-decoration: none; background: {{ rp.bg }}; color: {{ rp.cor }}; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 999px;">{{ rp.label }}</a>
               <sc-if value="{{ rp.podeFeita }}">
-                <button onclick="{{ rp.onFeita }}" title="Marcar a conversa como realizada" style="border: 1px solid var(--color-neutral-200); background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 10.5px; font-weight: 600; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-family: inherit;">Feita</button>
+                <button class="isr-botao" onclick="{{ rp.onFeita }}" title="Marcar a conversa como realizada" style="border: 1px solid var(--color-neutral-200); background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 10.5px; padding: 5px 10px">Feita</button>
               </sc-if>
             </span>
           </sc-for>
@@ -66,18 +67,18 @@
 
     <!-- FORMULÁRIO NOVO LEAD (cadastro manual) -->
     <sc-if value="{{ novoLeadAberto }}">
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 18px; margin-bottom: 16px;">
+      <div class="isr-cartao" style="padding: 16px 18px; margin-bottom: 16px">
         <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 12px;">Novo lead · cadastro manual</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-          <input ref="{{ nlNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
-          <input ref="{{ nlZapRef }}" placeholder="WhatsApp * (ex. +55 11 99999-0000)" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
-          <input ref="{{ nlEmailRef }}" placeholder="E-mail" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
-          <select ref="{{ nlCanalRef }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);">
+          <input class="isr-campo" ref="{{ nlNomeRef }}" placeholder="Nome *" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
+          <input class="isr-campo" ref="{{ nlZapRef }}" placeholder="WhatsApp * (ex. +55 11 99999-0000)" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
+          <input class="isr-campo" ref="{{ nlEmailRef }}" placeholder="E-mail" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
+          <select class="isr-campo" ref="{{ nlCanalRef }}" style="padding: 10px 12px; font-size: 13px; border-radius: 18px">
             <sc-for list="{{ canaisOpts }}" as="cn" hint-placeholder-count="6">
               <option value="{{ cn.id }}">{{ cn.label }}</option>
             </sc-for>
           </select>
-          <select ref="{{ nlNivelRef }}" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);">
+          <select class="isr-campo" ref="{{ nlNivelRef }}" style="padding: 10px 12px; font-size: 13px; border-radius: 18px">
             <option value="">Nível (se souber)</option>
             <option value="Iniciante">Iniciante (A0)</option>
             <option value="Básico">Básico (A1)</option>
@@ -85,11 +86,11 @@
             <option value="Intermediário">Intermediário (B1)</option>
             <option value="Avançado">Avançado (B2+)</option>
           </select>
-          <input ref="{{ nlHorariosRef }}" placeholder="Horários de preferência" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
+          <input class="isr-campo" ref="{{ nlHorariosRef }}" placeholder="Horários de preferência" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button onclick="{{ onSalvarNovoLead }}" style="font-family: inherit; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 13px; font-weight: 600; padding: 11px 22px; border-radius: 999px; cursor: pointer;">Criar lead</button>
-          <button onclick="{{ onCancelarNovoLead }}" style="font-family: inherit; border: 0; background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer;">Cancelar</button>
+          <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarNovoLead }}" style="font-size: 13px; padding: 11px 22px">Criar lead</button>
+          <button class="isr-botao" onclick="{{ onCancelarNovoLead }}" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; padding: 11px 16px">Cancelar</button>
           <sc-if value="{{ nlErro }}">
             <span style="font-size: 12px; color: var(--color-error); font-weight: 600;">{{ nlErro }}</span>
           </sc-if>
@@ -100,12 +101,12 @@
     <!-- INSCRIÇÃO NOVA · a faixa do v5 -->
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
       <sc-if value="{{ temNovas }}">
-        <span style="background: var(--color-button-primary); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--color-primary-900);">{{ novasCount }} {{ novasLabel }}</span>
+        <span class="isr-selo" style="background: var(--color-button-primary); padding: 8px 14px; font-size: 13px; color: var(--color-primary-900)">{{ novasCount }} {{ novasLabel }}</span>
         <!-- o v5 mostra só a contagem porque tem a fila do Jotform logo
              abaixo; aqui a inscrição já virou lead, então o nome é o que
              leva a pessoa até ela -->
         <sc-for list="{{ novasLeads }}" as="nv" hint-placeholder-count="2">
-          <button onclick="{{ nv.onAbrir }}" style="border: 0; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ nv.nome }}</button>
+          <button class="isr-botao" onclick="{{ nv.onAbrir }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; padding: 8px 14px">{{ nv.nome }}</button>
         </sc-for>
       </sc-if>
       <span style="flex: 1; min-width: 4px;"></span>
@@ -124,7 +125,7 @@
       <!-- ESTÁGIOS · os chips do v5, com a contagem de cada um -->
       <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px;">
         <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="8">
-          <button onclick="{{ tab.onClick }}" style="font-family: inherit; flex: none; border: 0; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 999px;">{{ tab.label }} · {{ tab.count }}</button>
+          <button class="isr-botao" onclick="{{ tab.onClick }}" style="flex: none; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 13px; padding: 9px 14px">{{ tab.label }} · {{ tab.count }}</button>
         </sc-for>
       </div>
 
@@ -132,18 +133,18 @@
       <sc-if value="{{ temSelecao }}">
         <div style="display: flex; gap: 9px; flex-wrap: wrap; align-items: center; background: var(--color-primary-900); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;">
           <span style="font-size: 12px; font-weight: 600; color: var(--color-neutral-0);">{{ selResumo }}</span>
-          <select onchange="{{ onSelStage }}" style="appearance: auto; border: 1px solid rgba(255,255,255,0.35); background: var(--color-primary-800); color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 7px 10px; border-radius: 12px; cursor: pointer; font-family: inherit;">
+          <select class="isr-campo" onchange="{{ onSelStage }}" style="appearance: auto; border: 1px solid rgba(255,255,255,0.35); background: var(--color-primary-800); color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 7px 10px; cursor: pointer">
             <sc-for list="{{ selStageOpts }}" as="ss" hint-placeholder-count="4">
               <option value="{{ ss.id }}">{{ ss.label }}</option>
             </sc-for>
           </select>
-          <button onclick="{{ onSelApagar }}" style="border: none; background: var(--color-error); color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ selApagarLabel }}</button>
-          <button onclick="{{ onSelLimpar }}" style="border: 1px solid rgba(255,255,255,0.35); background: transparent; color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Desmarcar</button>
+          <button class="isr-botao" onclick="{{ onSelApagar }}" style="background: var(--color-error); color: var(--color-neutral-0); font-size: 11.5px; padding: 8px 14px">{{ selApagarLabel }}</button>
+          <button class="isr-botao" onclick="{{ onSelLimpar }}" style="border: 1px solid rgba(255,255,255,0.35); background: transparent; color: var(--color-neutral-0); font-size: 11.5px; padding: 8px 14px">Desmarcar</button>
         </div>
       </sc-if>
 
       <!-- A LISTA -->
-      <div style="background: var(--color-neutral-0); border-radius: 24px; padding: 6px 20px;">
+      <div class="isr-cartao" style="padding: 6px 20px">
 
         <!-- marcar todos: o par do lote, sem o cabeçalho de colunas do v3 -->
         <sc-if value="{{ temLeads }}">
@@ -164,17 +165,17 @@
                 <input type="checkbox" checked="{{ lead.marcado }}" onclick="{{ lead.onSelClick }}" onchange="{{ lead.onMarcar }}" title="Selecionar para ações em lote" style="width: 15px; height: 15px; accent-color: var(--color-primary-500); cursor: pointer; margin: 0; flex: none;" />
                 <span style="width: 10px; height: 10px; border-radius: 999px; background: {{ lead.stageColor }}; flex: none;"></span>
                 <a href="{{ lead.perfilHref }}" onclick="{{ lead.onNomeClick }}" style="font-size: 15px; font-weight: 600; color: var(--color-primary-500); text-decoration: underline; text-underline-offset: 3px;">{{ lead.nome }}</a>
-                <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: var(--color-button-secondary); color: var(--color-primary-900);">{{ lead.stageLabel }}</span>
+                <span class="isr-selo" style="padding: 3px 9px; font-size: 11px; background: var(--color-button-secondary); color: var(--color-primary-900)">{{ lead.stageLabel }}</span>
                 <sc-if value="{{ lead.temReuniao }}">
-                  <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: rgba(107,91,149,0.13); color: #6b5b95;">Conversa {{ lead.reuniaoInfo }}</span>
+                  <span class="isr-selo" style="padding: 3px 9px; font-size: 11px; background: rgba(107,91,149,0.13); color: #6b5b95">Conversa {{ lead.reuniaoInfo }}</span>
                 </sc-if>
                 <sc-if value="{{ lead.badge }}">
-                  <span style="border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }};">{{ lead.badge }}</span>
+                  <span class="isr-selo" style="padding: 3px 9px; font-size: 11px; background: {{ lead.badgeBg }}; color: {{ lead.badgeFg }}">{{ lead.badge }}</span>
                 </sc-if>
               </div>
               <div style="flex: 1 1 130px; min-width: 0; font-size: 13px; font-weight: 600; color: {{ lead.entrouColor }};">entrou {{ lead.entrouRel }} {{ lead.entrouWarn }}</div>
               <div style="flex: 1 1 130px; min-width: 0; font-size: 13px; color: var(--color-primary-800);">{{ lead.turmaLabel }}</div>
-              <div style="flex: 1 1 110px; min-width: 0;"><span style="background: var(--color-primary-50); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--color-primary-800);">{{ lead.canal }}</span></div>
+              <div style="flex: 1 1 110px; min-width: 0;"><span class="isr-selo" style="background: var(--color-primary-50); padding: 4px 10px; font-size: 12px; color: var(--color-primary-800)">{{ lead.canal }}</span></div>
             </div>
 
             <!-- PAINEL EXPANDIDO -->
@@ -185,7 +186,7 @@
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
                   <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); margin-right: 4px;">estágio</span>
                   <sc-for list="{{ lead.stages }}" as="g" hint-placeholder-count="7">
-                    <button onclick="{{ g.onPick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; background: {{ g.bg }}; color: {{ g.fg }};">{{ g.label }}</button>
+                    <button class="isr-botao" onclick="{{ g.onPick }}" style="padding: 7px 12px; font-size: 12px; background: {{ g.bg }}; color: {{ g.fg }}">{{ g.label }}</button>
                   </sc-for>
                 </div>
 
@@ -197,14 +198,14 @@
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-200); margin-bottom: 3px;">Dia</div>
-                      <input ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
+                      <input class="isr-campo" ref="{{ lead.reuDataRef }}" type="date" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-200); margin-bottom: 3px;">Hora · Brasília</div>
-                      <input ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
+                      <input class="isr-campo" ref="{{ lead.reuHoraRef }}" type="time" style="padding: 10px 12px; font-size: 13px; border-radius: 18px" />
                     </div>
-                    <button onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12.5px; font-weight: 600; padding: 11px 20px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar conversa</button>
-                    <button onclick="{{ lead.onAgendarCancela }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12.5px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ lead.onAgendarConfirma }}" title="Confirmar o dia e a hora da conversa" style="font-size: 12.5px; padding: 11px 20px">Marcar conversa</button>
+                    <button class="isr-botao" onclick="{{ lead.onAgendarCancela }}" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12.5px; padding: 11px 18px">Cancelar</button>
                   </div>
                   <sc-if value="{{ lead.erroReuniao }}">
                     <p style="margin: 10px 0 0; font-size: 11.5px; color: var(--color-error); line-height: 1.5;">{{ lead.erroReuniao }}</p>
@@ -218,8 +219,8 @@
                   </sc-if>
                   <sc-if value="{{ lead.semBooking }}">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--color-tertiary-50);">
-                      <input ref="{{ lead.bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 220px; padding: 9px 11px; font-size: 11.5px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 18px; background: var(--color-button-secondary);" />
-                      <button onclick="{{ lead.onSalvarBooking }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11.5px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Guardar</button>
+                      <input class="isr-campo" ref="{{ lead.bookingRef }}" placeholder="Link da página de horários (booking do Google Agenda) — opcional" style="flex: 1; min-width: 220px; padding: 9px 11px; font-size: 11.5px; border-radius: 18px" />
+                      <button class="isr-botao" onclick="{{ lead.onSalvarBooking }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11.5px; padding: 9px 14px">Guardar</button>
                     </div>
                     <p style="margin: 8px 0 0; font-size: 10.5px; color: var(--color-tertiary-300); line-height: 1.5;">Com a página de horários salva, a lead escolhe o horário e o Google cria o evento no calendário do responsável.</p>
                   </sc-if>
@@ -256,7 +257,7 @@
                   </div>
                   <!-- FICHA DA INSCRIÇÃO — o que a pessoa respondeu no formulário -->
                   <sc-if value="{{ lead.temInscricao }}">
-                    <div style="margin-top: 12px; background: var(--color-neutral-0); border-radius: 12px; padding: 10px 13px;">
+                    <div class="isr-cartao" style="margin-top: 12px; border-radius: 12px; padding: 10px 13px">
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-tertiary-500); font-weight: 600; margin-bottom: 4px;">Ficha da inscrição</div>
                       <sc-for list="{{ lead.inscricao }}" as="iq" hint-placeholder-count="3">
                         <div style="padding: 5px 0; border-bottom: 1px solid var(--color-bg-default);">
@@ -276,10 +277,10 @@
                   <div style="font-size: 12px; color: var(--color-tertiary-500); margin-bottom: 8px;">Agendar próximo follow-up:</div>
                   <div style="display: flex; gap: 7px; flex-wrap: wrap; align-items: center;">
                     <sc-for list="{{ lead.followups }}" as="fu" hint-placeholder-count="3">
-                      <button onclick="{{ fu.onClick }}" style="font-family: inherit; border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer;">{{ fu.label }}</button>
+                      <button class="isr-botao" onclick="{{ fu.onClick }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; padding: 8px 14px">{{ fu.label }}</button>
                     </sc-for>
                     <span style="font-size: 10.5px; color: var(--color-tertiary-500);">ou na data:</span>
-                    <input type="date" onchange="{{ lead.onFollowupDate }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11px; padding: 7px 9px; border-radius: 12px; font-family: inherit;" />
+                    <input class="isr-campo" type="date" onchange="{{ lead.onFollowupDate }}" style="font-size: 11px; padding: 7px 9px" />
                   </div>
                   <sc-if value="{{ lead.followupInfo }}">
                     <div style="font-size: 11px; color: var(--color-primary-500); margin-top: 10px;">{{ lead.followupInfo }}</div>
@@ -299,7 +300,7 @@
               </div>
 
               <!-- NOTA -->
-              <input ref="{{ lead.noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ lead.onNoteKey }}" style="width: 100%; box-sizing: border-box; border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; padding: 12px 14px; border-radius: 12px; font-family: inherit; margin-bottom: 16px;" />
+              <input class="isr-campo" ref="{{ lead.noteRef }}" placeholder="Adicionar nota... (Enter salva)" onkeydown="{{ lead.onNoteKey }}" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 12px 14px; margin-bottom: 16px" />
 
               <!-- CONDIÇÕES COMBINADAS (estágio contrato) -->
               <sc-if value="{{ lead.negociando }}">
@@ -312,37 +313,37 @@
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin-bottom: 10px;">
                     <div style="grid-column: 1 / -1;">
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Turma acordada</div>
-                      <select ref="{{ lead.pTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);">
+                      <select class="isr-campo" ref="{{ lead.pTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)">
                         <sc-for list="{{ lead.turmasOpts }}" as="pt" hint-placeholder-count="4"><option value="{{ pt.id }}" selected="{{ pt.sel }}">{{ pt.label }}</option></sc-for>
                       </select>
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Moeda</div>
-                      <select ref="{{ lead.pMoedaRef }}" onchange="{{ lead.onPropostaMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);">
+                      <select class="isr-campo" ref="{{ lead.pMoedaRef }}" onchange="{{ lead.onPropostaMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)">
                         <option value="R$" selected="{{ lead.pMoedaBrl }}">R$ (Brasil)</option>
                         <option value="€" selected="{{ lead.pMoedaEur }}">€ (Europa)</option>
                       </select>
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Valor de cada parcela</div>
-                      <input ref="{{ lead.pValorRef }}" oninput="{{ lead.onPropostaMuda }}" placeholder="{{ lead.pValorPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);" />
+                      <input class="isr-campo" ref="{{ lead.pValorRef }}" oninput="{{ lead.onPropostaMuda }}" placeholder="{{ lead.pValorPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)" />
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Número de parcelas</div>
-                      <select ref="{{ lead.pParcelasRef }}" onchange="{{ lead.onPropostaMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);">
+                      <select class="isr-campo" ref="{{ lead.pParcelasRef }}" onchange="{{ lead.onPropostaMuda }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)">
                         <sc-for list="{{ lead.pParcelasOpts }}" as="pp" hint-placeholder-count="8"><option value="{{ pp.id }}" selected="{{ pp.sel }}">{{ pp.label }}</option></sc-for>
                       </select>
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Dia de vencimento</div>
-                      <input ref="{{ lead.pVencRef }}" placeholder="{{ lead.pVencPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);" />
+                      <input class="isr-campo" ref="{{ lead.pVencRef }}" placeholder="{{ lead.pVencPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)" />
                     </div>
                     <div>
                       <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-neutral-300); margin-bottom: 3px;">Sinal ou entrada</div>
-                      <input ref="{{ lead.pSinalRef }}" oninput="{{ lead.onPropostaMuda }}" placeholder="{{ lead.pSinalPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; font-family: inherit; color: var(--color-primary-900); border: 1px solid var(--color-primary-100); border-radius: 12px; background: var(--color-neutral-0);" />
+                      <input class="isr-campo" ref="{{ lead.pSinalRef }}" oninput="{{ lead.onPropostaMuda }}" placeholder="{{ lead.pSinalPh }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12px; border: 1px solid var(--color-primary-100); background: var(--color-neutral-0)" />
                     </div>
                     <div style="display: flex; align-items: flex-end;">
-                      <button onclick="{{ lead.onPSinalRecebido }}" style="width: 100%; border: 1px solid {{ lead.pSinalBorda }}; background: {{ lead.pSinalBg }}; color: {{ lead.pSinalFg }}; font-size: 11.5px; font-weight: 600; padding: 9px 11px; border-radius: 12px; cursor: pointer; font-family: inherit;">{{ lead.pSinalLabel }}</button>
+                      <button class="isr-botao" onclick="{{ lead.onPSinalRecebido }}" style="width: 100%; border: 1px solid {{ lead.pSinalBorda }}; background: {{ lead.pSinalBg }}; color: {{ lead.pSinalFg }}; font-size: 11.5px; padding: 9px 11px; border-radius: 12px">{{ lead.pSinalLabel }}</button>
                     </div>
                   </div>
                   <div style="border-left: 3px solid var(--color-primary-500); padding: 2px 0 2px 11px; margin-bottom: 12px;">
@@ -350,9 +351,9 @@
                     <div style="font-size: 13px; font-weight: 600; color: var(--color-primary-900); line-height: 1.6;">{{ lead.pResumo }}</div>
                   </div>
                   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button onclick="{{ lead.onSalvarProposta }}" style="flex: 1; min-width: 150px; border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 12px; font-weight: 600; padding: 11px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar condições</button>
-                    <button onclick="{{ lead.onPropostaVirarMatricula }}" style="border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar e matricular</button>
-                    <button onclick="{{ lead.onNegociarCancela }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Cancelar</button>
+                    <button class="isr-botao isr-botao--escuro" onclick="{{ lead.onSalvarProposta }}" style="flex: 1; min-width: 150px; font-size: 12px; padding: 11px">Salvar condições</button>
+                    <button class="isr-botao" onclick="{{ lead.onPropostaVirarMatricula }}" style="background: var(--color-primary-50); color: var(--color-primary-500); font-size: 12px; padding: 11px 16px">Salvar e matricular</button>
+                    <button class="isr-botao" onclick="{{ lead.onNegociarCancela }}" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; padding: 11px 16px">Cancelar</button>
                   </div>
                 </div>
               </sc-if>
@@ -361,7 +362,7 @@
               <sc-if value="{{ lead.faltamCondicoes }}">
                 <div style="background: var(--color-bg-default); border: 1px solid var(--color-warning-light); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
                   <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.6;">Esta lead está em contrato, mas as condições de pagamento ainda não foram registradas.</div>
-                  <button onclick="{{ lead.onNegociar }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 11.5px; font-weight: 600; padding: 8px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">Registrar condições</button>
+                  <button class="isr-botao isr-botao--escuro" onclick="{{ lead.onNegociar }}" style="font-size: 11.5px; padding: 8px 15px">Registrar condições</button>
                 </div>
               </sc-if>
 
@@ -370,7 +371,7 @@
                 <div style="background: var(--color-bg-default); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;">
                   <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap;">
                     <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-tertiary-500); font-weight: 600;">Condições combinadas em {{ lead.propostaEm }}</span>
-                    <button onclick="{{ lead.onNegociar }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-primary-800); font-size: 10.5px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-family: inherit;">Alterar</button>
+                    <button class="isr-botao" onclick="{{ lead.onNegociar }}" style="background: var(--color-button-secondary); color: var(--color-primary-800); font-size: 10.5px; padding: 5px 12px">Alterar</button>
                   </div>
                   <div style="font-size: 12.5px; color: var(--color-primary-900); line-height: 1.6; margin-top: 3px;">{{ lead.propostaResumo }}</div>
                 </div>
@@ -382,7 +383,7 @@
                   <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-error); font-weight: 600; margin-bottom: 10px;">Motivo da perda</div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                     <sc-for list="{{ lead.motivosOpts }}" as="mo" hint-placeholder-count="6">
-                      <button onclick="{{ mo.onClick }}" style="font-family: inherit; border: 1px solid var(--color-error); background: var(--color-neutral-0); color: var(--color-error); font-size: 11px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer;">{{ mo.label }}</button>
+                      <button class="isr-botao" onclick="{{ mo.onClick }}" style="border: 1px solid var(--color-error); background: var(--color-neutral-0); color: var(--color-error); font-size: 11px; padding: 7px 14px">{{ mo.label }}</button>
                     </sc-for>
                     <button onclick="{{ lead.onPerderCancela }}" style="font-family: inherit; border: none; background: transparent; color: var(--color-tertiary-500); font-size: 11px; font-weight: 600; padding: 7px 8px; cursor: pointer;">cancelar</button>
                   </div>
@@ -391,17 +392,17 @@
 
               <!-- RODAPÉ DE AÇÕES -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--color-button-secondary); padding-top: 14px;">
-                <button onclick="{{ lead.onRegistrar }}" style="font-family: inherit; border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Registrar contato</button>
+                <button class="isr-botao" onclick="{{ lead.onRegistrar }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; padding: 9px 16px">Registrar contato</button>
                 <sc-if value="{{ lead.semReuniao }}">
-                  <button onclick="{{ lead.onAgendar }}" style="font-family: inherit; border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer;">Marcar conversa</button>
+                  <button class="isr-botao" onclick="{{ lead.onAgendar }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; padding: 9px 16px">Marcar conversa</button>
                 </sc-if>
                 <sc-if value="{{ lead.temReuniao }}">
-                  <span style="background: rgba(224,120,86,0.12); color: var(--color-error); font-size: 11px; font-weight: 600; padding: 8px 14px; border-radius: 999px;">Reunião {{ lead.reuniaoInfo }}</span>
+                  <span class="isr-selo" style="background: rgba(224,120,86,0.12); color: var(--color-error); font-size: 11px; padding: 8px 14px">Reunião {{ lead.reuniaoInfo }}</span>
                   <a href="{{ lead.gcalReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid var(--color-primary-100); color: var(--color-primary-500); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Google Agenda</a>
                   <a href="{{ lead.waReuniao }}" target="_blank" rel="noopener" style="text-decoration: none; border: 1px solid var(--color-primary-100); color: var(--color-primary-500); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Enviar convite</a>
-                  <button onclick="{{ lead.onReuniaoFeita }}" style="border: 0; background: var(--color-primary-50); color: var(--color-primary-500); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Marcar como feita</button>
+                  <button class="isr-botao" onclick="{{ lead.onReuniaoFeita }}" style="background: var(--color-primary-50); color: var(--color-primary-500); font-size: 12px; padding: 9px 16px">Marcar como feita</button>
                 </sc-if>
-                <button onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ lead.condLabel }}</button>
+                <button class="isr-botao" onclick="{{ lead.onNegociar }}" style="border: 1px solid {{ lead.condBorda }}; background: {{ lead.condBg }}; color: {{ lead.condFg }}; font-size: 12px; padding: 9px 16px">{{ lead.condLabel }}</button>
                 <a href="{{ lead.matriculaHref }}" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px; box-shadow: 0 3px 0 var(--color-primary-950);">Matricular</a>
                 <span style="flex: 1;"></span>
                 <button onclick="{{ lead.onMarcarPerdido }}" style="border: none; background: transparent; color: var(--color-tertiary-500); font-size: 12px; font-weight: 600; padding: 9px 6px; cursor: pointer; font-family: inherit;">Marcar perdido...</button>
@@ -418,12 +419,12 @@
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
               <sc-for list="{{ pgBotoes }}" as="pb" hint-placeholder-count="7">
-                <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+                <button class="isr-botao" onclick="{{ pb.onClick }}" style="min-width: 34px; padding: 7px 11px; font-size: 13px; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }}">{{ pb.label }}</button>
               </sc-for>
             </div>
             <span style="flex: 1; min-width: 4px;"></span>
             <span style="font-size: 12px; color: var(--color-tertiary-500);">mostrar</span>
-            <select onchange="{{ pgOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); background: var(--color-button-secondary);">
+            <select class="isr-campo" onchange="{{ pgOnPorPagina }}" style="border-radius: 999px; padding: 7px 10px; font-size: 12.5px">
               <sc-for list="{{ pgOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
             </select>
             <span style="font-size: 12px; color: var(--color-tertiary-500);">por página · {{ pgResumo }}</span>
@@ -435,7 +436,7 @@
       <div style="margin-top: 34px;">
         <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 4px;">Reativação · ex-alunas recuperáveis</div>
         <p style="margin: 0 0 12px; font-size: 12.5px; color: var(--color-tertiary-500);">Ex-alunas marcadas como recuperáveis no encerramento aparecem aqui.</p>
-        <div style="background: var(--color-neutral-0); border-radius: 12px; overflow: hidden;">
+        <div class="isr-cartao" style="border-radius: 12px; overflow: hidden">
           <sc-for list="{{ reativacao }}" as="ex" hint-placeholder-count="2">
             <div style="display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--color-button-secondary);">
               <div style="flex: 1; min-width: 0;">
@@ -443,7 +444,7 @@
                 <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 2px;">{{ ex.motivo }} · {{ ex.ultimaTurma }}</div>
               </div>
               <a href="{{ ex.waLink }}" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 11.5px; font-weight: 600; padding: 8px 15px; border-radius: 999px; box-shadow: 0 3px 0 var(--color-primary-950); white-space: nowrap;">Reativar</a>
-              <button onclick="{{ ex.onExcluir }}" title="Exclui a lead e todos os dados dela, em todos os aparelhos" style="border: 1px solid {{ ex.excluirBorda }}; background: {{ ex.excluirBg }}; color: var(--color-error); font-size: 11px; font-weight: 600; padding: 7px 13px; border-radius: 999px; cursor: pointer; font-family: inherit; white-space: nowrap;">{{ ex.excluirLabel }}</button>
+              <button class="isr-botao" onclick="{{ ex.onExcluir }}" title="Exclui a lead e todos os dados dela, em todos os aparelhos" style="border: 1px solid {{ ex.excluirBorda }}; background: {{ ex.excluirBg }}; color: var(--color-error); font-size: 11px; padding: 7px 13px; white-space: nowrap">{{ ex.excluirLabel }}</button>
             </div>
           </sc-for>
         </div>

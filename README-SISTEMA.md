@@ -844,8 +844,75 @@ piores**. Os quatro que a primeira medição pegou eram o mesmo caso: a
 cor do estado usada como texto sobre o fundo do estado. Foram para o
 `-dark`.
 
-**Ainda por fazer:** a troca de botão, cartão, etiqueta e campo pelos
-componentes do design system (passo 3).
+**Passo 3, feito: 718 de 848 elementos passaram a usar a classe do
+componente, e 2.962 declarações de estilo saíram das telas.**
+
+O levantamento, antes de mexer: 848 botões, cartões, selos, campos e
+seleções nas 22 telas de gestão, em **546 formas de estilo distintas**.
+A variação quase toda era de colocação (margem, flex, largura) e de
+valores quase iguais — fonte 12 / 12,5 / 13px, canto 18 / 24px. O
+tipo, não: 195 dos 224 campos usam o mesmo preenchimento, 131 dos 131
+cartões usam o mesmo branco. 848 elementos, oito componentes de
+verdade.
+
+**Por que a camada de gestão mora no repositório.** O design system
+exporta catorze componentes. Dez são das páginas de venda — CTAButton,
+Tag, PriceTag, Gable, WordMarquee, StreetSign, FaqItem, ChatBubble,
+AuthorChip, Highlight. Os outros quatro são os genéricos, e cada um,
+do jeito que está exportado, piora a tela de gestão:
+
+| componente | o que ele faz hoje | o que a gestão precisa |
+|---|---|---|
+| `Button` | `--color-primary-500`, sem sombra, `--radius-lg` | `--900`, sombra de relevo, pílula |
+| `Badge` | `--color-success` sobre `--success-light` = 4,31:1 | o degrau `-dark`, que o passo 2 criou |
+| `Card` | `--shadow-md` em todo cartão | 20 dos 131 cartões têm sombra |
+| `Input` | branco com borda cinza | o preenchimento bege, sem borda |
+
+Trocar literalmente achataria os botões, desfaria a correção de
+contraste do passo 2, poria sombra em 111 cartões e deixaria os campos
+brancos. Então as classes ficam em **`isr-componentes.css`**, escritas
+inteiras em token do design system. Quando o design system ganhar um
+`Button` com sombra e um `Badge` com o `-dark`, cada classe vira uma
+linha e some.
+
+**A conversão não muda um pixel, e a razão é estrutural, não
+estatística:** a classe só entra num elemento que **já declara todas
+as propriedades da classe** — assim ela nunca introduz uma propriedade
+que o elemento não tinha; e uma declaração só sai do estilo quando o
+valor é equivalente ao da classe. O que não é equivalente fica no
+elemento e sobrepõe a classe, porque estilo direto vence classe. O
+campo que precisa de canto de 18px continua com ele à vista, agora
+como a única linha do seu estilo.
+
+**O preço dessa regra é uma lista:** 130 elementos ficaram de fora por
+não declararem alguma das propriedades. Não é dívida inventada — cada
+item é um lugar onde a tela está diferente das outras sem querer. 37
+botões não declaram `font-family`, e por isso aparecem na fonte do
+navegador e não na da escola.
+
+**`verificar-componentes.js`** é o quinto verificador: diz quanto das
+telas usa a classe, lista o que ficou de fora com tela e linha, e
+falha se alguma tela esquecer de carregar a folha.
+
+### Medir antes de mexer em forma
+
+**`verificar-forma.js`** é o instrumento deste passo. O de cores não
+servia: ele fotografa cor, e trocar estilo repetido por classe mexe em
+borda, canto, espaçamento e tipografia. Este fotografa a caixa, o
+canto, a borda, o espaçamento interno, a fonte, o peso, o cursor e a
+sombra de cada elemento de cada tela.
+
+Ele normaliza uma coisa de propósito: canto maior que a metade do lado
+menor é registrado como **pílula**, porque o navegador desenha a mesma
+pílula para 999px e para 9999px. Sem isso ele acusava diferença em 22
+telas onde não há nenhuma — e instrumento que acusa o que não existe
+não serve para o passo seguinte.
+
+O passo 3 fechou em **zero diferenças em forma e zero em cor**, nas 23
+telas e 5.230 elementos. E o instrumento pegou uma regressão de
+verdade no caminho: o `ISR App (Conectado)` carrega `styles.css` em vez
+de `tokens/web.css`, a folha de componentes não entrou lá, e um campo
+perdeu o canto e a fonte.
 
 ### A Área da Aluna no desenho novo
 

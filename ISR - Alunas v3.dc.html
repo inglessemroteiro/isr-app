@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
 <link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
 <style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
 <script src="./support.js"></script>
 <script src="./isr-versao.js"></script>
@@ -27,7 +28,7 @@
       <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Alunas</h1>
     </div>
     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-      <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar aluna ou lead…" style="background: var(--color-neutral-0); border: 0; border-radius: 999px; padding: 12px 18px; font-size: 14px; font-family: inherit; color: var(--color-primary-900); outline: none; width: 220px; max-width: 100%;" />
+      <input class="isr-campo" ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar aluna ou lead…" style="background: var(--color-neutral-0); border-radius: 999px; padding: 12px 18px; font-size: 14px; outline: none; width: 220px; max-width: 100%" />
     </div>
   </header>
 
@@ -36,13 +37,13 @@
     <section style="background: var(--color-error-light); border-radius: 24px; padding: 18px 22px;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
         <div style="font-size: 16px; font-weight: 600; color: var(--color-error-dark);">Registros duplicados · {{ duplicadasContagem }}</div>
-        <button onclick="{{ onMesclarTodos }}" style="border: 1px solid {{ todosBorda }}; background: {{ todosBg }}; color: var(--color-error-dark); font-size: 12px; font-weight: 600; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ todosLabel }}</button>
+        <button class="isr-botao" onclick="{{ onMesclarTodos }}" style="border: 1px solid {{ todosBorda }}; background: {{ todosBg }}; color: var(--color-error-dark); font-size: 12px; padding: 9px 15px">{{ todosLabel }}</button>
       </div>
       <p style="margin: 6px 0 4px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">Dois registros da mesma aluna, criados em aparelhos diferentes antes de conectar. Mesclar transfere contrato, histórico, presenças e miles para o registro mais completo e remove a cópia em todos os aparelhos.</p>
       <sc-for list="{{ duplicadas }}" as="dp" hint-placeholder-count="3">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-error-light);">
           <span style="font-size: 13px; color: var(--color-primary-900); flex: 1; min-width: 220px; line-height: 1.5;"><b>{{ dp.manterNome }}</b> <span style="color: var(--color-tertiary-500);">{{ dp.manterDetalhe }}</span><br><span style="color: var(--color-tertiary-300);">cópia: {{ dp.apagarNome }} {{ dp.apagarDetalhe }} · {{ dp.motivo }}</span></span>
-          <button onclick="{{ dp.onMesclar }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ dp.label }}</button>
+          <button class="isr-botao" onclick="{{ dp.onMesclar }}" style="background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; padding: 10px 16px">{{ dp.label }}</button>
         </div>
       </sc-for>
     </section>
@@ -54,10 +55,10 @@
        de turma ficou porque o lote de início depende dele. -->
   <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
     <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="5">
-      <button onclick="{{ ft.onClick }}" style="font-family: inherit; border: 0; cursor: pointer; background: {{ ft.bg }}; color: {{ ft.fg }}; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600;">{{ ft.label }} · {{ ft.n }}</button>
+      <button class="isr-botao" onclick="{{ ft.onClick }}" style="background: {{ ft.bg }}; color: {{ ft.fg }}; padding: 9px 16px; font-size: 13px">{{ ft.label }} · {{ ft.n }}</button>
     </sc-for>
     <span style="flex: 1; min-width: 4px;"></span>
-    <select onchange="{{ onTurma }}" style="padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--color-primary-900); border: 0; border-radius: 12px; background: var(--color-neutral-0);">
+    <select class="isr-campo" onchange="{{ onTurma }}" style="padding: 9px 12px; font-size: 13px; background: var(--color-neutral-0)">
       <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
     </select>
   </div>
@@ -68,8 +69,8 @@
       <div style="font-size: 14px; font-weight: 600;">Início das aulas em lote</div>
       <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">Filtre a turma acima, escolha a data e aplique. Cada aluna aparece na chamada a partir do dia dela; as exceções se corrigem no campo de cada uma.</p>
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <input ref="{{ loteRef }}" type="date" style="background: var(--color-button-secondary); border: 0; border-radius: 12px; padding: 11px 14px; font-size: 13px; font-family: inherit; color: var(--color-primary-900);" />
-        <button onclick="{{ onLote }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12.5px; font-weight: 600; padding: 12px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 var(--color-primary-950);">{{ loteLabel }}</button>
+        <input class="isr-campo" ref="{{ loteRef }}" type="date" style="padding: 11px 14px; font-size: 13px" />
+        <button class="isr-botao isr-botao--escuro" onclick="{{ onLote }}" style="font-size: 12.5px; padding: 12px 18px">{{ loteLabel }}</button>
         <span style="font-size: 12.5px; font-weight: 600; color: {{ loteCor }};">{{ loteNota }}</span>
       </div>
     </section>
@@ -83,7 +84,7 @@
     <sc-for list="{{ pessoas }}" as="p" hint-placeholder-count="8">
       <div style="display: flex; gap: 14px; align-items: center; padding: 13px 2px; border-top: 1px solid var(--color-button-secondary); flex-wrap: wrap;">
         <a href="{{ p.href }}" class="lk" style="flex: none; min-width: 170px; font-size: 15px; font-weight: 600; color: var(--color-primary-500);">{{ p.nome }}</a>
-        <span style="flex: none; border-radius: 999px; padding: 4px 11px; font-size: 11px; font-weight: 600; background: {{ p.stBg }}; color: {{ p.stFg }};">{{ p.stLabel }}</span>
+        <span class="isr-selo" style="flex: none; padding: 4px 11px; font-size: 11px; background: {{ p.stBg }}; color: {{ p.stFg }}">{{ p.stLabel }}</span>
         <span style="flex: 1; min-width: 180px; font-size: 13.5px; color: var(--color-primary-800);">{{ p.ctx }}</span>
         <sc-if value="{{ p.temRisco }}">
           <span style="flex: none; font-size: 12px; font-weight: 600; color: var(--color-error);">⚠︎ {{ p.risco }}</span>
@@ -91,7 +92,7 @@
         <sc-if value="{{ p.temInicio }}">
           <!-- o par do lote: é aqui que a exceção se corrige -->
           <span style="flex: none; display: flex; align-items: center; gap: 7px;">
-            <input type="date" value="{{ p.inicioIso }}" onchange="{{ p.onInicio }}" title="A aluna aparece na chamada a partir deste dia" style="background: var(--color-button-secondary); border: 0; border-radius: 10px; padding: 7px 10px; font-size: 12px; font-family: inherit; color: var(--color-primary-900);" />
+            <input class="isr-campo" type="date" value="{{ p.inicioIso }}" onchange="{{ p.onInicio }}" title="A aluna aparece na chamada a partir deste dia" style="border-radius: 10px; padding: 7px 10px; font-size: 12px" />
             <span style="font-size: 11.5px; color: {{ p.inicioCor }};">{{ p.inicioNota }}</span>
           </span>
         </sc-if>
@@ -102,12 +103,12 @@
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 4px 2px 0;">
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
           <sc-for list="{{ pgBotoes }}" as="pb" hint-placeholder-count="7">
-            <button onclick="{{ pb.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; min-width: 34px; padding: 7px 11px; font-size: 13px; font-weight: 600; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }};">{{ pb.label }}</button>
+            <button class="isr-botao" onclick="{{ pb.onClick }}" style="min-width: 34px; padding: 7px 11px; font-size: 13px; background: {{ pb.bg }}; color: {{ pb.fg }}; cursor: {{ pb.cursor }}">{{ pb.label }}</button>
           </sc-for>
         </div>
         <span style="flex: 1; min-width: 4px;"></span>
         <span style="font-size: 12px; color: var(--color-tertiary-500);">mostrar</span>
-        <select onchange="{{ pgOnPorPagina }}" style="border: 0; border-radius: 999px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; color: var(--color-primary-900); background: var(--color-button-secondary);">
+        <select class="isr-campo" onchange="{{ pgOnPorPagina }}" style="border-radius: 999px; padding: 7px 10px; font-size: 12.5px">
           <sc-for list="{{ pgOpcoes }}" as="po" hint-placeholder-count="4"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
         </select>
         <span style="font-size: 12px; color: var(--color-tertiary-500);">por página · {{ pgResumo }}</span>

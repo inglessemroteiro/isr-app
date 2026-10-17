@@ -1,0 +1,89 @@
+/* Inglês sem Roteiro — a camada de componentes da área de gestão.
+ *
+ * Por que este arquivo existe
+ * ───────────────────────────
+ * O design system exporta duas coisas: os tokens (adotados nas telas
+ * nos passos 1 e 2) e componentes React. Dos catorze componentes, dez
+ * são das páginas de venda — CTAButton, Tag, PriceTag, Gable,
+ * WordMarquee, StreetSign, FaqItem, ChatBubble, AuthorChip, Highlight.
+ * Os outros quatro — Button, Card, Badge, Input — são os genéricos, e
+ * cada um deles, do jeito que está exportado hoje, muda a tela de
+ * gestão para pior:
+ *
+ *   Button  usa --color-primary-500 (o teal médio), não o --900 que é
+ *           o botão escuro da gestão; não tem box-shadow, então o
+ *           relevo do botão desaparece; e usa --radius-lg onde 239 dos
+ *           304 botões da gestão são pílula.
+ *   Badge   escreve --color-success sobre --color-success-light, que
+ *           dá 4,31:1 — abaixo do mínimo de 4,5. É exatamente o par
+ *           que o passo 2 corrigiu com os degraus -dark.
+ *   Card    põe --shadow-md em todo cartão; dos 131 cartões da gestão,
+ *           20 têm sombra. E usa --radius-lg onde 72 usam 24px.
+ *   Input   é branco com borda cinza; o campo da gestão é o
+ *           preenchimento bege --color-button-secondary sem borda.
+ *
+ * Então a camada de gestão mora aqui, no repositório, e é escrita
+ * inteira em tokens do design system. Nada de hexadecimal, nada de
+ * número solto onde existe token. Quando o design system ganhar um
+ * Button com sombra e um Badge com o degrau -dark, estas classes
+ * viram uma linha cada e somem.
+ *
+ * Como usar
+ * ─────────
+ * A classe carrega o que o elemento compartilha com os outros da
+ * mesma família. O que é daquele uso — tamanho, espaçamento,
+ * posicionamento, cor de estado — continua no style do elemento, e
+ * sobrepõe a classe, porque style inline vence classe. Trocar o
+ * componente é mexer aqui; mexer no style de um elemento é mexer só
+ * naquele.
+ */
+
+/* ── BOTÃO ───────────────────────────────────────────────────────── */
+/* A casca: a família tipográfica herdada da barra, o peso, a ausência
+ * de borda, a pílula e o cursor. Tamanho de fonte e espaçamento ficam
+ * no elemento: um botão de linha de tabela e um de confirmar matrícula
+ * têm o mesmo tipo e tamanhos diferentes. */
+.isr-botao {
+  font-family: inherit;
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+/* A ação principal da tela: teal escuro, texto branco e o degrau
+ * abaixo dele como sombra — é essa sombra que dá o relevo. Sem o
+ * --950 ela ficaria da cor do próprio botão e o botão ficaria chapado. */
+.isr-botao--escuro {
+  background: var(--color-primary-900);
+  color: var(--color-neutral-0);
+  box-shadow: 0 3px 0 var(--color-primary-950);
+}
+
+/* ── CARTÃO ──────────────────────────────────────────────────────── */
+/* Todos os 131 cartões da gestão são o mesmo branco. O canto de 24px é
+ * o da maioria; o cartão que precisa de outro declara o seu. */
+.isr-cartao {
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-2xl);
+}
+
+/* ── CAMPO ───────────────────────────────────────────────────────── */
+/* input e select partilham a mesma casca: preenchimento bege, sem
+ * borda, canto de 12px, texto no teal escuro. */
+.isr-campo {
+  background: var(--color-button-secondary);
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--color-primary-900);
+  font-family: inherit;
+}
+
+/* ── SELO ────────────────────────────────────────────────────────── */
+/* O selo é a pílula pequena que marca estado. A cor vem do dado — o
+ * estágio do lead, a situação da parcela — então só a forma é
+ * compartilhada. */
+.isr-selo {
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
+}
