@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-d",
+  numero: "2026.10.17-e",
   data: "17/10/2026",
-  nota: "As cores das telas passam a vir dos tokens do design system: 2.889 trocas, nenhum pixel alterado"
+  nota: "Os tons de estado adotam os semânticos do design system, que ganhou o terceiro degrau que faltava em cada um. 307 textos ficaram mais legíveis"
 };
