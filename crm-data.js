@@ -5698,6 +5698,13 @@
 
   var syncTimer = null;
   function agendarSync() {
+    // Toda gravação passa por aqui, com banco central ou sem ele. É o
+    // único lugar que já quer dizer "algo mudou", então é daqui que sai
+    // o aviso para as telas abertas se redesenharem. Cinco telas
+    // escutavam "isr-dados" e ninguém o disparava: a Agenda, a Central,
+    // os Clubes, as Turmas e as Matrículas do ciclo ficavam velhas até
+    // alguém recarregar.
+    try { window.dispatchEvent(new CustomEvent("isr-dados")); } catch (e) {}
     if (!backendUrl()) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(enviarSync, 1500); // agrupa edições em sequência

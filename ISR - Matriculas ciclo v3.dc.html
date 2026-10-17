@@ -28,30 +28,6 @@
     </header>
     <p style="margin: 0; font-size: 13px; color: #1d5a63; line-height: 1.6; max-width: 760px;">Cada aluna que entrou no ciclo, de onde veio, para que turma foi e quanto fechou. A meta, o ritmo e o que já está contratado.</p>
 
-    <!-- COMO USAR -->
-    <div style="background: #fff; border-radius: 24px; padding: 16px 20px; margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465;">Como usar esta tela</span>
-        <button onclick="{{ onComoUsar }}" style="border: 0; background: #fff; color: #1d5a63; font-size: 10.5px; font-weight: 600; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ comoUsarLabel }}</button>
-      </div>
-      <sc-if value="{{ comoUsarAberto }}">
-        <div style="margin-top: 12px;">
-          <sc-for list="{{ passos }}" as="pa" hint-placeholder-count="4">
-            <div style="display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #f7f2ea;">
-              <span style="flex: none; width: 22px; height: 22px; border-radius: 50%; background: #164951; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{ pa.n }}</span>
-              <div style="flex: 1;">
-                <div style="font-size: 13px; font-weight: 600; color: #164951;">{{ pa.titulo }}</div>
-                <div style="font-size: 12.5px; color: #1d5a63; line-height: 1.6;">{{ pa.texto }}</div>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-      </sc-if>
-      <sc-if value="{{ comoUsarFechado }}">
-        <p style="margin: 6px 0 0; font-size: 12.5px; color: #1d5a63; line-height: 1.6;">{{ proximoPasso }}</p>
-      </sc-if>
-    </div>
-
     <!-- O CICLO · quando as aulas acontecem -->
     <!-- A agenda gera aula pelo dia da semana escrito no nome da turma.
          É o começo e o fim do ciclo que dizem até quando. Este bloco
@@ -101,134 +77,125 @@
       <p style="margin: 0; font-size: 12.5px; color: #8a7465; line-height: 1.55; max-width: 760px;">A aula particular não tem calendário de escola: cada uma depende da aluna, marcada numa data dentro do contrato dela. Por isso a chamada de aula particular é sempre cobrada, em qualquer semana.</p>
     </sc-if>
 
-    <!-- PLACAR -->
-    <div style="background: #164951; border-radius: 14px; padding: 22px 24px; margin-bottom: 16px;">
-      <div style="display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
-        <span style="font-size: 44px; font-weight: 600; color: #fff; letter-spacing: -1.4px; line-height: 1;">{{ feitas }}</span>
-        <span style="font-size: 17px; font-weight: 600; color: rgba(255,255,255,0.65);">de {{ meta }}</span>
-        <span style="background: {{ pctBg }}; color: {{ pctFg }}; font-size: 12px; font-weight: 600; padding: 5px 13px; border-radius: 999px;">{{ pctLabel }}</span>
-      </div>
-      <div style="font-size: 13px; color: rgba(255,255,255,0.72); margin-bottom: 16px;">{{ cicloLinha }}</div>
-
-      <div style="height: 8px; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden; margin-bottom: 16px;">
-        <div style="height: 100%; width: {{ barraLargura }}; background: {{ barraCor }}; border-radius: 999px;"></div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px;">
-        <sc-for list="{{ placar }}" as="pl" hint-placeholder-count="4">
-          <div>
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: rgba(255,255,255,0.5); margin-bottom: 3px;">{{ pl.label }}</div>
-            <div style="font-size: 17px; font-weight: 600; color: {{ pl.cor }};">{{ pl.valor }}</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">{{ pl.sub }}</div>
-          </div>
-        </sc-for>
-      </div>
+    <!-- OS NÚMEROS · cartões brancos, como no v5 -->
+    <div style="display: flex; flex-wrap: wrap; gap: 14px;">
+      <sc-for list="{{ placar }}" as="pl" hint-placeholder-count="5">
+        <section style="flex: 1 1 160px; min-width: 0; background: #fff; border-radius: 24px; padding: 18px 20px;">
+          <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ pl.label }}</div>
+          <div style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-top: 4px; color: {{ pl.cor }};">{{ pl.valor }}</div>
+          <div style="font-size: 12px; color: #1d5a63; margin-top: 2px;">{{ pl.sub }}</div>
+        </section>
+      </sc-for>
     </div>
 
     <sc-if value="{{ semFim }}">
-      <div style="background: #fdf1ec; border: 1px solid #f3d4c8; border-radius: 18px; padding: 13px 18px; margin-bottom: 16px; font-size: 12.5px; color: #a4483a; line-height: 1.6;">Sem data de fim não há ritmo nem projeção. Defina em Meta do ciclo, abaixo.</div>
+      <div style="background: #fdece9; border-radius: 18px; padding: 13px 18px; font-size: 12.5px; color: #a3392c; line-height: 1.6;">Sem data de fim não há ritmo nem projeção. Defina em Meta do ciclo, abaixo.</div>
     </sc-if>
 
-    <!-- META -->
-    <div style="background: #fff; border-radius: 24px; padding: 18px 20px; margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465;">Meta do ciclo</span>
-        <button onclick="{{ onEditarMeta }}" style="border: 0; background: {{ metaBg }}; color: {{ metaFg }}; font-size: 10.5px; font-weight: 600; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ metaLabel }}</button>
+    <!-- META DO CICLO · a barra com a linha do ritmo esperado -->
+    <section style="background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 800;">Meta do ciclo {{ cicloAtual }}</div>
+        <span style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ cicloLinha }}</span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <span style="font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">{{ feitas }}</span>
+        <span style="font-size: 15px; font-weight: 600; color: #8a7465;">de {{ meta }}</span>
+        <span style="background: {{ pctBg }}; color: {{ pctFg }}; font-size: 12px; font-weight: 600; padding: 5px 13px; border-radius: 999px;">{{ pctLabel }}</span>
+      </div>
+      <div style="height: 14px; background: #f2ebe3; border-radius: 7px; overflow: hidden; position: relative;">
+        <div style="height: 14px; background: {{ barraCor }}; border-radius: 7px; width: {{ barraLargura }};"></div>
+        <sc-if value="{{ temRitmoEsperado }}">
+          <div style="position: absolute; top: -3px; bottom: -3px; width: 3px; background: #164951; left: {{ ritmoEsperado }};"></div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ temRitmoEsperado }}">
+        <div style="font-size: 12px; color: #1d5a63; line-height: 1.55;">A linha escura é onde a escola deveria estar hoje para bater a meta no fim do ciclo.</div>
+      </sc-if>
+      <div style="display: flex; justify-content: flex-end;">
+        <button onclick="{{ onEditarMeta }}" style="border: 0; background: {{ metaBg }}; color: {{ metaFg }}; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ metaLabel }}</button>
       </div>
       <sc-if value="{{ editandoMeta }}">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 9px; margin-top: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Nome do ciclo</div>
-            <input ref="{{ cicloRef }}" placeholder="{{ cicloAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ cicloRef }}" placeholder="{{ cicloAtual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Começa em · {{ cicloIniAtual }}</div>
-            <input ref="{{ inicioRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ inicioRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Termina em · {{ cicloFimAtual }}</div>
-            <input ref="{{ fimRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 7px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ fimRef }}" type="date" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Alunas no ciclo</div>
-            <input ref="{{ metaRef }}" type="number" placeholder="{{ metaAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ metaRef }}" type="number" placeholder="{{ metaAtual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Alunas por mês</div>
-            <input ref="{{ metaMesRef }}" type="number" placeholder="{{ metaMesAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ metaMesRef }}" type="number" placeholder="{{ metaMesAtual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Faturamento R$</div>
-            <input ref="{{ fatRRef }}" placeholder="{{ fatRAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
+            <input ref="{{ fatRRef }}" placeholder="{{ fatRAtual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
           <div><div style="font-size: 9px; text-transform: uppercase; color: #b8ada0; margin-bottom: 3px;">Faturamento €</div>
-            <input ref="{{ fatERef }}" placeholder="{{ fatEAtual }}" style="width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
-          <div style="display: flex; align-items: flex-end;">
-            <button onclick="{{ onSalvarMeta }}" style="width: 100%; border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 12px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar</button>
-          </div>
-          <p style="grid-column: 1 / -1; margin: 2px 0 0; font-size: 10.5px; color: #b3a693; line-height: 1.5;">Campos em branco permanecem como estão. Sem alunas por mês, o sistema divide a meta do ciclo pelos meses dele. Sem data de fim, as aulas das turmas aparecem na agenda semana após semana e a chamada continua sendo cobrada.</p>
+            <input ref="{{ fatERef }}" placeholder="{{ fatEAtual }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" /></div>
         </div>
+        <button onclick="{{ onSalvarMeta }}" style="align-self: flex-start; border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar meta</button>
+        <p style="margin: 0; font-size: 12px; color: #b3a693; line-height: 1.55;">Campos em branco permanecem como estão. Sem alunas por mês, o sistema divide a meta do ciclo pelos meses dele. Sem data de fim, as aulas das turmas aparecem na agenda semana após semana e a chamada continua sendo cobrada.</p>
       </sc-if>
       <sc-if value="{{ metaResumoVisivel }}">
-        <div style="font-size: 12.5px; color: #1d5a63; line-height: 1.7; margin-top: 4px;">{{ metaResumo }}</div>
+        <div style="font-size: 12.5px; color: #1d5a63; line-height: 1.7;">{{ metaResumo }}</div>
       </sc-if>
-    </div>
+    </section>
 
-    <!-- MÊS A MÊS -->
-    <sc-if value="{{ temMeses }}">
-      <div style="background: #fff; border-radius: 24px; padding: 18px 20px; margin-bottom: 16px;">
-        <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465; margin-bottom: 12px;">Mês a mês</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 12px;">
-          <sc-for list="{{ mesesView }}" as="mv" hint-placeholder-count="4">
-            <div style="border-left: 3px solid {{ mv.cor }}; padding-left: 10px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0;">{{ mv.label }}</div>
-              <div style="font-size: 19px; font-weight: 600; color: #164951;">{{ mv.n }}</div>
-              <div style="font-size: 11px; color: {{ mv.corTexto }};">{{ mv.nota }}</div>
-              <div style="font-size: 11px; color: #8a7465; margin-top: 2px;">{{ mv.valor }}</div>
+    <!-- TRÊS CARTÕES DE BARRA · mês a mês, de onde vieram, por nível -->
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
+      <section style="flex: 1 1 300px; min-width: 0; background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 16px; font-weight: 800;">Mês a mês</div>
+        <sc-if value="{{ semMeses }}">
+          <div style="font-size: 12.5px; color: #1d5a63;">Sem meses no ciclo: defina começo e fim.</div>
+        </sc-if>
+        <sc-for list="{{ barrasMeses }}" as="bm" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: minmax(90px, 130px) minmax(0, 1fr) 40px; gap: 10px; align-items: center; font-size: 13px;">
+            <span style="font-weight: 600;">{{ bm.k }}</span>
+            <div style="height: 10px; background: #f2ebe3; border-radius: 5px; overflow: hidden;">
+              <div style="height: 10px; border-radius: 5px; background: {{ bm.cor }}; width: {{ bm.w }};"></div>
             </div>
-          </sc-for>
-        </div>
-      </div>
-    </sc-if>
+            <b style="text-align: right;">{{ bm.v }}</b>
+          </div>
+        </sc-for>
+      </section>
 
-    <!-- DE ONDE VIERAM -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px;">
-      <div style="background: #fff; border-radius: 24px; padding: 18px 20px;">
-        <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465; margin-bottom: 12px;">De onde vieram</div>
+      <section style="flex: 1 1 300px; min-width: 0; background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 16px; font-weight: 800;">De onde vieram</div>
         <sc-if value="{{ semCanais }}">
-          <div style="font-size: 12.5px; color: #b3a693;">Nenhuma matrícula no ciclo ainda.</div>
+          <div style="font-size: 12.5px; color: #1d5a63;">Nenhuma matrícula no ciclo ainda.</div>
         </sc-if>
-        <sc-for list="{{ canais }}" as="cn" hint-placeholder-count="4">
-          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f7f2ea;">
-            <span style="flex: none; width: 26px; font-size: 15px; font-weight: 600; color: #164951;">{{ cn.n }}</span>
-            <span style="flex: 1; min-width: 80px; font-size: 12.5px; color: #164951;">{{ cn.canal }}</span>
-            <span style="flex: none; font-size: 11.5px; color: #8a7465;">{{ cn.valor }}</span>
+        <sc-for list="{{ barrasCanais }}" as="bc" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: minmax(90px, 130px) minmax(0, 1fr) 40px; gap: 10px; align-items: center; font-size: 13px;">
+            <span style="font-weight: 600;">{{ bc.k }}</span>
+            <div style="height: 10px; background: #f2ebe3; border-radius: 5px; overflow: hidden;">
+              <div style="height: 10px; border-radius: 5px; background: {{ bc.cor }}; width: {{ bc.w }};"></div>
+            </div>
+            <b style="text-align: right;">{{ bc.v }}</b>
           </div>
         </sc-for>
-      </div>
+      </section>
 
-      <div style="background: #fff; border-radius: 24px; padding: 18px 20px;">
-        <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465; margin-bottom: 12px;">Por nível</div>
+      <section style="flex: 1 1 300px; min-width: 0; background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 16px; font-weight: 800;">Por nível</div>
         <sc-if value="{{ semNiveis }}">
-          <div style="font-size: 12.5px; color: #b3a693;">Nenhuma matrícula no ciclo ainda.</div>
+          <div style="font-size: 12.5px; color: #1d5a63;">Nenhuma matrícula no ciclo ainda.</div>
         </sc-if>
-        <sc-for list="{{ niveis }}" as="nv" hint-placeholder-count="4">
-          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f7f2ea;">
-            <span style="flex: none; width: 26px; font-size: 15px; font-weight: 600; color: #164951;">{{ nv.n }}</span>
-            <span style="flex: 1; min-width: 80px; font-size: 12.5px; color: #164951;">{{ nv.nivel }}</span>
-            <span style="flex: none; font-size: 11.5px; color: #8a7465;">{{ nv.turmas }}</span>
+        <sc-for list="{{ barrasNiveis }}" as="bn" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: minmax(90px, 130px) minmax(0, 1fr) 40px; gap: 10px; align-items: center; font-size: 13px;">
+            <span style="font-weight: 600;">{{ bn.k }}</span>
+            <div style="height: 10px; background: #f2ebe3; border-radius: 5px; overflow: hidden;">
+              <div style="height: 10px; border-radius: 5px; background: {{ bn.cor }}; width: {{ bn.w }};"></div>
+            </div>
+            <b style="text-align: right;">{{ bn.v }}</b>
           </div>
         </sc-for>
-      </div>
+      </section>
     </div>
 
     <!-- A LISTA -->
     <div style="background: #fff; border-radius: 24px; padding: 18px 20px; margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: #8a7465;">Uma a uma</span>
-        <button onclick="{{ onCopiar }}" style="border: 0; background: #fff; color: #164951; font-size: 10.5px; font-weight: 600; padding: 5px 13px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ copiarLabel }}</button>
-      </div>
+      <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Uma a uma · {{ nLinhas }}</div>
       <sc-if value="{{ semLinhas }}">
         <div style="font-size: 12.5px; color: #b3a693; line-height: 1.6;">Nenhuma aluna matriculada desde {{ inicioLabel }}. As matrículas aparecem aqui assim que o contrato é criado.</div>
-      </sc-if>
-      <sc-if value="{{ temLinhas }}">
-        <div style="background: #faf8f3; border: 1px solid #f0e8dc; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-          <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #8a7465; font-weight: 500; margin-bottom: 3px;">Início das aulas em lote</div>
-          <p style="margin: 0 0 9px; font-size: 11.5px; color: #b3a693; line-height: 1.5;">A turma nova começa toda no mesmo dia. Escolha a data, aplique a todas e ajuste as exceções na coluna da lista. Até esse dia a aluna ocupa vaga na turma e fica fora da chamada.</p>
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <input ref="{{ loteRef }}" type="date" style="padding: 8px 10px; font-size: 12.5px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3;" />
-            <button onclick="{{ onLote }}" style="border: none; background: #164951; color: #fff; box-shadow: 0 3px 0 #0e3339; font-size: 11.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ loteLabel }}</button>
-            <span style="font-size: 11.5px; font-weight: 600; color: {{ loteCor }};">{{ loteNota }}</span>
-          </div>
-        </div>
       </sc-if>
       <sc-if value="{{ temLinhas }}">
         <div style="overflow-x: auto;">
@@ -277,10 +244,8 @@ class Component extends DCLogic {
   // cicloForm: null quando fechado; { tipo, label, inicio, fim } ao
   // editar. Guardar no estado, e não em refs, é o que permite abrir
   // o formulário já preenchido com o que está gravado.
-  state = { editandoMeta: false, copiado: false, comoUsar: null, tick: 0, loteFeito: 0,
-    cicloErro: "", cicloForm: null };
+  state = { editandoMeta: false, tick: 0, cicloErro: "", cicloForm: null };
   cicloRef = React.createRef(); inicioRef = React.createRef(); fimRef = React.createRef();
-  loteRef = React.createRef();
   metaRef = React.createRef(); metaMesRef = React.createRef();
   fatRRef = React.createRef(); fatERef = React.createRef();
 
@@ -294,6 +259,15 @@ class Component extends DCLogic {
 
   dm(d) { return d ? String(d).slice(8, 10) + "/" + String(d).slice(5, 7) : "—"; }
 
+  // uma lista de { k, n, cor } vira as barras do v5: a largura é a
+  // proporção contra o maior do grupo, e zero ainda deixa um traço para
+  // a linha não ficar vazia
+  barras(lista) {
+    const maior = Math.max.apply(null, lista.map(x => x.n).concat([1]));
+    return lista.map(x => ({ k: x.k, v: String(x.n), cor: x.cor,
+      w: Math.max(2, Math.round((x.n / maior) * 100)) + "%" }));
+  }
+
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { feitas: "0", meta: "0", pctLabel: "", pctBg: "#fff", pctFg: "#164951",
@@ -304,15 +278,13 @@ class Component extends DCLogic {
       cicloRef: this.cicloRef, inicioRef: this.inicioRef,
       fimRef: this.fimRef, metaRef: this.metaRef, metaMesRef: this.metaMesRef,
       fatRRef: this.fatRRef, fatERef: this.fatERef, onEditarMeta: () => {}, onSalvarMeta: () => {},
-      temMeses: false, mesesView: [], canais: [], niveis: [], semCanais: true, semNiveis: true,
+      semMeses: true, barrasMeses: [], barrasCanais: [], barrasNiveis: [],
+      semCanais: true, semNiveis: true, nLinhas: "0",
+      temRitmoEsperado: false, ritmoEsperado: "0%",
       linhas: [], colunas: [], semLinhas: true, temLinhas: false, inicioLabel: "",
-      loteRef: this.loteRef, loteLabel: "Aplicar", loteNota: "", loteCor: "#8a7465",
-      onLote: () => {},
-      onCopiar: () => {}, copiarLabel: "Copiar lista",
+
       veCiclo: false, ciclos: [], cicloErro: "", cfLabel: "", cfInicio: "", cfFim: "",
-      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {}, onGravarCiclo: () => {},
-      comoUsarAberto: false, comoUsarFechado: true, comoUsarLabel: "ver",
-      onComoUsar: () => {}, passos: [], proximoPasso: "" };
+      onCfLabel: () => {}, onCfInicio: () => {}, onCfFim: () => {}, onGravarCiclo: () => {} };
 
     const d = CRM.matriculasDoCiclo();
     const M = CRM.metasAtuais();
@@ -325,34 +297,37 @@ class Component extends DCLogic {
       return p.length ? p.join(" · ") : "—";
     };
 
-    // Quantas das matrículas deste ciclo já contam na chamada de hoje. No
-    // período de matrículas isso costuma ser um erro a corrigir: a aluna do
-    // ciclo novo levava falta de aula que ainda não começou.
     const hj = new Date();
     const hojeIso = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0")
       + "-" + String(hj.getDate()).padStart(2, "0");
-    const naChamadaHoje = d.linhas.filter(l => !l.inicioAulas || l.inicioAulas <= hojeIso).length;
 
     const pct = d.pct === null ? 0 : d.pct;
     const noRitmo = d.projecao === null ? null : d.projecao >= d.meta;
+
+    // ── a linha do ritmo esperado ──
+    // No v5 a barra tem uma marca escura: onde a escola estaria hoje se
+    // as matrículas entrassem no mesmo passo do ciclo inteiro. Sem ela a
+    // barra diz quanto falta, mas não se está atrasada.
+    const totalDias = d.diasRestantes === null ? null : d.diasCorridos + d.diasRestantes;
+    const fracao = totalDias ? Math.min(1, d.diasCorridos / totalDias) : null;
 
     // ── o placar ──
     const placar = [
       { label: "Faltam", valor: String(d.faltam),
         sub: d.diasRestantes === null ? "sem data de fim"
           : d.diasRestantes + (d.diasRestantes === 1 ? " dia restante" : " dias restantes"),
-        cor: "#fff" },
+        cor: "#164951" },
       { label: "Ritmo atual", valor: d.porSemana + (d.porSemana === 1 ? " por semana" : " por semana"),
-        sub: d.feitas + " em " + d.diasCorridos + " dias", cor: "#fff" },
+        sub: d.feitas + " em " + d.diasCorridos + " dias", cor: "#164951" },
       { label: "Ritmo necessário",
         valor: d.precisaPorSemana === null ? "—" : d.precisaPorSemana + " por semana",
         sub: d.precisaPorSemana === null ? "defina o fim do ciclo"
           : (d.precisaPorSemana > d.porSemana ? "acima do ritmo de hoje" : "dentro do ritmo de hoje"),
-        cor: d.precisaPorSemana !== null && d.precisaPorSemana > d.porSemana ? "#f4a099" : "#9ec970" },
+        cor: d.precisaPorSemana !== null && d.precisaPorSemana > d.porSemana ? "#a3392c" : "#4f8c42" },
       { label: "Contratado até aqui", valor: duas(d.contratado),
-        sub: "meta " + duas(d.metaFaturamento), cor: "#fff" },
+        sub: "meta " + duas(d.metaFaturamento), cor: "#164951" },
       { label: "Mensalidade somada", valor: duas(d.mensalidades),
-        sub: "por mês, das alunas do ciclo", cor: "#fff" }
+        sub: "por mês, das alunas do ciclo", cor: "#164951" }
     ];
 
     // ── canal: cor estável por nome, para a etiqueta não trocar de cor ──
@@ -379,7 +354,6 @@ class Component extends DCLogic {
     // passo fica aberto sozinho até a configuração estar de pé, e depois
     // recolhe para não ocupar espaço todo dia.
     const precisaConfigurar = !d.meta || d.semFim;
-    const comoUsarAberto = this.state.comoUsar === null ? precisaConfigurar : this.state.comoUsar;
 
     // quem cuida da escola é quem mexe no calendário
     const userMC = (CRM.gestaoVisao ? CRM.gestaoVisao() : (CRM.gestaoUser ? CRM.gestaoUser() : {})) || {};
@@ -480,32 +454,10 @@ class Component extends DCLogic {
         this.setState({ cicloErro: "", cicloForm: null });
         this.bump();
       },
-      comoUsarAberto, comoUsarFechado: !comoUsarAberto,
-      comoUsarLabel: comoUsarAberto ? "fechar" : "ver",
-      onComoUsar: () => this.setState({ comoUsar: !comoUsarAberto }),
-      passos: [
-        { n: "1", titulo: "Defina a meta do ciclo",
-          texto: "Nome, começo, fim e quantas alunas. Sem a data de fim não há ritmo nem projeção." },
-        { n: "2", titulo: "Registre as matrículas",
-          texto: "Em CRM · Importar · Matrículas do Slack, cole as mensagens do canal #admin. A aluna nasce com contrato, turma, parcelas e sinal." },
-        { n: "3", titulo: "Acompanhe o ritmo necessário",
-          texto: "Vermelho no placar: o ritmo atual não chega na meta até o fim do ciclo." },
-        { n: "4", titulo: "Decida pelo canal",
-          texto: "Em De onde vieram está quanto cada origem trouxe em contrato — inclusive o tráfego pago." }
-      ],
-      proximoPasso: precisaConfigurar
-        ? "Defina a meta do ciclo abaixo."
-        : (!d.faltam
-          ? "Meta alcançada."
-          : "Faltam " + d.faltam + (d.faltam === 1 ? " aluna" : " alunas")
-            + (d.precisaPorSemana === null ? "."
-              : (d.precisaPorSemana > d.porSemana
-                ? " · ritmo necessário " + d.precisaPorSemana + " por semana, atual " + d.porSemana
-                : " · ritmo atual suficiente"))),
       feitas: String(d.feitas), meta: String(d.meta),
       pctLabel: d.pct === null ? "sem meta" : d.pct + "%",
-      pctBg: pct >= 100 ? "rgba(158,201,112,0.22)" : "rgba(255,255,255,0.12)",
-      pctFg: pct >= 100 ? "#9ec970" : "rgba(255,255,255,0.8)",
+      pctBg: pct >= 100 ? "#e8f3dd" : "#f2ebe3",
+      pctFg: pct >= 100 ? "#4f8c42" : "#1d5a63",
       cicloLinha: "Ciclo " + (d.ciclo || "—") + " · de " + this.dm(d.inicio)
         + (d.fim ? " a " + this.dm(d.fim) : " (sem data de fim)"),
       barraLargura: Math.min(100, pct) + "%",
@@ -554,27 +506,23 @@ class Component extends DCLogic {
         this.bump();
       },
 
-      // ── mês a mês ──
-      temMeses: d.porMes.length > 0,
-      mesesView: d.porMes.map(m => ({
-        label: m.label, n: String(m.n),
-        nota: m.meta ? (m.bateu ? "meta de " + m.meta + " batida" : m.meta - m.n + " para a meta") : "sem meta mensal",
-        cor: m.meta ? (m.bateu ? "#9ec970" : "#d4a574") : "#e0dcd6",
-        corTexto: m.meta ? (m.bateu ? "#4f8c42" : "#a4783a") : "#b3a693",
-        valor: duas(m.valor)
-      })),
-
-      // ── cortes ──
+      // ── os três cortes, em barra ──
+      // A barra mede contra o maior do próprio corte: o que se compara
+      // aqui é um mês com os outros meses, não com a meta.
+      temRitmoEsperado: fracao !== null,
+      ritmoEsperado: fracao === null ? "0%" : Math.round(fracao * 100) + "%",
+      semMeses: d.porMes.length === 0,
+      barrasMeses: this.barras(d.porMes.map(m => ({
+        k: m.label, n: m.n,
+        cor: m.meta ? (m.bateu ? "#4f8c42" : "#d4a574") : "#7fb8be"
+      }))),
       semCanais: d.porCanal.length === 0,
-      canais: d.porCanal.map(c => ({ canal: c.canal, n: String(c.n), valor: duas(c.valor) })),
+      barrasCanais: this.barras(d.porCanal.map(c => ({ k: c.canal, n: c.n, cor: "#348a8e" }))),
       semNiveis: d.porNivel.length === 0,
-      niveis: d.porNivel.map(n => {
-        const t = Object.keys(turmasPorNivel[n.nivel] || {}).length;
-        return { nivel: n.nivel, n: String(n.n),
-          turmas: t + (t === 1 ? " turma" : " turmas") };
-      }),
+      barrasNiveis: this.barras(d.porNivel.map(n => ({ k: n.nivel, n: n.n, cor: "#6b5b95" }))),
 
       // ── a lista ──
+      nLinhas: String(d.linhas.length),
       inicioLabel: this.dm(d.inicio),
       semLinhas: d.linhas.length === 0,
       temLinhas: d.linhas.length > 0,
@@ -612,39 +560,6 @@ class Component extends DCLogic {
       }),
 
       // ── início das aulas em lote ──
-      loteRef: this.loteRef,
-      loteLabel: "Aplicar às " + d.linhas.length
-        + (d.linhas.length === 1 ? " matrícula" : " matrículas"),
-      loteNota: this.state.loteFeito
-        ? "Gravado em " + this.state.loteFeito
-          + (this.state.loteFeito === 1 ? " matrícula" : " matrículas")
-        : (naChamadaHoje
-            ? naChamadaHoje + (naChamadaHoje === 1 ? " já entra" : " já entram") + " na chamada de hoje"
-            : "Nenhuma entra na chamada de hoje"),
-      loteCor: this.state.loteFeito ? "#4f8c42" : (naChamadaHoje ? "#c8622f" : "#8a7465"),
-      onLote: () => {
-        const v = (this.loteRef.current && this.loteRef.current.value) || "";
-        if (!v) return;
-        const n = CRM.setInicioDasAulasEmLote(d.linhas.map(l => l.id), v);
-        this.setState({ loteFeito: n });
-        setTimeout(() => this.setState({ loteFeito: 0 }), 6000);
-      },
-      copiarLabel: this.state.copiado ? "Copiado" : "Copiar lista",
-      onCopiar: () => {
-        const txt = ["Fechou\tAluna\tVeio de\tNível\tTurma\tAulas desde\tPacote\tMensalidade\tParcelas"]
-          .concat(d.linhas.map(l => [this.dm(l.desde), l.nome, l.canal, l.nivel || "", l.turma, this.dm(l.inicioAulas),
-            l.pacote ? $(l.moeda, l.pacote) : "", l.mensalidade ? $(l.moeda, l.mensalidade) : "",
-            l.parcelas || ""].join("\t"))).join("\n");
-        try { navigator.clipboard.writeText(txt); } catch (e) {
-          try {
-            const t = document.createElement("textarea");
-            t.value = txt; document.body.appendChild(t); t.select();
-            document.execCommand("copy"); t.remove();
-          } catch (e2) {}
-        }
-        this.setState({ copiado: true });
-        setTimeout(() => this.setState({ copiado: false }), 3000);
-      }
     };
   }
 }

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.16-x",
-  data: "16/10/2026",
-  nota: "Pessoa sai do texto das telas: quem estuda é aluna, quem ainda não fechou é lead"
+  numero: "2026.10.17-a",
+  data: "17/10/2026",
+  nota: "Matrículas do ciclo pelo v5, com a linha do ritmo esperado na barra. E cinco telas voltam a se atualizar sozinhas quando o dado muda"
 };
