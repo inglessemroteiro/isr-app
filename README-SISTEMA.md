@@ -787,9 +787,65 @@ não deve absorvê-las.
 escuro e tem paleta própria; `var(--color-…)` ali resolveria para
 nada. Entram quando o design system tiver os tokens do tema escuro.
 
-**Ainda por fazer:** as 138 cores sem token (passo 2) e a troca de
-botão, cartão, etiqueta e campo pelos componentes do design system
-(passo 3).
+**Passo 2, feito: 1.582 trocas, e cinco tokens novos no design
+system.** As 138 cores que sobravam entraram — menos oito.
+
+A decisão da escola foi que **o design system ganha**: os tons de
+estado das telas adotam os semânticos dele, não o contrário. Mas isso
+não pôde ser literal, porque a camada semântica estava incompleta:
+
+| texto sobre o fundo do estado | razão | mínimo |
+|---|---|---|
+| `error` sobre `error-light` | 4,20:1 | 4,5:1 |
+| `success` sobre `success-light` | 4,31:1 | 4,5:1 |
+| `warning` sobre `warning-light` | 2,35:1 | 4,5:1 |
+| `info` sobre `info-light` | 3,28:1 | 4,5:1 |
+
+Nenhum dos quatro passava. **Cada estado tem três degraus, não dois:**
+a cor do estado (ícone, borda, barra), o `-light` (o fundo do aviso) e
+o `-dark` (o texto escrito sobre esse fundo). Era por isso que havia
+tom escuro inventado em cada estado.
+
+Então entraram no design system cinco tokens, todos derivados das
+cores que já estavam lá: `--color-error-dark`, `--color-success-dark`,
+`--color-warning-dark`, `--color-info-dark` — cada um é a própria cor
+do estado escurecida até passar 4,5:1, e nada mais — e
+`--color-primary-950`, o degrau abaixo do 900, que é a sombra do botão
+escuro. Sem ele a sombra fica da cor do botão e o botão perde o
+relevo.
+
+**A rota não é distância de cor.** Mapear pelo tom mais próximo é o
+que transforma fundo de erro em bege e sombra de botão em botão. A
+regra é o papel: cor a menos de 3 ΔE de um token é o mesmo tom escrito
+errado e vai para ele; o resto vai pela família de matiz e pelo degrau
+de claridade. Marrom e vermelho são os dois quentes, e o que os separa
+é a saturação — `#9c6f56` é texto marrom, `#a3392c` é erro.
+
+**Oito cores ficaram em hexadecimal, de propósito: o roxo.** A paleta
+não tem roxo nenhum, e é com ele que o CRM e a Agenda marcam conversa
+e reunião. Mapear no cinza apagaria a distinção; mapear no teal daria
+a reunião a cor de todo o resto. Cor que falta na paleta é trabalho do
+design system, não chute de quem escreve a tela.
+
+### Medir antes de mexer em cor
+
+Duas ferramentas ficaram no repositório, porque é o que torna esse
+tipo de mudança segura:
+
+- **`verificar-cores.js`** fotografa a cor computada de cada elemento
+  de cada tela e compara duas fotos. No passo 1 provou que nada mudou;
+  no passo 2 mediu quanto mudou: **1.079 de 5.230 elementos, 20,6%**;
+- **`verificar-contraste.js`** mede o contraste de cada texto contra o
+  fundo em que ele está de verdade — subindo na árvore até achar o
+  fundo que vale, como o olho faz — e aponta só o que **piorou**.
+
+O passo 2 fechou em **307 textos melhores, 1.490 iguais, zero
+piores**. Os quatro que a primeira medição pegou eram o mesmo caso: a
+cor do estado usada como texto sobre o fundo do estado. Foram para o
+`-dark`.
+
+**Ainda por fazer:** a troca de botão, cartão, etiqueta e campo pelos
+componentes do design system (passo 3).
 
 ### A Área da Aluna no desenho novo
 

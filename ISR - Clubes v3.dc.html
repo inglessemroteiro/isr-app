@@ -26,7 +26,7 @@
         <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">clubes · encontros de conversa por tema</div>
         <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Clubes</h1>
       </div>
-      <button onclick="{{ onNovo }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ novoBotao }}</button>
+      <button onclick="{{ onNovo }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ novoBotao }}</button>
     </header>
 
     <!-- NÚMEROS -->
@@ -104,8 +104,8 @@
 
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px;">
           <button onclick="{{ onGravarRascunho }}" style="border: 0; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Salvar rascunho</button>
-          <button onclick="{{ onPublicar }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 #0e3339; font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Publicar para as alunas</button>
-          <span style="font-size: 12.5px; font-weight: 600; color: #a3392c;">{{ formErro }}</span>
+          <button onclick="{{ onPublicar }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;">Publicar para as alunas</button>
+          <span style="font-size: 12.5px; font-weight: 600; color: var(--color-error);">{{ formErro }}</span>
         </div>
         <p style="margin: 10px 0 0; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">Rascunho fica só para a equipe. Publicado, o clube aparece para as alunas e pode receber inscrição.</p>
       </section>
@@ -116,16 +116,16 @@
          aluna paga. Quem está participando sem ter pago aparece aqui,
          porque dinheiro que não é cobrado some sem ninguém notar. -->
     <sc-if value="{{ temPendentes }}">
-      <section style="background: #fdf3d6; border-radius: 24px; padding: 18px 22px;">
-        <div style="font-size: 16px; font-weight: 600; color: #7a5c00;">Pagamentos pendentes · {{ pendentesN }}</div>
-        <p style="margin: 4px 0 8px; font-size: 13px; color: #5c4400; line-height: 1.5;">{{ pendentesTexto }}</p>
+      <section style="background: var(--color-warning-light); border-radius: 24px; padding: 18px 22px;">
+        <div style="font-size: 16px; font-weight: 600; color: var(--color-warning-dark);">Pagamentos pendentes · {{ pendentesN }}</div>
+        <p style="margin: 4px 0 8px; font-size: 13px; color: var(--color-warning-dark); line-height: 1.5;">{{ pendentesTexto }}</p>
         <sc-for list="{{ pendentes }}" as="pd" hint-placeholder-count="2">
-          <div style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #f2e2b0; flex-wrap: wrap;">
+          <div style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--color-warning-light); flex-wrap: wrap;">
             <div style="flex: 1; min-width: 180px;">
               <a href="{{ pd.href }}" class="lk" style="font-size: 14.5px; font-weight: 600; color: var(--color-primary-900);">{{ pd.nome }}</a>
-              <div style="font-size: 12.5px; color: #5c4400; margin-top: 2px;">{{ pd.detalhe }}</div>
+              <div style="font-size: 12.5px; color: var(--color-warning-dark); margin-top: 2px;">{{ pd.detalhe }}</div>
             </div>
-            <span onclick="{{ pd.onPago }}" style="background: var(--color-neutral-0); border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: #7a5c00; cursor: pointer;">Marcar como pago</span>
+            <span onclick="{{ pd.onPago }}" style="background: var(--color-neutral-0); border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: var(--color-warning-dark); cursor: pointer;">Marcar como pago</span>
           </div>
         </sc-for>
       </section>
@@ -188,7 +188,7 @@
               <div style="margin-top: 10px; font-size: 13px; color: var(--color-primary-800);"><strong style="color: var(--color-primary-900);">Lista de espera:</strong> {{ cl.espera }}</div>
             </sc-if>
             <sc-if value="{{ cl.aviso }}">
-              <div style="margin-top: 10px; font-size: 13px; font-weight: 600; color: #3d6b22;">{{ cl.aviso }}</div>
+              <div style="margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--color-success-dark);">{{ cl.aviso }}</div>
             </sc-if>
           </sc-if>
         </section>
@@ -321,8 +321,8 @@ class Component extends DCLogic {
 
     const PLANO = {
       incluido: ["no plano", "var(--color-primary-50)", "var(--color-primary-900)"],
-      pago: ["3º clube · pago", "var(--color-secondary-100)", "#3d6b22"],
-      pendente: ["3º clube · a pagar", "#fdf3d6", "#7a5c00"]
+      pago: ["3º clube · pago", "var(--color-secondary-100)", "var(--color-success-dark)"],
+      pendente: ["3º clube · a pagar", "var(--color-warning-light)", "var(--color-warning-dark)"]
     };
 
     const f = this.state.form;
@@ -338,8 +338,8 @@ class Component extends DCLogic {
       numeros: [
         { valor: String(resumo.publicados), label: resumo.publicados === 1 ? "clube no ar" : "clubes no ar", cor: "var(--color-primary-900)" },
         { valor: String(resumo.alunas), label: resumo.alunas === 1 ? "aluna em clube" : "alunas em clube", cor: "var(--color-primary-900)" },
-        { valor: String(resumo.vagas), label: resumo.vagas === 1 ? "vaga aberta" : "vagas abertas", cor: resumo.vagas ? "#3d6b22" : "var(--color-tertiary-500)" },
-        { valor: String(resumo.pendentes.length), label: "a pagar", cor: resumo.pendentes.length ? "#a3392c" : "#3d6b22" }
+        { valor: String(resumo.vagas), label: resumo.vagas === 1 ? "vaga aberta" : "vagas abertas", cor: resumo.vagas ? "var(--color-success-dark)" : "var(--color-tertiary-500)" },
+        { valor: String(resumo.pendentes.length), label: "a pagar", cor: resumo.pendentes.length ? "var(--color-error)" : "var(--color-success-dark)" }
       ],
 
       novoBotao: f ? "fechar" : "+ novo clube",
@@ -394,12 +394,12 @@ class Component extends DCLogic {
           nome: c.nome,
           statusLabel: c.status === "publicado" ? "no ar" : "rascunho",
           statusBg: c.status === "publicado" ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
-          statusFg: c.status === "publicado" ? "#3d6b22" : "var(--color-tertiary-500)",
+          statusFg: c.status === "publicado" ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
           linha: [c.professora, c.dia + (c.hora ? " " + c.hora : ""), c.duracao,
                   c.formato === "presencial" ? (c.local || "presencial") : "online"]
             .filter(x => x && String(x).trim()).join(" · "),
           lotacao: c.vagas ? c.membros.length + " de " + c.vagas : String(c.membros.length),
-          lotacaoCor: livres === 0 ? "#a3392c" : "var(--color-primary-900)",
+          lotacaoCor: livres === 0 ? "var(--color-error)" : "var(--color-primary-900)",
           esperaLabel: livres === 0 ? "lotado" : (livres === null ? "sem limite" : livres + (livres === 1 ? " vaga" : " vagas")),
           abrirLabel: aberto ? "fechar" : "ver quem está",
           onAbrir: () => this.setState(s => ({ aberto: s.aberto === c.id ? "" : c.id })),

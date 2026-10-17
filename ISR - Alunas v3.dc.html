@@ -33,15 +33,15 @@
 
   <!-- REGISTROS DUPLICADOS -->
   <sc-if value="{{ temDuplicadas }}">
-    <section style="background: #fdece9; border-radius: 24px; padding: 18px 22px;">
+    <section style="background: var(--color-error-light); border-radius: 24px; padding: 18px 22px;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <div style="font-size: 16px; font-weight: 600; color: #a3392c;">Registros duplicados · {{ duplicadasContagem }}</div>
-        <button onclick="{{ onMesclarTodos }}" style="border: 1px solid {{ todosBorda }}; background: {{ todosBg }}; color: #a3392c; font-size: 12px; font-weight: 600; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ todosLabel }}</button>
+        <div style="font-size: 16px; font-weight: 600; color: var(--color-error-dark);">Registros duplicados · {{ duplicadasContagem }}</div>
+        <button onclick="{{ onMesclarTodos }}" style="border: 1px solid {{ todosBorda }}; background: {{ todosBg }}; color: var(--color-error-dark); font-size: 12px; font-weight: 600; padding: 9px 15px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ todosLabel }}</button>
       </div>
       <p style="margin: 6px 0 4px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">Dois registros da mesma aluna, criados em aparelhos diferentes antes de conectar. Mesclar transfere contrato, histórico, presenças e miles para o registro mais completo e remove a cópia em todos os aparelhos.</p>
       <sc-for list="{{ duplicadas }}" as="dp" hint-placeholder-count="3">
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid #f3d9d3;">
-          <span style="font-size: 13px; color: var(--color-primary-900); flex: 1; min-width: 220px; line-height: 1.5;"><b>{{ dp.manterNome }}</b> <span style="color: var(--color-tertiary-500);">{{ dp.manterDetalhe }}</span><br><span style="color: #b09a89;">cópia: {{ dp.apagarNome }} {{ dp.apagarDetalhe }} · {{ dp.motivo }}</span></span>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-error-light);">
+          <span style="font-size: 13px; color: var(--color-primary-900); flex: 1; min-width: 220px; line-height: 1.5;"><b>{{ dp.manterNome }}</b> <span style="color: var(--color-tertiary-500);">{{ dp.manterDetalhe }}</span><br><span style="color: var(--color-tertiary-300);">cópia: {{ dp.apagarNome }} {{ dp.apagarDetalhe }} · {{ dp.motivo }}</span></span>
           <button onclick="{{ dp.onMesclar }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit;">{{ dp.label }}</button>
         </div>
       </sc-for>
@@ -69,7 +69,7 @@
       <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">Filtre a turma acima, escolha a data e aplique. Cada aluna aparece na chamada a partir do dia dela; as exceções se corrigem no campo de cada uma.</p>
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <input ref="{{ loteRef }}" type="date" style="background: var(--color-button-secondary); border: 0; border-radius: 12px; padding: 11px 14px; font-size: 13px; font-family: inherit; color: var(--color-primary-900);" />
-        <button onclick="{{ onLote }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12.5px; font-weight: 600; padding: 12px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 #0e3339;">{{ loteLabel }}</button>
+        <button onclick="{{ onLote }}" style="border: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12.5px; font-weight: 600; padding: 12px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 var(--color-primary-950);">{{ loteLabel }}</button>
         <span style="font-size: 12.5px; font-weight: 600; color: {{ loteCor }};">{{ loteNota }}</span>
       </div>
     </section>
@@ -86,7 +86,7 @@
         <span style="flex: none; border-radius: 999px; padding: 4px 11px; font-size: 11px; font-weight: 600; background: {{ p.stBg }}; color: {{ p.stFg }};">{{ p.stLabel }}</span>
         <span style="flex: 1; min-width: 180px; font-size: 13.5px; color: var(--color-primary-800);">{{ p.ctx }}</span>
         <sc-if value="{{ p.temRisco }}">
-          <span style="flex: none; font-size: 12px; font-weight: 600; color: #a3392c;">⚠︎ {{ p.risco }}</span>
+          <span style="flex: none; font-size: 12px; font-weight: 600; color: var(--color-error);">⚠︎ {{ p.risco }}</span>
         </sc-if>
         <sc-if value="{{ p.temInicio }}">
           <!-- o par do lote: é aqui que a exceção se corrige -->
@@ -133,7 +133,7 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { filtros: [], turmaOpts: [], pessoas: [], vazio: true,
       contagem: "", temAlunas: false, loteRef: this.loteRef,
-      loteLabel: "Aplicar", loteNota: "", loteCor: "#8a7c6b", onLote: () => {} };
+      loteLabel: "Aplicar", loteNota: "", loteCor: "var(--color-tertiary-500)", onLote: () => {} };
 
     const todas = CRM.alunasPainel();
 
@@ -189,10 +189,10 @@ class Component extends DCLogic {
 
     // ── cada pessoa: nome, situação, contexto e o risco ──
     const ST = {
-      aluna: ["aluna", "var(--color-secondary-100)", "#3d6b22"],
-      mvs: ["MVS", "var(--color-secondary-100)", "#3d6b22"],
+      aluna: ["aluna", "var(--color-secondary-100)", "var(--color-success-dark)"],
+      mvs: ["MVS", "var(--color-secondary-100)", "var(--color-success-dark)"],
       lead: ["lead", "var(--color-primary-50)", "var(--color-primary-800)"],
-      pausada: ["pausada", "#fdf3d6", "#7a5c00"],
+      pausada: ["pausada", "var(--color-warning-light)", "var(--color-warning-dark)"],
       programa: ["desafio", "var(--color-primary-50)", "var(--color-primary-800)"],
       "ex-aluna": ["ex-aluna", "var(--color-tertiary-50)", "var(--color-tertiary-500)"]
     };
@@ -219,7 +219,7 @@ class Component extends DCLogic {
         inicioIso: p.desde || "",
         inicioNota: !p.desde ? "sem data · já na chamada"
           : (p.desde > hojeIso ? "entra na chamada em " + CRM.ddmm(p.desde) : "já na chamada"),
-        inicioCor: !p.desde || p.desde <= hojeIso ? "#b3a693" : "#4f8c42",
+        inicioCor: !p.desde || p.desde <= hojeIso ? "var(--color-tertiary-300)" : "var(--color-success)",
         onInicio: e => {
           const v = e.target.value;
           if (v) CRM.setInicioDasAulas(p.id, v);
@@ -262,7 +262,7 @@ class Component extends DCLogic {
       duplicadas,
       todosLabel: confirmandoTodos
         ? "Confirmar mesclagem dos " + duplicadas.length + " pares" : "Mesclar todos",
-      todosBorda: confirmandoTodos ? "#cf6b5c" : "#f3c4bb",
+      todosBorda: confirmandoTodos ? "var(--color-error)" : "var(--color-error-light)",
       todosBg: confirmandoTodos ? "var(--color-neutral-0)" : "transparent",
       onMesclarTodos: () => {
         if (!confirmandoTodos) { this.setState({ confirmandoMescla: "__todos__" }); return; }
@@ -289,7 +289,7 @@ class Component extends DCLogic {
               ? fut + (fut === 1 ? " começa" : " começam") + " depois de hoje"
               : "Todas já entram na chamada";
           })(),
-      loteCor: this.state.loteFeito ? "#4f8c42" : "#8a7c6b",
+      loteCor: this.state.loteFeito ? "var(--color-success)" : "var(--color-tertiary-500)",
       onLote: () => {
         const v = (this.loteRef.current && this.loteRef.current.value) || "";
         if (!v) return;

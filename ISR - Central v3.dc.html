@@ -68,7 +68,7 @@
                    não há quanto tempo: um follow-up de hoje e um de
                    duas semanas tinham a mesma cara, e é o antigo que
                    custa caro. -->
-              <span title="{{ q.regraTitulo }}" style="font-size: 11px; font-weight: 600; color: #b3a693;">{{ q.regra }}</span>
+              <span title="{{ q.regraTitulo }}" style="font-size: 11px; font-weight: 600; color: var(--color-tertiary-300);">{{ q.regra }}</span>
               <span style="font-size: 11px; font-weight: 700; color: {{ q.idadeCor }};">{{ q.idade }}</span>
             </div>
             <div style="font-size: 14px; color: var(--color-primary-800); margin-top: 2px;">{{ q.motivo }}</div>
@@ -76,10 +76,10 @@
           <div style="display: flex; gap: 12px; align-items: center;">
             <span onclick="{{ q.onAdiar }}" style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); cursor: pointer;">adiar</span>
             <sc-if value="{{ q.temFeito }}">
-              <span onclick="{{ q.onFeito }}" style="font-size: 12px; font-weight: 600; color: #3d6b22; cursor: pointer;">feito</span>
+              <span onclick="{{ q.onFeito }}" style="font-size: 12px; font-weight: 600; color: var(--color-success-dark); cursor: pointer;">feito</span>
             </sc-if>
             <sc-if value="{{ q.temAcao }}">
-              <a href="{{ q.acaoHref }}" style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 999px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 3px 0 #0e3339;">{{ q.acao }}</a>
+              <a href="{{ q.acaoHref }}" style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 999px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 3px 0 var(--color-primary-950);">{{ q.acao }}</a>
             </sc-if>
           </div>
         </div>
@@ -208,13 +208,13 @@ class Component extends DCLogic {
     // A mesma de sempre: filaParaHoje devolve o que cada regra acendeu.
     // Aqui ela ganha o ícone e o tom de fundo do desenho novo.
     const TOM = {
-      parcela_atrasada: ["#fde4df", "€"], parcela_a_vencer: ["#fdf3d6", "€"],
-      cobranca_falhou: ["#fde4df", "€"], falta_recente: ["#fdf3d6", "◷"],
+      parcela_atrasada: ["var(--color-error-light)", "€"], parcela_a_vencer: ["var(--color-warning-light)", "€"],
+      cobranca_falhou: ["var(--color-error-light)", "€"], falta_recente: ["var(--color-warning-light)", "◷"],
       checkin_agendado: ["var(--color-primary-50)", "○"], onboarding_pendente: ["var(--color-secondary-100)", "✓"],
-      onboarding_travado: ["#fde4df", "✓"], renovacao_aberta: ["var(--color-tertiary-50)", "↻"],
-      avaliacao_baixa: ["#fde4df", "☆"], sem_contato: ["var(--color-primary-50)", "✉︎"],
+      onboarding_travado: ["var(--color-error-light)", "✓"], renovacao_aberta: ["var(--color-tertiary-50)", "↻"],
+      avaliacao_baixa: ["var(--color-error-light)", "☆"], sem_contato: ["var(--color-primary-50)", "✉︎"],
       followup_lead: ["var(--color-primary-50)", "◎"], folha_dia15: ["var(--color-tertiary-50)", "≡"],
-      reativar: ["var(--color-tertiary-50)", "↺"], chamada_pendente: ["#fdf3d6", "✎"]
+      reativar: ["var(--color-tertiary-50)", "↺"], chamada_pendente: ["var(--color-warning-light)", "✎"]
     };
     // Quem cuida da escola escolhe de quem é a fila, e abre na dela.
     // Antes do porte era assim; a Central nova mostrava tudo de todo
@@ -245,7 +245,7 @@ class Component extends DCLogic {
         dono: perfil === "gestora" && item.dono ? item.dono : "",
         regra: item.regra || "", regraTitulo: "regra " + (item.regra || ""),
         idade: id.label,
-        idadeCor: id.velho ? "#a3392c" : "var(--color-tertiary-500)",
+        idadeCor: id.velho ? "var(--color-error)" : "var(--color-tertiary-500)",
         tint: tom[0], icone: tom[1],
         nomeCor: ehPessoa ? "var(--color-primary-500)" : "var(--color-primary-900)",
         temPerfil: !!ehPessoa, semPerfil: !ehPessoa,
@@ -339,7 +339,7 @@ class Component extends DCLogic {
                 { label: "Matrículas do ciclo", href: "ISR%20-%20Matriculas%20ciclo%20v3.dc.html" }] },
       { titulo: "Gestão", faixa: "var(--color-primary-300)", perfis: ["gestora", "operacao", "comercial"],
         linhas: [
-          { k: "parcelas atrasadas", v: String(cob.atrasadas || 0), cor: cob.atrasadas ? "#a3392c" : "#3d6b22" },
+          { k: "parcelas atrasadas", v: String(cob.atrasadas || 0), cor: cob.atrasadas ? "var(--color-error)" : "var(--color-success-dark)" },
           { k: "a receber neste mês", v: duas(cob.receber), cor: "var(--color-primary-900)" }
         ],
         links: [{ label: "Contas a receber", href: "ISR%20-%20Cobran%C3%A7a%20v3.dc.html" }]
@@ -348,7 +348,7 @@ class Component extends DCLogic {
       { titulo: "Pedagógico", faixa: "var(--color-secondary-500)", perfis: ["gestora", "operacao"],
         linhas: [
           { k: "vagas abertas", v: String(vagas), cor: "var(--color-primary-900)" },
-          { k: "alunas em risco", v: String(emRisco), cor: emRisco ? "#a3392c" : "#3d6b22" }
+          { k: "alunas em risco", v: String(emRisco), cor: emRisco ? "var(--color-error)" : "var(--color-success-dark)" }
         ],
         links: [{ label: "Turmas", href: "ISR%20-%20Turmas%20v3.dc.html" },
                 { label: "Painel do professor", href: "ISR%20-%20Painel%20v3.dc.html" }] },
