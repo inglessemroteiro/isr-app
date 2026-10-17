@@ -116,12 +116,10 @@
       </sc-if>
     </div>
 
-    <!-- ABAS PARCELAS | RENOVAÇÕES + FILTROS (estilo tab) -->
-    <div style="display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 0 6px;">
+    <!-- FILTROS · chips com a contagem, como no v5 -->
+    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
       <sc-for list="{{ abasTabs }}" as="tab" hint-placeholder-count="8">
-        <button onclick="{{ tab.onClick }}" style="font-family: inherit; flex: none; border: 1px solid {{ tab.border }}; border-bottom: none; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }}; font-size: 12.5px; font-weight: {{ tab.weight }}; padding: 10px 16px 9px; border-radius: 12px 10px 0 0; display: flex; align-items: center; gap: 6px; margin-left: {{ tab.ml }};">
-          <span>{{ tab.label }}</span><span style="color: {{ tab.countFg }}; font-weight: 600;">· {{ tab.count }}</span>
-        </button>
+        <button onclick="{{ tab.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: {{ tab.bg }}; color: {{ tab.fg }};">{{ tab.label }} · {{ tab.count }}</button>
       </sc-for>
     </div>
 
@@ -131,44 +129,32 @@
         <input ref="{{ buscaRef }}" oninput="{{ onBusca }}" placeholder="Buscar aluna pelo nome" style="flex: 1; min-width: 180px; padding: 10px 13px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 18px; background: #fff;" />
         <span style="font-size: 11.5px; color: #8a7465;">{{ buscaContagem }}</span>
       </div>
-      <div style="background: #fff; border-radius: 0 18px 18px 18px; overflow: hidden;">
-        <div style="display: grid; grid-template-columns: 1.8fr 1.1fr 0.8fr 1fr; gap: 12px; align-items: center; padding: 11px 18px; background: #faf7f2;">
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Aluna <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Parcela <span style="opacity:.5;">⌄</span></span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Progresso</span>
-          <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465;">Status <span style="opacity:.5;">⌄</span></span>
-        </div>
-
+      <div style="background: #fff; border-radius: 24px; padding: 6px 20px;">
         <sc-if value="{{ vazio }}">
-          <div style="text-align: center; padding: 44px 20px; color: #8a7465;">
-            <div style="height: 4px;"></div>
-            <p style="margin: 0; font-size: 13px;">Nenhuma cobrança nesta visão.</p>
-          </div>
+          <div style="padding: 22px 0; font-size: 14px; color: #1d5a63;">Nenhuma cobrança nesta visão.</div>
         </sc-if>
 
         <sc-for list="{{ items }}" as="c" hint-placeholder-count="4">
-          <div onclick="{{ c.onToggle }}" style="display: grid; grid-template-columns: 1.8fr 1.1fr 0.8fr 1fr; gap: 12px; align-items: center; padding: 15px 18px; border-top: 1px solid #f2e9dd; cursor: pointer; background: {{ c.rowBg }};">
-            <div style="min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <a href="{{ c.perfilHref }}" onclick="{{ c.onNomeClick }}" style="font-size: 14.5px; font-weight: 600; color: #164951; text-decoration: none; border-bottom: 1px solid rgba(22,73,81,0.25);">{{ c.nome }}</a>
-                <span style="color: #b3a693; font-size: 11px;">{{ c.caret }}</span>
+          <div style="border-bottom: 1px solid #f2ebe3;">
+            <div onclick="{{ c.onToggle }}" style="display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 0; cursor: pointer;">
+              <a href="{{ c.perfilHref }}" onclick="{{ c.onNomeClick }}" style="flex: 1 1 140px; min-width: 0; font-size: 15px; font-weight: 600; color: #348a8e; text-decoration: underline; text-underline-offset: 3px;">{{ c.nome }}</a>
+              <span style="flex: 1 1 140px; min-width: 0; font-size: 13px; color: #1d5a63;">{{ c.tipo }} · {{ c.ciclos }}</span>
+              <span style="flex: 1 1 140px; min-width: 0; font-size: 13px; font-weight: 600;">{{ c.parcelaValor }} <span style="color: #8a7465; font-weight: 400;">· {{ c.vencLabel }}</span></span>
+              <div style="flex: 1 1 140px; min-width: 0; display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+                <span style="font-size: 13px; font-weight: 600; color: #8a7465;">{{ c.progresso }}</span>
+                <span style="border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 600; background: {{ c.stBg }}; color: {{ c.stColor }};">{{ c.stLabel }}</span>
               </div>
-              <div style="font-size: 11.5px; color: #8a7465; margin-top: 3px;">{{ c.tipo }} · {{ c.ciclos }}</div>
             </div>
-            <div style="font-size: 13px; color: #1d5a63;">{{ c.parcelaValor }} <span style="color: #8a7465;">· {{ c.vencLabel }}</span></div>
-            <div style="font-size: 13px; color: #1d5a63;">{{ c.progresso }}</div>
-            <div><span style="display: inline-block; background: {{ c.stBg }}; color: {{ c.stColor }}; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 5px 12px; border-radius: 999px;">{{ c.stLabel }}</span></div>
-          </div>
 
           <sc-if value="{{ c.open }}">
-            <div style="border-top: 1px solid #f2e9dd; background: #faf7f2; padding: 18px;">
-              <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #8a7465; margin-bottom: 10px;">Parcelas · clique para marcar paga/pendente</div>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;">
+            <div style="background: #f5f5f0; border-radius: 18px; padding: 16px; margin-bottom: 14px;">
+              <div style="font-size: 12px; font-weight: 600; color: #8a7465; margin-bottom: 10px;">Parcelas · {{ c.parcelaAviso }}</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; margin-bottom: 16px;">
                 <sc-for list="{{ c.mesesView }}" as="m" hint-placeholder-count="7">
-                  <button onclick="{{ m.onClick }}" style="font-family: inherit; border: 1px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 10px; font-weight: 600; padding: 8px 10px; border-radius: 12px; cursor: pointer; min-width: 78px; text-align: center;">
-                    <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.75; margin-bottom: 2px;">{{ m.label }}</div>
-                    <div>{{ m.valor }}</div>
-                    <div style="font-size: 9px; margin-top: 2px;">{{ m.icon }}</div>
+                  <button onclick="{{ m.onClick }}" style="font-family: inherit; border: 2px solid {{ m.border }}; background: {{ m.bg }}; color: {{ m.fg }}; font-size: 11px; font-weight: 600; padding: 8px 4px; border-radius: 12px; cursor: pointer; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 600;">{{ m.label }}</div>
+                    <div style="font-size: 11px;">{{ m.valor }}</div>
+                    <div style="font-size: 10px; margin-top: 2px;">{{ m.icon }}</div>
                   </button>
                 </sc-for>
               </div>
@@ -184,6 +170,7 @@
               </div>
             </div>
           </sc-if>
+          </div>
         </sc-for>
         <!-- PAGINAÇÃO -->
         <sc-if value="{{ pgPrecisa }}">
@@ -270,6 +257,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { aba: "parcelas", filtro: "todas", openId: null, motivoId: null, tick: 0,
+    confirmaParcela: null,
     pagina: 1, porPagina: ISRPaginacao.PADRAO,
             periodo: "tudo", de: "", ate: "", prevAberta: false, linkAberto: false,
             busca: "" };
@@ -308,16 +296,12 @@ class Component extends DCLogic {
       return {
         label: f.label, count: counts[f.id],
         onClick: () => this.setState({ aba: "parcelas", filtro: f.id, openId: null, pagina: 1 }),
-        bg: on ? "#fff" : "#f2ebe3", fg: on ? "#164951" : "#8a7465",
-        border: on ? "transparent" : "transparent", weight: on ? 600 : 500,
-        countFg: on ? "#9c6f56" : "#b3a693", ml: "0"
+        bg: on ? "#164951" : "#fff", fg: on ? "#fff" : "#164951"
       };
     }).concat([{
       label: "Renovações", count: renovsRaw.length,
       onClick: () => this.setState({ aba: "renov", motivoId: null, pagina: 1 }),
-      bg: !abaParcelas ? "#fff" : "#f2ebe3", fg: !abaParcelas ? "#164951" : "#8a7465",
-      border: !abaParcelas ? "transparent" : "transparent", weight: !abaParcelas ? 600 : 500,
-      countFg: !abaParcelas ? "#9c6f56" : "#b3a693", ml: "18px"
+      bg: !abaParcelas ? "#164951" : "#fff", fg: !abaParcelas ? "#fff" : "#164951"
     }]);
 
     // ── período: fica com quem tem parcela no mês escolhido ──
@@ -371,20 +355,39 @@ class Component extends DCLogic {
         vencLabel: c.vencDia === "auto" ? "auto" : "venc. dia " + c.vencDia,
         progresso: pagas + "/" + (c.meses || []).length,
         stLabel: meta.label, stColor: meta.color, stBg: meta.bg,
-        caret: open ? "▲" : "▼", open: open,
-        rowBg: open ? "#faf7f2" : "#fff",
-        onToggle: () => this.setState({ openId: open ? null : c.id })
+        open: open,
+        onToggle: () => this.setState({ openId: open ? null : c.id, confirmaParcela: null })
       };
       if (open) {
         out.obs = c.obs || "";
-        out.mesesView = (c.meses || []).map(m => ({
-          label: m.label, valor: m.valor,
-          icon: m.anterior ? "ciclo anterior" : (m.pago ? "✓ paga" : (m.key === key ? "● este mês" : "pendente")),
-          border: m.anterior ? "#cf6b5c" : (m.pago ? "#5a9e4b" : (m.key === key ? meta.color : "transparent")),
-          bg: m.anterior ? "rgba(207,107,92,0.10)" : (m.pago ? "rgba(90,158,75,0.12)" : "#fff"),
-          fg: m.anterior ? "#cf6b5c" : (m.pago ? "#348a8e" : "#1d5a63"),
-          onClick: () => { CRM.setParcelaPaga(c.id, m.key, !m.pago, m.contratoIdx); this.bump(); }
-        }));
+        // Marcar uma parcela é mexer em dinheiro: o primeiro clique
+        // pergunta, o segundo grava. Sem isso um toque errado na lista
+        // dá uma parcela por paga e ninguém percebe.
+        const confirmando = this.state.confirmaParcela;
+        out.parcelaAviso = confirmando && confirmando.id === c.id
+          ? "clique de novo no mês destacado para confirmar"
+          : "clique para marcar paga ou pendente";
+        out.mesesView = (c.meses || []).map(m => {
+          const pendente = !!confirmando && confirmando.id === c.id && confirmando.key === m.key;
+          return {
+            label: m.label, valor: m.valor,
+            icon: pendente ? (m.pago ? "confirmar: estornar" : "confirmar: paga")
+              : (m.anterior ? "ciclo anterior" : (m.pago ? "✓ paga" : (m.key === key ? "● este mês" : "pendente"))),
+            border: pendente ? "#164951"
+              : (m.anterior ? "#cf6b5c" : (m.pago ? "#5a9e4b" : (m.key === key ? meta.color : "transparent"))),
+            bg: pendente ? "#fdf3d6"
+              : (m.anterior ? "rgba(207,107,92,0.10)" : (m.pago ? "rgba(90,158,75,0.12)" : "#fff")),
+            fg: pendente ? "#164951"
+              : (m.anterior ? "#cf6b5c" : (m.pago ? "#348a8e" : "#1d5a63")),
+            onClick: (e) => {
+              e.stopPropagation();
+              if (!pendente) { this.setState({ confirmaParcela: { id: c.id, key: m.key } }); return; }
+              CRM.setParcelaPaga(c.id, m.key, !m.pago, m.contratoIdx);
+              this.setState({ confirmaParcela: null });
+              this.bump();
+            }
+          };
+        });
         // abrem o compositor com pessoa + modelo (revisar antes de enviar)
         const compor = tpl => "ISR%20-%20Mensagens%20v3.dc.html?para=" + c.id + "&tpl=" + tpl;
         out.waLembrete = compor("pag_lembrete");

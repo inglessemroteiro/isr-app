@@ -686,6 +686,41 @@ O aviso passou a sair de `agendarSync()`, que é por onde toda gravação
 passa — com banco central configurado ou sem ele. Uma linha, cinco
 telas que voltam a se atualizar sozinhas.
 
+### Calculadora, Cobrança e Folha, pelo v5
+
+A **Calculadora** já era quase o v5. Mudaram três coisas: o produto
+virou **chip** (são poucos, e um seletor esconde a lista justamente
+onde a comparação de preço acontece); o cartão da **decisão** deixou de
+ser verde-escuro e virou o cartão claro do v5 — verde quando fecha
+sozinha, vermelho quando precisa de aprovação; e o **resumo** saiu de
+dentro dele para um cartão branco próprio. O bloco **Pacote** ficou.
+
+Na **Cobrança**, as abas-pasta viraram **chips com a contagem** e a
+linha virou os cinco campos do v5: nome, tipo, parcela, progresso,
+situação. O cabeçalho de colunas com as setinhas saiu.
+
+**O quadradinho da parcela pede confirmação.** No v5 um clique marca a
+parcela como paga. Aqui o primeiro clique destaca o mês e pergunta; o
+segundo grava. Marcar parcela é mexer em dinheiro, e um toque errado
+numa lista de trinta linhas não pode dar uma parcela por paga sem que
+ninguém perceba. Fechar a aluna cancela a confirmação pendente.
+
+Ficaram, por decisão da escola: resumo do mês, a projeção de doze
+meses, o link de pagamento e as alunas sem plano.
+
+Na **Folha**, o cartão verde-escuro virou **cartões brancos de número**
+— a mesma troca feita em Matrículas do ciclo —, e a lista de
+professoras passou a **abrir por clique**: o cálculo de todas de uma
+vez era uma parede de número. Marcar pago não abre nem fecha a linha.
+Ficaram os quatro blocos da escola: quem dá aula sem cadastro, aluna
+particular sem professora, valor fixo no cadastro, e as regras e
+faixas de comissão.
+
+**Uma coisa do v5 que não entrou na Folha:** o botão "Exportar para o
+ISR Financeiro". Ele aponta para um sistema externo que não existe
+deste lado, e inventar um formato de exportação sem saber quem o lê
+seria chutar.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da

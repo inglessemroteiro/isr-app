@@ -35,26 +35,19 @@
       </sc-for>
     </div>
 
-    <!-- TOTAL -->
-    <div style="background: #164951; border-radius: 14px; padding: 20px 22px; margin-bottom: 18px;">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 10px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: #9ec970; margin-bottom: 6px;">Folha do mês</div>
-          <div style="font-size: 31px; font-weight: 600; color: #fff; letter-spacing: -0.8px; line-height: 1;">{{ totalFolha }}</div>
-        </div>
-        <div style="text-align: right;">
-          <div style="font-size: 10px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 6px;">das mensalidades das turmas</div>
-          <div style="font-size: 25px; font-weight: 600; color: {{ pctCor }}; letter-spacing: -0.6px; line-height: 1;">{{ pctFolha }}</div>
-        </div>
-      </div>
-      <div style="display: flex; gap: 26px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.14);">
-        <sc-for list="{{ resumo }}" as="rs" hint-placeholder-count="7">
-          <div>
-            <div style="font-size: 9px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(255,255,255,0.5);">{{ rs.label }}</div>
-            <div style="font-size: 14px; font-weight: 600; color: {{ rs.cor }}; margin-top: 3px;">{{ rs.valor }}</div>
-          </div>
-        </sc-for>
-      </div>
+    <!-- TOTAIS · cartões brancos, como no v5 -->
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+      <section style="flex: 1 1 200px; min-width: 0; background: #fff; border-radius: 24px; padding: 18px 20px;">
+        <div style="font-size: 12px; font-weight: 600; color: #8a7465;">Folha do mês</div>
+        <div style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-top: 4px; color: #164951;">{{ totalFolha }}</div>
+        <div style="font-size: 12px; color: {{ pctCor }}; margin-top: 2px;">{{ pctFolha }} das mensalidades das turmas</div>
+      </section>
+      <sc-for list="{{ resumo }}" as="rs" hint-placeholder-count="7">
+        <section style="flex: 1 1 170px; min-width: 0; background: #fff; border-radius: 24px; padding: 18px 20px;">
+          <div style="font-size: 12px; font-weight: 600; color: #8a7465;">{{ rs.label }}</div>
+          <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin-top: 4px; color: {{ rs.cor }};">{{ rs.valor }}</div>
+        </section>
+      </sc-for>
     </div>
 
     <!-- QUEM DÁ AULA E NÃO ESTÁ NO CADASTRO -->
@@ -98,7 +91,9 @@
 
     <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="3">
       <div style="background: #fff; border-radius: 24px; padding: 18px 20px; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;">
+        <!-- no v5 a pessoa é uma linha que abre: o cálculo de todas de
+             uma vez é uma parede de número -->
+        <div onclick="{{ ln.onAbrir }}" style="display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap; cursor: pointer; margin-bottom: {{ ln.margem }};">
           <div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span style="font-size: 17px; font-weight: 600; color: #164951;">{{ ln.nome }}</span>
@@ -119,6 +114,7 @@
         </div>
 
         <!-- linhas do cálculo -->
+        <sc-if value="{{ ln.aberta }}">
         <sc-for list="{{ ln.itens }}" as="it" hint-placeholder-count="4">
           <div style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-top: 1px solid #f4f1ec;">
             <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ it.cor }}; margin-top: 5px;"></span>
@@ -141,6 +137,7 @@
             <div style="flex: none; font-size: 14px; font-weight: 600; color: #164951;">{{ it.valor }}</div>
           </div>
         </sc-for>
+        </sc-if>
       </div>
     </sc-for>
 
@@ -285,7 +282,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { mes: "", verRegras: false, tick: 0 };
+  // abertaId: a professora cujo cálculo está à mostra
+  state = { mes: "", verRegras: false, tick: 0, abertaId: null };
   campoRefs = {};
   faixaRefs = {};
 
@@ -433,11 +431,15 @@ class Component extends DCLogic {
         })(),
         total: $(p.total),
         pctLabel: p.pctDaReceita === null ? "" : p.pctDaReceita + "% da receita que ela gera",
+        aberta: this.state.abertaId === p.nome,
+        margem: this.state.abertaId === p.nome ? "14px" : "0",
+        onAbrir: () => this.setState({ abertaId: this.state.abertaId === p.nome ? null : p.nome }),
 
         estadoLabel: pago ? "Pago em " + CRM.ddmm(pago.em) : "A pagar em " + CRM.ddmm(folha.vencimento),
         estadoBg: pago ? "rgba(90,158,75,0.14)" : "#f2ece3",
         estadoFg: pago ? "#4a8a3d" : "#8a7c6b",
         btnLabel: pago ? "Desfazer" : "Marcar pago",
+        onPagarClique: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
         btnBg: pago ? "#fff" : "#348a8e",
         btnFg: pago ? "#9b8b7e" : "#fff",
         btnBorda: pago ? "#e5dccf" : "#348a8e",
@@ -507,15 +509,15 @@ class Component extends DCLogic {
     // ── resumo do cartão: números, não frase ──
     const comPiso = folha.linhas.reduce((s, p) => s + p.turmas.filter(t => t.pisoAplicado).length, 0);
     const resumo = [
-      { label: "Professoras", valor: String(folha.linhas.length), cor: "#fff" },
-      { label: "Valor fixo", valor: folha.fixos.length + " · " + $(folha.totalFixos), cor: "#fff" },
-      { label: "Mensalidades", valor: $(folha.receitaGerada), cor: "#fff" },
-      { label: "Pagamento", valor: CRM.ddmm(folha.vencimento), cor: "#fff" },
+      { label: "Professoras", valor: String(folha.linhas.length), cor: "#164951" },
+      { label: "Valor fixo", valor: folha.fixos.length + " · " + $(folha.totalFixos), cor: "#164951" },
+      { label: "Mensalidades", valor: $(folha.receitaGerada), cor: "#164951" },
+      { label: "Pagamento", valor: CRM.ddmm(folha.vencimento), cor: "#164951" },
       { label: "Já pago", valor: folha.nPagas + " de " + folha.nPagaveis,
-        cor: folha.nPagas === folha.nPagaveis && folha.nPagaveis ? "#9ec970" : "#fff" },
+        cor: folha.nPagas === folha.nPagaveis && folha.nPagaveis ? "#4f8c42" : "#164951" },
       { label: "Em aberto", valor: $(folha.totalAberto),
-        cor: folha.totalAberto > 0 ? "#fc9082" : "#9ec970" },
-      { label: "Piso aplicado", valor: comPiso + (comPiso === 1 ? " turma" : " turmas"), cor: "#fff" }
+        cor: folha.totalAberto > 0 ? "#a3392c" : "#4f8c42" },
+      { label: "Piso aplicado", valor: comPiso + (comPiso === 1 ? " turma" : " turmas"), cor: "#164951" }
     ];
 
     const CAMPOS = [

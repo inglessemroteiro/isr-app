@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-a",
+  numero: "2026.10.17-b",
   data: "17/10/2026",
-  nota: "Matrículas do ciclo pelo v5, com a linha do ritmo esperado na barra. E cinco telas voltam a se atualizar sozinhas quando o dado muda"
+  nota: "Calculadora, Cobrança e Folha pelo v5. A parcela agora pede confirmação antes de ser marcada como paga"
 };
