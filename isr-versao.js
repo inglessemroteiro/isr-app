@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-g",
+  numero: "2026.10.17-h",
   data: "17/10/2026",
-  nota: "A camada de componentes cobre 96% das telas de gestão. A lista do que sobrava revelou três defeitos: 16 botões em Arial, 6 com a borda do navegador e 6 seleções em preto"
+  nota: "O botão Criar aula extra passa a criar a aula extra: estava ligado a um handler que a tela nunca devolvia, e o clique não fazia nada"
 };
