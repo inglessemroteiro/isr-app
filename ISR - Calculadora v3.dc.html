@@ -84,12 +84,12 @@
       <div style="background: #fff; border-radius: 24px; padding: 16px 18px;">
         <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #348a8e; margin-bottom: 14px;">A proposta</div>
 
-        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 500; margin-bottom: 4px;">Produto</div>
-        <select onchange="{{ onProduto }}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px; font-family: inherit; color: #164951; border: 0; border-radius: 12px; background: #f2ebe3; margin-bottom: 12px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 500; margin-bottom: 5px;">Produto</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
           <sc-for list="{{ produtoOpts }}" as="po" hint-placeholder-count="8">
-            <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
+            <button onclick="{{ po.onClick }}" style="font-family: inherit; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; background: {{ po.bg }}; color: {{ po.fg }};">{{ po.label }}</button>
           </sc-for>
-        </select>
+        </div>
 
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #b8ada0; font-weight: 500; margin-bottom: 5px;">Fonte da venda</div>
         <div style="display: flex; gap: 6px; margin-bottom: 12px;">
@@ -140,25 +140,26 @@
         </sc-if>
       </div>
 
-      <div style="background: {{ decisaoBg }}; border-radius: 18px; padding: 16px 18px;">
-        <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: {{ decisaoEyebrow }}; margin-bottom: 10px;">Decisão</div>
-        <div style="font-size: 22px; font-weight: 600; color: {{ decisaoFg }}; letter-spacing: -0.4px; line-height: 1.2; margin-bottom: 4px;">{{ decisao }}</div>
-        <div style="font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 16px;">{{ contrato }}</div>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <section style="background: {{ decisaoBg }}; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 12px; font-weight: 600; color: #8a7465;">decisão</div>
+          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: {{ decisaoFg }};">{{ decisao }}</div>
+          <div style="font-size: 14px; color: #1d5a63; line-height: 1.5;">{{ contrato }}</div>
+        </section>
 
-        <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="7">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.12);">
-            <span style="font-size: 12px; color: rgba(255,255,255,0.62);">{{ ln.rotulo }}</span>
-            <span style="font-size: 13.5px; font-weight: 600; color: {{ ln.valorCor }}; text-align: right;">{{ ln.valor }}</span>
-          </div>
-        </sc-for>
-
-        <sc-if value="{{ temAlertas }}">
-          <div style="margin-top: 14px;">
+        <section style="background: #fff; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 4px;">
+          <sc-for list="{{ linhas }}" as="ln" hint-placeholder-count="7">
+            <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 4px 0; border-bottom: 1px solid #f2ebe3;">
+              <span style="color: #8a7465; font-weight: 600;">{{ ln.rotulo }}</span>
+              <b style="text-align: right; color: {{ ln.valorCor }};">{{ ln.valor }}</b>
+            </div>
+          </sc-for>
+          <sc-if value="{{ temAlertas }}">
             <sc-for list="{{ alertas }}" as="al" hint-placeholder-count="2">
-              <div style="background: rgba(207,107,92,0.22); color: #ffd9d3; font-size: 11.5px; line-height: 1.5; padding: 9px 12px; border-radius: 12px; margin-bottom: 6px;">{{ al.texto }}</div>
+              <div style="background: #fdece9; color: #a3392c; font-size: 12.5px; line-height: 1.5; padding: 9px 12px; border-radius: 12px; margin-top: 8px;">{{ al.texto }}</div>
             </sc-for>
-          </div>
-        </sc-if>
+          </sc-if>
+        </section>
       </div>
     </div>
 
@@ -258,10 +259,14 @@ class Component extends DCLogic {
     const dinheiro = v => CRM.fmtMoney(m, v);
     const ehParcelado = this.state.forma === "parcelado";
 
-    const produtoOpts = precos.map(p => ({
-      id: p.id, label: p.nome + " · " + CRM.fmtMoney(p.moeda, p.ciclo) + " / ciclo",
-      sel: p.id === this.state.produtoId
-    }));
+    // no v5 o produto é chip: são poucos, e um seletor esconde a lista
+    // justamente onde a comparação de preço acontece
+    const produtoOpts = precos.map(p => {
+      const on = p.id === this.state.produtoId;
+      return { label: p.nome + " · " + CRM.fmtMoney(p.moeda, p.ciclo),
+        bg: on ? "#164951" : "#f2ebe3", fg: on ? "#fff" : "#164951",
+        onClick: () => this.setState({ produtoId: p.id, total: "", parcelas: 1 }) };
+    });
 
     const fonteOpts = [{ id: "nova", label: "Matrícula nova" }, { id: "renovacao", label: "Renovação" }]
       .map(f => Object.assign({ label: f.label, onClick: () => this.setState({ fonte: f.id }) },
@@ -371,7 +376,6 @@ class Component extends DCLogic {
           + " em " + r.parcelas + (r.parcelas === 1 ? " parcela de " : " parcelas de ") + dinheiro(r.valorParcela) + "."
         : "O sinal é deduzido do valor a parcelar. O ciclo de " + (3 * r.ciclos) + " meses aceita até "
           + r.maxParcelas + " parcelas.",
-      onProduto: e => this.setState({ produtoId: e.target.value, total: "", parcelas: 1 }),
       totalRef: this.totalRef, tabelaLabel: dinheiro(r.tabela),
       onTotal: e => this.setState({ total: e.target.value }),
       onTabelaCheia: () => {
@@ -380,9 +384,10 @@ class Component extends DCLogic {
       },
 
       decisao: r.decisao, contrato: r.contrato,
-      decisaoBg: claro ? "#164951" : "#6b2f28",
-      decisaoFg: claro ? "#9ec970" : "#f4a099",
-      decisaoEyebrow: claro ? "rgba(158,201,112,0.75)" : "rgba(244,160,153,0.75)",
+      // o cartão da decisão é claro, como no v5: verde quando fecha
+      // sozinha, vermelho quando precisa de aprovação
+      decisaoBg: claro ? "#e8f3dd" : "#fdece9",
+      decisaoFg: claro ? "#3d6b22" : "#a3392c",
       linhas,
       alertas: r.alertas.map(a => ({ texto: a })), temAlertas: r.alertas.length > 0,
       escada,
