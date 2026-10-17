@@ -407,6 +407,11 @@ Saíram: o seletor Lista/Semana, o seletor de responsável, o
 7/14/30 dias, a legenda por tipo com contagem, o aviso do ciclo e o
 bloco de configuração da **assinatura**.
 
+Com o aviso do ciclo foi embora a explicação da semana vazia: depois
+que o ciclo fecha, as aulas das turmas param e a agenda fica vazia sem
+dizer por quê. É o que o v5 faz, e é o que está valendo — mas vale
+saber que o silêncio chega quando o ciclo 3 terminar.
+
 **O filtro virou regra, não controle.** No v5 cada evento carrega os
 papéis que o veem, e não há seletor. Aqui o equivalente é o nome:
 fora da gestão, a agenda mostra o que está no nome da pessoa — o que
@@ -418,7 +423,12 @@ tenha em lugar nenhum:
 
 - **aula extra** — é dela que sai a confirmação de presença no app da
   aluna e a chamada com horas próprias. Sem ela a aluna perde o botão
-  de confirmar;
+  de confirmar. O botão **"Criar aula extra" não criava nada**: estava
+  ligado a um `onCriarEvento` que `renderVals()` nunca devolvia, então
+  a gaveta abria, os oito campos preenchiam e o clique não fazia nada
+  — sem evento e sem aviso. Corrigido, e a agenda agora pula para a
+  semana da data marcada: sem isso, aula marcada para outra semana
+  some do olho de quem acabou de marcá-la, e parece que não gravou;
 - **feriados** — sem o cadastro, a agenda volta a gerar aula em
   feriado e a escola cobra chamada de aula que não houve;
 - **Book Club** — a configuração da aula fixa.

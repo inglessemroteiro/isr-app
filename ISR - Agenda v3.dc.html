@@ -275,7 +275,6 @@ class Component extends DCLogic {
       evVagasRef: this.evVagasRef, evTurmaRef: this.evTurmaRef, evDescRef: this.evDescRef,
       ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
     if (!CRM) return Object.assign({ dias: [], eventos: [], semEventos: true, feriados: [], novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "var(--color-primary-900)", novoFg: "var(--color-neutral-0)", ferBg: "var(--color-neutral-0)", ferFg: "var(--color-primary-900)", bcBg: "var(--color-neutral-0)", bcFg: "var(--color-primary-900)", bookclubAberto: false, semanaLabel: "", foraDaSemanaAtual: false, gcalNovo: "#",
-      cicloAvisa: false, cicloTitulo: "", cicloTexto: "",
       veAdmin: false, eyebrow: "pedagógico", titulo: "Agenda", subtitulo: "",
       rodape: "" }, refs);
 
@@ -444,6 +443,42 @@ class Component extends DCLogic {
       novoBg: this.state.novoAberto ? "var(--color-neutral-0)" : "var(--color-primary-900)",
       novoFg: this.state.novoAberto ? "var(--color-primary-800)" : "var(--color-neutral-0)",
       onToggleNovo: () => this.setState({ novoAberto: !this.state.novoAberto, feriadosAberto: false, bookclubAberto: false }),
+      // O botão "Criar aula extra" estava ligado a um val que
+      // renderVals nunca devolvia: a gaveta abria, os oito campos
+      // preenchiam e o clique não fazia nada — sem evento e sem aviso.
+      // O campo da gaveta é um só, "Local ou link da sala", e a base
+      // guarda local e link separados: o que começa com http é link,
+      // o resto é local.
+      // Depois de criar, a semana pula para a data do evento. Sem
+      // isso, aula marcada para outra semana some do olho de quem
+      // acabou de marcá-la, e parece que não gravou.
+      onCriarEvento: () => {
+        const titulo = this.val(this.evTituloRef);
+        const data = this.val(this.evDataRef);
+        if (!titulo) { window.alert("Dê um título à aula extra."); return; }
+        if (!data) { window.alert("Escolha a data da aula extra."); return; }
+        const onde = this.val(this.evLocalRef);
+        const ehLink = /^https?:\/\//i.test(onde);
+        window.ISRCRM.addEvento({
+          titulo, data,
+          hora: this.val(this.evHoraRef),
+          duracao: this.val(this.evDuracaoRef),
+          responsavel: this.val(this.evRespRef),
+          local: ehLink ? "" : onde,
+          link: ehLink ? onde : "",
+          vagas: this.val(this.evVagasRef),
+          turmaAlvo: this.val(this.evTurmaRef),
+          descricao: this.val(this.evDescRef)
+        });
+        [this.evTituloRef, this.evHoraRef, this.evDuracaoRef, this.evLocalRef,
+         this.evVagasRef, this.evDescRef].forEach(r => { if (r.current) r.current.value = ""; });
+        // meio-dia nos dois lados para o horário de verão não empurrar
+        // a conta para a semana vizinha; floor, não round, porque
+        // domingo está a seis dias da segunda e ainda é a mesma semana
+        const semanaDoEvento = Math.floor(
+          (new Date(data + "T12:00:00") - this.segundaDaSemana(0)) / (7 * 86400000));
+        this.setState({ novoAberto: false, dia: data, semanaOffset: semanaDoEvento });
+      },
 
       // o que a assinante vê no app: grupo do Whats e banner de matrícula
       feriadosAberto: this.state.feriadosAberto,
