@@ -63,12 +63,19 @@ function propsDe(style) {
 
 // ── as classes, e as grafias equivalentes de cada valor ──
 const CLASSES = {
+  // A base do botão não tem forma: 42 botões da gestão são botão de
+  // texto, sem canto nenhum, e a pílula na base os deixava de fora.
   'isr-botao': [
     ['font-family', ['inherit']],
     ['font-weight', ['600', 'var(--font-weight-semibold)']],
     ['border', ['none', '0', '0px']],
-    ['border-radius', ['999px', '9999px', 'var(--radius-full)']],
     ['cursor', ['pointer']]
+  ],
+  'isr-botao--pilula': [
+    ['border-radius', ['999px', '9999px', 'var(--radius-full)']]
+  ],
+  'isr-botao--texto': [
+    ['background', ['transparent']]
   ],
   'isr-botao--escuro': [
     ['background', ['var(--color-primary-900)']],
@@ -97,6 +104,10 @@ const BRANCOS = ['var(--color-neutral-0)', '#fff', '#ffffff', 'white', 'var(--co
 function familia(t, props) {
   const p = {}; props.forEach(([k, v]) => { p[k] = v; });
   if (t.nome === 'button') return 'botao';
+  // Caixa de marcar e escolher arquivo não são campo de preencher:
+  // não têm fundo, nem canto, nem texto dentro. Chamá-las de campo só
+  // engordava a lista do que ficou de fora.
+  if (/type="(checkbox|radio|file)"/.test(t.texto)) return null;
   if (t.nome === 'input' || t.nome === 'select' || t.nome === 'textarea') return 'campo';
   if (t.nome === 'div' && BRANCOS.indexOf(p['background']) >= 0 && p['border-radius']) return 'cartao';
   if (t.nome === 'span' && /^9{3,4}px$/.test(p['border-radius'] || '')) return 'selo';
@@ -146,11 +157,14 @@ function converterTela(arquivo, escrever) {
       continue;
     }
     aplicar.push(CLASSE_DE[fam]);
-    // a variante escura só entra se os três valores batem exatamente:
-    // dizer "escuro" e sobrepor o fundo por dentro seria mentir no nome
+    // Os modificadores entram só quando TODOS os valores deles batem
+    // exatamente. Dizer "pílula" e sobrepor o canto por dentro, ou
+    // dizer "escuro" e sobrepor o fundo, seria mentir no nome — e o
+    // nome é o que faz a camada valer alguma coisa.
     if (fam === 'botao') {
-      const v = CLASSES['isr-botao--escuro'];
-      if (v.every(([p, ok]) => ok.indexOf(decl[p]) >= 0)) aplicar.push('isr-botao--escuro');
+      ['isr-botao--pilula', 'isr-botao--texto', 'isr-botao--escuro'].forEach(m => {
+        if (CLASSES[m].every(([p, ok]) => ok.indexOf(decl[p]) >= 0)) aplicar.push(m);
+      });
     }
 
     // o que sai do style
@@ -193,9 +207,14 @@ function converterTela(arquivo, escrever) {
   if (escrever) fs.writeFileSync(BASE + arquivo, s);
 }
 
+// A camada é a da GESTÃO, e o que diz se uma tela é de gestão é a
+// barra lateral: as 21 telas do menu carregam isr-shell.js. O
+// "ISR App (Conectado)" carrega os tokens mas não a barra — é a área
+// da aluna, com Helvetica Neue e Georgia, tipografia própria. Deixar
+// a camada entrar ali faria uma mudança no botão da gestão chegar
+// calada na tela da aluna, e as duas áreas são para ficar separadas.
 const telas = fs.readdirSync(BASE).filter(f => /\.dc\.html$/.test(f))
-  .filter(f => !/Gestao v3|Gestao v4|Gestao v5|Student Portal|Aluna v4/.test(f))
-  .filter(f => fs.readFileSync(BASE + f, 'utf8').indexOf('_ds/ingles-sem-roteiro') >= 0).sort();
+  .filter(f => fs.readFileSync(BASE + f, 'utf8').indexOf('isr-shell.js') >= 0).sort();
 
 const escrever = process.argv[2] === '--escrever';
 telas.forEach(f => converterTela(f, escrever));

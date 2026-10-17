@@ -15,11 +15,12 @@
 const fs = require('fs');
 
 const CLASSES = {
+  // A base do botão não tem forma: a pílula é modificador, porque 42
+  // botões da gestão são botão de texto e não têm canto nenhum.
   'isr-botao': [
     ['font-family', ['inherit']],
     ['font-weight', ['600', 'var(--font-weight-semibold)']],
     ['border', ['none', '0', '0px']],
-    ['border-radius', ['999px', '9999px', 'var(--radius-full)']],
     ['cursor', ['pointer']]
   ],
   'isr-cartao': [
@@ -70,17 +71,23 @@ function propsDe(style) {
   });
   return o;
 }
-function familia(nome, p) {
+function familia(nome, p, texto) {
   if (nome === 'button') return 'botao';
+  // Caixa de marcar e escolher arquivo não são campo de preencher:
+  // não têm fundo, nem canto, nem texto dentro. Chamá-las de campo só
+  // engordava a lista do que ficou de fora.
+  if (/type="(checkbox|radio|file)"/.test(texto || '')) return null;
   if (nome === 'input' || nome === 'select' || nome === 'textarea') return 'campo';
   if (nome === 'div' && BRANCOS.indexOf(p['background']) >= 0 && p['border-radius']) return 'cartao';
   if (nome === 'span' && /^9{3,4}px$/.test(p['border-radius'] || '')) return 'selo';
   return null;
 }
 
+// As telas de gestão são as que carregam a barra lateral. O
+// "ISR App (Conectado)" carrega os tokens mas é da área da aluna, com
+// tipografia própria, e não entra na camada de componentes da gestão.
 const telas = fs.readdirSync('.').filter(f => /\.dc\.html$/.test(f))
-  .filter(f => !/Gestao v3|Gestao v4|Gestao v5|Student Portal|Aluna v4/.test(f))
-  .filter(f => fs.readFileSync(f, 'utf8').indexOf('_ds/ingles-sem-roteiro') >= 0).sort();
+  .filter(f => fs.readFileSync(f, 'utf8').indexOf('isr-shell.js') >= 0).sort();
 
 let comClasse = 0, fora = [], semFolha = [];
 telas.forEach(f => {
@@ -97,7 +104,7 @@ telas.forEach(f => {
     const style = attr(t.texto, 'style');
     if (!style) return;
     const p = propsDe(style);
-    const fam = familia(t.nome, p);
+    const fam = familia(t.nome, p, t.texto);
     if (!fam) return;
     const falta = CLASSES[CLASSE_DE[fam]].filter(([q]) => p[q] === undefined).map(x => x[0]);
     fora.push({ tela: f, linha: t.linha, fam, falta, texto: t.texto.slice(0, 110) });

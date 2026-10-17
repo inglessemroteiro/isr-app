@@ -884,15 +884,65 @@ elemento e sobrepõe a classe, porque estilo direto vence classe. O
 campo que precisa de canto de 18px continua com ele à vista, agora
 como a única linha do seu estilo.
 
-**O preço dessa regra é uma lista:** 130 elementos ficaram de fora por
-não declararem alguma das propriedades. Não é dívida inventada — cada
-item é um lugar onde a tela está diferente das outras sem querer. 37
-botões não declaram `font-family`, e por isso aparecem na fonte do
-navegador e não na da escola.
+**O preço dessa regra é uma lista**, e foi ela que ensinou o resto do
+passo. 130 elementos ficaram de fora por não declararem alguma das
+propriedades — e não era dívida inventada: cada item era um lugar onde
+a tela estava diferente das outras sem querer. Lendo a lista item por
+item, os 130 eram quatro coisas distintas, e só duas eram defeito:
+
+| caso | quantos | o que era |
+|---|---|---|
+| botão de texto | 42 | fundo transparente, sem canto — **outro componente**, que não estava nomeado |
+| sem `font-family` | 16 | botão preenchido aparecendo na fonte do navegador — **defeito** |
+| sem `border` | 6 | botão recebendo a borda 3D cinza do navegador — **defeito** |
+| `<select>` sem `color` | 6 | texto em preto puro onde todo o app é teal — **defeito** |
+| caixa de marcar e arquivo | 6 | não é campo de preencher — **erro de classificação do verificador** |
+| cartão clicável | 19 | não é botão de rótulo; mexer no peso mudaria o texto de dentro |
+
+**A forma do botão virou modificador.** Os 42 botões de texto — o
+"cancelar" ao lado do salvar, o "excluir" dentro do lead, o "esta
+semana" na Agenda — não têm canto nenhum. A pílula na base dizia que
+todo botão é preenchido e deixava esses 42 fora da camada. Agora são
+quatro classes: `.isr-botao` (tipo, peso, sem borda, cursor),
+`.isr-botao--pilula` (a forma preenchida), `.isr-botao--escuro` (a ação
+principal, com a sombra de relevo) e `.isr-botao--texto` (sem fundo e
+sem forma, só a palavra). A cor fica no elemento, porque ela diz o que
+o clique faz — teal para seguir, vermelho para desfazer.
+
+**Três defeitos corrigidos, e medidos um a um:**
+
+- **16 botões ganharam a fonte da escola.** Em Mensagens, Turma,
+  Equipe, Marketing e Dados, botões de rótulo real ("Criar", "Salvar
+  modelo", "Restaurar", "Pedir à Gabi") apareciam em Arial. 13 mudaram
+  na tela, e a caixa de todos ficou do mesmo tamanho — as duas fontes
+  têm a mesma métrica nesses corpos, então nada reposicionou;
+- **6 botões perderam a borda 3D do navegador.** Botão sem `border`
+  declarada recebe `2px outset` cinza: três no Perfil apareciam com
+  moldura, 4px mais largos e mais altos que os vizinhos limpos. A
+  página do Perfil ficou 3px mais curta;
+- **6 seleções da Caixa saíram do preto.** Controle de formulário não
+  herda cor do `body` no Chrome, então seis `<select>` apareciam em
+  preto puro onde todo o resto do app é o teal `#164951`. 35 elementos
+  mudaram de cor (as seis seleções e as opções dentro delas), e o
+  verificador de contraste confirma: **zero textos passaram a ficar
+  abaixo de 4,5:1**.
+
+Ficaram 29 elementos fora, de propósito: os 19 cartões clicáveis, 5
+selos e 5 campos onde a declaração que falta não é a mesma nos dois
+lados. A cobertura é de **96%**.
+
+**A área da aluna não entra nesta camada.** O que diz se uma tela é de
+gestão é a barra lateral: as 21 telas do menu carregam `isr-shell.js`.
+O `ISR App (Conectado)` carrega os tokens mas não a barra — é da área
+da aluna, com Helvetica Neue e Georgia, tipografia própria. Deixar a
+camada entrar ali faria uma mudança no botão da gestão chegar calada na
+tela da aluna, e as duas áreas são para ficar separadas. Os 41 botões
+sem `font-family` que ele tem continuam como estão: lá `inherit` não é
+a fonte da escola.
 
 **`verificar-componentes.js`** é o quinto verificador: diz quanto das
-telas usa a classe, lista o que ficou de fora com tela e linha, e
-falha se alguma tela esquecer de carregar a folha.
+telas usa a classe, lista o que ficou de fora com tela e linha
+(`--fora`), e falha se alguma tela esquecer de carregar a folha.
 
 ### Medir antes de mexer em forma
 
@@ -908,11 +958,15 @@ pílula para 999px e para 9999px. Sem isso ele acusava diferença em 22
 telas onde não há nenhuma — e instrumento que acusa o que não existe
 não serve para o passo seguinte.
 
-O passo 3 fechou em **zero diferenças em forma e zero em cor**, nas 23
-telas e 5.230 elementos. E o instrumento pegou uma regressão de
-verdade no caminho: o `ISR App (Conectado)` carrega `styles.css` em vez
-de `tokens/web.css`, a folha de componentes não entrou lá, e um campo
-perdeu o canto e a fonte.
+A conversão fechou em **zero diferenças em forma e zero em cor**, nas
+23 telas e 5.230 elementos. Os três defeitos corrigidos depois dela
+aparecem isolados: **13 elementos de fonte em 4 telas, 9 de borda no
+Perfil e 35 de cor na Caixa** — e mais nada, em 5.230.
+
+E o instrumento pegou uma regressão de verdade no caminho: o
+`ISR App (Conectado)` carrega `styles.css` em vez de `tokens/web.css`,
+a folha de componentes não entrou lá, e um campo perdeu o canto e a
+fonte. Foi o que levou a descobrir que aquela tela não é de gestão.
 
 ### A Área da Aluna no desenho novo
 
