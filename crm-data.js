@@ -4043,7 +4043,13 @@
   }
 
   function projecaoCaixa() {
-    var horizonte = MESES_COBRANCA.slice(0, 3); // mês corrente + 2
+    // Mês corrente + 2, contados da data de hoje. Antes eram os três
+    // primeiros de MESES_COBRANCA, uma lista fixa que começa em julho:
+    // a projeção mostrava julho, agosto e setembro em qualquer mês do
+    // ano. Ninguém viu porque nenhuma tela usava esta função.
+    var horizonte = mesesFinanceiro(0, 2).map(function (m) {
+      return { key: m.key, label: m.label, curto: m.curto };
+    });
     var custos = custosTotais();
     void custos;
     var recebidoPorMes = {}, previstoPorMes = {};
@@ -4068,7 +4074,7 @@
       var cst = custosTotais(m.key);
       var resultado = { "R$": esperado["R$"] - cst["R$"], "€": esperado["€"] - cst["€"] };
       saldo["R$"] += resultado["R$"]; saldo["€"] += resultado["€"];
-      return { key: m.key, label: m.label,
+      return { key: m.key, label: m.label, curto: m.curto,
         recebido: recebidoPorMes[m.key], previsto: previstoPorMes[m.key],
         esperado: esperado, custos: { "R$": cst["R$"], "€": cst["€"] },
         resultado: resultado, saldoAcumulado: { "R$": saldo["R$"], "€": saldo["€"] } };

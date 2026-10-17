@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-b",
+  numero: "2026.10.17-c",
   data: "17/10/2026",
-  nota: "Calculadora, Cobrança e Folha pelo v5. A parcela agora pede confirmação antes de ser marcada como paga"
+  nota: "O Caixa ganha o gráfico de entradas previstas × custo fixo e paginação nos lançamentos. A projeção de três meses parou de começar sempre em julho"
 };

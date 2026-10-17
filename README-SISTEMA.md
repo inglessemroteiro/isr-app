@@ -721,6 +721,36 @@ ISR Financeiro". Ele aponta para um sistema externo que não existe
 deste lado, e inventar um formato de exportação sem saber quem o lê
 seria chutar.
 
+### O Caixa, pelo v5
+
+O Caixa tem dezenove blocos; o v5 tem dois. Aqui a regra de seguir o
+v5 não ajuda — ele simplesmente não modela esta tela. Então a pergunta
+foi outra: o que a escola usa. Dezessete blocos ficaram.
+
+**Entrou o gráfico do v5**, no topo da aba do mês: três meses, duas
+barras por mês (€ e R$) e uma linha escura atravessando cada barra na
+altura do custo fixo. Barra abaixo da linha: o mês não se paga, e o
+mês ganha o aviso. Clicar no mês abre o detalhe moeda por moeda —
+recebido, a receber, entradas previstas, custo fixo, resultado.
+
+Cada moeda tem **escala própria**: € e R$ não se comparam em altura, e
+somar os dois esconderia qual das duas operações não se paga.
+
+**Um defeito achado ao ligar o gráfico:** `projecaoCaixa()` dizia no
+comentário "mês corrente + 2" e pegava os três primeiros meses de uma
+lista fixa que começa em julho. A projeção mostrava julho, agosto e
+setembro em qualquer mês do ano. Ninguém viu porque **nenhuma tela
+usava a função**. Agora os três meses são contados da data de hoje.
+
+**Saiu o bloco do câmbio.** A taxa continua existindo: ela alimenta a
+linha do tempo e o previsto × realizado, e o campo foi para o rodapé
+da linha do tempo — onde o número aparece é onde ele se edita. A tela
+perde um bloco e não perde a capacidade.
+
+**A paginação entrou nas duas listas de lançamento** do mês, entradas
+e saídas, cada uma com a sua página. O Caixa caiu de 3.734px para
+2.870px.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
