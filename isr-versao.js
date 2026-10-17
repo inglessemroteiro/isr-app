@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.17-c",
+  numero: "2026.10.17-d",
   data: "17/10/2026",
-  nota: "O Caixa ganha o gráfico de entradas previstas × custo fixo e paginação nos lançamentos. A projeção de três meses parou de começar sempre em julho"
+  nota: "As cores das telas passam a vir dos tokens do design system: 2.889 trocas, nenhum pixel alterado"
 };

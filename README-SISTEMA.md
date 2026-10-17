@@ -751,6 +751,46 @@ perde um bloco e não perde a capacidade.
 e saídas, cada uma com a sua página. O Caixa caiu de 3.734px para
 2.870px.
 
+### A identidade visual, aplicada de verdade
+
+As telas carregavam os quatro arquivos de token do design system — e
+não usavam nenhum. `var(--color-…)` aparecia **zero vezes** no app
+inteiro. Toda cor era um hexadecimal escrito à mão, e mudar o verde da
+marca no design system não mudava nada no sistema.
+
+O levantamento, antes de mexer: 4.610 cores escritas nas telas, 190
+valores distintos. 2.465 delas eram cores da paleta, escritas à mão;
+2.145 eram 168 valores que o design system não tem.
+
+**Passo 1, feito: 2.889 trocas em 23 telas.** Toda cor que tem token
+passou a ser `var(--color-…)`. Nada mudou de valor — mudou de
+mecanismo.
+
+A prova de que nenhum pixel mudou está no `cores-snapshot.js`: ele
+fotografa a cor computada (texto, fundo, borda, sombra) de cada
+elemento de cada tela, e compara as duas fotos. **5.230 elementos, 23
+telas, zero diferença.**
+
+**O `verificar-identidade.js`** passou a barrar o retorno do
+hexadecimal: cor que tem token e está escrita à mão falha a
+conferência, com arquivo e linha. Cor que ainda **não** tem token
+continua em hexadecimal e aparece em `--fora`, que é a lista do que
+falta no design system — não um erro de quem escreveu a tela.
+
+Três cores ficaram de fora da regra de propósito: o verde do WhatsApp
+e os dois tons do seu botão. São cor de outra marca, e a paleta da ISR
+não deve absorvê-las.
+
+**Fora do passo 1:** as nove telas da aluna que não carregam os tokens
+(`ISR - Aluna`, `Aulas`, `Certificado`, `Comunidade`, `Tela de Aula`,
+`Flin`, `Login`, `Onboarding`, `Notificações`). O app da aluna é
+escuro e tem paleta própria; `var(--color-…)` ali resolveria para
+nada. Entram quando o design system tiver os tokens do tema escuro.
+
+**Ainda por fazer:** as 138 cores sem token (passo 2) e a troca de
+botão, cartão, etiqueta e campo pelos componentes do design system
+(passo 3).
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
