@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-b",
+  numero: "2026.10.18-c",
   data: "18/10/2026",
-  nota: "O Painel do professor pela forma do v5: quatro abas no topo, e a turma como unidade — abre uma turma e trabalha dentro dela"
+  nota: "Sai o sistema de avisos, que escrevia para o nada desde que o Mural saiu: a chave do armazenamento tinha sido apagada e o erro ficava preso num try"
 };

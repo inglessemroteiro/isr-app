@@ -1477,14 +1477,9 @@
       if (!retro) {
         var quem = (gestaoUser() || {}).nome || "";
         var ondeQuando = turmaLabel + (unit && unit.teacher ? " · com " + unit.teacher : "");
-        equipeLista().forEach(function (m) {
-          if (m.nome === quem) return; // quem fez a matrícula já sabe
-          if ((m.papeis || []).indexOf("operacao") >= 0)
-            avisar(m.nome, "Matrícula nova: " + p.nome + " · " + ondeQuando
-              + ". Comece a integração dos primeiros 30 dias.", "matricula");
-          else if ((m.papeis || []).indexOf("gestora") >= 0)
-            avisar(m.nome, "Matrícula nova: " + p.nome + " · " + ondeQuando + ".", "matricula");
-        });
+        // A equipe fica sabendo pela tarefa de integração criada
+        // abaixo e pelo histórico da aluna. O aviso avulso dependia do
+        // Mural, que saiu no corte do v5.
         addTarefa({
           titulo: "Integração de " + p.nome,
           detalhe: ondeQuando + " · boas-vindas, confirmação da 1ª aula, check-in da 1ª semana e 1º pagamento",
@@ -1941,8 +1936,6 @@
         var pessoa = getPessoa(achou.pessoaId);
         var dono = pessoa && ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0
           ? pessoa.professora : "Gabi";
-        avisar(dono, (pessoa ? pessoa.nome : "Uma aluna") + " avaliou a última aula em "
-          + achou.nota + "/5: “" + comentario + "”", "acompanhamento");
         addTarefa({ titulo: "Falar com " + (pessoa ? pessoa.nome : "a aluna") + " sobre a última aula",
           detalhe: "Avaliação " + achou.nota + "/5 — “" + comentario + "”",
           dono: dono, prazo: iso(today()), por: pessoa ? pessoa.nome : "" });
@@ -2734,8 +2727,6 @@
 
 
     var dono = donoDaIntegracao();
-    avisar(dono, "Acompanhamento: " + pessoa.nome + " entrou no " + pg.nome
-      + ". Envie o desafio da semana e adicione ao grupo.", "programa");
     addTarefa({ titulo: "Entrada no acompanhamento · " + pessoa.nome,
       detalhe: "Adicionar ao grupo do WhatsApp e enviar o desafio da semana atual.",
       dono: dono, prazo: iso(today()), por: (gestaoUser() || {}).nome || "" });
@@ -3439,9 +3430,7 @@
       carimbar(tf);
       var virouFeita = !!feita && !tf.feita;
       tf.feita = !!feita; tf.feitaEm = feita ? iso(today()) : "";
-      // quem pediu fica sabendo — senão a pessoa fica perguntando "já saiu?"
-      if (virouFeita && tf.por && tf.por !== tf.dono)
-        avisar(tf.por, tf.dono + " concluiu: " + tf.titulo, "tarefa");
+      // quem pediu vê a tarefa marcada como feita na própria lista
     });
     tarefasSave(l); return l;
   }
@@ -3453,26 +3442,6 @@
   // em tempo real: viaja pela sincronização do banco central (até ~5
   // minutos para chegar nos outros aparelhos). Serve para aviso e
   // registro — e qualquer mensagem pode virar pendência com dono.
-  function avisosLista() {
-    try { return JSON.parse(localStorage.getItem(AVISOS_KEY)) || []; } catch (e) { return []; }
-  }
-  function avisosSave(l) { carimbarLista(l); try { localStorage.setItem(AVISOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
-  function avisar(para, texto, tipo) {
-    if (!para || !texto) return null;
-    var l = avisosLista();
-    var a = { id: "av" + Date.now() + Math.floor(Math.random() * 1000), para: para,
-      texto: texto, tipo: tipo || "geral", data: iso(today()), lido: false };
-    l.push(a); avisosSave(l); return a;
-  }
-  function avisosDe(nome) {
-    return avisosLista().filter(function (a) { return a.para === nome && !a.lido; })
-      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
-  }
-  function marcarAvisoLido(id) {
-    var l = avisosLista();
-    l.forEach(function (a) { if (a.id === id) a.lido = true; });
-    avisosSave(l); return l;
-  }
   function removeTarefa(id) {
     var l = tarefasRaw().map(function (tf) {
       return tf.id === id ? { id: tf.id, apagada: iso(today()), _v: Date.now() } : tf;
@@ -3522,10 +3491,6 @@
       dono: dono, prazo: dataIso,
       por: (gestaoUser() || {}).nome || ""
     });
-    if (dono && dono !== ((gestaoUser() || {}).nome || "")) {
-      avisar(dono, "Conversa de matrícula marcada: " + (pes ? pes.nome : "") + " · "
-        + ddmm(dataIso) + (hora ? " às " + hora : ""), "reuniao");
-    }
     return loadPessoas();
   }
   // A escola vive em dois fusos: Carla e a maioria das leads no Brasil,
@@ -6144,7 +6109,7 @@
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
       // programas vai CRU (com as lápides): é o sync que espalha o
       // "esta turma foi apagada" para os outros aparelhos
-      programas: programasRaw(), avisos: avisosLista(),
+      programas: programasRaw(),
       // configurações que o app da aluna lê: sem elas no payload, o grupo
       // da assinatura e o Book Club nunca chegavam ao aparelho da aluna
       assinaturaCfg: assinaturaCfg(), bookclub: bookclubUrl(), bookclubAula: bookclubAula(),
@@ -6163,7 +6128,7 @@
     grava(TAREFAS_KEY, d.tarefas); grava(FERIADOS_KEY, d.feriados); grava(METAS_KEY, d.metas);
     grava(MOEDAS_KEY, d.moedas); grava(EQUIPE_KEY, d.equipe); grava(CALC_KEY, d.calc);
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
-    grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas); grava(AVISOS_KEY, d.avisos);
+    grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas);
     grava(CONTAS_KEY, d.contas);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
@@ -7018,13 +6983,10 @@
       hist: hist };
     chamadasSaveLocal(m);
     agendarSync();
-    // Corrigir a chamada de outra pessoa sem avisar é mexer no trabalho
-    // dela às escondidas: a professora precisa saber o que mudou.
-    if (jaExistia && mudancas && quemAntes && quemAntes !== (por || "")) {
-      avisar(quemAntes, "A chamada de " + turmaLabel + " em " + ddmm(dataIso)
-        + " foi corrigida" + (por ? " por " + por : "") + " · "
-        + mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas"), "chamada");
-    }
+    // Corrigir a chamada de outra pessoa sem registro é mexer no
+    // trabalho dela às escondidas. Quem mudou o quê fica no hist acima,
+    // e o Painel mostra isso em "Histórico desta chamada" — é mais do
+    // que o aviso dizia, e num lugar onde se vai olhar.
     var ehParticular = turmaLabel.indexOf("Particular") === 0;
     // falta/justificada nova vai pra linha do tempo (re-salvar não duplica)
     Object.keys(presencas).forEach(function (pid) {
@@ -7818,15 +7780,10 @@
 
     var noMes = antesNoMes + 1;
     var excedeu = noMes > LIMITE_REMARCACAO_MES;
-    // a professora precisa saber que a aula dela mudou de dia
-    var prof = professoraDaParticular(pes);
-    if (prof) {
-      avisar(prof, "Aula particular de " + pes.nome + " remarcada: "
-        + ddmm(dataAntiga) + " → " + ddmm(novaData)
-        + (novaHora ? " às " + novaHora : "")
-        + (excedeu ? " · " + noMes + "ª remarcação no mês (limite: "
-            + LIMITE_REMARCACAO_MES + ")" : ""), "aula");
-    }
+    // A remarcação fica na linha do tempo da aluna (pushHist acima) e a
+    // Agenda passa a mostrar a aula no dia novo, que é onde a professora
+    // olha o dia dela. O limite excedido aparece para quem remarca, no
+    // Perfil, que é quem pode decidir sobre ele.
     return { ok: true, noMes: noMes, limite: LIMITE_REMARCACAO_MES, excedeu: excedeu,
       de: dataAntiga, para: novaData };
   }
@@ -10436,8 +10393,6 @@
       mutate(pessoaId, function (pp) {
         pushHist(pp, "contato", "Respondeu ao desafio da semana " + semana);
       });
-      var dono = ["Gabi", "Érika", "Carla"].indexOf(pessoa.professora) >= 0 ? pessoa.professora : "Gabi";
-      avisar(dono, pessoa.nome + " respondeu ao desafio da semana " + semana + ". Falta a devolutiva.", "programa");
     }
     return achou;
   }
@@ -13391,7 +13346,7 @@
     atualizarContrato: atualizarContrato, mudarTurma: mudarTurma,
     atualizarCadastro: atualizarCadastro, setOnboardingData: setOnboardingData,
     // avisos internos
-    avisosDe: avisosDe, avisar: avisar, marcarAvisoLido: marcarAvisoLido, avisosLista: avisosLista,
+
     // programa no WhatsApp
     MISSOES_PILOTO: MISSOES_PILOTO, ETAPAS_SEMANA: ETAPAS_SEMANA,
     programasLista: programasLista, addPrograma: addPrograma, getPrograma: getPrograma,

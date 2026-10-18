@@ -1044,6 +1044,52 @@ Agenda, da lista de aulas sem chamada e da página da Turma agora
 entram na turma, na aba de chamadas — que é o que quem clica veio
 fazer.
 
+### Os avisos estavam escrevendo para o nada
+
+Um teste cobrava que a professora é avisada quando a gestão corrige a
+chamada dela. Não era, e a causa estava três camadas abaixo:
+
+```js
+function avisosLista() {
+  try { return JSON.parse(localStorage.getItem(AVISOS_KEY)) || []; } catch (e) { return []; }
+}
+```
+
+**`AVISOS_KEY` não existia.** O corte do Mural apagou a declaração
+`var AVISOS_KEY = "isr_avisos_v1";` e deixou os três usos dela. Como o
+acesso a `localStorage` vive dentro de `try/catch`, o `ReferenceError`
+era engolido: a lista devolvia vazio, a gravação não gravava, e nada
+acusava. **Todo aviso que o sistema escreveu desde então foi descartado
+em silêncio** — nove lugares diferentes, por dias, sem uma linha de
+erro.
+
+Antes de mexer, conferi um por um se a informação sobrevive em outro
+lugar que alguém de fato vê:
+
+| o que avisava | onde a informação está |
+|---|---|
+| matrícula nova | `pushHist` do onboarding + a tarefa de integração, logo depois |
+| avaliação baixa | a tarefa "Falar com X sobre a última aula" |
+| entrada no acompanhamento | `pushHist` + tarefa |
+| tarefa concluída | a tarefa fica marcada como feita na lista |
+| conversa de matrícula marcada | a tarefa com dono e prazo |
+| chamada corrigida | o histórico da chamada, que o Painel mostra |
+| particular remarcada | a linha do tempo da aluna, e a Agenda mostra a aula no dia novo; o limite excedido aparece no Perfil, para quem remarca |
+| desafio respondido | `pushHist` |
+
+Todas cobertas. **Então a máquina saiu** — cinco funções, nove
+chamadas, duas exportações e o campo no pacote do sync. Restaurar a
+chave só devolveria uma gaveta write-only: nove escritores e, desde
+que o Mural saiu, zero leitores.
+
+**`verificar-nomes.js`** é o sexto verificador, e existe por causa
+deste defeito: ele procura chave de armazenamento (`NOME_KEY`) usada
+num arquivo e nunca declarada nele. O alvo é estreito de propósito —
+mirar em todo nome em caixa alta dá 104 achados, quase todos
+`window.ISRCRM` e `ISRPaginacao.PADRAO`, e verificador que acusa o que
+não existe deixa de ser lido. Posto no arquivo de antes da correção,
+ele aponta o `AVISOS_KEY` nas três linhas.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da
