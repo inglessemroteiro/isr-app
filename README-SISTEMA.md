@@ -993,6 +993,57 @@ E o instrumento pegou uma regressão de verdade no caminho: o
 a folha de componentes não entrou lá, e um campo perdeu o canto e a
 fonte. Foi o que levou a descobrir que aquela tela não é de gestão.
 
+### O Painel do professor, pelo v5
+
+A tela tinha **três abas planas** — Resumo do dia · Chamada · Turmas e
+horas — e a turma não era lugar nenhum: a chamada tinha um `<select>`
+de turma no meio dela, e escolher a turma e escolher a chamada eram
+duas escolhas separadas que precisavam combinar.
+
+O v5 tem **quatro abas no topo** — Hoje · Minhas turmas · Particulares
+· Clubes — e **"Minhas turmas" abre UMA turma, com abas próprias
+dentro**. A turma é a unidade do trabalho da professora: ela entra na
+turma e trabalha ali.
+
+| aba de dentro | o que tem | de onde veio |
+|---|---|---|
+| **Visão geral** | projeto do ciclo, ocupação com vagas, professora, próxima aula | nova |
+| **Alunas** | a lista com o estado de hoje e a frequência de cada uma | a mesma lista da grade do diário, sem cálculo novo |
+| **Chamadas** | a chamada inteira: as datas, a grade P/A/F/J, salvar, gravação, histórico, chamadas já feitas | era a aba Chamada |
+| **Materiais** | o caderno da turma com link para o Drive, e as aulas gravadas | nova |
+
+**A lógica da chamada não foi reescrita.** São 900 linhas que
+funcionam, e o que mudou foi quem escolhe a turma: antes um seletor
+dentro da chamada, agora a turma estar aberta. O state `turmaChamada`
+já era o "turma selecionada" — a reestruturação se encaixou nele, e o
+seletor saiu porque virou redundante.
+
+**As particulares saíram de dentro da chamada** e viraram aba do
+topo, como no v5: a tabela de pacotes e a chamada da semana. Elas não
+são uma turma, e estavam dentro do bloco de uma.
+
+**A aba Clubes mostra os clubes dela** — estado, horário, onde,
+inscritas, lista de espera, encontros do mês e o próximo — e manda
+editar na tela de Clubes. Criar e publicar em dois lugares acaba em
+dois lugares que discordam, e a tela de Clubes já existe no menu.
+
+**"Começar aula"** aparece quando a aula do dia tem caderno, e abre o
+caderno no Drive. O v5 abre um caderno ao vivo para edição; nós
+guardamos o **nome** do documento, não o caderno. O botão faz o que dá
+para fazer — leva ao caderno que a professora abre à mão hoje. Prometer
+caderno ao vivo seria pior que não ter botão.
+
+**Fora, por não haver dado nosso:** Plano das aulas (sessões,
+atividades, reordenar, publicar), Substituições (pedir e atribuir),
+Respostas ao vivo, Slides e Entregas do mês. Ficam nomeadas aqui, como
+o "Exportar para o ISR Financeiro" da Folha: tela que promete o que
+não existe é pior que tela sem a promessa.
+
+**Os links diretos continuam valendo.** `?turma=&data=&retro=1` da
+Agenda, da lista de aulas sem chamada e da página da Turma agora
+entram na turma, na aba de chamadas — que é o que quem clica veio
+fazer.
+
 ### A Área da Aluna no desenho novo
 
 `ISR - Aluna v4.dc.html` é o `Student Portal v3` com os dados reais da

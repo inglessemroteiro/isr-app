@@ -51,13 +51,232 @@
     </sc-for>
   </div>
 
+  <!-- A TURMA ABERTA: o caminho de volta e as abas de dentro -->
+  <!-- No v5 a turma é a unidade do trabalho da professora: ela entra
+       na turma e trabalha ali. Antes a chamada tinha um seletor de
+       turma no meio dela, e a turma não era lugar nenhum. -->
+  <sc-if value="{{ turmaAberta }}">
+    <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;">
+      <button class="isr-botao isr-botao--texto" onclick="{{ onVoltarTurmas }}" style="color: var(--color-primary-500); font-size: 12.5px; padding: 4px 0">← Minhas turmas</button>
+      <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">{{ turmaAbertaNome }}</div>
+      <div style="font-size: 12.5px; color: var(--color-tertiary-500);">{{ turmaAbertaSub }}</div>
+    </div>
+    <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap">
+      <sc-for list="{{ tAbas }}" as="ta" hint-placeholder-count="4">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ ta.onClick }}" style="padding: 9px 16px; font-size: 13px; background: {{ ta.bg }}; color: {{ ta.fg }}">{{ ta.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- VISÃO GERAL DA TURMA -->
+  <sc-if value="{{ tGeral }}">
+    <section class="isr-cartao" style="padding: 18px 22px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 600;">Visão geral</div>
+        <a href="{{ tGeralTurmaHref }}" class="lk" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">página da turma →</a>
+      </div>
+      <sc-for list="{{ tGeralLinhas }}" as="gl" hint-placeholder-count="4">
+        <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
+          <span style="flex: none; width: 150px; font-size: 12.5px; color: var(--color-tertiary-500);">{{ gl.k }}</span>
+          <span style="flex: 1; min-width: 180px; font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ gl.v }}</span>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- ALUNAS DA TURMA -->
+  <!-- A mesma lista que a grade do diário usa: nome, estado de hoje e
+       frequência. Sem cálculo novo, e por isso sem risco de os dois
+       discordarem. -->
+  <sc-if value="{{ tAlunas }}">
+    <section class="isr-cartao" style="padding: 18px 22px">
+      <div style="font-size: 16px; font-weight: 600;">Alunas</div>
+      <sc-if value="{{ tAlunasVazio }}">
+        <div style="padding: 18px 0 4px; font-size: 14px; color: var(--color-primary-800);">Nenhuma aluna matriculada nesta turma.</div>
+      </sc-if>
+      <sc-for list="{{ tAlunasLista }}" as="ta2" hint-placeholder-count="5">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--color-button-secondary);">
+          <div style="flex: 1; min-width: 180px;">
+            <a href="{{ ta2.perfilHref }}" class="lk" style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ ta2.nome }}</a>
+            <div style="font-size: 12px; color: {{ ta2.estadoCor }};">{{ ta2.estadoHoje }}</div>
+          </div>
+          <div style="flex: none; text-align: right;">
+            <div style="font-size: 15px; font-weight: 700; color: {{ ta2.freqCor }};">{{ ta2.freqLabel }}</div>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300);">frequência</div>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- MATERIAIS DA TURMA -->
+  <sc-if value="{{ tMateriais }}">
+    <section class="isr-cartao" style="padding: 18px 22px">
+      <div style="font-size: 16px; font-weight: 600;">Caderno da turma</div>
+      <sc-if value="{{ temCaderno }}">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 11px 0 0;">
+          <span style="flex: 1; min-width: 200px; font-size: 13px; color: var(--color-primary-800); word-break: break-word;">{{ tCaderno }}</span>
+          <a href="{{ tCadernoHref }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; background: var(--color-button-secondary); color: var(--color-primary-900); border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 600;">abrir no Drive →</a>
+        </div>
+      </sc-if>
+      <sc-if value="{{ semCaderno }}">
+        <p style="margin: 8px 0 0; font-size: 13px; color: var(--color-tertiary-500); line-height: 1.6;">Sem caderno vinculado neste ciclo. O nome do documento se grava na página da turma.</p>
+      </sc-if>
+    </section>
+
+    <section class="isr-cartao" style="padding: 18px 22px">
+      <div style="font-size: 16px; font-weight: 600;">Aulas gravadas</div>
+      <p style="margin: 4px 0 0; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">A gravação fica visível só para as alunas desta turma. O link se grava na chamada da aula.</p>
+      <sc-if value="{{ semGravacoes }}">
+        <div style="padding: 14px 0 2px; font-size: 13.5px; color: var(--color-primary-800);">Nenhuma aula gravada nesta turma.</div>
+      </sc-if>
+      <sc-for list="{{ tGravacoes }}" as="gr" hint-placeholder-count="4">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
+          <strong style="flex: none; width: 52px; font-size: 13px; font-weight: 600;">{{ gr.data }}</strong>
+          <span style="flex: 1; min-width: 160px; font-size: 13.5px; color: var(--color-primary-800);">{{ gr.label }}</span>
+          <sc-if value="{{ gr.temLink }}">
+            <a href="{{ gr.link }}" target="_blank" rel="noopener" class="lk" style="flex: none; font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">abrir →</a>
+          </sc-if>
+        </div>
+      </sc-for>
+    </section>
+  </sc-if>
+
+  <!-- PARTICULARES -->
+  <sc-if value="{{ ptParticulares }}">
+    <sc-if value="{{ temParticulares }}">
+      <div style="background: var(--color-bg-default); border-radius: 18px; padding: 14px 16px; margin-bottom: 14px;">
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Particulares</div>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px;">
+            <thead>
+              <tr>
+                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Aluna</th>
+                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Pacote</th>
+                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Frequência</th>
+                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Próxima aula</th>
+                <th style="padding: 0 0 6px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ particularesChamada }}" as="pc" hint-placeholder-count="4">
+                <tr style="border-top: 1px solid var(--color-button-secondary); background: {{ pc.linhaBg }};">
+                  <td style="padding: 9px 10px 9px 0;">
+                    <div style="font-weight: 600;">{{ pc.nome }}</div>
+                    <div style="font-size: 11.5px; color: {{ pc.avisoCor }};">{{ pc.aviso }}</div>
+                  </td>
+                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.pacote }}</td>
+                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.frequencia }}</td>
+                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.proxima }}</td>
+                  <td style="padding: 9px 0; text-align: right;">
+                    <button class="isr-botao isr-botao--pilula" onclick="{{ pc.onClick }}" style="background: {{ pc.bg }}; color: {{ pc.fg }}; font-size: 12px; padding: 8px 14px; white-space: nowrap">{{ pc.acao }}</button>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CHAMADA DA SEMANA -->
+        <div style="border-top: 1px solid var(--color-button-secondary); margin-top: 12px; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 14px; font-weight: 600;">Chamada da semana</span>
+            <span style="font-size: 12.5px; color: {{ semanaResumoCor }};">{{ semanaResumo }}</span>
+          </div>
+          <p style="margin: 4px 0 8px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">As aulas particulares dos últimos 7 dias. Marque aqui mesmo: cada clique salva a chamada daquela aula e conta a aula no pacote da aluna.</p>
+          <sc-if value="{{ semanaVazia }}">
+            <div style="font-size: 12.5px; color: var(--color-tertiary-500); padding: 4px 0 6px;">Nenhuma aula particular marcada nos últimos 7 dias. As aulas vêm da série de cada pacote, no perfil da aluna.</div>
+          </sc-if>
+          <sc-for list="{{ semanaParticulares }}" as="sp" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-button-secondary);">
+              <div style="flex: none; width: 96px;">
+                <div style="font-size: 13px; font-weight: 600;">{{ sp.dia }}</div>
+                <div style="font-size: 11.5px; color: var(--color-tertiary-300);">{{ sp.hora }}</div>
+              </div>
+              <div style="flex: 1; min-width: 130px;">
+                <div style="font-size: 13.5px; font-weight: 600;">{{ sp.nome }}</div>
+                <div style="font-size: 11.5px; color: {{ sp.estadoCor }};">{{ sp.estadoLabel }}</div>
+              </div>
+              <div style="flex: none; display: flex; gap: 5px; flex-wrap: wrap;">
+                <sc-for list="{{ sp.botoes }}" as="bt" hint-placeholder-count="3">
+                  <button class="isr-botao" onclick="{{ bt.onClick }}" title="{{ bt.title }}" style="border: 1px solid {{ bt.borda }}; background: {{ bt.bg }}; color: {{ bt.fg }}; font-size: 12px; padding: 8px 13px; border-radius: 10px">{{ bt.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ semParticulares }}">
+      <section class="isr-cartao" style="padding: 18px 22px">
+        <div style="font-size: 16px; font-weight: 600;">Particulares</div>
+        <p style="margin: 6px 0 0; font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">Nenhuma aluna particular no seu nome. As aulas vêm da série de cada pacote, no perfil da aluna.</p>
+      </section>
+    </sc-if>
+  </sc-if>
+
+  <!-- CLUBES -->
+  <!-- Os clubes dela e os encontros do mês. Criar, editar e publicar
+       ficam na tela de Clubes: duas telas que fazem a mesma coisa
+       acabam discordando, e a tela de Clubes já existe no menu. -->
+  <sc-if value="{{ ptClubes }}">
+    <sc-if value="{{ semClubes }}">
+      <section class="isr-cartao" style="padding: 18px 22px">
+        <div style="font-size: 16px; font-weight: 600;">Clubes</div>
+        <p style="margin: 6px 0 10px; font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">Nenhum clube no seu nome. Clube é encontro aberto a todas as alunas, com tema por encontro e lista de espera.</p>
+        <a href="ISR%20-%20Clubes%20v3.dc.html" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); border-radius: 999px; padding: 11px 18px; font-size: 12.5px; font-weight: 600;">Oferecer um clube</a>
+      </section>
+    </sc-if>
+    <sc-for list="{{ clubes }}" as="cl" hint-placeholder-count="3">
+      <section class="isr-cartao" style="padding: 18px 22px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+          <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em;">{{ cl.nome }}</div>
+          <span style="font-size: 12px; font-weight: 600; color: {{ cl.estadoCor }};">{{ cl.estado }}</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px;">
+          <div style="flex: 1 1 150px; min-width: 0;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">quando</div>
+            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.quando }}</div>
+          </div>
+          <div style="flex: 1 1 150px; min-width: 0;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">onde</div>
+            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.onde }}</div>
+          </div>
+          <div style="flex: 1 1 150px; min-width: 0;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">inscritas</div>
+            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.inscritas }}</div>
+            <sc-if value="{{ cl.temEspera }}">
+              <div style="font-size: 12px; color: var(--color-warning-dark);">{{ cl.espera }}</div>
+            </sc-if>
+          </div>
+          <div style="flex: 1 1 150px; min-width: 0;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">encontros</div>
+            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.encontrosMes }}</div>
+            <div style="font-size: 12px; color: var(--color-tertiary-500);">{{ cl.proximo }}</div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <a href="{{ cl.href }}" class="lk" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">abrir em Clubes →</a>
+        </div>
+      </section>
+    </sc-for>
+  </sc-if>
+
   <!-- RESUMO DO DIA -->
-  <sc-if value="{{ ptResumo }}">
+  <sc-if value="{{ ptHoje }}">
     <section style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 22px 24px;">
       <div style="font-size: 12px; font-weight: 600; color: var(--color-button-primary);">{{ heroQuando }}</div>
       <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.035em; margin-top: 3px;">{{ heroTitulo }}</div>
       <div style="font-size: 13px; color: rgba(255,255,255,0.78); margin-top: 5px; line-height: 1.5;">{{ heroDetalhe }}</div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
+        <!-- "Começar aula" no v5 abre o caderno da turma para edição.
+             Guardamos o NOME do documento, não um caderno ao vivo: o
+             botão leva ao caderno no Drive, que é o que a professora
+             abre à mão hoje. -->
+        <sc-if value="{{ temCadernoDoDia }}">
+          <a href="{{ cadernoDoDiaHref }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-primary); color: var(--color-primary-900); border-radius: 999px; padding: 11px 16px; font-size: 13px; font-weight: 600;">▶ Começar aula</a>
+        </sc-if>
         <sc-for list="{{ heroAcoes }}" as="ha" hint-placeholder-count="2">
           <button class="isr-botao isr-botao--pilula" onclick="{{ ha.onClick }}" style="padding: 11px 16px; font-size: 13px; background: {{ ha.bg }}; color: {{ ha.fg }}">{{ ha.label }}</button>
         </sc-for>
@@ -176,7 +395,7 @@
   </sc-if>
 
   <!-- PRÓXIMAS AULAS -->
-  <sc-if value="{{ ptResumo }}">
+  <sc-if value="{{ ptHoje }}">
   <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
     <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
       <div style="font-size: 16px; font-weight: 600;">Próximas aulas · 7 dias</div>
@@ -200,7 +419,7 @@
   </sc-if>
 
   <!-- CHAMADA -->
-  <sc-if value="{{ ptChamada }}">
+  <sc-if value="{{ tChamadas }}">
   <section ref="{{ chamadaRef }}" style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px; scroll-margin-top: 20px;">
     <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25;">{{ tituloChamada }}</div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; margin-bottom: 14px;">
@@ -220,76 +439,12 @@
       <button class="isr-botao isr-botao--pilula isr-botao--texto" onclick="{{ onOutraData }}" style="border: 1px dashed var(--color-tertiary-100); color: var(--color-tertiary-500); font-size: 12.5px; padding: 9px 14px">{{ outraDataLabel }}</button>
     </div>
 
-    <!-- PARTICULARES -->
-    <sc-if value="{{ temParticulares }}">
-      <div style="background: var(--color-bg-default); border-radius: 18px; padding: 14px 16px; margin-bottom: 14px;">
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Particulares</div>
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px;">
-            <thead>
-              <tr>
-                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Aluna</th>
-                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Pacote</th>
-                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Frequência</th>
-                <th style="text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300); padding: 0 10px 6px 0;">Próxima aula</th>
-                <th style="padding: 0 0 6px;"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <sc-for list="{{ particularesChamada }}" as="pc" hint-placeholder-count="4">
-                <tr style="border-top: 1px solid var(--color-button-secondary); background: {{ pc.linhaBg }};">
-                  <td style="padding: 9px 10px 9px 0;">
-                    <div style="font-weight: 600;">{{ pc.nome }}</div>
-                    <div style="font-size: 11.5px; color: {{ pc.avisoCor }};">{{ pc.aviso }}</div>
-                  </td>
-                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.pacote }}</td>
-                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.frequencia }}</td>
-                  <td style="padding: 9px 10px 9px 0; color: var(--color-primary-800); white-space: nowrap;">{{ pc.proxima }}</td>
-                  <td style="padding: 9px 0; text-align: right;">
-                    <button class="isr-botao isr-botao--pilula" onclick="{{ pc.onClick }}" style="background: {{ pc.bg }}; color: {{ pc.fg }}; font-size: 12px; padding: 8px 14px; white-space: nowrap">{{ pc.acao }}</button>
-                  </td>
-                </tr>
-              </sc-for>
-            </tbody>
-          </table>
-        </div>
 
-        <!-- CHAMADA DA SEMANA -->
-        <div style="border-top: 1px solid var(--color-button-secondary); margin-top: 12px; padding-top: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-            <span style="font-size: 14px; font-weight: 600;">Chamada da semana</span>
-            <span style="font-size: 12.5px; color: {{ semanaResumoCor }};">{{ semanaResumo }}</span>
-          </div>
-          <p style="margin: 4px 0 8px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">As aulas particulares dos últimos 7 dias. Marque aqui mesmo: cada clique salva a chamada daquela aula e conta a aula no pacote da aluna.</p>
-          <sc-if value="{{ semanaVazia }}">
-            <div style="font-size: 12.5px; color: var(--color-tertiary-500); padding: 4px 0 6px;">Nenhuma aula particular marcada nos últimos 7 dias. As aulas vêm da série de cada pacote, no perfil da aluna.</div>
-          </sc-if>
-          <sc-for list="{{ semanaParticulares }}" as="sp" hint-placeholder-count="5">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-button-secondary);">
-              <div style="flex: none; width: 96px;">
-                <div style="font-size: 13px; font-weight: 600;">{{ sp.dia }}</div>
-                <div style="font-size: 11.5px; color: var(--color-tertiary-300);">{{ sp.hora }}</div>
-              </div>
-              <div style="flex: 1; min-width: 130px;">
-                <div style="font-size: 13.5px; font-weight: 600;">{{ sp.nome }}</div>
-                <div style="font-size: 11.5px; color: {{ sp.estadoCor }};">{{ sp.estadoLabel }}</div>
-              </div>
-              <div style="flex: none; display: flex; gap: 5px; flex-wrap: wrap;">
-                <sc-for list="{{ sp.botoes }}" as="bt" hint-placeholder-count="3">
-                  <button class="isr-botao" onclick="{{ bt.onClick }}" title="{{ bt.title }}" style="border: 1px solid {{ bt.borda }}; background: {{ bt.bg }}; color: {{ bt.fg }}; font-size: 12px; padding: 8px 13px; border-radius: 10px">{{ bt.label }}</button>
-                </sc-for>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-    </sc-if>
-
+    <!-- O seletor de turma saiu: a turma é a que está aberta. Ficou só
+         a data, que é o que "chamada de outra data" precisa escolher. -->
     <sc-if value="{{ escolhendoData }}">
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
-        <select class="isr-campo" onchange="{{ onTurmaChamada }}" style="padding: 11px 13px; font-size: 13px; max-width: 100%">
-          <sc-for list="{{ turmasChamada }}" as="tc" hint-placeholder-count="4"><option value="{{ tc.id }}" selected="{{ tc.sel }}">{{ tc.label }}</option></sc-for>
-        </select>
+        <span style="font-size: 12.5px; color: var(--color-tertiary-500);">data da aula</span>
         <input class="isr-campo" type="date" value="{{ chamadaData }}" onchange="{{ onDataChamada }}" style="padding: 10px 13px; font-size: 13px" />
       </div>
     </sc-if>
@@ -450,9 +605,10 @@
   </sc-if>
 
   <!-- TURMAS DA PROFESSORA -->
-  <sc-if value="{{ ptTurmas }}">
+  <sc-if value="{{ ptListaTurmas }}">
   <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-    <div style="font-size: 16px; font-weight: 600; margin-bottom: 10px;">Turmas</div>
+    <div style="font-size: 16px; font-weight: 600;">Turmas</div>
+    <p style="margin: 4px 0 10px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">Abra uma turma para a chamada, as alunas e os materiais dela.</p>
     <sc-if value="{{ turmasVazio }}">
       <div style="padding: 16px 0; font-size: 14px; color: var(--color-primary-800);">Nenhuma turma desta professora.</div>
     </sc-if>
@@ -465,7 +621,7 @@
     <sc-for list="{{ turmasProf }}" as="u" hint-placeholder-count="3">
       <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 13px 0; border-top: 1px solid var(--color-button-secondary);">
         <div style="min-width: 0;">
-          <a href="{{ u.turmaHref }}" class="lk" style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ u.nivel }}</a>
+          <button class="isr-botao isr-botao--texto" onclick="{{ u.onAbrir }}" style="color: var(--color-primary-900); font-size: 14px; padding: 0; text-align: left">{{ u.nivel }}</button>
           <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ u.turma }}</div>
         </div>
         <div style="font-size: 13px; font-weight: 600; color: #6b5b95;">{{ u.projeto }}</div>
@@ -483,7 +639,7 @@
   </section>
   </sc-if>
 
-  <sc-if value="{{ ptChamada }}">
+  <sc-if value="{{ tChamadas }}">
   <p style="margin: 0; font-size: 12.5px; color: var(--color-tertiary-300); line-height: 1.6;">A chamada é registrada por turma e data. As ausências são lançadas na linha do tempo da aluna e consideradas no acompanhamento. Na aula extra, a lista parte de quem confirmou presença e admite inclusão manual.</p>
   </sc-if>
 
@@ -493,7 +649,10 @@
 class Component extends DCLogic {
   // aba nula = ainda não escolhida: quem chega por um link de chamada
   // cai na chamada, e quem abre o painel pelo menu cai no resumo
-  state = { aba: null, loteConfirmar: false, loteResultado: "", avisou: "", teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
+  // turmaAberta: no v5 a turma é a unidade do trabalho da professora —
+  // ela entra na turma e trabalha ali. tTab é a aba de dentro.
+  state = { aba: null, turmaAberta: false, tTab: "chamadas",
+            loteConfirmar: false, loteResultado: "", avisou: "", teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
             escolhendoData: null, linhaAberta: null,
             novaExtraAberta: false, neFeito: "" };
@@ -593,7 +752,14 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { abas: [], ptResumo: true, ptChamada: false, ptTurmas: false,
+    if (!CRM) return { abas: [], ptHoje: true, ptListaTurmas: false, turmaAberta: false,
+      ptParticulares: false, ptClubes: false,
+      onVoltarTurmas: () => {}, turmaAbertaNome: "", turmaAbertaSub: "", tAbas: [],
+      tGeral: false, tAlunas: false, tChamadas: false, tMateriais: false,
+      tGeralLinhas: [], tGeralTurmaHref: "#", tAlunasLista: [], tAlunasVazio: true,
+      tCaderno: "", tCadernoHref: "#", temCaderno: false, tGravacoes: [], semGravacoes: true,
+      clubes: [], semClubes: true,
+      temCadernoDoDia: false, cadernoDoDiaHref: "#",
       eyebrow: "painel do professor", heroQuando: "", heroTitulo: "", heroDetalhe: "",
       heroAcoes: [], entregas: [], entregasTitulo: "", entregasNota: "",
       fila: [], filaVazia: true, filaCount: "0",
@@ -605,7 +771,7 @@ class Component extends DCLogic {
       temHistorico: false, historico: [],
       temFeitas: false, feitas: [], feitasResumo: "",
       semanaParticulares: [], semanaVazia: true, semanaResumo: "", semanaResumoCor: "var(--color-tertiary-500)",
-      particularesChamada: [], temParticulares: false,
+      particularesChamada: [], temParticulares: false, semParticulares: true, semCaderno: true,
       novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "var(--color-tertiary-50)", neBg: "var(--color-neutral-0)", neFg: "var(--color-primary-900)",
       onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
       neTituloRef: this.neTituloRef, neDataRef: this.neDataRef, neHoraRef: this.neHoraRef,
@@ -668,6 +834,7 @@ class Component extends DCLogic {
           projeto: daTurma ? (daTurma.projeto || "") : "",
           quantas: daTurma ? daTurma.ocupadas : 0,
           quando: dl.label + (it.hora ? " · " + it.hora : ""),
+          label: rotulo, caderno: daTurma ? (daTurma.notebook || "") : "",
           titulo: it.titulo.replace(/^Aula( extra)? · /, ""), cor: this.tipoCor(it.tipo),
           gcal: ev ? CRM.gcalLinkEvento(ev) : CRM.gcalLink(it.titulo, it.data, it.hora, "Aula · Inglês sem Roteiro"),
           onChamada: () => {
@@ -684,9 +851,9 @@ class Component extends DCLogic {
               this.setState({ eventoChamada: null, particularChamada: null, turmaChamada: daTurma.label, chamadaData: it.data,
                 presencas: this.carregarChamada(daTurma.label, it.data), tarefas: null, salvouAgora: false });
             }
-            // a chamada agora é uma aba: sem trocar de aba, o clique
-            // rolava para um bloco que não está na tela
-            this.setState({ aba: "chamada" });
+            // A chamada agora é uma aba DENTRO da turma: sem abrir a
+            // turma, o clique rolava para um bloco que não está na tela.
+            this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas" });
             setTimeout(() => {
               const el = this.chamadaRef.current;
               if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -903,8 +1070,18 @@ class Component extends DCLogic {
     // já tem o que fazer: abrir no resumo seria um passo a mais.
     const veioParaChamada = !!(this.turmaParam() || this.dataParam()
       || this.eventoParam() || this.retroParam());
-    const aba = this.state.aba || (veioParaChamada ? "chamada" : "resumo");
-    const ABAS = [["resumo", "Resumo do dia"], ["chamada", "Chamada"], ["turmas", "Turmas e horas"]];
+    // Quem chega por um link de chamada entra na turma já aberta, na
+    // aba de chamadas: é o que ele veio fazer.
+    const aba = this.state.aba || (veioParaChamada ? "turmas" : "hoje");
+    const ABAS = [["hoje", "Hoje"], ["turmas", "Minhas turmas"],
+                  ["particulares", "Particulares"], ["clubes", "Clubes"]];
+    // A turma abre sozinha quando o link já disse qual é. Fora disso,
+    // "Minhas turmas" mostra a lista e a professora escolhe.
+    const turmaAberta = this.state.aba === null && veioParaChamada
+      ? true : !!this.state.turmaAberta;
+    const T_ABAS = [["geral", "Visão geral"], ["alunas", "Alunas"],
+                    ["chamadas", "Chamadas"], ["materiais", "Materiais"]];
+    const tTab = this.state.tTab || "chamadas";
 
     // ── o resumo do dia ──
     const hojeAgora = this.hojeIso();
@@ -960,14 +1137,129 @@ class Component extends DCLogic {
     // ── a fila dela ──
     const filaDela = (CRM.filaParaHoje ? CRM.filaParaHoje("professora", teacher) : []) || [];
 
+    // O caderno da aula de hoje: é o que o botão "Começar aula" abre.
+    const cadernoDoDia = (aulaDoDia && aulaDoDia.caderno)
+      ? "https://drive.google.com/drive/search?q=" + encodeURIComponent(aulaDoDia.caderno)
+      : "";
+
+    // ── a turma aberta ──
+    // turmaSel já resolve qual turma está em jogo (do state, do link ou
+    // da próxima aula). Aqui só se acha o registro dela para a visão
+    // geral e os materiais.
+    const turmaAbertaU = turmasProfOcup.filter(u => u.label === turmaSel)[0]
+      || ocup.filter(u => u.label === turmaSel)[0] || null;
+    const proximaDaAberta = turmaAbertaU
+      ? aulas.filter(a => a.label === turmaAbertaU.label)[0] || null : null;
+    // O caderno é um documento do Drive, e o que o sistema guarda é o
+    // nome dele. Buscar pelo nome é o que dá para fazer sem guardar o
+    // link — e é o que a professora faz à mão hoje.
+    const cadernoHref = (turmaAbertaU && turmaAbertaU.notebook)
+      ? "https://drive.google.com/drive/search?q=" + encodeURIComponent(turmaAbertaU.notebook)
+      : "#";
+    // Não há consulta por turma na base, só a lista inteira e a de uma
+    // aula. Filtrar aqui é o que existe.
+    const gravacoesDaTurma = (turmaAbertaU && CRM.gravacoesLista
+      ? CRM.gravacoesLista().filter(g => g.tipo === "turma" && g.turma === turmaAbertaU.label)
+      : []).sort((a, b) => (a.data < b.data ? 1 : -1)).map(g => ({
+        data: CRM.ddmm(g.data), link: g.link || "",
+        temLink: !!g.link, label: g.titulo || ("Aula de " + CRM.ddmm(g.data))
+      }));
+
+    // ── os clubes dela ──
+    const MESES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun",
+      "jul", "ago", "set", "out", "nov", "dez"];
+    const clubesDelaLista = (CRM.clubesLista ? CRM.clubesLista() : [])
+      .filter(c => c.professora === teacher)
+      .map(c => {
+        const enc = (c.encontros || []).filter(e => e && e.data).sort((a, b) => a.data < b.data ? -1 : 1);
+        const prox = enc.filter(e => e.data >= hojeIso)[0] || null;
+        const doMes = enc.filter(e => e.data.slice(0, 7) === hojeIso.slice(0, 7)).length;
+        return {
+          nome: c.nome,
+          estado: c.status === "publicado"
+            ? ((c.membros || []).length ? "em andamento" : "aguardando inscrições")
+            : "rascunho · só você vê",
+          estadoCor: c.status === "publicado"
+            ? ((c.membros || []).length ? "var(--color-success-dark)" : "var(--color-primary-800)")
+            : "var(--color-tertiary-500)",
+          quando: [c.dia, c.hora, c.duracao ? c.duracao + " min" : ""].filter(Boolean).join(" · ") || "sem horário",
+          onde: c.formato === "presencial" ? (c.local || "presencial") : (c.link ? "online" : "online · sem link"),
+          inscritas: (c.membros || []).length + (c.vagas ? " de " + c.vagas : "") + " inscritas",
+          espera: (c.espera || []).length
+            ? (c.espera || []).length + " na lista de espera" : "",
+          temEspera: ((c.espera || []).length > 0),
+          encontrosMes: doMes + (doMes === 1 ? " encontro em " : " encontros em ")
+            + MESES_CURTO[new Date().getMonth()],
+          proximo: prox ? ("próximo: " + CRM.ddmm(prox.data) + (prox.tema ? " · " + prox.tema : "")) : "sem encontro marcado",
+          href: "ISR%20-%20Clubes%20v3.dc.html"
+        };
+      });
+
     return {
       abas: ABAS.map(([id, label]) => ({ label,
         bg: aba === id ? "var(--color-primary-900)" : "transparent",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
         onClick: () => this.setState({ aba: id }) })),
-      ptResumo: aba === "resumo", ptChamada: aba === "chamada", ptTurmas: aba === "turmas",
-      eyebrow: aba === "chamada" ? "painel do professor · chamada por turma e data"
-        : aba === "turmas" ? "painel do professor · as suas turmas"
+      ptHoje: aba === "hoje",
+      ptParticulares: aba === "particulares",
+      ptClubes: aba === "clubes",
+      // a lista de turmas e a turma aberta são a mesma aba, em dois
+      // estados: ou se escolhe uma, ou se trabalha dentro dela
+      ptListaTurmas: aba === "turmas" && !turmaAberta,
+      turmaAberta: aba === "turmas" && turmaAberta,
+      onVoltarTurmas: () => this.setState({ turmaAberta: false }),
+      turmaAbertaNome: turmaAbertaU ? turmaAbertaU.nivel : (turmaSel || ""),
+      turmaAbertaSub: turmaAbertaU
+        ? turmaAbertaU.turma + " · " + turmaAbertaU.ocupadas + "/" + turmaAbertaU.capacidade + " alunas"
+        : "",
+      tAbas: T_ABAS.map(([id, label]) => ({ label,
+        bg: tTab === id ? "var(--color-primary-900)" : "transparent",
+        fg: tTab === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ tTab: id }) })),
+      // As abas de dentro só existem dentro: sem exigir a turma aberta,
+      // a chamada aparecia na aba Hoje, porque "chamadas" é o tTab
+      // inicial.
+      tGeral: aba === "turmas" && turmaAberta && tTab === "geral",
+      tAlunas: aba === "turmas" && turmaAberta && tTab === "alunas",
+      tChamadas: aba === "turmas" && turmaAberta && tTab === "chamadas",
+      tMateriais: aba === "turmas" && turmaAberta && tTab === "materiais",
+
+      // ── Visão geral da turma ──
+      tGeralLinhas: turmaAbertaU ? [
+        { k: "projeto do ciclo", v: turmaAbertaU.projeto || "—" },
+        { k: "ocupação", v: turmaAbertaU.ocupadas + " de " + turmaAbertaU.capacidade
+            + (turmaAbertaU.vagas > 0 ? " · " + turmaAbertaU.vagas + (turmaAbertaU.vagas === 1 ? " vaga aberta" : " vagas abertas") : " · turma cheia") },
+        { k: "professora", v: turmaAbertaU.teacher || "—" },
+        { k: "próxima aula", v: proximaDaAberta ? proximaDaAberta.quando : "sem aula marcada" }
+      ] : [],
+      tGeralTurmaHref: turmaAbertaU ? "ISR%20-%20Turma%20v3.dc.html?id=" + turmaAbertaU.id : "#",
+
+      // ── Alunas da turma ──
+      // A mesma lista que a grade do diário usa: nome, estado de hoje e
+      // frequência. Sem cálculo novo, e por isso sem risco de os dois
+      // discordarem.
+      tAlunasLista: linhasDiario,
+      tAlunasVazio: linhasDiario.length === 0,
+
+      // ── Materiais da turma ──
+      tCaderno: turmaAbertaU ? (turmaAbertaU.notebook || "") : "",
+      tCadernoHref: cadernoHref,
+      temCaderno: !!(turmaAbertaU && turmaAbertaU.notebook),
+      semCaderno: !(turmaAbertaU && turmaAbertaU.notebook),
+      tGravacoes: gravacoesDaTurma,
+      semGravacoes: gravacoesDaTurma.length === 0,
+
+      // ── Clubes ──
+      // Os clubes dela e os encontros do mês. Criar, editar e publicar
+      // ficam na tela de Clubes: duas telas que fazem a mesma coisa
+      // acabam discordando, e a tela de Clubes já existe no menu.
+      clubes: clubesDelaLista,
+      semClubes: clubesDelaLista.length === 0,
+
+      eyebrow: aba === "particulares" ? "painel do professor · as suas particulares"
+        : aba === "clubes" ? "painel do professor · os seus clubes"
+        : aba === "turmas" ? (turmaAberta ? "painel do professor · " + (turmaAbertaU ? turmaAbertaU.nivel.toLowerCase() : "turma")
+                                          : "painel do professor · as suas turmas")
           : "painel do professor · o seu dia",
 
       heroQuando: aulaDoDia
@@ -985,16 +1277,22 @@ class Component extends DCLogic {
               : "nada hoje — esta é a sua próxima aula"
           ].filter(Boolean).join(" · ")
         : "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.",
+      // "Começar aula" no v5 abre o caderno da turma para edição. Nós
+      // guardamos o NOME do documento, não um caderno ao vivo — então o
+      // botão leva ao caderno no Drive, que é o que a professora abre à
+      // mão hoje. Prometer caderno ao vivo seria pior que não ter botão.
       heroAcoes: (aulaDoDia ? [
         { label: "Fazer a chamada", bg: "var(--color-button-primary)", fg: "var(--color-primary-900)", onClick: aulaDoDia.onChamada },
         { label: "Chamada de outra data", bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)",
-          onClick: () => this.setState({ aba: "chamada", escolhendoData: true }) },
+          onClick: () => this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas", escolhendoData: true }) },
         { label: "As suas turmas", bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)",
-          onClick: () => this.setState({ aba: "turmas" }) }
+          onClick: () => this.setState({ aba: "turmas", turmaAberta: false }) }
       ] : [
         { label: "Chamada de outra data", bg: "var(--color-button-primary)", fg: "var(--color-primary-900)",
-          onClick: () => this.setState({ aba: "chamada", escolhendoData: true }) }
+          onClick: () => this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas", escolhendoData: true }) }
       ]),
+      temCadernoDoDia: !!cadernoDoDia,
+      cadernoDoDiaHref: cadernoDoDia || "#",
 
       entregasTitulo: "Entregas do mês · " + this.MES_LONGO[new Date().getMonth()],
       entregas: [
@@ -1289,7 +1587,8 @@ class Component extends DCLogic {
           return { turmas: opcoes.slice(0, 6), particulares: chipsPart };
         })();
         return { aulasChamada: g.turmas, particularesChamada: g.particulares,
-          temParticulares: g.particulares.length > 0 };
+          temParticulares: g.particulares.length > 0,
+          semParticulares: g.particulares.length === 0 };
       })(),
 
       // ── chamada da semana das particulares ──
@@ -1471,7 +1770,13 @@ class Component extends DCLogic {
         nivel: u.nivel, turma: u.turma,
         projeto: u.projeto || "—",
         ocupLabel: u.ocupadas + "/" + u.capacidade,
-        material: u.notebook || "Sem caderno vinculado neste ciclo"
+        material: u.notebook || "Sem caderno vinculado neste ciclo",
+        // abrir a turma troca a turma da chamada junto: é a mesma
+        // escolha, e deixá-las separadas era o que fazia a chamada
+        // precisar de um select próprio
+        onAbrir: () => this.setState({ turmaAberta: true, tTab: "chamadas",
+          turmaChamada: u.label, chamadaData: null, presencas: null, tarefas: null,
+          particularChamada: null, eventoChamada: null })
       })),
       turmasVazio: turmasProfOcup.length === 0
     };

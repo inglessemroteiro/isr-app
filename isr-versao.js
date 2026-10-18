@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-a",
+  numero: "2026.10.18-b",
   data: "18/10/2026",
-  nota: "A agenda volta a dizer por que não há aula de turma no dia: o ciclo terminou, e onde se abre o próximo"
+  nota: "O Painel do professor pela forma do v5: quatro abas no topo, e a turma como unidade — abre uma turma e trabalha dentro dela"
 };
