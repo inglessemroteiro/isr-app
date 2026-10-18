@@ -305,13 +305,17 @@ class Component extends DCLogic {
     const pct = (a, b) => (b > 0 ? Math.min(100, Math.round(100 * a / b)) : 0) + "%";
 
     // ── números dos cartões ───────────────────────────────────
-    // Para a professora o número é o dela: "32 alunas em risco" numa
-    // escola em que ela dá aula para 9 não é informação, é ruído — e
-    // ainda parece cobrança de uma coisa que não está na mão dela.
-    const alunasTodas = CRM.alunasPainel() || [];
-    const alunas = vePelaEscola ? alunasTodas
-      : alunasTodas.filter(a => a.professora === meuNome);
-    const emRisco = alunas.filter(a => (a.riscos || []).length).length;
+    // Este número é da escola inteira, e aqui é o certo: a Central é
+    // de quem cuida da escola — a professora não a tem no menu, e os
+    // cartões de área são de gestora e operação.
+    //
+    // Havia aqui um filtro por professora, de quando ela tinha
+    // Central: "32 alunas em risco" numa escola em que ela dá aula
+    // para 9 é ruído. O filtro ficou sem leitor quando ela saiu da
+    // tela, e um filtro que não filtra nada é armadilha para quem
+    // mexer depois. O número por professora é dela e vai no Painel do
+    // professor, que é a casa dela.
+    const emRisco = (CRM.alunasPainel() || []).filter(a => (a.riscos || []).length).length;
     const ocup = CRM.ocupacaoTurmas() || [];
     const vagas = ocup.reduce((t, u) => t + Math.max(0, u.vagas || 0), 0);
     const cob = CRM.cobrancaResumo ? CRM.cobrancaResumo() : { atrasadas: 0, receber: {} };

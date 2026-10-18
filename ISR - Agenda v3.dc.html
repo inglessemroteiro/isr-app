@@ -160,6 +160,13 @@
           </sc-if>
         </div>
       </sc-for>
+      <!-- Por que não há aula de turma neste dia. Fica embaixo da
+           lista, que é onde a falta se vê, e não como aviso no topo:
+           o v5 não tem o bloco, e a dúvida não é sobre o ciclo, é
+           sobre as aulas que não estão ali. -->
+      <sc-if value="{{ temNotaCiclo }}">
+        <div style="border-top: 1px solid var(--color-button-secondary); padding: 13px 2px 2px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.6;">{{ notaCiclo }}</div>
+      </sc-if>
     </section>
 
     <!-- AULAS EXTRAS AGENDADAS -->
@@ -274,7 +281,7 @@ class Component extends DCLogic {
       evRespRef: this.evRespRef, evDuracaoRef: this.evDuracaoRef, evLocalRef: this.evLocalRef,
       evVagasRef: this.evVagasRef, evTurmaRef: this.evTurmaRef, evDescRef: this.evDescRef,
       ferDataRef: this.ferDataRef, ferNomeRef: this.ferNomeRef, ferFimRef: this.ferFimRef };
-    if (!CRM) return Object.assign({ dias: [], eventos: [], semEventos: true, feriados: [], novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "var(--color-primary-900)", novoFg: "var(--color-neutral-0)", ferBg: "var(--color-neutral-0)", ferFg: "var(--color-primary-900)", bcBg: "var(--color-neutral-0)", bcFg: "var(--color-primary-900)", bookclubAberto: false, semanaLabel: "", foraDaSemanaAtual: false, gcalNovo: "#",
+    if (!CRM) return Object.assign({ dias: [], eventos: [], semEventos: true, temNotaCiclo: false, notaCiclo: "", feriados: [], novoAberto: false, feriadosAberto: false, semFeriados: true, novoLabel: "+ Aula extra", turmasAlvo: [], extras: [], temExtras: false, novoBg: "var(--color-primary-900)", novoFg: "var(--color-neutral-0)", ferBg: "var(--color-neutral-0)", ferFg: "var(--color-primary-900)", bcBg: "var(--color-neutral-0)", bcFg: "var(--color-primary-900)", bookclubAberto: false, semanaLabel: "", foraDaSemanaAtual: false, gcalNovo: "#",
       veAdmin: false, eyebrow: "pedagógico", titulo: "Agenda", subtitulo: "",
       rodape: "" }, refs);
 
@@ -349,6 +356,42 @@ class Component extends DCLogic {
       };
     });
     const doDia = visiveis.filter(it => it.data === diaSel);
+
+    // ── por que não há aula de turma neste dia ──
+    // O corte do v5 levou o bloco que explicava a semana vazia, e com
+    // ele a resposta para "o sistema perdeu minhas aulas?". Depois que
+    // o ciclo fecha, as aulas das turmas param — isso está certo, mas
+    // calado parece defeito.
+    //
+    // A explicação não volta como bloco no topo: volta como uma linha
+    // embaixo da lista do dia, que é onde a falta se vê. E aparece
+    // mesmo quando o dia tem outra coisa — follow-up e reunião não
+    // morrem com o ciclo, então "lista vazia" não é a condição certa;
+    // a condição é o dia estar fora da janela.
+    //
+    // São dois calendários, online e presencial, com datas próprias:
+    // o dia pode estar fora de um, do outro, ou dos dois.
+    const foraDaJanela = ["online", "presencial"]
+      .map(t => (CRM.cicloJanela ? CRM.cicloJanela(t) : null))
+      .filter(j => j && j.estado !== "sem_ciclo")
+      .map(j => {
+        if (j.fim && diaSel > j.fim) {
+          return "o ciclo " + j.label + " d" + (j.tipo === "online" ? "as turmas online" : "a turma presencial")
+            + " terminou em " + CRM.ddmm(j.fim);
+        }
+        if (j.inicio && diaSel < j.inicio) {
+          return "o ciclo " + j.label + " d" + (j.tipo === "online" ? "as turmas online" : "a turma presencial")
+            + " começa em " + CRM.ddmm(j.inicio);
+        }
+        return null;
+      })
+      .filter(Boolean);
+    // Abrir ciclo é trabalho da escola. Mandar a professora abrir é
+    // mandá-la para uma tela que ela não tem.
+    const notaCiclo = foraDaJanela.length === 0 ? ""
+      : "Não há aula de turma neste dia porque " + foraDaJanela.join(" e ")
+        + ". As aulas das turmas só existem dentro do ciclo."
+        + (veAdmin ? " O próximo se abre em Matrículas do ciclo." : "");
     const feriados = CRM.feriadosLista().map(fr => ({
       label: CRM.ddmm(fr.data) + (fr.fim && fr.fim !== fr.data ? "–" + CRM.ddmm(fr.fim) : "") + " · " + fr.nome,
       onRemover: () => { CRM.removeFeriado(fr.id); this.bump(); }
@@ -424,6 +467,7 @@ class Component extends DCLogic {
       // delas que sai a confirmação de presença no app da aluna
       extras, temExtras: extras.length > 0,
       semEventos: doDia.length === 0,
+      temNotaCiclo: notaCiclo !== "", notaCiclo,
       eventos: doDia.map(it => {
         const m = this.TIPO_META[it.tipo] || { label: "Evento", cor: "var(--color-tertiary-300)" };
         return {
