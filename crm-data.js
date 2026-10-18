@@ -9143,6 +9143,76 @@
     return { nunca: false, n: r.n, ultimo: r.ultimo, primeiro: r.primeiro,
       diasSemAbrir: d ? daysBetween(d, today()) : null };
   }
+
+  // ── O PERFIL QUE A ALUNA ESCREVE ──────────────────────────────
+  //
+  // Foto, bio, links e aniversário não são dados da escola: são dela.
+  // A escola não os tem nem deveria digitá-los, e por isso quem grava é
+  // o app dela.
+  //
+  // Isto é um caminho estreito de propósito. A alternativa seria expor
+  // o mutate e deixar o app da aluna escrever qualquer campo do
+  // cadastro — nome, turma, contrato. Um app que roda no aparelho de
+  // outra pessoa não ganha a chave do cadastro inteiro; ganha a porta
+  // dos quatro campos que são dela.
+  var PERFIL_LIMITES = { bio: 400, link: 200, links: 4 };
+  function salvarPerfilDaAluna(pessoaId, dados) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { ok: false, erro: "Aluna não encontrada." };
+    dados = dados || {};
+    var out = {};
+    if ("bio" in dados) {
+      out.bio = String(dados.bio || "").trim().slice(0, PERFIL_LIMITES.bio);
+    }
+    if ("foto" in dados) {
+      var foto = String(dados.foto || "").trim();
+      // Só endereço de imagem na web. Link que não é http não carrega, e
+      // dado embutido (data:) cresce o cadastro sem limite e viaja em
+      // todo sync.
+      if (foto && !/^https:\/\//i.test(foto)) {
+        return { ok: false, erro: "O endereço da foto precisa começar com https://" };
+      }
+      out.foto = foto;
+    }
+    if ("aniversario" in dados) {
+      var a = String(dados.aniversario || "").trim();
+      // dia e mês, sem ano: a comunidade comemora, não precisa da idade
+      if (a && !/^\d{2}-\d{2}$/.test(a)) {
+        return { ok: false, erro: "O aniversário é dia e mês, no formato DD-MM." };
+      }
+      if (a) {
+        var dia = parseInt(a.slice(0, 2), 10), mes = parseInt(a.slice(3, 5), 10);
+        if (mes < 1 || mes > 12 || dia < 1 || dia > 31) {
+          return { ok: false, erro: "Esse dia e mês não existem." };
+        }
+      }
+      out.aniversario = a;
+    }
+    if ("links" in dados) {
+      var ruim = null;
+      var links = (dados.links || []).map(function (l) {
+        return { label: String((l && l.label) || "").trim().slice(0, 40),
+          url: String((l && l.url) || "").trim().slice(0, PERFIL_LIMITES.link) };
+      }).filter(function (l) { return l.url; });
+      links.forEach(function (l) {
+        if (!/^https:\/\//i.test(l.url)) ruim = l.url;
+      });
+      if (ruim) return { ok: false, erro: "Cada link precisa começar com https:// — veja " + ruim };
+      out.links = links.slice(0, PERFIL_LIMITES.links);
+    }
+    mutate(pessoaId, function (pp) {
+      Object.keys(out).forEach(function (k) { pp[k] = out[k]; });
+    });
+    agendarSync();
+    return { ok: true, perfil: perfilDaAluna(pessoaId) };
+  }
+  function perfilDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId) || {};
+    return { foto: p.foto || "", bio: p.bio || "",
+      aniversario: p.aniversario || "", links: (p.links || []).slice(0, PERFIL_LIMITES.links),
+      limites: PERFIL_LIMITES };
+  }
+
   function usoDoApp(nDias) {
     var janela = nDias || 30;
     var corte = addDays(-janela);
@@ -13379,7 +13449,8 @@
     gravacoesParaAluna: gravacoesParaAluna, tarefasDeCasa: tarefasDeCasa,
     flinUrl: flinUrl, setFlinUrl: setFlinUrl, flinDaAluna: flinDaAluna, liberarFlin: liberarFlin,
     historicoDeNiveis: historicoDeNiveis,
-    registrarAcessoAluna: registrarAcessoAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
+    registrarAcessoAluna: registrarAcessoAluna,
+    salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
     diarioDaTurma: diarioDaTurma,
