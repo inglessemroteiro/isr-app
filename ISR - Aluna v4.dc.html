@@ -196,6 +196,138 @@
       </section>
     </sc-if>
 
+    <!-- CADERNO -->
+    <!-- O caderno do desenho é o plano da aula com as atividades, e o
+         plano ainda não existe. Esta é a metade que não depende dele: o
+         registro das aulas dela, com o que foi dado, se ela estava, a
+         tarefa, a gravação — e a nota que ela escreve. -->
+    <sc-if value="{{ isNotebook }}">
+      <sc-if value="{{ temTarefaAtual }}">
+        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ L.tarefaAtual }}</div>
+          <div style="font-size:16px;line-height:1.55">{{ tarefaAtualTexto }}</div>
+          <div style="font-size:12.5px;opacity:.8">{{ tarefaAtualQuando }}</div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{ cadernoVazio }}">
+        <section style="background:var(--color-neutral-0);border-radius:24px;padding:26px 28px;font-size:15px;line-height:1.6;color:var(--color-primary-800);max-width:640px">{{ L.cadernoVazio }}</section>
+      </sc-if>
+
+      <sc-for list="{{ caderno }}" as="c" hint-placeholder-count="5">
+        <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ c.quando }}</div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;margin-top:2px">{{ c.topico }}</div>
+            </div>
+            <span style="flex:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;background:{{ c.presencaBg }};color:{{ c.presencaFg }}">{{ c.presencaLabel }}</span>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--color-primary-800)">
+            <sc-if value="{{ c.temTarefa }}">
+              <span style="color:{{ c.tarefaCor }};font-weight:700">{{ c.tarefaLabel }}</span>
+            </sc-if>
+            <sc-if value="{{ c.temGravacao }}">
+              <a href="{{ c.gravacao }}" target="_blank" rel="noopener" style="font-weight:700;color:var(--color-text-light);text-decoration:none">{{ L.verGravacao }} →</a>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ c.temNota }}">
+            <div style="background:var(--color-button-secondary);border-radius:16px;padding:13px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap">{{ c.nota }}</div>
+          </sc-if>
+          <sc-if value="{{ c.lendo }}">
+            <button onclick="{{ c.onAbrir }}" style="align-self:flex-start;border:0;background:var(--color-button-secondary);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.botaoNota }}</button>
+          </sc-if>
+          <sc-if value="{{ c.escrevendo }}">
+            <textarea ref="{{ notaRef }}" defaultValue="{{ c.nota }}" rows="4" maxlength="2000" placeholder="{{ L.notaPh }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:16px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--color-primary-900);resize:vertical"></textarea>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button onclick="{{ c.onSalvar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:11px 18px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.salvar }}</button>
+              <button onclick="{{ c.onFechar }}" style="border:0;background:transparent;color:var(--color-tertiary-700);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:11px 4px">{{ L.cancelar }}</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ c.salvou }}">
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-success-dark)">{{ L.notaSalva }}</span>
+          </sc-if>
+        </section>
+      </sc-for>
+
+      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.cadernoEmObra }}</section>
+    </sc-if>
+
+    <!-- REVIEW · o cofre de palavras -->
+    <!-- A revisão é espaçada: cada acerto afasta a próxima (1, 3, 7,
+         14, 30, 60 dias) e um erro volta para amanhã. É isso que faz
+         Review ser Review e não uma lista. -->
+    <sc-if value="{{ isReview }}">
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 300px;min-width:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ revisaoTitulo }}</div>
+          <sc-if value="{{ temRevisao }}">
+            <div>
+              <div style="font-size:30px;font-weight:800;letter-spacing:-0.035em;line-height:1.1">{{ cartaoPalavra }}</div>
+              <sc-if value="{{ cartaoVirado }}">
+                <div style="font-size:18px;font-weight:600;color:var(--color-button-primary);margin-top:8px">{{ cartaoTraducao }}</div>
+                <sc-if value="{{ cartaoTemExemplo }}">
+                  <div style="font-size:14px;opacity:.85;line-height:1.55;margin-top:6px;font-style:italic">{{ cartaoExemplo }}</div>
+                </sc-if>
+              </sc-if>
+            </div>
+            <sc-if value="{{ cartaoFechado }}">
+              <button onclick="{{ onVirar }}" style="align-self:flex-start;border:0;background:var(--color-button-primary);color:var(--color-primary-900);border-radius:999px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.virar }}</button>
+            </sc-if>
+            <sc-if value="{{ cartaoVirado }}">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button onclick="{{ onErrei }}" style="border:0;background:rgba(255,255,255,.14);color:var(--color-neutral-0);border-radius:999px;padding:12px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.errei }}</button>
+                <button onclick="{{ onAcertei }}" style="border:0;background:var(--color-secondary-500);color:var(--color-primary-900);border-radius:999px;padding:12px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.acertei }}</button>
+              </div>
+            </sc-if>
+            <div style="font-size:12.5px;opacity:.8">{{ revisaoLinha }}</div>
+          </sc-if>
+          <sc-if value="{{ semRevisao }}">
+            <div style="font-size:16px;line-height:1.55">{{ revisaoVaziaTexto }}</div>
+          </sc-if>
+        </section>
+
+        <section style="flex:1 1 320px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:18px;font-weight:800">{{ L.novaPalavra }}</div>
+          <sc-if value="{{ palavraErro }}">
+            <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:14px;padding:11px 14px;font-size:13px;line-height:1.5">{{ palavraErroTexto }}</div>
+          </sc-if>
+          <input ref="{{ pvPalavraRef }}" placeholder="{{ L.pvPalavra }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:11px 14px;font-size:14px;font-family:inherit;color:var(--color-primary-900)" />
+          <input ref="{{ pvTraducaoRef }}" placeholder="{{ L.pvTraducao }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:11px 14px;font-size:14px;font-family:inherit;color:var(--color-primary-900)" />
+          <input ref="{{ pvExemploRef }}" placeholder="{{ L.pvExemplo }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;font-family:inherit;color:var(--color-primary-900)" />
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button onclick="{{ onSalvarPalavra }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:11px 18px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.guardar }}</button>
+            <sc-if value="{{ palavraSalva }}">
+              <span style="font-size:12.5px;font-weight:700;color:var(--color-success-dark)">{{ L.palavraSalva }}</span>
+            </sc-if>
+          </div>
+          <div style="font-size:12px;color:var(--color-tertiary-700);line-height:1.55">{{ L.cofreNota }}</div>
+        </section>
+      </div>
+
+      <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <div style="font-size:18px;font-weight:800">{{ L.meuCofre }}</div>
+          <span style="font-size:12.5px;color:var(--color-tertiary-700)">{{ cofreResumo }}</span>
+        </div>
+        <sc-if value="{{ cofreVazio }}">
+          <div style="font-size:14px;color:var(--color-primary-800);line-height:1.6">{{ L.cofreVazio }}</div>
+        </sc-if>
+        <sc-for list="{{ palavras }}" as="pv" hint-placeholder-count="6">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--color-button-secondary)">
+            <div style="flex:1;min-width:150px">
+              <div style="font-size:14.5px;font-weight:700">{{ pv.palavra }}</div>
+              <div style="font-size:12.5px;color:var(--color-tertiary-700)">{{ pv.traducao }}</div>
+            </div>
+            <span style="flex:none;font-size:11.5px;font-weight:700;color:{{ pv.forcaCor }};white-space:nowrap">{{ pv.forca }}</span>
+            <span style="flex:none;font-size:11.5px;color:var(--color-tertiary-700);white-space:nowrap">{{ pv.quando }}</span>
+            <button onclick="{{ pv.onRemover }}" style="flex:none;border:0;background:transparent;color:var(--color-tertiary-700);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:6px 4px">{{ L.tirar }}</button>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- LOJA DE MILHAS -->
     <!-- O saldo, o que dá para resgatar agora, o que falta para a
          próxima e o que ela já resgatou. O mural de trocas entre alunas
@@ -404,7 +536,14 @@ class Component extends DCLogic {
             // gasta milhas e não se desfaz
             confirmaResgate: null, resgateErro: "", resgateFeito: "",
             // perfil: editando guarda o rascunho até ela salvar
-            perfilEditando: false, perfilErro: "", perfilSalvo: false };
+            perfilEditando: false, perfilErro: "", perfilSalvo: false,
+            // caderno: qual aula está aberta para escrever
+            aulaAberta: null, notaSalva: "",
+            // review: a palavra virada, e o que está sendo cadastrado
+            virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
+  notaRef = React.createRef();
+  pvPalavraRef = React.createRef(); pvTraducaoRef = React.createRef();
+  pvExemploRef = React.createRef();
   bioRef = React.createRef(); fotoRef = React.createRef(); aniRef = React.createRef();
   linkRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
   linkLabelRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
@@ -442,6 +581,40 @@ class Component extends DCLogic {
 
     // ── as palavras da casca, nos dois idiomas ──
     const L = {
+      // ── caderno ──
+      tarefaAtual: T("homework for next class", "tarefa para a próxima aula"),
+      cadernoVazio: T("Your classes appear here once attendance is taken. Each one brings what was taught, your homework and the recording — and a place for your own notes.",
+        "As suas aulas aparecem aqui quando a chamada é feita. Cada uma traz o que foi dado, a sua tarefa e a gravação — e um lugar para as suas anotações."),
+      verGravacao: T("watch the class", "ver a gravação"),
+      escreverNota: T("Write a note", "Escrever uma nota"),
+      editarNota: T("Edit my note", "Editar a minha nota"),
+      notaPh: T("What you want to remember from this class…",
+        "O que você quer lembrar desta aula…"),
+      notaSalva: T("saved", "salvo"),
+      semTopico: T("class given", "aula dada"),
+      entregou: T("homework delivered", "tarefa entregue"),
+      naoEntregou: T("homework not delivered", "tarefa não entregue"),
+      cadernoEmObra: T("The activities of each lesson — the ones the teacher plans and you answer here — come when the lesson plan exists on her side. What is above is your record of the classes, and it stays.",
+        "As atividades de cada aula — as que a professora planeja e você responde aqui — chegam quando o plano de aula existir do lado dela. O que está acima é o seu registro das aulas, e ele fica."),
+      // ── review ──
+      paraHoje: T("to review today", "para revisar hoje"),
+      semFila: T("your review", "o seu review"),
+      virar: T("Show the answer", "Ver a resposta"),
+      acertei: T("I knew it", "Eu sabia"),
+      errei: T("Not yet", "Ainda não"),
+      novaPalavra: T("Save a word", "Guardar uma palavra"),
+      pvPalavra: T("the word in English", "a palavra em inglês"),
+      pvTraducao: T("what it means", "o que significa"),
+      pvExemplo: T("a sentence with it (optional)", "uma frase com ela (opcional)"),
+      guardar: T("Save", "Guardar"),
+      palavraSalva: T("saved", "guardada"),
+      cofreNota: T("Each time you get it right the word comes back later: 1, 3, 7, 14, 30 and 60 days. Get it wrong and it comes back tomorrow.",
+        "A cada acerto a palavra volta mais tarde: 1, 3, 7, 14, 30 e 60 dias. Se escapar, volta amanhã."),
+      meuCofre: T("My words", "O meu cofre"),
+      cofreVazio: T("No words yet. Save the first one you hear in class.",
+        "Nenhuma palavra ainda. Guarde a primeira que você ouvir na aula."),
+      tirar: T("remove", "tirar"),
+
       // ── loja de milhas ──
       meuSaldo: T("my miles", "minhas milhas"),
       comoGanhar: T("How to earn miles", "Como ganhar milhas"),
@@ -510,6 +683,17 @@ class Component extends DCLogic {
       navSections: [], tabs: [], subTabs: [], hasSub: false,
       eyebrow: "", title: "—",
       milesFmt: "0", milesLinha: "", goMiles: () => {},
+      caderno: [], cadernoVazio: true, temTarefaAtual: false,
+      tarefaAtualTexto: "", tarefaAtualQuando: "", notaRef: this.notaRef,
+      temRevisao: false, semRevisao: true, revisaoVaziaTexto: "",
+      cartaoPalavra: "", cartaoTraducao: "", cartaoExemplo: "", cartaoTemExemplo: false,
+      cartaoVirado: false, cartaoFechado: true, revisaoLinha: "", revisaoTitulo: "",
+      onVirar: () => {}, onAcertei: () => {}, onErrei: () => {},
+      palavras: [], cofreVazio: true, cofreResumo: "",
+      palavraErro: false, palavraErroTexto: "", palavraSalva: false,
+      onSalvarPalavra: () => {},
+      pvPalavraRef: this.pvPalavraRef, pvTraducaoRef: this.pvTraducaoRef,
+      pvExemploRef: this.pvExemploRef,
       lojaLinha: "", temProxima: false, proximaPct: "0%", proximaTexto: "",
       comoGanhar: [], recompensas: [], resgatados: [], temResgatados: false,
       resgateFeito: false, resgateFeitoTexto: "", resgateErro: false, resgateErroTexto: "",
@@ -525,7 +709,7 @@ class Component extends DCLogic {
       notifOpen: false, closeNotif: () => {}, notifs: [], notifRight: "32px",
       semAvisos: true, L,
       isHome: true, isProgress: false, isClubs: false, isAccount: false,
-      isShop: false, isProfile: false,
+      isShop: false, isProfile: false, isNotebook: false, isReview: false,
       emObra: false, emObraTexto: "", emObraTitulo: "",
       busca: "", onBusca: () => {}, goNotebook: () => {},
       classEyebrow: "", classTitulo: "", classLinha: "", temSala: false, salaLink: "#",
@@ -810,6 +994,16 @@ class Component extends DCLogic {
       ? DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " " + MES_L[hojeD.getMonth()]
       : DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " de " + MES_L[hojeD.getMonth()];
 
+    // ── caderno e review ──
+    const cad = (CRM.cadernoDaAluna && CRM.cadernoDaAluna(p.id, 180)) || [];
+    const turmaDela = (CRM.turmasLista ? CRM.turmasLista() : [])
+      .filter(u => (u.nivel + " · " + u.turma) === p.turma)[0] || null;
+    const tcAtual = (turmaDela && turmaDela.tarefaCasa) || null;
+    const rev = (CRM.revisaoDeHoje && CRM.revisaoDeHoje(p.id))
+      || { devidas: [], total: 0, sabidas: 0, degraus: 6 };
+    const cartao = rev.devidas[Math.min(this.state.revisando || 0, Math.max(0, rev.devidas.length - 1))] || null;
+    const minhasPalavras = (CRM.palavrasDaAluna && CRM.palavrasDaAluna(p.id)) || [];
+
     // ── loja e perfil ──
     const rec = (CRM.recompensasDaAluna && CRM.recompensasDaAluna(p.id))
       || { saldo: 0, disponiveis: [], bloqueados: [], proxima: null, faltam: 0, pct: 0 };
@@ -846,11 +1040,9 @@ class Component extends DCLogic {
       { h: T("me", "eu"), ids: ["progress", "shop", "account"] }
     ];
     // as quatro que ainda não têm dado, e de onde o dado virá
+    // Vazio: as oito páginas existem. O que ainda falta dentro de cada
+    // uma está dito na própria página, que é onde a pergunta nasce.
     const EM_OBRA = {
-      notebook: T("The lesson notebook comes from the teacher's lesson plan. The plan is being built on her side first.",
-        "O caderno da aula vem do plano que a professora monta. O plano está sendo feito primeiro do lado dela."),
-      review: T("The word vault is filled from the notebook of each class. It opens when the notebook does.",
-        "O cofre de palavras se enche com o caderno de cada aula. Abre junto com o caderno."),
       // O perfil e a loja saíram desta lista: as duas existem agora. O
       // que continua faltando nelas está dito na própria página — o
       // mural de trocas na loja, e a metade social do perfil (atributos
@@ -904,6 +1096,111 @@ class Component extends DCLogic {
         ? jornada.sequencia + T(" classes in a row · open shop", " aulas seguidas · abrir a loja")
         : T("open shop", "abrir a loja"),
       goMiles: () => this.setState({ page: "shop", notif: false }),
+
+      // ── CADERNO ──
+      temTarefaAtual: !!(tcAtual && tcAtual.texto),
+      tarefaAtualTexto: tcAtual ? tcAtual.texto : "",
+      tarefaAtualQuando: tcAtual && tcAtual.em
+        ? T("given on " + CRM.ddmm(tcAtual.em), "passada em " + CRM.ddmm(tcAtual.em)) : "",
+      cadernoVazio: cad.length === 0,
+      notaRef: this.notaRef,
+      caderno: cad.map(c => {
+        const chave = c.turma + "|" + c.data;
+        const aberta = this.state.aulaAberta === chave;
+        const EST = {
+          presente: [T("present", "presente"), "var(--color-secondary-100)", "var(--color-success-dark)"],
+          atraso: [T("late", "cheguei atrasada"), "var(--color-warning-light)", "var(--color-warning-dark)"],
+          falta: [T("missed", "faltei"), "var(--color-error-light)", "var(--color-error-dark)"],
+          justificada: [T("excused", "falta justificada"), "var(--color-button-secondary)", "var(--color-tertiary-700)"]
+        };
+        const e = EST[c.presenca] || EST.presente;
+        return {
+          quando: CRM.ddmm(c.data) + " · " + c.turma,
+          topico: c.topico || L.semTopico,
+          presencaLabel: e[0], presencaBg: e[1], presencaFg: e[2],
+          temTarefa: c.tarefaCobrada,
+          tarefaLabel: c.tarefaEntregue ? L.entregou : L.naoEntregou,
+          tarefaCor: c.tarefaEntregue ? "var(--color-success-dark)" : "var(--color-warning-dark)",
+          temGravacao: !!c.gravacao, gravacao: c.gravacao || "#",
+          temNota: !!c.nota && !aberta, nota: c.nota,
+          lendo: !aberta, escrevendo: aberta,
+          botaoNota: c.nota ? L.editarNota : L.escreverNota,
+          salvou: this.state.notaSalva === chave,
+          onAbrir: () => this.setState({ aulaAberta: chave, notaSalva: "" }),
+          onFechar: () => this.setState({ aulaAberta: null }),
+          onSalvar: () => {
+            const txt = ((this.notaRef.current && this.notaRef.current.value) || "");
+            CRM.salvarNotaDaAula(p.id, c.turma, c.data, txt);
+            this.setState({ aulaAberta: null, notaSalva: chave, tick: this.state.tick + 1 });
+          }
+        };
+      }),
+
+      // ── REVIEW ──
+      temRevisao: !!cartao, semRevisao: !cartao,
+      // "para revisar hoje" acima de "nada para revisar hoje" é a mesma
+      // etiqueta contando as duas histórias; o título segue a fila.
+      revisaoTitulo: cartao ? L.paraHoje : L.semFila,
+      revisaoVaziaTexto: rev.total === 0
+        ? T("Save your first word on the right, and it comes back here tomorrow.",
+            "Guarde a sua primeira palavra ao lado, e ela volta aqui amanhã.")
+        : T("Nothing to review today. " + rev.total + " words in your vault.",
+            "Nada para revisar hoje. " + rev.total + " palavra" + (rev.total === 1 ? "" : "s") + " no seu cofre."),
+      cartaoPalavra: cartao ? cartao.palavra : "",
+      cartaoTraducao: cartao ? (cartao.traducao || "—") : "",
+      cartaoExemplo: cartao ? (cartao.exemplo || "") : "",
+      cartaoTemExemplo: !!(cartao && cartao.exemplo),
+      cartaoVirado: !!this.state.virada, cartaoFechado: !this.state.virada,
+      revisaoLinha: rev.devidas.length
+        ? T(rev.devidas.length + " to go today", rev.devidas.length + " para hoje")
+        : "",
+      onVirar: () => this.setState({ virada: true }),
+      onAcertei: () => {
+        if (cartao) CRM.revisarPalavra(p.id, cartao.id, true);
+        this.setState({ virada: false, tick: this.state.tick + 1 });
+      },
+      onErrei: () => {
+        if (cartao) CRM.revisarPalavra(p.id, cartao.id, false);
+        this.setState({ virada: false, tick: this.state.tick + 1 });
+      },
+
+      palavraErro: !!this.state.palavraErro,
+      palavraErroTexto: this.state.palavraErro || "",
+      palavraSalva: !!this.state.palavraSalva,
+      pvPalavraRef: this.pvPalavraRef, pvTraducaoRef: this.pvTraducaoRef,
+      pvExemploRef: this.pvExemploRef,
+      onSalvarPalavra: () => {
+        const v = (r) => ((r.current && r.current.value) || "").trim();
+        const out = CRM.salvarPalavra(p.id, { palavra: v(this.pvPalavraRef),
+          traducao: v(this.pvTraducaoRef), exemplo: v(this.pvExemploRef) }) || {};
+        if (out.ok) {
+          [this.pvPalavraRef, this.pvTraducaoRef, this.pvExemploRef]
+            .forEach(r => { if (r.current) r.current.value = ""; });
+          this.setState({ palavraErro: "", palavraSalva: true, tick: this.state.tick + 1 });
+        } else {
+          this.setState({ palavraErro: out.erro || T("Could not save.", "Não foi possível salvar."),
+            palavraSalva: false });
+        }
+      },
+
+      cofreVazio: minhasPalavras.length === 0,
+      cofreResumo: minhasPalavras.length
+        ? T(rev.sabidas + " of " + rev.total + " already stick",
+            rev.sabidas + " de " + rev.total + " já grudaram")
+        : "",
+      palavras: minhasPalavras.map(w => {
+        const n = w.nivel || 0, pct = Math.round(100 * n / rev.degraus);
+        return {
+          palavra: w.palavra, traducao: w.traducao || "—",
+          forca: pct + "%",
+          forcaCor: pct >= 80 ? "var(--color-success-dark)"
+            : (pct >= 40 ? "var(--color-warning-dark)" : "var(--color-tertiary-700)"),
+          quando: w.proxima && w.proxima > new Date().toISOString().slice(0, 10)
+            ? T("back on " + CRM.ddmm(w.proxima), "volta em " + CRM.ddmm(w.proxima))
+            : T("due today", "para hoje"),
+          onRemover: () => { CRM.removerPalavra(p.id, w.id); this.setState({ tick: this.state.tick + 1 }); }
+        };
+      }),
 
       // ── LOJA DE MILHAS ──
       // Tudo vem de CRM.recompensasDaAluna, que é a mesma função que
@@ -1043,6 +1340,7 @@ class Component extends DCLogic {
       isHome: page === "home", isProgress: page === "progress",
       isClubs: page === "clubs", isAccount: page === "account",
       isShop: page === "shop", isProfile: page === "profile",
+      isNotebook: page === "notebook", isReview: page === "review",
       emObra: !!EM_OBRA[page], emObraTexto: EM_OBRA[page] || "",
       emObraTitulo: T("Not here yet", "Ainda não está aqui"),
 

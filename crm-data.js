@@ -5764,7 +5764,11 @@
     // os ciclos fechados são o arquivo de cinco anos, e os clubes
     // guardam quem está em qual: nenhum dos dois pode ficar de fora
     // de uma cópia que se chama "contém tudo"
-    "isr_bookclub_aula_v1", "isr_ciclos_v1", "isr_clubes_v1"];
+    // o caderno e o cofre de palavras são escritos pela aluna, no
+    // aparelho dela, e não existem em nenhuma outra chave: cópia que os
+    // deixa de fora não é cópia de tudo
+    "isr_bookclub_aula_v1", "isr_ciclos_v1", "isr_clubes_v1",
+    "isr_caderno_v1", "isr_palavras_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6113,6 +6117,9 @@
       // configurações que o app da aluna lê: sem elas no payload, o grupo
       // da assinatura e o Book Club nunca chegavam ao aparelho da aluna
       assinaturaCfg: assinaturaCfg(), bookclub: bookclubUrl(), bookclubAula: bookclubAula(),
+      // o que a aluna escreve no aparelho dela: sem isto no payload, a
+      // nota da aula e o cofre de palavras morriam ao trocar de celular
+      caderno: cadernoAll(), palavras: palavrasAll(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -6130,6 +6137,7 @@
     grava(LANC_KEY, d.lancamentos); grava(TOQUES_KEY, d.toques); grava(PULSOS_KEY, d.pulsos);
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas);
     grava(CONTAS_KEY, d.contas);
+    grava(CADERNO_KEY, d.caderno); grava(PALAVRAS_KEY, d.palavras);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
@@ -6167,7 +6175,11 @@
       pulsos: lista("pulsos"),
       precos: lista("precos"),
       programas: lista("programas"),
-      avisos: lista("avisos"),
+      // o caderno é um registro por aula de cada aluna, então mescla
+      // nota a nota; o cofre de palavras é uma lista por aluna, e vale
+      // inteiro — é dela, e ela escreve num aparelho de cada vez
+      caderno: mesclarMapa(local.caderno, remoto.caderno),
+      palavras: mesclarMapa(local.palavras, remoto.palavras),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
@@ -9211,6 +9223,178 @@
     return { foto: p.foto || "", bio: p.bio || "",
       aniversario: p.aniversario || "", links: (p.links || []).slice(0, PERFIL_LIMITES.links),
       limites: PERFIL_LIMITES };
+  }
+
+  // ── O CADERNO DA ALUNA ────────────────────────────────────────
+  //
+  // O caderno do desenho é o plano da aula com as atividades e as
+  // respostas. O plano não existe ainda, e inventá-lo aqui seria
+  // construir o mais difícil pela metade.
+  //
+  // Mas metade do caderno não depende do plano: é o REGISTRO das aulas
+  // dela. O tópico de cada aula já está na chamada — é ele que valida a
+  // aula para a folha —, a tarefa de casa está na turma, a entrega está
+  // na chamada e a gravação tem consulta própria. Falta só o que ela
+  // escreve.
+  //
+  // Então é isto: uma linha por aula dela, com o que foi dado, se ela
+  // estava, se entregou a tarefa, a gravação, e a nota dela. Quando o
+  // plano chegar, cada linha ganha as atividades — a estrutura cabe.
+  var CADERNO_KEY = "isr_caderno_v1";
+  var NOTA_LIMITE = 2000;
+  function cadernoAll() {
+    try { return JSON.parse(localStorage.getItem(CADERNO_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function cadernoChave(pessoaId, turmaLabel, dataIso) {
+    return pessoaId + "|" + turmaLabel + "|" + dataIso;
+  }
+  function notaDaAula(pessoaId, turmaLabel, dataIso) {
+    var r = cadernoAll()[cadernoChave(pessoaId, turmaLabel, dataIso)];
+    return r ? (r.texto || "") : "";
+  }
+  function salvarNotaDaAula(pessoaId, turmaLabel, dataIso, texto) {
+    if (!pessoaId || !turmaLabel || !dataIso) return { ok: false, erro: "Aula não identificada." };
+    var m = cadernoAll();
+    var k = cadernoChave(pessoaId, turmaLabel, dataIso);
+    var t = String(texto || "").trim().slice(0, NOTA_LIMITE);
+    if (t) m[k] = { texto: t, em: new Date().toISOString(), _v: Date.now() };
+    else delete m[k];
+    try { localStorage.setItem(CADERNO_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return { ok: true, texto: t };
+  }
+  // As aulas dela: as chamadas da turma dela em que ela aparece. É a
+  // chamada que diz que a aula aconteceu e que ela estava lá.
+  function cadernoDaAluna(pessoaId, nDias) {
+    var p = getPessoa(pessoaId);
+    if (!p) return [];
+    var desde = addDays(-(nDias || 180));
+    var m = chamadasAll();
+    var grav = gravacoesLista().filter(function (g) { return !!g.link; });
+    var out = [];
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || !ch.data || ch.data < desde) return;
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      var g = grav.filter(function (x) {
+        return x.tipo === "turma" && x.turma === ch.turma && x.data === ch.data;
+      })[0];
+      var est = estadoPresenca(ch.presencas[pessoaId]);
+      out.push({
+        turma: ch.turma, data: ch.data,
+        topico: ch.topico || "",
+        presenca: est,
+        // a tarefa só entra quando a professora cobrou: sem marca na
+        // chamada, dizer "não entregou" seria acusar sem pergunta
+        tarefaCobrada: !!(ch.tarefas && (pessoaId in ch.tarefas)),
+        tarefaEntregue: !!(ch.tarefas && ch.tarefas[pessoaId] === true),
+        gravacao: g ? g.link : "",
+        nota: notaDaAula(pessoaId, ch.turma, ch.data)
+      });
+    });
+    return out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+
+  // ── O COFRE DE PALAVRAS ───────────────────────────────────────
+  //
+  // No desenho as palavras vêm do caderno da aula. Sem plano não há de
+  // onde puxá-las — mas o cofre não precisa disso para servir: a aluna
+  // guarda a palavra que ouviu na aula, e o cofre a traz de volta.
+  //
+  // A revisão é espaçada, que é o que faz "Review" ser Review e não uma
+  // lista: cada acerto afasta a próxima revisão (1, 3, 7, 14, 30, 60
+  // dias) e um erro volta para amanhã. Palavra que a aluna já sabe para
+  // de aparecer; a que escapa, volta.
+  var PALAVRAS_KEY = "isr_palavras_v1";
+  var INTERVALOS = [1, 3, 7, 14, 30, 60];
+  function palavrasAll() {
+    try { return JSON.parse(localStorage.getItem(PALAVRAS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function palavrasSave(m) {
+    try { localStorage.setItem(PALAVRAS_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+  function palavrasDaAluna(pessoaId) {
+    return (palavrasAll()[pessoaId] || []).slice()
+      .sort(function (a, b) { return a.em < b.em ? 1 : -1; });
+  }
+  function salvarPalavra(pessoaId, dados) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { ok: false, erro: "Aluna não encontrada." };
+    dados = dados || {};
+    var palavra = String(dados.palavra || "").trim().slice(0, 80);
+    if (!palavra) return { ok: false, erro: "Escreva a palavra." };
+    var m = palavrasAll();
+    var l = (m[pessoaId] || []).slice();
+    var id = dados.id || "";
+    var reg = id ? l.filter(function (x) { return x.id === id; })[0] : null;
+    // mesma palavra duas vezes é a mesma palavra: edita, não duplica
+    if (!reg) {
+      var igual = l.filter(function (x) {
+        return x.palavra.toLowerCase() === palavra.toLowerCase();
+      })[0];
+      if (igual) reg = igual;
+    }
+    var campos = {
+      palavra: palavra,
+      traducao: String(dados.traducao || "").trim().slice(0, 120),
+      exemplo: String(dados.exemplo || "").trim().slice(0, 240),
+      daAula: String(dados.daAula || "").trim().slice(0, 120)
+    };
+    if (reg) {
+      Object.keys(campos).forEach(function (k) { reg[k] = campos[k]; });
+      reg._v = Date.now();
+    } else {
+      reg = Object.assign({
+        id: "pv" + Date.now() + "-" + l.length,
+        em: iso(today()), acertos: 0, erros: 0,
+        nivel: 0, proxima: iso(today()), _v: Date.now()
+      }, campos);
+      l.push(reg);
+    }
+    m[pessoaId] = l;
+    palavrasSave(m);
+    return { ok: true, palavra: reg };
+  }
+  function removerPalavra(pessoaId, id) {
+    var m = palavrasAll();
+    m[pessoaId] = (m[pessoaId] || []).filter(function (x) { return x.id !== id; });
+    palavrasSave(m);
+    return { ok: true };
+  }
+  // Acertou: sobe um degrau e a próxima revisão se afasta. Errou: volta
+  // ao primeiro degrau e aparece amanhã.
+  //
+  // `nivel` é quantos acertos seguidos a palavra tem, de 0 a seis — não o
+  // índice do intervalo. Palavra nova tem nivel 0 e vence hoje; o primeiro
+  // acerto a leva a 1, e o primeiro degrau da escada é 1 dia, não 3. Ler
+  // nivel como índice adianta a escada inteira em um passo.
+  function revisarPalavra(pessoaId, id, acertou) {
+    var m = palavrasAll();
+    var l = (m[pessoaId] || []).slice();
+    var reg = l.filter(function (x) { return x.id === id; })[0];
+    if (!reg) return { ok: false };
+    if (acertou) {
+      reg.acertos = (reg.acertos || 0) + 1;
+      reg.nivel = Math.min(INTERVALOS.length, (reg.nivel || 0) + 1);
+    } else {
+      reg.erros = (reg.erros || 0) + 1;
+      reg.nivel = 0;
+    }
+    reg.proxima = addDays(INTERVALOS[Math.max(0, reg.nivel - 1)]);
+    reg.revisadaEm = iso(today());
+    reg._v = Date.now();
+    m[pessoaId] = l;
+    palavrasSave(m);
+    return { ok: true, palavra: reg, proxima: reg.proxima };
+  }
+  function revisaoDeHoje(pessoaId) {
+    var hoje = iso(today());
+    var todas = palavrasDaAluna(pessoaId);
+    var devidas = todas.filter(function (x) { return (x.proxima || hoje) <= hoje; });
+    var sabidas = todas.filter(function (x) { return (x.nivel || 0) >= INTERVALOS.length; });
+    return { devidas: devidas, total: todas.length, sabidas: sabidas.length,
+      degraus: INTERVALOS.length };
   }
 
   function usoDoApp(nDias) {
@@ -13450,7 +13634,10 @@
     flinUrl: flinUrl, setFlinUrl: setFlinUrl, flinDaAluna: flinDaAluna, liberarFlin: liberarFlin,
     historicoDeNiveis: historicoDeNiveis,
     registrarAcessoAluna: registrarAcessoAluna,
-    salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
+    salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna,
+    cadernoDaAluna: cadernoDaAluna, notaDaAula: notaDaAula, salvarNotaDaAula: salvarNotaDaAula,
+    palavrasDaAluna: palavrasDaAluna, salvarPalavra: salvarPalavra, removerPalavra: removerPalavra,
+    revisarPalavra: revisarPalavra, revisaoDeHoje: revisaoDeHoje, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
     diarioDaTurma: diarioDaTurma,

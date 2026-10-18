@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-f",
+  numero: "2026.10.18-g",
   data: "18/10/2026",
-  nota: "A área da aluna ganha a Loja de milhas e o Meu perfil, que ela mesma escreve"
+  nota: "A área da aluna ganha o Meu caderno e o Review, com revisão espaçada"
 };

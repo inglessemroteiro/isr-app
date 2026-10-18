@@ -1197,7 +1197,8 @@ baixo** de quatro itens no celular; cabeçalho com assunto, título,
 seletor **PT / EN** e sino de avisos. O design system entra pelos
 tokens e pelo `_ds_bundle.js`, e o logo vem de `assets/`.
 
-Quatro páginas, com o dado que já existe:
+As quatro primeiras páginas, com o dado que já existe (as outras
+quatro vieram depois, nas duas seções seguintes):
 
 - **Início** — a próxima aula em destaque (professora, dia, hora e
   projeto do ciclo), a semana de segunda a domingo com o que já
@@ -1254,12 +1255,68 @@ mural de recados. Os dois são conteúdo público entre alunas, com as
 mesmas perguntas (o que cada anúncio mostra, como duas alunas se
 falam, quem modera), e isso é decisão da escola, não detalhe de tela.
 
-**Falta trazer do desenho:** **Caderno** (plano da aula, palavras,
-tarefas ao vivo, homework) e **Review** (cofre de palavras). As duas
-dependem do **plano de aula da professora**, que é a maior peça que
-falta no sistema e começa do lado dela. Até lá o app antigo
-(`ISR - Aluna.dc.html`) continua de pé, com Aulas, Materiais, Desafio e
-avaliação da aula.
+#### O Meu caderno e o Review
+
+As duas últimas. **Nenhuma das duas é a do desenho inteiro, e está
+dito na própria tela.**
+
+No desenho, o Caderno é o **plano de aula** da professora visto do lado
+da aluna: as atividades da sessão, as palavras que a professora
+soltou, a tarefa ao vivo. O plano de aula não existe no sistema — é a
+maior peça que falta, e ela começa do lado da professora. Esperar por
+ele deixaria a aluna sem caderno nenhum.
+
+**Mas metade do caderno não depende do plano: é o registro das aulas
+dela, e esse dado já está todo aí.** O tópico de cada aula está na
+chamada (é ele que valida a aula para a folha), a tarefa de casa está
+na turma, a entrega está na chamada e a gravação tem consulta própria.
+Faltava só o que ela escreve.
+
+Então o **Meu caderno** é uma linha por aula dela — data, turma, o que
+foi dado, se ela estava, se entregou a tarefa, a gravação — e **uma
+nota por aula, escrita por ela**. Quando o plano de aula chegar, cada
+linha ganha as atividades: a estrutura cabe. Uma frase no fim da página
+diz exatamente isso, em vez de a tela fingir que está completa.
+
+Duas decisões que valem registrar:
+
+- **A tarefa só aparece quando a professora cobrou.** Sem marca na
+  chamada, escrever "não entregou" seria acusar sem pergunta.
+- **O caderno mostra só aula em que ela aparece na chamada.** Não é a
+  agenda da turma; é o que ela viveu.
+
+O **Review** é o cofre de palavras dela, com **revisão espaçada de
+verdade** — é isso que faz Review ser Review e não uma lista. Cada
+acerto afasta a próxima revisão (1, 3, 7, 14, 30 e 60 dias) e um erro
+traz a palavra de volta para amanhã. Palavra que ela já sabe sai da
+fila; a que escapa, volta. A regra fica escrita na página, porque
+espaçamento que o usuário não entende vira "o app sumiu com a minha
+palavra".
+
+`nivel` é **quantos acertos seguidos** a palavra tem, não o índice do
+intervalo. Ler um como o outro adianta a escada inteira em um passo — o
+primeiro acerto mandava a palavra para três dias em vez de um. Foi o
+teste que pegou.
+
+Palavra repetida **edita em vez de duplicar**: a mesma palavra duas
+vezes é a mesma palavra.
+
+**O que a aluna escreve agora entra no sync e na cópia de tudo.** A
+nota e o cofre moram em chaves novas (`isr_caderno_v1`,
+`isr_palavras_v1`); sem elas no payload e no `CHAVES_DADOS`, trocar de
+celular apagava o caderno dela. O caderno mescla nota a nota (uma chave
+por aula); o cofre vale inteiro por aluna, que é dela e é escrito num
+aparelho de cada vez.
+
+Aproveitando o payload: a mesclagem ainda carregava um campo `avisos`
+que o PR dos avisos deixou para trás. Ele não existia mais do lado
+local, então a cada salvamento o sistema copiava de volta o que o
+servidor tinha de morto. Saiu.
+
+**Continua de fora, nomeado:** o **plano de aula** da professora
+(sessões, atividades, reordenar, publicar) — e com ele a outra metade
+do Caderno —, o **mural de trocas** da loja e a **metade social do
+perfil**.
 
 ### Cada tela na rotina de quem abriu
 
