@@ -407,10 +407,25 @@ Saíram: o seletor Lista/Semana, o seletor de responsável, o
 7/14/30 dias, a legenda por tipo com contagem, o aviso do ciclo e o
 bloco de configuração da **assinatura**.
 
-Com o aviso do ciclo foi embora a explicação da semana vazia: depois
-que o ciclo fecha, as aulas das turmas param e a agenda fica vazia sem
-dizer por quê. É o que o v5 faz, e é o que está valendo — mas vale
-saber que o silêncio chega quando o ciclo 3 terminar.
+**Com o aviso do ciclo foi embora a explicação da semana vazia**, e
+isso voltou — em outro lugar e em outra forma. Depois que o ciclo
+fecha, as aulas das turmas param: está certo, mas calado parece
+defeito. A explicação agora é **uma linha embaixo da lista do dia**,
+não um aviso no topo:
+
+> Não há aula de turma neste dia porque o ciclo 3.2026 das turmas
+> online terminou em 10/10. As aulas das turmas só existem dentro do
+> ciclo. O próximo se abre em Matrículas do ciclo.
+
+Duas coisas foram aprendidas ao fazer isso. A primeira: **"lista
+vazia" não é a condição certa.** Follow-up e reunião não morrem com o
+ciclo, então o dia costuma ter alguma coisa — a condição é o dia estar
+fora da janela, e a nota aparece de qualquer jeito. A segunda: a
+última frase só sai para quem pode abrir ciclo. Mandar a professora
+abrir é mandá-la para uma tela que ela não tem.
+
+São **dois calendários**, online e presencial, com datas próprias: o
+dia pode estar fora de um, do outro, ou dos dois, e a nota diz qual.
 
 **O filtro virou regra, não controle.** No v5 cada evento carrega os
 papéis que o veem, e não há seletor. Aqui o equivalente é o nome:
@@ -1024,13 +1039,21 @@ que ela precisa ver, e ainda parece cobrança.
 Na **Central**:
 
 - metas de matrícula e renovação, só para gestão e comercial;
-- o cartão Pedagógico conta **as alunas dela** ("suas alunas em
-  risco"), não as 32 da escola, e perde "vagas abertas", que é
-  conversa de matrícula;
-- o bloco de aulas sem chamada fala com ela ("47 aulas suas") em vez
-  de agrupar por professora e repetir o nome dela;
 - a planilha financeira é da direção; a ata é de quem está na reunião
   de alinhamento, então o comercial continua com ela.
+
+Dois itens desta lista descreviam um desenho que o corte do v5
+desfez, e ficaram aqui desmentindo o código: o cartão Pedagógico com
+"suas alunas em risco" e o bloco de aulas sem chamada com "47 aulas
+suas". **A professora não tem Central** — no `isr-shell.js` o item é
+de gestora, operação e comercial —, as aulas sem chamada foram para o
+Painel do professor e os cartões de área são de quem cuida da escola.
+O número por professora é dela e vai no Painel, que é a casa dela.
+
+O filtro por professora que alimentava aquele cartão continuou no
+código depois de a professora sair da tela, calculando um número que
+ninguém lia. Saiu: filtro que não filtra nada é armadilha para quem
+mexer depois.
 
 Na **Agenda**:
 
