@@ -196,6 +196,151 @@
       </section>
     </sc-if>
 
+    <!-- LOJA DE MILHAS -->
+    <!-- O saldo, o que dá para resgatar agora, o que falta para a
+         próxima e o que ela já resgatou. O mural de trocas entre alunas
+         está no desenho e não tem dado: fica dito no fim da página. -->
+    <sc-if value="{{ isShop }}">
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 280px;min-width:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ L.meuSaldo }}</div>
+          <div style="font-size:42px;font-weight:800;letter-spacing:-0.045em;line-height:1">{{ milesFmt }}</div>
+          <div style="font-size:13px;opacity:.85;line-height:1.5">{{ lojaLinha }}</div>
+          <sc-if value="{{ temProxima }}">
+            <div style="margin-top:10px">
+              <div style="height:8px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden">
+                <span style="display:block;height:100%;width:{{ proximaPct }};background:var(--color-button-primary)"></span>
+              </div>
+              <div style="font-size:12.5px;opacity:.9;margin-top:6px;line-height:1.5">{{ proximaTexto }}</div>
+            </div>
+          </sc-if>
+        </section>
+
+        <section style="flex:1 1 320px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:18px;font-weight:800">{{ L.comoGanhar }}</div>
+          <sc-for list="{{ comoGanhar }}" as="g" hint-placeholder-count="5">
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:5px 0;border-bottom:1px solid var(--color-button-secondary)">
+              <span style="color:var(--color-primary-800)">{{ g.k }}</span>
+              <b style="flex:none;font-weight:700">{{ g.v }}</b>
+            </div>
+          </sc-for>
+          <div style="font-size:12px;color:var(--color-tertiary-700);line-height:1.55">{{ L.validade }}</div>
+        </section>
+      </div>
+
+      <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:18px;font-weight:800">{{ L.recompensas }}</div>
+        <sc-if value="{{ resgateFeito }}">
+          <div style="background:var(--color-success-light);color:var(--color-success-dark);border-radius:16px;padding:12px 16px;font-size:13.5px;font-weight:600;line-height:1.5">{{ resgateFeitoTexto }}</div>
+        </sc-if>
+        <sc-if value="{{ resgateErro }}">
+          <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:16px;padding:12px 16px;font-size:13.5px;line-height:1.5">{{ resgateErroTexto }}</div>
+        </sc-if>
+        <sc-for list="{{ recompensas }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--color-button-secondary)">
+            <div style="flex:1;min-width:190px">
+              <div style="font-size:14.5px;font-weight:700;color:{{ r.cor }}">{{ r.nome }}</div>
+              <div style="font-size:12.5px;color:var(--color-tertiary-700);line-height:1.5;margin-top:2px">{{ r.detalhe }}</div>
+            </div>
+            <div style="flex:none;font-size:14px;font-weight:800;color:{{ r.custoCor }};white-space:nowrap">{{ r.custo }}</div>
+            <sc-if value="{{ r.podeResgatar }}">
+              <button onclick="{{ r.onResgatar }}" style="flex:none;border:0;background:{{ r.btnBg }};color:{{ r.btnFg }};border-radius:999px;padding:11px 17px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ r.btnLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ r.confirmando }}">
+              <button onclick="{{ r.onCancelar }}" style="flex:none;border:0;background:transparent;color:var(--color-tertiary-700);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:11px 4px">{{ L.cancelar }}</button>
+            </sc-if>
+            <sc-if value="{{ r.faltam }}">
+              <span style="flex:none;font-size:12.5px;font-weight:700;color:var(--color-tertiary-700);white-space:nowrap">{{ r.faltamTexto }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </section>
+
+      <sc-if value="{{ temResgatados }}">
+        <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:18px;font-weight:800">{{ L.jaResgatou }}</div>
+          <sc-for list="{{ resgatados }}" as="rs" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:7px 0;border-bottom:1px solid var(--color-button-secondary)">
+              <span style="font-weight:600">{{ rs.premio }}</span>
+              <span style="flex:none;color:var(--color-tertiary-700)">{{ rs.quando }} · {{ rs.custo }}</span>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.muralEmObra }}</section>
+    </sc-if>
+
+    <!-- MEU PERFIL -->
+    <!-- Foto, bio, links e aniversário: são dela, e é ela que escreve.
+         A metade social do desenho — atributos votados por outras alunas
+         e mural de recados — é conteúdo público entre alunas e fica
+         dita no fim da página. -->
+    <sc-if value="{{ isProfile }}">
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 300px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center">
+          <sc-if value="{{ temFoto }}">
+            <img src="{{ perfilFoto }}" alt="{{ perfilNome }}" style="width:120px;height:120px;border-radius:50%;object-fit:cover" />
+          </sc-if>
+          <sc-if value="{{ semFoto }}">
+            <span style="width:120px;height:120px;border-radius:50%;background:var(--color-primary-100);color:var(--color-primary-900);display:grid;place-items:center;font-size:44px;font-weight:800">{{ perfilInicial }}</span>
+          </sc-if>
+          <div>
+            <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em">{{ perfilNome }}</div>
+            <div style="font-size:13px;color:var(--color-tertiary-700);margin-top:2px">{{ perfilMeta }}</div>
+            <sc-if value="{{ temAniversario }}">
+              <div style="font-size:13px;color:var(--color-primary-800);margin-top:4px">{{ perfilAniversario }}</div>
+            </sc-if>
+          </div>
+        </section>
+
+        <section style="flex:1 1 340px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <div style="font-size:18px;font-weight:800">{{ L.sobreMim }}</div>
+            <sc-if value="{{ perfilLendo }}">
+              <button onclick="{{ onEditarPerfil }}" style="border:0;background:var(--color-button-secondary);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.editar }}</button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ perfilLendo }}">
+            <div style="font-size:14px;line-height:1.6;color:var(--color-primary-800);white-space:pre-wrap">{{ perfilBioTexto }}</div>
+            <sc-for list="{{ perfilLinks }}" as="lk" hint-placeholder-count="2">
+              <a href="{{ lk.url }}" target="_blank" rel="noopener" style="font-size:13.5px;font-weight:700;color:var(--color-text-light);text-decoration:none">{{ lk.label }} →</a>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ perfilEditando }}">
+            <sc-if value="{{ perfilErro }}">
+              <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:14px;padding:11px 14px;font-size:13px;line-height:1.5">{{ perfilErroTexto }}</div>
+            </sc-if>
+            <label style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.bio }}</label>
+            <textarea ref="{{ bioRef }}" defaultValue="{{ perfilBio }}" maxlength="400" rows="4" placeholder="{{ L.bioPh }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:16px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--color-primary-900);resize:vertical"></textarea>
+            <label style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.foto }}</label>
+            <input ref="{{ fotoRef }}" defaultValue="{{ perfilFotoBruta }}" placeholder="https://…" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;font-family:inherit;color:var(--color-primary-900)" />
+            <label style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.aniversario }}</label>
+            <input ref="{{ aniRef }}" defaultValue="{{ perfilAniBruto }}" placeholder="DD-MM" style="width:120px;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;font-family:inherit;color:var(--color-primary-900)" />
+            <label style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.links }}</label>
+            <sc-for list="{{ perfilLinhasLink }}" as="ll" hint-placeholder-count="4">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <input ref="{{ ll.labelRef }}" defaultValue="{{ ll.label }}" placeholder="{{ L.linkNome }}" style="flex:0 1 130px;min-width:0;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--color-primary-900)" />
+                <input ref="{{ ll.urlRef }}" defaultValue="{{ ll.url }}" placeholder="https://…" style="flex:1 1 180px;min-width:0;border:1px solid var(--color-tertiary-50);border-radius:14px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--color-primary-900)" />
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <button onclick="{{ onSalvarPerfil }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.salvar }}</button>
+              <button onclick="{{ onCancelarPerfil }}" style="border:0;background:transparent;color:var(--color-tertiary-700);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:12px 4px">{{ L.cancelar }}</button>
+              <sc-if value="{{ perfilSalvo }}">
+                <span style="font-size:12.5px;font-weight:700;color:var(--color-success-dark)">{{ L.perfilSalvo }}</span>
+              </sc-if>
+            </div>
+          </sc-if>
+          <div style="font-size:12px;color:var(--color-tertiary-700);line-height:1.55">{{ L.perfilNota }}</div>
+        </section>
+      </div>
+
+      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.perfilEmObra }}</section>
+    </sc-if>
+
     <!-- CONTA -->
     <sc-if value="{{ isAccount }}">
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
@@ -254,7 +399,15 @@ class Component extends DCLogic {
   // dela. Nenhuma função de gestão entra aqui — nem fila, nem funil,
   // nem folha, nem caixa.
   state = { page: "home", clubTab: "mine", lang: "pt", notif: false,
-            recado: "", busca: "", w: 1180, tick: 0 };
+            recado: "", busca: "", w: 1180, tick: 0,
+            // loja: a confirmação é de duas etapas, porque resgate
+            // gasta milhas e não se desfaz
+            confirmaResgate: null, resgateErro: "", resgateFeito: "",
+            // perfil: editando guarda o rascunho até ela salvar
+            perfilEditando: false, perfilErro: "", perfilSalvo: false };
+  bioRef = React.createRef(); fotoRef = React.createRef(); aniRef = React.createRef();
+  linkRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
+  linkLabelRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
 
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth });
@@ -289,6 +442,36 @@ class Component extends DCLogic {
 
     // ── as palavras da casca, nos dois idiomas ──
     const L = {
+      // ── loja de milhas ──
+      meuSaldo: T("my miles", "minhas milhas"),
+      comoGanhar: T("How to earn miles", "Como ganhar milhas"),
+      recompensas: T("School rewards", "Recompensas da escola"),
+      jaResgatou: T("What you have redeemed", "O que você já resgatou"),
+      validade: T("Miles expire one year after they are earned.",
+        "As milhas valem por um ano a partir do dia em que você as ganhou."),
+      resgatar: T("Redeem", "Resgatar"),
+      confirmar: T("Confirm", "Confirmar"),
+      cancelar: T("cancel", "cancelar"),
+      muralEmObra: T("The swap & sell board, where students trade things with each other, is in the design and comes next. It needs its own decisions: what each listing shows and how two students get in touch.",
+        "O mural de trocas, em que as alunas trocam coisas entre si, está no desenho e vem em seguida. Ele precisa das próprias decisões: o que cada anúncio mostra e como duas alunas se falam."),
+      // ── perfil ──
+      sobreMim: T("About me", "Sobre mim"),
+      editar: T("Edit", "Editar"),
+      salvar: T("Save", "Salvar"),
+      bio: T("your bio", "sua bio"),
+      bioPh: T("Where you are from, why you study English, what you like…",
+        "De onde você é, por que estuda inglês, do que você gosta…"),
+      foto: T("photo address (https)", "endereço da foto (https)"),
+      aniversario: T("birthday · day and month", "aniversário · dia e mês"),
+      links: T("your links", "seus links"),
+      linkNome: T("name", "nome"),
+      perfilSalvo: T("saved", "salvo"),
+      perfilNota: T("You write this, not the school. It is what the other students see.",
+        "Isto é você que escreve, não a escola. É o que as outras alunas veem."),
+      perfilEmObra: T("The rest of the profile in the design — the attributes other students rate and the wall where they leave messages — is content between students, and the school decides that first.",
+        "O resto do perfil no desenho — os atributos que outras alunas avaliam e o mural de recados — é conteúdo entre alunas, e isso a escola decide primeiro."),
+      semBio: T("You have not written your bio yet.", "Você ainda não escreveu a sua bio."),
+
       buscar: T("Search people / clubs…", "Buscar alunas / clubes…"),
       abrirCaderno: T("Open my notebook", "Abrir o meu caderno"),
       entrarSala: T("Join live room", "Entrar na sala"),
@@ -327,10 +510,22 @@ class Component extends DCLogic {
       navSections: [], tabs: [], subTabs: [], hasSub: false,
       eyebrow: "", title: "—",
       milesFmt: "0", milesLinha: "", goMiles: () => {},
+      lojaLinha: "", temProxima: false, proximaPct: "0%", proximaTexto: "",
+      comoGanhar: [], recompensas: [], resgatados: [], temResgatados: false,
+      resgateFeito: false, resgateFeitoTexto: "", resgateErro: false, resgateErroTexto: "",
+      temFoto: false, semFoto: true, perfilFoto: "", perfilFotoBruta: "",
+      perfilNome: "", perfilMeta: "", perfilInicial: "",
+      temAniversario: false, perfilAniversario: "", perfilAniBruto: "",
+      perfilLendo: true, perfilEditando: false, perfilErro: false, perfilErroTexto: "",
+      perfilSalvo: false, perfilBio: "", perfilBioTexto: "", perfilLinks: [],
+      perfilLinhasLink: [], onEditarPerfil: () => {}, onCancelarPerfil: () => {},
+      onSalvarPerfil: () => {},
+      bioRef: this.bioRef, fotoRef: this.fotoRef, aniRef: this.aniRef,
       langOpts: [], toggleNotif: () => {}, bellBg: "var(--color-neutral-0)", hasUnread: false, unread: "",
       notifOpen: false, closeNotif: () => {}, notifs: [], notifRight: "32px",
       semAvisos: true, L,
       isHome: true, isProgress: false, isClubs: false, isAccount: false,
+      isShop: false, isProfile: false,
       emObra: false, emObraTexto: "", emObraTitulo: "",
       busca: "", onBusca: () => {}, goNotebook: () => {},
       classEyebrow: "", classTitulo: "", classLinha: "", temSala: false, salaLink: "#",
@@ -615,6 +810,17 @@ class Component extends DCLogic {
       ? DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " " + MES_L[hojeD.getMonth()]
       : DIAS_L[hojeD.getDay()] + ", " + hojeD.getDate() + " de " + MES_L[hojeD.getMonth()];
 
+    // ── loja e perfil ──
+    const rec = (CRM.recompensasDaAluna && CRM.recompensasDaAluna(p.id))
+      || { saldo: 0, disponiveis: [], bloqueados: [], proxima: null, faltam: 0, pct: 0 };
+    const REGRAS = (CRM.MOEDAS_REGRAS) || { presenca: 10, atraso: 5, parcelaPaga: 15,
+      onboardingCompleto: 30, avaliouAula: 5, renovouCiclo: 100 };
+    const meusResgates = (CRM.resgatesAll ? CRM.resgatesAll() : [])
+      .filter(r => r.pessoaId === p.id)
+      .sort((a, b) => (a.em < b.em ? 1 : -1));
+    const perfil = (CRM.perfilDaAluna && CRM.perfilDaAluna(p.id))
+      || { foto: "", bio: "", aniversario: "", links: [] };
+
     const PAGINAS = {
       home: { label: T("Home", "Início"), icon: "⌂", eyebrow: dataLonga,
         title: T("Hello, ", "Olá, ") + CRM.firstName(p.nome) + "!" },
@@ -645,10 +851,10 @@ class Component extends DCLogic {
         "O caderno da aula vem do plano que a professora monta. O plano está sendo feito primeiro do lado dela."),
       review: T("The word vault is filled from the notebook of each class. It opens when the notebook does.",
         "O cofre de palavras se enche com o caderno de cada aula. Abre junto com o caderno."),
-      profile: T("The community profile — photo, bio and links — is not in the school's records yet.",
-        "O perfil da comunidade — foto, bio e links — ainda não existe no cadastro da escola."),
-      shop: T("Your miles are already counted, in Account. The shop and the swap board come next.",
-        "As suas milhas já são contadas, na Conta. A loja e o mural de trocas vêm em seguida.")
+      // O perfil e a loja saíram desta lista: as duas existem agora. O
+      // que continua faltando nelas está dito na própria página — o
+      // mural de trocas na loja, e a metade social do perfil (atributos
+      // votados por outras alunas e mural de recados).
     };
     const item = (id) => ({
       label: PAGINAS[id].label,
@@ -699,6 +905,129 @@ class Component extends DCLogic {
         : T("open shop", "abrir a loja"),
       goMiles: () => this.setState({ page: "shop", notif: false }),
 
+      // ── LOJA DE MILHAS ──
+      // Tudo vem de CRM.recompensasDaAluna, que é a mesma função que
+      // alimenta o número na Conta. Ela já tira da lista o prêmio
+      // fechado por regra (tempo de casa, vagas do mês, um por ciclo):
+      // não adianta dizer "faltam 315 milhas" para algo que milha
+      // nenhuma destrava hoje.
+      lojaLinha: rec.disponiveis.length
+        ? rec.disponiveis.length + T(" rewards within reach", " recompensa" + (rec.disponiveis.length === 1 ? "" : "s") + " ao seu alcance")
+        : T("keep going — the first reward is close", "siga assim — a primeira recompensa está perto"),
+      temProxima: !!rec.proxima,
+      proximaPct: (rec.pct || 0) + "%",
+      proximaTexto: rec.proxima
+        ? T(rec.faltam + " miles to " + rec.proxima.nome, rec.faltam + " milhas para " + rec.proxima.nome)
+        : "",
+      comoGanhar: [
+        { k: T("present in class", "presença na aula"), v: "+" + REGRAS.presenca },
+        { k: T("present, arrived late", "presença com atraso"), v: "+" + REGRAS.atraso },
+        { k: T("instalment paid on time", "parcela paga em dia"), v: "+" + REGRAS.parcelaPaga },
+        { k: T("first 30 days completed", "primeiros 30 dias completos"), v: "+" + REGRAS.onboardingCompleto },
+        { k: T("you rated a class", "você avaliou uma aula"), v: "+" + REGRAS.avaliouAula },
+        { k: T("you renewed for another cycle", "você renovou por mais um ciclo"), v: "+" + REGRAS.renovouCiclo }
+      ],
+
+      recompensas: rec.disponiveis.concat(rec.bloqueados).map(r => {
+        const posso = rec.disponiveis.indexOf(r) >= 0;
+        const confirmando = this.state.confirmaResgate === r.id;
+        return {
+          nome: r.nome,
+          detalhe: r.detalhe || "",
+          cor: posso ? "var(--color-primary-900)" : "var(--color-tertiary-700)",
+          custo: r.custo + T(" mi", " mi"),
+          custoCor: posso ? "var(--color-primary-900)" : "var(--color-tertiary-700)",
+          podeResgatar: posso,
+          confirmando,
+          // Resgate gasta milhas e não se desfaz: o primeiro clique
+          // pergunta, o segundo gasta.
+          btnLabel: confirmando ? L.confirmar : L.resgatar,
+          btnBg: confirmando ? "var(--color-button-primary)" : "var(--color-primary-900)",
+          btnFg: confirmando ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          onResgatar: () => {
+            if (!confirmando) {
+              this.setState({ confirmaResgate: r.id, resgateErro: "", resgateFeito: "" });
+              return;
+            }
+            const out = CRM.resgatarRecompensa(p.id, r.id) || {};
+            if (out.ok) {
+              this.setState({ confirmaResgate: null, resgateErro: "",
+                resgateFeito: r.nome, tick: this.state.tick + 1 });
+            } else {
+              this.setState({ confirmaResgate: null,
+                resgateErro: out.bloqueio
+                  ? out.bloqueio
+                  : (out.faltam
+                    ? T("You need " + out.faltam + " more miles for this.",
+                        "Faltam " + out.faltam + " milhas para esta.")
+                    : T("This reward could not be redeemed now.",
+                        "Esta recompensa não pôde ser resgatada agora.")),
+                resgateFeito: "" });
+            }
+          },
+          onCancelar: () => this.setState({ confirmaResgate: null }),
+          faltam: !posso,
+          faltamTexto: T("+" + (r.custo - rec.saldo) + " mi", "faltam " + (r.custo - rec.saldo))
+        };
+      }),
+
+      resgateFeito: !!this.state.resgateFeito,
+      resgateFeitoTexto: this.state.resgateFeito
+        ? T("Redeemed: " + this.state.resgateFeito + ". The school will get in touch.",
+            "Resgatado: " + this.state.resgateFeito + ". A escola vai falar com você.")
+        : "",
+      resgateErro: !!this.state.resgateErro,
+      resgateErroTexto: this.state.resgateErro || "",
+
+      resgatados: meusResgates.map(rs => ({
+        premio: rs.premio,
+        quando: CRM.ddmm(rs.em),
+        custo: rs.custo + T(" mi", " mi")
+      })),
+      temResgatados: meusResgates.length > 0,
+
+      // ── MEU PERFIL ──
+      temFoto: !!perfil.foto, semFoto: !perfil.foto,
+      perfilFoto: perfil.foto || "", perfilFotoBruta: perfil.foto || "",
+      perfilNome: p.nome,
+      perfilMeta: [p.nivel, p.turma].filter(Boolean).join(" · ") || T("student", "aluna"),
+      perfilInicial: (p.nome || "?").trim().charAt(0).toUpperCase(),
+      temAniversario: !!perfil.aniversario,
+      perfilAniversario: perfil.aniversario
+        ? T("birthday " + perfil.aniversario.replace("-", "/"),
+            "aniversário em " + perfil.aniversario.replace("-", "/"))
+        : "",
+      perfilAniBruto: perfil.aniversario || "",
+      perfilLendo: !this.state.perfilEditando,
+      perfilEditando: !!this.state.perfilEditando,
+      perfilErro: !!this.state.perfilErro,
+      perfilErroTexto: this.state.perfilErro || "",
+      perfilSalvo: !!this.state.perfilSalvo,
+      perfilBio: perfil.bio || "",
+      perfilBioTexto: perfil.bio || L.semBio,
+      perfilLinks: (perfil.links || []).map(l => ({
+        label: l.label || l.url.replace(/^https:\/\//i, "").slice(0, 28), url: l.url })),
+      // Quatro linhas sempre: a aluna não precisa descobrir um botão de
+      // "adicionar link" para pôr o segundo.
+      perfilLinhasLink: [0, 1, 2, 3].map(i => ({
+        labelRef: this.linkLabelRefs[i], urlRef: this.linkRefs[i],
+        label: (perfil.links[i] || {}).label || "",
+        url: (perfil.links[i] || {}).url || ""
+      })),
+      onEditarPerfil: () => this.setState({ perfilEditando: true, perfilErro: "", perfilSalvo: false }),
+      onCancelarPerfil: () => this.setState({ perfilEditando: false, perfilErro: "", perfilSalvo: false }),
+      onSalvarPerfil: () => {
+        const v = (r) => ((r.current && r.current.value) || "").trim();
+        const out = CRM.salvarPerfilDaAluna(p.id, {
+          bio: v(this.bioRef), foto: v(this.fotoRef), aniversario: v(this.aniRef),
+          links: [0, 1, 2, 3].map(i => ({ label: v(this.linkLabelRefs[i]), url: v(this.linkRefs[i]) }))
+        }) || {};
+        if (out.ok) this.setState({ perfilEditando: false, perfilErro: "", perfilSalvo: true,
+          tick: this.state.tick + 1 });
+        else this.setState({ perfilErro: out.erro || T("Could not save.", "Não foi possível salvar.") });
+      },
+      bioRef: this.bioRef, fotoRef: this.fotoRef, aniRef: this.aniRef,
+
       langOpts: [["en", "EN"], ["pt", "PT"]].map(([id, label]) => ({
         label, bg: this.state.lang === id ? "var(--color-primary-900)" : "transparent",
         fg: this.state.lang === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
@@ -713,6 +1042,7 @@ class Component extends DCLogic {
 
       isHome: page === "home", isProgress: page === "progress",
       isClubs: page === "clubs", isAccount: page === "account",
+      isShop: page === "shop", isProfile: page === "profile",
       emObra: !!EM_OBRA[page], emObraTexto: EM_OBRA[page] || "",
       emObraTitulo: T("Not here yet", "Ainda não está aqui"),
 

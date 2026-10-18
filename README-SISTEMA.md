@@ -1213,12 +1213,53 @@ Quatro páginas, com o dado que já existe:
 O **PT / EN** troca só as palavras da casca. Nome de turma, nível,
 professora e projeto são o dado da escola e não são traduzidos.
 
-Falta trazer do desenho: **Caderno** (plano da aula, palavras, tarefas
-ao vivo, homework), **Review** (cofre de palavras), **Perfil** da
-comunidade e a parte de **trocas** do Shop. Essas quatro dependem de
-dado que ainda não existe — e três delas começam do lado da
-professora, no Caderno. Até lá o app antigo (`ISR - Aluna.dc.html`)
-continua de pé, com Aulas, Materiais, Desafio e avaliação da aula.
+#### A Loja de milhas e o Meu perfil
+
+Duas das quatro que faltavam entraram.
+
+**A Loja de milhas não precisava de dado novo nenhum** — as milhas já
+eram contadas, o catálogo existia e o resgate funcionava; faltava a
+página. Ela tem o saldo, quantas recompensas estão ao alcance, a barra
+do que falta para a próxima, **como ganhar milhas** (as seis regras,
+com os valores que o sistema usa de verdade), as recompensas da escola
+e o que a aluna já resgatou.
+
+Tudo vem de `CRM.recompensasDaAluna`, que é a mesma função que alimenta
+o número na Conta — duas contas da mesma coisa acabam discordando. Ela
+também já tira da lista o prêmio fechado por regra (tempo de casa,
+vagas do mês, um por ciclo): não adianta dizer "faltam 315 milhas" para
+algo que milha nenhuma destrava hoje.
+
+**Resgatar é de duas etapas.** O primeiro clique pergunta, o segundo
+gasta — resgate debita milhas e não se desfaz. É a mesma confirmação da
+célula de parcela na Cobrança, e pela mesma razão.
+
+**O perfil é dela, e é ela que escreve.** Foto, bio, aniversário (dia e
+mês, sem ano: a comunidade comemora, não precisa da idade) e até quatro
+links. A escola não tem esses dados nem deveria digitá-los.
+
+Para isso entrou **`salvarPerfilDaAluna`** no `crm-data.js`, e ele é
+estreito de propósito. A alternativa seria expor o `mutate` e deixar o
+app da aluna escrever qualquer campo do cadastro — nome, turma,
+contrato. **Um app que roda no aparelho de outra pessoa não ganha a
+chave do cadastro inteiro; ganha a porta dos quatro campos que são
+dela.** Foto e link têm de começar com `https://` — endereço que não é
+https não carrega, e dado embutido (`data:`) cresce o cadastro sem
+limite e viaja em todo sync.
+
+**Fica de fora, nomeado na própria página:** o **mural de trocas** da
+loja, em que as alunas trocam coisas entre si, e **a metade social do
+perfil** — os atributos que outras alunas avaliam com estrelas e o
+mural de recados. Os dois são conteúdo público entre alunas, com as
+mesmas perguntas (o que cada anúncio mostra, como duas alunas se
+falam, quem modera), e isso é decisão da escola, não detalhe de tela.
+
+**Falta trazer do desenho:** **Caderno** (plano da aula, palavras,
+tarefas ao vivo, homework) e **Review** (cofre de palavras). As duas
+dependem do **plano de aula da professora**, que é a maior peça que
+falta no sistema e começa do lado dela. Até lá o app antigo
+(`ISR - Aluna.dc.html`) continua de pé, com Aulas, Materiais, Desafio e
+avaliação da aula.
 
 ### Cada tela na rotina de quem abriu
 
