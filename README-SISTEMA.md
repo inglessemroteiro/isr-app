@@ -1044,6 +1044,68 @@ Agenda, da lista de aulas sem chamada e da página da Turma agora
 entram na turma, na aba de chamadas — que é o que quem clica veio
 fazer.
 
+### Turmas e Turma, pelo v5
+
+**A lista dizia "3/5".** Para saber *quem* está na turma e se a
+professora aguenta mais uma, era preciso abrir turma por turma — e é
+exatamente isso que se faz ao encaixar uma matrícula nova.
+
+Agora a lista mostra **quem está em cada turma, como etiqueta, com as
+vagas vazias desenhadas em pontilhado** — é o quadro do v5. Aluna em
+risco vem marcada em vermelho: é nela que se olha antes de pôr mais uma
+na turma. A coluna de material saiu da linha para abrir esse espaço; o
+caderno é assunto da turma aberta.
+
+Duas alunas chamadas Beatriz na mesma turma davam duas etiquetas
+"Beatriz", que leem como uma duplicata. **Primeiro nome repetido na
+mesma turma ganha a inicial do sobrenome:** Beatriz O. e Beatriz C.
+
+**Capacidade das professoras** entrou, com uma barra por professora. O
+v5 conta em **horas por semana**, que o sistema não guarda; a **carteira
+em alunas** é a unidade que existe, já é editável na Equipe, e é a
+mesma `CRM.carteiraProfessoras()` que a Equipe mostra — duas contas da
+mesma coisa acabam discordando, e aí ninguém confia em nenhuma. Aqui
+ela só se vê, no momento em que se monta turma; editar continua na
+Equipe.
+
+**Os quatro blocos que o v5 não tem ficaram**, por decisão da escola:
+o formulário de nova turma (sem ele, criar turma não tem lugar nenhum
+no sistema), o aviso da janela do ciclo (que evita a pergunta
+"cadastrei a turma, por que não aparece aula?"), o bloco de alunas
+particulares e a seleção múltipla.
+
+#### A turma virou um lugar
+
+A tela de Turma tinha **duas colunas com seis blocos**: alunas e
+chamadas à esquerda; projeto, materiais, tarefa de casa e pedir à Gabi
+à direita. Quem vinha ver a chamada rolava por material e tarefa de
+casa.
+
+Agora são **cinco abas**, as quatro do Painel do professor mais a de
+gestão:
+
+| aba | o que tem |
+|---|---|
+| **Visão geral** | dia e horário, professora, projeto, ciclo, ocupação com vagas, caderno — e é onde "editar turma" abre |
+| **Alunas** | a lista, com faltas e situação de pagamento, e o campo de adicionar |
+| **Chamadas** | as chamadas recentes, cada uma abrindo no Painel |
+| **Materiais** | projeto do ciclo, materiais da turma, tarefa de casa e pedir à Gabi |
+| **Renovação e vagas** | quem renovou, quem não, quem não respondeu — e as vagas do ciclo seguinte |
+
+**Renovação e vagas é nova.** Cada aluna já carregava o campo
+`renovacao`; a soma disso por turma é o que diz quantas vagas o ciclo
+seguinte abre, e ela só existia na conta da escola inteira. A conta é
+explícita na tela: as vagas de hoje mais as de quem não renovou, e quem
+está sem resposta ainda não conta.
+
+**Lista de espera por turma ficou de fora:** o v5 tem, e o sistema não
+guarda espera por turma — só por clube.
+
+As duas colunas se dissolveram em vez de virar abas por coluna: cada
+bloco é filho direto da grade, embrulhado no `sc-if` da aba dele. Aba
+de um bloco ocupa a largura inteira, e Materiais, que tem três, os põe
+lado a lado — é o que a grade `auto-fit` já fazia.
+
 ### Os avisos estavam escrevendo para o nada
 
 Um teste cobrava que a professora é avisada quando a gestão corrige a

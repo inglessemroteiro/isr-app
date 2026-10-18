@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-c",
+  numero: "2026.10.18-d",
   data: "18/10/2026",
-  nota: "Sai o sistema de avisos, que escrevia para o nada desde que o Mural saiu: a chave do armazenamento tinha sido apagada e o erro ficava preso num try"
+  nota: "A lista de Turmas mostra quem está em cada uma, com as vagas desenhadas, e a turma virou um lugar com cinco abas"
 };

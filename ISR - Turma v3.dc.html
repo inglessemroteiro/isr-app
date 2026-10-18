@@ -42,6 +42,29 @@
       </header>
       <p style="margin: 0 0 18px; font-size: 13px; color: var(--color-primary-800);">{{ contexto }}</p>
 
+      <!-- AS ABAS DA TURMA -->
+      <!-- As mesmas do Painel do professor, mais Renovação e vagas, que
+           é de gestão. Antes eram duas colunas com seis blocos, e quem
+           vinha ver a chamada rolava por material e tarefa de casa. -->
+      <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap; margin-bottom: 4px">
+        <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="5">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="padding: 9px 16px; font-size: 13px; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- VISÃO GERAL -->
+      <sc-if value="{{ tGeral }}">
+        <section class="isr-cartao" style="padding: 18px 22px; margin-bottom: 16px">
+          <div style="font-size: 16px; font-weight: 600;">Visão geral</div>
+          <sc-for list="{{ geralLinhas }}" as="gl" hint-placeholder-count="6">
+            <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
+              <span style="flex: none; width: 150px; font-size: 12.5px; color: var(--color-tertiary-500);">{{ gl.k }}</span>
+              <span style="flex: 1; min-width: 180px; font-size: 14px; font-weight: 600; color: {{ gl.cor }};">{{ gl.v }}</span>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+
       <!-- EDITAR TURMA / MATERIAIS -->
       <sc-if value="{{ editando }}">
         <div class="isr-cartao" style="padding: 16px 18px; margin-bottom: 16px">
@@ -71,10 +94,8 @@
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
 
-        <!-- COLUNA ESQUERDA -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-
-          <!-- ALUNAS -->
+        <!-- ALUNAS -->
+        <sc-if value="{{ tAlunas }}">
           <div class="isr-cartao" style="overflow: hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--color-bg-default);">
               <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Alunas · {{ ocupLabel }}</span>
@@ -111,7 +132,10 @@
             </div>
           </div>
 
-          <!-- CHAMADAS RECENTES · cada uma abre no Painel para ver ou corrigir -->
+        </sc-if>
+
+        <!-- CHAMADAS RECENTES · cada uma abre no Painel para ver ou corrigir -->
+        <sc-if value="{{ tChamadas }}">
           <div class="isr-cartao" style="padding: 14px 16px">
             <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px;">
               <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Chamadas recentes</span>
@@ -128,12 +152,10 @@
               </a>
             </sc-for>
           </div>
-        </div>
+        </sc-if>
 
-        <!-- COLUNA DIREITA -->
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-
-          <!-- PROJETO DO CICLO -->
+        <!-- PROJETO DO CICLO -->
+        <sc-if value="{{ tMateriais }}">
           <div style="background: var(--color-primary-900); border-radius: 18px; padding: 14px 16px;">
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 500; margin-bottom: 4px;">Projeto do ciclo {{ ciclo }}</div>
             <div style="font-size: 16px; font-weight: 600; color: var(--color-secondary-500);">{{ projeto }}</div>
@@ -193,8 +215,35 @@
               <p style="margin: 8px 0 0; font-size: 11px; color: var(--color-primary-500); font-weight: 600;">Solicitação enviada.</p>
             </sc-if>
           </div>
+        </sc-if>
 
-        </div>
+        <!-- RENOVAÇÃO E VAGAS -->
+        <!-- Quem já disse que continua, quem disse que não, e quem ainda
+             não respondeu. É desta conta que sai a vaga do ciclo
+             seguinte, e ela estava só na soma da escola. -->
+        <sc-if value="{{ tRenovacao }}">
+          <div class="isr-cartao" style="padding: 18px 22px">
+            <div style="font-size: 16px; font-weight: 600;">Renovação e vagas</div>
+            <p style="margin: 4px 0 12px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ renovResumo }}</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 4px;">
+              <sc-for list="{{ renovNumeros }}" as="rn" hint-placeholder-count="4">
+                <div style="flex: 1 1 120px; min-width: 0;">
+                  <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ rn.cor }};">{{ rn.v }}</div>
+                  <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ rn.k }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-for list="{{ renovLista }}" as="rv" hint-placeholder-count="5">
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
+                <a href="{{ rv.href }}" class="lk" style="flex: 1; min-width: 150px; font-size: 13.5px; font-weight: 600; color: var(--color-primary-900);">{{ rv.nome }}</a>
+                <span class="isr-selo" style="flex: none; background: {{ rv.bg }}; color: {{ rv.fg }}; font-size: 11px; padding: 4px 11px">{{ rv.estado }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ semRenov }}">
+              <div style="padding: 14px 0 2px; font-size: 13.5px; color: var(--color-primary-800);">Nenhuma aluna matriculada nesta turma.</div>
+            </sc-if>
+          </div>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -203,7 +252,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "" };
+  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "geral" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
   edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
@@ -223,7 +272,9 @@ class Component extends DCLogic {
     const refs = { edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
       edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
       edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef };
-    if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [] }, refs);
+    if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [],
+      abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
+      geralLinhas: [], renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true }, refs);
 
     const ocup = CRM.ocupacaoTurmas();
     let u = ocup.filter(t => t.id === this.turmaId())[0];
@@ -291,8 +342,59 @@ class Component extends DCLogic {
     const tc = raw.tarefaCasa || null;
     const user = CRM.gestaoUser();
 
+    // ── as abas ──
+    const ABAS = [["geral", "Visão geral"], ["alunas", "Alunas"], ["chamadas", "Chamadas"],
+                  ["materiais", "Materiais"], ["renov", "Renovação e vagas"]];
+    const aba = this.state.aba || "geral";
+
+    // ── renovação e vagas ──
+    // Cada aluna carrega o campo renovacao. A soma disso por turma é o
+    // que diz quantas vagas o ciclo seguinte abre, e ela só existia na
+    // conta da escola inteira.
+    const RENOV = {
+      renovada: { estado: "renovou", bg: "var(--color-success-light)", fg: "var(--color-success-dark)" },
+      nao_renovou: { estado: "não renovou", bg: "var(--color-error-light)", fg: "var(--color-error-dark)" }
+    };
+    const renovLista = alunas.map(al => {
+      const p = CRM.getPessoa(al.id) || {};
+      const r = RENOV[p.renovacao] || { estado: "sem resposta", bg: "var(--color-button-secondary)", fg: "var(--color-tertiary-500)" };
+      return { nome: p.nome || al.nome, href: "ISR%20-%20Perfil%20v3.dc.html?id=" + al.id,
+        estado: r.estado, bg: r.bg, fg: r.fg, chave: p.renovacao || "sem" };
+    });
+    const nRenov = renovLista.filter(x => x.chave === "renovada").length;
+    const nSaiu = renovLista.filter(x => x.chave === "nao_renovou").length;
+    const nSem = renovLista.filter(x => x.chave === "sem").length;
+
     return Object.assign({
       ok: true, naoEncontrada: false,
+      abas: ABAS.map(([id, label]) => ({ label,
+        bg: aba === id ? "var(--color-primary-900)" : "transparent",
+        fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ aba: id }) })),
+      tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
+      tMateriais: aba === "materiais", tRenovacao: aba === "renov",
+
+      geralLinhas: [
+        { k: "dia e horário", v: u.turma, cor: "var(--color-primary-900)" },
+        { k: "professora", v: u.teacher || "sem professora",
+          cor: u.teacher ? "var(--color-primary-900)" : "var(--color-error-dark)" },
+        { k: "projeto do ciclo", v: u.projeto || "—", cor: "var(--color-primary-900)" },
+        { k: "ciclo", v: u.cycle || "—", cor: "var(--color-primary-900)" },
+        { k: "ocupação", v: u.ocupadas + " de " + u.capacidade
+            + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga aberta" : " vagas abertas") : " · turma cheia"),
+          cor: u.vagas > 0 ? "var(--color-primary-900)" : "var(--color-warning-dark)" },
+        { k: "caderno", v: raw.notebook || "sem caderno vinculado neste ciclo",
+          cor: raw.notebook ? "var(--color-primary-900)" : "var(--color-tertiary-500)" }
+      ],
+
+      renovNumeros: [
+        { v: String(nRenov), k: nRenov === 1 ? "renovou" : "renovaram", cor: "var(--color-success-dark)" },
+        { v: String(nSem), k: "sem resposta", cor: nSem ? "var(--color-warning-dark)" : "var(--color-primary-900)" },
+        { v: String(nSaiu), k: nSaiu === 1 ? "não renovou" : "não renovaram", cor: nSaiu ? "var(--color-error-dark)" : "var(--color-primary-900)" },
+        { v: String(u.vagas + nSaiu), k: "vagas no ciclo seguinte", cor: "var(--color-primary-900)" }
+      ],
+      renovLista, semRenov: renovLista.length === 0,
+      renovResumo: "As vagas do ciclo seguinte são as que estão abertas hoje mais as de quem não renovou. Quem está sem resposta ainda não conta.",
       nivel: u.nivel, horario: u.turma, ciclo: u.cycle,
       professora: u.teacher || "—", projeto: u.projeto || "—",
       contexto: u.turma + " · Prof. " + (u.teacher || "—") + " · " + u.ocupadas + "/" + u.capacidade + " alunas" + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas") : " · lotada"),

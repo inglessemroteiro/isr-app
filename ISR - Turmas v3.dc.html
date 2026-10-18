@@ -81,6 +81,29 @@
       </div>
     </sc-if>
 
+    <!-- CAPACIDADE DAS PROFESSORAS -->
+    <!-- Montar turma é quando se vê quem já passou do que aguenta. O
+         v5 conta em horas por semana; aqui a conta é em alunas, que é
+         a carteira que o sistema guarda e a Equipe edita. -->
+    <sc-if value="{{ temCapacidade }}">
+      <section class="isr-cartao" style="padding: 18px 22px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+          <div style="font-size: 16px; font-weight: 600;">Capacidade das professoras</div>
+          <a href="ISR%20-%20Equipe%20v3.dc.html" class="lk" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">mudar a carteira na Equipe →</a>
+        </div>
+        <p style="margin: 4px 0 12px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">Quantas alunas cada professora acompanha hoje, contra a carteira dela. Conta turma e particular.</p>
+        <sc-for list="{{ capacidade }}" as="cp" hint-placeholder-count="3">
+          <div style="display: grid; grid-template-columns: minmax(90px, 130px) minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 7px 0;">
+            <b style="font-size: 13px; font-weight: 600;">{{ cp.nome }}</b>
+            <div style="height: 10px; background: var(--color-button-secondary); border-radius: 999px; overflow: hidden;">
+              <span style="display: block; height: 100%; width: {{ cp.pct }}; background: {{ cp.cor }};"></span>
+            </div>
+            <span style="font-size: 12.5px; font-weight: 600; color: {{ cp.cor }}; white-space: nowrap;">{{ cp.label }}</span>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- ABAS DE OCUPAÇÃO -->
     <div style="display: flex; align-items: flex-end; gap: 2px; padding: 0 6px;">
       <sc-for list="{{ abas }}" as="tab" hint-placeholder-count="3">
@@ -92,12 +115,10 @@
 
     <!-- TABELA DE TURMAS -->
     <div class="isr-cartao" style="border-radius: 0 18px 18px 18px; overflow-x: auto">
-      <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 11px 18px; background: var(--color-bg-default); min-width: 780px;">
+      <div style="display: grid; grid-template-columns: minmax(230px, 1.4fr) minmax(96px, 0.5fr) minmax(300px, 2fr) 0.6fr; gap: 14px; align-items: center; padding: 11px 18px; background: var(--color-bg-default); min-width: 860px;">
         <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Turma</span>
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Professora</span>
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Projeto do ciclo</span>
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Ocupação</span>
-        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Material</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Vagas</span>
+        <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Quem está nesta turma</span>
         <span></span>
       </div>
 
@@ -109,30 +130,37 @@
 
       <sc-for list="{{ turmas }}" as="u" hint-placeholder-count="6">
         <div style="border-top: 1px solid var(--color-button-secondary); background: var(--color-neutral-0);">
-          <div style="display: grid; grid-template-columns: 1.5fr 0.8fr 1fr 1fr 1.2fr 0.7fr; gap: 12px; align-items: center; padding: 15px 18px; min-width: 780px;">
+          <div style="display: grid; grid-template-columns: minmax(230px, 1.4fr) minmax(96px, 0.5fr) minmax(300px, 2fr) 0.6fr; gap: 14px; align-items: flex-start; padding: 15px 18px; min-width: 860px;">
             <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" checked="{{ u.sel }}" onchange="{{ u.onSel }}" title="Selecionar esta turma" style="width: 15px; height: 15px; accent-color: var(--color-primary-500); flex: none; cursor: pointer;" />
                 <span style="width: 9px; height: 9px; border-radius: 50%; background: {{ u.cor }}; flex: none;"></span>
                 <a href="{{ u.turmaHref }}" class="lk" style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ u.nivel }}</a>
               </div>
-              <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px; margin-left: 17px;">{{ u.turma }} · ciclo {{ u.cycle }}</div>
+              <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px; margin-left: 17px;">{{ u.turma }}</div>
+              <div style="font-size: 11.5px; margin-top: 2px; margin-left: 17px; color: {{ u.cor }}; font-weight: 600;">{{ u.teacher }} · {{ u.projeto }}</div>
             </div>
-            <div style="font-size: 13px; color: var(--color-primary-800);">{{ u.teacher }}</div>
-            <div style="font-size: 13px; font-weight: 600; color: {{ u.cor }};">{{ u.projeto }}</div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 12.5px; font-weight: 600; color: {{ u.ocupCor }};">{{ u.ocupLabel }}</span>
-                <span class="isr-selo" style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px">{{ u.vagaLabel }}</span>
-                <sc-if value="{{ u.abaixoDoMinimo }}">
-                  <span class="isr-selo" title="{{ u.minimoTitulo }}" style="display: inline-block; white-space: nowrap; background: rgba(207,107,92,0.14); color: var(--color-error); font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; margin-left: 5px">{{ u.minimoLabel }}</span>
-                </sc-if>
-              </div>
-              <div style="height: 6px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden; margin-top: 5px; max-width: 110px;">
-                <span style="display: block; height: 100%; width: {{ u.ocupPct }}; background: {{ u.ocupCor }};"></span>
-              </div>
+              <span class="isr-selo" style="display: inline-block; background: {{ u.vagaBg }}; color: {{ u.vagaFg }}; font-size: 12.5px; font-weight: 600; padding: 3px 11px; white-space: nowrap">{{ u.vagaLabel }}</span>
+              <div style="font-size: 11px; font-weight: 600; color: var(--color-tertiary-500); margin-top: 3px;">{{ u.ocupLabel }}</div>
+              <sc-if value="{{ u.abaixoDoMinimo }}">
+                <div class="isr-selo" title="{{ u.minimoTitulo }}" style="display: inline-block; white-space: nowrap; background: var(--color-error-light); color: var(--color-error-dark); font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 8px; margin-top: 4px">{{ u.minimoLabel }}</div>
+              </sc-if>
             </div>
-            <div style="font-size: 11px; color: var(--color-primary-800); line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
+            <!-- Quem está na turma, e as vagas vazias desenhadas. Era
+                 isto que exigia abrir turma por turma para encaixar uma
+                 matrícula. -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 5px; min-width: 0;">
+              <sc-for list="{{ u.alunas }}" as="al" hint-placeholder-count="4">
+                <a href="{{ al.href }}" title="{{ al.title }}" style="text-decoration: none; background: {{ al.bg }}; color: {{ al.fg }}; font-weight: {{ al.peso }}; border-radius: 8px; padding: 5px 9px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ al.nome }}</a>
+              </sc-for>
+              <sc-for list="{{ u.vazias }}" as="vz" hint-placeholder-count="2">
+                <span style="border: 1px dashed var(--color-tertiary-100); border-radius: 8px; padding: 4px 9px; font-size: 12px; color: var(--color-tertiary-500); font-weight: 600; text-align: center;">vaga</span>
+              </sc-for>
+              <sc-if value="{{ u.semAlunas }}">
+                <span style="font-size: 12.5px; color: var(--color-tertiary-500);">Nenhuma aluna matriculada.</span>
+              </sc-if>
+            </div>
             <div style="display: flex; gap: 4px; justify-content: flex-end;">
               <button class="isr-botao isr-botao--pilula" onclick="{{ u.onEditar }}" style="background: {{ u.editBg }}; color: {{ u.editFg }}; font-size: 11px; padding: 6px 11px">{{ u.editLabel }}</button>
               <button class="isr-botao isr-botao--texto" onclick="{{ u.onExcluir }}" title="Excluir turma" style="color: var(--color-error); font-size: 11px; padding: 6px 7px">excluir</button>
@@ -233,10 +261,28 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+    if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true,
+      capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
       cicloBg: "var(--color-neutral-0)", cicloCor: "var(--color-primary-800)", cicloTexto: "", cicloAcao: "" };
 
     const ocup = CRM.ocupacaoTurmas();
+    const hojeIso = new Date().toISOString().slice(0, 10);
+
+    // ── a capacidade de cada professora ──
+    // A mesma conta que a Equipe mostra: CRM.carteiraProfessoras. Duas
+    // contas da mesma coisa acabam discordando, e aí ninguém confia em
+    // nenhuma das duas. Aqui ela só se vê; editar continua na Equipe,
+    // que é de onde a carteira vem.
+    const cart = CRM.carteiraProfessoras ? CRM.carteiraProfessoras() : { linhas: [] };
+    const capacidade = (cart.linhas || []).map(l => ({
+      nome: l.nome,
+      pct: Math.min(100, l.pct) + "%",
+      cor: l.acima ? "var(--color-error)"
+        : (l.pct >= 80 ? "var(--color-warning)" : "var(--color-primary-500)"),
+      label: l.alunas + " de " + l.capacidade + " · "
+        + l.turmas + (l.turmas === 1 ? " turma" : " turmas")
+    }));
+
     const names = ["Todas"];
     ocup.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
     const teacherSel = this.state.teacher;
@@ -296,6 +342,37 @@ class Component extends DCLogic {
         abaixoDoMinimo,
         minimoLabel: (minimo - u.ocupadas) + " abaixo do mínimo",
         minimoTitulo: "Mínimo de " + minimo + " alunas para abrir e para manter a turma",
+        // Quem está na turma, pela mesma consulta que a chamada usa.
+        // Aluna em risco vem marcada: é nela que se olha antes de
+        // encaixar mais uma na turma.
+        alunas: (() => {
+          const naTurma = CRM.alunasDaTurma ? CRM.alunasDaTurma(u.label, hojeIso) : [];
+          // Duas Beatriz na mesma turma davam duas etiquetas "Beatriz",
+          // que leem como uma duplicata. Primeiro nome repetido ganha a
+          // inicial do sobrenome.
+          const vezes = {};
+          naTurma.forEach(a => {
+            const pn = CRM.firstName ? CRM.firstName(a.nome) : a.nome;
+            vezes[pn] = (vezes[pn] || 0) + 1;
+          });
+          return naTurma.map(a => {
+          const risco = (a.riscos || []).length > 0;
+          const pn = CRM.firstName ? CRM.firstName(a.nome) : a.nome;
+          const resto = String(a.nome || "").slice(pn.length).trim();
+          return {
+            nome: vezes[pn] > 1 && resto ? pn + " " + resto.charAt(0).toUpperCase() + "." : pn,
+            href: "ISR%20-%20Perfil%20v3.dc.html?id=" + a.id,
+            title: a.nome + (risco ? " · em risco" : ""),
+            bg: risco ? "var(--color-error-light)" : "var(--color-button-secondary)",
+            fg: risco ? "var(--color-error-dark)" : "var(--color-primary-900)",
+            peso: risco ? "600" : "500"
+          };
+          });
+        })(),
+        // uma etiqueta pontilhada por vaga aberta: é o que o v5 desenha,
+        // e é o que faz a vaga ser vista sem contar nada
+        vazias: Array.from({ length: Math.max(0, u.vagas) }, (x, i) => ({ i })),
+        semAlunas: u.ocupadas === 0,
         material: u.notebook || "Sem caderno vinculado neste ciclo",
         materialCurto: (u.notebook || "—").slice(0, 30),
         editando,
@@ -374,6 +451,7 @@ class Component extends DCLogic {
       cicloTexto: cicloTexto,
       cicloAcao: "mudar as datas na Central",
 
+      capacidade, temCapacidade: capacidade.length > 0,
       teachers: names.map(n => ({ id: n, label: n === "Todas" ? "Todas as professoras" : n, sel: n === teacherSel })),
       onTeacher: (e) => this.setState({ teacher: e.target.value }),
       // barra de seleção: excluir várias turmas de uma vez, em dois cliques
