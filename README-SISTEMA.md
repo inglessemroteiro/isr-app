@@ -1318,6 +1318,61 @@ servidor tinha de morto. Saiu.
 do Caderno —, o **mural de trocas** da loja e a **metade social do
 perfil**.
 
+#### O plano de aula · o syllabus é da escola, o plano é da turma
+
+A maior peça que faltava. Ela entra em duas camadas, e **a separação
+entre elas é o ponto**.
+
+O **syllabus** é da escola: por nível e por ciclo, as sessões do
+projeto, cada uma com objetivo, etapas, palavras e homework. É o que
+está nos guias do professor que a Gabi escreve, e é igual para todas as
+turmas daquele nível.
+
+O **plano** é da turma: começa como a sessão do syllabus e a professora
+ajusta — tira uma etapa que não cabe, muda o tempo, reordena,
+acrescenta a dela. Depois marca pronta e publica.
+
+**O plano só passa a existir no armazenamento quando ela mexe nele.**
+Enquanto não mexe, a tela lê o syllabus direto. Isso resolve as duas
+coisas ao mesmo tempo: uma correção no syllabus alcança as turmas que
+ainda não ajustaram nada, e **não desfaz o ajuste de quem já mexeu** —
+que seria apagar o trabalho dela.
+
+**As fases são as da ISR, não as de um protótipo.** O v5 mostrava
+`warm-up / listen / learn / practice / mission`, que era dado de mentira
+do desenho. Os guias de verdade organizam toda sessão em **Warm-up ·
+Minds On · Language Focus · Hands On · Share Out · Wrap-up**, e a
+reflexão roda sempre no Wrap-up. É com essas seis que o sistema
+trabalha, e uma sessão nova nasce com as seis já postas.
+
+Duas regras que ficaram no código:
+
+- **Etapa do syllabus se desmarca, não se apaga.** Apagar daria à
+  professora o poder de sumir com o que a escola planejou; desmarcar já
+  resolve o caso dela ("não cabe nesta turma"), e a etapa continua à
+  vista, riscada, para ela ver o que tirou. A atividade que ela mesma
+  acrescentou, essa sim se apaga.
+- **Roteiro sem nenhuma etapa marcada não publica.** Publicar uma aula
+  vazia seria mandar a aluna abrir uma página em branco.
+
+**Aula publicada continua editável, com o aviso à vista.** Não há versão
+guardada: o que ela mudar depois de publicar, a aluna vê na hora, e a
+tela diz isso em vez de fingir que existe um rascunho separado.
+
+Na tela da Turma a aba **Plano das aulas** entra entre Alunas e
+Chamadas, com a tira das sessões do ciclo em cima, o estado de cada uma
+e a sessão escolhida aberta embaixo: selo do estado, de onde o roteiro
+veio (igual ao syllabus, ou ajustado, ou com N atividades suas), porta
+para o guia do professor, o objetivo, o roteiro com o tempo somado, as
+palavras e o homework.
+
+**Falta a outra metade, e ela é nomeada:** a aula publicada ainda não
+chega ao caderno da aluna. Para ligar uma aula a uma sessão falta a
+chamada guardar qual sessão foi dada — hoje ela guarda o tópico, não o
+número. E o conteúdo dos guias (os títulos e os objetivos das dez
+sessões de cada nível) ainda não está dentro do sistema: o syllabus
+começa vazio, e a tela diz isso em vez de inventar sessões.
+
 ### Cada tela na rotina de quem abriu
 
 O menu já escondia as telas que não são de quem entrou, mas **dentro**

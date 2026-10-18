@@ -5768,7 +5768,10 @@
     // aparelho dela, e não existem em nenhuma outra chave: cópia que os
     // deixa de fora não é cópia de tudo
     "isr_bookclub_aula_v1", "isr_ciclos_v1", "isr_clubes_v1",
-    "isr_caderno_v1", "isr_palavras_v1"];
+    "isr_caderno_v1", "isr_palavras_v1",
+    // o syllabus é o trabalho pedagógico do ciclo e o plano é o que a
+    // professora ajustou nele: perder isso é perder o planejamento
+    "isr_syllabus_v1", "isr_planos_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6120,6 +6123,9 @@
       // o que a aluna escreve no aparelho dela: sem isto no payload, a
       // nota da aula e o cofre de palavras morriam ao trocar de celular
       caderno: cadernoAll(), palavras: palavrasAll(),
+      // o syllabus é da escola e o plano é da turma: os dois precisam
+      // chegar ao aparelho da professora que vai dar a aula
+      syllabus: syllabusAll(), planos: planosAll(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -6138,6 +6144,7 @@
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas);
     grava(CONTAS_KEY, d.contas);
     grava(CADERNO_KEY, d.caderno); grava(PALAVRAS_KEY, d.palavras);
+    grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
@@ -6180,6 +6187,10 @@
       // inteiro — é dela, e ela escreve num aparelho de cada vez
       caderno: mesclarMapa(local.caderno, remoto.caderno),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
+      // o syllabus tem id por sessão e mescla como lista; o plano é um
+      // mapa turma|sessão, e cada aula tem a sua professora
+      syllabus: lista("syllabus"),
+      planos: mesclarMapa(local.planos, remoto.planos),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
@@ -9223,6 +9234,258 @@
     return { foto: p.foto || "", bio: p.bio || "",
       aniversario: p.aniversario || "", links: (p.links || []).slice(0, PERFIL_LIMITES.links),
       limites: PERFIL_LIMITES };
+  }
+
+  // ── O PLANO DE AULA ───────────────────────────────────────────
+  //
+  // Duas camadas, e a separação entre elas é o ponto.
+  //
+  // O SYLLABUS é da escola: por nível e por ciclo, as sessões do
+  // projeto, cada uma com objetivo, etapas, palavras e homework. É o
+  // que a Gabi escreve nos guias do professor, e é igual para todas as
+  // turmas daquele nível.
+  //
+  // O PLANO é da turma: começa como a sessão do syllabus e a
+  // professora ajusta — tira uma etapa que não cabe, muda o tempo,
+  // reordena, acrescenta a dela. Depois marca pronta e publica, e só
+  // então a aula aparece no caderno das alunas.
+  //
+  // O plano só passa a existir no armazenamento quando a professora
+  // mexe nele (cópia na primeira edição). Enquanto ela não mexe, a
+  // tela lê o syllabus direto: assim uma correção no syllabus alcança
+  // as turmas que ainda não ajustaram nada, e NÃO desfaz o ajuste de
+  // quem já mexeu — que seria apagar o trabalho dela.
+  //
+  // As fases são as da ISR, tiradas dos guias, não as de um protótipo:
+  // todo guia organiza a sessão em Warm-up, Minds On, Language Focus,
+  // Hands On, Share Out e Wrap-up, e a reflexão roda sempre no
+  // Wrap-up.
+  var FASES = [
+    { id: "warmup", label: "Warm-up", min: 10 },
+    { id: "mindson", label: "Minds On", min: 10 },
+    { id: "language", label: "Language Focus", min: 12 },
+    { id: "handson", label: "Hands On", min: 15 },
+    { id: "shareout", label: "Share Out", min: 10 },
+    { id: "wrapup", label: "Wrap-up", min: 5 }
+  ];
+  function fasesDoPlano() { return FASES.map(function (f) { return Object.assign({}, f); }); }
+  function faseLabel(id) {
+    var f = FASES.filter(function (x) { return x.id === id; })[0];
+    return f ? f.label : String(id || "");
+  }
+  var SYLLABUS_KEY = "isr_syllabus_v1";
+  var PLANOS_KEY = "isr_planos_v1";
+  var PLANO_LIMITES = { titulo: 120, objetivo: 400, etapa: 200, homework: 600,
+    palavras: 40, etapas: 20, min: 180 };
+
+  function syllabusAll() {
+    try { return JSON.parse(localStorage.getItem(SYLLABUS_KEY)) || []; } catch (e) { return []; }
+  }
+  function syllabusSave(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(SYLLABUS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  // As sessões de um nível num ciclo, em ordem.
+  function syllabusDoNivel(nivel, ciclo) {
+    var c = ciclo || metasAtuais().cicloLabel;
+    return syllabusAll()
+      .filter(function (s) { return s && !s.apagado && s.nivel === nivel && s.ciclo === c; })
+      .sort(function (a, b) { return (a.n || 0) - (b.n || 0); });
+  }
+  function limpaEtapas(lista) {
+    return (lista || []).slice(0, PLANO_LIMITES.etapas).map(function (e, i) {
+      var min = parseInt(e && e.min, 10);
+      return {
+        id: (e && e.id) || ("et" + i + "-" + Date.now()),
+        fase: (e && e.fase) || FASES[0].id,
+        titulo: String((e && e.titulo) || "").trim().slice(0, PLANO_LIMITES.etapa),
+        min: isFinite(min) && min > 0 ? Math.min(min, PLANO_LIMITES.min) : 10,
+        // a pergunta que a aluna responde no caderno; vazia = etapa sem tarefa
+        pergunta: String((e && e.pergunta) || "").trim().slice(0, PLANO_LIMITES.etapa),
+        on: (e && e.on) !== false,
+        minha: !!(e && e.minha)
+      };
+    });
+  }
+  function limpaPalavras(v) {
+    var l = Array.isArray(v) ? v : String(v || "").split(",");
+    var vistas = {}, out = [];
+    l.forEach(function (p) {
+      var w = String(p || "").trim().slice(0, 80);
+      var k = w.toLowerCase();
+      if (!w || vistas[k]) return;
+      vistas[k] = true; out.push(w);
+    });
+    return out.slice(0, PLANO_LIMITES.palavras);
+  }
+  function salvarSessaoSyllabus(dados) {
+    dados = dados || {};
+    var nivel = String(dados.nivel || "").trim();
+    var n = parseInt(dados.n, 10);
+    if (!nivel) return { ok: false, erro: "Diga o nível da sessão." };
+    if (!isFinite(n) || n < 1) return { ok: false, erro: "A sessão precisa de um número." };
+    var ciclo = String(dados.ciclo || metasAtuais().cicloLabel || "").trim();
+    var l = syllabusAll().filter(function (s) { return s && !s.apagado; });
+    var reg = dados.id ? l.filter(function (s) { return s.id === dados.id; })[0] : null;
+    if (!reg) {
+      reg = l.filter(function (s) {
+        return s.nivel === nivel && s.ciclo === ciclo && s.n === n;
+      })[0];
+    }
+    var campos = {
+      nivel: nivel, ciclo: ciclo, n: n,
+      projeto: String(dados.projeto || "").trim().slice(0, PLANO_LIMITES.titulo),
+      titulo: String(dados.titulo || "").trim().slice(0, PLANO_LIMITES.titulo),
+      objetivo: String(dados.objetivo || "").trim().slice(0, PLANO_LIMITES.objetivo),
+      homework: String(dados.homework || "").trim().slice(0, PLANO_LIMITES.homework),
+      guia: String(dados.guia || "").trim().slice(0, 300),
+      palavras: limpaPalavras(dados.palavras),
+      etapas: limpaEtapas(dados.etapas && dados.etapas.length ? dados.etapas
+        : FASES.map(function (f) { return { fase: f.id, titulo: "", min: f.min }; }))
+    };
+    if (reg) Object.keys(campos).forEach(function (k) { reg[k] = campos[k]; });
+    else { reg = Object.assign({ id: "sy" + Date.now() + "-" + l.length }, campos); l.push(reg); }
+    syllabusSave(l);
+    return { ok: true, sessao: reg };
+  }
+  function apagarSessaoSyllabus(id) {
+    var l = syllabusAll(), achou = false;
+    l.forEach(function (s) { if (s && s.id === id) { s.apagado = iso(today()); carimbar(s); achou = true; } });
+    if (!achou) return { ok: false };
+    try { localStorage.setItem(SYLLABUS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return { ok: true };
+  }
+
+  function planosAll() {
+    try { return JSON.parse(localStorage.getItem(PLANOS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function planosSave(m) {
+    try { localStorage.setItem(PLANOS_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+  function planoChave(turmaId, n) { return turmaId + "|" + n; }
+  // O plano de uma sessão numa turma: o que a professora gravou, ou a
+  // sessão do syllabus enquanto ela não gravou nada.
+  function planoDaTurma(turmaId, n) {
+    var t = (turmasLista().filter(function (x) { return x.id === turmaId; })[0]) || null;
+    if (!t) return null;
+    var sess = syllabusDoNivel(t.nivel, t.cycle).filter(function (s) { return s.n === n; })[0] || null;
+    var meu = planosAll()[planoChave(turmaId, n)] || null;
+    if (!sess && !meu) return null;
+    var base = sess || {};
+    return {
+      turma: turmaId, n: n,
+      titulo: base.titulo || "", objetivo: base.objetivo || "",
+      projeto: base.projeto || t.projeto || "", guia: base.guia || "",
+      doSyllabus: !!sess, tocado: !!meu,
+      etapas: limpaEtapas(meu ? meu.etapas : base.etapas),
+      palavras: limpaPalavras(meu && meu.palavras !== undefined ? meu.palavras : base.palavras),
+      homework: meu && meu.homework !== undefined ? meu.homework : (base.homework || ""),
+      estado: (meu && meu.estado) || "rascunho",
+      publicadoEm: (meu && meu.publicadoEm) || ""
+    };
+  }
+  // Todas as sessões da turma, para a tira de cima.
+  function planoSessoes(turmaId) {
+    var t = (turmasLista().filter(function (x) { return x.id === turmaId; })[0]) || null;
+    if (!t) return [];
+    var nums = {};
+    syllabusDoNivel(t.nivel, t.cycle).forEach(function (s) { nums[s.n] = true; });
+    var m = planosAll();
+    Object.keys(m).forEach(function (k) {
+      var p = k.split("|");
+      if (p[0] === turmaId) nums[parseInt(p[1], 10)] = true;
+    });
+    return Object.keys(nums).map(function (k) { return parseInt(k, 10); })
+      .filter(function (n) { return isFinite(n); })
+      .sort(function (a, b) { return a - b; })
+      .map(function (n) { return planoDaTurma(turmaId, n); })
+      .filter(Boolean);
+  }
+  // Grava o plano da turma. Na primeira gravação copia a sessão do
+  // syllabus inteira: a partir daí o plano é dela.
+  function salvarPlano(turmaId, n, patch) {
+    var atual = planoDaTurma(turmaId, n);
+    if (!atual) return { ok: false, erro: "Sessão não encontrada." };
+    var m = planosAll();
+    var k = planoChave(turmaId, n);
+    var base = m[k] || { turma: turmaId, n: n, etapas: atual.etapas,
+      palavras: atual.palavras, homework: atual.homework, estado: atual.estado };
+    patch = patch || {};
+    if (patch.etapas !== undefined) base.etapas = limpaEtapas(patch.etapas);
+    if (patch.palavras !== undefined) base.palavras = limpaPalavras(patch.palavras);
+    if (patch.homework !== undefined) {
+      base.homework = String(patch.homework || "").trim().slice(0, PLANO_LIMITES.homework);
+    }
+    if (patch.estado !== undefined) base.estado = patch.estado;
+    if (patch.publicadoEm !== undefined) base.publicadoEm = patch.publicadoEm;
+    base._v = Date.now();
+    m[k] = base;
+    planosSave(m);
+    return { ok: true, plano: planoDaTurma(turmaId, n) };
+  }
+  function etapasDoPlano(turmaId, n) {
+    var p = planoDaTurma(turmaId, n);
+    return p ? p.etapas.slice() : null;
+  }
+  function addEtapaPlano(turmaId, n, dados) {
+    var l = etapasDoPlano(turmaId, n);
+    if (!l) return { ok: false, erro: "Sessão não encontrada." };
+    dados = dados || {};
+    if (!String(dados.titulo || "").trim()) return { ok: false, erro: "Escreva o que é a atividade." };
+    if (l.length >= PLANO_LIMITES.etapas) {
+      return { ok: false, erro: "O roteiro já tem " + PLANO_LIMITES.etapas + " etapas." };
+    }
+    l.push({ id: "et" + Date.now(), fase: dados.fase || FASES[0].id,
+      titulo: dados.titulo, min: dados.min, pergunta: dados.pergunta || "",
+      on: true, minha: true });
+    return salvarPlano(turmaId, n, { etapas: l });
+  }
+  function removerEtapaPlano(turmaId, n, etapaId) {
+    var l = etapasDoPlano(turmaId, n);
+    if (!l) return { ok: false };
+    var alvo = l.filter(function (e) { return e.id === etapaId; })[0];
+    // etapa do syllabus não se apaga: desmarca-se. Apagar daria à
+    // professora o poder de sumir com o que a escola planejou, e o
+    // desmarcar já resolve o caso dela ("não cabe nesta turma").
+    if (!alvo || !alvo.minha) return { ok: false, erro: "Etapa do syllabus se desmarca, não se apaga." };
+    return salvarPlano(turmaId, n, { etapas: l.filter(function (e) { return e.id !== etapaId; }) });
+  }
+  function alternarEtapaPlano(turmaId, n, etapaId) {
+    var l = etapasDoPlano(turmaId, n);
+    if (!l) return { ok: false };
+    l.forEach(function (e) { if (e.id === etapaId) e.on = !e.on; });
+    return salvarPlano(turmaId, n, { etapas: l });
+  }
+  function moverEtapaPlano(turmaId, n, etapaId, dir) {
+    var l = etapasDoPlano(turmaId, n);
+    if (!l) return { ok: false };
+    var i = -1;
+    l.forEach(function (e, k) { if (e.id === etapaId) i = k; });
+    var j = i + (dir < 0 ? -1 : 1);
+    if (i < 0 || j < 0 || j >= l.length) return { ok: false };
+    var tmp = l[i]; l[i] = l[j]; l[j] = tmp;
+    return salvarPlano(turmaId, n, { etapas: l });
+  }
+  function marcarPlanoPronto(turmaId, n, pronto) {
+    var p = planoDaTurma(turmaId, n);
+    if (!p) return { ok: false };
+    if (p.estado === "publicada" && !pronto) return { ok: false, erro: "A aula já está publicada." };
+    return salvarPlano(turmaId, n, { estado: pronto ? "pronta" : "rascunho" });
+  }
+  function publicarPlano(turmaId, n) {
+    var p = planoDaTurma(turmaId, n);
+    if (!p) return { ok: false, erro: "Sessão não encontrada." };
+    var vivas = p.etapas.filter(function (e) { return e.on; });
+    if (!vivas.length) return { ok: false, erro: "O roteiro está vazio: nenhuma etapa marcada." };
+    return salvarPlano(turmaId, n, { estado: "publicada", publicadoEm: new Date().toISOString() });
+  }
+  // Quanto tempo o roteiro ocupa — só o que está marcado.
+  function minutosDoPlano(plano) {
+    return (plano && plano.etapas || []).filter(function (e) { return e.on; })
+      .reduce(function (s, e) { return s + (e.min || 0); }, 0);
   }
 
   // ── O CADERNO DA ALUNA ────────────────────────────────────────
@@ -13636,6 +13899,14 @@
     registrarAcessoAluna: registrarAcessoAluna,
     salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna,
     cadernoDaAluna: cadernoDaAluna, notaDaAula: notaDaAula, salvarNotaDaAula: salvarNotaDaAula,
+    fasesDoPlano: fasesDoPlano, faseLabel: faseLabel,
+    syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
+    apagarSessaoSyllabus: apagarSessaoSyllabus,
+    planoDaTurma: planoDaTurma, planoSessoes: planoSessoes, salvarPlano: salvarPlano,
+    addEtapaPlano: addEtapaPlano, removerEtapaPlano: removerEtapaPlano,
+    alternarEtapaPlano: alternarEtapaPlano, moverEtapaPlano: moverEtapaPlano,
+    marcarPlanoPronto: marcarPlanoPronto, publicarPlano: publicarPlano,
+    minutosDoPlano: minutosDoPlano, PLANO_LIMITES: PLANO_LIMITES,
     palavrasDaAluna: palavrasDaAluna, salvarPalavra: salvarPalavra, removerPalavra: removerPalavra,
     revisarPalavra: revisarPalavra, revisaoDeHoje: revisaoDeHoje, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,

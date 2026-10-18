@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-g",
+  numero: "2026.10.18-h",
   data: "18/10/2026",
-  nota: "A área da aluna ganha o Meu caderno e o Review, com revisão espaçada"
+  nota: "O plano de aula: o syllabus é da escola, o plano é da turma"
 };
