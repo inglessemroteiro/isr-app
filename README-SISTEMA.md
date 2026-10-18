@@ -1106,6 +1106,42 @@ bloco é filho direto da grade, embrulhado no `sc-if` da aba dele. Aba
 de um bloco ocupa a largura inteira, e Materiais, que tem três, os põe
 lado a lado — é o que a grade `auto-fit` já fazia.
 
+### Gravações das aulas · uma tela que faltava
+
+O link da aula gravada sempre existiu: colava-se **dentro da chamada**,
+no Painel do professor, e a aluna daquela turma o via no caderno. O que
+não existia era o lugar de ver o **conjunto** — quais aulas têm
+gravação e quais ficaram sem. Sem essa lista, descobrir que a aula de
+três semanas atrás não foi publicada dependia de a aluna reclamar.
+
+A tela é a do v5, e é curta: a regra no topo, três números, três
+filtros (**sem gravação · publicadas · todas**), o seletor de
+professora, e a lista das aulas com o campo de colar o link.
+
+**A lista é das aulas com chamada salva.** Aula sem chamada não existe
+para a escola, e gravação de aula não registrada não tem a quem
+aparecer: é a chamada que diz quem estava matriculada naquele dia, e é
+isso que decide quem vê o link. Por isso cada linha mostra quantas
+alunas veem aquela gravação.
+
+**Só aula de turma.** Particular é de uma aluna só, e aula extra tem
+convidadas de turmas diferentes — nos dois casos "quem estava
+matriculada naquela turma" não é a pergunta certa.
+
+**Link que não é do Drive é recusado na hora**, com o caminho certo
+("Compartilhar → Copiar link no Drive"). Colar o endereço errado
+publica uma gravação que ninguém abre, e o erro só apareceria quando a
+aluna tentasse assistir.
+
+**A linha em que se acabou de agir fica à vista.** Salvar o link tira a
+aula do filtro "sem gravação", e ela desapareceria da tela — o que
+parece que não gravou. A linha continua, com o selo de publicada, até a
+próxima troca de filtro. É o mesmo princípio da agenda que pula para a
+semana da aula que se acabou de marcar.
+
+Endereço curto: `/gravacoes.html`. No menu, em **pedagógico**, depois
+de Clubes.
+
 ### Os avisos estavam escrevendo para o nada
 
 Um teste cobrava que a professora é avisada quando a gestão corrige a
@@ -1652,6 +1688,7 @@ precisar da tela antiga a encontra no histórico do git.
 | Folha | `ISR - Folha v3.dc.html` | `/folha.html` |
 | Turmas e projetos | `ISR - Turmas v3.dc.html` | `/turmas.html` |
 | Clubes | `ISR - Clubes v3.dc.html` | `/clubes.html` |
+| Gravações | `ISR - Gravacoes v3.dc.html` | `/gravacoes.html` |
 | Agenda | `ISR - Agenda v3.dc.html` | `/agenda.html` |
 | Marketing | `ISR - Marketing v3.dc.html` | `/marketing.html` |
 | Importar | `ISR - Importar v3.dc.html` | `/importar.html` |

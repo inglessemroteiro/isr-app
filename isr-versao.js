@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-d",
+  numero: "2026.10.18-e",
   data: "18/10/2026",
-  nota: "A lista de Turmas mostra quem está em cada uma, com as vagas desenhadas, e a turma virou um lugar com cinco abas"
+  nota: "Gravações das aulas ganha tela: quais aulas têm gravação e quais ficaram sem, com o link colado por aula"
 };

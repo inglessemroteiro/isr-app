@@ -123,6 +123,11 @@
     { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
+    // O link da aula gravada sempre se colou dentro da chamada. O que
+    // não havia era onde VER o conjunto: quais aulas têm gravação e
+    // quais ficaram sem. Sem a lista, descobrir que a aula de três
+    // semanas atrás não foi publicada dependia de a aluna reclamar.
+    { id: "gravacoes", sec: "pedagógico", icone: "▷", label: "Gravações", href: "ISR - Gravacoes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
 
     { id: "marketing", sec: "escola", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
     { id: "equipe", sec: "escola", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },

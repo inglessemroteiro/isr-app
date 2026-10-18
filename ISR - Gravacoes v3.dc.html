@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Gravações das aulas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
+<style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}.lk{text-decoration:none}.lk:hover{text-decoration:underline;text-underline-offset:3px}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+<script src="./isr-paginacao.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: var(--color-primary-900);">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- HEADER -->
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">operação · onde o link da aula gravada se cola</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Gravações das aulas</h1>
+      </div>
+    </header>
+
+    <!-- A REGRA -->
+    <!-- A gravação é de uma aula, e quem a vê é quem estava matriculada
+         naquela turma. Dizer isso aqui é o que evita o link do Drive
+         aberto para a escola inteira. -->
+    <section style="background: var(--color-primary-50); border-radius: 20px; padding: 14px 18px; font-size: 13.5px; line-height: 1.6;">
+      Cole o link do Google Drive na aula. A gravação aparece no caderno só para as alunas matriculadas naquela turma — por isso o link é por aula, e não uma pasta solta.
+    </section>
+
+    <!-- NÚMEROS -->
+    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+      <sc-for list="{{ numeros }}" as="nu" hint-placeholder-count="3">
+        <section class="isr-cartao" style="flex: 1 1 170px; min-width: 0; padding: 18px 20px">
+          <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: {{ nu.cor }};">{{ nu.v }}</div>
+          <div style="font-size: 12.5px; color: var(--color-primary-800); margin-top: 2px;">{{ nu.k }}</div>
+        </section>
+      </sc-for>
+    </div>
+
+    <!-- FILTROS -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="3">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ ft.onClick }}" style="background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 12.5px; padding: 9px 15px">{{ ft.label }}</button>
+      </sc-for>
+      <span style="flex: 1; min-width: 4px;"></span>
+      <select class="isr-campo" onchange="{{ onProfessora }}" style="padding: 9px 12px; font-size: 12.5px">
+        <sc-for list="{{ professoras }}" as="pr" hint-placeholder-count="4">
+          <option value="{{ pr.id }}" selected="{{ pr.sel }}">{{ pr.label }}</option>
+        </sc-for>
+      </select>
+    </div>
+
+    <!-- A LISTA DAS AULAS -->
+    <section class="isr-cartao" style="padding: 6px 22px 14px">
+      <sc-if value="{{ vazio }}">
+        <div style="padding: 36px 2px; font-size: 14px; color: var(--color-primary-800);">{{ vazioTexto }}</div>
+      </sc-if>
+      <sc-for list="{{ aulas }}" as="a" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--color-button-secondary); flex-wrap: wrap;">
+          <div style="min-width: 220px; flex: 1;">
+            <div style="font-size: 14.5px; font-weight: 600;">{{ a.label }}</div>
+            <div style="font-size: 12px; color: var(--color-tertiary-500); font-weight: 600; margin-top: 2px;">{{ a.quando }} · {{ a.professora }} · {{ a.publico }}</div>
+          </div>
+          <sc-if value="{{ a.tem }}">
+            <a href="{{ a.link }}" target="_blank" rel="noopener" class="lk" style="flex: none; font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">abrir →</a>
+            <span class="isr-selo" style="flex: none; background: var(--color-success-light); color: var(--color-success-dark); font-size: 12px; padding: 6px 12px">✓ gravação publicada</span>
+            <button class="isr-botao isr-botao--texto" onclick="{{ a.onTrocar }}" style="flex: none; color: var(--color-tertiary-500); font-size: 12px; padding: 6px 4px">trocar link</button>
+          </sc-if>
+          <sc-if value="{{ a.editando }}">
+            <div style="display: flex; gap: 8px; flex: 1; min-width: 260px; flex-wrap: wrap;">
+              <input class="isr-campo" ref="{{ a.ref }}" defaultValue="{{ a.atual }}" placeholder="Colar link do Drive…" style="flex: 1; min-width: 0; border-radius: 999px; padding: 10px 15px; font-size: 13px" />
+              <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ a.onSalvar }}" style="flex: none; font-size: 12.5px; padding: 11px 17px">Salvar</button>
+              <sc-if value="{{ a.tem }}">
+                <button class="isr-botao isr-botao--texto" onclick="{{ a.onCancelar }}" style="flex: none; color: var(--color-tertiary-500); font-size: 12px; padding: 6px 4px">cancelar</button>
+              </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.erro }}">
+            <div style="flex: 1 1 100%; font-size: 12px; color: var(--color-error-dark); line-height: 1.5;">{{ a.erroTexto }}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <!-- PAGINAÇÃO -->
+      <sc-if value="{{ pag.precisa }}">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 13px 0 2px;">
+          <span style="font-size: 12px; color: var(--color-tertiary-500);">{{ pag.resumo }}</span>
+          <span style="flex: 1; min-width: 4px;"></span>
+          <select class="isr-campo" onchange="{{ pag.onPorPagina }}" style="padding: 7px 10px; font-size: 12px">
+            <sc-for list="{{ pag.opcoes }}" as="op" hint-placeholder-count="4">
+              <option value="{{ op.id }}" selected="{{ op.sel }}">{{ op.label }}</option>
+            </sc-for>
+          </select>
+          <sc-for list="{{ pag.botoes }}" as="bt" hint-placeholder-count="5">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ bt.onClick }}" style="background: {{ bt.bg }}; color: {{ bt.fg }}; font-size: 12px; padding: 7px 12px">{{ bt.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </section>
+
+    <p style="margin: 0; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.6;">A lista é das aulas com chamada salva: aula sem chamada não existe para a escola, e gravação de aula que não foi registrada não tem a quem aparecer. O link também pode ser colado na própria chamada, no Painel do professor.</p>
+
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // GRAVAÇÕES DAS AULAS.
+  //
+  // O link da aula gravada já existia: colava-se dentro da chamada, no
+  // Painel do professor. O que não existia era o lugar de VER o
+  // conjunto — quais aulas têm gravação e quais ficaram sem. Sem essa
+  // lista, descobrir que a aula de três semanas atrás não foi
+  // publicada dependia de a aluna reclamar.
+  //
+  // A lista é das aulas com chamada salva. Aula sem chamada não existe
+  // para a escola, e gravação de aula não registrada não tem a quem
+  // aparecer: é a chamada que diz quem estava matriculada naquele dia,
+  // e é isso que decide quem vê o link.
+  // salvasAgora: a aula que acabou de receber link sai do filtro "sem
+  // gravação" e desapareceria da tela — e desaparecer parece que não
+  // gravou. A linha em que se acabou de agir fica, mostrando o
+  // resultado, até a próxima troca de filtro.
+  state = { filtro: "sem", professora: "", editando: {}, erros: {}, tick: 0,
+            pagina: 1, porPagina: null, salvasAgora: {} };
+  refs = {};
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.onDados = () => this.bump();
+    window.addEventListener("isr-dados", this.onDados);
+    window.addEventListener("isr-dados-novos", this.onDados);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.onDados);
+    window.removeEventListener("isr-dados-novos", this.onDados);
+  }
+
+  // Link do Drive é o que a escola usa, e colar o endereço errado
+  // publica uma gravação que ninguém abre. O aviso é na hora, não
+  // depois.
+  pareceDrive(url) {
+    return /^https?:\/\/(drive\.google\.com|docs\.google\.com)\//i.test(String(url || "").trim());
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    if (!CRM) return { numeros: [], filtros: [], professoras: [], aulas: [], vazio: true,
+      vazioTexto: "", onProfessora: () => {},
+      pag: { precisa: false, resumo: "", opcoes: [], botoes: [], onPorPagina: () => {} } };
+
+    // ── as aulas com chamada salva ──
+    // chamadasFeitas devolve turma, particular e aula extra. Gravação é
+    // de aula de turma: a particular é de uma aluna só, e a aula extra
+    // tem convidadas de turmas diferentes — nos dois casos "quem estava
+    // matriculada naquela turma" não é a pergunta certa.
+    const feitas = (CRM.chamadasFeitas ? CRM.chamadasFeitas("", 120) : [])
+      .filter(c => c.tipo === "turma")
+      .sort((a, b) => (a.data < b.data ? 1 : -1));
+
+    const profs = [];
+    feitas.forEach(c => { if (c.professora && profs.indexOf(c.professora) < 0) profs.push(c.professora); });
+    const profSel = this.state.professora || "";
+
+    const comGravacao = (c) => {
+      const g = CRM.gravacaoDaAula ? CRM.gravacaoDaAula(c.turma, c.data) : null;
+      return g && g.link ? g : null;
+    };
+
+    const todas = feitas.filter(c => !profSel || c.professora === profSel);
+    const semLink = todas.filter(c => !comGravacao(c));
+    const comLink = todas.filter(c => comGravacao(c));
+
+    const FILTROS = [
+      { id: "sem", label: "Sem gravação · " + semLink.length, lista: semLink },
+      { id: "com", label: "Publicadas · " + comLink.length, lista: comLink },
+      { id: "todas", label: "Todas · " + todas.length, lista: todas }
+    ];
+    const filtro = this.state.filtro || "sem";
+    let escolhido = (FILTROS.filter(f => f.id === filtro)[0] || FILTROS[0]).lista;
+    // em "sem gravação", quem acabou de ser salva continua à vista
+    if (filtro === "sem") {
+      const agora = Object.keys(this.state.salvasAgora || {});
+      if (agora.length) {
+        const extras = todas.filter(c => agora.indexOf(c.turma + "|" + c.data) >= 0
+          && escolhido.indexOf(c) < 0);
+        escolhido = escolhido.concat(extras)
+          .sort((a, b) => (a.data < b.data ? 1 : -1));
+      }
+    }
+
+    const pag = window.ISRPaginacao
+      ? window.ISRPaginacao.fatiar(escolhido, this.state.pagina, this.state.porPagina,
+          (p, pp) => this.setState({ pagina: p, porPagina: pp }))
+      : { itens: escolhido, precisa: false, resumo: "", opcoes: [], botoes: [], onPorPagina: () => {} };
+
+    return {
+      numeros: [
+        { v: String(semLink.length), k: semLink.length === 1 ? "aula sem gravação" : "aulas sem gravação",
+          cor: semLink.length ? "var(--color-warning-dark)" : "var(--color-success-dark)" },
+        { v: String(comLink.length), k: comLink.length === 1 ? "gravação publicada" : "gravações publicadas",
+          cor: "var(--color-primary-900)" },
+        { v: todas.length ? Math.round(100 * comLink.length / todas.length) + "%" : "—",
+          k: "das aulas dadas têm gravação", cor: "var(--color-primary-900)" }
+      ],
+
+      filtros: FILTROS.map(f => ({ label: f.label,
+        bg: filtro === f.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+        fg: filtro === f.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ filtro: f.id, pagina: 1, salvasAgora: {} }) })),
+
+      professoras: [{ id: "", label: "Todas as professoras", sel: !profSel }]
+        .concat(profs.map(n => ({ id: n, label: n, sel: n === profSel }))),
+      onProfessora: (e) => this.setState({ professora: e.target.value, pagina: 1 }),
+
+      aulas: pag.itens.map(c => {
+        const g = comGravacao(c);
+        const chave = c.turma + "|" + c.data;
+        if (!this.refs[chave]) this.refs[chave] = React.createRef();
+        const editando = !g || !!this.state.editando[chave];
+        const erro = this.state.erros[chave] || "";
+        return {
+          label: c.turma,
+          quando: CRM.ddmm(c.data),
+          professora: c.professora || "sem professora",
+          // quem vê o link: as alunas que estavam na chamada daquele dia
+          publico: c.total + (c.total === 1 ? " aluna" : " alunas"),
+          tem: !!g, link: g ? g.link : "#", atual: g ? g.link : "",
+          editando, ref: this.refs[chave],
+          erro: !!erro, erroTexto: erro,
+          onTrocar: () => this.setState(s => ({
+            editando: Object.assign({}, s.editando, { [chave]: true }) })),
+          onCancelar: () => this.setState(s => {
+            const m = Object.assign({}, s.editando); delete m[chave];
+            const e2 = Object.assign({}, s.erros); delete e2[chave];
+            return { editando: m, erros: e2 };
+          }),
+          onSalvar: () => {
+            const el = this.refs[chave].current;
+            const url = ((el && el.value) || "").trim();
+            if (!url) {
+              this.setState(s => ({ erros: Object.assign({}, s.erros,
+                { [chave]: "Cole o link da gravação antes de salvar." }) }));
+              return;
+            }
+            if (!this.pareceDrive(url)) {
+              this.setState(s => ({ erros: Object.assign({}, s.erros,
+                { [chave]: "Esse link não é do Google Drive. Use Compartilhar → Copiar link no Drive." }) }));
+              return;
+            }
+            CRM.setGravacaoDaAula(c.turma, c.data, url, c.turma + " · " + CRM.ddmm(c.data));
+            this.setState(s => {
+              const m = Object.assign({}, s.editando); delete m[chave];
+              const e2 = Object.assign({}, s.erros); delete e2[chave];
+              return { editando: m, erros: e2, tick: s.tick + 1,
+                salvasAgora: Object.assign({}, s.salvasAgora, { [chave]: true }) };
+            });
+          }
+        };
+      }),
+      vazio: pag.itens.length === 0,
+      vazioTexto: filtro === "sem"
+        ? "Todas as aulas dadas têm gravação publicada."
+        : (filtro === "com" ? "Nenhuma gravação publicada ainda."
+          : "Nenhuma aula com chamada salva nos últimos 120 dias."),
+      pag
+    };
+  }
+}
+</script>
+</body>
+</html>
