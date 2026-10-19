@@ -123,15 +123,17 @@
     { id: "caixa", sec: "financeiro", icone: "⇅", label: "Caixa", href: "ISR - Caixa v3.dc.html", perfis: ["gestora", "operacao"] },
     { id: "folha", sec: "financeiro", icone: "≡", label: "Folha", href: "ISR - Folha v3.dc.html", perfis: ["gestora"] },
 
+    // A ordem é a que a escola desenhou: o painel primeiro, depois o
+    // acompanhamento das alunas, as turmas, as gravações e os clubes.
     { id: "professor", sec: "pedagógico", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
-    { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas e projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
+    { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas & Projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
     // O link da aula gravada sempre se colou dentro da chamada. O que
     // não havia era onde VER o conjunto: quais aulas têm gravação e
     // quais ficaram sem. Sem a lista, descobrir que a aula de três
     // semanas atrás não foi publicada dependia de a aluna reclamar.
     { id: "gravacoes", sec: "pedagógico", icone: "▷", label: "Gravações", href: "ISR - Gravacoes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
+    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
 
     { id: "marketing", sec: "escola", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
     { id: "equipe", sec: "escola", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },
