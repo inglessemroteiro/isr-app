@@ -1479,8 +1479,8 @@ todas as aulas sem chamada dela desde agosto, aulas que nunca deu. É o
 mesmo erro das gravações servidas pela turma atual: atribuir pelo
 estado de hoje em vez de por quem estava lá.
 
-Entrou o campo **"dá aula na escola desde"** na equipe. Aula anterior à
-entrada não é atribuída a ela. Sem a data preenchida o comportamento é
+Entrou o campo **"Início na equipe"** na ficha de cada pessoa. Aula
+anterior a essa data não é atribuída a ela. Sem a data preenchida o comportamento é
 o de antes — é a escola que sabe quando cada uma entrou, e inventar uma
 data esconderia pendência de verdade. **Quem entra na equipe a partir
 de agora nasce com a data de hoje**, que é o caso que gerou o
