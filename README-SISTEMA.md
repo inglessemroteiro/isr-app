@@ -1409,9 +1409,35 @@ da tela. Cada palavra que vem da aula fica marcada com a data e a
 sessão de onde veio, e o cofre diz quantas chegaram — cofre que cresce
 em silêncio é cofre em que ela encontra coisas que não pôs.
 
-**O que ainda falta:** o conteúdo dos guias. Os títulos e os objetivos
-das dez sessões de cada nível continuam só nos documentos; o syllabus
-começa vazio, e a tela diz isso em vez de inventar sessões.
+#### O syllabus do Traditions 2026.4, transcrito
+
+As dez sessões de cada nível que a escola dá neste ciclo estão no
+código (`SYLLABUS_2026_4`), transcritas dos guias do professor e do
+syllabus mestre. Não é dado de exemplo: é o syllabus de verdade.
+
+| Nível | Título e objetivo | Palavras e homework | Roteiro das seis fases |
+|---|---|---|---|
+| Basics (A1) | do guia | do syllabus mestre | **do guia**, com o tempo de cada fase sessão por sessão |
+| Essentials (A2) | do syllabus mestre | do syllabus mestre | tempo padrão da ISR |
+| A2/B1 Transition | do guia, com o *stretch towards B1* | homework do A2 | tempo padrão da ISR |
+| Speaking (B1) | do guia | do syllabus mestre | tempo padrão da ISR |
+
+Três coisas que valem saber:
+
+- **os tempos do guia variam por sessão.** No Basics, a sessão 1 é
+  10/10/10/15/10/5, a 6 e a 8 dão 20 minutos ao Hands On, e a 10 dá 25
+  ao Share Out — toda sessão fecha em 60. Por isso o roteiro do A1 não
+  usa o padrão: usá-lo apagaria a decisão de quem escreveu o guia. Os
+  tempos por sessão do A2, do A2/B1 e do B1 entram na próxima rodada;
+  até então as seis fases entram com o tempo padrão, que é o que a
+  professora ajusta na tela;
+- **a semeadura é uma vez, e só onde está vazio.** Entra na primeira
+  vez que alguém abre o plano de uma turma — ali as turmas já existem,
+  que é o que dá nível e ciclo —, e nunca por cima de uma sessão que a
+  escola escreveu. Depois disso a escola manda;
+- **nível sem turma não é semeado.** O First Steps (A0) está no
+  syllabus mestre, mas a escola não dá esse nível neste ciclo. A tela
+  diz que o syllabus do nível não tem sessões em vez de inventar dez.
 
 #### O convite da aluna, e os materiais do ciclo
 
