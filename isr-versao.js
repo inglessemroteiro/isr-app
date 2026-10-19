@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-i",
+  numero: "2026.10.19-j",
   data: "19/10/2026",
-  nota: "O Painel do professor em PT e EN"
+  nota: "O portão da equipe: e-mail, nome e convite"
 };

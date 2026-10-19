@@ -25,7 +25,7 @@
 <body>
 <div class="card">
   <p class="eyebrow">Inglês sem Roteiro</p>
-  <h1>Área da aluna</h1>
+  <h1 id="titulo">Área da aluna</h1>
 
   <div class="tela" id="telaCarregando">
     <p>Carregando…</p>
@@ -57,6 +57,7 @@
     <input id="conviteSenha" type="password" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password" />
     <button id="btConvite" onclick="aceitarConvite()">Criar senha</button>
     <p class="erro" id="conviteErro"></p>
+    <p class="nota">É a mesma senha para aluna e para a equipe da escola. Ao salvar, você vai direto para a sua área.</p>
   </div>
 
   <!-- chegou pelo link de redefinição: nova senha -->
@@ -65,6 +66,7 @@
     <input id="recoverySenha" type="password" placeholder="Nova senha (mínimo 8 caracteres)" autocomplete="new-password" />
     <button id="btRecovery" onclick="salvarNovaSenha()">Salvar senha</button>
     <p class="erro" id="recoveryErro"></p>
+    <p class="nota">É a mesma senha para aluna e para a equipe da escola. Ao salvar, você vai direto para a sua área.</p>
   </div>
 
   <!-- login feito, o e-mail está no banco mas o acesso não está ativo -->
@@ -92,9 +94,20 @@
 </div>
 <script>
   var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail"];
+  // O título era "Área da aluna" em cima de TODAS as telas — e o
+  // e-mail de convite e de redefinição de senha do Netlify aponta para
+  // a raiz do site, que é esta página, tanto para a aluna quanto para a
+  // equipe. Quem é da equipe clicava no link da própria senha e lia
+  // "Área da aluna": a Carla parou aí, achando que o link estava
+  // errado. O título passa a dizer o que a tela faz; depois de salvar,
+  // decidirDestino já manda cada uma para a sua área.
+  var TITULOS = { telaConvite: "Criar sua senha", telaRecovery: "Nova senha",
+    telaEsqueci: "Esqueci minha senha" };
   function mostrar(id) {
     for (var i = 0; i < TELAS.length; i++)
       document.getElementById(TELAS[i]).style.display = TELAS[i] === id ? "block" : "none";
+    var t = document.getElementById("titulo");
+    if (t) t.textContent = TITULOS[id] || "Área da aluna";
   }
   function texto(id, t) { var el = document.getElementById(id); el.textContent = t; el.style.display = t ? "block" : "none"; }
   function valor(id) { return (document.getElementById(id).value || "").trim(); }
