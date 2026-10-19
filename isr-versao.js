@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-m",
+  numero: "2026.10.19-n",
   data: "19/10/2026",
-  nota: "A moldura do Painel: um menu só para a professora"
+  nota: "As turmas em cartões e a coluna do desenho"
 };

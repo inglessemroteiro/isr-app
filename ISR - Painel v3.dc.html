@@ -664,39 +664,36 @@
   </sc-if>
 
   <!-- TURMAS DA PROFESSORA -->
+  <!-- Um cartão por turma, como no desenho: a faixa do nível em cima,
+       o nome da turma, o horário com a ocupação, a sessão da semana
+       numa caixa e a porta para a página da turma. A tabela de antes
+       pedia para ler quatro colunas antes de reconhecer a própria
+       turma; o cartão se reconhece de longe. -->
   <sc-if value="{{ ptListaTurmas }}">
-  <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-    <div style="font-size: 16px; font-weight: 600;">{{ L46 }}</div>
-    <p style="margin: 4px 0 10px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">Abra uma turma para a chamada, as alunas e os materiais dela.</p>
-    <sc-if value="{{ turmasVazio }}">
-      <div style="padding: 16px 0; font-size: 14px; color: var(--color-primary-800);">{{ L6 }}</div>
-    </sc-if>
-    <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 0 0 8px;">
-      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300);">{{ L52 }}</span>
-      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300);">{{ L21 }}</span>
-      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300);">{{ L45 }}</span>
-      <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-300);">{{ L39 }}</span>
-    </div>
+  <sc-if value="{{ turmasVazio }}">
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px;">
+      <div style="font-size: 14px; color: var(--color-primary-800);">{{ L6 }}</div>
+    </section>
+  </sc-if>
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
     <sc-for list="{{ turmasProf }}" as="u" hint-placeholder-count="3">
-      <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.9fr 1.4fr; gap: 12px; align-items: center; padding: 13px 0; border-top: 1px solid var(--color-button-secondary);">
-        <div style="min-width: 0;">
-          <button class="isr-botao isr-botao--texto" onclick="{{ u.onAbrir }}" style="color: var(--color-primary-900); font-size: 14px; padding: 0; text-align: left">{{ u.nivel }}</button>
-          <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ u.turma }}</div>
-          <a href="{{ u.turmaHref }}" style="display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--color-primary-500);">{{ L58 }}</a>
+      <a href="{{ u.turmaHref }}" style="display: block; text-decoration: none; background: var(--color-neutral-0); border-radius: 24px; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 18px; font-size: 12px; font-weight: 600; background: {{ u.faixaBg }}; color: var(--color-primary-900);">
+          <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ u.faixa }}</span>
+          <span style="flex: none; opacity: 0.8;">{{ u.projeto }}</span>
         </div>
-        <div style="font-size: 13px; font-weight: 600; color: #6b5b95;">{{ u.projeto }}</div>
-        <div style="font-size: 13px; color: var(--color-primary-800);">{{ u.ocupLabel }}</div>
-        <div style="font-size: 12px; color: var(--color-primary-800); line-height: 1.5; word-break: break-word;">{{ u.material }}</div>
-      </div>
+        <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-900);">{{ u.nome }}</div>
+          <div style="font-size: 13px; color: var(--color-primary-800);">{{ u.sub }}</div>
+          <div style="background: var(--color-bg-default); border-radius: 14px; padding: 10px 12px; font-size: 13px; color: var(--color-primary-900); line-height: 1.45;">
+            <span style="color: var(--color-tertiary-500); font-weight: 600;">{{ u.semanaRotulo }}</span>{{ u.semana }}
+          </div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-primary-500);">{{ L58 }}</div>
+        </div>
+      </a>
     </sc-for>
-  </section>
+  </div>
 
-  <!-- HORAS DE AULA EXTRA -->
-  <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-    <div style="font-size: 14px; font-weight: 600;">{{ L12 }}</div>
-    <div style="font-size: 14px; color: var(--color-primary-800); margin-top: 4px;">{{ horasLabel }}</div>
-    <p style="margin: 6px 0 0; font-size: 12.5px; color: var(--color-tertiary-300); line-height: 1.55;">A contagem considera apenas aulas extras com chamada salva.</p>
-  </section>
   </sc-if>
 
   <sc-if value="{{ tChamadas }}">
@@ -821,6 +818,33 @@ class Component extends DCLogic {
       u.searchParams.set("tab", id);
       window.history.replaceState(null, "", u.toString());
     } catch (e) {}
+  }
+  // ── o cartão da turma ──
+  // A faixa colorida é o nível, e a cor é a mesma em toda a escola. O
+  // nome curto ("TER 8h · Essentials") é o que a professora usa para
+  // falar da turma; o horário inteiro fica na linha de baixo.
+  DIAS_CURTOS = { MON: "SEG", TUE: "TER", WED: "QUA", THU: "QUI", FRI: "SEX", SAT: "SÁB", SUN: "DOM" };
+  corDoNivel(nivel) {
+    const n = String(nivel || "").toUpperCase();
+    if (n.indexOf("B2") >= 0) return "var(--color-error-light)";
+    if (n.indexOf("B1") >= 0 || n.indexOf("SPEAKING") >= 0 || n.indexOf("ADVANCED") >= 0) return "var(--color-secondary-100)";
+    if (n.indexOf("A2") >= 0 || n.indexOf("ESSENTIALS") >= 0) return "var(--color-primary-50)";
+    if (n.indexOf("A1") >= 0 || n.indexOf("BASICS") >= 0) return "var(--color-button-secondary)";
+    return "var(--color-warning-light)";
+  }
+  // "Essentials (A2)" vira "A2 · Essentials": o código primeiro, que é
+  // o que se procura quando se tem seis turmas na tela
+  faixaNivel(nivel) {
+    const m = String(nivel || "").match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    return m ? (m[2] + " · " + m[1]) : String(nivel || "");
+  }
+  nivelSemCodigo(nivel) {
+    const m = String(nivel || "").match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    return m ? m[1] : String(nivel || "");
+  }
+  turmaCurta(turma) {
+    const m = String(turma || "").match(/^([A-Z]{3})\s*(\d{1,2}h\d{0,2})/);
+    return m ? ((this.DIAS_CURTOS[m[1]] || m[1]) + " " + m[2]) : String(turma || "");
   }
   turmaParam() {
     try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
@@ -956,6 +980,8 @@ class Component extends DCLogic {
     // a professora que abre primeiro é a de VISÃO: com "ver como"
     // ligado, a gestora cai no painel da pessoa que escolheu
     const user = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
+    // quem está logada de verdade: é dela o "visualizando como"
+    const realUser = (CRM.gestaoUser ? CRM.gestaoUser() : null) || user;
     const tp = this.turmaParam();
     const tpTurma = tp ? ocup.filter(u => u.label === tp)[0] : null;
     let teacher = this.state.teacher;
@@ -1384,7 +1410,7 @@ class Component extends DCLogic {
       // de outra pessoa, ele diz isso em voz alta: olhar o painel da
       // colega e achar que é o seu é como se lança chamada na turma
       // errada.
-      tituloPainel: (user && user.nome === teacher)
+      tituloPainel: (realUser && realUser.nome === teacher)
         ? teacher
         : Tr("Teacher panel · viewing as ", "Painel do professor · visualizando como ") + teacher,
       turmaAbertaHref: turmaAbertaU
@@ -1437,12 +1463,7 @@ class Component extends DCLogic {
       clubes: clubesDelaLista,
       semClubes: clubesDelaLista.length === 0,
 
-      eyebrow: Tr("teacher panel · ", "painel do professor · ") + (
-        aba === "particulares" ? Tr("your private students", "as suas particulares")
-        : aba === "clubes" ? Tr("your clubs", "os seus clubes")
-        : aba === "turmas" ? (turmaAberta ? (turmaAbertaU ? turmaAbertaU.nivel.toLowerCase() : Tr("class", "turma"))
-                                          : Tr("your classes", "as suas turmas"))
-          : Tr("your day", "o seu dia")),
+      eyebrow: Tr("teaching", "pedagógico"),
 
       // ── O HERO, EM QUATRO ESTADOS ────────────────────────────
       //
@@ -2086,19 +2107,28 @@ class Component extends DCLogic {
         this.setState({ salvouAgora: true, turmaChamada: partSel ? null : turmaSel, chamadaData: dataSel, tarefas: tarAtual });
       },
 
-      turmasProf: turmasProfOcup.map(u => ({
-        turmaHref: "ISR%20-%20Turma%20v3.dc.html?id=" + u.id,
-        nivel: u.nivel, turma: u.turma,
-        projeto: u.projeto || "—",
-        ocupLabel: u.ocupadas + "/" + u.capacidade,
-        material: u.notebook || "Sem caderno vinculado neste ciclo",
-        // abrir a turma troca a turma da chamada junto: é a mesma
-        // escolha, e deixá-las separadas era o que fazia a chamada
-        // precisar de um select próprio
-        onAbrir: () => this.setState({ turmaAberta: true, tTab: "chamadas",
-          turmaChamada: u.label, chamadaData: null, presencas: null, tarefas: null,
-          particularChamada: null, eventoChamada: null })
-      })),
+      turmasProf: turmasProfOcup.map(u => {
+        // A sessão em que a turma está: as chamadas salvas dizem
+        // quantas aulas já aconteceram, e a próxima é a seguinte. É a
+        // mesma conta que o caderno da aluna faz.
+        const ss = (CRM.planoSessoes ? CRM.planoSessoes(u.id) : []) || [];
+        const dadas = ((CRM.chamadasDaTurma ? CRM.chamadasDaTurma(u.label) : []) || []).length;
+        const sx = ss.length ? ss[Math.min(dadas, ss.length - 1)] : null;
+        const estado = sx ? (sx.estado === "publicada" ? Tr(" · published", " · publicada")
+          : sx.estado === "pronta" ? Tr(" · ready", " · pronta") : Tr(" · draft", " · rascunho")) : "";
+        return {
+          turmaHref: "ISR%20-%20Turma%20v3.dc.html?id=" + u.id + "&sub=plano",
+          faixa: this.faixaNivel(u.nivel),
+          faixaBg: this.corDoNivel(u.nivel),
+          nome: this.turmaCurta(u.turma) + " · " + this.nivelSemCodigo(u.nivel),
+          sub: u.turma + " · " + u.ocupadas + Tr(" of ", " de ") + u.capacidade
+            + Tr(" students", " alunas"),
+          projeto: u.projeto || "",
+          semanaRotulo: Tr("this week · ", "esta semana · "),
+          semana: sx ? ("Session " + sx.n + (sx.titulo ? " · " + sx.titulo : "") + estado)
+            : Tr("no session in the syllabus yet", "o syllabus do nível ainda não tem sessões")
+        };
+      }),
       turmasVazio: turmasProfOcup.length === 0
     };
   }
