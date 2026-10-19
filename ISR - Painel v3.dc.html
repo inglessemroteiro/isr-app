@@ -451,8 +451,41 @@
 
   <!-- CHAMADA -->
   <sc-if value="{{ tChamadas }}">
+  <!-- A SEMANA, O DIA E AS AULAS DO DIA -->
+  <!-- A chamada começa por onde a professora pensa: que semana, que
+       dia, que aula. Antes ela abria numa aula escolhida pelo sistema e
+       trocar de dia era mexer num campo de data. -->
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <sc-for list="{{ semanas }}" as="sm" hint-placeholder-count="2">
+      <button class="isr-botao isr-botao--pilula" onclick="{{ sm.onClick }}" style="background: {{ sm.bg }}; color: {{ sm.fg }}; font-size: 13.5px; font-weight: 600; padding: 11px 20px">{{ sm.label }}</button>
+    </sc-for>
+  </div>
+  <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px;">
+    <sc-for list="{{ dias }}" as="di" hint-placeholder-count="7">
+      <button class="isr-botao" onclick="{{ di.onClick }}" style="flex: none; width: 88px; border-radius: 18px; padding: 12px 8px; background: {{ di.bg }}; color: {{ di.fg }}; display: flex; flex-direction: column; gap: 1px; align-items: center;">
+        <span style="font-size: 12px; font-weight: 600; opacity: 0.8;">{{ di.dia }}</span>
+        <span style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">{{ di.num }}</span>
+        <span style="font-size: 11.5px; opacity: 0.8;">{{ di.quantas }}</span>
+      </button>
+    </sc-for>
+  </div>
+  <sc-if value="{{ semAulasNoDia }}">
+    <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 18px 20px; font-size: 14px; color: var(--color-primary-800);">{{ L59 }}</div>
+  </sc-if>
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px;">
+    <sc-for list="{{ aulasDoDia }}" as="ad" hint-placeholder-count="3">
+      <button class="isr-botao" onclick="{{ ad.onClick }}" style="text-align: left; border-radius: 20px; padding: 15px 17px; background: {{ ad.bg }}; color: {{ ad.fg }}; display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+        <span style="font-size: 12px; font-weight: 600; opacity: 0.8;">{{ ad.quando }}</span>
+        <span style="font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3;">{{ ad.nome }}</span>
+        <span style="font-size: 12px; font-weight: 600; color: {{ ad.statusCor }};">{{ ad.status }}</span>
+      </button>
+    </sc-for>
+  </div>
   <section ref="{{ chamadaRef }}" style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px; scroll-margin-top: 20px;">
-    <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25;">{{ tituloChamada }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+      <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25;">{{ tituloChamada }}</div>
+      <div style="flex: none; font-size: 13px; font-weight: 600; color: var(--color-primary-800);">{{ presentesLabel }}</div>
+    </div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; margin-bottom: 14px;">
       <span style="font-size: 13px; color: var(--color-primary-800);">{{ subtituloChamada }}</span>
       <sc-if value="{{ jaSalva }}">
@@ -464,9 +497,6 @@
     </div>
 
     <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
-      <sc-for list="{{ aulasChamada }}" as="ac" hint-placeholder-count="4">
-        <button class="isr-botao isr-botao--pilula" onclick="{{ ac.onClick }}" style="background: {{ ac.bg }}; color: {{ ac.fg }}; font-size: 12.5px; padding: 9px 14px">{{ ac.label }}</button>
-      </sc-for>
       <button class="isr-botao isr-botao--pilula isr-botao--texto" onclick="{{ onOutraData }}" style="border: 1px dashed var(--color-tertiary-100); color: var(--color-tertiary-500); font-size: 12.5px; padding: 9px 14px">{{ outraDataLabel }}</button>
     </div>
 
@@ -506,31 +536,39 @@
 
     <sc-if value="{{ temAlunas }}">
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 2px 0 12px;">
-        <span style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ instrucaoChamada }}</span>
+        <span style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ instrucaoLista }}</span>
         <span style="flex: 1;"></span>
         <button class="isr-botao isr-botao--pilula" onclick="{{ onTodasPresentes }}" style="background: var(--color-primary-50); color: var(--color-primary-900); font-size: 12px; padding: 9px 14px">{{ L26 }}</button>
         <button class="isr-botao isr-botao--pilula" onclick="{{ onTodasFaltas }}" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; padding: 9px 14px">{{ L10 }}</button>
       </div>
     </sc-if>
 
-    <!-- AULA EXTRA: lista -->
+    <!-- A LISTA DA CHAMADA -->
+    <!-- Uma linha por aluna e quatro botões redondos: P presente, A com
+         atraso, F falta, J justificada. É o que a professora toca com o
+         polegar enquanto a aula começa. -->
     <sc-if value="{{ modoLista }}">
       <div>
         <sc-for list="{{ presencas }}" as="al" hint-placeholder-count="4">
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--color-button-secondary);">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-button-secondary);">
             <div style="flex: 1; min-width: 150px;">
-              <div style="font-size: 14.5px; font-weight: 600;">{{ al.nome }}</div>
+              <a href="{{ al.perfilHref }}" class="lk" style="font-size: 15px; font-weight: 600; color: var(--color-primary-500);">{{ al.nome }}</a>
               <div style="font-size: 12px; color: {{ al.estadoCor }};">{{ al.estadoLinha }}</div>
             </div>
-            <div style="flex: none; display: flex; gap: 5px; flex-wrap: wrap;">
+            <button class="isr-botao" onclick="{{ al.onTarefa }}" title="Registra apenas a entrega da tarefa. O conteúdo permanece no caderno." style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 12px; padding: 8px 13px; border-radius: 10px">{{ al.tarefaLabel }}</button>
+            <div style="flex: none; display: flex; gap: 8px;">
               <sc-for list="{{ al.estados }}" as="es" hint-placeholder-count="4">
-                <button class="isr-botao" onclick="{{ es.onClick }}" title="{{ es.title }}" style="border: 1px solid {{ es.border }}; background: {{ es.bg }}; color: {{ es.fg }}; font-size: 12px; padding: 8px 13px; border-radius: 10px">{{ es.label }}</button>
+                <button class="isr-botao" onclick="{{ es.onClick }}" title="{{ es.title }}" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: {{ es.bgRedondo }}; color: {{ es.fgRedondo }}; font-size: 14px; font-weight: 600; padding: 0; display: flex; align-items: center; justify-content: center;">{{ es.labelCurto }}</button>
               </sc-for>
             </div>
-            <button class="isr-botao" onclick="{{ al.onTarefa }}" title="Registra apenas a entrega da tarefa. O conteúdo permanece no caderno." style="flex: none; border: 1px solid {{ al.tarefaBorda }}; background: {{ al.tarefaBg }}; color: {{ al.tarefaFg }}; font-size: 12px; padding: 8px 13px; border-radius: 10px">{{ al.tarefaLabel }}</button>
-            <a href="{{ al.perfilHref }}" class="lk" style="flex: none; font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); padding: 7px 4px;">{{ L48 }}</a>
           </div>
         </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ temDiario }}">
+      <div style="padding: 10px 0 0;">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ onDiario }}" style="background: var(--color-button-secondary); color: var(--color-tertiary-500); font-size: 12px; padding: 9px 14px">{{ diarioLabel }}</button>
       </div>
     </sc-if>
 
@@ -780,6 +818,7 @@ class Component extends DCLogic {
     L55: ["onde", "where"],
     L57: ["Plano das aulas \u2197", "Lesson plans \u2197"],
     L58: ["Abrir turma \u2192", "Open class \u2192"],
+    L59: ["Nenhuma aula neste dia.", "No class on this day."],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -845,6 +884,59 @@ class Component extends DCLogic {
   turmaCurta(turma) {
     const m = String(turma || "").match(/^([A-Z]{3})\s*(\d{1,2}h\d{0,2})/);
     return m ? ((this.DIAS_CURTOS[m[1]] || m[1]) + " " + m[2]) : String(turma || "");
+  }
+  // ── a semana da chamada ──
+  // As aulas de uma semana qualquer, não só as sete próximas: para
+  // lançar a chamada da semana passada é preciso poder voltar.
+  isoDe(d) {
+    const p = (n) => (n < 10 ? "0" : "") + n;
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  segundaDe(base, offSemanas) {
+    const d = new Date(base); d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + (offSemanas || 0) * 7);
+    return d;
+  }
+  itensDaSemana(isoIni, teacher, turmasProfOcup) {
+    const CRM = window.ISRCRM;
+    if (!CRM || !CRM.agendaItens) return [];
+    return CRM.agendaItens(7, isoIni)
+      .filter(it => (it.tipo === "aula" || it.tipo === "aula_extra" || it.tipo === "particular")
+        && (it.responsavel === teacher || (it.tipo === "particular" && !it.responsavel)))
+      .map(it => {
+        const daTurma = turmasProfOcup.filter(u => it.titulo.indexOf(u.nivel) >= 0
+          && it.titulo.indexOf(u.turma) >= 0)[0];
+        const ev = it.eventoId ? CRM.getEvento(it.eventoId) : null;
+        const alunaPart = it.tipo === "particular" ? CRM.getPessoa(it.pessoaId) : null;
+        const label = alunaPart ? "Particular · " + alunaPart.nome
+          : ev ? CRM.aulaExtraLabel(ev) : (daTurma ? daTurma.label : "");
+        if (!label) return null;
+        return {
+          data: it.data, hora: it.hora || "",
+          tipo: alunaPart ? "particular" : (ev ? "aula extra" : "turma"),
+          label: label,
+          nome: alunaPart ? ("Particular · " + alunaPart.nome)
+            : (daTurma ? (this.turmaCurta(daTurma.turma) + " · " + this.nivelSemCodigo(daTurma.nivel)) : label),
+          temChamada: !!CRM.getChamada(label, it.data),
+          abrir: () => {
+            if (alunaPart) {
+              this.setState({ eventoChamada: null, particularChamada: alunaPart.id, turmaChamada: null,
+                chamadaData: it.data, presencas: this.carregarChamada(label, it.data),
+                tarefas: null, salvouAgora: false, escolhendoData: false });
+            } else if (ev) {
+              this.setState({ eventoChamada: ev.id, particularChamada: null, turmaChamada: label,
+                chamadaData: ev.data, presencas: this.carregarChamada(label, ev.data, ev.id),
+                tarefas: null, salvouAgora: false, escolhendoData: false });
+            } else {
+              this.setState({ eventoChamada: null, particularChamada: null, turmaChamada: label,
+                chamadaData: it.data, presencas: this.carregarChamada(label, it.data),
+                tarefas: null, salvouAgora: false, escolhendoData: false });
+            }
+          }
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (a.data + a.hora) < (b.data + b.hora) ? -1 : 1);
   }
   turmaParam() {
     try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
@@ -952,6 +1044,8 @@ class Component extends DCLogic {
       temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "", semChamada: [],
       podeLote: false, loteTexto: "", loteBotao: "", loteBg: "var(--color-primary-900)", loteSombra: "var(--color-primary-950)",
       loteConfirmar: false, loteResultado: "", onLote: () => {}, onLoteCancelar: () => {},
+      semanas: [], dias: [], aulasDoDia: [], semAulasNoDia: false, instrucaoLista: "",
+      presentesLabel: "", temDiario: false, diarioLabel: "", onDiario: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada", filaTitulo: "Fila pedagógica",
       temSessoes: false, sessoesOpts: [], onSessao: () => {},
@@ -1247,6 +1341,10 @@ class Component extends DCLogic {
           const on = es.id === estadoAtual;
           return {
             label: es.label, title: es.title,
+            // o botão redondo do desenho: a letra, cheia quando ligada
+            labelCurto: ({ presente: "P", atraso: "A", falta: "F", justificada: "J" })[es.id] || "",
+            bgRedondo: on ? es.cor : "var(--color-bg-default)",
+            fgRedondo: on ? "var(--color-neutral-0)" : "var(--color-tertiary-500)",
             bg: on ? es.cor : "var(--color-neutral-0)", fg: on ? "var(--color-neutral-0)" : "var(--color-tertiary-500)", border: on ? es.cor : "var(--color-tertiary-50)",
             onClick: () => this.marcar(p.id, es.id, presAtual, turmaSel, dataSel)
           };
@@ -2000,13 +2098,94 @@ class Component extends DCLogic {
             + vem.map(v => v.desde.slice(8, 10) + "/" + v.desde.slice(5, 7))
                 .filter((x, i, a) => a.indexOf(x) === i).join(" · ") };
       })(),
+      // ── a semana, o dia e as aulas do dia ──
+      ...(() => {
+        const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+        const DIAS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const off = this.state.semanaOff || 0;
+        const ini = this.segundaDe(new Date(), off);
+        const itens = this.itensDaSemana(this.isoDe(ini), teacher, turmasProfOcup);
+        // o dia escolhido: o da chamada aberta quando ele está nesta
+        // semana, senão hoje, senão a segunda
+        const fim = new Date(ini); fim.setDate(fim.getDate() + 6);
+        const dentro = (iso) => iso >= this.isoDe(ini) && iso <= this.isoDe(fim);
+        const hojeIso = this.isoDe(new Date());
+        const diaSel = (this.state.diaChamada && dentro(this.state.diaChamada))
+          ? this.state.diaChamada
+          : (dataSel && dentro(dataSel) ? dataSel
+            : (dentro(hojeIso) ? hojeIso : this.isoDe(ini)));
+        const ddmm = (d) => d.getDate() + " " + ["jan", "fev", "mar", "abr", "mai", "jun",
+          "jul", "ago", "set", "out", "nov", "dez"][d.getMonth()];
+        const rotuloSemana = (o) => {
+          const a = this.segundaDe(new Date(), o);
+          const b = new Date(a); b.setDate(b.getDate() + 6);
+          const quando = o === 0 ? Tr("This week · ", "Esta semana · ")
+            : o === -1 ? Tr("Last week · ", "Semana passada · ")
+            : Tr("Next week · ", "Semana que vem · ");
+          return quando + a.getDate() + Tr(" to ", " a ") + ddmm(b);
+        };
+        const doDia = itens.filter(x => x.data === diaSel);
+        return {
+          semanas: [-1, 0].map(o => ({
+            label: rotuloSemana(o),
+            bg: o === off ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+            fg: o === off ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            onClick: () => this.setState({ semanaOff: o, diaChamada: null })
+          })),
+          dias: [0, 1, 2, 3, 4, 5, 6].map(i => {
+            const d = new Date(ini); d.setDate(d.getDate() + i);
+            const iso = this.isoDe(d);
+            const n = itens.filter(x => x.data === iso).length;
+            const sel = iso === diaSel;
+            return {
+              dia: this.idioma() === "en" ? DIAS_EN[i] : DIAS[i],
+              num: String(d.getDate()),
+              quantas: n ? (n + (n === 1 ? Tr(" class", " aula") : Tr(" classes", " aulas"))) : "—",
+              bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: () => this.setState({ diaChamada: iso })
+            };
+          }),
+          aulasDoDia: doDia.map(x => {
+            const sel = x.label === turmaSel && x.data === dataSel;
+            return {
+              quando: (x.hora || "—") + " · " + x.tipo,
+              nome: x.nome,
+              status: x.temChamada ? Tr("attendance taken", "chamada feita")
+                : Tr("no attendance", "sem chamada"),
+              statusCor: sel ? "var(--color-neutral-0)"
+                : (x.temChamada ? "var(--color-success)" : "var(--color-error)"),
+              bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: x.abrir
+            };
+          }),
+          semAulasNoDia: doDia.length === 0
+        };
+      })(),
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
       colunas, linhas: linhasDiario, larguraGrade,
       // aula extra e aula particular são lista; turma é diário. O diário
       // monta as linhas pela turma cadastrada — para particular vinha
       // vazio, e a chamada ficava sem ninguém para marcar.
-      modoLista: alunas.length > 0 && (!!evSel || !!partSel),
-      modoDiario: alunas.length > 0 && !evSel && !partSel,
+      // A lista com os quatro botões é a chamada de todo dia, para
+      // turma, particular e aula extra. O diário do ciclo continua
+      // existindo — é onde se vê quem está sumindo — mas atrás de um
+      // botão: ele é conferência, não a tarefa do início da aula.
+      modoLista: alunas.length > 0 && !(this.state.verDiario && !evSel && !partSel),
+      modoDiario: alunas.length > 0 && !evSel && !partSel && !!this.state.verDiario,
+      temDiario: alunas.length > 0 && !evSel && !partSel,
+      diarioLabel: this.state.verDiario
+        ? Tr("hide the cycle diary", "esconder o diário do ciclo")
+        : Tr("cycle diary", "diário do ciclo"),
+      onDiario: () => this.setState(st => ({ verDiario: !st.verDiario })),
+      instrucaoLista: this.state.verDiario
+        ? Tr("Tap the day column to change the status.", "Toque na coluna do dia para alterar o estado.")
+        : Tr("P present · A late · F absent · J excused.", "P presente · A atrasou · F faltou · J justificada."),
+      presentesLabel: alunas.length
+        ? (alunas.filter(p => CRM.estadoPresenca(presAtual[p.id]) !== "falta").length
+           + Tr(" of ", " de ") + alunas.length + Tr(" present", " presentes"))
+        : "",
       legenda: [
         { letra: "P", label: "presente", bg: "rgba(52,138,142,0.12)", fg: "var(--color-primary-500)" },
         { letra: "A", label: "atrasou", bg: "rgba(212,165,116,0.20)", fg: "var(--color-warning)" },

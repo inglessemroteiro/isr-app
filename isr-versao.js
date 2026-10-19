@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-n",
+  numero: "2026.10.19-o",
   data: "19/10/2026",
-  nota: "As turmas em cartões e a coluna do desenho"
+  nota: "A chamada: semana, dia, aula e os quatro botões"
 };
