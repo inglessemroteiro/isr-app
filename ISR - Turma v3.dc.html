@@ -461,7 +461,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "geral" };
+  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
   edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
@@ -488,6 +488,23 @@ class Component extends DCLogic {
 
   turmaId() {
     try { return new URLSearchParams(window.location.search).get("id") || ""; } catch (e) { return ""; }
+  }
+
+  // A aba de dentro mora na URL (?sub=plano). Sem isso, recarregar a
+  // página — ou voltar depois de abrir um link — trazia a professora
+  // de volta para a Visão geral, e ela perdia o lugar onde estava
+  // trabalhando. É também o que deixa mandar "abre o plano da sessão
+  // 4" por mensagem.
+  subParam() {
+    try { return new URLSearchParams(window.location.search).get("sub") || ""; } catch (e) { return ""; }
+  }
+  irParaAba(id) {
+    this.setState({ aba: id });
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("sub", id);
+      window.history.replaceState(null, "", u.toString());
+    } catch (e) {}
   }
 
   renderVals() {
@@ -601,9 +618,30 @@ class Component extends DCLogic {
     const user = CRM.gestaoUser();
 
     // ── as abas ──
-    const ABAS = [["geral", "Visão geral"], ["alunas", "Alunas"], ["plano", "Plano das aulas"],
-                  ["chamadas", "Chamadas"], ["materiais", "Materiais"], ["renov", "Renovação e vagas"]];
-    const aba = this.state.aba || "geral";
+    // ── as abas, por papel ──
+    //
+    // A mesma página serve a escola inteira, e cada papel vê o seu
+    // pedaço: a professora não vê Renovação e vagas (é conversa de
+    // renovação, não de aula), a Carla não vê plano nem chamada, e a
+    // Érika vê tudo menos o plano. Esconder a aba não é proteção — é o
+    // recorte do trabalho de cada uma, como o resto do sistema.
+    //
+    // Quem olha é a VISÃO: com "vendo como" ligado, a gestora vê a
+    // página pelos olhos de quem escolheu.
+    const TODAS_ABAS = { geral: "Visão geral", alunas: "Alunas", plano: "Plano das aulas",
+      chamadas: "Chamadas", materiais: "Materiais", renov: "Renovação e vagas" };
+    const vis = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
+    const papeisVis = (vis.papeis || []).concat(vis.perfil ? [vis.perfil] : []);
+    const tem = (p) => papeisVis.indexOf(p) >= 0;
+    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "materiais", "renov"]
+      : tem("operacao") ? ["geral", "alunas", "chamadas", "materiais", "renov"]
+      : tem("comercial") ? ["geral", "alunas", "renov"]
+      : ["geral", "alunas", "plano", "chamadas", "materiais"];
+    const ABAS = ordem.map(id => [id, TODAS_ABAS[id]]);
+    // a aba pedida na URL só vale se o papel a tiver
+    const pedida = this.subParam();
+    const aba = this.state.aba
+      || (ordem.indexOf(pedida) >= 0 ? pedida : "geral");
 
     // ── renovação e vagas ──
     // Cada aluna carrega o campo renovacao. A soma disso por turma é o
@@ -628,7 +666,7 @@ class Component extends DCLogic {
       abas: ABAS.map(([id, label]) => ({ label,
         bg: aba === id ? "var(--color-primary-900)" : "transparent",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
-        onClick: () => this.setState({ aba: id }) })),
+        onClick: () => this.irParaAba(id) })),
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
       tPlano: aba === "plano",
       // ── o syllabus do nível ──

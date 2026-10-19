@@ -24,7 +24,7 @@
   <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
     <div style="min-width: 0;">
       <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ eyebrow }}</div>
-      <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">{{ L11 }}</h1>
+      <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">{{ tituloPainel }}</h1>
     </div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <!-- Trocar de professora é conferência da escola. Para a
@@ -51,9 +51,9 @@
        entrava para lançar a chamada do dia rolava por tudo. No
        desenho são abas, e a primeira responde "o que eu tenho
        hoje?" antes de pedir qualquer coisa. -->
-  <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap">
+  <div style="display: flex; gap: 6px; align-self: flex-start; max-width: 100%; overflow-x: auto; padding-bottom: 2px;">
     <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="3">
-      <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="padding: 10px 18px; font-size: 13.5px; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+      <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="flex: none; padding: 9px 16px; font-size: 14px; font-weight: 600; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
     </sc-for>
   </div>
 
@@ -66,6 +66,9 @@
       <button class="isr-botao isr-botao--texto" onclick="{{ onVoltarTurmas }}" style="color: var(--color-primary-500); font-size: 12.5px; padding: 4px 0">← Minhas turmas</button>
       <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">{{ turmaAbertaNome }}</div>
       <div style="font-size: 12.5px; color: var(--color-tertiary-500);">{{ turmaAbertaSub }}</div>
+      <!-- O plano das aulas mora na página da turma. Sem esta porta, a
+           professora não chega nele: o menu dela tem um item só. -->
+      <a href="{{ turmaAbertaHref }}" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">{{ L57 }}</a>
     </div>
     <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap">
       <sc-for list="{{ tAbas }}" as="ta" hint-placeholder-count="4">
@@ -679,6 +682,7 @@
         <div style="min-width: 0;">
           <button class="isr-botao isr-botao--texto" onclick="{{ u.onAbrir }}" style="color: var(--color-primary-900); font-size: 14px; padding: 0; text-align: left">{{ u.nivel }}</button>
           <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ u.turma }}</div>
+          <a href="{{ u.turmaHref }}" style="display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--color-primary-500);">{{ L58 }}</a>
         </div>
         <div style="font-size: 13px; font-weight: 600; color: #6b5b95;">{{ u.projeto }}</div>
         <div style="font-size: 13px; color: var(--color-primary-800);">{{ u.ocupLabel }}</div>
@@ -777,6 +781,8 @@ class Component extends DCLogic {
     L53: ["Aluna", "Student"],
     L54: ["Freq.", "Att."],
     L55: ["onde", "where"],
+    L57: ["Plano das aulas \u2197", "Lesson plans \u2197"],
+    L58: ["Abrir turma \u2192", "Open class \u2192"],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -800,6 +806,22 @@ class Component extends DCLogic {
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
 
+  // A aba mora na URL (?tab=turmas). Sem isso, recarregar devolvia a
+  // professora ao Hoje, e um link para "as minhas turmas" não existia.
+  tabParam() {
+    try {
+      const t = new URLSearchParams(window.location.search).get("tab") || "";
+      return ["hoje", "turmas", "particulares", "clubes"].indexOf(t) >= 0 ? t : "";
+    } catch (e) { return ""; }
+  }
+  irParaAba(id) {
+    this.setState({ aba: id });
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("tab", id);
+      window.history.replaceState(null, "", u.toString());
+    } catch (e) {}
+  }
   turmaParam() {
     try { return new URLSearchParams(window.location.search).get("turma") || ""; } catch (e) { return ""; }
   }
@@ -891,6 +913,7 @@ class Component extends DCLogic {
     if (!CRM) return { abas: [], ptHoje: true, ptListaTurmas: false, turmaAberta: false,
       ptParticulares: false, ptClubes: false,
       onVoltarTurmas: () => {}, turmaAbertaNome: "", turmaAbertaSub: "", tAbas: [],
+      tituloPainel: "Painel do professor", turmaAbertaHref: "#",
       tGeral: false, tAlunas: false, tChamadas: false, tMateriais: false,
       tGeralLinhas: [], tGeralTurmaHref: "#", tAlunasLista: [], tAlunasVazio: true,
       tCaderno: "", tCadernoHref: "#", temCaderno: false, tGravacoes: [], semGravacoes: true,
@@ -1214,7 +1237,7 @@ class Component extends DCLogic {
       || this.eventoParam() || this.retroParam());
     // Quem chega por um link de chamada entra na turma já aberta, na
     // aba de chamadas: é o que ele veio fazer.
-    const aba = this.state.aba || (veioParaChamada ? "turmas" : "hoje");
+    const aba = this.state.aba || this.tabParam() || (veioParaChamada ? "turmas" : "hoje");
     const Tr = (en, pt) => this.T(en, pt);
     const ABAS = [["hoje", Tr("Today", "Hoje")], ["turmas", Tr("My classes", "Minhas turmas")],
                   ["particulares", Tr("Private students", "Particulares")], ["clubes", Tr("Clubs", "Clubes")]];
@@ -1346,9 +1369,9 @@ class Component extends DCLogic {
 
     return {
       abas: ABAS.map(([id, label]) => ({ label,
-        bg: aba === id ? "var(--color-primary-900)" : "transparent",
+        bg: aba === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
-        onClick: () => this.setState({ aba: id }) })),
+        onClick: () => this.irParaAba(id) })),
       ptHoje: aba === "hoje",
       ptParticulares: aba === "particulares",
       ptClubes: aba === "clubes",
@@ -1357,6 +1380,15 @@ class Component extends DCLogic {
       ptListaTurmas: aba === "turmas" && !turmaAberta,
       turmaAberta: aba === "turmas" && turmaAberta,
       onVoltarTurmas: () => this.setState({ turmaAberta: false }),
+      // O título é de quem trabalha. Quando a escola confere o painel
+      // de outra pessoa, ele diz isso em voz alta: olhar o painel da
+      // colega e achar que é o seu é como se lança chamada na turma
+      // errada.
+      tituloPainel: (user && user.nome === teacher)
+        ? teacher
+        : Tr("Teacher panel · viewing as ", "Painel do professor · visualizando como ") + teacher,
+      turmaAbertaHref: turmaAbertaU
+        ? "ISR%20-%20Turma%20v3.dc.html?id=" + turmaAbertaU.id + "&sub=plano" : "#",
       turmaAbertaNome: turmaAbertaU ? turmaAbertaU.nivel : (turmaSel || ""),
       turmaAbertaSub: turmaAbertaU
         ? turmaAbertaU.turma + " · " + turmaAbertaU.ocupadas + "/" + turmaAbertaU.capacidade + " alunas"

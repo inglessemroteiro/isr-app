@@ -1,7 +1,13 @@
 # Plano · Painel do professor › Moldura (00)
 
-Plano antes de editar, como o `00 LEIA PRIMEIRO` pede. Nada foi
-alterado ainda.
+Plano antes de editar, como o `00 LEIA PRIMEIRO` pede.
+
+**Feito na Opção A, com uma correção de rumo.** O plano dizia que o
+resumo da turma dentro do Painel sairia. Ele ficou: é onde a chamada
+vive hoje, e tirá-la antes de as telas 08 e 10 existirem trocaria uma
+tela cheia por uma vazia. A Moldura abre o caminho para a página da
+turma — a lista e a turma aberta ganharam a porta "Plano das aulas ↗"
+— e não tira nada. A migração do conteúdo é das telas 04 a 10.
 
 ---
 

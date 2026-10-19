@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-l",
+  numero: "2026.10.19-m",
   data: "19/10/2026",
-  nota: "O syllabus do Traditions 2026.4, transcrito"
+  nota: "A moldura do Painel: um menu só para a professora"
 };
