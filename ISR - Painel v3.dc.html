@@ -534,6 +534,17 @@
       </div>
     </sc-if>
 
+    <!-- O QUE A FOLHA VÊ -->
+    <!-- Três estados, e a professora precisa saber em qual está: salva e
+         contando, reaberta e fora da folha até salvar de novo, ou salva
+         sem tópico, que também não conta. -->
+    <sc-if value="{{ temCaixaFolha }}">
+      <div style="background: {{ caixaFolhaBg }}; border-radius: 18px; padding: 13px 16px; margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 13px; font-weight: 600; color: {{ caixaFolhaFg }};">{{ caixaFolhaTitulo }}</span>
+        <span style="font-size: 12.5px; color: var(--color-primary-800); line-height: 1.5;">{{ caixaFolhaTexto }}</span>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ temAlunas }}">
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 2px 0 12px;">
         <span style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ instrucaoLista }}</span>
@@ -656,6 +667,9 @@
         <span style="font-size: 12.5px; color: var(--color-tertiary-500);">{{ resumoChamada }}</span>
         <sc-if value="{{ salvouAgora }}">
           <span style="font-size: 12.5px; color: var(--color-success-dark); font-weight: 600;">Chamada salva. Faltas registradas na linha do tempo das alunas.</span>
+        </sc-if>
+        <sc-if value="{{ temErroChamada }}">
+          <span style="font-size: 12.5px; color: var(--color-error); font-weight: 600;">{{ erroChamada }}</span>
         </sc-if>
       </div>
 
@@ -989,7 +1003,19 @@ class Component extends DCLogic {
     return base;
   }
 
+  // Mexer numa chamada já salva a reabre: enquanto ela estiver aberta,
+  // a aula sai da folha, e volta quando for salva de novo. Sem isto,
+  // uma correção pela metade continuava valendo como registro fechado.
+  reabrirSePreciso(turmaSel, dataSel) {
+    try {
+      const CRM = window.ISRCRM;
+      if (!CRM || !CRM.reabrirChamada || !turmaSel || !dataSel) return;
+      const u = CRM.gestaoUser ? CRM.gestaoUser() : null;
+      CRM.reabrirChamada(turmaSel, dataSel, (u && u.nome) || "");
+    } catch (e) {}
+  }
   marcar(pessoaId, estado, presAtual, turmaSel, dataSel) {
+    this.reabrirSePreciso(turmaSel, dataSel);
     this.setState({ presencas: Object.assign({}, presAtual, { [pessoaId]: estado }),
       turmaChamada: turmaSel, chamadaData: dataSel, salvouAgora: false });
   }
@@ -1045,6 +1071,8 @@ class Component extends DCLogic {
       podeLote: false, loteTexto: "", loteBotao: "", loteBg: "var(--color-primary-900)", loteSombra: "var(--color-primary-950)",
       loteConfirmar: false, loteResultado: "", onLote: () => {}, onLoteCancelar: () => {},
       semanas: [], dias: [], aulasDoDia: [], semAulasNoDia: false, instrucaoLista: "",
+      temCaixaFolha: false, caixaFolhaBg: "", caixaFolhaFg: "", caixaFolhaTitulo: "", caixaFolhaTexto: "",
+      temErroChamada: false, erroChamada: "",
       presentesLabel: "", temDiario: false, diarioLabel: "", onDiario: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada", filaTitulo: "Fila pedagógica",
@@ -2163,6 +2191,31 @@ class Component extends DCLogic {
           semAulasNoDia: doDia.length === 0
         };
       })(),
+      ...(() => {
+        const ch = (turmaSel && dataSel) ? CRM.getChamada(turmaSel, dataSel) : null;
+        const est = ch && ch.salvoEm
+          ? (ch.emEdicao ? "edicao" : (CRM.chamadaValidada(ch) ? "ok" : "sem_topico"))
+          : "";
+        return {
+          temCaixaFolha: !!est,
+          caixaFolhaBg: est === "ok" ? "var(--color-secondary-100)" : "var(--color-warning-light)",
+          caixaFolhaFg: est === "ok" ? "var(--color-success-dark)" : "var(--color-warning-dark)",
+          caixaFolhaTitulo: est === "ok"
+            ? Tr("Attendance saved · counts for payroll", "Chamada salva · conta na folha")
+            : est === "edicao" ? Tr("Being corrected", "Em correção")
+            : Tr("Saved without a topic", "Salva sem tópico"),
+          caixaFolhaTexto: est === "ok"
+            ? (ch.salvoEm ? Tr("saved on ", "salva em ") + CRM.ddmm(ch.salvoEm.slice(0, 10))
+               + (ch.por ? Tr(" by ", " por ") + ch.por : "") : "")
+            : est === "edicao"
+              ? Tr("This class is out of payroll until you save it again.",
+                   "Esta aula está fora da folha até você salvar de novo.")
+              : Tr("Without the lesson topic the class does not count for payroll.",
+                   "Sem o tópico da lição a aula não conta na folha."),
+          temErroChamada: !!this.state.erroChamada,
+          erroChamada: this.state.erroChamada || ""
+        };
+      })(),
       presencas, chamadaVazia: alunas.length === 0 && !!turmaSel, temAlunas: alunas.length > 0,
       colunas, linhas: linhasDiario, larguraGrade,
       // aula extra e aula particular são lista; turma é diário. O diário
@@ -2242,7 +2295,10 @@ class Component extends DCLogic {
         const valida = !!String(topicoValor).trim();
         return {
           topicoValor: topicoValor,
-          onTopico: (e) => this.setState({ topicoChamada: e.target.value, sessaoChave: chave }),
+          onTopico: (e) => {
+            this.reabrirSePreciso(turmaSel, dataSel);
+            this.setState({ topicoChamada: e.target.value, sessaoChave: chave });
+          },
           temSessoes: sessoes.length > 0,
           sessoesOpts: [{ v: "0", label: "— não digo qual —", sel: !sessaoSel }]
             .concat(sessoes.map(x => ({ v: String(x.n),
@@ -2269,6 +2325,21 @@ class Component extends DCLogic {
         };
       })(),
       onSalvarChamada: () => {
+        // Sem tópico não salva. O tópico é o que valida a aula para a
+        // folha; deixar salvar sem ele era criar registro que ninguém
+        // paga e que ninguém vê que está faltando. O no-show é a
+        // exceção: ali a explicação vai no link da aula.
+        const chAntes = turmaSel && dataSel ? CRM.getChamada(turmaSel, dataSel) : null;
+        const chaveT = turmaSel + "|" + dataSel;
+        const topicoAgora = String(this.state.sessaoChave === chaveT
+          && this.state.topicoChamada !== undefined
+          ? this.state.topicoChamada : ((chAntes && chAntes.topico) || "")).trim();
+        if (!topicoAgora && !(chAntes && chAntes.noshow)) {
+          this.setState({ erroChamada: this.T(
+            "Write the lesson topic before saving: it is what validates the class for payroll.",
+            "Escreva o tópico da lição antes de salvar: é ele que valida a aula para a folha.") });
+          return;
+        }
         // a grade mostra "presente" para quem não foi tocada, mas quem não
         // estava no registro não contava hora nem dava baixa no pacote —
         // salvar grava o estado de todas as alunas listadas
@@ -2283,7 +2354,7 @@ class Component extends DCLogic {
           sessao: meu ? (this.state.sessaoChamada || 0)
             : (parseInt(chSalva && chSalva.sessao, 10) || 0)
         });
-        this.setState({ salvouAgora: true, turmaChamada: partSel ? null : turmaSel, chamadaData: dataSel, tarefas: tarAtual });
+        this.setState({ salvouAgora: true, erroChamada: "", turmaChamada: partSel ? null : turmaSel, chamadaData: dataSel, tarefas: tarAtual });
       },
 
       turmasProf: turmasProfOcup.map(u => {

@@ -1768,6 +1768,32 @@ enquanto a aula começa.
 aula. Tirá-lo seria perder a única tela que mostra o ciclo inteiro de
 uma vez.
 
+### As três regras de folha da chamada
+
+**Sem tópico não salva.** O tópico da lição é o que valida a aula para
+a folha, e deixar salvar sem ele era criar registro que ninguém paga e
+que ninguém vê que está faltando. A tela recusa e diz por quê. O
+no-show é a exceção: ali a explicação vai no link da aula.
+
+A exigência vale na TELA, não na camada de dados. O lançamento em lote
+— "presença para todas nas aulas sem chamada" — continua podendo
+gravar sem tópico, porque ele existe justamente para resolver uma pilha
+atrasada de uma vez. Essas chamadas nascem como "falta o tópico", que é
+o que a tela já mostrava.
+
+**Mexer numa chamada salva a reabre, e a aula sai da folha** até ser
+salva de novo. Sem isto, uma correção pela metade continuava valendo
+como registro fechado: a folha do mês pagava por algo que ninguém
+terminou. A reabertura entra no histórico da chamada, com quem e
+quando, e a tela mostra uma faixa amarela dizendo que a aula está fora
+da folha.
+
+**Chamada antiga sem tópico continua contando.** Esta é a parte que eu
+quase fiz errado. A regra do tópico é nova; aplicá-la para trás
+cortaria a folha de meses que já foram trabalhados e pagos, por uma
+exigência que não existia quando aquelas aulas foram dadas. A folha
+exclui só a chamada reaberta.
+
 ### O menu da professora é um item só
 
 "A professora vê só o Painel do professor, com as próprias turmas,

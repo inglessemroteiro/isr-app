@@ -7028,7 +7028,27 @@
   //            é da aula, a data real é de quando ela aconteceu.
   function chamadaValidada(ch) {
     if (!ch || !ch.salvoEm) return false;
+    // reaberta para correção não conta até ser salva de novo: enquanto
+    // a professora mexe, a aula não é a que a folha vai pagar
+    if (ch.emEdicao) return false;
     return !!ch.noshow || !!String(ch.topico || "").trim();
+  }
+  // Reabrir uma chamada salva. Enquanto estiver aberta, a aula sai da
+  // folha — e volta quando for salva de novo. Sem isto, uma chamada
+  // meio corrigida continuava contando como se estivesse fechada, e a
+  // folha do mês pagava por um registro que ninguém terminou.
+  function reabrirChamada(turmaLabel, dataIso, por) {
+    var m = chamadasAll();
+    var k = turmaLabel + "|" + dataIso;
+    var ch = m[k];
+    if (!ch || !ch.salvoEm || ch.emEdicao) return false;
+    ch.emEdicao = true;
+    ch.hist = (ch.hist || []).concat([{ por: por || "", em: new Date().toISOString(),
+      o: "chamada reaberta para correção" }]);
+    carimbar(ch);
+    chamadasSaveLocal(m);
+    agendarSync();
+    return true;
   }
   // o estado de uma aula, do ponto de vista da folha e do painel
   function chamadaEstado(turmaLabel, dataIso) {
@@ -7037,12 +7057,14 @@
     if (!ch || !ch.salvoEm) {
       return dataIso > hoje ? "agendada" : "pendente";
     }
+    if (ch.emEdicao) return "em_edicao";
     if (ch.noshow) return "no-show";
     return String(ch.topico || "").trim() ? "validada" : "sem_topico";
   }
   var CHAMADA_ESTADOS = {
     validada: { label: "validada", bg: "#e8f5dd", fg: "#3d6b22" },
     sem_topico: { label: "falta o tópico", bg: "#fdf3d6", fg: "#7a5c00" },
+    em_edicao: { label: "em correção", bg: "#fdf3d6", fg: "#7a5c00" },
     pendente: { label: "diário pendente", bg: "#fde4df", fg: "#a3392c" },
     "no-show": { label: "no-show gravado", bg: "#e5f2f6", fg: "#1d5a63" },
     agendada: { label: "agendada", bg: "#f2ebe3", fg: "#8a7465" }
@@ -7118,7 +7140,7 @@
       // só existe quando a aula foi dada em outro dia
       dataReal: ("dataReal" in extra)
         ? String(extra.dataReal || "") : ((velha && velha.dataReal) || ""),
-      salvoEm: agora, por: por || "",
+      salvoEm: agora, por: por || "", emEdicao: false,
       criadaEm: (velha && velha.criadaEm) || agora,
       criadaPor: quemAntes || por || "",
       correcoes: (velha && velha.correcoes || 0) + (jaExistia && mudancas ? 1 : 0),
@@ -8434,11 +8456,24 @@
   function mesDe(isoStr) { return (isoStr || "").slice(0, 7); }
 
   // Aulas dadas de uma turma no mês: uma chamada salva é uma aula dada.
+  // Conta as aulas que a folha vai pagar.
+  //
+  // Fica de fora só a chamada REABERTA para correção: enquanto a
+  // professora mexe, a aula não é a que a folha paga, e volta assim que
+  // for salva de novo.
+  //
+  // Chamada antiga sem tópico CONTINUA contando. O tópico passou a ser
+  // obrigatório ao salvar, então daqui para a frente não nasce chamada
+  // sem ele — mas aplicar a regra para trás cortaria a folha de meses
+  // que já foram trabalhados e já foram pagos, por uma exigência que
+  // não existia quando aquelas aulas foram dadas. A tela continua
+  // dizendo "falta o tópico" em cada uma delas.
   function aulasDadasNoMes(turmaLabel, mesKey) {
     var m = chamadasAll(), n = 0, comTarefa = 0;
     Object.keys(m).forEach(function (k) {
       var ch = m[k];
       if (ch.turma !== turmaLabel || mesDe(ch.data) !== mesKey) return;
+      if (ch.emEdicao) return;
       n++;
       if (ch.tarefas && Object.keys(ch.tarefas).length) comTarefa++;
     });
@@ -14622,6 +14657,7 @@
     chamadasPendentes: chamadasPendentes, chamadasFeitas: chamadasFeitas,
     chamadaHistorico: chamadaHistorico,
     chamadaValidada: chamadaValidada, chamadaEstado: chamadaEstado,
+    reabrirChamada: reabrirChamada,
     CHAMADA_ESTADOS: CHAMADA_ESTADOS,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,
