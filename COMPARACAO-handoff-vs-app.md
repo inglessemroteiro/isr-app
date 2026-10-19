@@ -4,12 +4,9 @@ Resposta ao passo 0 do `00 LEIA PRIMEIRO` e ao prompt do `02 Lógica do
 sistema`: para cada papel, entidade, regra e evento, se **já existe**,
 **existe diferente** ou **FALTA**. Nada foi editado.
 
-Lido: `00 LEIA PRIMEIRO`, `01 Tokens e padrões`, `02 Lógica do sistema`,
-`00 Moldura do painel`, `01 Hoje`, `02 Em aula · Respostas ao vivo`,
-`03 Em aula · Slides`, `12 Clubes`. **Não recebi** os arquivos 04 a 11
-(Minhas turmas, Página da turma: Visão geral, Alunas, Plano das aulas,
-Chamadas, Projeto, Materiais, Particulares) nem `gestao/01 Miles e loja`
-e a pasta `aluna/`.
+Lido: `00 LEIA PRIMEIRO`, `01 Tokens e padrões`, `02 Lógica do sistema`
+e os treze arquivos do Painel do professor (00 a 12). **Não recebi**
+`gestao/01 Miles e loja` nem a pasta `aluna/`.
 
 ---
 
@@ -122,28 +119,57 @@ Três diferenças, e a segunda é a que mais aparece na tela:
    app diz "Alunas" e "Folha", porque você pediu assim. Mantive o que
    você pediu.
 
-## 6. O que falta decidir antes de implementar
+## 6. Tela a tela
+
+| # | Tela | Quanto já existe | O que falta nela |
+|---|---|---|---|
+| 00 | Moldura | abas Hoje · Minhas turmas · Particulares · Clubes, "vendo como", cabeçalho | a aba na URL (`?tab=…&turma=…&sub=…`), o modo "em aula" na barra, e as abas da Página da turma por papel |
+| 01 | Hoje | o hero em quatro estados (A–D), a fila pedagógica, Entregas do mês | **Agenda de hoje** (hoje é "próximas aulas · 7 dias"), **Projeto · entregas**, **Turmas atribuídas**, **Substituições** |
+| 02 | Em aula · Respostas ao vivo | nada | tudo: estado da aula, resposta da aluna ao vivo, comentário por tarefa |
+| 03 | Em aula · Slides | nada | link do Google Slides por sessão, validação do domínio, miniaturas a partir do roteiro |
+| 04 | Minhas turmas | a lista das turmas da professora com nível, horário, ocupação e a sessão da semana | a faixa de cor por nível (não há tabela de cor de nível no app) |
+| 05 | Turma · Visão geral | nome, nível, ciclo, horário, professora, projeto, ocupação | **"Editar turma" só para a coordenação** (hoje a página é de gestão inteira) e o cartão de **substituto** |
+| 06 | Turma · Alunas | lista da turma, nome clicável, quem saiu | alerta de **2 faltas seguidas** (há "falta recente", que é outra regra) e de **homework atrasado** (não existe entrega) |
+| 07 | Turma · Plano das aulas | faixa de sessões, ajustar, incluir/tirar etapa, reordenar, atividade própria com selo "sua", perguntas do caderno, palavras, homework, publicar | **sessão passada só leitura**, "x **de 60** min", formato da turma (digital/papel), **gerar worksheet** e **ver como aluna**. As pills de etapa são as seis da ISR, não as cinco do protótipo |
+| 08 | Turma · Chamadas | semanas, dias, aulas do dia, P/A/F/J, tópico, data real, chamada retroativa, conta na folha | **tópico obrigatório** para salvar e **editar chamada salva tira a aula da folha** até salvar de novo |
+| 09 | Turma · Projeto | o nome do projeto do ciclo | **as entregas por aluna** — o app não registra quem entregou o projeto, então o "7/10" e o "Faltam: nomes" não têm de onde sair |
+| 10 | Turma · Materiais | os materiais da turma com link, status e edição | **apoio pedagógico** (tipos de pedido, pedido e status) |
+| 11 | Particulares | as alunas particulares da professora e as notas da professora | **objetivo da aluna**, **pular e reordenar sessões por aluna**, **plano ajustado por aluna**, a caixa da aluna híbrida e a etapa *review* |
+| 12 | Clubes | cartões, publicado/rascunho, inscritas, catálogo da aluna | nível, os 4 encontros, bio, material, lista de espera, marca "novo", e as regras de publicar/despublicar/apagar |
+
+## 7. O que falta decidir antes de implementar
 
 1. **A professora vê só o Painel?** O handoff diz que sim. Hoje ela vê
    seis itens de menu. Isso muda o menu dela de uma vez.
-2. **Os arquivos 04 a 11.** Sem eles não dá para fazer Minhas turmas, a
-   Página da turma nem Particulares no desenho novo.
-3. **Dois blocos novos e grandes:** *Em aula* (respostas ao vivo +
-   slides) depende de caderno ao vivo, estado da aula e comentário por
-   tarefa; *Substituições* depende de uma entidade que não existe. Cada
-   um é um trabalho em si, não um ajuste de tela.
+2. **A Página da turma é uma só ou duas?** Hoje `ISR - Turma v3` é a
+   página de gestão, com Renovação e vagas para todo mundo. O handoff
+   quer a mesma página mostrando abas diferentes por papel, com
+   Projeto e Financeiro, que não existem. Dá para fazer das duas
+   formas; a de uma página só é menos código e menos chance de as duas
+   divergirem.
+3. **Quatro entidades novas**, e cada uma é um trabalho em si, não um
+   ajuste de tela: **substituição**, **estado da aula ao vivo** (com a
+   resposta da aluna chegando e o comentário da professora), **entrega
+   do projeto por aluna** e **entrega do homework por aluna**. As
+   telas 01, 02, 05, 06 e 09 dependem delas.
 4. **Clubes** precisa de seis campos novos antes de a tela existir:
    nível, os 4 encontros, bio, material, lista de espera e a marca
    "novo".
 
-## 7. Ordem que eu proponho
+## 8. Ordem que eu proponho
 
-| # | Tela | Por que primeiro |
+| # | Tela | Por que nesta posição |
 |---|---|---|
-| 1 | Moldura (00) | as outras encaixam dentro dela, e é o que põe a aba na URL |
-| 2 | Hoje (01) | o hero em quatro estados já está feito; falta Agenda de hoje, Projeto, Turmas atribuídas e Substituições |
-| 3 | Clubes (12) | é uma tela só, e os campos que faltam são de cadastro |
-| 4 | Em aula · Slides (03) | um campo por sessão, e abre o caminho do caderno |
-| 5 | Em aula · Respostas ao vivo (02) | a mais pesada: depende de leitura ao vivo do caderno |
+| 1 | Moldura (00) | as outras encaixam dentro dela, põe a aba na URL e resolve as abas por papel, que o 05 e o 06 cobram |
+| 2 | Chamadas (08) | duas regras pequenas e de consequência direta na folha: tópico obrigatório e editar tira da folha |
+| 3 | Minhas turmas (04) + Visão geral (05) + Alunas (06) | as três são leitura; o que falta é a cor do nível e o recorte por papel |
+| 4 | Hoje (01) | o hero já está feito; Agenda de hoje e Turmas atribuídas saem do que existe. Projeto e Substituições esperam as entidades |
+| 5 | Plano das aulas (07) | está quase todo pronto: faltam só leitura em sessão passada, "de 60 min" e os dois links do rodapé |
+| 6 | Materiais (10) | uma lista que já existe mais o apoio pedagógico |
+| 7 | Clubes (12) | os campos que faltam são de cadastro |
+| 8 | Particulares (11) | depende de plano por aluna, que é estrutura nova |
+| 9 | Em aula · Slides (03) | um campo por sessão, e abre o caminho do caderno |
+| 10 | Em aula · Respostas ao vivo (02) | a mais pesada: depende de leitura ao vivo do caderno |
 
-Substituições entra junto com Hoje ou depois, conforme você quiser.
+Substituição e entrega do projeto entram antes das telas que as usam
+(01, 05 e 09). Projeto (09) é meia tela depois que a entrega existir.
