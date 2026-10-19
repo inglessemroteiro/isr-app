@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-h",
+  numero: "2026.10.19-i",
   data: "19/10/2026",
-  nota: "O syllabus ganhou onde ser escrito"
+  nota: "O Painel do professor em PT e EN"
 };
