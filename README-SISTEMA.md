@@ -1747,6 +1747,38 @@ recusam tudo — não existe modo aberto, de propósito.
 Quem chama de fora manda a chave no cabeçalho `x-isr-chave` ou no
 campo `chave` do corpo.
 
+### O menu da professora é um item só
+
+"A professora vê só o Painel do professor, com as próprias turmas,
+particulares e clubes" — é a regra do handoff do desenho novo, e a
+escola confirmou. Antes ela via seis destinos, e cinco deles ou
+mostravam a escola inteira ou repetiam o que o Painel já traz. A Agenda
+saiu junto; a função dela volta como o cartão "Agenda de hoje", dentro
+do Painel.
+
+Quem dá aula **e** cuida da escola não perde nada: a conta é por papel,
+e o papel de gestão continua abrindo tudo. É o caso da Gabi e da Carla.
+
+**Menu escondido não é porta trancada.** O endereço de uma tela de
+gestão continua funcionando se alguém o digitar ou se ele vier num link
+antigo, então o guard leva a professora de volta ao Painel em vez de
+abrir a escola inteira. As telas que ela alcança são três: o Painel, a
+página da turma e o perfil da aluna. Como o resto, isto roda no
+navegador e é recorte de trabalho, não proteção.
+
+**A página da turma mostra abas diferentes por papel**, conforme a
+tabela do handoff: a professora não vê Renovação e vagas, o comercial
+vê Visão geral, Alunas e Renovação, e a operação vê tudo menos o plano.
+A aba de dentro mora na URL (`?sub=plano`), e a do Painel também
+(`?tab=turmas`): recarregar e voltar mantêm o lugar, e dá para mandar
+"abre o plano da sessão 4" por mensagem.
+
+**Uma coisa que o corte do menu quase quebrou:** o plano das aulas mora
+na página da turma, que a professora alcançava por "Turmas & Projetos".
+Sem uma porta nova, ela perderia o acesso ao plano no mesmo dia em que
+ele foi transcrito. A lista de turmas e a turma aberta no Painel
+ganharam o link para a página da turma, já na aba do plano.
+
 ### O portão da equipe
 
 Quem confere a senha é o **Netlify Identity** — o mesmo serviço que as

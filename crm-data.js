@@ -6795,11 +6795,39 @@
     if (path.indexOf("ISR - ") < 0) return false;
     return !ABERTAS.some(function (a) { return path.indexOf(a) >= 0; });
   }
+  // As telas que a professora alcança. O trabalho dela é o Painel; a
+  // página da turma é onde o plano, a chamada e os materiais daquela
+  // turma moram, e o perfil é o que o nome da aluna abre.
+  var TELAS_DA_PROFESSORA = ["ISR - Painel", "ISR - Turma ", "ISR - Perfil"];
+  // Quem só dá aula: ensina e não cuida da escola. A Gabi e a Carla
+  // dão aula e cuidam, então não entram aqui.
+  function soProfessora() {
+    var v = gestaoVisao();
+    if (!v) return false;
+    var papeis = (v.papeis || []).slice();
+    if (v.perfil) papeis.push(v.perfil);
+    var ensina = papeis.indexOf("professora") >= 0 || papeis.indexOf("extra") >= 0
+      || papeis.indexOf("shadow") >= 0;
+    var cuida = papeis.indexOf("gestora") >= 0 || papeis.indexOf("operacao") >= 0
+      || papeis.indexOf("comercial") >= 0;
+    return ensina && !cuida;
+  }
   (function guardGestao() {
     try {
       if (window.top !== window.self) return;
       var path = decodeURIComponent(window.location.pathname || "");
-      if (telaDeGestao(path) && !gestaoUser()) window.location.replace("gestao.html");
+      if (!telaDeGestao(path)) return;
+      if (!gestaoUser()) { window.location.replace("gestao.html"); return; }
+      // O menu da professora tem um item só, mas menu escondido não é
+      // porta trancada: o endereço de uma tela de gestão continua
+      // funcionando se alguém o digitar ou se ele vier num link antigo.
+      // Aqui ela volta para o Painel em vez de abrir a escola inteira.
+      //
+      // Vale o mesmo aviso do guard acima: isto roda no navegador e é
+      // recorte de trabalho, não proteção. O que protege é o servidor.
+      if (soProfessora() && !TELAS_DA_PROFESSORA.some(function (t) { return path.indexOf(t) >= 0; })) {
+        window.location.replace("ISR%20-%20Painel%20v3.dc.html");
+      }
     } catch (e) {}
   })();
 
@@ -14357,6 +14385,7 @@
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
     gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
+    soProfessora: soProfessora,
     verComo: verComo, setVerComo: setVerComo,
     verComoOpcoes: verComoOpcoes,
     guardarTokenGestao: guardarTokenGestao, tokenGestao: tokenGestao,

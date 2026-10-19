@@ -102,11 +102,24 @@
   // título em cima de cada grupo, a pessoa pula direto para o pedaço
   // do dia em que está.
   var ITENS = [
+    // ── O MENU DA PROFESSORA É UM ITEM SÓ ────────────────────────
+    //
+    // "A professora vê só o Painel do professor, com as próprias
+    // turmas, particulares e clubes" — é a regra do handoff, e a
+    // escola confirmou. Antes ela via seis destinos, e cinco deles
+    // mostravam a escola inteira ou repetiam o que o Painel já traz.
+    //
+    // A Agenda saiu junto. A função dela volta como o cartão "Agenda
+    // de hoje" dentro do Painel; enquanto esse cartão não existe, a
+    // professora vê as aulas da semana na própria aba Hoje.
+    //
+    // Quem dá aula E cuida da escola (a Gabi, a Carla) não perde nada:
+    // a conta é por papel, e o papel de gestão continua abrindo tudo.
     // A Central é de quem cuida da escola. No v5 a professora nem
     // aparece nela: a casa dela é o Painel do professor, que é onde a
     // fila pedagógica e as aulas sem chamada passaram a morar.
     { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
-    { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
+    { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
 
     // "Alunas e vendas" é a seção de quem vende e administra. A
     // professora não entra: o trabalho dela é a seção pedagógico, e as
@@ -126,14 +139,14 @@
     // A ordem é a que a escola desenhou: o painel primeiro, depois o
     // acompanhamento das alunas, as turmas, as gravações e os clubes.
     { id: "professor", sec: "pedagógico", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
-    { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
-    { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas & Projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas & Projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     // O link da aula gravada sempre se colou dentro da chamada. O que
     // não havia era onde VER o conjunto: quais aulas têm gravação e
     // quais ficaram sem. Sem a lista, descobrir que a aula de três
     // semanas atrás não foi publicada dependia de a aluna reclamar.
-    { id: "gravacoes", sec: "pedagógico", icone: "▷", label: "Gravações", href: "ISR - Gravacoes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
-    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "professora", "operacao"] },
+    { id: "gravacoes", sec: "pedagógico", icone: "▷", label: "Gravações", href: "ISR - Gravacoes v3.dc.html", perfis: ["gestora", "operacao"] },
+    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "operacao"] },
 
     { id: "marketing", sec: "escola", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
     { id: "equipe", sec: "escola", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },
