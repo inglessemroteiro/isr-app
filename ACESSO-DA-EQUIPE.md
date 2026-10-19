@@ -1,14 +1,19 @@
 # Entrar no sistema — passo a passo para a equipe
 
-Mensagem pronta para mandar para as professoras e tutoras. O acesso é o
-mesmo em celular e computador.
+Mensagem pronta para encaminhar às professoras e tutoras, em português e
+em inglês. O acesso é o mesmo em celular e computador.
 
 ---
+
+## Português
 
 **Acesso ao sistema do Inglês sem Roteiro**
 
 O endereço é este, e vale salvar nos favoritos:
 **https://app.inglessemroteiro.com.br/gestao.html**
+
+Esse endereço é o da equipe. O endereço do site sem o `/gestao.html` é a
+porta das alunas — por ele você não entra no painel.
 
 **1. Se você ainda não tem senha**
 
@@ -39,7 +44,7 @@ idiomas, e a escolha fica guardada no seu aparelho.
 **4. Confira a versão**
 
 No pé do menu aparece um número de versão. Precisa estar em
-**v2026.10.19-j** ou mais recente. Se estiver diferente, o seu navegador
+**v2026.10.19-k** ou mais recente. Se estiver diferente, o seu navegador
 guardou uma cópia antiga:
 
 - celular: feche a aba e abra o endereço de novo;
@@ -58,7 +63,66 @@ Com essas quatro coisas dá para resolver sem ficar adivinhando.
 
 ---
 
-## Por que o link de senha abre numa tela de aluna
+## English
+
+**Signing in to the Inglês sem Roteiro system**
+
+This is the address — worth bookmarking it:
+**https://app.inglessemroteiro.com.br/gestao.html**
+
+That address is the team's door. The site address without `/gestao.html`
+is the students' door, and it will not take you to the teacher panel.
+
+**1. If you don't have a password yet**
+
+Tap **"Esqueci minha senha"** (*Forgot my password*), type your e-mail
+and send. A link arrives by e-mail within a few minutes — if you don't
+see it, check your spam folder (the sender is Netlify).
+
+Open the link. The screen is titled **"Nova senha"** (*New password*).
+Type a password of 8 characters or more and save. Saving signs you in.
+
+Use **the same e-mail the school registered for you**. If you try
+another address, the screen says that e-mail is not in the team records
+and names the address it refused — send that message to Gabi.
+
+**2. If you already have a password**
+
+E-mail and password on the sign-in screen, then **Entrar** (*Sign in*).
+
+**3. What you should see**
+
+A menu on the left (on a phone, behind the menu button at the top) with
+**Agenda** (*Schedule*) and **Painel do professor** (*Teacher panel*).
+The panel is your working screen: today's class, attendance, your
+classes and your students.
+
+At the top of the panel there is a **PT / EN** button — the panel works
+in both languages, and your choice is remembered on your device.
+
+**4. Check the version**
+
+A version number shows at the bottom of the menu. It has to be
+**v2026.10.19-k** or newer. If it is different, your browser kept an old
+copy:
+
+- phone: close the tab and open the address again;
+- computer: `Ctrl + Shift + R` (Windows) or `Cmd + Shift + R` (Mac).
+
+**5. If it doesn't work**
+
+Please send Gabi:
+
+1. the exact e-mail you used;
+2. the sentence that appeared on screen (a screenshot is enough);
+3. phone or computer, and which browser;
+4. the version number from the bottom of the menu.
+
+With those four things it can be fixed without guesswork.
+
+---
+
+## Por que a tela de senha fala de aluna
 
 O e-mail de convite e o de redefinição de senha do Netlify apontam
 sempre para a raiz do site, e aluna e equipe vivem no mesmo serviço de
@@ -66,5 +130,5 @@ identidade — não há como dar um endereço por pessoa. A tela que abre é
 a porta das duas, e depois de salvar a senha cada uma vai para a sua
 área: a professora para o painel, a aluna para o app dela.
 
-Por isso a tela de senha se chama **"Nova senha"**, e não "Área da
-aluna", e diz que o acesso é o mesmo para as duas.
+Por isso a tela de senha se chama "Nova senha", e não "Área da aluna", e
+diz que o acesso é o mesmo para as duas.

@@ -264,11 +264,24 @@
   status = 301
   force = true
 
-# A Área da Aluna no desenho novo. O endereço curto é o que vai para
-# ela; o arquivo antigo continua de pé enquanto o caderno, o Review e
-# o perfil não estão prontos aqui.
+# A Área da Aluna no desenho novo, num endereço curto para abrir e
+# conferir. O arquivo antigo continua de pé enquanto o caderno, o
+# Review e o perfil não estão prontos aqui.
+#
+# ESTE ENDEREÇO NÃO PODE SER `/aluna.html`. Era, e com `force = true`,
+# que manda a regra valer POR CIMA de um arquivo existente — e existe um
+# arquivo `aluna.html`: é o PORTÃO DE LOGIN, da aluna e da equipe. Com a
+# regra assim, o portão ficava inalcançável em produção: a raiz do site
+# manda todo mundo para `aluna.html`, e de lá a pessoa caía na tela da
+# aluna v4, que reconhece quem é só pelo `?id=` da barra de endereço.
+# Sem `?id`, página vazia. Foi o que as professoras viram ao entrar, e
+# foi o que engoliu os links de criar e redefinir senha — o token chega
+# numa tela que não sabe o que fazer com ele.
+#
+# verificar-redirects.js existe por causa disto: nenhuma regra forçada
+# pode cobrir um arquivo que existe.
 [[redirects]]
-  from = "/aluna.html"
+  from = "/area-da-aluna"
   to = "/ISR%20-%20Aluna%20v4.dc.html"
   status = 301
   force = true
