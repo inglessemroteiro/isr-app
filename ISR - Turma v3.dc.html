@@ -186,7 +186,12 @@
               <sc-if value="{{ planoTemGuia }}">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-button-secondary); border-radius: 14px; padding: 11px 14px">
                   <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
-                  <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">Guia do professor ↗</a>
+                  <sc-if value="{{ planoTemSyllabus }}">
+                    <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
+                  </sc-if>
+                  <sc-if value="{{ planoTemGuiaDoNivel }}">
+                    <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoGuiaLabel }} ↗</a>
+                  </sc-if>
                 </div>
               </sc-if>
 
@@ -463,7 +468,9 @@ class Component extends DCLogic {
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
       planoOnPublicar: () => {}, planoPublicarLabel: "", planoTemErro: false, planoErro: "",
-      planoTemGuia: false, planoGuia: "", planoTemObjetivo: false, planoObjetivo: "",
+      planoTemGuia: false, planoGuia: "", planoGuiaLabel: "", planoTemGuiaDoNivel: false,
+      planoTemSyllabus: false, planoSyllabus: "", planoSyllabusLabel: "",
+      planoTemObjetivo: false, planoObjetivo: "",
       planoMinutos: "", planoEtapas: [], planoEditando: false, planoLendo: true,
       planoFases: [], planoOnAddEtapa: () => {}, planoPalavras: [], planoSemPalavras: true,
       planoHomework: "", planoOnSalvar: () => {} }, refs);
@@ -639,8 +646,13 @@ class Component extends DCLogic {
       },
       planoTemErro: !!this.state.planoErro,
       planoErro: this.state.planoErro || "",
-      planoTemGuia: !!(pAtual && pAtual.guia),
+      planoTemGuia: !!(pAtual && (pAtual.guia || pAtual.syllabusDoCiclo)),
       planoGuia: (pAtual && pAtual.guia) || "#",
+      planoTemGuiaDoNivel: !!(pAtual && pAtual.guia),
+      planoGuiaLabel: "Guia " + (u.nivel || "do professor"),
+      planoTemSyllabus: !!(pAtual && pAtual.syllabusDoCiclo),
+      planoSyllabus: (pAtual && pAtual.syllabusDoCiclo) || "#",
+      planoSyllabusLabel: "Syllabus " + (u.cycle || "do ciclo"),
       planoTemObjetivo: !!(pAtual && pAtual.objetivo),
       planoObjetivo: (pAtual && pAtual.objetivo) || "",
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",

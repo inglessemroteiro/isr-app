@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-a",
+  numero: "2026.10.19-b",
   data: "19/10/2026",
-  nota: "A chamada diz qual sessão foi dada, e o plano chega ao caderno da aluna"
+  nota: "Convite da aluna pelo e-mail da matrícula, e os materiais do ciclo"
 };

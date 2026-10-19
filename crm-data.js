@@ -5771,7 +5771,7 @@
     "isr_caderno_v1", "isr_palavras_v1",
     // o syllabus é o trabalho pedagógico do ciclo e o plano é o que a
     // professora ajustou nele: perder isso é perder o planejamento
-    "isr_syllabus_v1", "isr_planos_v1"];
+    "isr_syllabus_v1", "isr_planos_v1", "isr_materiais_v1"];
 
   function snapshotDados() {
     var d = { _versao: ESQUEMA_VERSAO, _em: new Date().toISOString() };
@@ -6125,7 +6125,7 @@
       caderno: cadernoAll(), palavras: palavrasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
-      syllabus: syllabusAll(), planos: planosAll(),
+      syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -6145,6 +6145,7 @@
     grava(CONTAS_KEY, d.contas);
     grava(CADERNO_KEY, d.caderno); grava(PALAVRAS_KEY, d.palavras);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
+    grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
@@ -6191,6 +6192,7 @@
       // mapa turma|sessão, e cada aula tem a sua professora
       syllabus: lista("syllabus"),
       planos: mesclarMapa(local.planos, remoto.planos),
+      materiais: mesclarMapa(local.materiais, remoto.materiais),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
@@ -9247,6 +9249,57 @@
       limites: PERFIL_LIMITES };
   }
 
+  // ── CONVIDAR A ALUNA PARA O APP ───────────────────────────────
+  //
+  // O convite vai para o e-mail da MATRÍCULA, e isso é estrutural, não
+  // uma recomendação: esta função não aceita um endereço digitado. Ela
+  // recebe o id da aluna e manda para o e-mail que está na ficha dela.
+  // Um campo livre aqui seria a porta para convidar qualquer um, e o
+  // acesso ao app é o acesso aos dados dela.
+  //
+  // Quem convida é a gestora logada: o navegador manda o token do
+  // Netlify Identity, e a função do Netlify valida. A chave do Zapier
+  // continua existindo para a automação do systeme, e não passa pelo
+  // navegador de ninguém.
+  function convidarAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return Promise.resolve({ ok: false, erro: "Aluna não encontrada." });
+    if (p.status !== "aluna" && p.status !== "mvs") {
+      return Promise.resolve({ ok: false,
+        erro: "O convite é para quem já é aluna. " + firstName(p.nome)
+          + " ainda está como " + (p.status || "lead") + "." });
+    }
+    var email = String(p.email || "").trim().toLowerCase();
+    if (!email || email.indexOf("@") < 1) {
+      return Promise.resolve({ ok: false,
+        erro: "A ficha de " + firstName(p.nome) + " não tem e-mail. "
+          + "O convite vai para o e-mail da matrícula, então ele precisa estar no cadastro." });
+    }
+    return chamarFuncao("convidar-aluna", { body: { email: email } })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          return { ok: false, erro: (d && d.erro) || "O convite não saiu.", email: email };
+        }
+        // fica na ficha: quem olhar depois precisa saber que já foi, e
+        // quando, para não convidar a mesma pessoa toda semana
+        mutate(pessoaId, function (pp) {
+          pp.convidadaEm = iso(today());
+          pp.convidadaPara = email;
+        });
+        agendarSync();
+        return { ok: true, email: email, jaTinhaConta: !!d.jaTinhaConta };
+      })
+      .catch(function (e) {
+        return { ok: false, erro: "Não foi possível falar com o servidor: " + String(e && e.message || e) };
+      });
+  }
+  function conviteDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId) || {};
+    return { em: p.convidadaEm || "", para: p.convidadaPara || "",
+      email: String(p.email || "").trim() };
+  }
+
   // ── O PLANO DE AULA ───────────────────────────────────────────
   //
   // Duas camadas, e a separação entre elas é o ponto.
@@ -9286,6 +9339,77 @@
   }
   var SYLLABUS_KEY = "isr_syllabus_v1";
   var PLANOS_KEY = "isr_planos_v1";
+  // ── OS MATERIAIS DO CICLO ─────────────────────────────────────
+  //
+  // O syllabus do ciclo e o guia de cada nível são documentos, e é
+  // neles que o trabalho pedagógico de verdade mora. O sistema não os
+  // copia para dentro: ele guarda a PORTA para cada um, por ciclo e
+  // por nível, e a tela do plano abre a porta certa.
+  //
+  // Copiar o texto dos guias para cá seria criar uma segunda versão
+  // que envelhece sozinha. A professora precisa do guia inteiro, e o
+  // guia inteiro é o documento.
+  var MATERIAIS_KEY = "isr_materiais_v1";
+  function materiaisAll() {
+    try { return JSON.parse(localStorage.getItem(MATERIAIS_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function materiaisSave(m) {
+    try { localStorage.setItem(MATERIAIS_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+  // O ciclo da turma não é sempre o ciclo das metas: na virada, as
+  // turmas continuam marcadas com o ciclo anterior por um tempo. Então
+  // a busca é pelo ciclo pedido e, se ele não tem material guardado,
+  // pelo ciclo que a escola está dando agora — que é o guia que a
+  // professora quer abrir. Sem essa volta, o link que a Gabi acabou de
+  // cadastrar não aparecia em turma nenhuma.
+  function materiaisDoCiclo(ciclo) {
+    var m = materiaisAll();
+    var atual = metasAtuais().cicloLabel;
+    var c = ciclo || atual;
+    var r = m[c];
+    var de = c;
+    if (!r || (!r.syllabus && !Object.keys(r.guias || {}).length)) {
+      if (m[atual]) { r = m[atual]; de = atual; }
+    }
+    r = r || {};
+    return { ciclo: c, de: de, syllabus: r.syllabus || "", guias: r.guias || {} };
+  }
+  function guiaDoNivel(nivel, ciclo) {
+    return materiaisDoCiclo(ciclo).guias[nivel] || "";
+  }
+  // Só https: um link que não é https não abre, e aqui ele vira botão.
+  function salvarMateriais(ciclo, dados) {
+    var c = String(ciclo || metasAtuais().cicloLabel || "").trim();
+    if (!c) return { ok: false, erro: "Diga de que ciclo são os materiais." };
+    dados = dados || {};
+    var limpa = function (u) {
+      var v = String(u || "").trim().slice(0, 300);
+      if (!v) return "";
+      return /^https:\/\//i.test(v) ? v : null;
+    };
+    var m = materiaisAll();
+    var r = m[c] || { guias: {} };
+    if ("syllabus" in dados) {
+      var s = limpa(dados.syllabus);
+      if (s === null) return { ok: false, erro: "O link do syllabus precisa começar com https://" };
+      r.syllabus = s;
+    }
+    if (dados.guias) {
+      r.guias = r.guias || {};
+      var ruim = "";
+      Object.keys(dados.guias).forEach(function (n) {
+        var g = limpa(dados.guias[n]);
+        if (g === null) { ruim = n; return; }
+        if (g) r.guias[n] = g; else delete r.guias[n];
+      });
+      if (ruim) return { ok: false, erro: "O link do guia de " + ruim + " precisa começar com https://" };
+    }
+    r._v = Date.now();
+    m[c] = r;
+    materiaisSave(m);
+    return { ok: true, materiais: materiaisDoCiclo(c) };
+  }
   var PLANO_LIMITES = { titulo: 120, objetivo: 400, etapa: 200, homework: 600,
     palavras: 40, etapas: 20, min: 180 };
 
@@ -9389,7 +9513,12 @@
     return {
       turma: turmaId, n: n,
       titulo: base.titulo || "", objetivo: base.objetivo || "",
-      projeto: base.projeto || t.projeto || "", guia: base.guia || "",
+      projeto: base.projeto || t.projeto || "",
+      // o guia é do NÍVEL, não da sessão: é um documento só para as dez
+      // sessões, e repeti-lo por sessão era convidar dez links
+      // diferentes para o mesmo guia
+      guia: base.guia || guiaDoNivel(t.nivel, t.cycle),
+      syllabusDoCiclo: materiaisDoCiclo(t.cycle).syllabus,
       doSyllabus: !!sess, tocado: !!meu,
       etapas: limpaEtapas(meu ? meu.etapas : base.etapas),
       palavras: limpaPalavras(meu && meu.palavras !== undefined ? meu.palavras : base.palavras),
@@ -13972,6 +14101,9 @@
     registrarAcessoAluna: registrarAcessoAluna,
     salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna,
     cadernoDaAluna: cadernoDaAluna, notaDaAula: notaDaAula, salvarNotaDaAula: salvarNotaDaAula,
+    convidarAluna: convidarAluna, conviteDaAluna: conviteDaAluna,
+    materiaisDoCiclo: materiaisDoCiclo, guiaDoNivel: guiaDoNivel,
+    salvarMateriais: salvarMateriais,
     fasesDoPlano: fasesDoPlano, faseLabel: faseLabel,
     syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
     apagarSessaoSyllabus: apagarSessaoSyllabus,

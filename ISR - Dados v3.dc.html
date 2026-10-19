@@ -99,6 +99,27 @@
       <p style="margin: 8px 0 0; font-size: 11.5px; color: {{ flinAvisoCor }};">{{ flinAviso }}</p>
     </section>
 
+    <!-- MATERIAIS DO CICLO -->
+    <!-- O sistema guarda a PORTA para cada documento, não uma cópia do
+         texto. Copiar os guias para dentro criaria uma segunda versão
+         que envelhece sozinha, e a professora precisa do guia inteiro. -->
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px; margin-bottom: 12px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Materiais do ciclo {{ matCiclo }}</div>
+      <p style="margin: 0 0 12px; font-size: 12.5px; color: var(--color-primary-800); line-height: 1.6;">O syllabus do ciclo e o guia do professor de cada nível. Eles aparecem como porta em Turmas → a turma → Plano das aulas, ao lado do roteiro da sessão. O sistema guarda o endereço, não uma cópia do documento.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;">
+        <span style="flex: 0 0 150px; font-size: 12px; font-weight: 600; color: var(--color-tertiary-500)">Syllabus do ciclo</span>
+        <input class="isr-campo" ref="{{ matSyllabusRef }}" placeholder="{{ matSyllabusAtual }}" style="flex: 1; min-width: 220px; padding: 9px 12px; font-size: 12.5px" />
+      </div>
+      <sc-for list="{{ matNiveis }}" as="mn" hint-placeholder-count="5">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+          <span style="flex: 0 0 150px; font-size: 12px; font-weight: 600; color: var(--color-tertiary-500)">Guia {{ mn.nivel }}</span>
+          <input class="isr-campo" ref="{{ mn.ref }}" placeholder="{{ mn.atual }}" style="flex: 1; min-width: 220px; padding: 9px 12px; font-size: 12.5px" />
+        </div>
+      </sc-for>
+      <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarMateriais }}" style="font-size: 12.5px; padding: 10px 18px; border-radius: 12px; margin-top: 4px">Salvar materiais</button>
+      <p style="margin: 8px 0 0; font-size: 11.5px; color: {{ matAvisoCor }};">{{ matAviso }}</p>
+    </section>
+
     <!-- AULAS GRAVADAS -->
     <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px; margin-bottom: 12px;">
       <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Aulas extras gravadas · todas as turmas</div>
@@ -140,6 +161,14 @@
 class Component extends DCLogic {
   state = { tick: 0, copiado: false, aviso: "", erro: "", flinSalvo: false, portalCopiado: false };
   flinRef = React.createRef();
+  matSyllabusRef = React.createRef();
+  // um ref por nível, criado sob demanda: os níveis vêm das turmas, e
+  // a escola abre nível novo sem avisar o código
+  matRefs = {};
+  refDoNivel(n) {
+    if (!this.matRefs[n]) this.matRefs[n] = React.createRef();
+    return this.matRefs[n];
+  }
   gravadasRef = React.createRef();
   importRef = React.createRef();
   portalRef = React.createRef();
@@ -154,11 +183,21 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { numeros: [], backups: [], semBackups: true, temAviso: false, temErro: false,
-      copiarLabel: "Copiar", tamanho: "" };
+      copiarLabel: "Copiar", tamanho: "",
+      matCiclo: "", matNiveis: [], matSyllabusRef: this.matSyllabusRef,
+      matSyllabusAtual: "", matAviso: "", matAvisoCor: "", onSalvarMateriais: () => {} };
 
     const bks = CRM.backupsLista();
     const arq = CRM.exportarTudo();
     const pessoas = CRM.getPessoas();
+
+    // ── os materiais do ciclo ──
+    const mat = CRM.materiaisDoCiclo ? CRM.materiaisDoCiclo() : { ciclo: "", syllabus: "", guias: {} };
+    const niveis = [];
+    (CRM.turmasLista() || []).forEach(u => {
+      if (u.nivel && niveis.indexOf(u.nivel) < 0) niveis.push(u.nivel);
+    });
+    niveis.sort();
 
     const flinAtual = CRM.flinUrl ? CRM.flinUrl() : "";
     const gravadasAtual = CRM.gravadasUrl ? CRM.gravadasUrl() : "";
@@ -183,6 +222,38 @@ class Component extends DCLogic {
             ? "Em uso: " + flinAtual
             : "Sem endereço: o resgate desconta os miles, mas o botão não aparece no app."),
       flinAvisoCor: (!flinAtual && !this.state.flinSalvo) ? "var(--color-error)" : "var(--color-tertiary-300)",
+      matCiclo: mat.ciclo,
+      matSyllabusRef: this.matSyllabusRef,
+      matSyllabusAtual: mat.syllabus || "Cole o link do syllabus do ciclo",
+      matNiveis: niveis.map(n => ({
+        nivel: n, ref: this.refDoNivel(n),
+        atual: mat.guias[n] || "Cole o link do guia deste nível"
+      })),
+      matAviso: this.state.matAviso || "",
+      matAvisoCor: this.state.matErro ? "var(--color-error-dark)" : "var(--color-success-dark)",
+      onSalvarMateriais: () => {
+        const v = (r) => ((r.current && r.current.value) || "").trim();
+        // campo em branco quer dizer "deixa como está", não "apaga": o
+        // placeholder mostra o que já está lá, e quem não digitou nada
+        // não pediu para remover nada
+        const dados = {};
+        const sy = v(this.matSyllabusRef);
+        if (sy) dados.syllabus = sy;
+        const guias = {};
+        niveis.forEach(n => { const g = v(this.refDoNivel(n)); if (g) guias[n] = g; });
+        if (Object.keys(guias).length) dados.guias = guias;
+        if (!Object.keys(dados).length) {
+          this.setState({ matAviso: "Nenhum link novo para salvar.", matErro: true });
+          return;
+        }
+        const r = CRM.salvarMateriais(mat.ciclo, dados);
+        if (r.ok) {
+          if (this.matSyllabusRef.current) this.matSyllabusRef.current.value = "";
+          niveis.forEach(n => { const x = this.refDoNivel(n); if (x.current) x.current.value = ""; });
+          this.setState({ matAviso: "Materiais salvos. Eles já aparecem no Plano das aulas.", matErro: false });
+        } else this.setState({ matAviso: r.erro, matErro: true });
+        this.bump();
+      },
       onSalvarFlin: () => {
         const v = ((this.flinRef.current && this.flinRef.current.value) || "").trim();
         if (v) CRM.setFlinUrl(v);

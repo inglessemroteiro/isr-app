@@ -781,6 +781,21 @@
                 <a href="{{ appHref }}" target="_blank" rel="noopener" style="text-decoration: none; border: 0; color: var(--color-tertiary-500); font-size: 11.5px; font-weight: 600; padding: 8px 14px; border-radius: 999px;">Abrir o app da aluna</a>
               </div>
               <p style="margin: 9px 0 0; font-size: 10.5px; color: {{ acessoCor }};">{{ acessoTexto }}</p>
+
+              <!-- CONVITE PARA O APP -->
+              <!-- O convite vai para o e-mail da matrícula, e não há
+                   campo para digitar outro: o acesso ao app é o acesso
+                   aos dados dela. -->
+              <div style="border-top: 1px solid var(--color-button-secondary); margin-top: 11px; padding-top: 11px">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Convite para o app</div>
+                <p style="margin: 0 0 9px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ conviteTexto }}</p>
+                <sc-if value="{{ convitePode }}">
+                  <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onConvidar }}" style="font-size: 11.5px; padding: 8px 14px">{{ conviteBotao }}</button>
+                </sc-if>
+                <sc-if value="{{ conviteAviso }}">
+                  <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: {{ conviteAvisoCor }};">{{ conviteAvisoTexto }}</p>
+                </sc-if>
+              </div>
             </div>
           </sc-if>
           </sc-if>
@@ -920,7 +935,9 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { ok: false, naoEncontrada: true, waDireto: "#" };
+    if (!CRM) return { ok: false, naoEncontrada: true, waDireto: "#",
+      convitePode: false, conviteBotao: "", conviteTexto: "", conviteAviso: false,
+      conviteAvisoTexto: "", conviteAvisoCor: "", onConvidar: () => {} };
     let p = CRM.getPessoa(this.pessoaId());
     if (!p) p = CRM.getPessoas()[0] || null;
     if (!p) return { ok: false, naoEncontrada: true, waDireto: "#" };
@@ -1854,7 +1871,8 @@ class Component extends DCLogic {
       label, bg, href: "ISR%20-%20Mensagens%20v3.dc.html?para=" + p.id + "&tpl=" + tpl
     });
     // certificado, app e uso: a gestão precisa ver se ela abre o app
-    (function () {
+    // (arrow, e não função comum: o bloco do convite usa this.state)
+    (() => {
       const h = CRM.horasDaAluna ? CRM.horasDaAluna(p.id) : null;
       const ac = CRM.acessoDaAluna ? CRM.acessoDaAluna(p.id) : null;
       out.certificadoHref = "ISR%20-%20Certificado.dc.html?id=" + p.id;
@@ -1871,6 +1889,36 @@ class Component extends DCLogic {
             + " · " + ac.n + (ac.n === 1 ? " acesso" : " acessos"));
       out.acessoCor = !ac || ac.nunca || (ac.diasSemAbrir !== null && ac.diasSemAbrir > 21)
         ? "var(--color-error)" : "var(--color-tertiary-300)";
+
+      // ── o convite ──
+      const cv = CRM.conviteDaAluna ? CRM.conviteDaAluna(p.id) : { em: "", email: "" };
+      const temEmail = !!cv.email && cv.email.indexOf("@") > 0;
+      out.convitePode = temEmail;
+      out.conviteBotao = cv.em ? "Convidar de novo" : "Convidar para o app";
+      out.conviteTexto = !temEmail
+        ? "Sem e-mail no cadastro. O convite vai para o e-mail da matrícula, "
+          + "então ele precisa estar na ficha antes."
+        : (cv.em
+          ? "Convidada em " + CRM.ddmm(cv.em) + ", para " + (cv.para || cv.email) + "."
+          : "Ainda não foi convidada. O convite vai para " + cv.email + ", "
+            + "o e-mail da matrícula.");
+      const res = this.state.conviteRes;
+      out.conviteAviso = !!(res && res.id === p.id);
+      out.conviteAvisoTexto = out.conviteAviso ? res.texto : "";
+      out.conviteAvisoCor = out.conviteAviso && res.bom
+        ? "var(--color-success-dark)" : "var(--color-error-dark)";
+      out.onConvidar = () => {
+        this.setState({ conviteRes: { id: p.id, bom: true, texto: "Enviando…" } });
+        CRM.convidarAluna(p.id).then((r) => {
+          this.setState({ conviteRes: { id: p.id, bom: !!r.ok,
+            texto: r.ok
+              ? (r.jaTinhaConta
+                ? "Ela já tinha conta — não precisa de convite de novo."
+                : "Convite enviado para " + r.email + ".")
+              : r.erro } });
+          this.bump();
+        });
+      };
     })();
 
     out.acoes = out.ehLead ? [
