@@ -9145,16 +9145,39 @@
 
   // O que esta pessoa pode assistir: as extras são de todo mundo; as da
   // turma, só se ela estiver nela.
+  // As gravações que a aluna pode ver. Duas regras, e as duas foram
+  // apontadas pela escola:
+  //
+  // 1. SÃO AS AULAS DELA, NÃO AS DA TURMA EM QUE ELA ESTÁ HOJE. Servir
+  //    pela turma atual fazia quem trocou de turma perder as gravações
+  //    das aulas que assistiu e ganhar as de aulas que nunca teve. A
+  //    chamada é quem sabe: a aula é dela se ela aparece na chamada.
+  //    É o mesmo casamento que o caderno já faz.
+  //
+  // 2. O ACESSO É DURANTE O PERÍODO DE AULAS. Quem saiu da escola não
+  //    continua com a biblioteca aberta — nem as gravações da turma
+  //    nem as extras. Enquanto é aluna, vê; deixou de ser, não vê.
   function gravacoesParaAluna(pessoaId) {
     var p = getPessoa(pessoaId);
-    if (!p) return { extras: [], turma: [] };
+    var vazio = { extras: [], turma: [], semAcesso: true };
+    if (!p) return vazio;
+    if (p.status !== "aluna" && p.status !== "mvs") return vazio;
     var todas = gravacoesLista().filter(function (g) { return !!g.link; });
-    var extras = todas.filter(function (g) { return g.tipo === "extra"; });
-    var daTurma = p.turma
-      ? todas.filter(function (g) { return g.tipo === "turma" && g.turma === p.turma; })
-      : [];
+    // as datas em que ela esteve na chamada, por turma
+    var minhas = {};
+    var cham = chamadasAll();
+    Object.keys(cham).forEach(function (k) {
+      var ch = cham[k];
+      if (!ch || !ch.data || !ch.presencas) return;
+      if (!(pessoaId in ch.presencas)) return;
+      minhas[ch.turma + "|" + ch.data] = true;
+    });
+    var daTurma = todas.filter(function (g) {
+      return g.tipo === "turma" && minhas[g.turma + "|" + g.data];
+    });
     var ordena = function (a, b) { return a.data < b.data ? 1 : -1; };
-    return { extras: extras.sort(ordena), turma: daTurma.sort(ordena) };
+    return { extras: todas.filter(function (g) { return g.tipo === "extra"; }).sort(ordena),
+      turma: daTurma.sort(ordena), semAcesso: false };
   }
 
   // ── TAREFA DE CASA ────────────────────────────────────────────

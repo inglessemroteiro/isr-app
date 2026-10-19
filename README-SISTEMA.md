@@ -1538,6 +1538,35 @@ continuam como estão — não têm dado nenhum no sistema, e o desenho
 pedia os dois. "Agenda de hoje" não entrou: ficou só "Próximas aulas ·
 7 dias", que é de onde a professora descobre a aula de quinta.
 
+#### As gravações são as aulas dela, e só enquanto ela estuda
+
+Dois consertos na mesma função, os dois apontados pela escola.
+
+**As gravações seguem a chamada, não a turma de hoje.** Servir pela
+turma atual fazia quem trocou de turma **perder as gravações das aulas
+que assistiu e ganhar as de aulas que nunca teve**. Agora a aula é dela
+se ela aparece na chamada — o mesmo casamento que o caderno já fazia.
+
+**O acesso é durante o período de aulas.** Quem saiu da escola não
+continua com a biblioteca aberta: nem as gravações da turma, nem as
+extras. Enquanto é aluna, vê; deixou de ser, não vê.
+
+#### A `save-chamada` fechou
+
+Era a última função que **gravava dado** e estava aberta na internet —
+e o que ela grava é chamada, o registro que valida a aula para a folha
+e decide a presença da aluna no ciclo. Ficou aberta porque nasceu antes
+da regra. A escola conferiu as invocações no Netlify: nenhuma automação
+a chama, então fechá-la não quebrou nada.
+
+Ficam abertas `bc-proxy`, `save-confirmation`, `save-feedback`,
+`save-interest` e `subscribe-push` — as quatro últimas são formulário
+de aluna, e é razoável que sejam.
+
+A suíte das portas também foi consertada: uma função que depende de
+pacote não instalado no ambiente de teste derrubava a suíte inteira, e
+com ela a prova das outras. Agora ela diz qual pulou e prova o resto.
+
 ### Cada tela na rotina de quem abriu
 
 O menu já escondia as telas que não são de quem entrou, mas **dentro**

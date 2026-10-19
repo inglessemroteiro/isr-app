@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-f",
+  numero: "2026.10.19-g",
   data: "19/10/2026",
-  nota: "A aba Hoje: um hero só, em quatro estados"
+  nota: "Gravações pela presença, e a save-chamada fechada"
 };
