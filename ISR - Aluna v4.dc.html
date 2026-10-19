@@ -202,6 +202,39 @@
          registro das aulas dela, com o que foi dado, se ela estava, a
          tarefa, a gravação — e a nota que ela escreve. -->
     <sc-if value="{{ isNotebook }}">
+      <!-- A AULA AO VIVO -->
+      <!-- Enquanto a professora mantém a aula aberta, as tarefas do
+           plano publicado aceitam resposta aqui, e o que ela comenta
+           aparece preso à tarefa. Quando a aula é encerrada, o que
+           está escrito fica guardado e o campo fecha. -->
+      <sc-if value="{{ temAulaViva }}">
+        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ vivoEtiqueta }}</div>
+          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">{{ vivoTitulo }}</div>
+          <div style="font-size:13px;line-height:1.55;opacity:.85">{{ vivoTexto }}</div>
+        </section>
+
+        <sc-if value="{{ vivoSemTarefas }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:14px;line-height:1.6;color:var(--color-primary-800)">{{ L.vivoSemTarefas }}</section>
+        </sc-if>
+
+        <sc-for list="{{ vivoTarefas }}" as="vt" hint-placeholder-count="3">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ vt.rotulo }}</div>
+            <div style="font-size:16px;font-weight:700;line-height:1.45;color:var(--color-primary-900)">{{ vt.pergunta }}</div>
+            <sc-if value="{{ vt.aberta }}">
+              <textarea value="{{ vt.resposta }}" onchange="{{ vt.onResposta }}" rows="4" maxlength="4000" placeholder="{{ L.respostaPh }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-tertiary-50);border-radius:16px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--color-primary-900);resize:vertical"></textarea>
+            </sc-if>
+            <sc-if value="{{ vt.fechada }}">
+              <div style="background:var(--color-bg-default);border-radius:16px;padding:13px 16px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;color:{{ vt.cor }}">{{ vt.respostaLida }}</div>
+            </sc-if>
+            <sc-for list="{{ vt.comentarios }}" as="cm" hint-placeholder-count="1">
+              <div style="background:var(--color-primary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.55;color:var(--color-primary-900)">{{ cm.texto }} <span style="color:var(--color-tertiary-700)">· {{ cm.quem }}</span></div>
+            </sc-for>
+          </section>
+        </sc-for>
+      </sc-if>
+
       <sc-if value="{{ temTarefaAtual }}">
         <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:6px">
           <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ L.tarefaAtual }}</div>
@@ -583,8 +616,26 @@ class Component extends DCLogic {
         if (r && r.novas) this.setState({ palavrasNovas: r.novas });
       }
     } catch (e) {}
+    // Enquanto a aula corre, o comentário da professora chega no
+    // caderno sozinho — ficar recarregando a página no meio da aula
+    // não é trabalho de aluna. O relógio pula quando ela está
+    // digitando: trocar o texto debaixo do cursor seria pior.
+    this.relogioVivo = setInterval(() => {
+      try {
+        const a = document.activeElement;
+        if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
+        if (this.state.page !== "notebook") return;
+        const C = window.ISRCRM, id = this.alunaId();
+        if (!C || !C.aulaVivaDaAluna || !id || !C.aulaVivaDaAluna(id)) return;
+        if (C.carregarDoBackend) C.carregarDoBackend(() => {});
+        this.bump();
+      } catch (e) {}
+    }, 20000);
   }
-  componentWillUnmount() { try { window.removeEventListener("resize", this.onR); } catch (e) {} }
+  componentWillUnmount() {
+    try { window.removeEventListener("resize", this.onR); } catch (e) {}
+    try { clearInterval(this.relogioVivo); } catch (e) {}
+  }
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   alunaId() {
@@ -627,8 +678,13 @@ class Component extends DCLogic {
       semTopico: T("class given", "aula dada"),
       entregou: T("homework delivered", "tarefa entregue"),
       naoEntregou: T("homework not delivered", "tarefa não entregue"),
-      cadernoEmObra: T("The activities of each lesson — the ones the teacher plans and you answer here — come when the lesson plan exists on her side. What is above is your record of the classes, and it stays.",
-        "As atividades de cada aula — as que a professora planeja e você responde aqui — chegam quando o plano de aula existir do lado dela. O que está acima é o seu registro das aulas, e ele fica."),
+      cadernoEmObra: T("The tasks of a lesson show up here while the class is open: your teacher opens the notebook, you answer, and she reads it while you write. What is above is your record of the classes, and it stays.",
+        "As tarefas da aula aparecem aqui enquanto a aula está aberta: a professora abre o caderno, você responde, e ela lê enquanto você escreve. O que está acima é o seu registro das aulas, e ele fica."),
+      // ── a aula ao vivo ──
+      respostaPh: T("Write your answer here…", "Escreva a sua resposta aqui…"),
+      vivoSemTarefas: T("This class has no task with a question yet. When your teacher publishes the lesson plan, the tasks show up here.",
+        "Esta aula ainda não tem tarefa com pergunta. Quando a professora publicar o plano da aula, as tarefas aparecem aqui."),
+      semResposta: T("You did not answer this one.", "Você não respondeu esta."),
       // ── review ──
       paraHoje: T("to review today", "para revisar hoje"),
       semFila: T("your review", "o seu review"),
@@ -717,6 +773,8 @@ class Component extends DCLogic {
       eyebrow: "", title: "—",
       milesFmt: "0", milesLinha: "", goMiles: () => {},
       caderno: [], cadernoVazio: true, temTarefaAtual: false,
+      temAulaViva: false, vivoEtiqueta: "", vivoTitulo: "", vivoTexto: "",
+      vivoTarefas: [], vivoSemTarefas: false,
       tarefaAtualTexto: "", tarefaAtualQuando: "", notaRef: this.notaRef,
       temRevisao: false, semRevisao: true, revisaoVaziaTexto: "",
       cartaoPalavra: "", cartaoTraducao: "", cartaoExemplo: "", cartaoTemExemplo: false,
@@ -1029,6 +1087,22 @@ class Component extends DCLogic {
 
     // ── caderno e review ──
     const cad = (CRM.cadernoDaAluna && CRM.cadernoDaAluna(p.id, 180)) || [];
+
+    // ── a aula ao vivo ──
+    // A professora abre o caderno da aula; enquanto ele está aberto, a
+    // resposta de cada tarefa é gravada a cada letra. O campo some
+    // quando ela encerra: a resposta continua ali, só não muda mais.
+    const viva = (CRM.aulaVivaDaAluna && CRM.aulaVivaDaAluna(p.id)) || null;
+    const vivaTarefas = viva && CRM.tarefasDaAula
+      ? CRM.tarefasDaAula(viva.turma, viva.data) : [];
+    const vivaMinhas = viva && CRM.respostasDaAluna
+      ? CRM.respostasDaAluna(p.id, viva.turma, viva.data)
+      : { respostas: {}, comentarios: {} };
+    // A aula de hoje está em cima, aberta. Deixá-la também na lista de
+    // registro punha as mesmas perguntas duas vezes na mesma tela; ela
+    // entra no registro amanhã, que é quando vira registro.
+    const cadLista = viva
+      ? cad.filter(c => !(c.turma === viva.turma && c.data === viva.data)) : cad;
     const turmaDela = (CRM.turmasLista ? CRM.turmasLista() : [])
       .filter(u => (u.nivel + " · " + u.turma) === p.turma)[0] || null;
     const tcAtual = (turmaDela && turmaDela.tarefaCasa) || null;
@@ -1135,9 +1209,43 @@ class Component extends DCLogic {
       tarefaAtualTexto: tcAtual ? tcAtual.texto : "",
       tarefaAtualQuando: tcAtual && tcAtual.em
         ? T("given on " + CRM.ddmm(tcAtual.em), "passada em " + CRM.ddmm(tcAtual.em)) : "",
-      cadernoVazio: cad.length === 0,
+      temAulaViva: !!viva,
+      vivoEtiqueta: viva && viva.estado === "ao_vivo"
+        ? T("class in progress", "aula acontecendo agora")
+        : T("class ended", "aula encerrada"),
+      vivoTitulo: viva ? viva.turma : "",
+      vivoTexto: viva && viva.estado === "ao_vivo"
+        ? T("Answer below. Your teacher reads it while you write.",
+            "Responda abaixo. A professora lê enquanto você escreve.")
+        : T("The notebook of this class is closed. What you wrote stays here.",
+            "O caderno desta aula está fechado. O que você escreveu fica aqui."),
+      vivoSemTarefas: !!viva && vivaTarefas.length === 0,
+      vivoTarefas: vivaTarefas.map((t, i) => {
+        const r = vivaMinhas.respostas[String(i)] || null;
+        const texto = r ? String(r.t || "") : "";
+        const aberta = !!viva && viva.estado === "ao_vivo";
+        return {
+          rotulo: T("Task ", "Tarefa ") + (i + 1)
+            + [t.fase, t.titulo].filter(Boolean).map(x => " · " + x).join(""),
+          pergunta: t.pergunta,
+          resposta: texto,
+          aberta: aberta, fechada: !aberta,
+          respostaLida: texto.trim() ? texto : L.semResposta,
+          cor: texto.trim() ? "var(--color-primary-900)" : "var(--color-tertiary-700)",
+          onResposta: (e) => {
+            CRM.salvarResposta(p.id, viva.turma, viva.data, i, e.target.value);
+            this.bump();
+          },
+          comentarios: (vivaMinhas.comentarios[String(i)] || []).map(c => ({
+            texto: c.texto,
+            quem: [c.por ? CRM.firstName(c.por) : "",
+              c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
+          }))
+        };
+      }),
+      cadernoVazio: cadLista.length === 0 && !viva,
       notaRef: this.notaRef,
-      caderno: cad.map(c => {
+      caderno: cadLista.map(c => {
         const chave = c.turma + "|" + c.data;
         const aberta = this.state.aulaAberta === chave;
         const EST = {

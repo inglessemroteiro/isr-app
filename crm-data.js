@@ -6125,6 +6125,9 @@
       // o que a aluna escreve no aparelho dela: sem isto no payload, a
       // nota da aula e o cofre de palavras morriam ao trocar de celular
       caderno: cadernoAll(), palavras: palavrasAll(),
+      // a aula ao vivo é um fato compartilhado: a professora abre no
+      // aparelho dela e o caderno de cinco alunas tem de abrir junto
+      aulasVivas: aulasVivasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
@@ -6146,6 +6149,7 @@
     grava(PRECOS_KEY, d.precos); grava(PROGRAMAS_KEY, d.programas);
     grava(CONTAS_KEY, d.contas);
     grava(CADERNO_KEY, d.caderno); grava(PALAVRAS_KEY, d.palavras);
+    grava(AULA_VIVA_KEY, d.aulasVivas);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
@@ -6189,6 +6193,7 @@
       // nota a nota; o cofre de palavras é uma lista por aluna, e vale
       // inteiro — é dela, e ela escreve num aparelho de cada vez
       caderno: mesclarMapa(local.caderno, remoto.caderno),
+      aulasVivas: mesclarMapa(local.aulasVivas, remoto.aulasVivas),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
@@ -10211,6 +10216,179 @@
     agendarSync();
     return { ok: true, texto: t };
   }
+  // ══════════════════════════════════════════════════════════════
+  //  A AULA AO VIVO
+  //  ------------------------------------------------------------
+  //  A professora abre a aula, e aí o caderno das alunas aceita
+  //  resposta. Enquanto a aula corre, o que elas escrevem aparece no
+  //  painel dela; quando a aula termina, as atividades fecham e o
+  //  homework abre.
+  //
+  //  Por que o estado é gravado e não fica só na tela: a aula é a
+  //  mesma para a professora e para cinco alunas, em cinco aparelhos.
+  //  "Começou" tem de ser um fato do banco, senão cada tela acredita
+  //  numa coisa — e a aluna que recarrega a página perde o acesso ao
+  //  caderno no meio da aula.
+  // ══════════════════════════════════════════════════════════════
+  var AULA_VIVA_KEY = "isr_aula_viva_v1";
+  function aulasVivasAll() {
+    try { return JSON.parse(localStorage.getItem(AULA_VIVA_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function aulasVivasSave(m) {
+    try { localStorage.setItem(AULA_VIVA_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+  function aulaVivaChave(turmaLabel, dataIso) { return turmaLabel + "|" + dataIso; }
+  // "nao_comecou" · "ao_vivo" · "encerrada"
+  function aulaViva(turmaLabel, dataIso) {
+    var r = aulasVivasAll()[aulaVivaChave(turmaLabel, dataIso)] || null;
+    if (!r || !r.inicio) return { estado: "nao_comecou", inicio: "", fim: "", minutos: 0 };
+    if (r.fim) return { estado: "encerrada", inicio: r.inicio, fim: r.fim, minutos: 0, por: r.por || "" };
+    var min = Math.max(0, Math.round((Date.now() - new Date(r.inicio).getTime()) / 60000));
+    return { estado: "ao_vivo", inicio: r.inicio, fim: "", minutos: min, por: r.por || "" };
+  }
+  function iniciarAula(turmaLabel, dataIso, por) {
+    if (!turmaLabel || !dataIso) return { ok: false, erro: "Aula não identificada." };
+    var m = aulasVivasAll();
+    var k = aulaVivaChave(turmaLabel, dataIso);
+    m[k] = { turma: turmaLabel, data: dataIso, inicio: new Date().toISOString(),
+      fim: "", por: por || "", _v: Date.now() };
+    aulasVivasSave(m);
+    return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
+  }
+  function encerrarAula(turmaLabel, dataIso, por) {
+    var m = aulasVivasAll();
+    var k = aulaVivaChave(turmaLabel, dataIso);
+    if (!m[k] || !m[k].inicio) return { ok: false, erro: "Esta aula não foi aberta." };
+    m[k].fim = new Date().toISOString();
+    m[k].fechouPor = por || "";
+    m[k]._v = Date.now();
+    aulasVivasSave(m);
+    return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
+  }
+  // Reabrir: a professora encerrou sem querer, ou a aula continuou.
+  function reabrirAula(turmaLabel, dataIso, por) {
+    var m = aulasVivasAll();
+    var k = aulaVivaChave(turmaLabel, dataIso);
+    if (!m[k] || !m[k].inicio) return iniciarAula(turmaLabel, dataIso, por);
+    m[k].fim = "";
+    m[k]._v = Date.now();
+    aulasVivasSave(m);
+    return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
+  }
+
+  // As tarefas que a aluna responde nesta aula: as etapas marcadas do
+  // plano publicado que trazem pergunta.
+  //
+  // Painel e caderno precisam da MESMA lista, na mesma ordem — a
+  // resposta é guardada pela posição. Se cada tela filtrasse por conta
+  // própria, a resposta da tarefa 2 apareceria na 3 no dia em que
+  // alguém mudasse um filtro.
+  function tarefasDaAula(turmaLabel, dataIso) {
+    var ch = getChamada(turmaLabel, dataIso);
+    var sessao = ch && ch.sessao ? ch.sessao : 0;
+    var plano = sessao ? planoPublicadoDaAula(turmaLabel, sessao) : null;
+    if (!plano) return [];
+    return (plano.atividades || []).filter(function (a) {
+      return a && String(a.pergunta || "").trim();
+    });
+  }
+
+  // A aula que está aberta para esta aluna agora: a turma dela, hoje.
+  // Só hoje — o caderno de ontem é registro, não aula em curso.
+  function aulaVivaDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p || !p.turma) return null;
+    var hoje = addDays(0);
+    var v = aulaViva(p.turma, hoje);
+    if (v.estado === "nao_comecou") return null;
+    return { turma: p.turma, data: hoje, estado: v.estado, minutos: v.minutos };
+  }
+
+  // ── AS RESPOSTAS DO CADERNO, POR TAREFA ───────────────────────
+  //
+  // O caderno guardava um texto livre por aula. As tarefas do plano
+  // publicado são perguntas numeradas, e é por elas que a aluna
+  // responde e a professora comenta — uma resposta por tarefa, com a
+  // hora da última letra, que é o que diz quem está escrevendo agora.
+  var RESPOSTA_LIMITE = 4000;
+  function registroDoCaderno(pessoaId, turmaLabel, dataIso) {
+    return cadernoAll()[cadernoChave(pessoaId, turmaLabel, dataIso)] || null;
+  }
+  function respostasDaAluna(pessoaId, turmaLabel, dataIso) {
+    var r = registroDoCaderno(pessoaId, turmaLabel, dataIso);
+    return { respostas: (r && r.respostas) || {}, comentarios: (r && r.comentarios) || {} };
+  }
+  function salvarResposta(pessoaId, turmaLabel, dataIso, i, texto) {
+    if (!pessoaId || !turmaLabel || !dataIso) return { ok: false, erro: "Aula não identificada." };
+    var viva = aulaViva(turmaLabel, dataIso);
+    if (viva.estado !== "ao_vivo") {
+      return { ok: false, fechado: true,
+        erro: viva.estado === "encerrada"
+          ? "Esta aula foi encerrada. O caderno dela está fechado."
+          : "A professora ainda não abriu o caderno desta aula." };
+    }
+    var m = cadernoAll();
+    var k = cadernoChave(pessoaId, turmaLabel, dataIso);
+    var reg = m[k] || {};
+    reg.respostas = reg.respostas || {};
+    var t = String(texto || "").slice(0, RESPOSTA_LIMITE);
+    reg.respostas[String(i)] = { t: t, em: new Date().toISOString() };
+    reg.em = new Date().toISOString();
+    reg._v = Date.now();
+    m[k] = reg;
+    try { localStorage.setItem(CADERNO_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return { ok: true };
+  }
+  // O comentário da professora numa resposta. Aparece no caderno da
+  // aluna, preso à tarefa — não é recado solto.
+  function comentarResposta(pessoaId, turmaLabel, dataIso, i, texto, por) {
+    var t = String(texto || "").trim().slice(0, 600);
+    if (!t) return { ok: false, erro: "Escreva o comentário." };
+    var m = cadernoAll();
+    var k = cadernoChave(pessoaId, turmaLabel, dataIso);
+    var reg = m[k] || {};
+    reg.comentarios = reg.comentarios || {};
+    var lista = reg.comentarios[String(i)] || [];
+    lista.push({ por: por || "", texto: t, em: new Date().toISOString() });
+    reg.comentarios[String(i)] = lista.slice(-10);
+    reg._v = Date.now();
+    m[k] = reg;
+    try { localStorage.setItem(CADERNO_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return { ok: true, comentarios: lista };
+  }
+  // O que a professora vê enquanto a aula corre: uma linha por aluna,
+  // com o que ela escreveu em cada tarefa e há quanto tempo.
+  //   escrevendo — mexeu nos últimos 90 segundos
+  //   terminou   — respondeu todas as tarefas
+  //   aguardando — está na aula e ainda não escreveu
+  function respostasDaAula(turmaLabel, dataIso, nTarefas) {
+    var alunas = alunasDaTurma(turmaLabel, dataIso) || [];
+    var total = parseInt(nTarefas, 10) || 0;
+    var agora = Date.now();
+    return alunas.map(function (p) {
+      var r = respostasDaAluna(p.id, turmaLabel, dataIso);
+      var respostas = [];
+      var feitas = 0, ultima = 0;
+      for (var i = 0; i < Math.max(total, Object.keys(r.respostas).length); i++) {
+        var x = r.respostas[String(i)] || null;
+        var txt = x ? String(x.t || "") : "";
+        if (txt.trim()) feitas++;
+        if (x && x.em) ultima = Math.max(ultima, new Date(x.em).getTime());
+        respostas.push({ i: i, texto: txt, em: (x && x.em) || "",
+          comentarios: (r.comentarios[String(i)] || []) });
+      }
+      var escrevendo = ultima && (agora - ultima) < 90000;
+      return { id: p.id, nome: p.nome, respostas: respostas,
+        feitas: feitas, total: total,
+        ultimaEm: ultima ? new Date(ultima).toISOString() : "",
+        estado: escrevendo ? "escrevendo" : (total && feitas >= total ? "terminou"
+          : (feitas ? "aguardando" : "nao_comecou")) };
+    });
+  }
+
   // As aulas dela: as chamadas da turma dela em que ela aparece. É a
   // chamada que diz que a aula aconteceu e que ela estava lá.
   function cadernoDaAluna(pessoaId, nDias) {
@@ -14658,6 +14836,11 @@
     chamadaHistorico: chamadaHistorico,
     chamadaValidada: chamadaValidada, chamadaEstado: chamadaEstado,
     reabrirChamada: reabrirChamada,
+    aulaViva: aulaViva, iniciarAula: iniciarAula, encerrarAula: encerrarAula,
+    reabrirAula: reabrirAula, respostasDaAluna: respostasDaAluna,
+    salvarResposta: salvarResposta, comentarResposta: comentarResposta,
+    respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
+    aulaVivaDaAluna: aulaVivaDaAluna,
     CHAMADA_ESTADOS: CHAMADA_ESTADOS,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,
     resumoParticular: resumoParticular, resumosParticulares: resumosParticulares,

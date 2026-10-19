@@ -1794,6 +1794,60 @@ cortaria a folha de meses que já foram trabalhados e pagos, por uma
 exigência que não existia quando aquelas aulas foram dadas. A folha
 exclui só a chamada reaberta.
 
+### Em aula · as respostas ao vivo
+
+A tela 02 do desenho novo: enquanto a aula corre, a professora vê o
+que cada aluna está escrevendo, e comenta ali.
+
+**A aula aberta é um fato do banco, não da tela.** `iniciarAula` /
+`encerrarAula` gravam em `isr_aula_viva_v1`, com a chave
+`turma|data`, e `aulaViva` devolve `nao_comecou`, `ao_vivo` ou
+`encerrada`. Tinha de ser assim: a mesma aula está aberta no aparelho
+da professora e no de cada aluna, e a aluna que recarrega a página no
+meio da aula não pode perder o caderno. Se "começou" morasse na tela,
+cada aparelho acreditaria numa coisa.
+
+**O caderno só aceita resposta com a aula aberta.** `salvarResposta`
+recusa quando o estado não é `ao_vivo` e devolve o motivo — antes da
+aula, que a professora ainda não abriu; depois, que a aula foi
+encerrada. A resposta já escrita não some: ela fica no caderno, para
+ler.
+
+**As tarefas são as do plano publicado, e vêm de um lugar só.**
+`tarefasDaAula(turma, data)` acha a sessão pela chamada, pega o plano
+publicado e devolve as etapas marcadas que têm pergunta. Painel e
+caderno chamam essa mesma função porque a resposta é guardada pela
+POSIÇÃO da tarefa: se cada tela filtrasse por conta própria, bastaria
+alguém mudar um filtro para a resposta da tarefa 2 aparecer na 3. Sem
+plano publicado não há pergunta nenhuma, e a tela diz isso em vez de
+deixar a professora esperando resposta que não vem.
+
+**O estado de cada aluna é calculado, não declarado**: escrevendo
+(mexeu nos últimos 90 segundos), terminou (respondeu todas), sem
+escrever (começou e parou), não começou. É o que a professora precisa
+para saber em quem falar no meio da aula.
+
+**O comentário é de uma tarefa, não da aluna.** Ele fica preso ao
+número da tarefa e aparece ali no caderno dela. Uma pílula em cada
+tarefa escolhe onde a caixa de baixo escreve, e a caixa diz em qual
+tarefa está — comentário solto numa ficha com cinco respostas não diz
+nada sobre qual delas.
+
+**A caixa de comentário é controlada por estado, e não por ref.** A
+tela da aula se redesenha a cada cinco segundos para trazer as
+respostas novas; um campo preso a ref perde o que foi escrito nesse
+caminho. Foi assim que a primeira versão falhou no teste.
+
+**Durante a aula o painel é só a aula**: as abas somem e o resto da
+tela não aparece. Trocar de aba no meio da aula não é o que a
+professora está fazendo, e deixar o resumo do dia embaixo era pedir
+para ela se perder. O caminho de volta é uma pílula no topo.
+
+No lado da aluna, o caderno mostra a aula aberta em cima, com um campo
+por tarefa que grava a cada letra, e o comentário da professora preso
+à tarefa. A aula de hoje sai da lista de registro enquanto está aberta
+— ela entra lá amanhã, que é quando vira registro.
+
 ### O menu da professora é um item só
 
 "A professora vê só o Painel do professor, com as próprias turmas,

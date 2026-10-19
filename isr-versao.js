@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-p",
+  numero: "2026.10.19-q",
   data: "19/10/2026",
-  nota: "O tópico obrigatório e a chamada reaberta"
+  nota: "Em aula · as respostas ao vivo"
 };
