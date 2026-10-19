@@ -127,9 +127,16 @@ function stringsDoScript(html) {
 }
 
 // crm-data e isr-nav: as strings de rótulo e mensagem, sem os modelos
-// de WhatsApp (voz da escola falando com a aluna, não interface)
+// de WhatsApp (voz da escola falando com a aluna, não interface) e sem
+// o syllabus do ciclo.
+//
+// O syllabus é conteúdo de aula transcrito dos guias do professor, em
+// inglês: "Happy New Year!" é a frase que a aluna aprende, não um
+// rótulo de tela. Corrigir a pontuação dele seria reescrever o material
+// da escola para agradar a um verificador de interface.
 function stringsDeDados(js) {
   var semTemplates = js.replace(/var TEMPLATES[\s\S]*?\n  \];/, " ")
+    .replace(/var SYLLABUS_2026_4[\s\S]*?\n  \};/, " ")
     .replace(/corpo:\s*"(?:[^"\\]|\\.)*"/g, " ");
   return literaisDe(semTemplates);
 }

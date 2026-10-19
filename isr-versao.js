@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-k",
+  numero: "2026.10.19-l",
   data: "19/10/2026",
-  nota: "O portão de login volta ao ar"
+  nota: "O syllabus do Traditions 2026.4, transcrito"
 };
