@@ -95,7 +95,7 @@
       // A Érika (operacao) também vê — ela dá suporte a aluna e professora.
       id: "pedagogico", label: "Pedagógico", cor: "#348a8e",
       itens: [
-        { label: "Turmas e projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+        { label: "Turmas & Projetos", desc: "Turmas, particulares, projetos e materiais", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
         { label: "Painel do Professor", desc: "Aulas da semana, chamada e diário de classe", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
         { label: "Agenda", desc: "Calendário da escola, aulas extras e Book Club", href: "ISR - Agenda v3.dc.html", perfis: null },
       ]

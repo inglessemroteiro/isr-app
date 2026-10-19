@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-c",
+  numero: "2026.10.19-d",
   data: "19/10/2026",
-  nota: "A professora vê o que é dela, e sair da equipe passa a funcionar"
+  nota: "O pedagógico na ordem que a escola desenhou"
 };
