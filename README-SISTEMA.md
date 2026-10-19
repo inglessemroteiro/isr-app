@@ -1747,6 +1747,27 @@ recusam tudo — não existe modo aberto, de propósito.
 Quem chama de fora manda a chave no cabeçalho `x-isr-chave` ou no
 campo `chave` do corpo.
 
+### A chamada começa pela semana, não pela aula
+
+O desenho novo entra na chamada pelo caminho em que a professora pensa:
+que semana, que dia, que aula. Três tiras em cima — as duas semanas, os
+sete dias com quantas aulas cada um tem, e as aulas daquele dia com o
+estado de cada uma ("chamada feita" / "sem chamada") — e só então a
+lista das alunas.
+
+Antes a tela abria numa aula escolhida pelo sistema, e trocar de dia era
+mexer num campo de data. Lançar a chamada da semana passada, que é o
+caso de quem esqueceu, não tinha caminho nenhum.
+
+**Quatro botões redondos por aluna** — P presente, A atrasou, F faltou,
+J justificada — no lugar da grade. É o que se toca com o polegar
+enquanto a aula começa.
+
+**O diário do ciclo continua**, atrás de um botão. Ele é a conferência
+— quem está sumindo, quem entrega tarefa — e não a tarefa do início da
+aula. Tirá-lo seria perder a única tela que mostra o ciclo inteiro de
+uma vez.
+
 ### O menu da professora é um item só
 
 "A professora vê só o Painel do professor, com as próprias turmas,
