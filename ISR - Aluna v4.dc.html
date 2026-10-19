@@ -232,6 +232,27 @@
             </sc-if>
           </div>
 
+          <!-- O QUE A AULA TEVE · só de plano publicado -->
+          <sc-if value="{{ c.temObjetivo }}">
+            <div style="font-size:14px;line-height:1.55;color:var(--color-primary-800)">{{ c.objetivo }}</div>
+          </sc-if>
+          <sc-if value="{{ c.temAtividades }}">
+            <div style="background:var(--color-button-secondary);border-radius:16px;padding:13px 16px;display:flex;flex-direction:column;gap:9px">
+              <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ L.oQueTeve }}</div>
+              <sc-for list="{{ c.atividades }}" as="at" hint-placeholder-count="5">
+                <div>
+                  <div style="display:flex;gap:7px;align-items:baseline;flex-wrap:wrap">
+                    <span style="border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ at.fase }}</span>
+                    <span style="font-size:14px;font-weight:600">{{ at.titulo }}</span>
+                  </div>
+                  <sc-if value="{{ at.temPergunta }}">
+                    <div style="font-size:13.5px;line-height:1.5;margin-top:4px;color:var(--color-primary-800)">{{ at.pergunta }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ c.temNota }}">
             <div style="background:var(--color-button-secondary);border-radius:16px;padding:13px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap">{{ c.nota }}</div>
           </sc-if>
@@ -551,6 +572,17 @@ class Component extends DCLogic {
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth });
     try { this.setState({ w: window.innerWidth }); window.addEventListener("resize", this.onR); } catch (e) {}
+    // As palavras das aulas publicadas entram no cofre dela uma vez por
+    // abertura do app — não a cada desenho da tela. A função é
+    // idempotente e nunca toca palavra que ela já tem, mas escrever em
+    // todo render seria gravar centenas de vezes por nada.
+    try {
+      const CRM = window.ISRCRM, id = this.alunaId();
+      if (CRM && CRM.sincronizarPalavrasDaAula && id) {
+        const r = CRM.sincronizarPalavrasDaAula(id, 180);
+        if (r && r.novas) this.setState({ palavrasNovas: r.novas });
+      }
+    } catch (e) {}
   }
   componentWillUnmount() { try { window.removeEventListener("resize", this.onR); } catch (e) {} }
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -586,6 +618,7 @@ class Component extends DCLogic {
       cadernoVazio: T("Your classes appear here once attendance is taken. Each one brings what was taught, your homework and the recording — and a place for your own notes.",
         "As suas aulas aparecem aqui quando a chamada é feita. Cada uma traz o que foi dado, a sua tarefa e a gravação — e um lugar para as suas anotações."),
       verGravacao: T("watch the class", "ver a gravação"),
+      oQueTeve: T("what this class had", "o que esta aula teve"),
       escreverNota: T("Write a note", "Escrever uma nota"),
       editarNota: T("Edit my note", "Editar a minha nota"),
       notaPh: T("What you want to remember from this class…",
@@ -1116,7 +1149,16 @@ class Component extends DCLogic {
         const e = EST[c.presenca] || EST.presente;
         return {
           quando: CRM.ddmm(c.data) + " · " + c.turma,
-          topico: c.topico || L.semTopico,
+          // o título da sessão é melhor que o tópico escrito à mão, mas
+          // só existe quando a professora disse qual sessão foi e
+          // publicou o plano
+          topico: c.tituloSessao || c.topico || L.semTopico,
+          temObjetivo: !!c.objetivo, objetivo: c.objetivo,
+          temAtividades: (c.atividades || []).length > 0,
+          atividades: (c.atividades || []).map(a => ({
+            fase: a.fase, titulo: a.titulo,
+            temPergunta: !!a.pergunta, pergunta: a.pergunta
+          })),
           presencaLabel: e[0], presencaBg: e[1], presencaFg: e[2],
           temTarefa: c.tarefaCobrada,
           tarefaLabel: c.tarefaEntregue ? L.entregou : L.naoEntregou,
@@ -1184,10 +1226,14 @@ class Component extends DCLogic {
       },
 
       cofreVazio: minhasPalavras.length === 0,
-      cofreResumo: minhasPalavras.length
-        ? T(rev.sabidas + " of " + rev.total + " already stick",
-            rev.sabidas + " de " + rev.total + " já grudaram")
-        : "",
+      // o cofre não cresce em silêncio: se a aula trouxe palavras, a
+      // tela diz quantas, senão ela só encontra coisas que não pôs
+      cofreResumo: !minhasPalavras.length ? ""
+        : (T(rev.sabidas + " of " + rev.total + " already stick",
+             rev.sabidas + " de " + rev.total + " já grudaram")
+          + (this.state.palavrasNovas
+            ? T(" · " + this.state.palavrasNovas + " new from your classes",
+                " · " + this.state.palavrasNovas + " novas vieram das suas aulas") : "")),
       palavras: minhasPalavras.map(w => {
         const n = w.nivel || 0, pct = Math.round(100 * n / rev.degraus);
         return {

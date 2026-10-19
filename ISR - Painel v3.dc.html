@@ -549,7 +549,35 @@
       </div>
     </sc-if>
 
+    <!-- QUAL SESSÃO FOI DADA, E O TÓPICO -->
+    <!-- O tópico é o que valida a aula para a folha, e até aqui ele não
+         tinha onde ser escrito em tela nenhuma: toda chamada nascia
+         "falta o tópico". A sessão é o que liga a aula ao plano — é por
+         ela que o caderno da aluna sabe quais atividades ela viveu.
+         Escolher a sessão preenche o tópico com o título dela, que é o
+         caso comum; quem quiser escrever outro, escreve. -->
     <sc-if value="{{ temAlunas }}">
+      <div class="isr-cartao" style="margin-top: 16px; padding: 14px 16px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; background: var(--color-button-secondary)">
+        <sc-if value="{{ temSessoes }}">
+          <div style="flex: 0 1 220px; min-width: 0">
+            <div style="font-size: 11.5px; font-weight: 600; color: var(--color-tertiary-500); margin-bottom: 4px">sessão do ciclo</div>
+            <select class="isr-campo" onchange="{{ onSessao }}" style="width: 100%; padding: 10px 12px; font-size: 13px; background: var(--color-neutral-0)">
+              <sc-for list="{{ sessoesOpts }}" as="so" hint-placeholder-count="10">
+                <option value="{{ so.v }}" selected="{{ so.sel }}">{{ so.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+        </sc-if>
+        <div style="flex: 1 1 260px; min-width: 0">
+          <div style="font-size: 11.5px; font-weight: 600; color: var(--color-tertiary-500); margin-bottom: 4px">tópico da lição · é ele que valida a aula</div>
+          <input class="isr-campo" value="{{ topicoValor }}" onchange="{{ onTopico }}" placeholder="O que foi dado nesta aula" style="width: 100%; padding: 10px 12px; font-size: 13px; background: var(--color-neutral-0)" />
+        </div>
+        <span class="isr-selo" style="padding: 6px 12px; font-size: 11.5px; background: {{ validaBg }}; color: {{ validaFg }}">{{ validaLabel }}</span>
+      </div>
+      <sc-if value="{{ temAvisoPlano }}">
+        <div style="font-size: 12px; color: var(--color-tertiary-500); line-height: 1.5; margin-top: 6px">{{ avisoPlano }}</div>
+      </sc-if>
+
       <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
         <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarChamada }}" style="font-size: 13px; padding: 13px 24px">{{ salvarLabel }}</button>
         <div style="flex: 1; min-width: 220px; display: flex; gap: 6px; align-items: center;">
@@ -768,6 +796,9 @@ class Component extends DCLogic {
       loteConfirmar: false, loteResultado: "", onLote: () => {}, onLoteCancelar: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada",
+      temSessoes: false, sessoesOpts: [], onSessao: () => {},
+      topicoValor: "", onTopico: () => {},
+      validaLabel: "", validaBg: "", validaFg: "", temAvisoPlano: false, avisoPlano: "",
       temHistorico: false, historico: [],
       temFeitas: false, feitas: [], feitasResumo: "",
       semanaParticulares: [], semanaVazia: true, semanaResumo: "", semanaResumoCor: "var(--color-tertiary-500)",
@@ -1755,13 +1786,71 @@ class Component extends DCLogic {
         if (this.gravacaoRef.current) this.gravacaoRef.current.value = "";
         this.bump();
       },
+      ...(() => {
+        // ── qual sessão foi dada ──
+        const chSalva = turmaSel && dataSel ? CRM.getChamada(turmaSel, dataSel) : null;
+        const uTurma = (CRM.turmasLista() || [])
+          .filter(x => (x.nivel + " · " + x.turma) === turmaSel)[0] || null;
+        const sessoes = uTurma && CRM.planoSessoes ? CRM.planoSessoes(uTurma.id) : [];
+        const chave = turmaSel + "|" + dataSel;
+        // a escolha vale para esta chamada: trocar de aula ou de dia
+        // volta ao que está gravado, em vez de carregar a sessão da
+        // aula anterior para dentro desta
+        const sessaoSel = this.state.sessaoChave === chave
+          ? (this.state.sessaoChamada || 0)
+          : (parseInt(chSalva && chSalva.sessao, 10) || 0);
+        const sess = sessoes.filter(x => x.n === sessaoSel)[0] || null;
+        // o tópico é campo controlado: guardado no estado e desenhado a
+        // partir dele. Escrever no DOM por ref não sobrevive ao
+        // redesenho, e o campo voltava vazio a cada clique da tela.
+        const topicoValor = this.state.sessaoChave === chave
+          ? (this.state.topicoChamada !== undefined
+            ? this.state.topicoChamada : String((chSalva && chSalva.topico) || ""))
+          : String((chSalva && chSalva.topico) || "");
+        const valida = !!String(topicoValor).trim();
+        return {
+          topicoValor: topicoValor,
+          onTopico: (e) => this.setState({ topicoChamada: e.target.value, sessaoChave: chave }),
+          temSessoes: sessoes.length > 0,
+          sessoesOpts: [{ v: "0", label: "— não digo qual —", sel: !sessaoSel }]
+            .concat(sessoes.map(x => ({ v: String(x.n),
+              label: "Sessão " + x.n + (x.titulo ? " · " + x.titulo : "")
+                + (x.estado === "publicada" ? "" : " (não publicada)"),
+              sel: x.n === sessaoSel }))),
+          onSessao: (e) => {
+            const n = parseInt(e.target.value, 10) || 0;
+            const nova = sessoes.filter(x => x.n === n)[0] || null;
+            // o título da sessão preenche o tópico SÓ se o campo estiver
+            // vazio: escrever por cima apagaria o que ela digitou
+            const novoTopico = (nova && nova.titulo && !String(topicoValor).trim())
+              ? nova.titulo : topicoValor;
+            this.setState({ sessaoChamada: n, sessaoChave: chave, topicoChamada: novoTopico });
+          },
+          validaLabel: valida ? "aula validada" : "falta o tópico",
+          validaBg: valida ? "var(--color-secondary-100)" : "var(--color-warning-light)",
+          validaFg: valida ? "var(--color-success-dark)" : "var(--color-warning-dark)",
+          temAvisoPlano: !!(sess && sess.estado !== "publicada"),
+          avisoPlano: sess && sess.estado !== "publicada"
+            ? "O plano da sessão " + sess.n + " ainda não está publicado, então as "
+              + "atividades não aparecem no caderno das alunas. Publique em Turma → Plano das aulas."
+            : ""
+        };
+      })(),
       onSalvarChamada: () => {
         // a grade mostra "presente" para quem não foi tocada, mas quem não
         // estava no registro não contava hora nem dava baixa no pacote —
         // salvar grava o estado de todas as alunas listadas
         const cheio = {};
         alunas.forEach(a => { cheio[a.id] = presAtual[a.id] !== undefined ? presAtual[a.id] : true; });
-        CRM.salvarChamada(turmaSel, dataSel, cheio, (user && user.nome) || "", tarAtual);
+        const chSalva = turmaSel && dataSel ? CRM.getChamada(turmaSel, dataSel) : null;
+        const chave = turmaSel + "|" + dataSel;
+        const meu = this.state.sessaoChave === chave;
+        CRM.salvarChamada(turmaSel, dataSel, cheio, (user && user.nome) || "", tarAtual, {
+          topico: String(meu && this.state.topicoChamada !== undefined
+            ? this.state.topicoChamada : ((chSalva && chSalva.topico) || "")).trim(),
+          sessao: meu ? (this.state.sessaoChamada || 0)
+            : (parseInt(chSalva && chSalva.sessao, 10) || 0)
+        });
         this.setState({ salvouAgora: true, turmaChamada: partSel ? null : turmaSel, chamadaData: dataSel, tarefas: tarAtual });
       },
 
