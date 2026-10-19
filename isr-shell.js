@@ -108,7 +108,11 @@
     { id: "central", sec: "hoje", icone: "⌂", label: "Central", href: "ISR - Central v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
     { id: "agenda", sec: "hoje", icone: "◷", label: "Agenda", href: "ISR - Agenda v3.dc.html", perfis: null },
 
-    { id: "alunas", sec: "alunas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "professora", "operacao"] },
+    // "Alunas e vendas" é a seção de quem vende e administra. A
+    // professora não entra: o trabalho dela é a seção pedagógico, e as
+    // alunas dela estão dentro das turmas dela. Com ela fora deste
+    // item, a seção inteira some do menu da professora.
+    { id: "alunas", sec: "alunas e vendas", icone: "◉", label: "Alunas", href: "ISR - Alunas v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "crm", sec: "alunas e vendas", icone: "◎", label: "CRM · Funil", href: "ISR - CRM v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "mensagens", sec: "alunas e vendas", icone: "✉︎", label: "Mensagens", href: "ISR - Mensagens v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "matricula", sec: "alunas e vendas", icone: "+", label: "Matrícula", href: "ISR - Matrícula v3.dc.html", perfis: ["gestora", "comercial"] },

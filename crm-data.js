@@ -6111,7 +6111,9 @@
       tarefas: tarefasRaw(), feriados: feriadosLista(), metas: metasAtuais(), moedas: moedasAjustesAll(),
       // os ciclos já fechados: registro acadêmico, vai junto
       ciclos: ciclosLista(),
-      equipe: equipeLista(), calc: calcParams(),
+      // equipe vai CRUA (com as lápides): sem isto a marca de "saiu da
+      // equipe" não subia ao banco e o puxe seguinte devolvia a pessoa
+      equipe: equipeRaw(), calc: calcParams(),
       lancamentos: lancamentosRaw(), cambio: taxaCambio(), contas: contasLista(),
       toques: toquesLista(), pulsos: pulsosLista(), precos: precosLista(),
       // programas vai CRU (com as lápides): é o sync que espalha o
@@ -6495,6 +6497,36 @@
   // A identidade que as telas usam para FILTRAR e para decidir o que
   // mostrar. Nunca para gravar.
   function gestaoVisao() { return verComo() || gestaoUser(); }
+
+  // ── O RECORTE DE QUEM ESTÁ OLHANDO ────────────────────────────
+  //
+  // Quatro telas respeitavam o "ver como" e cinco não: Alunas, Turmas,
+  // Acompanhamento, Clubes e Gravações mostravam a escola inteira para
+  // qualquer perfil, inclusive para a professora. Uma professora via
+  // todas as alunas da escola.
+  //
+  // Esta é a resposta única: devolve o NOME da professora quando quem
+  // olha é professora, e "" quando quem olha vê a escola toda. Cada
+  // tela filtra pelo que já tem — a turma tem `teacher`, a aluna tem
+  // `professora`, o clube tem `professora`.
+  //
+  // Vale repetir o que o guard já diz: isto roda no navegador e não é
+  // proteção. É o recorte do trabalho de cada uma — o que impede a
+  // professora de abrir uma tela e achar que a escola inteira é
+  // responsabilidade dela.
+  function professoraDaVisao() {
+    var v = gestaoVisao();
+    if (!v) return "";
+    var papeis = (v.papeis || []).slice();
+    if (v.perfil) papeis.push(v.perfil);
+    var ensina = papeis.indexOf("professora") >= 0 || papeis.indexOf("extra") >= 0
+      || papeis.indexOf("shadow") >= 0;
+    // quem também é gestora, operação ou comercial vê a escola toda,
+    // mesmo dando aula: é o caso da Gabi e da Carla
+    var vêTudo = papeis.indexOf("gestora") >= 0 || papeis.indexOf("operacao") >= 0
+      || papeis.indexOf("comercial") >= 0;
+    return ensina && !vêTudo ? (v.nome || "") : "";
+  }
   // Quem a gestora pode escolher ver: a equipe cadastrada, sem ela.
   function verComoOpcoes() {
     var u = gestaoUser();
@@ -6535,19 +6567,35 @@
     { id: "eqRicky", nome: "Ricky", email: "",
       papeis: ["professora"], valorTipo: "", valor: 0, moeda: "R$" }
   ];
-  function equipeLista() {
+  // A lista crua guarda também as lápides (quem saiu da equipe).
+  function equipeRaw() {
     try {
       var l = JSON.parse(localStorage.getItem(EQUIPE_KEY));
       if (l) return l;
     } catch (e) {}
     return EQUIPE_PADRAO.map(function (m) { return Object.assign({}, m, { papeis: m.papeis.slice() }); });
   }
-  function equipeSave(l) { carimbarLista(l); try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
+  function equipeLista() {
+    return equipeRaw().filter(function (m) { return !(m && m.apagado); });
+  }
+  function equipeSave(l) {
+    carimbarLista(l);
+    // quem salva recebeu a lista sem as lápides — devolvê-las aqui é o
+    // que impede um save qualquer de ressuscitar quem saiu
+    var vivos = {};
+    (l || []).forEach(function (m) { if (m && m.id) vivos[m.id] = true; });
+    var lapides = equipeRaw().filter(function (m) { return m && m.apagado && !vivos[m.id]; });
+    try { localStorage.setItem(EQUIPE_KEY, JSON.stringify((l || []).concat(lapides))); } catch (e) {}
+    agendarSync();
+  }
   function addEquipe(dados) {
     var l = equipeLista();
     l.push({ id: "eq" + Date.now(), nome: (dados.nome || "").trim(), email: (dados.email || "").trim().toLowerCase(),
       papeis: dados.papeis || [], valorTipo: dados.valorTipo || "", valor: parseFloat(dados.valor) || 0,
-      moeda: dados.moeda || "R$" });
+      moeda: dados.moeda || "R$",
+      // quem entra agora não herda a pilha de aulas sem chamada de
+      // quem estava na turma antes
+      desde: dados.desde || iso(today()) });
     equipeSave(l); return l;
   }
   function updateEquipe(id, patch) {
@@ -6594,7 +6642,22 @@
     }
     agendarSync();
   }
-  function removeEquipe(id) { var l = equipeLista().filter(function (m) { return m.id !== id; }); equipeSave(l); return l; }
+  // Tirar da lista e salvar NÃO apaga: a mesclagem do sync soma
+  // registros, e o banco devolvia a pessoa no puxe seguinte — era por
+  // isso que remover alguém da equipe "não funcionava". Turmas, alunas
+  // e programas já têm lápide pela mesma razão; a equipe ficou de fora.
+  // A lápide viaja pelo sync, vence a cópia viva nos outros aparelhos e
+  // some das telas em todos eles.
+  function removeEquipe(id) {
+    var l = equipeRaw(), achou = false;
+    l.forEach(function (m) {
+      if (m && m.id === id) { m.apagado = iso(today()); carimbar(m); achou = true; }
+    });
+    if (!achou) return equipeLista();
+    try { localStorage.setItem(EQUIPE_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+    return equipeLista();
+  }
   function equipeCustosMensais(key) {
     var k = key || mesAtualKey();
     return equipeLista()
@@ -7886,6 +7949,24 @@
   // ciclo ficava furada em silêncio. Agora a conferência é do CICLO
   // inteiro — que é a unidade que a escola fecha e arquiva.
   var JANELA_CHAMADA_DIAS = 21;
+
+  // "Dá aula na escola desde": a data em que a pessoa entrou. Serve
+  // para não atribuir a ela aula que aconteceu antes — quem assume uma
+  // turma não assume o passado dela.
+  //
+  // Sem a data preenchida, o comportamento é o de antes (nada é
+  // cortado): é a escola que sabe quando cada uma entrou, e inventar
+  // uma data seria esconder pendência de verdade. Quem entra na equipe
+  // a partir de agora nasce com a data de hoje, que é o caso novo.
+  function entradaNaEquipe(nome) {
+    if (!nome) return "";
+    var m = equipeLista().filter(function (x) { return x.nome === nome; })[0];
+    return (m && m.desde) || "";
+  }
+  function antesDeEntrar(nome, dataIso) {
+    var d = entradaNaEquipe(nome);
+    return !!d && !!dataIso && dataIso < d;
+  }
   function chamadasPendentes(professora, dias) {
     var hoje = iso(today());
     var n, desde;
@@ -7918,6 +7999,11 @@
       var u = porId[it.turmaId];
       if (!u) return;
       if (professora && (u.teacher || "") !== professora) return;
+      // A aula é atribuída a quem está na turma HOJE, e quem assumiu a
+      // turma agora herdava toda a pilha dela desde agosto — aulas que
+      // essa pessoa nunca deu. A data de entrada da professora corta
+      // isso: antes dela, a aula não é dela.
+      if (antesDeEntrar(u.teacher, it.data)) return;
       var label = u.nivel + " · " + u.turma;
       if (getChamada(label, it.data)) return;
       // turma sem aluna não tem chamada a fazer
@@ -13900,7 +13986,8 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
-    gestaoVisao: gestaoVisao, verComo: verComo, setVerComo: setVerComo,
+    gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
+    verComo: verComo, setVerComo: setVerComo,
     verComoOpcoes: verComoOpcoes,
     guardarTokenGestao: guardarTokenGestao, tokenGestao: tokenGestao,
     temTokenGestao: function () { return !!tokenGestaoGuardado(); }, chamarFuncao: chamarFuncao,
@@ -13954,6 +14041,7 @@
     vagasDoMes: vagasDoMes, resgatesAll: resgatesAll,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
+    entradaNaEquipe: entradaNaEquipe,
     professorasSemCadastro: professorasSemCadastro, cadastrarProfessora: cadastrarProfessora,
     receitaParticularesNoMes: receitaParticularesNoMes,
     furosDeCadastro: furosDeCadastro, marcarFuroCiente: marcarFuroCiente,

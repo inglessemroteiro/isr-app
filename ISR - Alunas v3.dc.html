@@ -61,6 +61,14 @@
     <select class="isr-campo" onchange="{{ onTurma }}" style="padding: 9px 12px; font-size: 13px; background: var(--color-neutral-0)">
       <sc-for list="{{ turmaOpts }}" as="to" hint-placeholder-count="6"><option value="{{ to.id }}" selected="{{ to.sel }}">{{ to.label }}</option></sc-for>
     </select>
+    <sc-if value="{{ temFiltroProf }}">
+      <select class="isr-campo" onchange="{{ onProf }}" style="padding: 9px 12px; font-size: 13px; background: var(--color-neutral-0)">
+        <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="5"><option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option></sc-for>
+      </select>
+    </sc-if>
+    <select class="isr-campo" onchange="{{ onOrdem }}" title="Ordem da lista" style="padding: 9px 12px; font-size: 13px; background: var(--color-neutral-0)">
+      <sc-for list="{{ ordemOpts }}" as="oo" hint-placeholder-count="4"><option value="{{ oo.id }}" selected="{{ oo.sel }}">{{ oo.label }}</option></sc-for>
+    </select>
   </div>
 
   <!-- INÍCIO DAS AULAS EM LOTE -->
@@ -132,7 +140,8 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    if (!CRM) return { filtros: [], turmaOpts: [], pessoas: [], vazio: true,
+    if (!CRM) return { filtros: [], turmaOpts: [], profOpts: [], ordemOpts: [],
+      temFiltroProf: false, onProf: () => {}, onOrdem: () => {}, pessoas: [], vazio: true,
       contagem: "", temAlunas: false, loteRef: this.loteRef,
       loteLabel: "Aplicar", loteNota: "", loteCor: "var(--color-tertiary-500)", onLote: () => {} };
 
@@ -144,7 +153,13 @@ class Component extends DCLogic {
     // do painel, que só conhece aluna e MVS.
     const painel = {};
     todas.forEach(a2 => { painel[a2.id] = a2; });
-    const gente = (CRM.getPessoas() || []).filter(p => p.status !== "arquivada");
+    // A professora vê as alunas DELA. Esta tela mostrava a escola
+    // inteira para qualquer perfil: a professora abria e encontrava
+    // todas as alunas, inclusive as que não são responsabilidade dela.
+    const profVisao = CRM.professoraDaVisao ? CRM.professoraDaVisao() : "";
+    const gente = (CRM.getPessoas() || [])
+      .filter(p => p.status !== "arquivada")
+      .filter(p => !profVisao || p.professora === profVisao);
 
     // ── os chips, com a contagem, como no v5 ──
     const FILTROS = [
@@ -172,10 +187,36 @@ class Component extends DCLogic {
       .concat(turmas.sort().map(t => ({ id: t, label: t, sel: t === this.state.turma })));
 
     const busca = (this.state.busca || "").toLowerCase();
+    // ── filtros de turma e de professora, e a ordem ──
+    // A lista vinha na ordem em que as alunas entraram no cadastro, que
+    // não é ordem nenhuma para quem procura um nome. Alfabética por
+    // padrão; as outras ordens servem a perguntas diferentes (quem
+    // entrou agora, quem some há mais tempo).
+    const profs = [];
+    gente.forEach(p => { if (p.professora && profs.indexOf(p.professora) < 0) profs.push(p.professora); });
+    profs.sort((a, b) => a.localeCompare(b, "pt"));
+    const profOpts = [{ id: "", label: "Todas as professoras", sel: !this.state.prof }]
+      .concat(profs.map(n => ({ id: n, label: n, sel: n === this.state.prof })));
+
+    const ORDENS = [
+      ["nome", "Nome (A–Z)", (a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt")],
+      ["turma", "Turma", (a, b) => String(a.turma || "zzz").localeCompare(String(b.turma || "zzz"), "pt")
+        || String(a.nome || "").localeCompare(String(b.nome || ""), "pt")],
+      ["recentes", "Entrou por último", (a, b) => String(b.entrouEm || b.alunaDesde || "")
+        .localeCompare(String(a.entrouEm || a.alunaDesde || ""))],
+      ["sumidas", "Sem contato há mais tempo", (a, b) => String(a.ultimaAtividade || "")
+        .localeCompare(String(b.ultimaAtividade || ""))]
+    ];
+    const ordemAtiva = this.state.ordem || "nome";
+    const fnOrdem = (ORDENS.filter(o => o[0] === ordemAtiva)[0] || ORDENS[0])[2];
+    const ordemOpts = ORDENS.map(([id, label]) => ({ id, label, sel: id === ordemAtiva }));
+
     const filtradas = gente.filter(p =>
       fnAtiva(p)
       && (!busca || String(p.nome || "").toLowerCase().indexOf(busca) >= 0)
-      && (!this.state.turma || p.turma === this.state.turma));
+      && (!this.state.turma || p.turma === this.state.turma)
+      && (!this.state.prof || p.professora === this.state.prof))
+      .sort(fnOrdem);
 
     // ── início das aulas ──
     // Quem já está na lista foi cadastrada com a data do dia do cadastro. É
@@ -270,7 +311,10 @@ class Component extends DCLogic {
         CRM.mesclarTodasDuplicadas();
         this.setState({ confirmandoMescla: "", tick: this.state.tick + 1 });
       },
-      filtros, turmaOpts,
+      filtros, turmaOpts, profOpts, ordemOpts,
+      // o filtro de professora não aparece para a professora: a
+      // lista dela já é só a dela, e um filtro de um item só confunde
+      temFiltroProf: !profVisao && profs.length > 1,
       pessoas: pg.itens,
       vazio: pessoas.length === 0,
       pgPrecisa: pg.precisa, pgBotoes: pg.botoes, pgOpcoes: pg.opcoes,
@@ -303,7 +347,9 @@ class Component extends DCLogic {
         : (filtradas.length + " de " + gente.length),
       buscaRef: this.buscaRef,
       onBusca: e => this.setState({ busca: e.target.value, pagina: 1 }),
-      onTurma: e => this.setState({ turma: e.target.value, pagina: 1 })
+      onTurma: e => this.setState({ turma: e.target.value, pagina: 1 }),
+      onProf: e => this.setState({ prof: e.target.value, pagina: 1 }),
+      onOrdem: e => this.setState({ ordem: e.target.value, pagina: 1 })
     };
   }
 }

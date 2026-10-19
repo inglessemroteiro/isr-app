@@ -265,7 +265,10 @@ class Component extends DCLogic {
       capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
       cicloBg: "var(--color-neutral-0)", cicloCor: "var(--color-primary-800)", cicloTexto: "", cicloAcao: "" };
 
-    const ocup = CRM.ocupacaoTurmas();
+    // A professora vê as turmas dela, não as da escola.
+    const profVisao = CRM.professoraDaVisao ? CRM.professoraDaVisao() : "";
+    const ocup = CRM.ocupacaoTurmas()
+      .filter(u => !profVisao || (u.teacher || "") === profVisao);
     const hojeIso = new Date().toISOString().slice(0, 10);
 
     // ── a capacidade de cada professora ──
@@ -274,7 +277,10 @@ class Component extends DCLogic {
     // nenhuma das duas. Aqui ela só se vê; editar continua na Equipe,
     // que é de onde a carteira vem.
     const cart = CRM.carteiraProfessoras ? CRM.carteiraProfessoras() : { linhas: [] };
-    const capacidade = (cart.linhas || []).map(l => ({
+    const capacidade = (cart.linhas || [])
+      // a carteira das colegas é conferência da escola, não dela
+      .filter(l => !profVisao || l.nome === profVisao)
+      .map(l => ({
       nome: l.nome,
       pct: Math.min(100, l.pct) + "%",
       cor: l.acima ? "var(--color-error)"
@@ -417,6 +423,8 @@ class Component extends DCLogic {
     // alunas particulares (matrícula com turma "Particular")
     const particulares = CRM.getPessoas()
       .filter(p => p.status === "aluna" && (p.turma === "Particular" || (p.formatos || []).indexOf("particular") >= 0))
+      // a particular de outra professora não é trabalho dela
+      .filter(p => !profVisao || (p.professora || "") === profVisao)
       .map(p => {
         const pac = p.particular || null;
         return {

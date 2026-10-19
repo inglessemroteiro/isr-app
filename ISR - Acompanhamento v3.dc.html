@@ -286,7 +286,10 @@ class Component extends DCLogic {
       chamada: "", chamadaDetalhe: "", proximas: [], temProximas: false,
       detalhesAbertos: false, detLabel: "Ver números", detBg: "var(--color-neutral-0)", detFg: "var(--color-primary-900)" };
 
-    const toda = CRM.filaAcompanhamento();
+    // A professora acompanha as alunas dela.
+    const profVisao = CRM.professoraDaVisao ? CRM.professoraDaVisao() : "";
+    const toda = CRM.filaAcompanhamento()
+      .filter(x => !profVisao || (x.professora || "") === profVisao);
 
     // ── cadência: quantos contatos por semana a escola precisa dar ──
     const carga = CRM.cargaDeContato();

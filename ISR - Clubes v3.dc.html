@@ -314,7 +314,10 @@ class Component extends DCLogic {
       onNovo: () => {}, onFormato: () => {}, onGravarRascunho: () => {}, onPublicar: () => {} };
     if (!CRM || !CRM.clubesLista) return vazio;
 
-    const cs = CRM.clubesLista();
+    // A professora vê os clubes que ela oferece.
+    const profVisao = CRM.professoraDaVisao ? CRM.professoraDaVisao() : "";
+    const cs = CRM.clubesLista()
+      .filter(c => !profVisao || (c.professora || "") === profVisao);
     const resumo = CRM.clubesResumo();
     const pessoas = CRM.getPessoas() || [];
     const nomeDe = (id) => { const p = pessoas.filter(x => x.id === id)[0]; return (p && p.nome) || id; };

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-b",
+  numero: "2026.10.19-c",
   data: "19/10/2026",
-  nota: "Convite da aluna pelo e-mail da matrícula, e os materiais do ciclo"
+  nota: "A professora vê o que é dela, e sair da equipe passa a funcionar"
 };

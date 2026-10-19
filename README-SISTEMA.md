@@ -1445,6 +1445,66 @@ o ciclo anterior por um tempo, e o link recém-cadastrado não aparecia em
 turma nenhuma. A busca passou a ser pelo ciclo da turma e, se ele não
 tem material guardado, pelo ciclo que a escola está dando agora.
 
+#### A professora vê o que é dela · quatro correções
+
+Quatro defeitos que a escola encontrou usando o sistema, e que têm a
+mesma raiz: o sistema sabia quem estava olhando e não usava essa
+informação.
+
+**1. Cinco telas mostravam a escola inteira para qualquer perfil.**
+Central, Agenda, Painel e Matrículas do ciclo respeitavam o "ver como";
+**Alunas, Turmas, Acompanhamento, Clubes e Gravações não respeitavam
+nenhuma.** Uma professora abria Alunas e encontrava as 45 alunas da
+escola em vez das 7 dela.
+
+A resposta é uma função só, `professoraDaVisao()`: devolve o nome da
+professora quando quem olha é professora, e `""` quando quem olha vê a
+escola toda. Quem também é gestora, operação ou comercial continua
+vendo tudo, mesmo dando aula — é o caso da Gabi e da Carla. Na tela de
+Turmas o recorte alcança três blocos, não um: as turmas, **as alunas
+particulares** e **a carteira das professoras** (a carga das colegas é
+conferência da escola, não dela).
+
+Vale repetir o que o guard já dizia: **isto roda no navegador e não é
+proteção.** É o recorte do trabalho de cada uma.
+
+**2. "Alunas e vendas" aparecia no menu da professora.** O item
+"Alunas" tinha `professora` na lista de perfis. Sem ele, a seção
+inteira some do menu dela, que fica com Agenda e a seção pedagógico.
+
+**3. Professora nova herdava a pilha de chamadas de quem veio antes.**
+A varredura começa no ciclo de auditoria e atribui cada aula ao
+professor **que está na turma hoje** — quem assumiu uma turma herdava
+todas as aulas sem chamada dela desde agosto, aulas que nunca deu. É o
+mesmo erro das gravações servidas pela turma atual: atribuir pelo
+estado de hoje em vez de por quem estava lá.
+
+Entrou o campo **"dá aula na escola desde"** na equipe. Aula anterior à
+entrada não é atribuída a ela. Sem a data preenchida o comportamento é
+o de antes — é a escola que sabe quando cada uma entrou, e inventar uma
+data esconderia pendência de verdade. **Quem entra na equipe a partir
+de agora nasce com a data de hoje**, que é o caso que gerou o
+problema.
+
+**4. Remover alguém da equipe não funcionava.** `removeEquipe` só tirava
+da lista e salvava. Mas a mesclagem do sync **soma** registros: sem
+lápide, o banco devolvia a pessoa no puxe seguinte. Turmas, alunas e
+programas já tinham lápide exatamente por isso; a equipe ficou de fora
+quando o padrão foi criado. Agora tem, e a lista crua sobe no payload
+para a marca viajar.
+
+**E a lista de alunas ganhou ordem e recorte.** Ela vinha na ordem em
+que as alunas entraram no cadastro, que não é ordem nenhuma para quem
+procura um nome. Agora é **alfabética por padrão**, com ordem por
+turma, por quem entrou por último e por quem está sem contato há mais
+tempo, mais um **filtro de professora**. O filtro de professora não
+aparece para a professora: a lista dela já é só a dela.
+
+Isso reverte metade de um corte do v5, que tinha tirado o filtro de
+professora junto com o de etiqueta. **Foi decisão da escola**, depois
+de usar a lista: lista longa sem ordem nem recorte não se usa. O filtro
+de etiqueta continua fora.
+
 ### Cada tela na rotina de quem abriu
 
 O menu já escondia as telas que não são de quem entrou, mas **dentro**
