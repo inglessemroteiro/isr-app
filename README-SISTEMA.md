@@ -1505,6 +1505,39 @@ professora junto com o de etiqueta. **Foi decisão da escola**, depois
 de usar a lista: lista longa sem ordem nem recorte não se usa. O filtro
 de etiqueta continua fora.
 
+#### A aba Hoje · um hero só, em quatro estados
+
+A aba respondia "o que eu faço agora?" em dois lugares ao mesmo tempo:
+o hero com a próxima aula, e um cartão amarelo com a pilha de chamadas
+atrasadas. A contagem aparecia duas vezes na mesma tela.
+
+Agora é **um hero só**, e vale a primeira regra verdadeira — a ordem é
+a da urgência:
+
+| | Quando | O hero mostra |
+|---|---|---|
+| **A** | tem aula hoje | a aula, com as pílulas de plano e de chamada |
+| **B** | não tem aula hoje e há pilha | a contagem e a chamada mais antiga |
+| **C** | a próxima aula é nos 7 dias | a próxima aula |
+| **D** | nada disso | "Nenhuma aula nos próximos 7 dias" |
+
+**O cartão amarelo deixou de existir.** A lista continua, mas fechada:
+abre pelo botão "Ver todas" do estado B, ou pelo número das Entregas. E
+o **lote de chamadas continua intacto** dentro dela — é o que resolve o
+acúmulo, e clicar uma por uma nunca foi a alternativa real.
+
+Uma coisa que o teste pegou e que era mais funda que o layout: as
+Entregas mostravam **"aulas sem chamada" com a pilha do ciclo inteiro,
+ao lado de "aulas com chamada" que é do mês** — dois números com
+escalas diferentes lado a lado, dentro de um cartão chamado "Entregas
+do mês". Agora o número é do mês, e se chama "sem chamada no mês". A
+pilha do ciclo tem lugar próprio: o hero.
+
+**Fora, por decisão da escola:** Substituições e "entregas do projeto"
+continuam como estão — não têm dado nenhum no sistema, e o desenho
+pedia os dois. "Agenda de hoje" não entrou: ficou só "Próximas aulas ·
+7 dias", que é de onde a professora descobre a aula de quinta.
+
 ### Cada tela na rotina de quem abriu
 
 O menu já escondia as telas que não são de quem entrou, mas **dentro**
