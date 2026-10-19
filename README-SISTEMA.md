@@ -1733,6 +1733,58 @@ Quem o Identity autentica ainda precisa estar na equipe da escola: o
 e-mail passa pelo `liberarGestao`, e quem não está não entra, mesmo
 com a senha certa.
 
+#### Professora ou aluna? Quem decide é o cadastro de Equipe
+
+Um e-mail só. No login, `decidirDestino` pergunta primeiro à Equipe e
+só depois à lista de alunas — então **a ficha de Equipe é o que faz o
+sistema tratar a pessoa como professora**, e ela ganha dela o perfil, o
+nome e o painel. Para uma professora nova:
+
+1. Escola → **Equipe** → *+ Nova pessoa*: nome, **o mesmo e-mail do
+   convite do Identity**, função *Professora* e *Início na equipe*;
+2. Netlify → Identity → *Invite users*, com esse mesmo e-mail;
+3. na ficha dela, marcar as **turmas** que são dela — é daí que sai o
+   Painel do professor.
+
+Quem foi matriculada como aluna algum dia e hoje dá aula não precisa
+sair de lugar nenhum: a Equipe vence, e a mesma senha serve.
+
+Três coisas que mordiam nesse caminho, e agora não mordem:
+
+- **o nome é chave.** A turma guarda `teacher`, a aluna guarda
+  `professora`, a tarefa guarda `dono` — tudo por nome. Uma segunda
+  "Gabi" na equipe não é uma segunda pessoa para o sistema: é a mesma,
+  e as turmas das duas aparecem no painel de cada uma. O cadastro passa
+  a barrar nome repetido (e e-mail repetido) e dizer por quê. Duas
+  pessoas de mesmo primeiro nome entram com o nome completo;
+- **o e-mail era comparado cru.** O que a pessoa digita passa por
+  `toLowerCase`; o que estava gravado na ficha, não. Uma ficha salva
+  com maiúscula — ou com o espaço que o teclado do celular cola no fim
+  — ouvia "este e-mail não está na equipe". A comparação agora ignora
+  caixa e espaço, a ficha grava normalizado, e o aviso diz **qual**
+  e-mail foi recusado, que é o que deixa ver o erro;
+- **o portão não lia a base antes de dizer não.** O cadastro de Equipe
+  mora no banco da escola; num aparelho novo o código traz só a equipe
+  de origem. Quem foi cadastrada depois, abrindo o sistema no celular
+  dela pela primeira vez, era recusada porque a ficha estava no
+  servidor e ninguém foi buscá-la. Agora o portão lê a base e só então
+  decide.
+
+#### O convite e a nova senha caem na porta da aluna
+
+O e-mail de convite e o de redefinição de senha do Netlify apontam para
+a **raiz do site** — não há como dar um endereço por pessoa, porque
+aluna e equipe vivem no mesmo Identity. A raiz leva a `aluna.html`, que
+é o portão das duas e já manda cada uma para a sua área depois de
+salvar a senha (`decidirDestino`).
+
+O que atrapalhava era o título: "Área da aluna" ficava fixo em cima de
+**todas** as telas, inclusive da de nova senha. Quem é da equipe abria
+o link da própria senha, lia "Área da aluna" e parava ali, achando que
+o link estava errado. O título agora diz o que a tela faz — "Nova
+senha", "Criar sua senha" — e as duas avisam que o acesso é o mesmo
+para aluna e para a equipe.
+
 **Criar as contas** (uma vez, por pessoa): Netlify → Identity → Invite
 users → o e-mail. A pessoa recebe um convite, abre, define a senha, e
 daí em diante entra por `gestao.html`. Esqueceu a senha: "Esqueci

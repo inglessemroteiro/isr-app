@@ -123,8 +123,7 @@
   // O Identity diz QUEM é a pessoa. Quem diz se ela trabalha aqui, e
   // com qual perfil, continua sendo a base da escola: o e-mail
   // autenticado tem de estar na equipe, senão não entra.
-  function abrirSessao(email, tokens) {
-    try { window.ISRCRM.conectarPadrao(); } catch (e) {}
+  function entrarCom(email, tokens) {
     var u = window.ISRCRM && window.ISRCRM.liberarGestao(email);
     if (!u) {
       try { window.ISRCRM.guardarTokenGestao(null); } catch (e) {}
@@ -134,8 +133,32 @@
     window.location.replace(DESTINO);
     return true;
   }
-  function naoAutorizada(idErro) {
-    msg(idErro, "Este e-mail não está na equipe da escola. Fale com a Gabi para liberar o acesso.");
+  // O cadastro de Equipe mora na base da escola, e num aparelho novo a
+  // base local começa vazia: o código traz só a equipe de origem — a
+  // Gabi, a Carla, a Érika e as duas primeiras professoras. Quem foi
+  // cadastrada depois, abrindo o sistema no celular dela pela primeira
+  // vez, era recebida com "este e-mail não está na equipe da escola",
+  // porque a ficha dela estava no servidor e o portão nunca foi
+  // buscá-la. Agora, antes de dizer não, o portão lê a base.
+  function abrirSessao(email, tokens, idErro) {
+    try { window.ISRCRM.conectarPadrao(); } catch (e) {}
+    if (entrarCom(email, tokens)) return;
+    var temBase = false;
+    try { temBase = !!(window.ISRCRM.backendUrl && window.ISRCRM.backendUrl()); } catch (e) {}
+    if (!temBase) { naoAutorizada(idErro, email); return; }
+    msg(idErro, "Procurando o seu cadastro na escola…");
+    try {
+      window.ISRCRM.carregarDoBackend(function () {
+        if (entrarCom(email, tokens)) return;
+        naoAutorizada(idErro, email);
+      });
+    } catch (e) { naoAutorizada(idErro, email); }
+  }
+  // Dizer o e-mail que foi recusado é o que permite ver o erro: quase
+  // sempre é o endereço do convite diferente do que está na ficha.
+  function naoAutorizada(idErro, email) {
+    msg(idErro, (email ? "O e-mail " + email + " não está" : "Este e-mail não está")
+      + " no cadastro de Equipe da escola. Fale com a Gabi para liberar o acesso.");
   }
 
   function entrar() {
@@ -153,7 +176,7 @@
     }).then(function (res) {
       document.getElementById("btEntrar").disabled = false;
       if (res.ok && res.d.access_token) {
-        if (!abrirSessao(email, res.d)) naoAutorizada("erro");
+        abrirSessao(email, res.d, "erro");
         return;
       }
       // PORTA DE TRANSIÇÃO — sai daqui quando as contas existirem.
@@ -173,7 +196,7 @@
   // PORTA DE TRANSIÇÃO — remover junto com o bloco acima.
   function entrarSemSenha() {
     msg("erroSemConta", "");
-    if (!abrirSessao(v("email"), null)) naoAutorizada("erroSemConta");
+    abrirSessao(v("email"), null, "erroSemConta");
   }
 
   function aceitarConvite() {
@@ -188,7 +211,7 @@
       body: JSON.stringify({ token: hashToken[2], type: "signup", password: senha })
     }).then(function (r) { if (!r.ok) throw new Error("convite"); return r.json(); })
       .then(function (d) { tokens = d; return emailDoToken(d.access_token); })
-      .then(function (email) { if (!abrirSessao(email, tokens)) naoAutorizada("conviteErro"); })
+      .then(function (email) { abrirSessao(email, tokens, "conviteErro"); })
       .catch(function (e) {
         document.getElementById("btConvite").disabled = false;
         msg("conviteErro", String(e.message) === "convite"
@@ -217,7 +240,7 @@
         });
       })
       .then(function (r) { if (!r.ok) throw new Error("senha"); return emailDoToken(tokens.access_token); })
-      .then(function (email) { if (!abrirSessao(email, tokens)) naoAutorizada("recoveryErro"); })
+      .then(function (email) { abrirSessao(email, tokens, "recoveryErro"); })
       .catch(function (e) {
         document.getElementById("btRecovery").disabled = false;
         msg("recoveryErro", String(e.message) === "link"

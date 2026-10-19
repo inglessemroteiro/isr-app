@@ -6602,6 +6602,9 @@
     var l = equipeLista();
     var antes = l.filter(function (m) { return m.id === id; })[0];
     var nomeAntigo = antes ? antes.nome : "";
+    // o e-mail entra na ficha como a pessoa digitou; guardar cru deixava
+    // maiúscula e espaço na chave de acesso
+    if (patch && typeof patch.email === "string") patch.email = patch.email.trim().toLowerCase();
     l.forEach(function (m) { if (m.id === id) { Object.assign(m, patch); carimbar(m); } });
     equipeSave(l);
     // o nome da pessoa é a chave que liga turma, aluna, tarefa e reunião a ela.
@@ -6674,10 +6677,21 @@
     if (papeis.indexOf("shadow") >= 0) return "shadow";
     return null;
   }
+  // O e-mail é a chave que liga a pessoa autenticada ao cadastro da
+  // Equipe, e ela estava sendo comparada crua: o que a pessoa digita
+  // passa por toLowerCase, mas o que está gravado na ficha não. Um
+  // "Comercial.InglesSemRoteiro@gmail.com" cadastrado com maiúscula —
+  // ou com um espaço colado no fim, que é o que o teclado do celular
+  // faz — nunca casava, e a pessoa ouvia que não está na equipe da
+  // escola. E-mail não distingue maiúscula de minúscula; a comparação
+  // também não pode.
+  function mesmoEmail(a, b) {
+    return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  }
   function liberarGestao(email) {
     var e = (email || "").toLowerCase().trim();
     var m = GESTAO_EMAILS[e];
-    var eq = equipeLista().filter(function (x) { return x.email === e; })[0];
+    var eq = equipeLista().filter(function (x) { return mesmoEmail(x.email, e); })[0];
     var u = null;
     if (m) {
       var papeis = [m.perfil];
@@ -9539,6 +9553,124 @@
     agendarSync();
   }
   // As sessões de um nível num ciclo, em ordem.
+  // ── O SYLLABUS DO TRADITIONS 2026.4 ──────────────────────────
+  //
+  // Isto não é dado de exemplo: é o syllabus de verdade da escola,
+  // transcrito dos guias do professor. Ele entra uma vez, e só onde o
+  // nível ainda não tem sessão nenhuma — depois disso a escola manda,
+  // e nada aqui sobrescreve o que ela escreveu.
+  //
+  // A semeadura usa o ciclo que as TURMAS carregam, não um rótulo
+  // escrito aqui: na virada as turmas ficam com o ciclo anterior por
+  // um tempo, e um rótulo fixo não alcançaria nenhuma delas.
+  var FASE_SEED = { w: "warmup", m: "mindson", l: "language", h: "handson",
+    s: "shareout", r: "wrapup" };
+  var SYLLABUS_2026_4 = {
+    "A2": {
+      projeto: "Traditions",
+      sessoes: [
+        [1, "Family celebrations", ""],
+        [2, "Dutch holidays", ""],
+        [3, "Family recipes", ""],
+        [4, "Signature dish", "Describe your grandmother’s signature dish.",
+          [["w", "Look back: family recipes from Session 3", 5],
+           ["m", "Listen first: Ana talks about her grandmother’s moqueca", 10],
+           ["l", "Cooking verbs: to simmer, to season, a pinch of", 10],
+           ["h", "Caderno: write about your family’s signature dish", 10,
+             "What is your grandmother’s signature dish? When do you eat it? Explain how she makes it in 4 steps."],
+           ["h", "Pair work: explain a recipe in 4 steps", 12],
+           ["s", "Mission: present your signature dish", 10]],
+          "to simmer, to season, a pinch of, leftovers, signature dish",
+          "Ask someone in your family about the dish. Write 5 sentences you’ll say next class."],
+        [5, "Food markets", ""],
+        [6, "Birthdays", ""],
+        [7, "Sinterklaas", ""],
+        [8, "Then and now", ""],
+        [9, "Project prep", ""],
+        [10, "Presentation day", ""]
+      ]
+    },
+    "A2/B1": {
+      projeto: "Traditions",
+      sessoes: [
+        [1, "End of year at home",
+          "By the end of this session every student can say, in four sentences, what her family eats and does at the end of the year."],
+        [2, "One remembered occasion",
+          "By the end of this session every student can ask and answer past simple questions about one remembered occasion."],
+        [3, "The parts of a recipe",
+          "By the end of this session every student can see that a recipe has parts, and can find the imperatives and the sequencers in one."],
+        [4, "Quantities out loud",
+          "By the end of this session every student can say a recipe’s quantities out loud and write the ingredient list of her own recipe."],
+        [5, "", ""],
+        [6, "", ""],
+        [7, "Next year, out loud",
+          "By the end of this session every student can say what she is going to do and what she would like to do next year."],
+        [8, "The 2027 list",
+          "By the end of this session every student has turned last week’s wishes into a list of five things she is going to do in 2027."],
+        [9, "First steps and obstacles",
+          "By the end of this session every student can say what the first step of a plan is and name one thing that could stop it."],
+        [10, "The Traditions Showcase", ""]
+      ]
+    },
+    "A1": {
+      projeto: "Traditions",
+      sessoes: [
+        [1, "Introductions and Our End of Year Dishes",
+          "By the end of this session every student has her page My family dish started, with her dish named."],
+        [2, "Who makes it, and how often",
+          "By the end of this session every student can ask and answer who makes the dish and how often."],
+        [3, "Joining two ideas",
+          "By the end of this session every student can join two ideas with and or then."],
+        [4, "", ""], [5, "", ""],
+        [6, "Closing the recipe",
+          "By the end of this session every student has the ingredient list and three steps of her family recipe written on her page."],
+        [7, "", ""],
+        [8, "The 2027 card",
+          "By the end of this session every student has her New Year card written."],
+        [9, "Readiness check", ""],
+        [10, "The Traditions Showcase", ""]
+      ]
+    }
+  };
+  // Qual tabela vale para o nível da turma. Os nomes da escola são
+  // "Essentials (A2)", "Basics (A1)", "Speaking (B1)" — o casamento é
+  // pelo código do nível, que é o que não muda.
+  function tabelaDoNivel(nivel) {
+    var n = String(nivel || "").toUpperCase();
+    if (n.indexOf("A2/B1") >= 0) return SYLLABUS_2026_4["A2/B1"];
+    if (n.indexOf("A2") >= 0 || n.indexOf("ESSENTIALS") >= 0) return SYLLABUS_2026_4["A2"];
+    if (n.indexOf("A1") >= 0 || n.indexOf("BASICS") >= 0) return SYLLABUS_2026_4["A1"];
+    return null;
+  }
+  var SEMEADO_KEY = "isr_syllabus_semeado_v1";
+  function semearSyllabus() {
+    var feito = {};
+    try { feito = JSON.parse(localStorage.getItem(SEMEADO_KEY)) || {}; } catch (e) {}
+    var mudou = false;
+    turmasLista().forEach(function (u) {
+      if (!u.nivel || !u.cycle) return;
+      var k = u.nivel + "|" + u.cycle;
+      if (feito[k]) return;
+      // nunca por cima do que a escola já escreveu
+      if (syllabusDoNivel(u.nivel, u.cycle).length) { feito[k] = "ja tinha"; mudou = true; return; }
+      var tab = tabelaDoNivel(u.nivel);
+      if (!tab) return;
+      tab.sessoes.forEach(function (sx) {
+        var etapas = (sx[3] || []).map(function (e) {
+          return { fase: FASE_SEED[e[0]] || "handson", titulo: e[1], min: e[2],
+            pergunta: e[3] || "" };
+        });
+        salvarSessaoSyllabus({ nivel: u.nivel, ciclo: u.cycle, n: sx[0],
+          projeto: tab.projeto, titulo: sx[1] || "", objetivo: sx[2] || "",
+          etapas: etapas, palavras: sx[4] || "", homework: sx[5] || "" });
+      });
+      feito[k] = iso(today());
+      mudou = true;
+    });
+    if (mudou) { try { localStorage.setItem(SEMEADO_KEY, JSON.stringify(feito)); } catch (e) {} }
+    return feito;
+  }
+
   function syllabusDoNivel(nivel, ciclo) {
     var c = ciclo || metasAtuais().cicloLabel;
     return syllabusAll()
@@ -9645,7 +9777,18 @@
     };
   }
   // Todas as sessões da turma, para a tira de cima.
+  // O syllabus de verdade entra na primeira vez que alguém abre o
+  // plano de uma turma. Ali as turmas já existem, que é o que a
+  // semeadura precisa para saber nível e ciclo — e é idempotente, então
+  // chamar a cada abertura não custa nem repete.
+  var semeou = false;
+  function garantirSyllabus() {
+    if (semeou) return;
+    semeou = true;
+    try { semearSyllabus(); } catch (e) {}
+  }
   function planoSessoes(turmaId) {
+    garantirSyllabus();
     var t = (turmasLista().filter(function (x) { return x.id === turmaId; })[0]) || null;
     if (!t) return [];
     var nums = {};
@@ -14225,6 +14368,7 @@
     salvarMateriais: salvarMateriais,
     fasesDoPlano: fasesDoPlano, faseLabel: faseLabel,
     syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
+    semearSyllabus: semearSyllabus,
     apagarSessaoSyllabus: apagarSessaoSyllabus,
     planoDaTurma: planoDaTurma, planoSessoes: planoSessoes, salvarPlano: salvarPlano,
     addEtapaPlano: addEtapaPlano, removerEtapaPlano: removerEtapaPlano,

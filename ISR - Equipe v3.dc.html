@@ -300,6 +300,30 @@ class Component extends DCLogic {
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
 
+  // ── duas pessoas com o mesmo nome viram uma ────────────────────
+  //
+  // O nome é a chave que liga a pessoa a tudo: a turma guarda
+  // `teacher`, a aluna guarda `professora`, a tarefa guarda `dono`. Uma
+  // segunda "Gabi" na equipe não é uma segunda pessoa para o sistema —
+  // é a mesma, e as turmas das duas passam a aparecer no painel de cada
+  // uma. O e-mail é a chave do acesso, pela mesma razão.
+  //
+  // Barrar na hora do cadastro é o único momento em que isso custa um
+  // aviso; depois custa desembaraçar chamada, folha e agenda.
+  jaExiste(nome, email, idProprio) {
+    const n = (s) => String(s || "").trim().toLowerCase();
+    const lista = (window.ISRCRM.equipeLista() || []).filter(x => x.id !== idProprio);
+    const porNome = lista.filter(x => n(x.nome) === n(nome))[0];
+    if (porNome) {
+      return "Já existe " + porNome.nome + " na equipe, e o nome é o que liga "
+        + "turmas, alunas e tarefas à pessoa — duas iguais viram uma só. "
+        + "Use o nome completo para diferenciar.";
+    }
+    const porEmail = email ? lista.filter(x => n(x.email) === n(email))[0] : null;
+    if (porEmail) return "Este e-mail já é o acesso de " + porEmail.nome + ".";
+    return "";
+  }
+
   // Uma pessoa pode ter mais de uma função — a Carla vende e dá aula, a
   // Gabi gere e dá aula. A descrição diz o que a função abre no sistema,
   // porque é isso que muda ao marcar.
@@ -457,6 +481,8 @@ class Component extends DCLogic {
           if (!email && papeis.some(x => x !== "prestadora")) {
             this.setState({ edErro: "Quem entra no sistema precisa de e-mail." }); return;
           }
+          const choque = this.jaExiste(nome, email, m.id);
+          if (choque) { this.setState({ edErro: choque }); return; }
           if (nome !== m.nome && (nTurmas || nAlunas)
               && !window.confirm("Renomear " + m.nome + " para " + nome
                 + "? As turmas, alunas, tarefas e reuniões no nome dela passam junto.")) return;
@@ -609,6 +635,8 @@ class Component extends DCLogic {
         if (!email && papeis.some(p => p !== "prestadora")) {
           if (!window.confirm("Sem e-mail, essa pessoa não consegue entrar no sistema. Continuar?")) return;
         }
+        const choque = this.jaExiste(nome, email, null);
+        if (choque) { window.alert(choque); return; }
         window.ISRCRM.addEquipe({
           nome, email, papeis,
           valorTipo: this.val(this.nvTipoRef), valor: CRM.parseMoney(this.val(this.nvValorRef)),
