@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.18-h",
-  data: "18/10/2026",
-  nota: "O plano de aula: o syllabus é da escola, o plano é da turma"
+  numero: "2026.10.19-a",
+  data: "19/10/2026",
+  nota: "A chamada diz qual sessão foi dada, e o plano chega ao caderno da aluna"
 };

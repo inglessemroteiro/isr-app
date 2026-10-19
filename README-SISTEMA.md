@@ -1366,11 +1366,51 @@ veio (igual ao syllabus, ou ajustado, ou com N atividades suas), porta
 para o guia do professor, o objetivo, o roteiro com o tempo somado, as
 palavras e o homework.
 
-**Falta a outra metade, e ela é nomeada:** a aula publicada ainda não
-chega ao caderno da aluna. Para ligar uma aula a uma sessão falta a
-chamada guardar qual sessão foi dada — hoje ela guarda o tópico, não o
-número. E o conteúdo dos guias (os títulos e os objetivos das dez
-sessões de cada nível) ainda não está dentro do sistema: o syllabus
+#### O laço fecha · da chamada ao caderno da aluna
+
+Faltava a ligação: a chamada não dizia **qual sessão** foi dada, então o
+caderno da aluna não tinha como saber quais atividades ela viveu. Agora
+a chamada guarda o número da sessão, e o caderno dela recebe as
+atividades da aula.
+
+**E no caminho apareceu um defeito que valia por si.** O `topico` é o
+campo que valida a aula para a folha — `chamadaValidada` depende dele, e
+a chamada sem tópico aparece como "falta o tópico". Ele era lido em três
+lugares e **não tinha onde ser escrito em tela nenhuma**: o Painel
+chamava `salvarChamada` sem o argumento `extra`, então nenhuma chamada
+feita pelo app jamais foi validada. O v5 tinha o campo; a tela nunca o
+ganhou.
+
+Então os dois entraram juntos, acima do botão de salvar: **a sessão do
+ciclo** e **o tópico da lição**, com o selo ao lado dizendo "aula
+validada" ou "falta o tópico".
+
+Escolher a sessão **preenche o tópico com o título dela**, que é o caso
+comum — e **não escreve por cima** do que a professora digitou, porque
+apagar o que ela escreveu para pôr o título padrão seria perder
+trabalho. O campo é controlado (valor no estado, não escrito no DOM por
+ref): a primeira versão usava ref e o campo voltava vazio a cada
+redesenho da tela.
+
+No caderno da aluna, cada aula passa a trazer o objetivo e **o que a
+aula teve** — as etapas do roteiro, com a pergunta de cada uma. Duas
+regras:
+
+- **Só plano publicado chega.** Rascunho é trabalho em andamento da
+  professora e não é para ser lido por ninguém.
+- **Etapa desmarcada não aparece.** Ela não aconteceu na aula.
+
+**As palavras da sessão entram no Review dela**, que é o que o desenho
+quer dizer com "palavras · vão para o Review". Com duas cautelas:
+palavra que ela **já tem não é tocada** (se ela escreveu a própria
+tradução, sobrescrever com a da escola apagaria o trabalho dela), e a
+sincronização roda **uma vez por abertura do app**, não a cada desenho
+da tela. Cada palavra que vem da aula fica marcada com a data e a
+sessão de onde veio, e o cofre diz quantas chegaram — cofre que cresce
+em silêncio é cofre em que ela encontra coisas que não pôs.
+
+**O que ainda falta:** o conteúdo dos guias. Os títulos e os objetivos
+das dez sessões de cada nível continuam só nos documentos; o syllabus
 começa vazio, e a tela diz isso em vez de inventar sessões.
 
 ### Cada tela na rotina de quem abriu

@@ -6975,6 +6975,13 @@
     var topicoNovo = ("topico" in extra)
       ? String(extra.topico || "").trim() : String((velha && velha.topico) || "");
     var noshowNovo = ("noshow" in extra) ? !!extra.noshow : !!(velha && velha.noshow);
+    // Qual sessão do ciclo foi dada. É isto que liga a aula ao plano:
+    // sem o número, o caderno da aluna não tem como saber quais
+    // atividades ela viveu — a chamada só guardava o tópico escrito à
+    // mão, que não casa com nada.
+    var sessaoNova = ("sessao" in extra)
+      ? (parseInt(extra.sessao, 10) || 0) : (parseInt(velha && velha.sessao, 10) || 0);
+    var mudouSessao = jaExistia && sessaoNova !== (parseInt(velha && velha.sessao, 10) || 0);
     var mudouTopico = jaExistia && topicoNovo !== String((velha && velha.topico) || "");
     var mudouNoshow = jaExistia && noshowNovo !== !!(velha && velha.noshow);
     hist.push({ por: por || "", em: agora,
@@ -6982,7 +6989,9 @@
         : mudouNoshow ? (noshowNovo ? "no-show gravado" : "no-show desfeito")
         : mudancas ? mudancas + (mudancas === 1 ? " presença alterada" : " presenças alteradas")
           + (mudouTopico ? " · tópico alterado" : "")
-        : mudouTopico ? "tópico alterado"
+          + (mudouSessao ? " · sessão alterada" : "")
+        : mudouTopico ? "tópico alterado" + (mudouSessao ? " · sessão alterada" : "")
+        : mudouSessao ? "sessão alterada"
         : "regravada sem mudança" });
     // uma chamada reaberta muitas vezes não pode crescer sem fim: a
     // primeira linha é a que conta a origem, as últimas é que dizem o
@@ -6994,6 +7003,8 @@
       // o que valida a aula
       topico: topicoNovo,
       noshow: noshowNovo,
+      // qual sessão do plano foi dada (0 = a professora não disse)
+      sessao: sessaoNova,
       // só existe quando a aula foi dada em outro dia
       dataReal: ("dataReal" in extra)
         ? String(extra.dataReal || "") : ((velha && velha.dataReal) || ""),
@@ -9482,6 +9493,29 @@
     if (!vivas.length) return { ok: false, erro: "O roteiro está vazio: nenhuma etapa marcada." };
     return salvarPlano(turmaId, n, { estado: "publicada", publicadoEm: new Date().toISOString() });
   }
+  // O plano PUBLICADO de uma aula, pelo nome da turma e pelo número da
+  // sessão que a chamada guardou. É por aqui que o caderno da aluna
+  // chega ao que a professora planejou — e só se estiver publicado:
+  // rascunho é trabalho em andamento e não é para ser lido.
+  function planoPublicadoDaAula(turmaLabel, sessao) {
+    var n = parseInt(sessao, 10) || 0;
+    if (!n || !turmaLabel) return null;
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === turmaLabel;
+    })[0];
+    if (!t) return null;
+    var p = planoDaTurma(t.id, n);
+    if (!p || p.estado !== "publicada") return null;
+    return {
+      n: p.n, titulo: p.titulo, objetivo: p.objetivo, homework: p.homework,
+      palavras: p.palavras,
+      // só o que ficou marcado: etapa desmarcada não aconteceu na aula
+      atividades: p.etapas.filter(function (e) { return e.on; }).map(function (e) {
+        return { fase: faseLabel(e.fase), titulo: e.titulo, min: e.min,
+          pergunta: e.pergunta };
+      })
+    };
+  }
   // Quanto tempo o roteiro ocupa — só o que está marcado.
   function minutosDoPlano(plano) {
     return (plano && plano.etapas || []).filter(function (e) { return e.on; })
@@ -9543,9 +9577,18 @@
         return x.tipo === "turma" && x.turma === ch.turma && x.data === ch.data;
       })[0];
       var est = estadoPresenca(ch.presencas[pessoaId]);
+      // o plano daquela sessão, se a professora disse qual foi e já
+      // publicou. Sem isso a linha é só o registro; com isso ela traz
+      // as atividades que a aula teve.
+      var plano = planoPublicadoDaAula(ch.turma, ch.sessao);
       out.push({
         turma: ch.turma, data: ch.data,
         topico: ch.topico || "",
+        sessao: parseInt(ch.sessao, 10) || 0,
+        tituloSessao: plano ? plano.titulo : "",
+        objetivo: plano ? plano.objetivo : "",
+        atividades: plano ? plano.atividades : [],
+        palavrasDaAula: plano ? plano.palavras : [],
         presenca: est,
         // a tarefa só entra quando a professora cobrou: sem marca na
         // chamada, dizer "não entregou" seria acusar sem pergunta
@@ -9618,6 +9661,36 @@
     m[pessoaId] = l;
     palavrasSave(m);
     return { ok: true, palavra: reg };
+  }
+  // As palavras que a professora pôs na sessão entram no cofre da
+  // aluna, marcadas com a aula de onde vieram. É isto que o desenho
+  // quer dizer com "palavras · vão para o Review".
+  //
+  // Duas cautelas. A primeira: palavra que ela JÁ TEM não é tocada —
+  // se ela escreveu a própria tradução, reescrever por cima com a da
+  // escola apagaria o trabalho dela. A segunda: isto roda ao abrir o
+  // Review, o que é escrever numa leitura; é idempotente de propósito
+  // (nada muda da segunda vez em diante) e devolve quantas entraram,
+  // para a tela poder dizer o que aconteceu em vez de o cofre crescer
+  // sozinho sem explicação.
+  function sincronizarPalavrasDaAula(pessoaId, nDias) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { ok: false, novas: 0 };
+    var tenho = {};
+    palavrasDaAluna(pessoaId).forEach(function (w) {
+      tenho[String(w.palavra || "").toLowerCase()] = true;
+    });
+    var novas = 0;
+    cadernoDaAluna(pessoaId, nDias || 180).forEach(function (c) {
+      (c.palavrasDaAula || []).forEach(function (w) {
+        var k = String(w || "").trim().toLowerCase();
+        if (!k || tenho[k]) return;
+        var r = salvarPalavra(pessoaId, { palavra: w,
+          daAula: ddmm(c.data) + " · " + (c.tituloSessao || c.turma) });
+        if (r && r.ok) { tenho[k] = true; novas++; }
+      });
+    });
+    return { ok: true, novas: novas };
   }
   function removerPalavra(pessoaId, id) {
     var m = palavrasAll();
@@ -13907,6 +13980,8 @@
     alternarEtapaPlano: alternarEtapaPlano, moverEtapaPlano: moverEtapaPlano,
     marcarPlanoPronto: marcarPlanoPronto, publicarPlano: publicarPlano,
     minutosDoPlano: minutosDoPlano, PLANO_LIMITES: PLANO_LIMITES,
+    planoPublicadoDaAula: planoPublicadoDaAula,
+    sincronizarPalavrasDaAula: sincronizarPalavrasDaAula,
     palavrasDaAluna: palavrasDaAluna, salvarPalavra: salvarPalavra, removerPalavra: removerPalavra,
     revisarPalavra: revisarPalavra, revisaoDeHoje: revisaoDeHoje, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
