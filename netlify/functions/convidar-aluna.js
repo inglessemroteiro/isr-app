@@ -13,25 +13,37 @@
 // e-mail já existe e a função trata isso como sucesso. É o que evita a
 // mensagem de acesso chegando toda semana para a mesma pessoa.
 //
+// DUAS PORTAS, porque são dois chamadores diferentes:
+//
+//   1. a MÁQUINA (Zapier, quando alguém assina no systeme) manda a
+//      chave ISR_CONVITE_CHAVE, no corpo ou no cabeçalho x-isr-chave;
+//   2. a GESTORA, do próprio app, manda o token do Netlify Identity —
+//      ela já está logada, e pedir que o navegador dela guarde a chave
+//      seria publicar a chave.
+//
+// A porta 2 pode ser estreitada com ISR_EQUIPE_EMAILS: a lista, separada
+// por vírgula, de quem da equipe pode convidar. Com ela configurada, só
+// esses e-mails convidam pelo app. Sem ela, qualquer pessoa com conta no
+// Identity convida — o que ainda é bem menos que "qualquer pessoa na
+// internet", mas é menos do que você provavelmente quer.
+//
 // Endereço:  POST /.netlify/functions/convidar-aluna
 // Corpo:     { "email": "...", "chave": "..." }
 // Chave:     variável de ambiente ISR_CONVITE_CHAVE, no painel do
 //            Netlify (Site configuration → Environment variables). A
-//            mesma string vai no Zapier. Sem ela configurada, a função
-//            recusa tudo — não existe modo "aberto".
+//            mesma string vai no Zapier. Sem ela e sem sessão de
+//            gestão, a função recusa tudo — não existe modo "aberto".
 // ════════════════════════════════════════════════════════════════
 
 const CHAVE = process.env.ISR_CONVITE_CHAVE;
+const EQUIPE = String(process.env.ISR_EQUIPE_EMAILS || '')
+  .split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
 
 exports.handler = async (event, context) => {
   const headers = { 'Content-Type': 'application/json' };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   if (event.httpMethod !== 'POST')
     return { statusCode: 405, headers, body: JSON.stringify({ ok: false, erro: 'use POST' }) };
-
-  if (!CHAVE)
-    return { statusCode: 500, headers, body: JSON.stringify({
-      ok: false, erro: 'ISR_CONVITE_CHAVE não está configurada no Netlify' }) };
 
   let corpo = {};
   try { corpo = JSON.parse(event.body || '{}'); } catch (e) {}
@@ -46,10 +58,27 @@ exports.handler = async (event, context) => {
   // espaço sobrando na variável do Netlify ou no que foi colado não pode
   // ser a diferença entre funcionar e não funcionar
   const enviada = String(corpo.chave || (event.headers && event.headers['x-isr-chave']) || '').trim();
-  if (enviada !== String(CHAVE).trim())
+  const comChave = !!CHAVE && enviada === String(CHAVE).trim();
+
+  // a gestora logada no app: o Netlify só preenche clientContext.user
+  // quando o token do Identity que veio no Authorization é válido
+  const quem = context && context.clientContext && context.clientContext.user;
+  const emailDeQuem = String((quem && quem.email) || '').trim().toLowerCase();
+  const daEquipe = !!emailDeQuem && (!EQUIPE.length || EQUIPE.indexOf(emailDeQuem) >= 0);
+
+  if (!comChave && !daEquipe) {
+    // a mensagem diz qual das duas portas falhou, senão depurar isto
+    // vira adivinhação
     return { statusCode: 401, headers, body: JSON.stringify({ ok: false,
-      erro: 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
-        + 'No campo "chave" vai o VALOR da senha, não o nome da variável.' }) };
+      erro: emailDeQuem
+        ? 'A sua conta (' + emailDeQuem + ') não está em ISR_EQUIPE_EMAILS, '
+          + 'a lista de quem pode convidar.'
+        : (enviada
+          ? 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
+            + 'No campo "chave" vai o VALOR da senha, não o nome da variável.'
+          : 'Sem chave e sem sessão de gestão. Entre no app, ou mande a chave '
+            + 'no cabeçalho x-isr-chave.') }) };
+  }
 
   const email = String(corpo.email || '').trim().toLowerCase();
   if (!email || email.indexOf('@') < 0)

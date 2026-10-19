@@ -1413,6 +1413,38 @@ em silêncio é cofre em que ela encontra coisas que não pôs.
 das dez sessões de cada nível continuam só nos documentos; o syllabus
 começa vazio, e a tela diz isso em vez de inventar sessões.
 
+#### O convite da aluna, e os materiais do ciclo
+
+**O convite vai para o e-mail da matrícula, e isso é estrutural.**
+`convidarAluna` recebe o **id da aluna**, não um endereço: não existe
+campo para digitar outro. Um campo livre ali seria a porta para
+convidar qualquer pessoa, e o acesso ao app é o acesso aos dados dela.
+Ela recusa quem ainda é lead, recusa ficha sem e-mail (dizendo que o
+e-mail precisa estar no cadastro antes), e deixa na ficha a data e o
+endereço para onde o convite foi — para ninguém convidar a mesma pessoa
+toda semana.
+
+A função do Netlify passou a ter **duas portas**, porque são dois
+chamadores: a máquina (o Zapier do systeme) manda a chave
+`ISR_CONVITE_CHAVE`, e a gestora, do próprio app, manda o token do
+Netlify Identity — ela já está logada, e pedir que o navegador dela
+guarde a chave seria publicar a chave. A porta da gestora pode ser
+estreitada com `ISR_EQUIPE_EMAILS`, a lista de quem pode convidar; sem
+ela, qualquer pessoa com conta no Identity convida, o que é bem menos
+que "qualquer pessoa na internet" mas é menos do que se quer.
+
+**Os materiais do ciclo** são o syllabus e o guia do professor de cada
+nível. O sistema guarda **a porta para cada documento, não uma cópia do
+texto**: copiar os guias para dentro criaria uma segunda versão que
+envelhece sozinha, e a professora precisa do guia inteiro. Eles se
+cadastram em Dados e aparecem no Plano das aulas, ao lado do roteiro.
+
+Uma volta que o teste obrigou a existir: **o ciclo da turma não é
+sempre o ciclo das metas**. Na virada, as turmas continuam marcadas com
+o ciclo anterior por um tempo, e o link recém-cadastrado não aparecia em
+turma nenhuma. A busca passou a ser pelo ciclo da turma e, se ele não
+tem material guardado, pelo ciclo que a escola está dando agora.
+
 ### Cada tela na rotina de quem abriu
 
 O menu já escondia as telas que não são de quem entrou, mas **dentro**
