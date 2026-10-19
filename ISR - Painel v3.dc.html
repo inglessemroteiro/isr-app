@@ -57,6 +57,94 @@
     </sc-for>
   </div>
 
+  <!-- EM AULA · RESPOSTAS AO VIVO -->
+  <!-- O que a professora vê enquanto a aula corre: o que cada aluna
+       está escrevendo no caderno, e um comentário que chega lá. -->
+  <sc-if value="{{ ptEmAula }}">
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <button class="isr-botao isr-botao--pilula" onclick="{{ onSairDaAula }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; padding: 9px 16px">← {{ L61 }}</button>
+      <span style="font-size: 13px; font-weight: 600; color: var(--color-tertiary-500);">{{ emAulaTitulo }}</span>
+    </div>
+
+    <div style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+      <button class="isr-botao isr-botao--pilula" onclick="{{ onAbrirCaderno }}" style="background: var(--color-button-primary); color: var(--color-primary-900); font-size: 14px; padding: 13px 22px">{{ vivoBotao }}</button>
+      <span style="flex: 1; min-width: 220px; font-size: 13.5px; line-height: 1.5;">{{ vivoTexto }}</span>
+      <sc-if value="{{ temCadernoDoDia }}">
+        <a href="{{ cadernoDoDiaHref }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; background: rgba(255,255,255,0.12); color: var(--color-neutral-0); border-radius: 999px; padding: 11px 16px; font-size: 13px; font-weight: 600;">{{ L62 }}</a>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 12.5px; color: var(--color-tertiary-500);">{{ L63 }}</span>
+      <sc-for list="{{ vivoTurmas }}" as="vt" hint-placeholder-count="2">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ vt.onClick }}" style="background: {{ vt.bg }}; color: {{ vt.fg }}; font-size: 13px; padding: 9px 16px">{{ vt.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px;">
+      <sc-for list="{{ vivoFiltros }}" as="vf" hint-placeholder-count="6">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ vf.onClick }}" style="flex: none; background: {{ vf.bg }}; color: {{ vf.fg }}; font-size: 13px; padding: 9px 16px; display: flex; gap: 7px; align-items: center">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ vf.ponto }};"></span>{{ vf.label }}
+        </button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ vivoSemAlunas }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ L64 }}</section>
+    </sc-if>
+
+    <!-- a grade de todas -->
+    <sc-if value="{{ vivoGrade }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;">
+        <sc-for list="{{ vivoAlunas }}" as="va" hint-placeholder-count="6">
+          <button class="isr-botao" onclick="{{ va.onClick }}" style="text-align: left; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+            <span style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <span style="font-size: 15px; font-weight: 700; color: var(--color-primary-900);">{{ va.nome }}</span>
+              <span style="flex: none; display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--color-tertiary-500);">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ va.ponto }};"></span>{{ va.estado }}
+              </span>
+            </span>
+            <span style="min-height: 52px; font-size: 13px; color: var(--color-primary-800); line-height: 1.5;">{{ va.previa }}</span>
+            <span style="font-size: 12px; color: var(--color-tertiary-500);">{{ va.progresso }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- uma aluna -->
+    <sc-if value="{{ vivoDetalhe }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onVoltarTodas }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; padding: 9px 16px">← {{ L65 }}</button>
+          <span style="flex: 1; font-size: 18px; font-weight: 700; color: var(--color-primary-900);">{{ alunaNome }}</span>
+          <span style="flex: none; display: flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--color-tertiary-500);">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ alunaPonto }};"></span>{{ alunaEstado }}
+          </span>
+        </div>
+        <sc-for list="{{ alunaTarefas }}" as="at" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ at.rotulo }}</span>
+            <span style="font-size: 15px; font-weight: 700; color: var(--color-primary-900); line-height: 1.4;">{{ at.pergunta }}</span>
+            <div style="background: var(--color-bg-default); border-radius: 14px; padding: 13px 15px; font-size: 14px; color: {{ at.cor }}; line-height: 1.6; white-space: pre-wrap;">{{ at.resposta }}</div>
+            <sc-for list="{{ at.comentarios }}" as="cm" hint-placeholder-count="1">
+              <div style="background: var(--color-primary-50); border-radius: 12px; padding: 10px 13px; font-size: 13px; color: var(--color-primary-900); line-height: 1.5;">{{ cm.texto }} <span style="color: var(--color-tertiary-500);">· {{ cm.quem }}</span></div>
+            </sc-for>
+            <!-- O comentário é de uma tarefa, não da aluna: esta
+                 pílula escolhe em qual delas a caixa de baixo escreve. -->
+            <button class="isr-botao isr-botao--pilula" onclick="{{ at.onEscolher }}" style="align-self: flex-start; background: {{ at.selBg }}; color: {{ at.selFg }}; font-size: 12px; padding: 7px 14px">{{ at.selLabel }}</button>
+          </div>
+        </sc-for>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input class="isr-campo" value="{{ comentarioTexto }}" onchange="{{ onComentarioMuda }}" placeholder="{{ phComentario }}" style="flex: 1; min-width: 240px; padding: 13px 16px; font-size: 13.5px" />
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onComentar }}" style="font-size: 13px; padding: 13px 24px">{{ L66 }}</button>
+        </div>
+        <sc-if value="{{ comentouAgora }}">
+          <span style="font-size: 12.5px; font-weight: 600; color: var(--color-success-dark);">{{ L67 }}</span>
+        </sc-if>
+      </section>
+    </sc-if>
+  </sc-if>
+
   <!-- A TURMA ABERTA: o caminho de volta e as abas de dentro -->
   <!-- No v5 a turma é a unidade do trabalho da professora: ela entra
        na turma e trabalha ali. Antes a chamada tinha um seletor de
@@ -288,12 +376,11 @@
         </div>
       </sc-if>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
-        <!-- "Começar aula" no v5 abre o caderno da turma para edição.
-             Guardamos o NOME do documento, não um caderno ao vivo: o
-             botão leva ao caderno no Drive, que é o que a professora
-             abre à mão hoje. -->
-        <sc-if value="{{ temCadernoDoDia }}">
-          <a href="{{ cadernoDoDiaHref }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-primary); color: var(--color-primary-900); border-radius: 999px; padding: 11px 16px; font-size: 13px; font-weight: 600;">▶ Começar aula</a>
+        <!-- "Começar aula" abre a tela de dentro da aula: é lá que o
+             caderno das alunas é aberto e que as respostas aparecem
+             enquanto elas escrevem. -->
+        <sc-if value="{{ podeComecarAula }}">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onComecarAula }}" style="background: var(--color-button-primary); color: var(--color-primary-900); padding: 11px 16px; font-size: 13px">▶ {{ L60 }}</button>
         </sc-if>
         <sc-for list="{{ heroAcoes }}" as="ha" hint-placeholder-count="2">
           <button class="isr-botao isr-botao--pilula" onclick="{{ ha.onClick }}" style="padding: 11px 16px; font-size: 13px; background: {{ ha.bg }}; color: {{ ha.fg }}">{{ ha.label }}</button>
@@ -764,7 +851,12 @@ class Component extends DCLogic {
             loteConfirmar: false, loteResultado: "", avisou: "", teacher: null, turmaChamada: null, chamadaData: null, presencas: null, tarefas: null,
             salvouAgora: false, tick: 0, eventoChamada: undefined, buscaExtra: "",
             escolhendoData: null, linhaAberta: null,
-            novaExtraAberta: false, neFeito: "" };
+            novaExtraAberta: false, neFeito: "",
+            // emAula = { label, data } da aula que está aberta na tela.
+            // Enquanto ela existe, o painel é a tela da aula e mais
+            // nada: as abas somem e o resto do painel não aparece.
+            emAula: null, vivoFiltro: "todas", vivoAluna: null,
+            vivoTarefa: 0, comentou: "", comentarioTexto: "" };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -833,6 +925,14 @@ class Component extends DCLogic {
     L57: ["Plano das aulas \u2197", "Lesson plans \u2197"],
     L58: ["Abrir turma \u2192", "Open class \u2192"],
     L59: ["Nenhuma aula neste dia.", "No class on this day."],
+    L60: ["Começar aula", "Start class"],
+    L61: ["Hoje", "Today"],
+    L62: ["Caderno no Drive \u2197", "Notebook on Drive \u2197"],
+    L63: ["turma", "class"],
+    L64: ["Nenhuma aluna nesta aula.", "No student in this class."],
+    L65: ["Voltar para todas", "Back to everyone"],
+    L66: ["Enviar", "Send"],
+    L67: ["Comentário enviado. Ele aparece no caderno dela.", "Comment sent. It shows in her notebook."],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -853,6 +953,19 @@ class Component extends DCLogic {
   neDuracaoRef = React.createRef(); neRespRef = React.createRef(); neLocalRef = React.createRef();
   neVagasRef = React.createRef(); neTurmaRef = React.createRef(); neDescRef = React.createRef();
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+  // Enquanto a aula corre, a tela se redesenha sozinha: as respostas
+  // das alunas chegam pelo banco, e ficar apertando F5 durante a aula
+  // não é trabalho de ninguém. Cinco segundos é o passo do caderno; o
+  // relógio só existe quando há aula aberta.
+  componentDidMount() {
+    this.relogioVivo = setInterval(() => {
+      if (this.state.emAula) {
+        try { if (window.ISRCRM && window.ISRCRM.carregarDoBackend) window.ISRCRM.carregarDoBackend(() => {}); } catch (e) {}
+        this.bump();
+      }
+    }, 5000);
+  }
+  componentWillUnmount() { try { clearInterval(this.relogioVivo); } catch (e) {} }
 
   hojeIso() { const d = new Date(); return d.toISOString().slice(0, 10); }
 
@@ -1072,6 +1185,13 @@ class Component extends DCLogic {
       loteConfirmar: false, loteResultado: "", onLote: () => {}, onLoteCancelar: () => {},
       semanas: [], dias: [], aulasDoDia: [], semAulasNoDia: false, instrucaoLista: "",
       temCaixaFolha: false, caixaFolhaBg: "", caixaFolhaFg: "", caixaFolhaTitulo: "", caixaFolhaTexto: "",
+      ptEmAula: false, emAulaTitulo: "", onSairDaAula: () => {}, onAbrirCaderno: () => {},
+      vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [], vivoAlunas: [],
+      vivoGrade: false, vivoDetalhe: false, vivoSemAlunas: false,
+      alunaNome: "", alunaEstado: "", alunaPonto: "", alunaTarefas: [],
+      onVoltarTodas: () => {}, onComentar: () => {}, comentouAgora: false,
+      comentarioTexto: "", onComentarioMuda: () => {}, phComentario: "",
+      podeComecarAula: false, onComecarAula: () => {},
       temErroChamada: false, erroChamada: "",
       presentesLabel: "", temDiario: false, diarioLabel: "", onDiario: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
@@ -1138,7 +1258,7 @@ class Component extends DCLogic {
         const rotulo = alunaPart ? "Particular · " + alunaPart.nome
           : ev ? CRM.aulaExtraLabel(ev) : (daTurma ? daTurma.label : "");
         return {
-          dia: dl.label, diaCor: dl.cor, hora: it.hora || "—",
+          dia: dl.label, diaCor: dl.cor, hora: it.hora || "—", data: it.data,
           temChamada: !!(rotulo && CRM.getChamada(rotulo, it.data)),
           // para o resumo do dia: o nome curto, o projeto e o tamanho
           nivel: daTurma ? daTurma.nivel
@@ -1519,18 +1639,188 @@ class Component extends DCLogic {
         };
       });
 
+    // ── EM AULA · RESPOSTAS AO VIVO ──────────────────────────────
+    //
+    // A professora entra pelo "Começar aula" do resumo do dia. A
+    // partir daí o painel é a aula e mais nada: as abas somem, porque
+    // trocar de aba no meio da aula não é o que ela está fazendo.
+    //
+    // O estado da aula vem do banco (CRM.aulaViva), não da tela: a
+    // mesma aula está aberta no aparelho dela e no de cada aluna.
+    const emAula = this.state.emAula;
+    const vivoOn = !!emAula;
+    const PONTOS = {
+      escrevendo: "var(--color-primary-500)",
+      terminou: "var(--color-secondary-500)",
+      aguardando: "var(--color-warning-light)",
+      nao_comecou: "var(--color-tertiary-500)"
+    };
+    const estadoLabel = (e) => e === "escrevendo" ? Tr("writing", "escrevendo")
+      : e === "terminou" ? Tr("finished", "terminou")
+      : e === "aguardando" ? Tr("idle", "sem escrever")
+      : Tr("not started", "não começou");
+    const vivoVals = (() => {
+      if (!vivoOn) return { ptEmAula: false, emAulaTitulo: "",
+        onSairDaAula: () => {}, onAbrirCaderno: () => {},
+        vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [],
+        vivoAlunas: [], vivoGrade: false, vivoDetalhe: false,
+        vivoSemAlunas: false, alunaNome: "", alunaEstado: "", alunaPonto: "",
+        alunaTarefas: [], onVoltarTodas: () => {}, onComentar: () => {},
+        comentouAgora: false, phComentario: "",
+        comentarioTexto: "", onComentarioMuda: () => {} };
+
+      const label = emAula.label, data = emAula.data;
+      const quem = (realUser && realUser.nome) || "";
+      const viva = CRM.aulaViva ? CRM.aulaViva(label, data)
+        : { estado: "nao_comecou", minutos: 0 };
+      const tarefas = CRM.tarefasDaAula ? CRM.tarefasDaAula(label, data) : [];
+      const linhas = CRM.respostasDaAula
+        ? CRM.respostasDaAula(label, data, tarefas.length) : [];
+      const filtro = this.state.vivoFiltro || "todas";
+      const visiveis = filtro === "todas" ? linhas
+        : linhas.filter(l => l.estado === filtro);
+      const sel = this.state.vivoAluna
+        ? linhas.filter(l => l.id === this.state.vivoAluna)[0] || null : null;
+      const iSel = this.state.vivoTarefa || 0;
+
+      const botao = viva.estado === "ao_vivo" ? Tr("End class", "Encerrar aula")
+        : viva.estado === "encerrada" ? Tr("Reopen class", "Reabrir a aula")
+        : Tr("Open the notebook", "Abrir o caderno");
+      let texto = viva.estado === "ao_vivo"
+        ? Tr("Class open for ", "Aula aberta há ") + viva.minutos
+          + Tr(" min. What they write shows up here.", " min. O que elas escrevem aparece aqui.")
+        : viva.estado === "encerrada"
+          ? Tr("Class ended. The answers stay in their notebooks.", "Aula encerrada. As respostas ficam guardadas no caderno delas.")
+          : Tr("The notebook is closed. Open it and they can answer the tasks.", "O caderno está fechado. Abra para elas responderem as tarefas.");
+      // Sem plano publicado não há pergunta nenhuma para responder, e
+      // abrir o caderno não muda isso. Dizer isso aqui é melhor do que
+      // deixar a professora esperando resposta que não vai chegar.
+      if (!tarefas.length) {
+        texto += " " + Tr("There is no task with a question in this lesson’s published plan — they have nothing to answer yet.",
+          "Não há tarefa com pergunta no plano publicado desta aula — elas ainda não têm o que responder.");
+      }
+
+      const previa = (l) => {
+        const t = (l.respostas || []).map(r => r.texto).filter(x => x && x.trim()).pop() || "";
+        return t.trim() ? (t.length > 120 ? t.slice(0, 120) + "…" : t)
+          : Tr("Nothing written yet.", "Ainda sem nada escrito.");
+      };
+
+      return {
+        ptEmAula: true,
+        emAulaTitulo: label + " · " + CRM.ddmm(data),
+        onSairDaAula: () => this.setState({ emAula: null, vivoAluna: null, comentou: "" }),
+        onAbrirCaderno: () => {
+          if (viva.estado === "ao_vivo") CRM.encerrarAula(label, data, quem);
+          else if (viva.estado === "encerrada") CRM.reabrirAula(label, data, quem);
+          else CRM.iniciarAula(label, data, quem);
+          this.bump();
+        },
+        vivoBotao: botao,
+        vivoTexto: texto,
+        // as aulas de hoje desta professora: quando há duas, trocar de
+        // aula é um toque e não voltar ao resumo
+        vivoTurmas: deHoje.filter(a => a.label).map(a => ({
+          label: a.label,
+          bg: a.label === label ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          fg: a.label === label ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          onClick: () => this.setState({ emAula: { label: a.label, data: a.data || hojeAgora },
+            vivoAluna: null, vivoTarefa: 0, comentou: "" })
+        })),
+        vivoFiltros: [["todas", Tr("Everyone", "Todas"), "var(--color-primary-900)"]]
+          .concat(["escrevendo", "terminou", "aguardando", "nao_comecou"]
+            .map(e => [e, estadoLabel(e), PONTOS[e]]))
+          .map(([id, lb, ponto]) => {
+            const n = id === "todas" ? linhas.length
+              : linhas.filter(l => l.estado === id).length;
+            return { label: lb + " · " + n, ponto,
+              bg: filtro === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: filtro === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: () => this.setState({ vivoFiltro: id, vivoAluna: null }) };
+          }),
+        vivoSemAlunas: linhas.length === 0,
+        vivoGrade: linhas.length > 0 && !sel,
+        vivoDetalhe: !!sel,
+        vivoAlunas: visiveis.map(l => ({
+          nome: l.nome,
+          estado: estadoLabel(l.estado),
+          ponto: PONTOS[l.estado] || "var(--color-tertiary-500)",
+          previa: previa(l),
+          progresso: tarefas.length
+            ? l.feitas + Tr(" of ", " de ") + tarefas.length + Tr(" tasks", " tarefas")
+            : Tr("no task in the plan", "sem tarefa no plano"),
+          onClick: () => this.setState({ vivoAluna: l.id, vivoTarefa: 0, comentou: "", comentarioTexto: "" })
+        })),
+        alunaNome: sel ? sel.nome : "",
+        alunaEstado: sel ? estadoLabel(sel.estado) : "",
+        alunaPonto: sel ? (PONTOS[sel.estado] || "var(--color-tertiary-500)") : "",
+        alunaTarefas: sel ? tarefas.map((t, i) => {
+          const r = (sel.respostas || [])[i] || { texto: "", comentarios: [] };
+          const escrito = !!(r.texto && r.texto.trim());
+          return {
+            rotulo: Tr("Task ", "Tarefa ") + (i + 1)
+              + [t.fase, t.titulo].filter(Boolean).map(x => " · " + x).join(""),
+            pergunta: t.pergunta,
+            resposta: escrito ? r.texto : Tr("No answer yet.", "Ainda sem resposta."),
+            cor: escrito ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
+            comentarios: (r.comentarios || []).map(c => ({
+              texto: c.texto,
+              quem: [c.por ? CRM.firstName(c.por) : "",
+                c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
+            })),
+            selLabel: i === iSel ? Tr("Commenting here", "Comentando aqui")
+              : Tr("Comment here", "Comentar aqui"),
+            selBg: i === iSel ? "var(--color-primary-900)" : "var(--color-button-secondary)",
+            selFg: i === iSel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            onEscolher: () => this.setState({ vivoTarefa: i, comentou: "" })
+          };
+        }) : [],
+        onVoltarTodas: () => this.setState({ vivoAluna: null, comentou: "", comentarioTexto: "" }),
+        phComentario: Tr("Comment on task ", "Comentário na tarefa ") + (iSel + 1) + "…",
+        // A caixa é controlada pelo estado, e não por ref: a tela se
+        // redesenha a cada cinco segundos enquanto a aula corre, e um
+        // campo preso a ref perde o que foi escrito nesse caminho.
+        comentarioTexto: this.state.comentarioTexto || "",
+        onComentarioMuda: (e) => this.setState({ comentarioTexto: e.target.value }),
+        onComentar: () => {
+          if (!sel) return;
+          const r = CRM.comentarResposta(sel.id, label, data, iSel,
+            this.state.comentarioTexto || "", quem);
+          if (r && r.ok) this.setState({ comentarioTexto: "", comentou: String(sel.id) });
+        },
+        comentouAgora: !!sel && this.state.comentou === String(sel.id)
+      };
+    })();
+
     return {
-      abas: ABAS.map(([id, label]) => ({ label,
+      ...vivoVals,
+      // Durante a aula o resumo do dia, as turmas e os clubes saem da
+      // tela: a aula é uma coisa só.
+      abas: vivoOn ? [] : ABAS.map(([id, label]) => ({ label,
         bg: aba === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
         onClick: () => this.irParaAba(id) })),
-      ptHoje: aba === "hoje",
-      ptParticulares: aba === "particulares",
-      ptClubes: aba === "clubes",
+      ptHoje: !vivoOn && aba === "hoje",
+      ptParticulares: !vivoOn && aba === "particulares",
+      ptClubes: !vivoOn && aba === "clubes",
       // a lista de turmas e a turma aberta são a mesma aba, em dois
       // estados: ou se escolhe uma, ou se trabalha dentro dela
-      ptListaTurmas: aba === "turmas" && !turmaAberta,
-      turmaAberta: aba === "turmas" && turmaAberta,
+      ptListaTurmas: !vivoOn && aba === "turmas" && !turmaAberta,
+      turmaAberta: !vivoOn && aba === "turmas" && turmaAberta,
+      // "Começar aula" abre a tela da aula e, se ela ainda não tinha
+      // sido aberta, abre o caderno das alunas junto: é o que a
+      // professora quer dizer quando aperta o botão.
+      podeComecarAula: !!(aulaDoDia && aulaDoDia.dia === "Hoje" && aulaDoDia.label),
+      onComecarAula: () => {
+        if (!aulaDoDia || !aulaDoDia.label) return;
+        const lbl = aulaDoDia.label, dt = aulaDoDia.data || hojeAgora;
+        const v = CRM.aulaViva ? CRM.aulaViva(lbl, dt) : null;
+        if (v && v.estado === "nao_comecou" && CRM.iniciarAula) {
+          CRM.iniciarAula(lbl, dt, (realUser && realUser.nome) || "");
+        }
+        this.setState({ emAula: { label: lbl, data: dt }, vivoAluna: null,
+          vivoFiltro: "todas", vivoTarefa: 0, comentou: "" });
+      },
       onVoltarTurmas: () => this.setState({ turmaAberta: false }),
       // O título é de quem trabalha. Quando a escola confere o painel
       // de outra pessoa, ele diz isso em voz alta: olhar o painel da
@@ -1552,10 +1842,10 @@ class Component extends DCLogic {
       // As abas de dentro só existem dentro: sem exigir a turma aberta,
       // a chamada aparecia na aba Hoje, porque "chamadas" é o tTab
       // inicial.
-      tGeral: aba === "turmas" && turmaAberta && tTab === "geral",
-      tAlunas: aba === "turmas" && turmaAberta && tTab === "alunas",
-      tChamadas: aba === "turmas" && turmaAberta && tTab === "chamadas",
-      tMateriais: aba === "turmas" && turmaAberta && tTab === "materiais",
+      tGeral: !vivoOn && aba === "turmas" && turmaAberta && tTab === "geral",
+      tAlunas: !vivoOn && aba === "turmas" && turmaAberta && tTab === "alunas",
+      tChamadas: !vivoOn && aba === "turmas" && turmaAberta && tTab === "chamadas",
+      tMateriais: !vivoOn && aba === "turmas" && turmaAberta && tTab === "materiais",
 
       // ── Visão geral da turma ──
       tGeralLinhas: turmaAbertaU ? [
