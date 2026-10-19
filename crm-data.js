@@ -6801,8 +6801,11 @@
   var TELAS_DA_PROFESSORA = ["ISR - Painel", "ISR - Turma ", "ISR - Perfil"];
   // Quem só dá aula: ensina e não cuida da escola. A Gabi e a Carla
   // dão aula e cuidam, então não entram aqui.
+  // Quem está logada de verdade, não a lente: a gestora olhando "como
+  // a professora" continua entrando em tudo. Usar a visão aqui prendia
+  // a gestora no Painel no momento em que ela ligava o ver como.
   function soProfessora() {
-    var v = gestaoVisao();
+    var v = gestaoUser();
     if (!v) return false;
     var papeis = (v.papeis || []).slice();
     if (v.perfil) papeis.push(v.perfil);

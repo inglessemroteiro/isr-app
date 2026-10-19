@@ -156,10 +156,16 @@
   ];
   var SECOES = ["hoje", "alunas e vendas", "financeiro", "pedagógico", "escola"];
 
+  // O menu é da pessoa de VERDADE, não da lente. A gestora olhando
+  // "como a professora" continua com os destinos dela na coluna: o
+  // "ver como" existe para ver o conteúdo pelos olhos da outra, e
+  // encolher o próprio menu junto deixava a gestora presa numa tela só
+  // sem entender por quê. O que a lente troca é o que as telas
+  // mostram, e os números ao lado dos destinos.
   function visivel(item) {
     if (!item.perfis) return true;
-    if (item.perfis.indexOf(user.perfil) >= 0) return true;
-    var papeis = user.papeis || [];
+    if (item.perfis.indexOf(real.perfil) >= 0) return true;
+    var papeis = real.papeis || [];
     for (var i = 0; i < papeis.length; i++) if (item.perfis.indexOf(papeis[i]) >= 0) return true;
     return false;
   }
@@ -230,15 +236,25 @@
     var vendoComo = null;
     try { vendoComo = window.ISRCRM && window.ISRCRM.verComo ? window.ISRCRM.verComo() : null; } catch (e) {}
 
-    var quem = document.createElement("div");
-    quem.style.cssText = "flex:none;font-size:12px;line-height:1.4;color:rgba(255,255,255,0.75);";
-    var qn = document.createElement("div");
-    qn.textContent = user.nome;
-    qn.style.cssText = "font-size:14px;font-weight:600;color:#fff;";
-    var qp = document.createElement("div");
-    qp.textContent = PERFIL_LABEL[user.perfil] || user.perfil || "";
-    quem.appendChild(qn); quem.appendChild(qp);
-    aside.appendChild(quem);
+    // Quem está logada. Para a gestora isto seria repetição — a grade
+    // do "ver como" logo abaixo já mostra o nome dela no cartão aceso —,
+    // então só aparece para quem não tem a grade.
+    var temGrade = false;
+    try {
+      temGrade = real.perfil === "gestora"
+        && ((window.ISRCRM && window.ISRCRM.verComoOpcoes ? window.ISRCRM.verComoOpcoes() : []) || []).length > 0;
+    } catch (e) {}
+    if (!temGrade) {
+      var quem = document.createElement("div");
+      quem.style.cssText = "flex:none;font-size:12px;line-height:1.4;color:rgba(255,255,255,0.75);";
+      var qn = document.createElement("div");
+      qn.textContent = real.nome;
+      qn.style.cssText = "font-size:14px;font-weight:600;color:#fff;";
+      var qp = document.createElement("div");
+      qp.textContent = PERFIL_LABEL[real.perfil] || real.perfil || "";
+      quem.appendChild(qn); quem.appendChild(qp);
+      aside.appendChild(quem);
+    }
 
     // ── ver como ────────────────────────────────────────────────
     // Só a gestora, e marcado o tempo todo: olhar pelos olhos de
@@ -248,15 +264,16 @@
     if (real.perfil === "gestora" && opcoes.length) {
       var vc = document.createElement("div");
       vc.id = "isr-shell-vercomo";
-      vc.style.cssText = "flex:none;display:flex;flex-direction:column;gap:6px;"
-        + (vendoComo ? "background:#9c6f56;margin:0 -6px;padding:8px 8px 10px;border-radius:14px;" : "");
+      vc.style.cssText = "flex:none;display:flex;flex-direction:column;gap:8px;";
       var vt = document.createElement("div");
-      vt.textContent = vendoComo ? "vendo como" : "ver como";
-      vt.style.cssText = "font-size:11px;font-weight:600;letter-spacing:.04em;"
-        + (vendoComo ? "color:#ffe6d8;" : "color:#fc9082;") + "padding:0 4px;";
+      vt.textContent = "ver como";
+      vt.style.cssText = "font-size:11px;font-weight:600;letter-spacing:.04em;color:#fc9082;padding:0 2px;";
       vc.appendChild(vt);
+      // Duas colunas de cartões, como no desenho. A caixa marrom em
+      // volta saiu: quem está sendo olhado já aparece no cartão aceso e
+      // no título da página, e a cor extra só competia com o menu.
       var chips = document.createElement("div");
-      chips.style.cssText = "display:flex;flex-wrap:wrap;gap:5px;";
+      chips.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px;";
       var trocar = function (alvo) {
         try { window.ISRCRM.setVerComo(alvo); } catch (e) {}
         window.location.reload();
@@ -265,16 +282,16 @@
         var b = document.createElement("button");
         b.type = "button";
         b.style.cssText = "border:0;cursor:pointer;font-family:inherit;text-align:left;"
-          + "border-radius:10px;padding:6px 9px;line-height:1.25;"
+          + "border-radius:12px;padding:10px 12px;line-height:1.3;min-width:0;"
           + (ligado ? "background:#fff;color:#164951;" : "background:rgba(255,255,255,0.10);color:#fff;");
         var l1 = document.createElement("div");
         l1.textContent = rotulo;
-        l1.style.cssText = "font-size:12px;font-weight:600;";
+        l1.style.cssText = "font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
         b.appendChild(l1);
         if (sub) {
           var l2 = document.createElement("div");
           l2.textContent = sub;
-          l2.style.cssText = "font-size:10px;opacity:.75;";
+          l2.style.cssText = "font-size:11px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
           b.appendChild(l2);
         }
         b.onclick = aoClicar;
@@ -287,12 +304,6 @@
           !!vendoComo && vendoComo.nome === o.nome, function () { trocar(o); }));
       });
       vc.appendChild(chips);
-      if (vendoComo) {
-        var aviso = document.createElement("div");
-        aviso.textContent = "Você vê o que " + vendoComo.nome + " vê. O que você gravar continua no seu nome.";
-        aviso.style.cssText = "font-size:10.5px;line-height:1.4;color:#ffe6d8;padding:0 4px;";
-        vc.appendChild(aviso);
-      }
       aside.appendChild(vc);
     }
 
