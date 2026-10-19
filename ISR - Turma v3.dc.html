@@ -147,6 +147,42 @@
             </div>
           </sc-if>
 
+          <!-- O SYLLABUS DO NÍVEL -->
+          <!-- O syllabus é da escola e vale para TODAS as turmas deste
+               nível — por isso só quem cuida da escola edita aqui, e a
+               tela diz o alcance antes de deixar mexer. Sem este bloco
+               as sessões existiam no dado e não tinham onde ser
+               escritas, que é o mesmo erro de pôr campo sem tela. -->
+          <sc-if value="{{ podeSyllabus }}">
+            <div class="isr-cartao" style="padding: 16px 20px; margin-top: 14px; background: var(--color-button-secondary)">
+              <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Syllabus de {{ syNivel }} · ciclo {{ syCiclo }}</div>
+                <button class="isr-botao isr-botao--texto" onclick="{{ onAbrirSyllabus }}" style="font-size: 12.5px; color: var(--color-primary-900)">{{ syAbrirLabel }}</button>
+              </div>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ sySubtitulo }}</p>
+
+              <sc-if value="{{ syAberto }}">
+                <sc-for list="{{ sySessoes }}" as="sy" hint-placeholder-count="10">
+                  <div style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-neutral-0)">
+                    <span style="flex: 0 0 56px; font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500); padding-top: 9px">S{{ sy.n }}</span>
+                    <div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                      <input class="isr-campo" value="{{ sy.titulo }}" onchange="{{ sy.onTitulo }}" placeholder="Título da sessão" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 13px; background: var(--color-neutral-0)" />
+                      <input class="isr-campo" value="{{ sy.objetivo }}" onchange="{{ sy.onObjetivo }}" placeholder="O que a aluna sai sabendo" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 12.5px; background: var(--color-neutral-0)" />
+                    </div>
+                    <button class="isr-botao" onclick="{{ sy.onApagar }}" title="Tirar esta sessão do syllabus" style="flex: none; width: 28px; height: 28px; margin-top: 7px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
+                  </div>
+                </sc-for>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px">
+                  <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onAddSessao }}" style="font-size: 12.5px; padding: 9px 15px">{{ syAddLabel }}</button>
+                  <span style="font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.5; flex: 1; min-width: 200px">{{ syNota }}</span>
+                </div>
+                <sc-if value="{{ syTemErro }}">
+                  <p style="margin: 8px 0 0; font-size: 11.5px; color: var(--color-error-dark);">{{ syErro }}</p>
+                </sc-if>
+              </sc-if>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ planoTem }}">
             <!-- a tira das sessões do ciclo -->
             <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px">
@@ -465,6 +501,9 @@ class Component extends DCLogic {
       abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
       geralLinhas: [], renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
       tPlano: false, planoVazio: true, planoVazioTexto: "", planoTem: false, planoTira: [],
+      podeSyllabus: false, syNivel: "", syCiclo: "", sySubtitulo: "", syAberto: false,
+      syAbrirLabel: "", sySessoes: [], onAbrirSyllabus: () => {}, onAddSessao: () => {},
+      syAddLabel: "", syNota: "", syTemErro: false, syErro: "",
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
       planoOnPublicar: () => {}, planoPublicarLabel: "", planoTemErro: false, planoErro: "",
@@ -592,6 +631,56 @@ class Component extends DCLogic {
         onClick: () => this.setState({ aba: id }) })),
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
       tPlano: aba === "plano",
+      // ── o syllabus do nível ──
+      // Quem edita é quem cuida da escola: o syllabus vale para todas
+      // as turmas do nível, e uma professora mudando aqui mudaria a
+      // aula das colegas sem saber.
+      podeSyllabus: !!user && (user.perfil === "gestora" || user.perfil === "operacao"),
+      syNivel: u.nivel || "este nível",
+      syCiclo: u.cycle || "atual",
+      sySubtitulo: "O que está aqui vale para TODAS as turmas de "
+        + (u.nivel || "este nível") + " neste ciclo. Cada turma ajusta o roteiro dela "
+        + "no plano, sem mexer nisto.",
+      syAberto: !!this.state.syAberto,
+      syAbrirLabel: this.state.syAberto ? "fechar" : "editar as sessões",
+      syAddLabel: "+ Sessão " + (pSessoes.length + 1),
+      syNota: pSessoes.length
+        ? "Apagar uma sessão aqui não apaga o ajuste que alguma turma já fez nela."
+        : "Comece criando a sessão 1. O roteiro de cada uma se escreve depois, na própria sessão.",
+      syTemErro: !!this.state.syErro,
+      syErro: this.state.syErro || "",
+      sySessoes: (CRM.syllabusDoNivel ? CRM.syllabusDoNivel(u.nivel, u.cycle) : []).map(sx => ({
+        n: String(sx.n), titulo: sx.titulo || "", objetivo: sx.objetivo || "",
+        onTitulo: (e) => {
+          CRM.salvarSessaoSyllabus({ id: sx.id, nivel: sx.nivel, ciclo: sx.ciclo, n: sx.n,
+            titulo: e.target.value, objetivo: sx.objetivo, palavras: sx.palavras,
+            homework: sx.homework, etapas: sx.etapas, projeto: sx.projeto, guia: sx.guia });
+          this.bump();
+        },
+        onObjetivo: (e) => {
+          CRM.salvarSessaoSyllabus({ id: sx.id, nivel: sx.nivel, ciclo: sx.ciclo, n: sx.n,
+            titulo: sx.titulo, objetivo: e.target.value, palavras: sx.palavras,
+            homework: sx.homework, etapas: sx.etapas, projeto: sx.projeto, guia: sx.guia });
+          this.bump();
+        },
+        onApagar: () => {
+          if (!window.confirm("Tirar a sessão " + sx.n + " do syllabus de " + sx.nivel
+            + "? Isso vale para todas as turmas deste nível.")) return;
+          CRM.apagarSessaoSyllabus(sx.id);
+          this.setState({ syErro: "" });
+          this.bump();
+        }
+      })),
+      onAbrirSyllabus: () => this.setState({ syAberto: !this.state.syAberto, syErro: "" }),
+      onAddSessao: () => {
+        const usados = (CRM.syllabusDoNivel(u.nivel, u.cycle) || []).map(x => x.n);
+        let n = 1; while (usados.indexOf(n) >= 0) n++;
+        const r = CRM.salvarSessaoSyllabus({ nivel: u.nivel, ciclo: u.cycle, n: n,
+          projeto: u.projeto || "" });
+        this.setState({ syErro: r.ok ? "" : (r.erro || "Não foi possível."), syAberto: true });
+        this.bump();
+      },
+
       planoVazio: !pAtual,
       planoVazioTexto: "O syllabus de " + (u.nivel || "este nível") + " no ciclo "
         + (u.cycle || "atual") + " ainda não tem sessões. Elas são da escola, não da turma: "

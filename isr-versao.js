@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-g",
+  numero: "2026.10.19-h",
   data: "19/10/2026",
-  nota: "Gravações pela presença, e a save-chamada fechada"
+  nota: "O syllabus ganhou onde ser escrito"
 };
