@@ -110,6 +110,15 @@
               <input class="isr-campo" ref="{{ mb.nomeRef }}" placeholder="Nome" style="padding: 10px 12px; font-size: 13px" />
               <input class="isr-campo" ref="{{ mb.emailRef }}" placeholder="E-mail de acesso" style="padding: 10px 12px; font-size: 13px" />
             </div>
+            <!-- INÍCIO NA EQUIPE -->
+            <!-- Aula anterior a esta data não entra na pilha de chamadas
+                 pendentes dela: quem assume uma turma não assume o
+                 passado dela. Em branco, nada é cortado. -->
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+              <span style="flex: 0 0 120px; font-size: 11.5px; font-weight: 600; color: var(--color-tertiary-500)">Início na equipe</span>
+              <input class="isr-campo" type="date" ref="{{ mb.desdeRef }}" style="padding: 9px 11px; font-size: 12.5px" />
+              <span style="font-size: 11px; color: var(--color-tertiary-500); line-height: 1.5; flex: 1; min-width: 200px">{{ mb.desdeNota }}</span>
+            </div>
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 6px;">Funções na escola</div>
             <div style="margin-bottom: 12px; max-width: 380px;">
               <button class="isr-botao" onclick="{{ mb.onAbrirPapeis }}" title="Funções na escola" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; background: var(--color-neutral-0); color: {{ mb.papeisCor }}; font-size: 13px; padding: 10px 12px; border-radius: 12px; text-align: left">
@@ -343,7 +352,8 @@ class Component extends DCLogic {
       const editando = this.state.editId === m.id;
       if (!this.edRefs[m.id]) {
         this.edRefs[m.id] = { nome: React.createRef(), email: React.createRef(),
-          tipo: React.createRef(), moeda: React.createRef(), valor: React.createRef() };
+          tipo: React.createRef(), moeda: React.createRef(), valor: React.createRef(),
+          desde: React.createRef() };
       }
       const r = this.edRefs[m.id];
       // enquanto edita, os papéis marcados vivem no estado; fora disso, vêm do cadastro
@@ -377,6 +387,11 @@ class Component extends DCLogic {
         nomeRef: r.nome, emailRef: r.email,
         tipoRef: r.tipo, moedaRef: r.moeda, valorRef: r.valor,
         valorPlaceholder: m.valor > 0 ? String(m.valor) : "ex. 2500",
+        desdeRef: r.desde,
+        // sem data, o comportamento é o de antes: nada é cortado
+        desdeNota: m.desde
+          ? "Aulas anteriores a esta data não entram nas chamadas pendentes dela."
+          : "Em branco: todas as aulas das turmas dela entram nas pendências, inclusive as de quem deu aula antes.",
         remExplica: (m.papeis || []).indexOf("professora") >= 0
           ? "Professora não precisa de valor aqui: o pagamento dela sai da folha, calculado das turmas. Preencha apenas se houver também um valor fixo adicional."
           : "Valor mensal entra na folha do mês e nos custos do Caixa, sem precisar lançar de novo.",
@@ -429,6 +444,7 @@ class Component extends DCLogic {
             // edição, e salvar apagava a remuneração de quem já tinha.
             if (r.tipo.current) r.tipo.current.value = m.valorTipo || "";
             if (r.moeda.current) r.moeda.current.value = m.moeda || "R$";
+            if (r.desde.current) r.desde.current.value = m.desde || "";
           }, 0);
         },
         onCancelar: () => this.setState({ editId: null, edErro: "" }),
@@ -448,7 +464,8 @@ class Component extends DCLogic {
             nome, email, papeis,
             valorTipo: this.val(r.tipo),
             moeda: this.val(r.moeda) || "R$",
-            valor: CRM.parseMoney(this.val(r.valor)) || 0
+            valor: CRM.parseMoney(this.val(r.valor)) || 0,
+            desde: this.val(r.desde)
           });
           // as turmas marcadas passam para ela; as desmarcadas que eram dela ficam sem professora
           if (papeis.indexOf("professora") >= 0) {
