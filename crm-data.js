@@ -7978,8 +7978,16 @@
       // descartada pela janela do SEU calendário, não pela desta
       // varredura — senão a aula presencial de uma semana que não
       // existe para as turmas online entraria na conta.
+      // Só os ciclos que CONTÊM hoje. Quando nenhum contém — porque o
+      // ciclo novo ainda não foi cadastrado, que é o caso da virada —,
+      // cair no último ciclo fechado fazia a varredura voltar meses: a
+      // professora abria o painel e via 143 aulas de julho, de um ciclo
+      // que já encerrou. Sem ciclo aberto, vale a janela curta.
+      var hojeIso = iso(today());
       var inicios = TIPOS_CICLO.map(function (t) { return cicloDeAuditoria(t.id); })
-        .filter(function (c) { return c && c.inicio; })
+        .filter(function (c) {
+          return c && c.inicio && c.inicio <= hojeIso && (!c.fim || hojeIso <= c.fim);
+        })
         .map(function (c) { return c.inicio; })
         .sort();
       if (inicios.length) {
