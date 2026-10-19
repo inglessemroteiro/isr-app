@@ -14,7 +14,7 @@ O sistema tem **duas** áreas, e elas não se misturam:
 | | Área de Gestão | Área da Aluna |
 |---|---|---|
 | quem entra | a equipe, por `gestao.html` (Netlify Identity) | a aluna, pelo endereço dela |
-| telas | tudo o que começa com `ISR - ` e não está na lista aberta | `/aluna.html` → `ISR - Aluna v4.dc.html` |
+| telas | tudo o que começa com `ISR - ` e não está na lista aberta | `ISR - Aluna.dc.html`, e `/area-da-aluna` para o desenho novo (`ISR - Aluna v4.dc.html`) |
 | desenho | `ISR Gestao v4` (barra lateral fixa, `isr-shell.js`) | `Student Portal v3` (barra lateral no monitor, barra de baixo no celular) |
 
 A separação é feita em **um lugar só**, no `crm-data.js`: a lista
@@ -1784,6 +1784,28 @@ o link da própria senha, lia "Área da aluna" e parava ali, achando que
 o link estava errado. O título agora diz o que a tela faz — "Nova
 senha", "Criar sua senha" — e as duas avisam que o acesso é o mesmo
 para aluna e para a equipe.
+
+#### E o portão chegou a ficar fora do ar sem erro nenhum
+
+Havia uma regra no `netlify.toml` redirecionando `/aluna.html` para a
+tela da aluna no desenho novo, com `force = true` — que no Netlify manda
+a regra valer **por cima do arquivo** que está naquele endereço. E
+existe um arquivo `aluna.html`: é o portão de login.
+
+Resultado em produção: a raiz do site manda todo mundo para
+`aluna.html`, a regra desviava de lá para `ISR - Aluna v4.dc.html`, e
+essa tela reconhece quem é apenas pelo `?id=` da barra de endereço. Sem
+`?id`, **página em branco** — foi o que as professoras viram ao tentar
+entrar, e foi o que engoliu os links de criar e redefinir senha: o
+token chegava numa tela que não sabe o que fazer com ele. Nenhum erro,
+nenhum log, nada vermelho em lugar nenhum.
+
+Não aparecia em teste de navegador porque o servidor local não aplica as
+regras do Netlify: localmente `aluna.html` é servido, e o portão abre.
+
+O endereço curto do desenho novo passou a ser `/area-da-aluna`, e
+`verificar-redirects.js` existe para que isto não volte: nenhuma regra
+forçada pode cobrir um arquivo que existe.
 
 **Criar as contas** (uma vez, por pessoa): Netlify → Identity → Invite
 users → o e-mail. A pessoa recebe um convite, abre, define a senha, e

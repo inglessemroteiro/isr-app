@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-j",
+  numero: "2026.10.19-k",
   data: "19/10/2026",
-  nota: "O portão da equipe: e-mail, nome e convite"
+  nota: "O portão de login volta ao ar"
 };
