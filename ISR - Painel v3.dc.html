@@ -269,6 +269,15 @@
       <div style="font-size: 12px; font-weight: 600; color: var(--color-button-primary);">{{ heroQuando }}</div>
       <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.035em; margin-top: 3px;">{{ heroTitulo }}</div>
       <div style="font-size: 13px; color: rgba(255,255,255,0.78); margin-top: 5px; line-height: 1.5;">{{ heroDetalhe }}</div>
+      <!-- As pílulas dizem o que falta nesta aula: plano publicado e
+           chamada feita. É o que a professora confere antes de entrar. -->
+      <sc-if value="{{ temHeroPills }}">
+        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px;">
+          <sc-for list="{{ heroPills }}" as="hp" hint-placeholder-count="2">
+            <span class="isr-selo" style="padding: 5px 12px; font-size: 12px; background: {{ hp.bg }}; color: var(--color-primary-900)">{{ hp.label }}</span>
+          </sc-for>
+        </div>
+      </sc-if>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
         <!-- "Começar aula" no v5 abre o caderno da turma para edição.
              Guardamos o NOME do documento, não um caderno ao vivo: o
@@ -287,23 +296,36 @@
       <div style="font-size: 16px; font-weight: 600;">{{ entregasTitulo }}</div>
       <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px;">
         <sc-for list="{{ entregas }}" as="en" hint-placeholder-count="4">
-          <div style="flex: 1 1 120px; min-width: 0;">
-            <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
-            <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ en.k }}</div>
-          </div>
+          <!-- O número que indica pendência é porta: clicar nele abre a
+               lista. Sem isso, com aula hoje E pilha atrasada, a lista
+               ficava inalcançável — o hero só mostra um estado. -->
+          <sc-if value="{{ en.temPorta }}">
+            <button class="isr-botao" onclick="{{ en.onClick }}" title="Ver as aulas sem chamada" style="flex: 1 1 120px; min-width: 0; text-align: left; background: transparent; padding: 0">
+              <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
+              <div style="font-size: 12.5px; color: var(--color-primary-800); text-decoration: underline;">{{ en.k }}</div>
+            </button>
+          </sc-if>
+          <sc-if value="{{ en.semPorta }}">
+            <div style="flex: 1 1 120px; min-width: 0;">
+              <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
+              <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ en.k }}</div>
+            </div>
+          </sc-if>
         </sc-for>
       </div>
-      <p style="margin: 10px 0 0; font-size: 12px; color: var(--color-tertiary-300); line-height: 1.55;">{{ entregasNota }}</p>
     </section>
 
     <!-- AULAS SEM CHAMADA -->
-    <sc-if value="{{ temSemChamada }}">
-      <section style="background: var(--color-warning-light); border-radius: 24px; padding: 18px 22px;">
+    <!-- A pilha de chamadas deixou de ser um cartão amarelo com a
+         contagem repetida: a contagem agora está no hero, que é o
+         estado B. Aqui fica só a lista, aberta pelo botão "Ver todas"
+         — e o lote continua igual, que é o que resolve o acúmulo. -->
+    <sc-if value="{{ verSemChamada }}">
+      <section class="isr-cartao" style="border-radius: 24px; padding: 18px 22px;">
         <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-          <div style="font-size: 16px; font-weight: 600; color: var(--color-warning);">Aulas sem chamada</div>
-          <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ semChamadaResumo }}</span>
+          <div style="font-size: 16px; font-weight: 600;">Aulas sem chamada</div>
+          <button class="isr-botao isr-botao--texto" onclick="{{ onFecharSemChamada }}" style="font-size: 12.5px; color: var(--color-tertiary-500)">fechar</button>
         </div>
-        <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ semChamadaTexto }}</p>
         <!-- A pilha acumulada não se resolve clicando uma por uma, e a
              alternativa real não é "fazer com calma", é não fazer. Duas
              etapas: a primeira conta o que vai escrever, a segunda
@@ -320,17 +342,17 @@
           </div>
         </sc-if>
         <sc-for list="{{ semChamada }}" as="sc" hint-placeholder-count="3">
-          <div style="padding: 10px 0; border-top: 1px solid var(--color-warning-light);">
+          <div style="padding: 10px 0; border-top: 1px solid var(--color-button-secondary);">
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 160px;">
                 <div style="font-size: 14px; font-weight: 600;">{{ sc.professora }}</div>
                 <div style="font-size: 12.5px; color: var(--color-tertiary-500); margin-top: 2px;">{{ sc.detalhe }}</div>
               </div>
-              <a href="{{ sc.href }}" style="text-decoration: none; background: var(--color-neutral-0); border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: var(--color-warning);">Abrir o painel</a>
+              <a href="{{ sc.href }}" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">Abrir o painel</a>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
               <sc-for list="{{ sc.aulas }}" as="au" hint-placeholder-count="3">
-                <a href="{{ au.href }}" style="text-decoration: none; background: var(--color-neutral-0); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--color-tertiary-600);">{{ au.label }}</a>
+                <a href="{{ au.href }}" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--color-primary-800);">{{ au.label }}</a>
               </sc-for>
             </div>
           </div>
@@ -355,7 +377,7 @@
     <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
       <div style="font-size: 16px; font-weight: 600;">Fila pedagógica · {{ filaCount }}</div>
       <sc-if value="{{ filaVazia }}">
-        <p style="margin: 6px 0 0; font-size: 13px; color: var(--color-primary-800); line-height: 1.6;">Nada esperando por você agora. Falta de aluna, avaliação baixa e tarefa não entregue acendem um item aqui.</p>
+        <p style="margin: 6px 0 0; font-size: 13px; color: var(--color-primary-800); line-height: 1.6;">Nenhuma pendência pedagógica.</p>
       </sc-if>
       <sc-for list="{{ fila }}" as="fi" hint-placeholder-count="3">
         <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-button-secondary);">
@@ -790,6 +812,7 @@ class Component extends DCLogic {
       temCadernoDoDia: false, cadernoDoDiaHref: "#",
       eyebrow: "painel do professor", heroQuando: "", heroTitulo: "", heroDetalhe: "",
       heroAcoes: [], entregas: [], entregasTitulo: "", entregasNota: "",
+      temHeroPills: false, heroPills: [], verSemChamada: false, onFecharSemChamada: () => {},
       fila: [], filaVazia: true, filaCount: "0",
       temSemChamada: false, semChamadaResumo: "", semChamadaTexto: "", semChamada: [],
       podeLote: false, loteTexto: "", loteBotao: "", loteBg: "var(--color-primary-900)", loteSombra: "var(--color-primary-950)",
@@ -1140,6 +1163,12 @@ class Component extends DCLogic {
       ? CRM.chamadasPendentesPorProfessora() : [])
       .filter(g => g.professora === teacher)[0];
     const semChamada = pendentesDela ? pendentesDela.n : 0;
+    // O cartão se chama "Entregas do mês" e este número era a pilha do
+    // CICLO inteiro — ao lado de "aulas com chamada", que é do mês. Dois
+    // números com escalas diferentes lado a lado não se comparam, e o
+    // da pilha já aparece no hero. Aqui vale o mês.
+    const semChamadaMes = pendentesDela
+      ? (pendentesDela.aulas || []).filter(a => (a.data || "").slice(0, 7) === mes).length : 0;
     const nAlunas = turmasProfOcup.reduce((t, u) => t + (u.ocupadas || 0), 0);
     const clubesDela = (CRM.clubesLista ? CRM.clubesLista() : [])
       .filter(c => c.professora === teacher && c.status === "publicado").length;
@@ -1293,45 +1322,111 @@ class Component extends DCLogic {
                                           : "painel do professor · as suas turmas")
           : "painel do professor · o seu dia",
 
-      heroQuando: aulaDoDia
-        ? (aulaDoDia.dia === "Hoje" ? "hoje" : aulaDoDia.dia.toLowerCase()) + (aulaDoDia.hora !== "—" ? " · " + aulaDoDia.hora : "")
-        : "sem aula marcada",
-      heroTitulo: aulaDoDia ? aulaDoDia.nivel : "Nenhuma aula nos próximos 7 dias",
-      heroDetalhe: aulaDoDia
-        ? [
-            aulaDoDia.projeto ? "Projeto do ciclo: " + aulaDoDia.projeto : "",
-            aulaDoDia.quantas ? aulaDoDia.quantas + (aulaDoDia.quantas === 1 ? " aluna" : " alunas") : "",
-            aulaDoDia.dia === "Hoje"
-              ? (chamadaDeHoje === deHoje.length
-                  ? "as chamadas de hoje já estão salvas"
-                  : "a chamada abre em um clique")
-              : "nada hoje — esta é a sua próxima aula"
-          ].filter(Boolean).join(" · ")
-        : "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.",
+      // ── O HERO, EM QUATRO ESTADOS ────────────────────────────
+      //
+      // Um hero só, e a primeira regra verdadeira ganha. A ordem é a da
+      // urgência: aula de hoje primeiro, depois a pilha de chamadas
+      // atrasadas, depois a próxima aula da semana, depois o vazio.
+      //
+      // O cartão amarelo "Aulas sem chamada" deixou de existir: a
+      // contagem aparecia em dois lugares e o professor via "17" duas
+      // vezes na mesma tela. Agora é o estado B deste hero, e a lista
+      // abre pelo botão.
+      ...(() => {
+        const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
+        const B = !A && grupos.length > 0;
+        const C = !A && !B && !!aulaDoDia;
+        const maisAntiga = (grupos[0] && grupos[0].aulas && grupos[0].aulas[0]) || null;
+        const quando = aulaDoDia
+          ? (aulaDoDia.dia === "Hoje" ? "hoje" : aulaDoDia.dia.toLowerCase())
+            + (aulaDoDia.hora !== "—" ? " · " + aulaDoDia.hora : "")
+          : "";
+        if (B) {
+          return {
+            heroQuando: nAulas + (nAulas === 1 ? " aula sem chamada" : " aulas sem chamada"),
+            heroTitulo: maisAntiga
+              ? "Faça a chamada de " + CRM.ddmm(maisAntiga.data) + " · " + maisAntiga.label
+              : "Faça as chamadas que ficaram para trás",
+            heroDetalhe: "Aula sem chamada é aula que aconteceu e ficou sem registro: "
+              + "sem ela a aluna não tem presença nem falta no ciclo."
+          };
+        }
+        return {
+          heroQuando: A ? quando : (C ? "próxima aula · " + quando : "sem aula marcada"),
+          heroTitulo: aulaDoDia ? aulaDoDia.nivel : "Nenhuma aula nos próximos 7 dias",
+          heroDetalhe: aulaDoDia
+            ? [
+                aulaDoDia.projeto ? "Projeto do ciclo: " + aulaDoDia.projeto : "",
+                aulaDoDia.quantas ? aulaDoDia.quantas + (aulaDoDia.quantas === 1 ? " aluna" : " alunas") : "",
+                A ? (chamadaDeHoje === deHoje.length
+                      ? "as chamadas de hoje já estão salvas"
+                      : "a chamada abre em um clique")
+                  : "nada hoje — esta é a sua próxima aula"
+              ].filter(Boolean).join(" · ")
+            : "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá."
+        };
+      })(),
       // "Começar aula" no v5 abre o caderno da turma para edição. Nós
       // guardamos o NOME do documento, não um caderno ao vivo — então o
       // botão leva ao caderno no Drive, que é o que a professora abre à
       // mão hoje. Prometer caderno ao vivo seria pior que não ter botão.
-      heroAcoes: (aulaDoDia ? [
-        { label: "Fazer a chamada", bg: "var(--color-button-primary)", fg: "var(--color-primary-900)", onClick: aulaDoDia.onChamada },
-        { label: "Chamada de outra data", bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)",
-          onClick: () => this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas", escolhendoData: true }) },
-        { label: "As suas turmas", bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)",
-          onClick: () => this.setState({ aba: "turmas", turmaAberta: false }) }
-      ] : [
-        { label: "Chamada de outra data", bg: "var(--color-button-primary)", fg: "var(--color-primary-900)",
-          onClick: () => this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas", escolhendoData: true }) }
-      ]),
+      ...(() => {
+        const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
+        const B = !A && grupos.length > 0;
+        const coral = { bg: "var(--color-button-primary)", fg: "var(--color-primary-900)" };
+        const claro = { bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)" };
+        const outraData = () => this.setState({ aba: "turmas", turmaAberta: true,
+          tTab: "chamadas", escolhendoData: true });
+        if (B) {
+          return { heroAcoes: [
+            Object.assign({ label: "Fazer chamada", onClick: outraData }, coral),
+            Object.assign({ label: "Ver todas",
+              onClick: () => this.setState({ verSemChamada: true }) }, claro)
+          ] };
+        }
+        if (!aulaDoDia) {
+          return { heroAcoes: [Object.assign({ label: "Chamada de outra data", onClick: outraData }, coral)] };
+        }
+        return { heroAcoes: [
+          Object.assign({ label: A ? "Fazer a chamada" : "Ver o plano",
+            onClick: A ? aulaDoDia.onChamada
+              : () => this.setState({ aba: "turmas", turmaAberta: false }) }, coral),
+          Object.assign({ label: "Chamada de outra data", onClick: outraData }, claro),
+          Object.assign({ label: "As suas turmas",
+            onClick: () => this.setState({ aba: "turmas", turmaAberta: false }) }, claro)
+        ] };
+      })(),
+      // o plano publicado e a chamada feita, da aula que o hero mostra
+      ...(() => {
+        if (!aulaDoDia || aulaDoDia.dia !== "Hoje") return { temHeroPills: false, heroPills: [] };
+        const ok = "var(--color-secondary-500)", falta = "var(--color-warning-light)";
+        const feita = chamadaDeHoje === deHoje.length;
+        const ch = CRM.getChamada ? CRM.getChamada(aulaDoDia.label, hojeAgora) : null;
+        const plano = ch && ch.sessao && CRM.planoPublicadoDaAula
+          ? CRM.planoPublicadoDaAula(aulaDoDia.label, ch.sessao) : null;
+        return {
+          temHeroPills: true,
+          heroPills: [
+            { label: plano ? "plano publicado" : "plano não publicado", bg: plano ? ok : falta },
+            { label: feita ? "chamada feita" : "chamada pendente", bg: feita ? ok : falta }
+          ]
+        };
+      })(),
       temCadernoDoDia: !!cadernoDoDia,
       cadernoDoDiaHref: cadernoDoDia || "#",
 
       entregasTitulo: "Entregas do mês · " + this.MES_LONGO[new Date().getMonth()],
       entregas: [
-        { v: String(comChamada), k: comChamada === 1 ? "aula com chamada" : "aulas com chamada", cor: "var(--color-primary-900)" },
-        { v: String(semChamada), k: semChamada === 1 ? "aula sem chamada" : "aulas sem chamada",
-          cor: semChamada ? "var(--color-error)" : "var(--color-success-dark)" },
-        { v: String(nAlunas), k: nAlunas === 1 ? "aluna nas suas turmas" : "alunas nas suas turmas", cor: "var(--color-primary-900)" },
-        { v: String(clubesDela), k: clubesDela === 1 ? "clube seu" : "clubes seus", cor: "var(--color-primary-900)" }
+        { v: String(comChamada), k: comChamada === 1 ? "aula com chamada" : "aulas com chamada", cor: "var(--color-primary-900)", temPorta: false, semPorta: true },
+        // "aulas sem chamada" aqui e no hero eram as mesmas palavras
+        // para contas diferentes — a do mês e a do ciclo inteiro. Quem
+        // lia via dois números com o mesmo nome na mesma tela.
+        { v: String(semChamadaMes), k: "sem chamada no mês",
+          cor: semChamadaMes ? "var(--color-error)" : "var(--color-success-dark)",
+          temPorta: semChamada > 0, semPorta: semChamada === 0,
+          onClick: () => this.setState({ verSemChamada: true }) },
+        { v: String(nAlunas), k: nAlunas === 1 ? "aluna nas suas turmas" : "alunas nas suas turmas", cor: "var(--color-primary-900)", temPorta: false, semPorta: true },
+        { v: String(clubesDela), k: clubesDela === 1 ? "clube seu" : "clubes seus", cor: "var(--color-primary-900)", temPorta: false, semPorta: true }
       ],
       entregasNota: "A conta é das aulas das suas turmas. Aula sem chamada é aula que aconteceu e ficou sem registro: sem ela a aluna não tem presença nem falta no ciclo.",
 
@@ -1363,6 +1458,10 @@ class Component extends DCLogic {
       },
 
       temSemChamada: grupos.length > 0,
+      // a lista abre pelo hero; sem isso ela e o hero diziam a mesma
+      // coisa um embaixo do outro
+      verSemChamada: grupos.length > 0 && !!this.state.verSemChamada,
+      onFecharSemChamada: () => this.setState({ verSemChamada: false }),
       // para a professora o agrupamento por professora é ela mesma:
       // dizer "1 professora" e repetir o nome dela é conversa da
       // gestão vazando para quem só tem as próprias aulas a lançar

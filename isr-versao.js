@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-e",
+  numero: "2026.10.19-f",
   data: "19/10/2026",
-  nota: "Início na equipe: o campo que faltava na tela"
+  nota: "A aba Hoje: um hero só, em quatro estados"
 };
