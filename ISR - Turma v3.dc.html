@@ -28,27 +28,36 @@
     </sc-if>
 
     <sc-if value="{{ ok }}">
-      <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">turma · quem está nela e o que foi dado</div>
-          <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; color: var(--color-primary-900);">{{ nivel }}</h1>
+      <!-- O CAMINHO DE VOLTA -->
+      <!-- A página da turma abre por cima de "Minhas turmas", e sem a
+           porta de volta a professora saía pelo menu — que para ela
+           tem um item só. -->
+      <div>
+        <a href="{{ voltarHref }}" style="display: inline-block; text-decoration: none; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">← {{ voltarLabel }}</a>
+      </div>
+
+      <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="min-width: 0;">
+          <div style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ linhaMeta }}</div>
+          <h1 style="margin: 3px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; color: var(--color-primary-900);">{{ nomeDaTurma }}</h1>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ onToggleEditar }}" style="background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; padding: 9px 14px">{{ edLabel }}</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <sc-if value="{{ podeEditarTurma }}">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onToggleEditar }}" style="background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; padding: 9px 14px">{{ edLabel }}</button>
+          </sc-if>
           <sc-if value="{{ temMeet }}">
             <a href="{{ meet }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Entrar na aula →</a>
           </sc-if>
         </div>
       </header>
-      <p style="margin: 0 0 18px; font-size: 13px; color: var(--color-primary-800);">{{ contexto }}</p>
 
       <!-- AS ABAS DA TURMA -->
-      <!-- As mesmas do Painel do professor, mais Renovação e vagas, que
-           é de gestão. Antes eram duas colunas com seis blocos, e quem
-           vinha ver a chamada rolava por material e tarefa de casa. -->
-      <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap; margin-bottom: 4px">
-        <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="5">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="padding: 9px 16px; font-size: 13px; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+      <!-- Sublinhadas, como no desenho: pílulas aqui competiam com as
+           pílulas das abas do painel, logo acima, e a pessoa não sabia
+           qual nível de navegação estava mexendo. -->
+      <div style="display: flex; gap: 22px; align-items: flex-end; overflow-x: auto; border-bottom: 1px solid var(--color-tertiary-50); margin-bottom: 4px;">
+        <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="6">
+          <button class="isr-botao" onclick="{{ ab.onClick }}" style="flex: none; background: transparent; border-radius: 0; padding: 10px 2px 11px; font-size: 14px; font-weight: 800; color: {{ ab.fg }}; border-bottom: 3px solid {{ ab.linha }}; margin-bottom: -1px">{{ ab.label }}</button>
         </sc-for>
       </div>
 
@@ -382,6 +391,39 @@
         </sc-if>
 
         <!-- PROJETO DO CICLO -->
+        <!-- PROJETO -->
+        <!-- O projeto do ciclo já existia como nome na turma. O que
+             faltava era quem entregou, e é disso que a barra é feita.
+             Marcar a entrega é da professora: é ela que recebe. -->
+        <sc-if value="{{ tProjeto }}">
+          <sc-if value="{{ projSemProjeto }}">
+            <div class="isr-cartao" style="padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ projVazioTexto }}</div>
+          </sc-if>
+          <sc-if value="{{ projTem }}">
+            <div class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap">
+                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ projTitulo }}</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--color-primary-900);">{{ projValor }}</div>
+              </div>
+              <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden;">
+                <div style="height: 100%; width: {{ projPct }}; background: var(--color-secondary-500);"></div>
+              </div>
+              <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ projFaltam }}</div>
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{ projLinhas }}" as="pj" hint-placeholder-count="6">
+                  <button class="isr-botao" onclick="{{ pj.onToggle }}" title="{{ pj.title }}" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: transparent; text-align: left; padding: 11px 2px; border-top: 1px solid var(--color-button-secondary); border-radius: 0">
+                    <span style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ pj.nome }}</span>
+                    <span class="isr-selo" style="flex: none; padding: 5px 12px; font-size: 12px; font-weight: 700; background: {{ pj.bg }}; color: {{ pj.fg }}">{{ pj.estado }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ projVazio }}">
+                <div style="font-size: 13px; color: var(--color-tertiary-500);">Nenhuma aluna matriculada nesta turma.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </sc-if>
+
         <sc-if value="{{ tMateriais }}">
           <div style="background: var(--color-primary-900); border-radius: 18px; padding: 14px 16px;">
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 500; margin-bottom: 4px;">Projeto do ciclo {{ ciclo }}</div>
@@ -502,6 +544,25 @@ class Component extends DCLogic {
   }
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  // "19 out": o dia e o mês por extenso curto. A faixa das sessões
+  // mostra a SEMANA em que a aula cai, e "19/10" ali ao lado de "S5"
+  // vira um amontoado de número.
+  MES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun",
+               "jul", "ago", "set", "out", "nov", "dez"];
+  // A segunda-feira da semana de uma data, para comparar semanas.
+  segundaDe(isoStr) {
+    const d = new Date(String(isoStr || "") + "T12:00:00");
+    if (isNaN(d.getTime())) return "";
+    const dow = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - dow);
+    return d.toISOString().slice(0, 10);
+  }
+  diaMes(isoStr) {
+    const d = new Date(String(isoStr || "") + "T12:00:00");
+    if (isNaN(d.getTime())) return "";
+    return d.getDate() + " " + this.MES_CURTO[d.getMonth()];
+  }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
 
   turmaId() {
@@ -534,6 +595,9 @@ class Component extends DCLogic {
       pePerguntaRef: this.pePerguntaRef, pePalavrasRef: this.pePalavrasRef, peHwRef: this.peHwRef };
     if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [],
       abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
+      tProjeto: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
+      podeEditarTurma: false, projTem: false, projTitulo: "", projValor: "", projPct: "0%",
+      projFaltam: "", projLinhas: [], projVazio: true, projSemProjeto: true, projVazioTexto: "",
       geralLinhas: [], renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
       tPlano: false, planoVazio: true, planoVazioTexto: "", planoTem: false, planoTira: [],
       podeSyllabus: false, syNivel: "", syCiclo: "", sySubtitulo: "", syAberto: false,
@@ -647,15 +711,19 @@ class Component extends DCLogic {
     // Quem olha é a VISÃO: com "vendo como" ligado, a gestora vê a
     // página pelos olhos de quem escolheu.
     const TODAS_ABAS = { geral: "Visão geral", alunas: "Alunas", plano: "Plano das aulas",
-      chamadas: "Chamadas", materiais: "Materiais", renov: "Renovação e vagas" };
+      chamadas: "Chamadas", projeto: "Projeto", materiais: "Materiais",
+      renov: "Renovação e vagas" };
     const vis = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
     const papeisVis = (vis.papeis || []).concat(vis.perfil ? [vis.perfil] : []);
     const tem = (p) => papeisVis.indexOf(p) >= 0;
-    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "materiais", "renov"]
-      : tem("operacao") ? ["geral", "alunas", "chamadas", "materiais", "renov"]
+    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "projeto", "materiais", "renov"]
+      : tem("operacao") ? ["geral", "alunas", "chamadas", "projeto", "materiais", "renov"]
       : tem("comercial") ? ["geral", "alunas", "renov"]
-      : ["geral", "alunas", "plano", "chamadas", "materiais"];
+      : ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"];
     const ABAS = ordem.map(id => [id, TODAS_ABAS[id]]);
+    // Quem é só professora: o recorte dela muda o caminho de volta e
+    // tira os botões de coordenação da página.
+    const soProf = !tem("gestora") && !tem("operacao") && !tem("comercial");
     // a aba pedida na URL só vale se o papel a tiver
     const pedida = this.subParam();
     const aba = this.state.aba
@@ -682,10 +750,51 @@ class Component extends DCLogic {
     return Object.assign({
       ok: true, naoEncontrada: false,
       abas: ABAS.map(([id, label]) => ({ label,
-        bg: aba === id ? "var(--color-primary-900)" : "transparent",
-        fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        fg: aba === id ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
+        linha: aba === id ? "var(--color-button-primary)" : "transparent",
         onClick: () => this.irParaAba(id) })),
+      // O caminho de volta: a professora veio de "Minhas turmas", no
+      // painel dela; quem cuida da escola veio de Turmas & Projetos.
+      voltarHref: soProf ? "ISR%20-%20Painel%20v3.dc.html?tab=turmas"
+        : "ISR%20-%20Turmas%20v3.dc.html",
+      voltarLabel: soProf ? "Minhas turmas" : "Turmas & Projetos",
+      linhaMeta: [u.nivel, u.turma, u.teacher ? "Prof. " + u.teacher : ""]
+        .filter(Boolean).join(" · "),
+      nomeDaTurma: u.turma || u.nivel,
+      // "Editar turma" é da coordenação. A professora lê a ficha da
+      // turma dela; mudar horário, capacidade e links é outra conversa.
+      podeEditarTurma: !soProf,
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
+      tProjeto: aba === "projeto",
+      // ── o projeto do ciclo e quem entregou ──
+      ...(() => {
+        const e = CRM.entregasDoProjeto ? CRM.entregasDoProjeto(u.label)
+          : { temProjeto: false, linhas: [], faltam: [], feitas: 0, total: 0, pct: 0 };
+        const quem = ((CRM.gestaoUser && CRM.gestaoUser()) || {}).nome || "";
+        return {
+          projTem: e.temProjeto,
+          projSemProjeto: !e.temProjeto,
+          projVazioTexto: "Esta turma ainda não tem projeto do ciclo. O projeto é escrito na ficha da turma.",
+          projTitulo: "Projeto " + e.projeto + " · entregas",
+          projValor: e.feitas + "/" + e.total,
+          projPct: e.pct + "%",
+          projFaltam: e.faltam.length
+            ? "Faltam: " + e.faltam.join(", ")
+            : (e.total ? "Todas entregaram." : ""),
+          projVazio: e.total === 0,
+          projLinhas: e.linhas.map(l => ({
+            nome: l.nome,
+            estado: l.entregue ? ("entregue · " + CRM.ddmm(l.em)) : "falta entregar",
+            bg: l.entregue ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
+            fg: l.entregue ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
+            title: l.entregue ? "Desmarcar a entrega" : "Marcar como entregue",
+            onToggle: () => {
+              CRM.marcarEntregaProjeto(u.label, l.id, !l.entregue, quem);
+              this.bump();
+            }
+          }))
+        };
+      })(),
       tPlano: aba === "plano",
       // ── o syllabus do nível ──
       // Quem edita é quem cuida da escola: o syllabus vale para todas
@@ -743,26 +852,41 @@ class Component extends DCLogic {
         + "quando entrarem, aparecem aqui já com as seis fases, e a professora ajusta o que não couber.",
       planoTem: !!pAtual,
       planoFases: (CRM.fasesDoPlano ? CRM.fasesDoPlano() : []),
-      planoTira: pSessoes.map(x => {
+      planoTira: (() => { const quando = CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {};
+        return pSessoes.map(x => {
         const e = EST_PLANO[x.estado] || EST_PLANO.rascunho;
         const sel = pAtual && x.n === pAtual.n;
-        // A data vem da chamada que disse qual sessão foi dada.
-        // Sessão ainda não dada não tem data, e a faixa fica sem ela:
-        // inventar uma data a partir do horário da turma erraria em
-        // todo feriado e remarcação.
-        const dada = CRM.dataDaSessao ? CRM.dataDaSessao(u.label, x.n) : "";
+        // A faixa mostra o estado da SESSÃO — dada, esta semana, ou a
+        // semana em que ela cai —, não o estado do plano: o plano
+        // (rascunho / publicada) está nas pílulas da sessão aberta, e
+        // repeti-lo aqui gastava a única linha que a professora usa
+        // para se localizar no ciclo.
+        const q = quando[x.n] || null;
+        // "esta semana" é a semana do calendário, não "nos próximos
+        // sete dias": com a segunda que vem a seis dias daqui, a
+        // contagem corrida chamava a aula da semana seguinte de "esta
+        // semana" e a professora se preparava para o dia errado.
+        const estaSemana = q && !q.dada && this.segundaDe(q.data) === this.segundaDe(new Date().toISOString().slice(0, 10));
         return {
-          n: "S" + x.n, estadoCurto: e[3],
-          data: dada ? CRM.ddmm(dada) : "",
+          n: "S" + x.n,
+          estadoCurto: !q ? "" : q.dada ? "dada"
+            : estaSemana ? "esta semana" : ("sem. " + this.diaMes(q.data)),
+          data: "",
           titulo: x.titulo || "sem título ainda",
           bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
           fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
-          op: (dada && !sel) ? "0.6" : "1",
+          op: (q && q.dada && !sel) ? "0.55" : "1",
           onClick: () => { this.setState({ planoSessao: x.n, planoAjuste: false, planoErro: "" }); }
         };
-      }),
+      }); })(),
       planoEyebrow: pAtual
-        ? ("Sessão " + pAtual.n + (pAtual.projeto ? " · " + pAtual.projeto : "")) : "",
+        ? (() => {
+            const q = (CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {})[pAtual.n];
+            const quandoTxt = !q ? "" : q.dada
+              ? ("dada em " + CRM.ddmm(q.data))
+              : ("semana de " + this.diaMes(q.data));
+            return ["sessão " + pAtual.n, quandoTxt, u.turma].filter(Boolean).join(" · ");
+          })() : "",
       planoTitulo: pAtual ? (pAtual.titulo || "Sessão sem título") : "",
       planoEstado: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[0] : "",
       planoEstadoBg: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[1] : "",

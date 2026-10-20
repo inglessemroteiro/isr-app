@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-a",
+  numero: "2026.10.20-b",
   data: "20/10/2026",
-  nota: "O convite da equipe sai da tela Equipe"
+  nota: "A moldura do painel e os slides da aula"
 };

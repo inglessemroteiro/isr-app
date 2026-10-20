@@ -10225,6 +10225,52 @@
     return datas[0] || "";
   }
 
+  // A semana de cada sessão da turma.
+  //
+  // Sessão já dada tem data de verdade, a da chamada. Para as que
+  // ainda não aconteceram, a tela do desenho mostra "sem. 19 out" — a
+  // SEMANA, não o dia. É por isso que projetar aqui é honesto: as
+  // próximas datas de aula desta turma saem do mesmo caminho que a
+  // agenda usa, pulando feriado e semana sem aula; e o rótulo diz
+  // "semana de", que é o que a conta garante.
+  function datasDasSessoes(turmaId) {
+    var t = turmasLista().filter(function (x) { return x.id === turmaId; })[0];
+    if (!t) return {};
+    var label = t.nivel + " · " + t.turma;
+    var out = {};
+    var dadas = {};
+    var m = chamadasAll();
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || ch.turma !== label) return;
+      var n = parseInt(ch.sessao, 10) || 0;
+      if (n && (!dadas[n] || ch.data < dadas[n])) dadas[n] = ch.data;
+    });
+    Object.keys(dadas).forEach(function (n) {
+      out[n] = { data: dadas[n], dada: true };
+    });
+    // as que faltam, na ordem, nos próximos dias de aula da turma
+    var mm = (t.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
+    if (!mm) return out;
+    var alvo = DIAS_SEMANA[mm[1]];
+    var pendentes = (syllabusDoNivel(t.nivel, t.cycle) || [])
+      .map(function (x) { return x.n; })
+      .filter(function (n) { return !dadas[n]; })
+      .sort(function (a2, b2) { return a2 - b2; });
+    var d = new Date(today());
+    var i = 0;
+    var passos = 0;
+    while (pendentes.length && passos < 400) {
+      passos++;
+      if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d), tipoDaTurma(t))) {
+        out[pendentes.shift()] = { data: iso(d), dada: false };
+      }
+      d.setDate(d.getDate() + 1);
+      i++;
+    }
+    return out;
+  }
+
   // Grava o plano da turma. Na primeira gravação copia a sessão do
   // syllabus inteira: a partir daí o plano é dela.
   function salvarPlano(turmaId, n, patch) {
@@ -15481,7 +15527,7 @@
     clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
     clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
-    dataDaSessao: dataDaSessao,
+    dataDaSessao: dataDaSessao, datasDasSessoes: datasDasSessoes,
     aulaVivaDaAluna: aulaVivaDaAluna,
     CHAMADA_ESTADOS: CHAMADA_ESTADOS,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,

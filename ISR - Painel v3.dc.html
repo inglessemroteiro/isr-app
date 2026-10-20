@@ -51,21 +51,35 @@
        entrava para lançar a chamada do dia rolava por tudo. No
        desenho são abas, e a primeira responde "o que eu tenho
        hoje?" antes de pedir qualquer coisa. -->
-  <div style="display: flex; gap: 6px; align-self: flex-start; max-width: 100%; overflow-x: auto; padding-bottom: 2px;">
-    <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="3">
-      <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="flex: none; padding: 9px 16px; font-size: 14px; font-weight: 600; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
-    </sc-for>
-  </div>
+  <sc-if value="{{ temAbas }}">
+    <div style="display: flex; gap: 6px; align-self: flex-start; max-width: 100%; overflow-x: auto; padding-bottom: 2px;">
+      <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="4">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="flex: none; padding: 9px 16px; font-size: 14px; font-weight: 700; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- A BARRA "EM AULA" -->
+  <!-- No lugar das abas, enquanto a aula corre: o caminho de volta, o
+       nome da aula, e as duas telas de dentro dela. As abas principais
+       somem porque trocar de aba no meio da aula não é o que a
+       professora está fazendo. -->
+  <sc-if value="{{ ptEmAula }}">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <button class="isr-botao isr-botao--pilula" onclick="{{ onSairDaAula }}" style="flex: none; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 9px 16px">← {{ L61 }}</button>
+      <span style="flex: 1; min-width: 120px; font-size: 13px; font-weight: 700; color: var(--color-tertiary-500);">{{ emAulaTitulo }}</span>
+      <div style="flex: none; display: flex; gap: 6px; flex-wrap: wrap;">
+        <sc-for list="{{ emAulaAbas }}" as="ea" hint-placeholder-count="2">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ ea.onClick }}" style="padding: 9px 16px; font-size: 13px; font-weight: 700; background: {{ ea.bg }}; color: {{ ea.fg }}">{{ ea.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
 
   <!-- EM AULA · RESPOSTAS AO VIVO -->
   <!-- O que a professora vê enquanto a aula corre: o que cada aluna
        está escrevendo no caderno, e um comentário que chega lá. -->
-  <sc-if value="{{ ptEmAula }}">
-    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <button class="isr-botao isr-botao--pilula" onclick="{{ onSairDaAula }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; padding: 9px 16px">← {{ L61 }}</button>
-      <span style="font-size: 13px; font-weight: 600; color: var(--color-tertiary-500);">{{ emAulaTitulo }}</span>
-    </div>
-
+  <sc-if value="{{ ptRespostas }}">
     <div style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
       <button class="isr-botao isr-botao--pilula" onclick="{{ onAbrirCaderno }}" style="background: var(--color-button-primary); color: var(--color-primary-900); font-size: 14px; padding: 13px 22px">{{ vivoBotao }}</button>
       <span style="flex: 1; min-width: 220px; font-size: 13.5px; line-height: 1.5;">{{ vivoTexto }}</span>
@@ -143,6 +157,62 @@
         </sc-if>
       </section>
     </sc-if>
+  </sc-if>
+
+  <!-- EM AULA · SLIDES -->
+  <!-- Os slides ficam no Google Slides. Aqui mora o link de cada aula:
+       a professora apresenta daqui e as alunas veem o mesmo deck no
+       caderno. Sem link, a prévia é o roteiro do syllabus — que é o
+       que a aula vai ter de qualquer jeito. -->
+  <sc-if value="{{ ptSlides }}">
+    <section style="background: var(--color-primary-50); border-radius: 20px; padding: 16px 20px; font-size: 13.5px; line-height: 1.6; color: var(--color-primary-900);">{{ L68 }}</section>
+
+    <sc-if value="{{ semSlides }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ L69 }}</section>
+    </sc-if>
+
+    <sc-for list="{{ slidesAulas }}" as="sl" hint-placeholder-count="2">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ sl.turma }}</div>
+            <div style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25;">{{ sl.titulo }}</div>
+            <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ sl.meta }}</div>
+          </div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <sc-if value="{{ sl.temLink }}">
+              <a href="{{ sl.href }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-primary); color: var(--color-primary-900); border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 800;">▶ {{ L70 }}</a>
+              <a href="{{ sl.href }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); color: var(--color-primary-900); border-radius: 999px; padding: 12px 18px; font-size: 13px; font-weight: 700;">{{ L71 }}</a>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input class="isr-campo" value="{{ sl.valor }}" onchange="{{ sl.onMuda }}" placeholder="https://docs.google.com/presentation/d/…" style="flex: 1; min-width: 260px; padding: 12px 15px; font-size: 13.5px" />
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ sl.onSalvar }}" style="font-size: 13px; padding: 12px 20px">{{ sl.botao }}</button>
+        </div>
+        <sc-if value="{{ sl.temErro }}">
+          <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5;">{{ sl.erro }}</div>
+        </sc-if>
+        <sc-if value="{{ sl.semLink }}">
+          <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ L72 }}</div>
+        </sc-if>
+
+        <sc-if value="{{ sl.temPrevia }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+            <sc-for list="{{ sl.previa }}" as="mn" hint-placeholder-count="6">
+              <div style="background: var(--color-bg-default); border-radius: 14px; padding: 11px 13px; aspect-ratio: 16 / 9; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px;">
+                <span style="font-size: 10.5px; font-weight: 700; color: var(--color-tertiary-500);">{{ mn.rotulo }}</span>
+                <span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--color-primary-900);">{{ mn.titulo }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sl.semPrevia }}">
+          <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ L73 }}</div>
+        </sc-if>
+      </section>
+    </sc-for>
   </sc-if>
 
   <!-- A TURMA ABERTA: o caminho de volta e as abas de dentro -->
@@ -856,7 +926,11 @@ class Component extends DCLogic {
             // Enquanto ela existe, o painel é a tela da aula e mais
             // nada: as abas somem e o resto do painel não aparece.
             emAula: null, vivoFiltro: "todas", vivoAluna: null,
-            vivoTarefa: 0, comentou: "", comentarioTexto: "" };
+            vivoTarefa: 0, comentou: "", comentarioTexto: "",
+            // qual tela de dentro da aula: respostas ou slides
+            emAulaTela: "respostas",
+            // o link dos slides sendo digitado, por aula, e o erro dele
+            slidesTexto: {}, slidesErro: {} };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -933,6 +1007,14 @@ class Component extends DCLogic {
     L65: ["Voltar para todas", "Back to everyone"],
     L66: ["Enviar", "Send"],
     L67: ["Comentário enviado. Ele aparece no caderno dela.", "Comment sent. It shows in her notebook."],
+    L68: ["Os slides ficam no Google Slides. Cole o link de compartilhamento de cada aula: você apresenta daqui para a turma e as alunas veem o mesmo deck no caderno.",
+      "Slides live in Google Slides. Paste each lesson’s share link: you present from here and your students see the same deck in their notebook."],
+    L69: ["Nenhuma aula de hoje para pôr slides.", "No class today to add slides to."],
+    L70: ["Apresentar para a turma", "Present to the class"],
+    L71: ["Abrir no Google Slides ↗", "Open in Google Slides ↗"],
+    L72: ["Sem link ainda. A prévia abaixo é o roteiro do syllabus.", "No link yet. The preview below is the syllabus plan."],
+    L73: ["Sem plano publicado nesta aula, não há roteiro para mostrar na prévia.",
+      "No published plan for this class, so there is no outline to preview."],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -1186,6 +1268,8 @@ class Component extends DCLogic {
       semanas: [], dias: [], aulasDoDia: [], semAulasNoDia: false, instrucaoLista: "",
       temCaixaFolha: false, caixaFolhaBg: "", caixaFolhaFg: "", caixaFolhaTitulo: "", caixaFolhaTexto: "",
       ptEmAula: false, emAulaTitulo: "", onSairDaAula: () => {}, onAbrirCaderno: () => {},
+      temAbas: true, ptRespostas: false, ptSlides: false, emAulaAbas: [],
+      slidesAulas: [], semSlides: false,
       vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [], vivoAlunas: [],
       vivoGrade: false, vivoDetalhe: false, vivoSemAlunas: false,
       alunaNome: "", alunaEstado: "", alunaPonto: "", alunaTarefas: [],
@@ -1661,6 +1745,8 @@ class Component extends DCLogic {
       : Tr("not started", "não começou");
     const vivoVals = (() => {
       if (!vivoOn) return { ptEmAula: false, emAulaTitulo: "",
+        ptRespostas: false, ptSlides: false, emAulaAbas: [],
+        slidesAulas: [], semSlides: false,
         onSairDaAula: () => {}, onAbrirCaderno: () => {},
         vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [],
         vivoAlunas: [], vivoGrade: false, vivoDetalhe: false,
@@ -1706,10 +1792,89 @@ class Component extends DCLogic {
           : Tr("Nothing written yet.", "Ainda sem nada escrito.");
       };
 
+      const tela = this.state.emAulaTela || "respostas";
+      // As duas telas de dentro da aula. A pílula só existe porque as
+      // duas existem: botão que não leva a lugar nenhum é pior do que
+      // botão ausente.
+      const EM_AULA_ABAS = [["respostas", Tr("Live answers", "Respostas ao vivo")],
+                            ["slides", "Slides"]];
+
+      // ── SLIDES ──
+      // Um cartão por aula de hoje desta professora. O link é da
+      // SESSÃO, e vem do plano da turma; a prévia, quando não há link,
+      // é o roteiro publicado.
+      const slidesAulas = deHoje.filter(a => a.label).map(a => {
+        const dt = a.data || hojeAgora;
+        const ch = CRM.getChamada ? CRM.getChamada(a.label, dt) : null;
+        const sessao = (ch && parseInt(ch.sessao, 10)) || 0;
+        const turmaU = turmasProfOcup.filter(u => u.label === a.label)[0] || null;
+        const plano = (turmaU && sessao && CRM.planoDaTurma)
+          ? CRM.planoDaTurma(turmaU.id, sessao) : null;
+        const pub = (turmaU && sessao && CRM.planoPublicadoDaAula)
+          ? CRM.planoPublicadoDaAula(a.label, sessao) : null;
+        const link = (plano && plano.slides) || "";
+        const chave = a.label + "|" + dt;
+        const digitado = this.state.slidesTexto[chave];
+        const erro = this.state.slidesErro[chave] || "";
+        const previa = (pub ? pub.atividades : []).map((at, i) => ({
+          rotulo: (i + 1) + (at.fase ? " · " + at.fase : ""),
+          titulo: at.titulo || ""
+        }));
+        return {
+          turma: a.label,
+          titulo: sessao
+            ? (Tr("Session ", "Sessão ") + sessao + (plano && plano.titulo ? " · " + plano.titulo : ""))
+            : Tr("Session not chosen in the attendance", "Sessão ainda não dita na chamada"),
+          meta: "Google Slides · " + (link ? Tr("link saved", "link salvo") : Tr("no link", "sem link")),
+          temLink: !!link, href: link || "#",
+          valor: digitado === undefined ? link : digitado,
+          onMuda: (e) => {
+            const t = Object.assign({}, this.state.slidesTexto);
+            t[chave] = e.target.value;
+            this.setState({ slidesTexto: t });
+          },
+          botao: link ? Tr("Change link", "Trocar link") : Tr("Save link", "Salvar link"),
+          onSalvar: () => {
+            const txt = String(digitado === undefined ? link : digitado).trim();
+            const erros = Object.assign({}, this.state.slidesErro);
+            if (!turmaU || !sessao) {
+              erros[chave] = Tr("Say which session this class was, in the attendance, before saving the slides.",
+                "Diga na chamada qual sessão é esta aula antes de salvar os slides.");
+              this.setState({ slidesErro: erros }); return;
+            }
+            // Só link do Google Slides: outro endereço abre qualquer
+            // coisa na frente da turma no meio da aula.
+            if (txt && txt.indexOf("https://docs.google.com/presentation/") !== 0) {
+              erros[chave] = Tr("That link is not Google Slides. Use Share → Copy link in Google Slides.",
+                "Esse link não é do Google Slides. Use Compartilhar → Copiar link no Google Slides.");
+              this.setState({ slidesErro: erros }); return;
+            }
+            const r = CRM.salvarPlano(turmaU.id, sessao, { slides: txt });
+            erros[chave] = (r && r.ok) ? "" : ((r && r.erro) || "O link não foi salvo.");
+            const t = Object.assign({}, this.state.slidesTexto);
+            delete t[chave];
+            this.setState({ slidesErro: erros, slidesTexto: t });
+            this.bump();
+          },
+          temErro: !!erro, erro: erro,
+          semLink: !link && !erro,
+          temPrevia: previa.length > 0, previa: previa,
+          semPrevia: previa.length === 0
+        };
+      });
+
       return {
         ptEmAula: true,
-        emAulaTitulo: label + " · " + CRM.ddmm(data),
-        onSairDaAula: () => this.setState({ emAula: null, vivoAluna: null, comentou: "" }),
+        ptRespostas: tela === "respostas",
+        ptSlides: tela === "slides",
+        slidesAulas: slidesAulas,
+        semSlides: slidesAulas.length === 0,
+        emAulaAbas: EM_AULA_ABAS.map(([id, lb]) => ({ label: lb,
+          bg: tela === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          fg: tela === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          onClick: () => this.setState({ emAulaTela: id }) })),
+        emAulaTitulo: Tr("in class · ", "em aula · ") + label + " · " + CRM.ddmm(data),
+        onSairDaAula: () => this.setState({ emAula: null, vivoAluna: null, comentou: "", emAulaTela: "respostas" }),
         onAbrirCaderno: () => {
           if (viva.estado === "ao_vivo") CRM.encerrarAula(label, data, quem);
           else if (viva.estado === "encerrada") CRM.reabrirAula(label, data, quem);
@@ -1796,6 +1961,7 @@ class Component extends DCLogic {
       ...vivoVals,
       // Durante a aula o resumo do dia, as turmas e os clubes saem da
       // tela: a aula é uma coisa só.
+      temAbas: !vivoOn,
       abas: vivoOn ? [] : ABAS.map(([id, label]) => ({ label,
         bg: aba === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
@@ -1819,7 +1985,7 @@ class Component extends DCLogic {
           CRM.iniciarAula(lbl, dt, (realUser && realUser.nome) || "");
         }
         this.setState({ emAula: { label: lbl, data: dt }, vivoAluna: null,
-          vivoFiltro: "todas", vivoTarefa: 0, comentou: "" });
+          vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });
       },
       onVoltarTurmas: () => this.setState({ turmaAberta: false }),
       // O título é de quem trabalha. Quando a escola confere o painel
@@ -1879,7 +2045,9 @@ class Component extends DCLogic {
       clubes: clubesDelaLista,
       semClubes: clubesDelaLista.length === 0,
 
-      eyebrow: Tr("teaching", "pedagógico"),
+      // O 00 do desenho: o eyebrow diz em que tela a pessoa está, e
+      // "pedagógico" é o nome do bloco do menu, não o da tela.
+      eyebrow: Tr("teacher panel", "painel do professor"),
 
       // ── O HERO, EM QUATRO ESTADOS ────────────────────────────
       //
