@@ -6128,6 +6128,11 @@
       // a aula ao vivo é um fato compartilhado: a professora abre no
       // aparelho dela e o caderno de cinco alunas tem de abrir junto
       aulasVivas: aulasVivasAll(),
+      // o que o desenho novo trouxe: a substituição é combinada entre
+      // duas pessoas e tem de chegar nos dois aparelhos; a entrega do
+      // projeto e a sequência da particular são registro da aluna
+      substituicoes: subsRaw(), reunioes: reunioesRaw(),
+      projetoEntregas: projEntregasAll(), sequencias: seqAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
@@ -6150,6 +6155,8 @@
     grava(CONTAS_KEY, d.contas);
     grava(CADERNO_KEY, d.caderno); grava(PALAVRAS_KEY, d.palavras);
     grava(AULA_VIVA_KEY, d.aulasVivas);
+    grava(SUBS_KEY, d.substituicoes); grava(REUNIOES_KEY, d.reunioes);
+    grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
@@ -6194,6 +6201,12 @@
       // inteiro — é dela, e ela escreve num aparelho de cada vez
       caderno: mesclarMapa(local.caderno, remoto.caderno),
       aulasVivas: mesclarMapa(local.aulasVivas, remoto.aulasVivas),
+      // substituição e reunião têm id próprio e mesclam como lista; a
+      // entrega do projeto e a sequência da aluna são mapas
+      substituicoes: lista("substituicoes"),
+      reunioes: lista("reunioes"),
+      projetoEntregas: mesclarMapa(local.projetoEntregas, remoto.projetoEntregas),
+      sequencias: mesclarMapa(local.sequencias, remoto.sequencias),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
@@ -8507,17 +8520,42 @@
   // que já foram trabalhados e já foram pagos, por uma exigência que
   // não existia quando aquelas aulas foram dadas. A tela continua
   // dizendo "falta o tópico" em cada uma delas.
-  function aulasDadasNoMes(turmaLabel, mesKey) {
-    var m = chamadasAll(), n = 0, comTarefa = 0;
+  // semSubstituta: tira da conta as aulas que outra pessoa cobriu.
+  // A folha da professora da turma usa esta forma; a conta da escola,
+  // a forma cheia. Com nenhuma substituição registrada — que é o caso
+  // de todo mês já fechado —, as duas dão o mesmo número.
+  function aulasDadasNoMes(turmaLabel, mesKey, semSubstituta) {
+    var m = chamadasAll(), n = 0, comTarefa = 0, cobertas = 0;
     Object.keys(m).forEach(function (k) {
       var ch = m[k];
       if (ch.turma !== turmaLabel || mesDe(ch.data) !== mesKey) return;
       if (ch.emEdicao) return;
+      if (substitutaDaAula(turmaLabel, ch.data)) {
+        cobertas++;
+        if (semSubstituta) return;
+      }
       n++;
       if (ch.tarefas && Object.keys(ch.tarefas).length) comTarefa++;
     });
-    return { aulas: n, comTarefa: comTarefa,
+    return { aulas: n, comTarefa: comTarefa, cobertas: cobertas,
       pctTarefa: n ? Math.round((comTarefa / n) * 100) : null };
+  }
+  // As aulas que esta pessoa cobriu no mês, como substituta. Elas não
+  // estão em turma nenhuma dela — é por aqui que entram na folha.
+  function aulasCobertasNoMes(nome, mesKey) {
+    var n = String(nome || "");
+    var m = chamadasAll();
+    var out = [];
+    substituicoesLista().forEach(function (s) {
+      if (s.cobre !== n || s.status !== "atribuida") return;
+      if (mesDe(s.data) !== mesKey) return;
+      var ch = m[s.turma + "|" + s.data];
+      // só conta a aula que aconteceu e foi registrada: é a mesma
+      // régua das outras aulas da folha
+      if (!ch || ch.emEdicao) return;
+      out.push({ turma: s.turma, data: s.data, noLugarDe: s.pedidoPor });
+    });
+    return { aulas: out.length, lista: out };
   }
 
   // Frequência da turma no ciclo corrente (últimos CICLO_MESES meses).
@@ -8661,7 +8699,7 @@
         // quem está com parcela em aberto. A fatia da professora não muda
         // por causa disso: a base é a matrícula ativa, não o que entrou.
         var devendo = alunas.filter(function (a) { return parcelasAbertas(a).length > 0; });
-        var dadas = aulasDadasNoMes(label, mes);
+        var dadas = aulasDadasNoMes(label, mes, true);
         var freq = frequenciaDaTurma(label);
         var freqOk = freq.pct !== null && freq.pct >= cfg.metaFrequencia;
         var tarefaOk = dadas.pctTarefa !== null && dadas.pctTarefa >= cfg.metaTarefas;
@@ -8711,7 +8749,15 @@
     var cortePeloTeto = tetoAplicado ? parteTurma - teto : 0;
     if (tetoAplicado) parteTurma = teto;
 
-    var total = parteTurma + vPart + vExtras;
+    // AS AULAS COBERTAS COMO SUBSTITUTA
+    //
+    // Não entram em turma nenhuma dela, e por isso ficam fora da fatia
+    // e do teto: é aula avulsa, paga pelo piso. A professora que
+    // faltou perdeu essa aula na conta dela — as duas pontas batem.
+    var cobertas = aulasCobertasNoMes(nome, mes);
+    var vCobertas = cobertas.aulas * cfg.pisoAula;
+
+    var total = parteTurma + vPart + vExtras + vCobertas;
     var inadimplentes = turmas.reduce(function (s, x) { return s + x.inadimplentes; }, 0);
 
     return {
@@ -8719,6 +8765,8 @@
       fixo: fixo, turmas: turmas, somaTurmas: somaTurmas,
       turmasComMovimento: comMovimento.length,
       turmasParadas: turmas.length - comMovimento.length,
+      cobertas: { aulas: cobertas.aulas, lista: cobertas.lista, valor: vCobertas,
+        porAula: cfg.pisoAula },
       particulares: { aulas: part.aulas, alunas: part.alunas, valor: vPart,
         receita: receitaPart.valor, nAlunas: receitaPart.alunas },
       extras: { dadas: extras.dadas, incluidas: cfg.extrasIncluidas,
@@ -10547,6 +10595,387 @@
     return out.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  O QUE O DESENHO PEDE E O SISTEMA NÃO TINHA
+  //  ------------------------------------------------------------
+  //  Cinco cadastros que as telas do handoff precisam e que não
+  //  existiam: substituição, reunião pedagógica, entrega do projeto
+  //  por aluna, a sequência da aluna particular e três campos do
+  //  clube.
+  //
+  //  Eles entram aqui, na camada de dados, antes das telas — porque
+  //  tela que inventa o próprio dado é tela que mente quando alguém
+  //  abre em outro aparelho.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── SUBSTITUIÇÃO ──────────────────────────────────────────────
+  //
+  // A professora pede, a coordenação atribui quem cobre. O pedido é
+  // de uma AULA — turma e data —, não da pessoa: é a aula que precisa
+  // de alguém na frente dela.
+  //
+  // Por que a hora entra no registro: a regra das 24 horas é sobre o
+  // começo da aula, e sem a hora um pedido feito às 23h para a aula
+  // das 7h da manhã seguinte pareceria ter oito horas de antecedência
+  // quando tem oito.
+  var SUBS_KEY = "isr_substituicoes_v1";
+  var SUBS_MOTIVOS = [
+    { id: "doenca", label: "Doença" },
+    { id: "imprevisto", label: "Imprevisto pessoal" },
+    { id: "viagem", label: "Viagem" },
+    { id: "compromisso", label: "Compromisso marcado" },
+    { id: "outro", label: "Outro" }
+  ];
+  function subsRaw() {
+    try { return JSON.parse(localStorage.getItem(SUBS_KEY)) || []; } catch (e) { return []; }
+  }
+  function subsSalvar(l) {
+    try { localStorage.setItem(SUBS_KEY, JSON.stringify(l || [])); } catch (e) {}
+    agendarSync();
+  }
+  function substituicoesLista() {
+    return subsRaw().filter(function (s) { return s && s.id && !s.apagado; });
+  }
+  // Quantas horas faltam para a aula. Sem hora na aula, conta o começo
+  // do dia — é o palpite que erra para o lado seguro.
+  function horasAteAula(dataIso, hora) {
+    var h = String(hora || "").match(/^(\d{1,2})[:h]?(\d{2})?/);
+    var d = new Date((dataIso || "") + "T"
+      + (h ? ("0" + h[1]).slice(-2) + ":" + (h[2] || "00") : "00:00") + ":00");
+    if (isNaN(d.getTime())) return 999;
+    return (d.getTime() - Date.now()) / 3600000;
+  }
+  function pedirSubstituicao(dados) {
+    dados = dados || {};
+    var turma = String(dados.turma || "").trim();
+    var data = String(dados.data || "").trim();
+    if (!turma || !data) return { ok: false, erro: "Diga qual aula precisa de substituta." };
+    if (!String(dados.motivo || "").trim()) return { ok: false, erro: "Escolha o motivo." };
+    var l = subsRaw();
+    // Pedir duas vezes a mesma aula não cria dois pedidos: a
+    // coordenação veria a mesma aula duas vezes na lista e poderia
+    // atribuir duas pessoas para a mesma hora.
+    var jaTem = l.filter(function (s) {
+      return !s.apagado && s.turma === turma && s.data === data
+        && s.status !== "cancelada" && s.status !== "recusada";
+    })[0];
+    if (jaTem) return { ok: false, erro: "Esta aula já tem um pedido de substituição.", id: jaTem.id };
+    var horas = horasAteAula(data, dados.hora);
+    var reg = {
+      id: "sb" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      turma: turma, data: data, hora: String(dados.hora || "").trim(),
+      pedidoPor: String(dados.por || "").trim(),
+      motivo: String(dados.motivo || "").trim(),
+      observacao: String(dados.observacao || "").trim().slice(0, 600),
+      cobre: "", status: "pedida",
+      // guardado no pedido, e não recalculado depois: o que importa é
+      // se era em cima da hora QUANDO foi pedido
+      urgente: horas < 24,
+      pedidoEm: new Date().toISOString(), _v: Date.now()
+    };
+    l.push(reg);
+    subsSalvar(l);
+    return { ok: true, id: reg.id, urgente: reg.urgente };
+  }
+  function atribuirSubstituta(id, quemCobre, por) {
+    var nome = String(quemCobre || "").trim();
+    if (!nome) return { ok: false, erro: "Diga quem cobre a aula." };
+    if (equipeDocente().indexOf(nome) < 0) {
+      return { ok: false, erro: nome + " não está na equipe como quem dá aula." };
+    }
+    var l = subsRaw();
+    var s = l.filter(function (x) { return x.id === id; })[0];
+    if (!s) return { ok: false, erro: "Pedido não encontrado." };
+    if (nome === s.pedidoPor) {
+      return { ok: false, erro: "Quem pediu a substituição não pode cobrir a própria aula." };
+    }
+    s.cobre = nome; s.status = "atribuida";
+    s.atribuidoPor = String(por || ""); s.atribuidoEm = new Date().toISOString();
+    s._v = Date.now();
+    subsSalvar(l);
+    return { ok: true, substituicao: s };
+  }
+  function cancelarSubstituicao(id, por) {
+    var l = subsRaw();
+    var s = l.filter(function (x) { return x.id === id; })[0];
+    if (!s) return { ok: false, erro: "Pedido não encontrado." };
+    s.status = "cancelada"; s.canceladoPor = String(por || "");
+    s.canceladoEm = new Date().toISOString(); s._v = Date.now();
+    subsSalvar(l);
+    return { ok: true };
+  }
+  function substituicoesDaProfessora(nome) {
+    var n = String(nome || "");
+    return substituicoesLista().filter(function (s) {
+      return s.pedidoPor === n || s.cobre === n;
+    }).sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function substituicoesDaTurma(turmaLabel) {
+    return substituicoesLista().filter(function (s) { return s.turma === turmaLabel; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function substituicoesAbertas() {
+    return substituicoesLista().filter(function (s) { return s.status === "pedida"; })
+      .sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+  }
+  // Quem de fato deu esta aula. É o que a folha precisa saber: a aula
+  // da substituta conta na folha DELA, não na de quem faltou.
+  function substitutaDaAula(turmaLabel, dataIso) {
+    var s = substituicoesLista().filter(function (x) {
+      return x.turma === turmaLabel && x.data === dataIso && x.status === "atribuida";
+    })[0];
+    return s ? s.cobre : "";
+  }
+
+  // ── REUNIÃO PEDAGÓGICA ────────────────────────────────────────
+  //
+  // Não é a "reunião" do funil, que é conversa de matrícula com uma
+  // lead. Esta é o encontro pedagógico da equipe, e é dele que sai o
+  // "2 de 4 reuniões" do mês no painel da professora.
+  var REUNIOES_KEY = "isr_reunioes_ped_v1";
+  function reunioesRaw() {
+    try { return JSON.parse(localStorage.getItem(REUNIOES_KEY)) || []; } catch (e) { return []; }
+  }
+  function reunioesSalvar(l) {
+    try { localStorage.setItem(REUNIOES_KEY, JSON.stringify(l || [])); } catch (e) {}
+    agendarSync();
+  }
+  function reunioesPedagogicas() {
+    return reunioesRaw().filter(function (r) { return r && r.id && !r.apagado; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+  function salvarReuniaoPedagogica(dados) {
+    dados = dados || {};
+    if (!String(dados.data || "").trim()) return { ok: false, erro: "A reunião precisa de data." };
+    var l = reunioesRaw();
+    var r = dados.id ? l.filter(function (x) { return x.id === dados.id; })[0] : null;
+    if (!r) {
+      r = { id: "rp" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) };
+      l.push(r);
+    }
+    r.data = String(dados.data).trim();
+    r.hora = String(dados.hora || "").trim();
+    r.tema = String(dados.tema || "").trim().slice(0, 200);
+    r.participantes = (dados.participantes || []).slice();
+    r.presentes = (dados.presentes || r.presentes || []).slice();
+    r._v = Date.now();
+    reunioesSalvar(l);
+    return { ok: true, id: r.id };
+  }
+  function removerReuniaoPedagogica(id) {
+    var l = reunioesRaw();
+    var r = l.filter(function (x) { return x.id === id; })[0];
+    if (!r) return { ok: false, erro: "Reunião não encontrada." };
+    r.apagado = true; r._v = Date.now();
+    reunioesSalvar(l);
+    return { ok: true };
+  }
+  // "2 de 4": as reuniões do mês em que esta professora estava
+  // convocada, e em quantas ela esteve.
+  function reunioesDoMes(nome, mes) {
+    var m = String(mes || "").slice(0, 7);
+    var n = String(nome || "");
+    var doMes = reunioesPedagogicas().filter(function (r) {
+      return String(r.data || "").slice(0, 7) === m
+        && (!(r.participantes || []).length || (r.participantes || []).indexOf(n) >= 0);
+    });
+    var feitas = doMes.filter(function (r) { return (r.presentes || []).indexOf(n) >= 0; });
+    return { total: doMes.length, feitas: feitas.length, lista: doMes };
+  }
+
+  // ── A ENTREGA DO PROJETO, POR ALUNA ───────────────────────────
+  //
+  // O projeto do ciclo já existia na turma, como nome. O que faltava
+  // era quem entregou — e é disso que a barra "7 de 10" e o "Faltam:"
+  // do desenho são feitos.
+  var PROJ_KEY = "isr_projeto_entregas_v1";
+  function projEntregasAll() {
+    try { return JSON.parse(localStorage.getItem(PROJ_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function projChave(turmaLabel, pessoaId) { return turmaLabel + "|" + pessoaId; }
+  function marcarEntregaProjeto(turmaLabel, pessoaId, entregue, por) {
+    if (!turmaLabel || !pessoaId) return { ok: false, erro: "Aluna ou turma não identificada." };
+    var m = projEntregasAll();
+    var k = projChave(turmaLabel, pessoaId);
+    if (entregue) {
+      m[k] = { turma: turmaLabel, pessoaId: pessoaId, entregue: true,
+        em: iso(today()), por: String(por || ""), _v: Date.now() };
+    } else {
+      // desmarcar não apaga a linha: o registro guarda que foi
+      // desmarcado, e por quem, senão a correção some sem rastro
+      m[k] = { turma: turmaLabel, pessoaId: pessoaId, entregue: false,
+        em: iso(today()), por: String(por || ""), _v: Date.now() };
+    }
+    try { localStorage.setItem(PROJ_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return { ok: true };
+  }
+  function entregasDoProjeto(turmaLabel) {
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === turmaLabel;
+    })[0];
+    var alunas = alunasDaTurma(turmaLabel) || [];
+    var m = projEntregasAll();
+    var linhas = alunas.map(function (p) {
+      var r = m[projChave(turmaLabel, p.id)] || null;
+      return { id: p.id, nome: p.nome, entregue: !!(r && r.entregue),
+        em: (r && r.entregue) ? r.em : "" };
+    });
+    var feitas = linhas.filter(function (x) { return x.entregue; }).length;
+    return {
+      projeto: (t && t.projeto) || "",
+      temProjeto: !!(t && t.projeto),
+      feitas: feitas, total: linhas.length,
+      pct: linhas.length ? Math.round((feitas / linhas.length) * 100) : 0,
+      faltam: linhas.filter(function (x) { return !x.entregue; }).map(function (x) { return x.nome; }),
+      linhas: linhas
+    };
+  }
+
+  // ── A SEQUÊNCIA DA ALUNA PARTICULAR ───────────────────────────
+  //
+  // A particular usa o syllabus do nível dela, mas não na marcha da
+  // turma: a professora pula o que a aluna já sabe e troca a ordem
+  // conforme o que ela precisa agora. A sequência é DELA.
+  //
+  // Guardamos só o que foge do syllabus — a ordem trocada e as
+  // sessões puladas. Assim, sessão nova no syllabus entra sozinha na
+  // sequência de quem ainda não chegou lá.
+  var SEQ_KEY = "isr_sequencia_aluna_v1";
+  function seqAll() {
+    try { return JSON.parse(localStorage.getItem(SEQ_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function seqSalvar(m) {
+    try { localStorage.setItem(SEQ_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+  }
+  // O nível da aluna particular, para achar o syllabus dela.
+  // O syllabus é por nível E por ciclo. Pegar o nível e esquecer o
+  // ciclo devolvia lista vazia para toda aluna cuja turma não está no
+  // ciclo escrito nas metas — que é a maioria assim que um ciclo vira.
+  function nivelDaAluna(p) {
+    if (!p) return { nivel: "", ciclo: "" };
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === p.turma;
+    })[0];
+    return { nivel: p.nivel || (t ? t.nivel : ""),
+      ciclo: (t && t.cycle) || metasAtuais().cicloLabel || "" };
+  }
+  function sequenciaDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { nivel: "", sessoes: [], atual: null };
+    var nc = nivelDaAluna(p);
+    var nivel = nc.nivel;
+    var base = syllabusDoNivel(nivel, nc.ciclo) || [];
+    var cfg = seqAll()[pessoaId] || { ordem: [], puladas: [] };
+    var puladas = {};
+    (cfg.puladas || []).forEach(function (n) { puladas[n] = true; });
+    // a ordem guardada primeiro, e o que o syllabus tem depois dela
+    var vistos = {};
+    var ordem = [];
+    (cfg.ordem || []).forEach(function (n) {
+      if (base.some(function (s) { return s.n === n; }) && !vistos[n]) { vistos[n] = true; ordem.push(n); }
+    });
+    base.forEach(function (s) { if (!vistos[s.n]) { vistos[s.n] = true; ordem.push(s.n); } });
+
+    // as aulas dela que já aconteceram: é a chamada da particular que
+    // diz qual sessão foi dada
+    var label = "Particular · " + p.nome;
+    var dadas = {};
+    var m = chamadasAll();
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || ch.turma !== label) return;
+      var n = parseInt(ch.sessao, 10) || 0;
+      if (n) dadas[n] = ch.data;
+    });
+
+    var achouAtual = false;
+    var sessoes = ordem.map(function (n) {
+      var s = base.filter(function (x) { return x.n === n; })[0] || { n: n, titulo: "" };
+      var pulada = !!puladas[n];
+      var dada = !!dadas[n];
+      var atual = false;
+      if (!dada && !pulada && !achouAtual) { atual = true; achouAtual = true; }
+      return { n: n, titulo: s.titulo || "", objetivo: s.objetivo || "",
+        pulada: pulada, dada: dada, data: dadas[n] || "", atual: atual,
+        estado: pulada ? "pulada" : dada ? "dada" : atual ? "esta aula" : "a vir" };
+    });
+    return { nivel: nivel, sessoes: sessoes,
+      atual: sessoes.filter(function (x) { return x.atual; })[0] || null };
+  }
+  function pularSessaoDaAluna(pessoaId, n, pular) {
+    var num = parseInt(n, 10) || 0;
+    if (!pessoaId || !num) return { ok: false, erro: "Sessão não identificada." };
+    var m = seqAll();
+    var cfg = m[pessoaId] || { ordem: [], puladas: [] };
+    var l = (cfg.puladas || []).filter(function (x) { return x !== num; });
+    if (pular) l.push(num);
+    cfg.puladas = l; cfg._v = Date.now();
+    m[pessoaId] = cfg; seqSalvar(m);
+    return { ok: true };
+  }
+  function moverSessaoDaAluna(pessoaId, n, direcao) {
+    var num = parseInt(n, 10) || 0;
+    var seq = sequenciaDaAluna(pessoaId);
+    var ordem = seq.sessoes.map(function (s) { return s.n; });
+    var i = ordem.indexOf(num);
+    var j = i + (direcao === "cima" ? -1 : 1);
+    if (i < 0 || j < 0 || j >= ordem.length) return { ok: false, erro: "A sessão já está no fim da fila." };
+    ordem[i] = ordem[j]; ordem[j] = num;
+    var m = seqAll();
+    var cfg = m[pessoaId] || { ordem: [], puladas: [] };
+    cfg.ordem = ordem; cfg._v = Date.now();
+    m[pessoaId] = cfg; seqSalvar(m);
+    return { ok: true };
+  }
+  // O objetivo da aluna particular: a frase que diz para que ela está
+  // aprendendo inglês. Fica na ficha dela, e é a primeira coisa que a
+  // professora lê antes da aula.
+  function salvarObjetivoDaAluna(pessoaId, texto) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    var t = String(texto || "").trim().slice(0, 300);
+    mutate(pessoaId, function (p) { p.objetivo = t; });
+    agendarSync();
+    return { ok: true, objetivo: t };
+  }
+  function objetivoDaAluna(pessoaId) {
+    var p = getPessoa(pessoaId);
+    return (p && p.objetivo) || "";
+  }
+
+  // ── DUAS FALTAS SEGUIDAS ──────────────────────────────────────
+  //
+  // Não é cadastro novo: sai das chamadas que já existem. Duas faltas
+  // em sequência nas últimas aulas da turma é o sinal que a escola
+  // combinou acompanhar, e aparece na aba Alunas e na fila.
+  function faltasSeguidas(pessoaId, turmaLabel) {
+    var m = chamadasAll();
+    var minhas = [];
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || !ch.data || ch.turma !== turmaLabel) return;
+      // aula marcada para depois de hoje não diz nada sobre presença:
+      // contá-la quebrava a sequência de faltas com uma aula futura
+      if (ch.data > iso(today())) return;
+      if (!ch.presencas || !(pessoaId in ch.presencas)) return;
+      minhas.push({ data: ch.data, est: estadoPresenca(ch.presencas[pessoaId]) });
+    });
+    minhas.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    var n = 0;
+    for (var i = 0; i < minhas.length; i++) {
+      if (minhas[i].est === "falta") n++;
+      else break;
+    }
+    return { seguidas: n, alerta: n >= 2, desde: n ? minhas[n - 1].data : "" };
+  }
+  function alunasComFaltasSeguidas(turmaLabel) {
+    return (alunasDaTurma(turmaLabel) || []).map(function (p) {
+      var f = faltasSeguidas(p.id, turmaLabel);
+      return { id: p.id, nome: p.nome, seguidas: f.seguidas, desde: f.desde };
+    }).filter(function (x) { return x.seguidas >= 2; });
+  }
+
   // ── O COFRE DE PALAVRAS ───────────────────────────────────────
   //
   // No desenho as palavras vêm do caderno da aula. Sem plano não há de
@@ -11465,6 +11894,15 @@
       vagas: Math.max(0, parseInt(c.vagas, 10) || 0),
       status: c.status === "publicado" ? "publicado" : "rascunho",
       descricao: c.descricao || "",
+      // O nível diz para quem o clube é, e sem ele a aluna de A1 via
+      // na lista um clube de B2 que não ia conseguir acompanhar.
+      nivel: c.nivel || "todos",
+      // A bio aparece no cartão que a aluna vê: quem vai estar lá na
+      // frente é metade da decisão de entrar num clube.
+      bio: c.bio || "",
+      // "New" não é um campo que alguém marca e esquece de desmarcar:
+      // é a data em que o clube foi publicado.
+      publicadoEm: c.publicadoEm || "",
       materiais: c.materiais || [], encontros: c.encontros || [],
       membros: c.membros || [], espera: c.espera || [],
       entrou: c.entrou || {}, pagos: c.pagos || {},
@@ -11477,9 +11915,31 @@
   function getClube(id) {
     return clubesLista().filter(function (c) { return c.id === id; })[0] || null;
   }
+  // O que um clube precisa ter para ser publicado. Rascunho pode
+  // estar pela metade — é para isso que rascunho existe —, mas o que
+  // a aluna vê no catálogo não pode estar sem horário ou sem onde é.
+  function faltaParaPublicar(c) {
+    var falta = [];
+    if (!String(c.nome || "").trim()) falta.push("nome");
+    if (!String(c.descricao || "").trim()) falta.push("descrição");
+    if (!String(c.nivel || "").trim() || c.nivel === "") falta.push("nível");
+    if (!String(c.dia || "").trim() || !String(c.hora || "").trim()) falta.push("horário");
+    if ((c.encontros || []).filter(function (e) { return e && e.data; }).length < 4) {
+      falta.push("as 4 datas dos encontros");
+    }
+    if (!(parseInt(c.vagas, 10) > 0)) falta.push("vagas");
+    if (c.formato === "presencial" ? !String(c.local || "").trim() : !String(c.link || "").trim()) {
+      falta.push(c.formato === "presencial" ? "o endereço" : "o link");
+    }
+    return falta;
+  }
   function clubeSalvar(cfg) {
     cfg = cfg || {};
-    var nome = String(cfg.nome || "").trim();
+    // Numa edição parcial — salvar só os encontros, só a bio — o nome
+    // não vem no pacote. Exigi-lo aí fazia a gravação falhar calada
+    // para quem só queria mudar um campo.
+    var atual = cfg.id ? getClube(cfg.id) : null;
+    var nome = String(cfg.nome !== undefined ? cfg.nome : (atual && atual.nome) || "").trim();
     if (!nome) return { ok: false, erro: "O clube precisa de um nome." };
     if (cfg.formato === "presencial" && !String(cfg.local || "").trim()) {
       return { ok: false, erro: "Clube presencial precisa de endereço." };
@@ -11497,13 +11957,61 @@
     clubesSalvar(l);
     return { ok: true, id: i < 0 ? l[l.length - 1].id : cfg.id };
   }
+  // Publicar e despublicar, com as travas do handoff.
+  //
+  // Clube publicado é o que a aluna vê no catálogo. Por isso publicar
+  // exige o cadastro inteiro, e despublicar com gente inscrita é tirar
+  // da frente delas um clube em que já entraram — some do catálogo, e
+  // elas ficam com uma inscrição para lugar nenhum.
+  function clubePublicar(id) {
+    var c = getClube(id);
+    if (!c) return { ok: false, erro: "Clube não encontrado." };
+    var falta = faltaParaPublicar(c);
+    if (falta.length) {
+      return { ok: false, erro: "Falta " + falta.join(", ") + " para publicar." };
+    }
+    var l = clubesRaw();
+    var reg = l.filter(function (x) { return x.id === id; })[0];
+    reg.status = "publicado";
+    if (!reg.publicadoEm) reg.publicadoEm = iso(today());
+    reg._v = Date.now();
+    clubesSalvar(l);
+    return { ok: true };
+  }
+  function clubeDespublicar(id) {
+    var c = getClube(id);
+    if (!c) return { ok: false, erro: "Clube não encontrado." };
+    if ((c.membros || []).length) {
+      return { ok: false,
+        erro: "Este clube tem " + c.membros.length
+          + (c.membros.length === 1 ? " inscrita" : " inscritas")
+          + ". Despublicar tiraria do catálogo um clube em que elas já entraram." };
+    }
+    var l = clubesRaw();
+    var reg = l.filter(function (x) { return x.id === id; })[0];
+    reg.status = "rascunho"; reg._v = Date.now();
+    clubesSalvar(l);
+    return { ok: true };
+  }
+  // "New" por três semanas depois de publicado.
+  function clubeEhNovo(c) {
+    if (!c || c.status !== "publicado" || !c.publicadoEm) return false;
+    return daysBetween(parseISO(c.publicadoEm), today()) <= 21;
+  }
+  // Apagar é só para rascunho: clube publicado já foi visto por
+  // alguém, e apagar o que foi anunciado some com o registro.
   function clubeRemover(id) {
-    var l = clubesRaw().map(function (c) {
-      return c.id === id ? { id: c.id, apagado: iso(today()), _v: Date.now() } : c;
+    var c = getClube(id);
+    if (c && c.status === "publicado") {
+      return { ok: false,
+        erro: "Clube publicado não se apaga. Despublique primeiro — e isso só é possível sem inscritas." };
+    }
+    var l = clubesRaw().map(function (c2) {
+      return c2.id === id ? { id: c2.id, apagado: iso(today()), _v: Date.now() } : c2;
     });
     try { localStorage.setItem(CLUBES_KEY, JSON.stringify(l)); } catch (e) {}
     agendarSync();
-    return clubesLista();
+    return { ok: true, clubes: clubesLista() };
   }
 
   // Os clubes de uma aluna, na ordem em que ela entrou, já dizendo
@@ -14905,7 +15413,7 @@
     desmarcarPagamento: desmarcarPagamento, vencimentoDaFolha: vencimentoDaFolha,
     emMoedaDaFolha: emMoedaDaFolha,
     pagamentoProfessora: pagamentoProfessora, folhaPagamento: folhaPagamento,
-    aulasDadasNoMes: aulasDadasNoMes, frequenciaDaTurma: frequenciaDaTurma,
+    aulasDadasNoMes: aulasDadasNoMes, aulasCobertasNoMes: aulasCobertasNoMes, frequenciaDaTurma: frequenciaDaTurma,
     particularesNoMes: particularesNoMes, extrasNoMes: extrasNoMes,
     particularesSemProfessora: particularesSemProfessora,
     professoraDaParticular: professoraDaParticular, ehAlunaParticular: ehAlunaParticular,
@@ -14958,6 +15466,20 @@
     aulaViva: aulaViva, iniciarAula: iniciarAula, encerrarAula: encerrarAula,
     reabrirAula: reabrirAula, respostasDaAluna: respostasDaAluna,
     salvarResposta: salvarResposta, comentarResposta: comentarResposta,
+    substituicoesLista: substituicoesLista, pedirSubstituicao: pedirSubstituicao,
+    atribuirSubstituta: atribuirSubstituta, cancelarSubstituicao: cancelarSubstituicao,
+    substituicoesDaProfessora: substituicoesDaProfessora,
+    substituicoesDaTurma: substituicoesDaTurma, substituicoesAbertas: substituicoesAbertas,
+    substitutaDaAula: substitutaDaAula, SUBS_MOTIVOS: SUBS_MOTIVOS,
+    reunioesPedagogicas: reunioesPedagogicas, salvarReuniaoPedagogica: salvarReuniaoPedagogica,
+    removerReuniaoPedagogica: removerReuniaoPedagogica, reunioesDoMes: reunioesDoMes,
+    entregasDoProjeto: entregasDoProjeto, marcarEntregaProjeto: marcarEntregaProjeto,
+    sequenciaDaAluna: sequenciaDaAluna, pularSessaoDaAluna: pularSessaoDaAluna,
+    moverSessaoDaAluna: moverSessaoDaAluna,
+    salvarObjetivoDaAluna: salvarObjetivoDaAluna, objetivoDaAluna: objetivoDaAluna,
+    faltasSeguidas: faltasSeguidas, alunasComFaltasSeguidas: alunasComFaltasSeguidas,
+    clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
+    clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
     dataDaSessao: dataDaSessao,
     aulaVivaDaAluna: aulaVivaDaAluna,

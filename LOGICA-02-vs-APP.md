@@ -107,6 +107,45 @@ Três respostas: **já existe** · **existe diferente** (e em quê) ·
 
 ---
 
+## Depois desta conferência: os cinco cadastros foram criados
+
+O que estava marcado **FALTA** nas quatro telas travadas já existe na
+camada de dados, com teste:
+
+- **Substituição** (`isr_substituicoes_v1`) — pedido por aula (turma e
+  data), motivo, observação, quem cobre, status. Pedir duas vezes a
+  mesma aula é recusado; quem pediu não cobre a própria aula; só quem
+  está na equipe docente cobre. O pedido nasce marcado como urgente
+  quando falta menos de 24h para a aula.
+- **Reunião pedagógica** (`isr_reunioes_ped_v1`) — data, hora, tema,
+  quem é esperado e quem esteve. É daqui que sai o "2 de 4" do mês.
+- **Entrega do projeto, por aluna** (`isr_projeto_entregas_v1`) — a
+  barra "7 de 10" e o "Faltam: nomes".
+- **Sequência da aluna particular** (`isr_sequencia_aluna_v1`) — pular
+  e reordenar sessões por aluna, sobre o syllabus do nível dela. Só o
+  que foge do syllabus é guardado, então sessão nova entra sozinha na
+  fila de quem ainda não chegou lá. O **objetivo** dela ficou na ficha.
+- **Clube** — ganhou `nível`, `bio` e `publicadoEm` (de onde sai a tag
+  "New", que vale 21 dias). Publicar exige o cadastro inteiro e diz o
+  que falta; publicado não se apaga; despublicar só sem inscritas.
+
+Junto vieram duas regras do §3 que dependiam deles:
+
+- **A aula da substituta conta na folha dela.** A folha da turma passou
+  a descontar a aula coberta, e quem cobriu recebe por ela pelo piso,
+  numa linha própria — não escondida dentro da fatia da turma. Como
+  nenhum mês fechado tem substituição registrada, nenhuma folha
+  passada mudou de valor.
+- **Duas faltas seguidas** acendem alerta por aluna e por turma. Conta
+  só aula que já aconteceu: chamada lançada para uma data futura não
+  quebra a sequência.
+
+**Três erros que o teste pegou no caminho:** a sequência da aluna
+buscava o syllabus pelo ciclo das metas e não pelo ciclo da turma dela
+(devolvia lista vazia assim que um ciclo virasse); as faltas seguidas
+contavam aula futura; e salvar um campo só do clube exigia reenviar o
+nome, falhando calado para quem só queria mudar os encontros.
+
 ## O que isto significa para a ordem das telas
 
 As telas **00, 04, 05, 06, 07, 08, 10** usam só o que já existe. Dá para
@@ -123,6 +162,5 @@ pedem dado que não existe:
   (pular e reordenar sessões).
 - **12 Clubes** — faltam `nível`, `bio` e `é novo`.
 
-Para essas quatro, ou eu construo o cadastro que falta (e aí não é só
-interface), ou a tela sai sem o bloco e com o lugar marcado. Decisão sua,
-uma de cada vez.
+**Essas quatro estão destravadas**: o cadastro foi construído. Agora
+todas as doze telas podem ser refeitas só com interface.
