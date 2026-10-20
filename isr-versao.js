@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-h",
+  numero: "2026.10.20-j",
   data: "20/10/2026",
-  nota: "Clubes: a professora oferece, edita, publica e faz a chamada dos encontros"
+  nota: "Alunas e Materiais conferidas contra os arquivos 06 e 10"
 };
