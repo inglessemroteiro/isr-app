@@ -3,6 +3,15 @@
 Mensagem pronta para encaminhar às professoras e tutoras, em português e
 em inglês. O acesso é o mesmo em celular e computador.
 
+> **Dois endereços parecidos, e só um é o sistema.**
+> O sistema da escola é `inglessemroteiro.netlify.app`.
+> `app.inglessemroteiro.com.br` é o **Book Club**, outro app — este
+> repositório só o lê de fora, pela função `bc-proxy`. Não existe
+> `/gestao.html` lá, e foi o endereço que saiu errado numa versão
+> anterior deste documento. Se um dia a escola apontar um domínio
+> próprio para o sistema, troque o endereço aqui e rode
+> `node verificar-endereco.js`.
+
 ---
 
 ## Português
@@ -10,7 +19,7 @@ em inglês. O acesso é o mesmo em celular e computador.
 **Acesso ao sistema do Inglês sem Roteiro**
 
 O endereço é este, e vale salvar nos favoritos:
-**https://app.inglessemroteiro.com.br/gestao.html**
+**https://inglessemroteiro.netlify.app/gestao.html**
 
 Esse endereço é o da equipe. O endereço do site sem o `/gestao.html` é a
 porta das alunas — por ele você não entra no painel.
@@ -43,9 +52,9 @@ idiomas, e a escolha fica guardada no seu aparelho.
 
 **4. Confira a versão**
 
-No pé do menu aparece um número de versão. Precisa estar em
-**v2026.10.19-k** ou mais recente. Se estiver diferente, o seu navegador
-guardou uma cópia antiga:
+No pé do menu aparece um número de versão, e ele é uma data:
+`v2026.10.20-j` é 20 de outubro de 2026. Se a data que aparecer for bem
+anterior à de hoje, o seu navegador guardou uma cópia antiga:
 
 - celular: feche a aba e abra o endereço de novo;
 - computador: `Ctrl + Shift + R` (Windows) ou `Cmd + Shift + R` (Mac).
@@ -68,7 +77,7 @@ Com essas quatro coisas dá para resolver sem ficar adivinhando.
 **Signing in to the Inglês sem Roteiro system**
 
 This is the address — worth bookmarking it:
-**https://app.inglessemroteiro.com.br/gestao.html**
+**https://inglessemroteiro.netlify.app/gestao.html**
 
 That address is the team's door. The site address without `/gestao.html`
 is the students' door, and it will not take you to the teacher panel.
@@ -102,9 +111,9 @@ in both languages, and your choice is remembered on your device.
 
 **4. Check the version**
 
-A version number shows at the bottom of the menu. It has to be
-**v2026.10.19-k** or newer. If it is different, your browser kept an old
-copy:
+A version number shows at the bottom of the menu, and it is a date:
+`v2026.10.20-j` means 20 October 2026. If the date shown is well before
+today, your browser kept an old copy:
 
 - phone: close the tab and open the address again;
 - computer: `Ctrl + Shift + R` (Windows) or `Cmd + Shift + R` (Mac).
