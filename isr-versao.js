@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-i",
+  numero: "2026.10.20-j",
   data: "20/10/2026",
-  nota: "Minhas turmas conferida contra o arquivo 04"
+  nota: "Alunas e Materiais conferidas contra os arquivos 06 e 10"
 };
