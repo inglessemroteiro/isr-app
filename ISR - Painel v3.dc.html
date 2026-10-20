@@ -353,7 +353,28 @@
         </sc-if>
       </section>
 
-      <!-- 3 · a sequência dela -->
+      <!-- 3 · o programa que ela segue, e a sequência dele -->
+      <!-- A particular segue o mesmo programa das turmas; qual deles é
+           escolha da professora, e fica na ficha da aluna. -->
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap;">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ L99 }}</div>
+            <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px;">{{ partPrograma }}</div>
+          </div>
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onTrocarPrograma }}" style="flex: none; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ partProgramaBotao }}</button>
+        </div>
+        <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ partProgramaNota }}</div>
+        <sc-if value="{{ partTrocando }}">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <sc-for list="{{ partProgramas }}" as="pg" hint-placeholder-count="4">
+              <button class="isr-botao isr-botao--pilula" onclick="{{ pg.onClick }}" style="background: {{ pg.bg }}; color: {{ pg.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ pg.label }}</button>
+            </sc-for>
+          </div>
+          <div style="background: var(--color-warning-light); color: var(--color-warning-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.55;">{{ L100 }}</div>
+        </sc-if>
+      </section>
+
       <div style="font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500);">{{ partSeqTitulo }}</div>
       <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;">
         <sc-for list="{{ partSessoes }}" as="ps" hint-placeholder-count="6">
@@ -1063,8 +1084,9 @@ class Component extends DCLogic {
             slidesTexto: {}, slidesErro: {},
             // o pedido de substituição sendo escrito
             subAberto: false, subAula: "", subMotivo: "doenca", subObs: "", subErro: "",
-            // qual aluna particular está aberta
-            partSel: "" };
+            // qual aluna particular está aberta, e se o seletor de
+            // programa dela está aberto
+            partSel: "", partTrocando: false };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -1179,6 +1201,9 @@ class Component extends DCLogic {
       "What works with her, what gets stuck, what to try next."],
     L98: ["Todas as sessões do nível dela estão dadas ou puladas.",
       "Every session of her level is either given or skipped."],
+    L99: ["programa que ela segue", "the programme she follows"],
+    L100: ["Trocar o programa recomeça a marcha dela: o que você pulou ou reordenou vale para o programa de agora, e as sessões do novo entram na ordem do syllabus.",
+      "Changing the programme restarts her sequence: what you skipped or reordered belongs to the current one, and the new programme comes in syllabus order."],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -1467,6 +1492,8 @@ class Component extends DCLogic {
       partTemObjetivoSessao: false, partObjetivoSessao: "", partEtapas: [],
       partSemRoteiro: false, partNotas: "", onPartNotas: () => {},
       partSemSyllabus: false, partSemSyllabusTexto: "",
+      partPrograma: "", partProgramaBotao: "", partProgramaNota: "",
+      partTrocando: false, onTrocarPrograma: () => {}, partProgramas: [],
       novaExtraAberta: false, neLabel: "+ Aula extra", neBorda: "var(--color-tertiary-50)", neBg: "var(--color-neutral-0)", neFg: "var(--color-primary-900)",
       onToggleNovaExtra: () => {}, onCriarNovaExtra: () => {}, neRespOpts: [], neTurmasAlvo: [], neFeito: "",
       neTituloRef: this.neTituloRef, neDataRef: this.neDataRef, neHoraRef: this.neHoraRef,
@@ -2825,6 +2852,8 @@ class Component extends DCLogic {
             partNome: "", partMeta: "", partPerfil: "#", partObjetivo: "",
             partObjLendo: true, partObjEditando: false, partObjCor: "", onPartObjetivo: () => {},
             partHibrida: false, partHibridaTexto: "", partSeqTitulo: "", partSessoes: [],
+            partPrograma: "", partProgramaBotao: "", partProgramaNota: "",
+            partTrocando: false, onTrocarPrograma: () => {}, partProgramas: [],
             partTemSessao: false, partSemSessao: false, partSemSyllabus: false,
             partSemSyllabusTexto: "", partSessaoEyebrow: "",
             partSessaoTitulo: "", partTemObjetivoSessao: false, partObjetivoSessao: "",
@@ -2879,6 +2908,38 @@ class Component extends DCLogic {
                + Tr(" — use the private class to review and go deeper.",
                     " — use a particular para revisar e aprofundar."))
             : "",
+          // ── o programa dela ──
+          ...(() => {
+            const atualPrg = CRM.programaDeEstudo ? CRM.programaDeEstudo(sel.id) : { nivel: "", ciclo: "", escolhido: false };
+            const lista = CRM.programasDisponiveis ? CRM.programasDisponiveis() : [];
+            const rotulo = (x) => x.nivel + (x.ciclo ? " · ciclo " + x.ciclo : "");
+            return {
+              partPrograma: atualPrg.nivel
+                ? rotulo(atualPrg)
+                : Tr("no programme chosen", "nenhum programa escolhido"),
+              partProgramaBotao: this.state.partTrocando
+                ? Tr("close", "fechar") : Tr("Change", "Trocar"),
+              partProgramaNota: atualPrg.escolhido
+                ? Tr("Chosen for her. The sessions below are this programme’s.",
+                     "Escolhido para ela. As sessões abaixo são deste programa.")
+                : Tr("Taken from her level, because no programme was chosen yet. The sessions below are this one’s.",
+                     "Veio do nível da ficha dela, porque nenhum programa foi escolhido ainda. As sessões abaixo são deste."),
+              partTrocando: !!this.state.partTrocando,
+              onTrocarPrograma: () => this.setState({ partTrocando: !this.state.partTrocando }),
+              partProgramas: lista.map(x => ({
+                label: rotulo(x) + " · " + x.sessoes + Tr(" sessions", " sessões"),
+                bg: (x.nivel === atualPrg.nivel && x.ciclo === atualPrg.ciclo)
+                  ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+                fg: (x.nivel === atualPrg.nivel && x.ciclo === atualPrg.ciclo)
+                  ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+                onClick: () => {
+                  CRM.salvarProgramaDeEstudo(sel.id, x.nivel, x.ciclo);
+                  this.setState({ partTrocando: false });
+                  this.bump();
+                }
+              }))
+            };
+          })(),
           partSeqTitulo: Tr("her sequence · syllabus ", "sequência da aluna · syllabus ") + (seq.nivel || "—"),
           partSessoes: seq.sessoes.map(x => ({
             n: String(x.n),

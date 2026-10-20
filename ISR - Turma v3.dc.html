@@ -180,43 +180,55 @@
       <div style="display: flex; flex-direction: column; gap: 16px;">
 
         <!-- ALUNAS -->
+        <!-- ALUNAS -->
+        <!-- Uma linha por aluna, o nome abre o perfil, e à direita o
+             que precisa de atenção: duas faltas seguidas, tarefa
+             atrasada. Antes a linha carregava o selo de pagamento ao
+             lado do nome — dinheiro na tela de quem dá aula —, e o
+             botão de remover ficava à mão de quem não remove. -->
         <sc-if value="{{ tAlunas }}">
-          <div class="isr-cartao" style="overflow: hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--color-bg-default);">
-              <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Alunas · {{ ocupLabel }}</span>
-              <a href="{{ chamadaHref }}" style="text-decoration: none; font-size: 11px; font-weight: 600; color: var(--color-primary-500);">Fazer chamada →</a>
+          <section class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
+              <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Alunas · {{ ocupLabel }}</div>
+              <a href="{{ chamadaHref }}" style="text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Fazer chamada →</a>
             </div>
             <sc-if value="{{ semAlunas }}">
-              <div style="text-align: center; padding: 26px 20px; color: var(--color-tertiary-500); font-size: 13px;">Nenhuma aluna matriculada ainda.</div>
+              <div style="font-size: 14px; color: var(--color-primary-800);">Nenhuma aluna nesta turma ainda.</div>
             </sc-if>
-            <sc-for list="{{ alunas }}" as="al" hint-placeholder-count="5">
-              <div style="display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-top: 1px solid var(--color-button-secondary);">
-                <a href="{{ al.perfilHref }}" style="flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--color-text-light); text-decoration: underline; text-underline-offset: 2px;">{{ al.nome }}</a>
-                <sc-if value="{{ al.faltasInfo }}">
-                  <span style="flex: none; font-size: 10px; color: var(--color-tertiary-300);">{{ al.faltasInfo }}</span>
-                </sc-if>
-                <span class="isr-selo" style="flex: none; background: {{ al.pagBg }}; color: {{ al.pagFg }}; font-size: 9px; font-weight: 500; text-transform: uppercase; padding: 2px 8px">{{ al.pagLabel }}</span>
-                <button class="isr-botao isr-botao--texto" onclick="{{ al.onTirar }}" title="Remove da turma. A matrícula e o contrato permanecem." style="flex: none; color: var(--color-tertiary-200); font-size: 11px; padding: 4px 6px">remover</button>
-              </div>
-            </sc-for>
-
-            <div style="border-top: 1px solid var(--color-button-secondary); padding: 12px 16px;">
-              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 6px;">Adicionar aluna à turma</div>
-              <input class="isr-campo" ref="{{ buscaRef }}" oninput="{{ onBuscar }}" placeholder="{{ buscaPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" />
-              <sc-if value="{{ semVaga }}">
-                <p style="margin: 8px 0 0; font-size: 11px; color: var(--color-error); line-height: 1.5;">A turma está lotada. Aumente a capacidade em "Editar turma" antes de incluir.</p>
-              </sc-if>
-              <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
-                <sc-for list="{{ candidatas }}" as="ca" hint-placeholder-count="6">
-                  <button class="isr-botao isr-botao--pilula" onclick="{{ ca.onPor }}" title="{{ ca.title }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 11.5px; padding: 7px 12px">{{ ca.label }}</button>
-                </sc-for>
-              </div>
-              <sc-if value="{{ semCandidatas }}">
-                <p style="margin: 8px 0 0; font-size: 11px; color: var(--color-tertiary-300); line-height: 1.5;">{{ semCandidatasTexto }}</p>
-              </sc-if>
+            <div style="display: flex; flex-direction: column;">
+              <sc-for list="{{ alunas }}" as="al" hint-placeholder-count="5">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--color-button-secondary);">
+                  <a href="{{ al.perfilHref }}" class="lk" style="flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: {{ al.nomeCor }}; text-decoration: {{ al.nomeDeco }};">{{ al.nome }}</a>
+                  <sc-if value="{{ al.temAlerta }}">
+                    <span style="flex: none; font-size: 12.5px; font-weight: 700; color: var(--color-error-dark);">{{ al.alerta }}</span>
+                  </sc-if>
+                  <sc-if value="{{ al.podeTirar }}">
+                    <button class="isr-botao isr-botao--texto" onclick="{{ al.onTirar }}" title="Remove da turma. A matrícula e o contrato permanecem." style="flex: none; color: var(--color-tertiary-200); font-size: 11px; padding: 4px 6px">remover</button>
+                  </sc-if>
+                </div>
+              </sc-for>
             </div>
-          </div>
 
+            <!-- Pôr aluna na turma é matrícula, e matrícula é da
+                 coordenação: a professora lê a lista dela. -->
+            <sc-if value="{{ podeMexerAlunas }}">
+              <div style="border-top: 1px solid var(--color-button-secondary); padding-top: 12px; margin-top: 2px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">Adicionar aluna à turma</div>
+                <input class="isr-campo" ref="{{ buscaRef }}" oninput="{{ onBuscar }}" placeholder="{{ buscaPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13px" />
+                <sc-if value="{{ semVaga }}">
+                  <p style="margin: 8px 0 0; font-size: 12px; color: var(--color-error-dark); line-height: 1.5;">A turma está lotada. Aumente a capacidade em "Editar turma" antes de incluir.</p>
+                </sc-if>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+                  <sc-for list="{{ candidatas }}" as="ca" hint-placeholder-count="6">
+                    <button class="isr-botao isr-botao--pilula" onclick="{{ ca.onPor }}" title="{{ ca.title }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 12px; padding: 8px 13px">{{ ca.label }}</button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ semCandidatas }}">
+                  <p style="margin: 8px 0 0; font-size: 12px; color: var(--color-tertiary-500); line-height: 1.5;">{{ semCandidatasTexto }}</p>
+                </sc-if>
+              </div>
+            </sc-if>
+          </section>
         </sc-if>
 
         <!-- PLANO DAS AULAS -->
@@ -512,65 +524,69 @@
           </sc-if>
         </sc-if>
 
+        <!-- MATERIAIS -->
+        <!-- Dois cartões, como no 10: os links da turma e o apoio
+             pedagógico. O cartão escuro do projeto saiu daqui — ele
+             repete a Visão geral —, e a tarefa de casa da semana foi
+             para o plano da sessão, que é onde o homework mora. -->
         <sc-if value="{{ tMateriais }}">
-          <div style="background: var(--color-primary-900); border-radius: 18px; padding: 14px 16px;">
-            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 500; margin-bottom: 4px;">Projeto do ciclo {{ ciclo }}</div>
-            <div style="font-size: 16px; font-weight: 600; color: var(--color-secondary-500);">{{ projeto }}</div>
-            <div style="font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 4px;">Prof. {{ professora }} · {{ horario }}</div>
-          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 
-          <!-- MATERIAIS -->
-          <div class="isr-cartao" style="padding: 16px">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 10px;">Materiais da turma</div>
-            <sc-for list="{{ materiais }}" as="mt" hint-placeholder-count="6">
-              <sc-if value="{{ mt.temLink }}">
-                <a href="{{ mt.link }}" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 8px 0; border-bottom: 1px solid var(--color-bg-default);">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: {{ mt.cor }}; flex: none;"></span>
-                  <span style="flex: 1; font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ mt.label }}</span>
-                  <span style="font-size: 11px; color: var(--color-primary-500); font-weight: 600;">Abrir →</span>
-                </a>
-              </sc-if>
-              <sc-if value="{{ mt.semLink }}">
-                <div style="display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--color-bg-default);">
-                  <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-tertiary-50); flex: none;"></span>
-                  <span style="flex: 1; font-size: 12.5px; color: var(--color-tertiary-200);">{{ mt.label }}</span>
-                  <span style="font-size: 10px; color: var(--color-tertiary-200);">sem link — use "editar"</span>
-                </div>
-              </sc-if>
-            </sc-for>
-          </div>
-
-          <!-- TAREFA DE CASA -->
-          <div class="isr-cartao" style="padding: 16px">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 8px;">Tarefa de casa da semana</div>
-            <sc-if value="{{ temTarefaCasa }}">
-              <div style="background: var(--color-neutral-50); border: 1px solid var(--color-primary-100); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px;">
-                <div style="font-size: 12.5px; color: var(--color-primary-900); line-height: 1.55;">{{ tarefaCasaTexto }}</div>
-                <div style="font-size: 10px; color: var(--color-tertiary-500); margin-top: 4px;">passada em {{ tarefaCasaEm }}</div>
+            <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
+                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Materiais da turma</div>
+                <sc-if value="{{ podeEditarLinks }}">
+                  <button class="isr-botao isr-botao--texto" onclick="{{ onEditarLinks }}" style="font-size: 13px; font-weight: 700; color: var(--color-primary-500); padding: 2px 0">{{ editarLinksLabel }}</button>
+                </sc-if>
               </div>
-            </sc-if>
-            <div style="display: flex; gap: 6px;">
-              <input class="isr-campo" ref="{{ tcTextoRef }}" placeholder="Tarefa da semana (ex. Caderno p. 12-14 + áudio no grupo)" style="flex: 1; min-width: 0; font-size: 12px; padding: 9px 11px" />
-              <button class="isr-botao isr-botao--escuro" onclick="{{ onSalvarTarefaCasa }}" style="font-size: 12px; padding: 9px 14px; border-radius: 12px">Registrar</button>
-            </div>
-            <p style="margin: 8px 0 0; font-size: 10px; color: var(--color-tertiary-200);">Fica registrada na turma e aparece na área da aluna como tarefa da semana.</p>
-          </div>
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{ materiais }}" as="mt" hint-placeholder-count="6">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-button-secondary);">
+                    <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ mt.cor }};"></span>
+                    <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 700; color: {{ mt.labelCor }};">{{ mt.label }}</span>
+                    <sc-if value="{{ mt.temLink }}">
+                      <a href="{{ mt.link }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Abrir →</a>
+                    </sc-if>
+                    <sc-if value="{{ mt.semLink }}">
+                      <span style="flex: none; font-size: 12.5px; color: var(--color-tertiary-500);">sem link</span>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ linksEditando }}">
+                    <input class="isr-campo" value="{{ mt.valor }}" onchange="{{ mt.onMuda }}" placeholder="Colar link…" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 12.5px; margin: 2px 0 8px" />
+                  </sc-if>
+                </sc-for>
+              </div>
+              <sc-if value="{{ linksEditando }}">
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarLinks }}" style="align-self: flex-start; font-size: 13px; padding: 11px 18px">Salvar links</button>
+              </sc-if>
+            </section>
 
-          <!-- PEDIR À GABI -->
-          <div class="isr-cartao" style="padding: 16px">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 8px;">Apoio pedagógico</div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-              <select class="isr-campo" ref="{{ pgTipoRef }}" style="padding: 9px 11px; font-size: 12px">
-                <option value="Revisar aula">Revisar aula</option>
-                <option value="Planejar aula">Planejar aula</option>
-                <option value="Revisar material">Revisar material</option>
-              </select>
-              <input class="isr-campo" ref="{{ pgDetalheRef }}" placeholder="Qual aula ou material" style="flex: 1; min-width: 140px; font-size: 12px; padding: 9px 11px" />
-              <button class="isr-botao isr-botao--escuro" onclick="{{ onPedirGabi }}" style="font-size: 12px; padding: 9px 14px; border-radius: 12px">Solicitar</button>
-            </div>
-            <sc-if value="{{ pedidoEnviado }}">
-              <p style="margin: 8px 0 0; font-size: 11px; color: var(--color-primary-500); font-weight: 600;">Solicitação enviada.</p>
-            </sc-if>
+            <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+              <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Apoio pedagógico</div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <select class="isr-campo" ref="{{ pgTipoRef }}" style="padding: 11px 13px; font-size: 13px">
+                  <option value="Revisar aula">Revisar aula</option>
+                  <option value="Planejar aula">Planejar aula</option>
+                  <option value="Revisar material">Revisar material</option>
+                </select>
+                <input class="isr-campo" ref="{{ pgDetalheRef }}" placeholder="Qual aula ou material" style="flex: 1; min-width: 150px; font-size: 13px; padding: 11px 13px" />
+                <button class="isr-botao isr-botao--pilula" onclick="{{ onPedirGabi }}" style="background: var(--color-primary-500); color: var(--color-neutral-0); font-size: 13px; font-weight: 700; padding: 11px 18px">Solicitar</button>
+              </div>
+              <sc-if value="{{ semPedidos }}">
+                <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.55;">Nenhum pedido de apoio nesta turma.</div>
+              </sc-if>
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{ pedidosApoio }}" as="pa" hint-placeholder-count="3">
+                  <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 9px 0; border-bottom: 1px solid var(--color-button-secondary);">
+                    <span style="flex: 1; min-width: 150px; font-size: 13.5px; color: var(--color-primary-900);">{{ pa.texto }}</span>
+                    <span class="isr-selo" style="flex: none; padding: 5px 12px; font-size: 11.5px; font-weight: 700; background: {{ pa.bg }}; color: {{ pa.fg }}">{{ pa.estado }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ pedidoEnviado }}">
+                <p style="margin: 0; font-size: 12.5px; font-weight: 700; color: var(--color-success-dark);">Solicitação enviada.</p>
+              </sc-if>
+            </section>
           </div>
         </sc-if>
 
@@ -612,7 +628,7 @@ class Component extends DCLogic {
   state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "",
     // o erro de atribuir substituta fica preso ao pedido: sem o id,
     // o aviso de um pedido aparecia embaixo de outro
-    subErro: null,
+    subErro: null, linksEditando: false, linksRascunho: {},
     // a etapa escolhida no formulário de acrescentar atividade
     planoFase: "warmup" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
@@ -701,7 +717,9 @@ class Component extends DCLogic {
       pePerguntaRef: this.pePerguntaRef, pePalavrasRef: this.pePalavrasRef, peHwRef: this.peHwRef };
     if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [],
       abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
-      tProjeto: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
+      tProjeto: false, podeMexerAlunas: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
+      podeEditarLinks: false, linksEditando: false, editarLinksLabel: "", onEditarLinks: () => {},
+      onSalvarLinks: () => {}, semPedidos: true, pedidosApoio: [],
       podeEditarTurma: false, projTem: false, projTitulo: "", projValor: "", projPct: "0%",
       projFaltam: "", projLinhas: [], projVazio: true, projSemProjeto: true, projVazioTexto: "",
       renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
@@ -735,6 +753,13 @@ class Component extends DCLogic {
     if (!u) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [] }, refs);
     const raw = CRM.turmasLista().filter(t => t.id === u.id)[0] || {};
 
+    // quem é só professora não mexe na matrícula: é preciso saber
+    // disso antes de montar a lista
+    const soProf = !(() => {
+      const vis2 = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
+      const pp2 = (vis2.papeis || []).concat(vis2.perfil ? [vis2.perfil] : []);
+      return pp2.indexOf("gestora") >= 0 || pp2.indexOf("operacao") >= 0 || pp2.indexOf("comercial") >= 0;
+    })();
     const alunas = CRM.alunasDaTurma(u.label).map(p => {
       const tirar = () => {
         if (!window.confirm("Remover " + p.nome + " desta turma? A matrícula e o contrato permanecem."))
@@ -742,19 +767,25 @@ class Component extends DCLogic {
         CRM.setTurmaDaPessoa(p.id, "", "");
         this.bump();
       };
-      const faltas = CRM.faltasDe(p.id);
-      const st = CRM.cobrancaStatus ? null : null;
-      const c = CRM.contratoVigente(p);
-      const key = CRM.mesAtualKey();
-      const mes = c && (c.meses || []).filter(m => m.key === key)[0];
-      const emDia = !mes || mes.pago;
+      // O alerta é pedagógico: duas faltas seguidas e tarefa que a
+      // professora cobrou e não recebeu. O selo de pagamento saiu da
+      // linha — é conta da escola, não da aula, e a professora não
+      // precisa ver a situação financeira de quem está na frente
+      // dela para dar aula.
+      const seg = CRM.faltasSeguidas ? CRM.faltasSeguidas(p.id, u.label) : { seguidas: 0 };
+      const atrasada = (CRM.chamadasDaTurma(u.label) || []).slice(0, 3)
+        .some(ch => ch.tarefas && (p.id in ch.tarefas) && ch.tarefas[p.id] !== true);
+      const saiu = p.status !== "aluna";
+      const alerta = seg.seguidas >= 2
+        ? (seg.seguidas + " faltas seguidas")
+        : (atrasada ? "homework atrasado" : "");
       return {
         nome: p.nome, perfilHref: "ISR%20-%20Perfil%20v3.dc.html?id=" + p.id,
         onTirar: tirar,
-        faltasInfo: faltas > 0 ? faltas + (faltas === 1 ? " falta" : " faltas") : "",
-        pagLabel: emDia ? "em dia" : "parcela aberta",
-        pagBg: emDia ? "rgba(90,158,75,0.14)" : "rgba(224,120,86,0.14)",
-        pagFg: emDia ? "var(--color-success)" : "var(--color-error)"
+        nomeCor: saiu ? "var(--color-tertiary-500)" : "var(--color-primary-500)",
+        nomeDeco: saiu ? "line-through" : "underline",
+        temAlerta: !!alerta, alerta: alerta,
+        podeTirar: !soProf
       };
     });
 
@@ -784,9 +815,26 @@ class Component extends DCLogic {
       if (k === "notebook") return /^https?:/.test(v) ? v : "";
       return v;
     };
+    // A bolinha diz se o material TEM link: verde quando tem, cinza
+    // quando falta. Antes cada material tinha uma cor própria, e a
+    // bolinha virava decoração — não dava para varrer a lista e ver o
+    // que falta pôr.
+    const editandoLinks = !!this.state.linksEditando;
     const materiais = MATERIAIS.map(m => {
       const link = linkDe(m.key);
-      return { label: m.label + (m.key === "notebook" && raw.notebook && !link ? " · " + raw.notebook : ""), cor: m.cor, link, temLink: !!link, semLink: !link };
+      const rasc = this.state.linksRascunho || {};
+      return {
+        label: m.label + (m.key === "notebook" && raw.notebook && !link ? " · " + raw.notebook : ""),
+        cor: link ? "var(--color-secondary-500)" : "var(--color-tertiary-50)",
+        labelCor: link ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
+        link, temLink: !!link, semLink: !link,
+        valor: rasc[m.key] === undefined ? link : rasc[m.key],
+        onMuda: (e) => {
+          const r = Object.assign({}, this.state.linksRascunho || {});
+          r[m.key] = e.target.value;
+          this.setState({ linksRascunho: r });
+        }
+      };
     });
 
     // ── o plano das aulas ──
@@ -841,7 +889,7 @@ class Component extends DCLogic {
     const ABAS = ordem.map(id => [id, TODAS_ABAS[id]]);
     // Quem é só professora: o recorte dela muda o caminho de volta e
     // tira os botões de coordenação da página.
-    const soProf = !tem("gestora") && !tem("operacao") && !tem("comercial");
+    // (a mesma conta de soProf acima, com os papéis já resolvidos)
     // a aba pedida na URL só vale se o papel a tiver
     const pedida = this.subParam();
     const aba = this.state.aba
@@ -884,6 +932,7 @@ class Component extends DCLogic {
       podeEditarTurma: !soProf,
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
       tProjeto: aba === "projeto",
+      podeMexerAlunas: !soProf,
       // ── o projeto do ciclo e quem entregou ──
       ...(() => {
         const e = CRM.entregasDoProjeto ? CRM.entregasDoProjeto(u.label)
@@ -1311,6 +1360,37 @@ class Component extends DCLogic {
         ? ("ISR%20-%20Aluna%20v4.dc.html?id=" + encodeURIComponent(alunas[0].id))
         : "",
       planoTemAluna: alunas.length > 0,
+      // ── os links, editados aqui mesmo ──
+      podeEditarLinks: !soProf,
+      linksEditando: editandoLinks,
+      editarLinksLabel: editandoLinks ? "fechar" : "Editar links",
+      onEditarLinks: () => this.setState({ linksEditando: !editandoLinks, linksRascunho: {} }),
+      onSalvarLinks: () => {
+        const r = this.state.linksRascunho || {};
+        const patch = {};
+        Object.keys(r).forEach(k => { patch[k] = String(r[k] || "").trim(); });
+        if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
+        this.setState({ linksEditando: false, linksRascunho: {} });
+        this.bump();
+      },
+      // ── os pedidos de apoio desta turma ──
+      ...(() => {
+        const todas = (CRM.tarefasLista ? CRM.tarefasLista() : [])
+          .filter(t => t && !t.apagado && /apoio pedagógico/i.test(t.titulo || ""))
+          .filter(t => (t.sobre || "").indexOf(u.label) >= 0);
+        const EST = {
+          aberta: ["enviado", "var(--color-warning-light)", "var(--color-warning-dark)"],
+          andamento: ["em andamento", "var(--color-primary-50)", "var(--color-primary-800)"],
+          feita: ["pronto", "var(--color-secondary-100)", "var(--color-success-dark)"]
+        };
+        return {
+          semPedidos: todas.length === 0,
+          pedidosApoio: todas.slice(0, 6).map(t => {
+            const e = EST[t.feita ? "feita" : (t.estado === "andamento" ? "andamento" : "aberta")];
+            return { texto: t.sobre || t.titulo, estado: e[0], bg: e[1], fg: e[2] };
+          })
+        };
+      })(),
       pedidoEnviado: this.state.pedidoEnviado,
       onPedirGabi: () => {
         const tipo = this.val(this.pgTipoRef) || "Revisar aula";
