@@ -10528,6 +10528,26 @@
     });
   }
 
+  // ── A NOTA DA EQUIPE SOBRE A ALUNA ────────────────────────────
+  //
+  // O que a professora entende da aluna e precisa lembrar na próxima
+  // aula: o que funciona, o que trava, o que tentar. Fica na ficha e
+  // só a equipe vê — não aparece em lugar nenhum do app da aluna.
+  //
+  // É diferente da nota da AULA, que a aluna escreve no caderno dela,
+  // e do histórico, que é a linha do tempo de fatos.
+  function salvarNotaDaEquipe(pessoaId, texto) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    var t = String(texto || "").trim().slice(0, 2000);
+    mutate(pessoaId, function (p) { p.notaEquipe = t; });
+    agendarSync();
+    return { ok: true, nota: t };
+  }
+  function notaDaEquipe(pessoaId) {
+    var p = getPessoa(pessoaId);
+    return (p && p.notaEquipe) || "";
+  }
+
   // A aula que está aberta para esta aluna agora: a turma dela, hoje.
   // Só hoje — o caderno de ontem é registro, não aula em curso.
   function aulaVivaDaAluna(pessoaId) {
@@ -10927,8 +10947,18 @@
     var t = turmasLista().filter(function (x) {
       return (x.nivel + " · " + x.turma) === p.turma;
     })[0];
-    return { nivel: p.nivel || (t ? t.nivel : ""),
-      ciclo: (t && t.cycle) || metasAtuais().cicloLabel || "" };
+    var nivel = p.nivel || (t ? t.nivel : "");
+    // A particular pura não tem turma de grupo, e o ciclo das metas é
+    // o da escola, não o do nível dela. O syllabus é por nível E por
+    // ciclo: sem casar os dois, a sequência vinha vazia e a tela dizia
+    // que o nível não tem syllabus quando ele tem.
+    var ciclo = (t && t.cycle) || "";
+    if (!ciclo && nivel) {
+      var doNivel = turmasLista().filter(function (x) { return x.nivel === nivel; })[0];
+      if (doNivel) ciclo = doNivel.cycle || "";
+    }
+    if (!ciclo) ciclo = metasAtuais().cicloLabel || "";
+    return { nivel: nivel, ciclo: ciclo };
   }
   function sequenciaDaAluna(pessoaId) {
     var p = getPessoa(pessoaId);
@@ -15546,6 +15576,7 @@
     sequenciaDaAluna: sequenciaDaAluna, pularSessaoDaAluna: pularSessaoDaAluna,
     moverSessaoDaAluna: moverSessaoDaAluna,
     salvarObjetivoDaAluna: salvarObjetivoDaAluna, objetivoDaAluna: objetivoDaAluna,
+    salvarNotaDaEquipe: salvarNotaDaEquipe, notaDaEquipe: notaDaEquipe,
     faltasSeguidas: faltasSeguidas, alunasComFaltasSeguidas: alunasComFaltasSeguidas,
     clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
     clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
