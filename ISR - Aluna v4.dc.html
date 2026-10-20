@@ -207,6 +207,96 @@
          registro das aulas dela, com o que foi dado, se ela estava, a
          tarefa, a gravação — e a nota que ela escreve. -->
     <sc-if value="{{ isNotebook }}">
+      <!-- ══ CADERNO · arquivo 02 ═══════════════════════════════
+           Uma sessão por vez, escolhida na faixa de cima. Era uma
+           lista de todas as aulas passadas, e com ela a aluna não
+           tinha como ver a aula de hoje antes de ela acontecer. -->
+
+      <!-- O BLOQUEIO: tarefa anterior em aberto, no topo de tudo -->
+      <sc-if value="{{ cadBloqueio }}">
+        <div onclick="{{ onCadBloqueio }}" style="background:var(--color-warning-light);border-radius:16px;padding:13px 16px;font-size:14px;font-weight:700;color:var(--color-warning-dark);cursor:pointer">{{ cadBloqueioTexto }} →</div>
+      </sc-if>
+
+      <!-- A FAIXA DE SESSÕES -->
+      <sc-if value="{{ cadTemSessoes }}">
+        <div style="display:flex;gap:9px;overflow-x:auto;padding-bottom:4px">
+          <sc-for list="{{ cadStrip }}" as="ss" hint-placeholder-count="6">
+            <div onclick="{{ ss.go }}" style="flex:none;min-width:92px;border-radius:16px;border:{{ ss.borda }};background:var(--color-neutral-0);padding:11px 13px;cursor:pointer">
+              <div style="font-size:15px;font-weight:800;letter-spacing:-0.02em;color:var(--color-primary-900)">{{ ss.n }}</div>
+              <div style="font-size:12px;color:var(--color-tertiary-700);margin-top:1px">{{ ss.quando }}</div>
+              <div style="margin-top:7px;display:inline-block;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;background:{{ ss.bg }};color:{{ ss.fg }}">{{ ss.estado }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- A SESSÃO ABERTA -->
+      <sc-if value="{{ cadSelAberta }}">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:800;background:{{ cadSelPillBg }};color:{{ cadSelPillFg }}">{{ cadSelPill }}</span>
+        </div>
+
+        <!-- 🎯 o objetivo, que é o que ela leva da aula -->
+        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12.5px;font-weight:700;color:var(--color-button-primary)">{{ cadSelTitulo }}</div>
+          <sc-if value="{{ cadTemObjetivo }}">
+            <div style="font-size:12px;font-weight:700;opacity:.75">{{ L.vaiSaber }}</div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;line-height:1.25">{{ cadObjetivo }}</div>
+          </sc-if>
+          <sc-if value="{{ cadSemObjetivo }}">
+            <div style="font-size:15px;line-height:1.6;opacity:.85">{{ L.semPlano }}</div>
+          </sc-if>
+        </section>
+
+        <!-- slides e gravação -->
+        <sc-if value="{{ cadTemMaterial }}">
+          <div style="display:flex;flex-wrap:wrap;gap:22px">
+            <sc-if value="{{ cadTemSlides }}">
+              <a href="{{ cadSlides }}" target="_blank" rel="noopener" style="flex:1 1 0;min-width:240px;text-decoration:none;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:block">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.slidesDaAula }}</div>
+                <div style="margin-top:4px;font-size:16px;font-weight:800;color:var(--color-primary-500)">{{ L.abrirSlides }}</div>
+              </a>
+            </sc-if>
+            <sc-if value="{{ cadTemGravacao }}">
+              <a href="{{ cadGravacao }}" target="_blank" rel="noopener" style="flex:1 1 0;min-width:240px;text-decoration:none;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:block">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.gravacaoDaAula }}</div>
+                <div style="margin-top:4px;font-size:16px;font-weight:800;color:var(--color-primary-500)">{{ L.verGravacao }} →</div>
+              </a>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- as palavras da aula -->
+        <sc-if value="{{ cadTemPalavras }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.palavrasDaAula }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ cadPalavras }}" as="pw" hint-placeholder-count="6">
+                <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ pw }}</span>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- 🔒 enquanto a professora não abre a aula -->
+        <sc-if value="{{ cadTrancado }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;font-size:15px;line-height:1.6;color:var(--color-primary-800)">🔒 {{ cadTrancadoTexto }}</section>
+        </sc-if>
+
+        <!-- a tarefa de casa -->
+        <sc-if value="{{ cadTemHomework }}">
+          <section style="background:var(--color-neutral-0);border-left:5px solid {{ cadHwBorda }};border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.homework }}</div>
+              <span style="font-size:12.5px;font-weight:700;color:var(--color-tertiary-700)">{{ cadHwEstado }}</span>
+            </div>
+            <div style="font-size:15.5px;line-height:1.6;color:var(--color-primary-900)">{{ cadHomework }}</div>
+          </section>
+        </sc-if>
+
+        <!-- o que ainda não tem onde morar -->
+        <div style="font-size:13px;line-height:1.6;color:var(--color-tertiary-700);max-width:640px">{{ cadFaltaNota }}</div>
+      </sc-if>
       <!-- A AULA AO VIVO -->
       <!-- Enquanto a professora mantém a aula aberta, as tarefas do
            plano publicado aceitam resposta aqui, e o que ela comenta
@@ -681,6 +771,15 @@ class Component extends DCLogic {
     // ── as palavras da casca, nos dois idiomas ──
     const L = {
       sair: T("Log out", "Sair"),
+      // ── caderno, arquivo 02 ──
+      vaiSaber: T("today you will…", "hoje você vai…"),
+      semPlano: T("Your teacher has not published this session yet. When she does, what you will learn and the activities appear here.",
+        "A professora ainda não publicou esta sessão. Quando publicar, o que você vai aprender e as atividades aparecem aqui."),
+      slidesDaAula: T("class slides", "slides da aula"),
+      abrirSlides: T("Open the slides →", "Abrir os slides →"),
+      gravacaoDaAula: T("class recording", "gravação da aula"),
+      palavrasDaAula: T("words from this class", "palavras desta aula"),
+      homework: T("homework", "tarefa de casa"),
       // ── caderno ──
       tarefaAtual: T("homework for next class", "tarefa para a próxima aula"),
       cadernoVazio: T("Your classes appear here once attendance is taken. Each one brings what was taught, your homework and the recording — and a place for your own notes.",
@@ -791,6 +890,14 @@ class Component extends DCLogic {
       milesFmt: "0", milesLinha: "", goMiles: () => {}, onSair: () => {},
       hasGrupo: false, grupoTabs: [],
       caderno: [], cadernoVazio: true, temTarefaAtual: false,
+      cadTemSessoes: false, cadStrip: [], cadSelAberta: false, cadSelTitulo: "",
+      cadSelPill: "", cadSelPillBg: "", cadSelPillFg: "",
+      cadTemObjetivo: false, cadObjetivo: "", cadTemSlides: false, cadSlides: "#",
+      cadTemGravacao: false, cadGravacao: "#", cadTemPalavras: false, cadPalavras: [],
+      cadTrancado: false, cadTrancadoTexto: "", cadTemHomework: false, cadHomework: "",
+      cadHwFeito: false, cadHwBorda: "", cadHwEstado: "",
+      cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {}, cadFaltaNota: "",
+      cadSemObjetivo: false, cadTemMaterial: false,
       temAulaViva: false, vivoEtiqueta: "", vivoTitulo: "", vivoTexto: "",
       vivoTarefas: [], vivoSemTarefas: false,
       tarefaAtualTexto: "", tarefaAtualQuando: "", notaRef: this.notaRef,
@@ -1123,6 +1230,23 @@ class Component extends DCLogic {
       ? cad.filter(c => !(c.turma === viva.turma && c.data === viva.data)) : cad;
     const turmaDela = (CRM.turmasLista ? CRM.turmasLista() : [])
       .filter(u => (u.nivel + " · " + u.turma) === p.turma)[0] || null;
+
+    // ── QUAL SESSÃO O CADERNO ESTÁ MOSTRANDO (arquivo 02) ──
+    // Fica aqui, e não dentro do bloco do caderno, porque o cartão da
+    // aula — que é montado antes — precisa saber se é a sessão aberta.
+    const cadSessoes = turmaRaw && CRM.planoSessoes ? (CRM.planoSessoes(turmaRaw.id) || []) : [];
+    // encaixarPorOrdem: a chamada nem sempre traz o número da sessão,
+    // e sem o encaixe a aluna via dez sessões "sem data" tendo tido
+    // quatro aulas. Aqui é só para MOSTRAR; o plano da professora não
+    // usa este encaixe, para não travar o trabalho dela num palpite.
+    const cadDatas = turmaRaw && CRM.datasDasSessoes
+      ? (CRM.datasDasSessoes(turmaRaw.id, { encaixarPorOrdem: true }) || {}) : {};
+    const cadVivaN = viva && viva.sessao ? parseInt(viva.sessao, 10) : 0;
+    const cadPadrao = cadVivaN
+      || ((cadSessoes.filter(x => !((cadDatas[x.n] || {}).dada))[0] || {}).n)
+      || (cadSessoes.length ? cadSessoes[cadSessoes.length - 1].n : 0);
+    const cadSelN = this.state.cadSel || cadPadrao;
+    const cadSelData = (cadDatas[cadSelN] || {}).data || "";
     const tcAtual = (turmaDela && turmaDela.tarefaCasa) || null;
     const rev = (CRM.revisaoDeHoje && CRM.revisaoDeHoje(p.id))
       || { devidas: [], total: 0, sabidas: 0, degraus: 6 };
@@ -1295,7 +1419,124 @@ class Component extends DCLogic {
       }),
       cadernoVazio: cadLista.length === 0 && !viva,
       notaRef: this.notaRef,
-      caderno: cadLista.map(c => {
+      // ══ CADERNO · arquivo 02 ═════════════════════════════════
+      //
+      // A tela deixa de ser uma lista de todas as aulas e passa a ser
+      // UMA sessão por vez, escolhida na faixa de cima. É o que o
+      // arquivo pede, e é como a aluna usa: ela está numa aula.
+      ...(() => {
+        // datasDasSessoes dá a data de cada sessão: a real, das aulas
+        // já dadas, e a projetada, para as que vêm. É a mesma fonte
+        // que o painel usa, então as duas telas contam a mesma coisa.
+        const sessoes = cadSessoes, datas = cadDatas;
+        const porData = {};
+        (cadLista || []).forEach(c => { if (c.data) porData[c.data] = c; });
+        const hojeIso = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
+        const vivaN = cadVivaN;
+
+        const linha = sessoes.map(s => {
+          const d = datas[s.n] || datas[String(s.n)] || null;
+          const data = d ? d.data : "";
+          const c = (data && porData[data]) || null;
+          return { n: s.n, titulo: s.titulo || "", data,
+            dada: !!(d && d.dada), aula: c,
+            viva: vivaN === s.n,
+            objetivo: s.objetivo || "" };
+        });
+        // qual abre: a aula ao vivo, senão a primeira que ainda não
+        // foi dada, senão a última dada
+        const selN = cadSelN;
+        const sel = linha.filter(x => x.n === selN)[0] || null;
+        const plano = sel ? CRM.planoPublicadoDaAula(p.turma, sel.n) : null;
+
+        // o homework da aula ANTERIOR, que a chamada registra por aluna
+        const anterior = linha.filter(x => x.dada && x.n < (sel ? sel.n : 0)).pop() || null;
+        const hwAnteriorFeito = !anterior || !anterior.aula
+          || !(anterior.aula.tarefaCobrada && !anterior.aula.tarefaEntregue);
+
+        const EST_SESS = {
+          viva: [T("live now", "ao vivo agora"), "var(--color-button-primary)", "var(--color-primary-900)"],
+          dada: [T("done", "dada"), "var(--color-secondary-100)", "var(--color-secondary-900)"],
+          avir: [T("to come", "a vir"), "var(--color-bg-cell)", "var(--color-tertiary-500)"]
+        };
+        const chaveEst = (x) => x.viva ? "viva" : (x.dada ? "dada" : "avir");
+
+        return {
+          cadTemSessoes: linha.length > 0,
+          cadStrip: linha.map(x => {
+            const e = EST_SESS[chaveEst(x)];
+            return {
+              n: "S" + x.n,
+              quando: x.data ? CRM.ddmm(x.data) : T("no date", "sem data"),
+              estado: e[0], bg: e[1], fg: e[2],
+              borda: x.n === selN ? "2px solid var(--color-primary-900)" : "1px solid var(--color-border)",
+              go: () => this.setState({ cadSel: x.n })
+            };
+          }),
+
+          cadSelAberta: !!sel,
+          cadSelTitulo: sel ? ("Session " + sel.n + (sel.titulo ? " · " + sel.titulo : "")) : "",
+          cadSelPill: !sel ? ""
+            : sel.viva ? T("live now", "ao vivo agora")
+            : sel.dada ? T("✓ class done · read only", "✓ aula dada · só leitura")
+            : (sel.data && sel.data >= hojeIso
+                ? (T("starts ", "começa ") + CRM.ddmm(sel.data)) : T("to come", "a vir")),
+          cadSelPillBg: !sel ? "" : sel.viva ? "var(--color-button-primary)"
+            : sel.dada ? "var(--color-secondary-100)" : "var(--color-bg-cell)",
+          cadSelPillFg: !sel ? "" : sel.viva ? "var(--color-primary-900)"
+            : sel.dada ? "var(--color-secondary-900)" : "var(--color-tertiary-500)",
+
+          // 🎯 o que você vai saber ao sair daqui
+          cadTemObjetivo: !!(plano && plano.objetivo),
+          cadObjetivo: (plano && plano.objetivo) || "",
+
+          cadTemSlides: !!(plano && plano.slides),
+          cadSlides: (plano && plano.slides) || "#",
+          cadTemGravacao: !!(sel && sel.aula && sel.aula.gravacao),
+          cadGravacao: (sel && sel.aula && sel.aula.gravacao) || "#",
+
+          cadTemPalavras: !!(plano && (plano.palavras || "").trim()),
+          cadPalavras: ((plano && plano.palavras) || "").split(",")
+            .map(w => w.trim()).filter(Boolean),
+
+          // 🔒 enquanto a professora não abre a aula, as tarefas não
+          // aceitam resposta. Não é enfeite: o que ela escreve antes
+          // não chegaria à professora.
+          cadTrancado: !!(sel && !sel.viva && !sel.dada),
+          cadTrancadoTexto: sel && sel.data
+            ? (T("Class activities open when your teacher starts the class, on ", "As atividades abrem quando a professora começar a aula, em ") + CRM.ddmm(sel.data) + ".")
+            : T("Class activities open when your teacher starts the class.", "As atividades abrem quando a professora começar a aula."),
+
+          cadTemHomework: !!(plano && (plano.homework || "").trim()),
+          cadHomework: (plano && plano.homework) || "",
+          cadHwFeito: !!(sel && sel.aula && sel.aula.tarefaEntregue),
+          cadHwBorda: (sel && sel.aula && sel.aula.tarefaEntregue)
+            ? "var(--color-secondary-500)"
+            : (sel && sel.dada ? "var(--color-warning)" : "var(--color-border)"),
+          cadHwEstado: !sel || !sel.dada ? T("after the class", "depois da aula")
+            : (sel.aula && sel.aula.tarefaEntregue
+                ? T("delivered", "entregue") : T("not delivered yet", "ainda não entregue")),
+
+          // a faixa amarela do arquivo: homework anterior em aberto
+          cadBloqueio: !hwAnteriorFeito,
+          cadBloqueioTexto: anterior
+            ? (T("Session ", "Sessão ") + anterior.n + T(" homework is still open.", " está com a tarefa em aberto."))
+            : "",
+          onCadBloqueio: () => this.setState({ cadSel: anterior ? anterior.n : selN }),
+
+          // O arquivo pede três coisas que ainda não têm onde morar no
+          // sistema. Ficam escritas na tela em vez de inventadas.
+          cadSemObjetivo: !(plano && plano.objetivo),
+          cadTemMaterial: !!((plano && plano.slides) || (sel && sel.aula && sel.aula.gravacao)),
+          cadFaltaNota: T(
+            "Recording audio, sending a photo and the sentence starters are in the design but have nowhere to be stored yet.",
+            "Gravar áudio, mandar foto e os sentence starters estão no desenho, mas ainda não têm onde ser guardados no sistema.")
+        };
+      })(),
+      // Só a aula da sessão aberta: a faixa de cima é a navegação
+      // agora, e repetir a lista inteira embaixo dela era mostrar a
+      // mesma coisa duas vezes.
+      caderno: cadLista.filter(c => !cadSelData || c.data === cadSelData).map(c => {
         const chave = c.turma + "|" + c.data;
         const aberta = this.state.aulaAberta === chave;
         const EST = {

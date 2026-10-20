@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-m",
+  numero: "2026.10.20-n",
   data: "20/10/2026",
-  nota: "O app da aluna abre sem ?id= e o celular alcança as oito telas"
+  nota: "O caderno da aluna passa a ser uma sessão por vez, pela faixa de cima"
 };

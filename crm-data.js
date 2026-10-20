@@ -10288,12 +10288,17 @@
   // próximas datas de aula desta turma saem do mesmo caminho que a
   // agenda usa, pulando feriado e semana sem aula; e o rótulo diz
   // "semana de", que é o que a conta garante.
-  function datasDasSessoes(turmaId) {
+  // encaixarPorOrdem: ver o comentário do encaixe, abaixo. Só quem
+  // MOSTRA a sessão pede o encaixe; quem decide se o plano está
+  // trancado, não — travar o trabalho da professora num palpite é
+  // pior do que não saber a data.
+  function datasDasSessoes(turmaId, opcoes) {
     var t = turmasLista().filter(function (x) { return x.id === turmaId; })[0];
     if (!t) return {};
     var label = t.nivel + " · " + t.turma;
     var out = {};
     var dadas = {};
+    var inferido = false;
     var m = chamadasAll();
     Object.keys(m).forEach(function (k) {
       var ch = m[k];
@@ -10301,8 +10306,32 @@
       var n = parseInt(ch.sessao, 10) || 0;
       if (n && (!dadas[n] || ch.data < dadas[n])) dadas[n] = ch.data;
     });
+    // Chamada sem o número da sessão.
+    //
+    // O campo existe na tela da chamada, mas não é obrigatório, e há
+    // turma inteira sem ele. Sem este encaixe, a aluna via dez sessões
+    // "a vir" e "sem data" mesmo tendo tido quatro aulas — e o caderno
+    // dela ficava inútil por causa de um campo que a professora não
+    // preencheu.
+    //
+    // O encaixe é por ordem: a k-ésima aula dada é a sessão k. É a
+    // mesma conta que o painel do professor já faz para dizer em que
+    // sessão a turma está, então as duas telas não divergem.
+    if (!Object.keys(dadas).length && opcoes && opcoes.encaixarPorOrdem) {
+      var semNumero = [];
+      Object.keys(m).forEach(function (k) {
+        var ch = m[k];
+        if (ch && ch.turma === label && ch.data) semNumero.push(ch.data);
+      });
+      semNumero.sort();
+      var nums = (syllabusDoNivel(t.nivel, t.cycle) || [])
+        .map(function (x) { return x.n; })
+        .sort(function (a2, b2) { return a2 - b2; });
+      semNumero.forEach(function (dt, i) { if (nums[i]) dadas[nums[i]] = dt; });
+      inferido = true;
+    }
     Object.keys(dadas).forEach(function (n) {
-      out[n] = { data: dadas[n], dada: true };
+      out[n] = { data: dadas[n], dada: true, inferida: inferido };
     });
     // as que faltam, na ordem, nos próximos dias de aula da turma
     var mm = (t.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
