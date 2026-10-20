@@ -6593,9 +6593,21 @@
     try { localStorage.setItem(EQUIPE_KEY, JSON.stringify((l || []).concat(lapides))); } catch (e) {}
     agendarSync();
   }
+  // O id era só o relógio, e duas pessoas cadastradas no mesmo
+  // milissegundo — a importação faz isso — ficavam com o MESMO id: a
+  // segunda sobrescrevia a primeira em qualquer edição. O sufixo
+  // aleatório separa as duas.
+  function novoIdEquipe() {
+    var l = equipeLista();
+    var id;
+    do {
+      id = "eq" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+    } while (l.some(function (m) { return m.id === id; }));
+    return id;
+  }
   function addEquipe(dados) {
     var l = equipeLista();
-    l.push({ id: "eq" + Date.now(), nome: (dados.nome || "").trim(), email: (dados.email || "").trim().toLowerCase(),
+    l.push({ id: novoIdEquipe(), nome: (dados.nome || "").trim(), email: (dados.email || "").trim().toLowerCase(),
       papeis: dados.papeis || [], valorTipo: dados.valorTipo || "", valor: parseFloat(dados.valor) || 0,
       moeda: dados.moeda || "R$",
       // quem entra agora não herda a pilha de aulas sem chamada de
@@ -6728,7 +6740,7 @@
     if (eq) {
       return { caso: "sem_funcao", nome: eq.nome || "", papeis: (eq.papeis || []).slice() };
     }
-    var pes = getPessoas().filter(function (x) { return mesmoEmail(x.email, e); })[0];
+    var pes = loadPessoas().filter(function (x) { return mesmoEmail(x.email, e); })[0];
     if (pes) return { caso: "e_aluna", nome: pes.nome || "", papeis: [] };
     return { caso: "fora", nome: "", papeis: [] };
   }
@@ -9518,6 +9530,54 @@
         return { ok: false, erro: "Não foi possível falar com o servidor: " + String(e && e.message || e) };
       });
   }
+  // ── O CONVITE DA EQUIPE ───────────────────────────────────────
+  //
+  // Até aqui, pôr uma professora no sistema era duas tarefas em dois
+  // lugares: cadastrar na tela Equipe e convidar à mão no painel do
+  // Netlify. Quem esquecia a segunda metade tinha uma pessoa cadastrada
+  // que não conseguia entrar — e a tela de entrada dizia só que o
+  // e-mail não estava no cadastro, o que mandava procurar no lugar
+  // errado.
+  //
+  // O convite é o MESMO do lado das alunas: a função do Netlify manda o
+  // e-mail do Identity. O que muda é quem pode receber — aqui, quem
+  // está na Equipe com uma função que abre o sistema. Convidar uma
+  // prestadora sem função criaria uma conta que a porta recusa.
+  function convidarEquipe(membroId) {
+    var m = equipeLista().filter(function (x) { return x.id === membroId; })[0];
+    if (!m) return Promise.resolve({ ok: false, erro: "Pessoa não encontrada na Equipe." });
+    var perfil = perfilDosPapeis(m.papeis || []);
+    if (!perfil) {
+      return Promise.resolve({ ok: false,
+        erro: "Nenhuma função de " + firstName(m.nome) + " abre o sistema. "
+          + "Marque professora, comercial, operação, aulas extras ou shadow antes de convidar." });
+    }
+    var email = String(m.email || "").trim().toLowerCase();
+    if (!email || email.indexOf("@") < 1) {
+      return Promise.resolve({ ok: false,
+        erro: "A ficha de " + firstName(m.nome) + " não tem e-mail. "
+          + "O convite vai para ele, então ele precisa estar no cadastro." });
+    }
+    return chamarFuncao("convidar-aluna", { body: { email: email } })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          return { ok: false, erro: (d && d.erro) || "O convite não saiu.", email: email };
+        }
+        updateEquipe(membroId, { convidadaEm: iso(today()), convidadaPara: email });
+        return { ok: true, email: email, jaTinhaConta: !!d.jaTinhaConta };
+      })
+      .catch(function (e) {
+        return { ok: false, erro: "Não foi possível falar com o servidor: " + String(e && e.message || e) };
+      });
+  }
+  function conviteDaEquipe(membroId) {
+    var m = equipeLista().filter(function (x) { return x.id === membroId; })[0] || {};
+    return { em: m.convidadaEm || "", para: m.convidadaPara || "",
+      email: String(m.email || "").trim(),
+      podeEntrar: !!perfilDosPapeis(m.papeis || []) };
+  }
+
   function conviteDaAluna(pessoaId) {
     var p = getPessoa(pessoaId) || {};
     return { em: p.convidadaEm || "", para: p.convidadaPara || "",
@@ -14658,6 +14718,7 @@
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
     motivoSemAcesso: motivoSemAcesso,
+    convidarEquipe: convidarEquipe, conviteDaEquipe: conviteDaEquipe,
     gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
     soProfessora: soProfessora,
     verComo: verComo, setVerComo: setVerComo,

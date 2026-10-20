@@ -171,6 +171,23 @@
                 <input class="isr-campo" ref="{{ mb.valorRef }}" type="number" placeholder="{{ mb.valorPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" />
               </div>
             </div>
+            <!-- O ACESSO AO SISTEMA -->
+            <!-- Cadastrar aqui não criava a conta: o convite tinha de
+                 ser mandado à mão no painel do Netlify, e quem pulava
+                 essa metade tinha uma pessoa cadastrada que não
+                 conseguia entrar. O convite é o mesmo das alunas — o
+                 e-mail do Identity —, e sai daqui. -->
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Acesso ao sistema</div>
+            <div style="background: var(--color-neutral-0); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;">
+              <p style="margin: 0 0 9px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ mb.conviteTexto }}</p>
+              <sc-if value="{{ mb.convitePode }}">
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ mb.onConvidar }}" style="font-size: 11.5px; padding: 8px 14px">{{ mb.conviteBotao }}</button>
+              </sc-if>
+              <sc-if value="{{ mb.conviteAviso }}">
+                <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: {{ mb.conviteAvisoCor }};">{{ mb.conviteAvisoTexto }}</p>
+              </sc-if>
+            </div>
+
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ mb.onSalvar }}" style="font-size: 12.5px; padding: 10px 20px">Salvar</button>
               <button class="isr-botao isr-botao--pilula" onclick="{{ mb.onCancelar }}" style="background: var(--color-neutral-0); color: var(--color-tertiary-500); font-size: 12.5px; padding: 10px 18px">Cancelar</button>
@@ -291,7 +308,10 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { novoAberto: false, papeisSel: {}, papeisAberto: false, tick: 0, editandoCap: false,
-    editId: null, edPapeis: {}, edPapeisAberto: false, edTurmas: {}, edErro: "" };
+    editId: null, edPapeis: {}, edPapeisAberto: false, edTurmas: {}, edErro: "",
+    // o resultado do último convite enviado, preso à pessoa: sem o id,
+    // o aviso de uma aparecia na ficha da outra
+    conviteRes: null };
   capRefs = {};
   edRefs = {};
   nvNomeRef = React.createRef(); nvEmailRef = React.createRef();
@@ -434,6 +454,46 @@ class Component extends DCLogic {
         papeisAberto: this.state.edPapeisAberto,
         papeisSeta: this.state.edPapeisAberto ? "\u25b2" : "\u25bc",
         onAbrirPapeis: () => this.setState({ edPapeisAberto: !this.state.edPapeisAberto }),
+
+        // ── o convite de acesso ──
+        // Quem está na Equipe com função que abre o sistema recebe o
+        // convite do Identity daqui. Prestadora sem função não recebe:
+        // criaria uma conta que a porta recusa.
+        ...(() => {
+          const cv = CRM.conviteDaEquipe ? CRM.conviteDaEquipe(m.id)
+            : { em: "", para: "", email: "", podeEntrar: false };
+          const res = this.state.conviteRes;
+          const temEmail = !!cv.email && cv.email.indexOf("@") > 0;
+          return {
+            convitePode: cv.podeEntrar && temEmail,
+            conviteBotao: cv.em ? "Reenviar o convite" : "Enviar o convite de acesso",
+            conviteTexto: !cv.podeEntrar
+              ? "Nenhuma função marcada abre o sistema, então não há para onde convidar. Marque professora, comercial, operação, aulas extras ou shadow."
+              : !temEmail
+                ? "Sem e-mail na ficha não há para onde mandar o convite."
+                : (cv.em
+                  ? "Convidada em " + CRM.ddmm(cv.em) + ", para " + (cv.para || cv.email)
+                    + ". Reenviar não atrapalha: quem já tem conta não recebe de novo."
+                  : "Ainda não foi convidada. O convite do Netlify Identity vai para "
+                    + cv.email + ", e é com ele que ela cria a senha."),
+            conviteAviso: !!(res && res.id === m.id),
+            conviteAvisoTexto: (res && res.id === m.id) ? res.texto : "",
+            conviteAvisoCor: (res && res.id === m.id && res.bom)
+              ? "var(--color-success-dark)" : "var(--color-error-dark)",
+            onConvidar: () => {
+              this.setState({ conviteRes: { id: m.id, bom: true, texto: "Enviando…" } });
+              CRM.convidarEquipe(m.id).then((r) => {
+                this.setState({ conviteRes: { id: m.id, bom: !!r.ok,
+                  texto: r.ok
+                    ? (r.jaTinhaConta
+                      ? "Ela já tinha conta — não precisa de convite de novo. Se não consegue entrar, é senha: peça para usar \u201cEsqueci minha senha\u201d."
+                      : "Convite enviado para " + r.email + ". Ele chega em minutos; se não aparecer, olhar o spam.")
+                    : r.erro } });
+                this.bump();
+              });
+            }
+          };
+        })(),
 
         ehProfessora: !!marcados.professora,
         turmasAviso: "Marque as turmas desta pessoa. Ao salvar, elas passam para o nome dela e entram na folha de pagamento.",
