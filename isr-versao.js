@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-k",
+  numero: "2026.10.20-l",
   data: "20/10/2026",
-  nota: "A página da turma em inglês, as datas do clube que se deixam escrever, e a escala do desenho"
+  nota: "As datas do clube no calendário, com a data escrita por extenso ao lado"
 };

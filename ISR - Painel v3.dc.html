@@ -595,9 +595,12 @@
                 <sc-for list="{{ clFencontros }}" as="en" hint-placeholder-count="4">
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
                     <span style="flex: none; width: 26px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ en.n }}</span>
-                    <input value="{{ en.data }}" onchange="{{ en.onData }}" placeholder="{{ en.dica }}" style="flex: 1 1 120px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
-                    <input value="{{ en.hora }}" onchange="{{ en.onHora }}" placeholder="19:00" style="flex: 0 1 90px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                    <input type="date" value="{{ en.data }}" onchange="{{ en.onData }}" style="flex: 1 1 150px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                    <input type="time" value="{{ en.hora }}" onchange="{{ en.onHora }}" style="flex: 0 1 110px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
                     <input value="{{ en.tema }}" onchange="{{ en.onTema }}" placeholder="{{ phTema }}" style="flex: 2 1 160px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                    <sc-if value="{{ en.temAntigo }}">
+                      <span style="flex: none; font-size: 12.5px; font-weight: 700; color: {{ en.antigoCor }};">{{ en.antigo }}</span>
+                    </sc-if>
                   </div>
                 </sc-for>
               </div>
@@ -2259,27 +2262,27 @@ class Component extends DCLogic {
 
     const clNome = (c) => c.nome || Tr("Untitled club", "Clube sem nome");
 
-    // A data do encontro é digitada como dd/mm ou dd/mm/aaaa e guardada
-    // em ISO, que é o formato que o resto do app lê. Sem ano, vale o
-    // ano corrente; o que não der data volta vazio em vez de virar
-    // "NaN-NaN-NaN" dentro do clube.
+    // A data escrita ao lado do calendário.
     //
-    // ATENÇÃO: isto só roda ao SALVAR, nunca enquanto se digita.
-    // No runtime, onchange é o onChange do React, que dispara a cada
-    // tecla. Convertendo tecla a tecla, o "0" de "01/12" não é data,
-    // virava "" e o campo se apagava sozinho — era impossível escrever
-    // a data de um encontro. Por isso o formulário guarda o TEXTO como
-    // ela escreveu, em dataTexto, e só converte quando ela salva.
-    const clIsoDeData = (txt) => {
-      const m = String(txt || "").trim().match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+    // O campo de data mostra o formato do NAVEGADOR: em português sai
+    // 03/12/2026, em inglês sai 12/03/2026, e é a mesma data. Numa
+    // escola entre o Brasil e a Holanda isso se lê errado. A data por
+    // extenso não tem como ser lida errado — e o dia da semana ainda
+    // avisa na hora se a data saiu no dia errado, o que num clube que
+    // se encontra às quintas é o erro mais provável.
+    const DIA_SEM = { pt: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
+      en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] };
+    const MES_EXT = { pt: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
+      en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] };
+    const clDataPorExtenso = (iso) => {
+      const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (!m) return "";
-      const d = parseInt(m[1], 10), mes = parseInt(m[2], 10);
-      let ano = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
-      if (ano < 100) ano += 2000;
-      if (d < 1 || d > 31 || mes < 1 || mes > 12) return "";
-      const dd = (d < 10 ? "0" : "") + d, mm = (mes < 10 ? "0" : "") + mes;
-      return ano + "-" + mm + "-" + dd;
+      const d = new Date(+m[1], +m[2] - 1, +m[3]);
+      if (isNaN(d.getTime())) return "";
+      const L = this.idioma() === "en" ? "en" : "pt";
+      return DIA_SEM[L][d.getDay()] + " · " + (+m[3]) + " " + MES_EXT[L][+m[2] - 1];
     };
+
 
     // ── EM AULA · RESPOSTAS AO VIVO ──────────────────────────────
     //
@@ -2752,11 +2755,7 @@ class Component extends DCLogic {
           }[k] || k)).join(", ") + ".") : "",
       onClEditar: () => this.setState({
         clForm: Object.assign({}, clSel, {
-          encontros: [0, 1, 2, 3].map(i => {
-            const e = Object.assign({}, (clSel.encontros || [])[i] || {});
-            e.dataTexto = e.data ? CRM.ddmm(e.data) : (e.quando || "");
-            return e;
-          })
+          encontros: [0, 1, 2, 3].map(i => Object.assign({}, (clSel.encontros || [])[i] || {}))
         }), clErro: "", clAviso: "" }),
 
       // ── modo edição ──
@@ -2802,11 +2801,20 @@ class Component extends DCLogic {
           clCampo("encontros", l);
         };
         return { n: String(i + 1),
-          data: e0.dataTexto !== undefined ? e0.dataTexto : (e0.data ? CRM.ddmm(e0.data) : ""),
-          dica: Tr("dd/mm/yyyy", "dd/mm/aaaa"),
+          // O valor de um campo de data já é "aaaa-mm-dd", que é
+          // exatamente o formato gravado: nada a converter, e some a
+          // classe de defeito que apagava o campo enquanto se digitava.
+          data: e0.data || "",
           hora: e0.hora || "",
           tema: e0.tema || "",
-          onData: (ev) => mexe("dataTexto", ev.target.value),
+          // Clube criado na tela da coordenação guarda o quando em
+          // texto livre, que um calendário não sabe mostrar. Em vez de
+          // sumir com ele, fica escrito ao lado até ela marcar a data.
+          temAntigo: !!(e0.data || e0.quando),
+          antigo: e0.data ? clDataPorExtenso(e0.data)
+            : (e0.quando ? (Tr("was: ", "antes: ") + e0.quando) : ""),
+          antigoCor: e0.data ? "var(--color-primary-800)" : "var(--color-warning-dark)",
+          onData: (ev) => mexe("data", ev.target.value),
           onHora: (ev) => mexe("hora", ev.target.value),
           onTema: (ev) => mexe("tema", ev.target.value) };
       }),
@@ -2814,26 +2822,13 @@ class Component extends DCLogic {
       clErroTexto: this.state.clErro,
       onClSalvar: () => {
         if (!clF) return;
-        // Data que não dá para ler não vira "" calado: a professora
-        // escreveu alguma coisa ali, e precisa saber que não valeu.
-        const ruins = (clF.encontros || []).map((e, i) => {
-          const t = String(e.dataTexto || "").trim();
-          return (t && !clIsoDeData(t)) ? (i + 1) : 0;
-        }).filter(Boolean);
-        if (ruins.length) {
-          return this.setState({ clAviso: "", clErro: Tr(
-            "Meeting " + ruins.join(", ") + ": the date is not readable. Use dd/mm or dd/mm/yyyy.",
-            "Encontro " + ruins.join(", ") + ": não consegui ler a data. Escreva dd/mm ou dd/mm/aaaa.") });
-        }
         const r = CRM.clubeSalvar({
           id: clF.id, nome: clF.nome, professora: teacher,
           descricao: clF.descricao, nivel: clF.nivel, formato: clF.formato,
           local: clF.local, link: clF.link, dia: clF.dia, hora: clF.hora,
           vagas: clF.vagas, bio: clF.bio,
           encontros: (clF.encontros || []).map(e => {
-            const texto = String(e.dataTexto || "").trim();
-            const o = { data: texto ? clIsoDeData(texto) : (e.data || ""),
-              hora: e.hora || "", tema: e.tema || "" };
+            const o = { data: e.data || "", hora: e.hora || "", tema: e.tema || "" };
             // o "quando" em texto livre da tela antiga só se perde
             // quando a data de verdade entra no lugar dele
             if (!o.data && e.quando) o.quando = e.quando;
