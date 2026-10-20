@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.19-q",
-  data: "19/10/2026",
-  nota: "Em aula · as respostas ao vivo"
+  numero: "2026.10.20-e",
+  data: "20/10/2026",
+  nota: "A aba Hoje, pelo 01"
 };

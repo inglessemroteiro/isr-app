@@ -51,21 +51,35 @@
        entrava para lançar a chamada do dia rolava por tudo. No
        desenho são abas, e a primeira responde "o que eu tenho
        hoje?" antes de pedir qualquer coisa. -->
-  <div style="display: flex; gap: 6px; align-self: flex-start; max-width: 100%; overflow-x: auto; padding-bottom: 2px;">
-    <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="3">
-      <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="flex: none; padding: 9px 16px; font-size: 14px; font-weight: 600; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
-    </sc-for>
-  </div>
+  <sc-if value="{{ temAbas }}">
+    <div style="display: flex; gap: 6px; align-self: flex-start; max-width: 100%; overflow-x: auto; padding-bottom: 2px;">
+      <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="4">
+        <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="flex: none; padding: 9px 16px; font-size: 14px; font-weight: 700; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- A BARRA "EM AULA" -->
+  <!-- No lugar das abas, enquanto a aula corre: o caminho de volta, o
+       nome da aula, e as duas telas de dentro dela. As abas principais
+       somem porque trocar de aba no meio da aula não é o que a
+       professora está fazendo. -->
+  <sc-if value="{{ ptEmAula }}">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <button class="isr-botao isr-botao--pilula" onclick="{{ onSairDaAula }}" style="flex: none; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 9px 16px">← {{ L61 }}</button>
+      <span style="flex: 1; min-width: 120px; font-size: 13px; font-weight: 700; color: var(--color-tertiary-500);">{{ emAulaTitulo }}</span>
+      <div style="flex: none; display: flex; gap: 6px; flex-wrap: wrap;">
+        <sc-for list="{{ emAulaAbas }}" as="ea" hint-placeholder-count="2">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ ea.onClick }}" style="padding: 9px 16px; font-size: 13px; font-weight: 700; background: {{ ea.bg }}; color: {{ ea.fg }}">{{ ea.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
 
   <!-- EM AULA · RESPOSTAS AO VIVO -->
   <!-- O que a professora vê enquanto a aula corre: o que cada aluna
        está escrevendo no caderno, e um comentário que chega lá. -->
-  <sc-if value="{{ ptEmAula }}">
-    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <button class="isr-botao isr-botao--pilula" onclick="{{ onSairDaAula }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; padding: 9px 16px">← {{ L61 }}</button>
-      <span style="font-size: 13px; font-weight: 600; color: var(--color-tertiary-500);">{{ emAulaTitulo }}</span>
-    </div>
-
+  <sc-if value="{{ ptRespostas }}">
     <div style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
       <button class="isr-botao isr-botao--pilula" onclick="{{ onAbrirCaderno }}" style="background: var(--color-button-primary); color: var(--color-primary-900); font-size: 14px; padding: 13px 22px">{{ vivoBotao }}</button>
       <span style="flex: 1; min-width: 220px; font-size: 13.5px; line-height: 1.5;">{{ vivoTexto }}</span>
@@ -143,6 +157,62 @@
         </sc-if>
       </section>
     </sc-if>
+  </sc-if>
+
+  <!-- EM AULA · SLIDES -->
+  <!-- Os slides ficam no Google Slides. Aqui mora o link de cada aula:
+       a professora apresenta daqui e as alunas veem o mesmo deck no
+       caderno. Sem link, a prévia é o roteiro do syllabus — que é o
+       que a aula vai ter de qualquer jeito. -->
+  <sc-if value="{{ ptSlides }}">
+    <section style="background: var(--color-primary-50); border-radius: 20px; padding: 16px 20px; font-size: 13.5px; line-height: 1.6; color: var(--color-primary-900);">{{ L68 }}</section>
+
+    <sc-if value="{{ semSlides }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ L69 }}</section>
+    </sc-if>
+
+    <sc-for list="{{ slidesAulas }}" as="sl" hint-placeholder-count="2">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start;">
+          <div style="min-width: 0;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ sl.turma }}</div>
+            <div style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25;">{{ sl.titulo }}</div>
+            <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ sl.meta }}</div>
+          </div>
+          <div style="flex: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <sc-if value="{{ sl.temLink }}">
+              <a href="{{ sl.href }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-primary); color: var(--color-primary-900); border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 800;">▶ {{ L70 }}</a>
+              <a href="{{ sl.href }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); color: var(--color-primary-900); border-radius: 999px; padding: 12px 18px; font-size: 13px; font-weight: 700;">{{ L71 }}</a>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input class="isr-campo" value="{{ sl.valor }}" onchange="{{ sl.onMuda }}" placeholder="https://docs.google.com/presentation/d/…" style="flex: 1; min-width: 260px; padding: 12px 15px; font-size: 13.5px" />
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ sl.onSalvar }}" style="font-size: 13px; padding: 12px 20px">{{ sl.botao }}</button>
+        </div>
+        <sc-if value="{{ sl.temErro }}">
+          <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5;">{{ sl.erro }}</div>
+        </sc-if>
+        <sc-if value="{{ sl.semLink }}">
+          <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ L72 }}</div>
+        </sc-if>
+
+        <sc-if value="{{ sl.temPrevia }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+            <sc-for list="{{ sl.previa }}" as="mn" hint-placeholder-count="6">
+              <div style="background: var(--color-bg-default); border-radius: 14px; padding: 11px 13px; aspect-ratio: 16 / 9; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px;">
+                <span style="font-size: 10.5px; font-weight: 700; color: var(--color-tertiary-500);">{{ mn.rotulo }}</span>
+                <span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--color-primary-900);">{{ mn.titulo }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sl.semPrevia }}">
+          <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ L73 }}</div>
+        </sc-if>
+      </section>
+    </sc-for>
   </sc-if>
 
   <!-- A TURMA ABERTA: o caminho de volta e as abas de dentro -->
@@ -361,54 +431,176 @@
   </sc-if>
 
   <!-- RESUMO DO DIA -->
+  <!-- ══ HOJE ══ -->
+  <!-- A ordem é a do 01: o hero com UMA ação principal, a linha do
+       agora (a agenda e a fila), o mês, e as substituições. -->
   <sc-if value="{{ ptHoje }}">
-    <section style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 22px 24px;">
-      <div style="font-size: 12px; font-weight: 600; color: var(--color-button-primary);">{{ heroQuando }}</div>
-      <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.035em; margin-top: 3px;">{{ heroTitulo }}</div>
-      <div style="font-size: 13px; color: rgba(255,255,255,0.78); margin-top: 5px; line-height: 1.5;">{{ heroDetalhe }}</div>
-      <!-- As pílulas dizem o que falta nesta aula: plano publicado e
-           chamada feita. É o que a professora confere antes de entrar. -->
-      <sc-if value="{{ temHeroPills }}">
-        <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px;">
-          <sc-for list="{{ heroPills }}" as="hp" hint-placeholder-count="2">
-            <span class="isr-selo" style="padding: 5px 12px; font-size: 12px; background: {{ hp.bg }}; color: var(--color-primary-900)">{{ hp.label }}</span>
-          </sc-for>
-        </div>
-      </sc-if>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
-        <!-- "Começar aula" abre a tela de dentro da aula: é lá que o
-             caderno das alunas é aberto e que as respostas aparecem
-             enquanto elas escrevem. -->
-        <sc-if value="{{ podeComecarAula }}">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ onComecarAula }}" style="background: var(--color-button-primary); color: var(--color-primary-900); padding: 11px 16px; font-size: 13px">▶ {{ L60 }}</button>
+
+    <!-- 1 · O HERO -->
+    <!-- Um estado por vez, pela primeira regra verdadeira: aula hoje,
+         pilha de chamadas, próxima aula da semana, ou nada. O cartão
+         amarelo "Aulas sem chamada" deixou de existir: a contagem dele
+         virou o estado B, e aparecia duas vezes na mesma tela. -->
+    <section style="background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--color-button-primary);">{{ heroQuando }}</div>
+        <div style="font-size: 28px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; margin-top: 3px;">{{ heroTitulo }}</div>
+        <sc-if value="{{ temHeroPills }}">
+          <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px;">
+            <sc-for list="{{ heroPills }}" as="hp" hint-placeholder-count="2">
+              <span class="isr-selo" style="padding: 6px 12px; font-size: 12px; font-weight: 800; background: {{ hp.bg }}; color: var(--color-primary-900)">{{ hp.label }}</span>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-if value="{{ temHeroPrincipal }}">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onHeroPrincipal }}" style="background: var(--color-button-primary); color: var(--color-primary-900); padding: 13px 22px; font-size: 15px; font-weight: 800; box-shadow: 0 3px 0 #d9675a">{{ heroPrincipal }}</button>
         </sc-if>
         <sc-for list="{{ heroAcoes }}" as="ha" hint-placeholder-count="2">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ ha.onClick }}" style="padding: 11px 16px; font-size: 13px; background: {{ ha.bg }}; color: {{ ha.fg }}">{{ ha.label }}</button>
+          <button class="isr-botao isr-botao--pilula" onclick="{{ ha.onClick }}" style="padding: 12px 18px; font-size: 14px; font-weight: 800; background: rgba(255,255,255,0.12); color: var(--color-neutral-0)">{{ ha.label }}</button>
         </sc-for>
       </div>
     </section>
 
-    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-      <div style="font-size: 16px; font-weight: 600;">{{ entregasTitulo }}</div>
-      <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px;">
-        <sc-for list="{{ entregas }}" as="en" hint-placeholder-count="4">
-          <!-- O número que indica pendência é porta: clicar nele abre a
-               lista. Sem isso, com aula hoje E pilha atrasada, a lista
-               ficava inalcançável — o hero só mostra um estado. -->
-          <sc-if value="{{ en.temPorta }}">
-            <button class="isr-botao" onclick="{{ en.onClick }}" title="Ver as aulas sem chamada" style="flex: 1 1 120px; min-width: 0; text-align: left; background: transparent; padding: 0">
-              <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
-              <div style="font-size: 12.5px; color: var(--color-primary-800); text-decoration: underline;">{{ en.k }}</div>
+    <!-- 2 · O AGORA: a agenda de hoje e a fila -->
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+      <section style="flex: 1 1 320px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ agendaTitulo }}</div>
+        <sc-if value="{{ agendaVazia }}">
+          <div style="font-size: 14px; color: var(--color-primary-800);">{{ L74 }}</div>
+        </sc-if>
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{ agendaHoje }}" as="ag" hint-placeholder-count="3">
+            <button class="isr-botao" onclick="{{ ag.onClick }}" style="display: flex; align-items: center; gap: 12px; text-align: left; background: transparent; border-radius: 0; padding: 10px 0; border-bottom: 1px solid var(--color-button-secondary);">
+              <span style="flex: none; min-width: 48px; font-size: 14px; font-weight: 800; color: var(--color-primary-900);">{{ ag.hora }}</span>
+              <span style="flex: 1; min-width: 0; font-size: 14px; color: var(--color-primary-900);">{{ ag.texto }}</span>
+              <span class="isr-selo" style="flex: none; padding: 5px 11px; font-size: 11px; font-weight: 800; background: {{ ag.bg }}; color: {{ ag.fg }}">{{ ag.estado }}</span>
             </button>
-          </sc-if>
-          <sc-if value="{{ en.semPorta }}">
-            <div style="flex: 1 1 120px; min-width: 0;">
-              <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
-              <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ en.k }}</div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="flex: 1 1 320px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ filaTitulo }} · {{ filaCount }}</div>
+        <sc-if value="{{ filaVazia }}">
+          <div style="font-size: 14px; color: var(--color-primary-800);">{{ L7 }}</div>
+        </sc-if>
+        <sc-for list="{{ fila }}" as="fi" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <span style="flex: none; font-size: 15px;">{{ fi.icone }}</span>
+            <div style="flex: 1; min-width: 140px;">
+              <a href="{{ fi.href }}" class="lk" style="font-size: 14px; font-weight: 700; color: var(--color-primary-500);">{{ fi.nome }}</a>
+              <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.45; margin-top: 2px;">{{ fi.motivo }}</div>
             </div>
-          </sc-if>
+            <a href="{{ fi.href }}" style="flex: none; text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 999px; padding: 10px 16px; font-size: 12.5px; font-weight: 700;">{{ fi.acao }}</a>
+          </div>
         </sc-for>
+      </section>
+    </div>
+
+    <!-- 3 · SEU MÊS -->
+    <div style="font-size: 13px; font-weight: 700; color: var(--color-tertiary-500); margin-top: 8px;">{{ L75 }}</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+      <section style="flex: 1 1 320px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px;">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ entregasTitulo }}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px;">
+          <sc-for list="{{ entregas }}" as="en" hint-placeholder-count="4">
+            <sc-if value="{{ en.temPorta }}">
+              <button class="isr-botao" onclick="{{ en.onClick }}" title="Ver as aulas sem chamada" style="flex: 1 1 110px; min-width: 0; text-align: left; background: transparent; padding: 0">
+                <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); text-decoration: underline;">{{ en.k }}</div>
+              </button>
+            </sc-if>
+            <sc-if value="{{ en.semPorta }}">
+              <div style="flex: 1 1 110px; min-width: 0;">
+                <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.03em; color: {{ en.cor }};">{{ en.v }}</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ en.k }}</div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="flex: 1 1 320px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap;">
+          <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ projTitulo }}</div>
+          <div style="font-size: 16px; font-weight: 800;">{{ projValor }}</div>
+        </div>
+        <sc-if value="{{ projTem }}">
+          <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden;">
+            <div style="height: 100%; width: {{ projPct }}; background: var(--color-secondary-500);"></div>
+          </div>
+        </sc-if>
+        <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ projFaltam }}</div>
+      </section>
+
+      <section style="flex: 1 1 320px; min-width: 0; background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px;">{{ L76 }}</div>
+        <sc-if value="{{ semTurmasMes }}">
+          <div style="font-size: 14px; color: var(--color-primary-800);">{{ L6 }}</div>
+        </sc-if>
+        <sc-for list="{{ turmasDoMes }}" as="tm" hint-placeholder-count="3">
+          <button class="isr-botao" onclick="{{ tm.onClick }}" style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; text-align: left; background: transparent; border-radius: 0; padding: 9px 0; border-bottom: 1px solid var(--color-button-secondary);">
+            <span style="flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ tm.nome }}</span>
+            <span style="flex: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">{{ tm.vagas }} →</span>
+          </button>
+        </sc-for>
+      </section>
+    </div>
+
+    <!-- 4 · SUBSTITUIÇÕES -->
+    <div style="font-size: 13px; font-weight: 700; color: var(--color-tertiary-500); margin-top: 8px;">{{ L77 }}</div>
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ L78 }}</div>
+        <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onAbrirSub }}" style="font-size: 13px; padding: 11px 18px">{{ subBotao }}</button>
       </div>
+
+      <sc-if value="{{ subAberto }}">
+        <div style="background: var(--color-bg-default); border-radius: 18px; padding: 15px 17px; display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ L79 }}</div>
+            <sc-if value="{{ subSemAulas }}">
+              <div style="font-size: 13px; color: var(--color-primary-800);">{{ L80 }}</div>
+            </sc-if>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <sc-for list="{{ subAulas }}" as="sa" hint-placeholder-count="3">
+                <button class="isr-botao isr-botao--pilula" onclick="{{ sa.onClick }}" style="background: {{ sa.bg }}; color: {{ sa.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ sa.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ L81 }}</div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <sc-for list="{{ subMotivos }}" as="sm" hint-placeholder-count="5">
+                <button class="isr-botao isr-botao--pilula" onclick="{{ sm.onClick }}" style="background: {{ sm.bg }}; color: {{ sm.fg }}; font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ sm.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <input class="isr-campo" value="{{ subObs }}" onchange="{{ onSubObs }}" placeholder="{{ L82 }}" style="padding: 12px 15px; font-size: 13.5px" />
+          <sc-if value="{{ subUrgente }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.5;">{{ L83 }}</div>
+          </sc-if>
+          <sc-if value="{{ subErro }}">
+            <div style="font-size: 12.5px; font-weight: 700; color: var(--color-error-dark);">{{ subErroTexto }}</div>
+          </sc-if>
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onPedirSub }}" style="align-self: flex-start; font-size: 13px; padding: 12px 20px">{{ L84 }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ subNenhum }}">
+        <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">{{ L85 }}</div>
+      </sc-if>
+      <sc-for list="{{ subPedidos }}" as="sp" hint-placeholder-count="2">
+        <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-button-secondary);">
+          <div style="flex: 1; min-width: 180px;">
+            <div style="font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ sp.quando }}</div>
+            <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5; margin-top: 2px;">{{ sp.motivo }}</div>
+          </div>
+          <span class="isr-selo" style="flex: none; padding: 6px 13px; font-size: 12px; font-weight: 800; background: {{ sp.bg }}; color: {{ sp.fg }}">{{ sp.estado }}</span>
+        </div>
+      </sc-for>
     </section>
 
     <!-- AULAS SEM CHAMADA -->
@@ -466,23 +658,6 @@
         <p style="margin: 4px 0 0; font-size: 13px; color: var(--color-primary-800); line-height: 1.5;">Quem faltou precisa ser corrigido na chamada do dia, pelo Painel do professor. O lote ficou registrado no mural da equipe.</p>
       </section>
     </sc-if>
-
-
-    <!-- A fila da professora já existia na Central. Ela mora aqui
-         também porque é daqui que a professora não sai. -->
-    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-      <div style="font-size: 16px; font-weight: 600;">{{ filaTitulo }} · {{ filaCount }}</div>
-      <sc-if value="{{ filaVazia }}">
-        <p style="margin: 6px 0 0; font-size: 13px; color: var(--color-primary-800); line-height: 1.6;">{{ L7 }}</p>
-      </sc-if>
-      <sc-for list="{{ fila }}" as="fi" hint-placeholder-count="3">
-        <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-button-secondary);">
-          <a href="{{ fi.href }}" class="lk" style="font-size: 14px; font-weight: 600; color: var(--color-primary-500); min-width: 150px;">{{ fi.nome }}</a>
-          <span style="flex: 1; min-width: 180px; font-size: 13px; color: var(--color-primary-800);">{{ fi.motivo }}</span>
-          <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ fi.acao }}</span>
-        </div>
-      </sc-for>
-    </section>
   </sc-if>
 
   <!-- NOVA AULA EXTRA -->
@@ -513,29 +688,6 @@
   </sc-if>
 
   <!-- PRÓXIMAS AULAS -->
-  <sc-if value="{{ ptHoje }}">
-  <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 22px;">
-    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-      <div style="font-size: 16px; font-weight: 600;">{{ L8 }}</div>
-      <a href="ISR%20-%20Agenda%20v3.dc.html" style="text-decoration: none; font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">{{ L16 }}</a>
-    </div>
-    <sc-if value="{{ aulasVazio }}">
-      <div style="padding: 20px 0 4px; font-size: 14px; color: var(--color-primary-800);">Nenhuma aula nos próximos 7 dias para esta professora.</div>
-    </sc-if>
-    <sc-for list="{{ aulas }}" as="a" hint-placeholder-count="5">
-      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
-        <span style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: {{ a.cor }};"></span>
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.titulo }}</div>
-          <div style="font-size: 12.5px; color: {{ a.diaCor }};">{{ a.quando }}</div>
-        </div>
-        <a href="{{ a.gcal }}" target="_blank" rel="noopener" title="Adicionar ao Google Agenda" style="flex: none; text-decoration: none; font-size: 12.5px; font-weight: 600; color: var(--color-primary-500); padding: 6px 4px;">{{ L51 }}</a>
-        <button class="isr-botao isr-botao--pilula" onclick="{{ a.onChamada }}" style="flex: none; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12px; padding: 9px 15px">{{ L42 }}</button>
-      </div>
-    </sc-for>
-  </section>
-  </sc-if>
-
   <!-- CHAMADA -->
   <sc-if value="{{ tChamadas }}">
   <!-- A SEMANA, O DIA E AS AULAS DO DIA -->
@@ -856,7 +1008,13 @@ class Component extends DCLogic {
             // Enquanto ela existe, o painel é a tela da aula e mais
             // nada: as abas somem e o resto do painel não aparece.
             emAula: null, vivoFiltro: "todas", vivoAluna: null,
-            vivoTarefa: 0, comentou: "", comentarioTexto: "" };
+            vivoTarefa: 0, comentou: "", comentarioTexto: "",
+            // qual tela de dentro da aula: respostas ou slides
+            emAulaTela: "respostas",
+            // o link dos slides sendo digitado, por aula, e o erro dele
+            slidesTexto: {}, slidesErro: {},
+            // o pedido de substituição sendo escrito
+            subAberto: false, subAula: "", subMotivo: "doenca", subObs: "", subErro: "" };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -933,6 +1091,27 @@ class Component extends DCLogic {
     L65: ["Voltar para todas", "Back to everyone"],
     L66: ["Enviar", "Send"],
     L67: ["Comentário enviado. Ele aparece no caderno dela.", "Comment sent. It shows in her notebook."],
+    L68: ["Os slides ficam no Google Slides. Cole o link de compartilhamento de cada aula: você apresenta daqui para a turma e as alunas veem o mesmo deck no caderno.",
+      "Slides live in Google Slides. Paste each lesson’s share link: you present from here and your students see the same deck in their notebook."],
+    L69: ["Nenhuma aula de hoje para pôr slides.", "No class today to add slides to."],
+    L70: ["Apresentar para a turma", "Present to the class"],
+    L71: ["Abrir no Google Slides ↗", "Open in Google Slides ↗"],
+    L72: ["Sem link ainda. A prévia abaixo é o roteiro do syllabus.", "No link yet. The preview below is the syllabus plan."],
+    L73: ["Sem plano publicado nesta aula, não há roteiro para mostrar na prévia.",
+      "No published plan for this class, so there is no outline to preview."],
+    L74: ["Nada na agenda hoje.", "Nothing on today’s agenda."],
+    L75: ["seu mês", "your month"],
+    L76: ["Turmas atribuídas", "Your classes"],
+    L77: ["substituições", "cover"],
+    L78: ["Substituições", "Cover requests"],
+    L79: ["aula", "class"],
+    L80: ["Nenhuma aula sua marcada nos próximos dias.", "No class of yours in the coming days."],
+    L81: ["motivo", "reason"],
+    L82: ["Observação para a coordenação (opcional)", "A note for the coordination (optional)"],
+    L83: ["Falta menos de 24h para esta aula. A coordenação é avisada na hora, mas pode não haver quem cubra.",
+      "This class is less than 24h away. The coordination is told right away, but there may be nobody free."],
+    L84: ["Pedir substituição", "Ask for cover"],
+    L85: ["Você não pediu nenhuma substituição.", "You have not asked for cover."],
     phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
   };
   idioma() {
@@ -1174,7 +1353,15 @@ class Component extends DCLogic {
       tCaderno: "", tCadernoHref: "#", temCaderno: false, tGravacoes: [], semGravacoes: true,
       clubes: [], semClubes: true,
       temCadernoDoDia: false, cadernoDoDiaHref: "#",
-      eyebrow: "painel do professor", heroQuando: "", heroTitulo: "", heroDetalhe: "",
+      eyebrow: "painel do professor", heroQuando: "", heroTitulo: "",
+      temHeroPrincipal: false, heroPrincipal: "", onHeroPrincipal: () => {},
+      agendaTitulo: "", agendaVazia: true, agendaHoje: [],
+      projTem: false, projTitulo: "", projValor: "—", projPct: "0%", projFaltam: "",
+      semTurmasMes: true, turmasDoMes: [],
+      subAberto: false, subBotao: "", onAbrirSub: () => {}, subSemAulas: true,
+      subAulas: [], subMotivos: [], subObs: "", onSubObs: () => {},
+      subUrgente: false, subErro: false, subErroTexto: "", onPedirSub: () => {},
+      subNenhum: true, subPedidos: [],
       heroAcoes: [], entregas: [], entregasTitulo: "", entregasNota: "",
       temHeroPills: false, heroPills: [], verSemChamada: false, onFecharSemChamada: () => {},
       fila: [], filaVazia: true, filaCount: "0",
@@ -1186,6 +1373,8 @@ class Component extends DCLogic {
       semanas: [], dias: [], aulasDoDia: [], semAulasNoDia: false, instrucaoLista: "",
       temCaixaFolha: false, caixaFolhaBg: "", caixaFolhaFg: "", caixaFolhaTitulo: "", caixaFolhaTexto: "",
       ptEmAula: false, emAulaTitulo: "", onSairDaAula: () => {}, onAbrirCaderno: () => {},
+      temAbas: true, ptRespostas: false, ptSlides: false, emAulaAbas: [],
+      slidesAulas: [], semSlides: false,
       vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [], vivoAlunas: [],
       vivoGrade: false, vivoDetalhe: false, vivoSemAlunas: false,
       alunaNome: "", alunaEstado: "", alunaPonto: "", alunaTarefas: [],
@@ -1661,6 +1850,8 @@ class Component extends DCLogic {
       : Tr("not started", "não começou");
     const vivoVals = (() => {
       if (!vivoOn) return { ptEmAula: false, emAulaTitulo: "",
+        ptRespostas: false, ptSlides: false, emAulaAbas: [],
+        slidesAulas: [], semSlides: false,
         onSairDaAula: () => {}, onAbrirCaderno: () => {},
         vivoBotao: "", vivoTexto: "", vivoTurmas: [], vivoFiltros: [],
         vivoAlunas: [], vivoGrade: false, vivoDetalhe: false,
@@ -1706,10 +1897,89 @@ class Component extends DCLogic {
           : Tr("Nothing written yet.", "Ainda sem nada escrito.");
       };
 
+      const tela = this.state.emAulaTela || "respostas";
+      // As duas telas de dentro da aula. A pílula só existe porque as
+      // duas existem: botão que não leva a lugar nenhum é pior do que
+      // botão ausente.
+      const EM_AULA_ABAS = [["respostas", Tr("Live answers", "Respostas ao vivo")],
+                            ["slides", "Slides"]];
+
+      // ── SLIDES ──
+      // Um cartão por aula de hoje desta professora. O link é da
+      // SESSÃO, e vem do plano da turma; a prévia, quando não há link,
+      // é o roteiro publicado.
+      const slidesAulas = deHoje.filter(a => a.label).map(a => {
+        const dt = a.data || hojeAgora;
+        const ch = CRM.getChamada ? CRM.getChamada(a.label, dt) : null;
+        const sessao = (ch && parseInt(ch.sessao, 10)) || 0;
+        const turmaU = turmasProfOcup.filter(u => u.label === a.label)[0] || null;
+        const plano = (turmaU && sessao && CRM.planoDaTurma)
+          ? CRM.planoDaTurma(turmaU.id, sessao) : null;
+        const pub = (turmaU && sessao && CRM.planoPublicadoDaAula)
+          ? CRM.planoPublicadoDaAula(a.label, sessao) : null;
+        const link = (plano && plano.slides) || "";
+        const chave = a.label + "|" + dt;
+        const digitado = this.state.slidesTexto[chave];
+        const erro = this.state.slidesErro[chave] || "";
+        const previa = (pub ? pub.atividades : []).map((at, i) => ({
+          rotulo: (i + 1) + (at.fase ? " · " + at.fase : ""),
+          titulo: at.titulo || ""
+        }));
+        return {
+          turma: a.label,
+          titulo: sessao
+            ? (Tr("Session ", "Sessão ") + sessao + (plano && plano.titulo ? " · " + plano.titulo : ""))
+            : Tr("Session not chosen in the attendance", "Sessão ainda não dita na chamada"),
+          meta: "Google Slides · " + (link ? Tr("link saved", "link salvo") : Tr("no link", "sem link")),
+          temLink: !!link, href: link || "#",
+          valor: digitado === undefined ? link : digitado,
+          onMuda: (e) => {
+            const t = Object.assign({}, this.state.slidesTexto);
+            t[chave] = e.target.value;
+            this.setState({ slidesTexto: t });
+          },
+          botao: link ? Tr("Change link", "Trocar link") : Tr("Save link", "Salvar link"),
+          onSalvar: () => {
+            const txt = String(digitado === undefined ? link : digitado).trim();
+            const erros = Object.assign({}, this.state.slidesErro);
+            if (!turmaU || !sessao) {
+              erros[chave] = Tr("Say which session this class was, in the attendance, before saving the slides.",
+                "Diga na chamada qual sessão é esta aula antes de salvar os slides.");
+              this.setState({ slidesErro: erros }); return;
+            }
+            // Só link do Google Slides: outro endereço abre qualquer
+            // coisa na frente da turma no meio da aula.
+            if (txt && txt.indexOf("https://docs.google.com/presentation/") !== 0) {
+              erros[chave] = Tr("That link is not Google Slides. Use Share → Copy link in Google Slides.",
+                "Esse link não é do Google Slides. Use Compartilhar → Copiar link no Google Slides.");
+              this.setState({ slidesErro: erros }); return;
+            }
+            const r = CRM.salvarPlano(turmaU.id, sessao, { slides: txt });
+            erros[chave] = (r && r.ok) ? "" : ((r && r.erro) || "O link não foi salvo.");
+            const t = Object.assign({}, this.state.slidesTexto);
+            delete t[chave];
+            this.setState({ slidesErro: erros, slidesTexto: t });
+            this.bump();
+          },
+          temErro: !!erro, erro: erro,
+          semLink: !link && !erro,
+          temPrevia: previa.length > 0, previa: previa,
+          semPrevia: previa.length === 0
+        };
+      });
+
       return {
         ptEmAula: true,
-        emAulaTitulo: label + " · " + CRM.ddmm(data),
-        onSairDaAula: () => this.setState({ emAula: null, vivoAluna: null, comentou: "" }),
+        ptRespostas: tela === "respostas",
+        ptSlides: tela === "slides",
+        slidesAulas: slidesAulas,
+        semSlides: slidesAulas.length === 0,
+        emAulaAbas: EM_AULA_ABAS.map(([id, lb]) => ({ label: lb,
+          bg: tela === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          fg: tela === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          onClick: () => this.setState({ emAulaTela: id }) })),
+        emAulaTitulo: Tr("in class · ", "em aula · ") + label + " · " + CRM.ddmm(data),
+        onSairDaAula: () => this.setState({ emAula: null, vivoAluna: null, comentou: "", emAulaTela: "respostas" }),
         onAbrirCaderno: () => {
           if (viva.estado === "ao_vivo") CRM.encerrarAula(label, data, quem);
           else if (viva.estado === "encerrada") CRM.reabrirAula(label, data, quem);
@@ -1796,6 +2066,7 @@ class Component extends DCLogic {
       ...vivoVals,
       // Durante a aula o resumo do dia, as turmas e os clubes saem da
       // tela: a aula é uma coisa só.
+      temAbas: !vivoOn,
       abas: vivoOn ? [] : ABAS.map(([id, label]) => ({ label,
         bg: aba === id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
@@ -1819,7 +2090,7 @@ class Component extends DCLogic {
           CRM.iniciarAula(lbl, dt, (realUser && realUser.nome) || "");
         }
         this.setState({ emAula: { label: lbl, data: dt }, vivoAluna: null,
-          vivoFiltro: "todas", vivoTarefa: 0, comentou: "" });
+          vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });
       },
       onVoltarTurmas: () => this.setState({ turmaAberta: false }),
       // O título é de quem trabalha. Quando a escola confere o painel
@@ -1879,7 +2150,9 @@ class Component extends DCLogic {
       clubes: clubesDelaLista,
       semClubes: clubesDelaLista.length === 0,
 
-      eyebrow: Tr("teaching", "pedagógico"),
+      // O 00 do desenho: o eyebrow diz em que tela a pessoa está, e
+      // "pedagógico" é o nome do bloco do menu, não o da tela.
+      eyebrow: Tr("teacher panel", "painel do professor"),
 
       // ── O HERO, EM QUATRO ESTADOS ────────────────────────────
       //
@@ -1887,73 +2160,106 @@ class Component extends DCLogic {
       // urgência: aula de hoje primeiro, depois a pilha de chamadas
       // atrasadas, depois a próxima aula da semana, depois o vazio.
       //
-      // O cartão amarelo "Aulas sem chamada" deixou de existir: a
-      // contagem aparecia em dois lugares e o professor via "17" duas
-      // vezes na mesma tela. Agora é o estado B deste hero, e a lista
-      // abre pelo botão.
+      // ── O HERO, UM ESTADO POR VEZ ──
+      //
+      // A primeira regra verdadeira ganha, na ordem do 01: aula hoje,
+      // pilha de chamadas, próxima aula da semana, nada. O cartão
+      // amarelo "Aulas sem chamada" deixou de existir: a contagem dele
+      // é o estado B, e aparecia duas vezes na mesma tela.
+      //
+      // Um botão principal por estado, e é ele que diz o que fazer
+      // agora. Antes havia três corais competindo.
       ...(() => {
         const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
         const B = !A && grupos.length > 0;
         const C = !A && !B && !!aulaDoDia;
         const maisAntiga = (grupos[0] && grupos[0].aulas && grupos[0].aulas[0]) || null;
-        const quando = aulaDoDia
-          ? (aulaDoDia.dia === "Hoje" ? "hoje" : aulaDoDia.dia.toLowerCase())
-            + (aulaDoDia.hora !== "—" ? " · " + aulaDoDia.hora : "")
-          : "";
+        const outraData = () => this.setState({ aba: "turmas", turmaAberta: true,
+          tTab: "chamadas", escolhendoData: true });
+        // a sessão e o tema da aula que o hero mostra
+        // Qual sessão é esta aula, e com que tema.
+        //
+        // A chamada diz, mas ela só existe depois da aula — e o hero
+        // pergunta antes. Então, quando ainda não há chamada, vale a
+        // mesma projeção que a faixa de sessões usa: qual sessão cai
+        // nesta data, andando pelos dias de aula da turma.
+        const sessaoDe = (a) => {
+          if (!a || !a.label) return "";
+          const tu = turmasProfOcup.filter(x => x.label === a.label)[0];
+          const dt = a.data || hojeAgora;
+          const ch = CRM.getChamada ? CRM.getChamada(a.label, dt) : null;
+          let n = (ch && parseInt(ch.sessao, 10)) || 0;
+          if (!n && tu && CRM.datasDasSessoes) {
+            const mapa = CRM.datasDasSessoes(tu.id);
+            Object.keys(mapa).forEach(k => { if (mapa[k] && mapa[k].data === dt) n = parseInt(k, 10); });
+          }
+          if (!n) return a.nivel || "";
+          const pl = (tu && CRM.planoDaTurma) ? CRM.planoDaTurma(tu.id, n) : null;
+          return "Session " + n + (pl && pl.titulo ? " · " + pl.titulo : "");
+        };
+        const irParaOPlano = () => {
+          const tu = aulaDoDia ? turmasProfOcup.filter(x => x.label === aulaDoDia.label)[0] : null;
+          if (tu) window.location.href = "ISR%20-%20Turma%20v3.dc.html?id=" + tu.id + "&sub=plano";
+          else this.setState({ aba: "turmas", turmaAberta: false });
+        };
+
+        if (A) {
+          return {
+            heroQuando: Tr("next class · today ", "próxima aula · hoje ")
+              + (aulaDoDia.hora !== "—" ? aulaDoDia.hora + " · " : "") + aulaDoDia.label,
+            heroTitulo: sessaoDe(aulaDoDia) || aulaDoDia.nivel,
+            temHeroPrincipal: true,
+            heroPrincipal: "▶ " + Tr("Start class", "Começar aula"),
+            onHeroPrincipal: () => {
+              const dt = aulaDoDia.data || hojeAgora;
+              const v = CRM.aulaViva ? CRM.aulaViva(aulaDoDia.label, dt) : null;
+              if (v && v.estado === "nao_comecou" && CRM.iniciarAula) {
+                CRM.iniciarAula(aulaDoDia.label, dt, (realUser && realUser.nome) || "");
+              }
+              this.setState({ emAula: { label: aulaDoDia.label, data: dt }, vivoAluna: null,
+                vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });
+            },
+            heroAcoes: [
+              { label: Tr("See the plan", "Ver plano"), onClick: irParaOPlano },
+              { label: Tr("Take attendance", "Fazer chamada"), onClick: aulaDoDia.onChamada }
+            ]
+          };
+        }
         if (B) {
           return {
             heroQuando: nAulas + Tr(nAulas === 1 ? " class without attendance" : " classes without attendance", nAulas === 1 ? " aula sem chamada" : " aulas sem chamada"),
             heroTitulo: maisAntiga
               ? Tr("Take the attendance of ", "Faça a chamada de ") + CRM.ddmm(maisAntiga.data) + " · " + maisAntiga.label
               : Tr("Catch up on the attendance you owe", "Faça as chamadas que ficaram para trás"),
-            heroDetalhe: Tr("A class without attendance happened and was never recorded: without it the student has neither presence nor absence in the cycle.",
-              "Aula sem chamada é aula que aconteceu e ficou sem registro: sem ela a aluna não tem presença nem falta no ciclo.")
+            temHeroPrincipal: true,
+            heroPrincipal: Tr("Take attendance", "Fazer chamada"),
+            onHeroPrincipal: outraData,
+            heroAcoes: [
+              { label: Tr("See all", "Ver todas"), onClick: () => this.setState({ verSemChamada: true }) }
+            ]
+          };
+        }
+        if (C) {
+          return {
+            heroQuando: Tr("next class · ", "próxima aula · ") + aulaDoDia.dia.toLowerCase()
+              + (aulaDoDia.hora !== "—" ? " " + aulaDoDia.hora : ""),
+            heroTitulo: sessaoDe(aulaDoDia) || aulaDoDia.nivel,
+            temHeroPrincipal: true,
+            heroPrincipal: Tr("See the plan", "Ver plano"),
+            onHeroPrincipal: irParaOPlano,
+            heroAcoes: [
+              { label: Tr("Attendance for another date", "Chamada de outra data"), onClick: outraData }
+            ]
           };
         }
         return {
-          heroQuando: A ? quando : (C ? Tr("next class · ", "próxima aula · ") + quando : Tr("no class scheduled", "sem aula marcada")),
-          heroTitulo: aulaDoDia ? aulaDoDia.nivel : Tr("No class in the next 7 days", "Nenhuma aula nos próximos 7 dias"),
-          heroDetalhe: aulaDoDia
-            ? [
-                aulaDoDia.projeto ? Tr("Cycle project: ", "Projeto do ciclo: ") + aulaDoDia.projeto : "",
-                aulaDoDia.quantas ? aulaDoDia.quantas + Tr(aulaDoDia.quantas === 1 ? " student" : " students", aulaDoDia.quantas === 1 ? " aluna" : " alunas") : "",
-                A ? (chamadaDeHoje === deHoje.length
-                      ? Tr("today’s attendance is saved", "as chamadas de hoje já estão salvas")
-                      : Tr("attendance is one click away", "a chamada abre em um clique"))
-                  : Tr("nothing today — this is your next class", "nada hoje — esta é a sua próxima aula")
-              ].filter(Boolean).join(" · ")
-            : Tr("When the school opens the next cycle, your classes come back here.", "Quando a escola abrir o próximo ciclo, as suas aulas voltam para cá.")
+          heroQuando: Tr("no class scheduled", "sem aula marcada"),
+          heroTitulo: Tr("No class in the next 7 days", "Nenhuma aula nos próximos 7 dias"),
+          temHeroPrincipal: false, heroPrincipal: "", onHeroPrincipal: () => {},
+          heroAcoes: [
+            { label: Tr("Attendance for another date", "Chamada de outra data"), onClick: outraData }
+          ]
         };
-      })(),
-      // "Começar aula" no v5 abre o caderno da turma para edição. Nós
-      // guardamos o NOME do documento, não um caderno ao vivo — então o
-      // botão leva ao caderno no Drive, que é o que a professora abre à
-      // mão hoje. Prometer caderno ao vivo seria pior que não ter botão.
-      ...(() => {
-        const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
-        const B = !A && grupos.length > 0;
-        const coral = { bg: "var(--color-button-primary)", fg: "var(--color-primary-900)" };
-        const claro = { bg: "rgba(255,255,255,0.12)", fg: "var(--color-neutral-0)" };
-        const outraData = () => this.setState({ aba: "turmas", turmaAberta: true,
-          tTab: "chamadas", escolhendoData: true });
-        if (B) {
-          return { heroAcoes: [
-            Object.assign({ label: Tr("Take attendance", "Fazer chamada"), onClick: outraData }, coral),
-            Object.assign({ label: Tr("See all", "Ver todas"),
-              onClick: () => this.setState({ verSemChamada: true }) }, claro)
-          ] };
-        }
-        if (!aulaDoDia) {
-          return { heroAcoes: [Object.assign({ label: Tr("Attendance for another date", "Chamada de outra data"), onClick: outraData }, coral)] };
-        }
-        return { heroAcoes: [
-          Object.assign({ label: A ? Tr("Take attendance", "Fazer a chamada") : Tr("See the plan", "Ver o plano"),
-            onClick: A ? aulaDoDia.onChamada
-              : () => this.setState({ aba: "turmas", turmaAberta: false }) }, coral),
-          Object.assign({ label: Tr("Attendance for another date", "Chamada de outra data"), onClick: outraData }, claro),
-          Object.assign({ label: Tr("Your classes", "As suas turmas"),
-            onClick: () => this.setState({ aba: "turmas", turmaAberta: false }) }, claro)
-        ] };
       })(),
       // o plano publicado e a chamada feita, da aula que o hero mostra
       ...(() => {
@@ -2066,9 +2372,148 @@ class Component extends DCLogic {
       fila: filaDela.slice(0, 8).map(it => ({
         nome: it.nome,
         motivo: it.motivo || "",
-        acao: it.acao || "",
+        // a ação era texto cinza ao lado do motivo, e não parecia
+        // clicável; no desenho ela é um botão escuro
+        acao: it.acao || Tr("Open", "Abrir"),
+        icone: it.icon || "◆",
         href: it.pessoaId ? "ISR%20-%20Perfil%20v3.dc.html?id=" + it.pessoaId : "#"
       })),
+
+      // ── A AGENDA DE HOJE ──
+      // O que ela tem pela frente HOJE, hora a hora, com o estado de
+      // cada item. O cartão de antes — "Próximas aulas · 7 dias" —
+      // misturava o dia com a semana, e para saber o que era de hoje
+      // era preciso ler sete linhas.
+      ...(() => {
+        const MES_C = ["jan", "fev", "mar", "abr", "mai", "jun",
+          "jul", "ago", "set", "out", "nov", "dez"];
+        const hd = new Date();
+        const DIAS_C = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+        const itens = aulas.filter(a => a.dia === "Hoje");
+        return {
+          agendaTitulo: Tr("Today · ", "Agenda de hoje · ") + DIAS_C[hd.getDay()]
+            + " " + hd.getDate() + " " + MES_C[hd.getMonth()],
+          agendaVazia: itens.length === 0,
+          agendaHoje: itens.map(a => {
+            // "diário pendente" é a aula que aconteceu e ainda não tem
+            // chamada salva. É o mesmo fato que alimenta a folha.
+            const feita = a.temChamada;
+            return {
+              hora: a.hora === "—" ? "—" : a.hora,
+              texto: a.titulo || a.label || a.nivel,
+              estado: feita ? Tr("attendance saved", "chamada salva")
+                : Tr("diary pending", "diário pendente"),
+              bg: feita ? "var(--color-secondary-100)" : "var(--color-warning-light)",
+              fg: feita ? "var(--color-success-dark)" : "var(--color-warning-dark)",
+              onClick: a.onChamada
+            };
+          })
+        };
+      })(),
+
+      // ── O PROJETO DO CICLO ──
+      // A entrega por aluna é cadastro novo. A barra soma as turmas
+      // dela: é o projeto do ciclo, e ela acompanha todas de uma vez.
+      ...(() => {
+        const porTurma = turmasProfOcup
+          .map(u => (CRM.entregasDoProjeto ? CRM.entregasDoProjeto(u.label) : null))
+          .filter(x => x && x.temProjeto);
+        const feitas = porTurma.reduce((t, x) => t + x.feitas, 0);
+        const total = porTurma.reduce((t, x) => t + x.total, 0);
+        const faltam = porTurma.reduce((l, x) => l.concat(x.faltam), []);
+        const nomes2 = porTurma.map(x => x.projeto)
+          .filter((v, i, l) => v && l.indexOf(v) === i);
+        return {
+          projTem: total > 0,
+          projTitulo: nomes2.length === 1
+            ? (Tr("Project ", "Projeto ") + nomes2[0] + Tr(" · deliveries", " · entregas"))
+            : Tr("Cycle project · deliveries", "Projeto do ciclo · entregas"),
+          projValor: total ? (feitas + "/" + total) : "—",
+          projPct: (total ? Math.round((feitas / total) * 100) : 0) + "%",
+          projFaltam: !total
+            ? Tr("No class of yours has a cycle project yet.", "Nenhuma turma sua tem projeto do ciclo ainda.")
+            : faltam.length
+              ? (Tr("Missing: ", "Faltam: ") + faltam.join(", "))
+              : Tr("Everyone delivered.", "Todas entregaram.")
+        };
+      })(),
+
+      // ── AS TURMAS DELA, COM AS VAGAS ──
+      semTurmasMes: turmasProfOcup.length === 0,
+      turmasDoMes: turmasProfOcup.map(u => ({
+        nome: u.nivel + " · " + u.turma,
+        vagas: u.ocupadas + "/" + u.capacidade + Tr(" students", " alunas"),
+        onClick: () => { window.location.href = "ISR%20-%20Turma%20v3.dc.html?id=" + u.id + "&sub=geral"; }
+      })),
+
+      // ── SUBSTITUIÇÕES ──
+      // A professora pede; quem atribui é a coordenação, na página da
+      // turma. O pedido é de uma AULA, então a aula se escolhe numa
+      // lista das próximas dela — digitar data à mão erra o dia.
+      ...(() => {
+        const aberto = !!this.state.subAberto;
+        const minhas = (CRM.substituicoesDaProfessora
+          ? CRM.substituicoesDaProfessora(teacher) : []);
+        const proximas = aulas.filter(a => a.label && a.data >= hojeAgora);
+        const escolhida = this.state.subAula
+          || (proximas[0] ? (proximas[0].label + "|" + proximas[0].data) : "");
+        const motivoSel = this.state.subMotivo || "doenca";
+        const aulaSel = proximas.filter(a => (a.label + "|" + a.data) === escolhida)[0] || null;
+        const horas = aulaSel
+          ? (new Date(aulaSel.data + "T" + ((aulaSel.hora || "0h").replace("h", "") || "0").padStart(2, "0") + ":00:00").getTime() - Date.now()) / 3600000
+          : 999;
+        const EST = {
+          pedida: [Tr("waiting for cover", "aguardando quem cubra"), "var(--color-warning-light)", "var(--color-warning-dark)"],
+          atribuida: [Tr("covered", "coberta"), "var(--color-secondary-100)", "var(--color-success-dark)"],
+          cancelada: [Tr("cancelled", "cancelada"), "var(--color-button-secondary)", "var(--color-tertiary-500)"]
+        };
+        const MOT = {};
+        (CRM.SUBS_MOTIVOS || []).forEach(m => { MOT[m.id] = m.label; });
+        return {
+          subAberto: aberto,
+          subBotao: aberto ? Tr("close", "fechar") : Tr("Ask for cover", "Pedir substituição"),
+          onAbrirSub: () => this.setState({ subAberto: !aberto, subErro: "" }),
+          subSemAulas: proximas.length === 0,
+          subAulas: proximas.slice(0, 8).map(a => {
+            const k = a.label + "|" + a.data;
+            return { label: CRM.ddmm(a.data) + (a.hora !== "—" ? " · " + a.hora : "") + " · " + a.label,
+              bg: k === escolhida ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: k === escolhida ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: () => this.setState({ subAula: k, subErro: "" }) };
+          }),
+          subMotivos: (CRM.SUBS_MOTIVOS || []).map(m => ({
+            label: m.label,
+            bg: m.id === motivoSel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+            fg: m.id === motivoSel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            onClick: () => this.setState({ subMotivo: m.id, subErro: "" })
+          })),
+          subObs: this.state.subObs || "",
+          onSubObs: (e) => this.setState({ subObs: e.target.value }),
+          subUrgente: !!aulaSel && horas < 24,
+          subErro: !!this.state.subErro,
+          subErroTexto: this.state.subErro || "",
+          onPedirSub: () => {
+            if (!aulaSel) { this.setState({ subErro: Tr("Choose the class.", "Escolha a aula.") }); return; }
+            const r = CRM.pedirSubstituicao({ turma: aulaSel.label, data: aulaSel.data,
+              hora: aulaSel.hora === "—" ? "" : aulaSel.hora, motivo: motivoSel,
+              observacao: this.state.subObs || "", por: teacher });
+            if (!r.ok) { this.setState({ subErro: r.erro }); return; }
+            this.setState({ subAberto: false, subObs: "", subErro: "" });
+            this.bump();
+          },
+          subNenhum: minhas.length === 0,
+          subPedidos: minhas.map(sb => {
+            const e = EST[sb.status] || EST.pedida;
+            return {
+              quando: CRM.ddmm(sb.data) + (sb.hora ? " · " + sb.hora : "") + " · " + sb.turma,
+              motivo: [MOT[sb.motivo] || sb.motivo, sb.observacao,
+                sb.cobre ? (Tr("covered by ", "quem cobre: ") + sb.cobre) : ""]
+                .filter(Boolean).join(" · "),
+              estado: e[0], bg: e[1], fg: e[2]
+            };
+          })
+        };
+      })(),
 
       podeTrocar: podeTrocar,
       teachers: nomes.map(n => ({ id: n, label: n, sel: n === teacher })),

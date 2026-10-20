@@ -1794,6 +1794,38 @@ cortaria a folha de meses que já foram trabalhados e pagos, por uma
 exigência que não existia quando aquelas aulas foram dadas. A folha
 exclui só a chamada reaberta.
 
+### O convite da equipe sai da tela Equipe
+
+Pôr uma professora no sistema eram duas tarefas em dois lugares:
+cadastrar na tela Equipe e convidar à mão no painel do Netlify. Quem
+fazia só a primeira metade tinha uma pessoa cadastrada que não
+conseguia entrar — e a tela de entrada dizia apenas que o e-mail não
+estava no cadastro, o que mandava a escola procurar no lugar errado.
+
+Agora a ficha da Equipe tem o bloco **Acesso ao sistema**, com o mesmo
+convite que as alunas já recebiam: a função do Netlify
+(`convidar-aluna`) manda o e-mail do Identity, e a pessoa cria a senha
+por ele. A ficha guarda a data, para ninguém convidar a mesma pessoa
+toda semana.
+
+Quem pode ser convidada é quem tem função que abre o sistema —
+professora, comercial, operação, aulas extras ou shadow. Prestadora
+sem função não recebe convite: criaria uma conta que a porta recusa, e
+a tela explica isso em vez de deixar o botão disponível.
+
+A recusa na entrada também passou a separar os três casos, porque
+"não está no cadastro de Equipe" era falso em dois deles: a pessoa
+pode estar no cadastro sem função de acesso, e pode estar cadastrada
+como aluna. Cada caso tem a sua frase e o seu próximo passo.
+
+**Dois erros que o teste pegou e que estavam escondidos:**
+`motivoSemAcesso` chamava `getPessoas`, que não existe dentro do
+módulo — na primeira recusa de um e-mail desconhecido a tela
+quebraria. E o id da Equipe era só `"eq" + Date.now()`: duas pessoas
+cadastradas no mesmo milissegundo — o que a importação faz — ficavam
+com o MESMO id, e a segunda sobrescrevia a primeira em qualquer
+edição. O id agora tem sufixo aleatório e é conferido contra a lista.
+
 ### Em aula · as respostas ao vivo
 
 A tela 02 do desenho novo: enquanto a aula corre, a professora vê o

@@ -28,41 +28,112 @@
     </sc-if>
 
     <sc-if value="{{ ok }}">
-      <header style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 6px; gap: 12px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">turma · quem está nela e o que foi dado</div>
-          <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; color: var(--color-primary-900);">{{ nivel }}</h1>
+      <!-- O CAMINHO DE VOLTA -->
+      <!-- A página da turma abre por cima de "Minhas turmas", e sem a
+           porta de volta a professora saía pelo menu — que para ela
+           tem um item só. -->
+      <div>
+        <a href="{{ voltarHref }}" style="display: inline-block; text-decoration: none; background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 999px;">← {{ voltarLabel }}</a>
+      </div>
+
+      <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="min-width: 0;">
+          <div style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ linhaMeta }}</div>
+          <h1 style="margin: 3px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; color: var(--color-primary-900);">{{ nomeDaTurma }}</h1>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ onToggleEditar }}" style="background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; padding: 9px 14px">{{ edLabel }}</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <sc-if value="{{ podeEditarTurma }}">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onToggleEditar }}" style="background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; padding: 9px 14px">{{ edLabel }}</button>
+          </sc-if>
           <sc-if value="{{ temMeet }}">
             <a href="{{ meet }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Entrar na aula →</a>
           </sc-if>
         </div>
       </header>
-      <p style="margin: 0 0 18px; font-size: 13px; color: var(--color-primary-800);">{{ contexto }}</p>
 
       <!-- AS ABAS DA TURMA -->
-      <!-- As mesmas do Painel do professor, mais Renovação e vagas, que
-           é de gestão. Antes eram duas colunas com seis blocos, e quem
-           vinha ver a chamada rolava por material e tarefa de casa. -->
-      <div class="isr-cartao" style="display: flex; gap: 6px; border-radius: 999px; padding: 6px; align-self: flex-start; flex-wrap: wrap; margin-bottom: 4px">
-        <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="5">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ ab.onClick }}" style="padding: 9px 16px; font-size: 13px; background: {{ ab.bg }}; color: {{ ab.fg }}">{{ ab.label }}</button>
+      <!-- Sublinhadas, como no desenho: pílulas aqui competiam com as
+           pílulas das abas do painel, logo acima, e a pessoa não sabia
+           qual nível de navegação estava mexendo. -->
+      <div style="display: flex; gap: 22px; align-items: flex-end; overflow-x: auto; border-bottom: 1px solid var(--color-tertiary-50); margin-bottom: 4px;">
+        <sc-for list="{{ abas }}" as="ab" hint-placeholder-count="6">
+          <button class="isr-botao" onclick="{{ ab.onClick }}" style="flex: none; background: transparent; border-radius: 0; padding: 10px 2px 11px; font-size: 14px; font-weight: 800; color: {{ ab.fg }}; border-bottom: 3px solid {{ ab.linha }}; margin-bottom: -1px">{{ ab.label }}</button>
         </sc-for>
       </div>
 
       <!-- VISÃO GERAL -->
+      <!-- Dois cartões lado a lado, como no 05: a ficha da turma e o
+           professor substituto. Antes era uma lista de rótulo e valor
+           — "ocupação: 3 de 5" escrito por extenso —, que obriga a ler
+           a frase inteira para saber se a turma está cheia. A barra se
+           lê de longe. -->
       <sc-if value="{{ tGeral }}">
-        <section class="isr-cartao" style="padding: 18px 22px; margin-bottom: 16px">
-          <div style="font-size: 16px; font-weight: 600;">Visão geral</div>
-          <sc-for list="{{ geralLinhas }}" as="gl" hint-placeholder-count="6">
-            <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
-              <span style="flex: none; width: 150px; font-size: 12.5px; color: var(--color-tertiary-500);">{{ gl.k }}</span>
-              <span style="flex: 1; min-width: 180px; font-size: 14px; font-weight: 600; color: {{ gl.cor }};">{{ gl.v }}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+          <!-- 1 · A FICHA DA TURMA -->
+          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column">
+            <div style="background: {{ gFaixaBg }}; color: var(--color-primary-900); padding: 11px 20px; font-size: 12px; font-weight: 800;">{{ gFaixa }}</div>
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+              <div>
+                <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">{{ nomeDaTurma }}</div>
+                <div style="font-size: 13px; color: var(--color-primary-800); margin-top: 3px;">{{ gQuem }}</div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline;">
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">ocupação</span>
+                  <span style="font-size: 13px; font-weight: 800; color: {{ gOcupTextoCor }};">{{ gOcup }}</span>
+                </div>
+                <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden; margin-top: 6px;">
+                  <div style="height: 100%; width: {{ gOcupPct }}; background: {{ gOcupCor }};"></div>
+                </div>
+              </div>
+
+              <div style="background: var(--color-bg-default); border-radius: 16px; padding: 13px 15px;">
+                <div style="font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ gProjeto }}</div>
+                <div style="font-size: 13px; font-weight: 700; color: {{ gCadernoCor }}; margin-top: 3px;">{{ gCaderno }}</div>
+              </div>
+
+              <sc-if value="{{ podeEditarTurma }}">
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onToggleEditar }}" style="align-self: flex-start; font-size: 13px; padding: 11px 18px">✎ {{ edLabel }}</button>
+              </sc-if>
             </div>
-          </sc-for>
-        </section>
+          </section>
+
+          <!-- 2 · O PROFESSOR SUBSTITUTO -->
+          <!-- Quem marca é a coordenação. A professora lê: ela pede a
+               substituição pela aba Hoje, e não escolhe quem cobre a
+               própria aula. -->
+          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Professor substituto</div>
+
+            <sc-if value="{{ subVazio }}">
+              <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">{{ subVazioTexto }}</div>
+            </sc-if>
+
+            <sc-for list="{{ subLista }}" as="sb" hint-placeholder-count="2">
+              <div style="background: var(--color-primary-50); border-radius: 16px; padding: 13px 15px; display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-size: 13.5px; font-weight: 800; color: var(--color-primary-900);">{{ sb.quando }}</div>
+                <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.5;">{{ sb.quem }}</div>
+                <div style="font-size: 12px; color: var(--color-tertiary-500); line-height: 1.5;">{{ sb.motivo }}</div>
+                <sc-if value="{{ sb.podeAtribuir }}">
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                    <sc-for list="{{ sb.candidatas }}" as="cd" hint-placeholder-count="3">
+                      <button class="isr-botao isr-botao--pilula" onclick="{{ cd.onClick }}" style="background: {{ cd.bg }}; color: {{ cd.fg }}; font-size: 12px; padding: 8px 14px">{{ cd.label }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sb.temErro }}">
+                  <div style="font-size: 12px; color: var(--color-error-dark); line-height: 1.5; margin-top: 4px;">{{ sb.erro }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+
+            <sc-if value="{{ subNota }}">
+              <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.6;">{{ subNotaTexto }}</div>
+            </sc-if>
+          </section>
+        </div>
       </sc-if>
 
       <!-- EDITAR TURMA / MATERIAIS -->
@@ -80,6 +151,11 @@
             </select>
             <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ capacidade }}" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="Projeto: {{ projeto }}" style="padding: 9px 11px; font-size: 12px" />
+            <select class="isr-campo" ref="{{ edFormatoRef }}" style="padding: 9px 11px; font-size: 12px">
+              <sc-for list="{{ formatoOpts }}" as="fo" hint-placeholder-count="2">
+                <option value="{{ fo.id }}" selected="{{ fo.sel }}">{{ fo.label }}</option>
+              </sc-for>
+            </select>
             <input class="isr-campo" ref="{{ edMeetRef }}" defaultValue="{{ edMeetAtual }}" placeholder="Link da aula (Meet)" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edGuideRef }}" defaultValue="{{ edGuideAtual }}" placeholder="Link do Teacher's Guide" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edCadernoRef }}" defaultValue="{{ edCadernoAtual }}" placeholder="Link do Caderno de tarefas" style="padding: 9px 11px; font-size: 12px" />
@@ -92,7 +168,16 @@
         </div>
       </sc-if>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+      <!-- O conteúdo da aba é uma COLUNA.
+           Aqui havia um grid de duas colunas, de quando a página
+           mostrava os seis blocos de uma vez. Com as abas, a aba que
+           tem mais de um bloco — o Plano das aulas tem três: o
+           syllabus, a tira de sessões e a sessão aberta — era partida
+           em colunas pelo grid: a tira de sessões ficava espremida e
+           cortada ao meio, e sobrava meia tela vazia embaixo.
+           Quem quer dois cartões lado a lado diz isso no próprio
+           bloco; o container não decide por ele. -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
 
         <!-- ALUNAS -->
         <sc-if value="{{ tAlunas }}">
@@ -184,24 +269,33 @@
           </sc-if>
 
           <sc-if value="{{ planoTem }}">
-            <!-- a tira das sessões do ciclo -->
-            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px">
+            <!-- A FAIXA DE SESSÕES -->
+            <!-- Cartões de 128px rolando na horizontal, a aberta escura
+                 e as passadas mais apagadas. A faixa ocupa a largura
+                 inteira: espremida numa coluna, ela cortava o cartão no
+                 meio e não dava para ler o título da sessão. -->
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px">
               <sc-for list="{{ planoTira }}" as="ps" hint-placeholder-count="10">
-                <button class="isr-botao" onclick="{{ ps.onClick }}" style="flex: none; width: 132px; text-align: left; border-radius: 16px; padding: 10px 12px; background: {{ ps.bg }}; color: {{ ps.fg }}">
-                  <div style="display: flex; justify-content: space-between; gap: 6px; align-items: baseline">
-                    <span style="font-size: 13px; font-weight: 700;">{{ ps.n }}</span>
-                    <span style="font-size: 10.5px; font-weight: 600; opacity: .85;">{{ ps.estadoCurto }}</span>
-                  </div>
-                  <div style="font-size: 12px; font-weight: 600; line-height: 1.35; margin-top: 3px;">{{ ps.titulo }}</div>
+                <button class="isr-botao" onclick="{{ ps.onClick }}" style="flex: none; width: 128px; text-align: left; border-radius: 16px; padding: 11px 13px; background: {{ ps.bg }}; color: {{ ps.fg }}; opacity: {{ ps.op }}; display: flex; flex-direction: column; gap: 2px; align-items: stretch">
+                  <span style="display: flex; justify-content: space-between; gap: 6px; align-items: baseline">
+                    <span style="font-size: 14px; font-weight: 800; letter-spacing: -0.02em;">{{ ps.n }}</span>
+                    <span style="font-size: 10.5px; font-weight: 700; opacity: .85;">{{ ps.estadoCurto }}</span>
+                  </span>
+                  <span style="font-size: 11px; font-weight: 700; opacity: .75;">{{ ps.data }}</span>
+                  <span style="font-size: 12px; font-weight: 600; line-height: 1.35; margin-top: 2px;">{{ ps.titulo }}</span>
                 </button>
               </sc-for>
             </div>
 
-            <div class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+            <!-- A ÁREA DA SESSÃO -->
+            <!-- Painel bege com os cartões brancos dentro, como no
+                 desenho: o roteiro, o material e os dois cartões de
+                 palavras e homework. -->
+            <div style="background: var(--color-button-secondary); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
               <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start">
                 <div style="min-width: 0">
                   <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoEyebrow }}</div>
-                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25;">{{ planoTitulo }}</div>
+                  <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">{{ planoTitulo }}</div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px;">
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: {{ planoEstadoBg }}; color: {{ planoEstadoFg }};">{{ planoEstado }}</span>
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: var(--color-button-secondary); color: var(--color-primary-800);">{{ planoOrigem }}</span>
@@ -219,29 +313,33 @@
                 <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 12px; padding: 10px 13px; font-size: 12.5px; line-height: 1.5">{{ planoErro }}</div>
               </sc-if>
 
+              <sc-if value="{{ planoJaDada }}">
+                <div style="background: var(--color-neutral-0); border-radius: 16px; padding: 11px 14px; font-size: 12.5px; line-height: 1.55; color: var(--color-primary-800)">{{ planoJaDadaTexto }}</div>
+              </sc-if>
+
               <sc-if value="{{ planoTemGuia }}">
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-button-secondary); border-radius: 14px; padding: 11px 14px">
-                  <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-neutral-0); border-radius: 20px; padding: 14px 18px">
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
                   <sc-if value="{{ planoTemSyllabus }}">
-                    <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
+                    <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
                   </sc-if>
                   <sc-if value="{{ planoTemGuiaDoNivel }}">
-                    <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoGuiaLabel }} ↗</a>
+                    <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--color-primary-900);">{{ planoGuiaLabel }} ↗</a>
                   </sc-if>
                 </div>
               </sc-if>
 
               <sc-if value="{{ planoTemObjetivo }}">
-                <div>
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">o que a aluna sai sabendo</div>
-                  <div style="font-size: 15px; line-height: 1.55; margin-top: 3px;">{{ planoObjetivo }}</div>
+                <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">o que a aluna sai sabendo</div>
+                  <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.4; margin-top: 5px;">{{ planoObjetivo }}</div>
                 </div>
               </sc-if>
 
               <!-- O ROTEIRO -->
-              <div>
+              <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
-                  <div style="font-size: 15px; font-weight: 600;">Roteiro</div>
+                  <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Roteiro</div>
                   <span style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoMinutos }}</span>
                 </div>
                 <sc-for list="{{ planoEtapas }}" as="pe" hint-placeholder-count="6">
@@ -254,7 +352,7 @@
                     </sc-if>
                     <div style="flex: 1; min-width: 0">
                       <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap">
-                        <span class="isr-selo" style="padding: 2px 9px; font-size: 10.5px; background: var(--color-secondary-100); color: var(--color-primary-900);">{{ pe.fase }}</span>
+                        <span class="isr-selo" style="padding: 2px 9px; font-size: 10.5px; font-weight: 700; background: {{ pe.faseCor }}; color: var(--color-primary-900);">{{ pe.fase }}</span>
                         <sc-if value="{{ pe.mostraTitulo }}">
                           <span style="font-size: 14px; font-weight: 600; text-decoration: {{ pe.deco }}">{{ pe.titulo }}</span>
                         </sc-if>
@@ -265,11 +363,14 @@
                       <sc-if value="{{ pe.editando }}">
                         <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" placeholder="O que acontece nesta etapa" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
                       </sc-if>
-                      <sc-if value="{{ pe.temPergunta }}">
-                        <div style="background: var(--color-secondary-100); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
-                          <div style="font-size: 11.5px; font-weight: 600; color: var(--color-success-dark);">a aluna responde no caderno</div>
+                      <sc-if value="{{ pe.mostraPergunta }}">
+                        <div style="background: var(--color-primary-50); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
+                          <div style="font-size: 11.5px; font-weight: 700; color: var(--color-primary-800);">as alunas respondem no caderno</div>
                           <div style="font-size: 13.5px; line-height: 1.5; margin-top: 2px;">{{ pe.pergunta }}</div>
                         </div>
+                      </sc-if>
+                      <sc-if value="{{ pe.editando }}">
+                        <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" placeholder="Pergunta para o caderno da aluna (opcional)" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 6px; background: var(--color-primary-50)" />
                       </sc-if>
                     </div>
                     <sc-if value="{{ pe.editando }}">
@@ -290,12 +391,16 @@
                 <sc-if value="{{ planoEditando }}">
                   <div style="background: var(--color-button-secondary); border-radius: 16px; padding: 13px 15px; margin-top: 12px; display: flex; flex-direction: column; gap: 8px">
                     <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">acrescentar atividade sua · desmarque ✓ para tirar uma etapa desta turma</div>
+                    <!-- A etapa em pílulas, com a cor de cada uma: num
+                         campo de seleção a professora não via as seis
+                         fases, e escolhia a primeira. -->
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                      <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">etapa</span>
+                      <sc-for list="{{ planoFases }}" as="pf" hint-placeholder-count="6">
+                        <button class="isr-botao isr-botao--pilula" onclick="{{ pf.onClick }}" style="background: {{ pf.bg }}; color: {{ pf.fg }}; font-size: 12px; font-weight: 700; padding: 8px 14px">{{ pf.label }}</button>
+                      </sc-for>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
-                      <select class="isr-campo" ref="{{ peFaseRef }}" style="padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)">
-                        <sc-for list="{{ planoFases }}" as="pf" hint-placeholder-count="6">
-                          <option value="{{ pf.id }}">{{ pf.label }}</option>
-                        </sc-for>
-                      </select>
                       <input class="isr-campo" ref="{{ peTituloRef }}" placeholder="Ex.: Roleplay at the market" style="flex: 1; min-width: 190px; padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
                       <input class="isr-campo" ref="{{ peMinRef }}" value="10" style="width: 54px; text-align: center; padding: 9px 6px; font-size: 13px; background: var(--color-neutral-0)" />
                       <span style="font-size: 12px; color: var(--color-tertiary-500)">min</span>
@@ -307,9 +412,9 @@
               </div>
 
               <!-- PALAVRAS E HOMEWORK -->
-              <div style="display: flex; gap: 14px; flex-wrap: wrap">
-                <div style="flex: 1 1 260px; min-width: 0">
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">palavras · vão para o Review da aluna</div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap">
+                <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">palavras · vão para o Review da aluna</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px">
                       <sc-for list="{{ planoPalavras }}" as="pw" hint-placeholder-count="5">
@@ -325,8 +430,8 @@
                     <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">Separe por vírgula.</div>
                   </sc-if>
                 </div>
-                <div style="flex: 1 1 260px; min-width: 0">
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">homework · abre quando a aula termina</div>
+                <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">homework · abre quando a aula termina</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="font-size: 13.5px; line-height: 1.55; margin-top: 7px">{{ planoHomework }}</div>
                   </sc-if>
@@ -339,6 +444,16 @@
               <sc-if value="{{ planoEditando }}">
                 <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnSalvar }}" style="align-self: flex-start; padding: 10px 17px; font-size: 13px">Salvar o roteiro</button>
               </sc-if>
+
+              <!-- O RODAPÉ -->
+              <!-- Como a turma trabalha, e a porta para ver o plano com
+                   os olhos da aluna antes de publicar. -->
+              <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; padding-top: 4px">
+                <span style="flex: 1; min-width: 220px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ planoRodape }}</span>
+                <sc-if value="{{ planoTemAluna }}">
+                  <a href="{{ planoVerComoAluna }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Ver como aluna →</a>
+                </sc-if>
+              </div>
             </div>
           </sc-if>
         </sc-if>
@@ -364,6 +479,39 @@
         </sc-if>
 
         <!-- PROJETO DO CICLO -->
+        <!-- PROJETO -->
+        <!-- O projeto do ciclo já existia como nome na turma. O que
+             faltava era quem entregou, e é disso que a barra é feita.
+             Marcar a entrega é da professora: é ela que recebe. -->
+        <sc-if value="{{ tProjeto }}">
+          <sc-if value="{{ projSemProjeto }}">
+            <div class="isr-cartao" style="padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ projVazioTexto }}</div>
+          </sc-if>
+          <sc-if value="{{ projTem }}">
+            <div class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap">
+                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ projTitulo }}</div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--color-primary-900);">{{ projValor }}</div>
+              </div>
+              <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden;">
+                <div style="height: 100%; width: {{ projPct }}; background: var(--color-secondary-500);"></div>
+              </div>
+              <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ projFaltam }}</div>
+              <div style="display: flex; flex-direction: column;">
+                <sc-for list="{{ projLinhas }}" as="pj" hint-placeholder-count="6">
+                  <button class="isr-botao" onclick="{{ pj.onToggle }}" title="{{ pj.title }}" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: transparent; text-align: left; padding: 11px 2px; border-top: 1px solid var(--color-button-secondary); border-radius: 0">
+                    <span style="font-size: 14px; font-weight: 600; color: var(--color-primary-900);">{{ pj.nome }}</span>
+                    <span class="isr-selo" style="flex: none; padding: 5px 12px; font-size: 12px; font-weight: 700; background: {{ pj.bg }}; color: {{ pj.fg }}">{{ pj.estado }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ projVazio }}">
+                <div style="font-size: 13px; color: var(--color-tertiary-500);">Nenhuma aluna matriculada nesta turma.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </sc-if>
+
         <sc-if value="{{ tMateriais }}">
           <div style="background: var(--color-primary-900); border-radius: 18px; padding: 14px 16px;">
             <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.7); font-weight: 500; margin-bottom: 4px;">Projeto do ciclo {{ ciclo }}</div>
@@ -461,8 +609,14 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "" };
+  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "",
+    // o erro de atribuir substituta fica preso ao pedido: sem o id,
+    // o aviso de um pedido aparecia embaixo de outro
+    subErro: null,
+    // a etapa escolhida no formulário de acrescentar atividade
+    planoFase: "warmup" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
+  edFormatoRef = React.createRef();
   edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
   edCadernoRef = React.createRef(); edSlidesRef = React.createRef(); edSyllabusRef = React.createRef();
@@ -484,6 +638,36 @@ class Component extends DCLogic {
   }
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  // A cor da faixa do nível: a mesma de Turmas na gestão, para a
+  // turma se reconhecer de longe nas duas telas.
+  CORES_NIVEL = { "First Steps": "var(--color-button-secondary)",
+    "Basics": "var(--color-primary-50)", "Essentials": "var(--color-secondary-100)",
+    "Speaking": "var(--color-warning-light)", "Advanced": "var(--color-error-light)" };
+  corDoNivel(nivel) {
+    const n = String(nivel || "");
+    const k = Object.keys(this.CORES_NIVEL).filter(x => n.indexOf(x) >= 0)[0];
+    return k ? this.CORES_NIVEL[k] : "var(--color-button-secondary)";
+  }
+
+  // "19 out": o dia e o mês por extenso curto. A faixa das sessões
+  // mostra a SEMANA em que a aula cai, e "19/10" ali ao lado de "S5"
+  // vira um amontoado de número.
+  MES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun",
+               "jul", "ago", "set", "out", "nov", "dez"];
+  // A segunda-feira da semana de uma data, para comparar semanas.
+  segundaDe(isoStr) {
+    const d = new Date(String(isoStr || "") + "T12:00:00");
+    if (isNaN(d.getTime())) return "";
+    const dow = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - dow);
+    return d.toISOString().slice(0, 10);
+  }
+  diaMes(isoStr) {
+    const d = new Date(String(isoStr || "") + "T12:00:00");
+    if (isNaN(d.getTime())) return "";
+    return d.getDate() + " " + this.MES_CURTO[d.getMonth()];
+  }
   val(ref) { return ((ref.current && ref.current.value) || "").trim(); }
 
   turmaId() {
@@ -509,20 +693,31 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
+    const refs = { edFormatoRef: this.edFormatoRef, formatoOpts: [],
+      edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
       edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
       edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef,
       peFaseRef: this.peFaseRef, peTituloRef: this.peTituloRef, peMinRef: this.peMinRef,
       pePerguntaRef: this.pePerguntaRef, pePalavrasRef: this.pePalavrasRef, peHwRef: this.peHwRef };
     if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [],
       abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
-      geralLinhas: [], renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
+      tProjeto: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
+      podeEditarTurma: false, projTem: false, projTitulo: "", projValor: "", projPct: "0%",
+      projFaltam: "", projLinhas: [], projVazio: true, projSemProjeto: true, projVazioTexto: "",
+      renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
+      gFaixa: "", gFaixaBg: "var(--color-button-secondary)", gQuem: "", gOcup: "",
+      gOcupCor: "var(--color-secondary-500)", gOcupTextoCor: "var(--color-primary-900)",
+      gOcupPct: "0%", gProjeto: "",
+      gCaderno: "", gCadernoCor: "var(--color-tertiary-500)",
+      subVazio: true, subVazioTexto: "", subLista: [], subNota: false, subNotaTexto: "",
       tPlano: false, planoVazio: true, planoVazioTexto: "", planoTem: false, planoTira: [],
       podeSyllabus: false, syNivel: "", syCiclo: "", sySubtitulo: "", syAberto: false,
       syAbrirLabel: "", sySessoes: [], onAbrirSyllabus: () => {}, onAddSessao: () => {},
       syAddLabel: "", syNota: "", syTemErro: false, syErro: "",
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
+      planoJaDada: false, planoJaDadaTexto: "", planoRodape: "", planoVerComoAluna: "#",
+      planoTemAluna: false, formatoOpts: [],
       planoOnPublicar: () => {}, planoPublicarLabel: "", planoTemErro: false, planoErro: "",
       planoTemGuia: false, planoGuia: "", planoGuiaLabel: "", planoTemGuiaDoNivel: false,
       planoTemSyllabus: false, planoSyllabus: "", planoSyllabusLabel: "",
@@ -606,6 +801,11 @@ class Component extends DCLogic {
       pronta: ["pronta ✓", "var(--color-warning-light)", "var(--color-warning-dark)", "pronta"],
       publicada: ["publicada · as alunas já veem", "var(--color-secondary-100)", "var(--color-success-dark)", "publicada"]
     };
+    // quando cada sessão cai, e se já caiu: a faixa, o eyebrow e a
+    // trava de edição leem daqui
+    const quandoSessoes = CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {};
+    const planoJaDada = !!(pAtual && quandoSessoes[pAtual.n] && quandoSessoes[pAtual.n].dada);
+
     const pSalvarCampos = () => {
       if (!pAtual) return;
       CRM.salvarPlano(u.id, pAtual.n, {
@@ -629,15 +829,19 @@ class Component extends DCLogic {
     // Quem olha é a VISÃO: com "vendo como" ligado, a gestora vê a
     // página pelos olhos de quem escolheu.
     const TODAS_ABAS = { geral: "Visão geral", alunas: "Alunas", plano: "Plano das aulas",
-      chamadas: "Chamadas", materiais: "Materiais", renov: "Renovação e vagas" };
+      chamadas: "Chamadas", projeto: "Projeto", materiais: "Materiais",
+      renov: "Renovação e vagas" };
     const vis = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
     const papeisVis = (vis.papeis || []).concat(vis.perfil ? [vis.perfil] : []);
     const tem = (p) => papeisVis.indexOf(p) >= 0;
-    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "materiais", "renov"]
-      : tem("operacao") ? ["geral", "alunas", "chamadas", "materiais", "renov"]
+    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "projeto", "materiais", "renov"]
+      : tem("operacao") ? ["geral", "alunas", "chamadas", "projeto", "materiais", "renov"]
       : tem("comercial") ? ["geral", "alunas", "renov"]
-      : ["geral", "alunas", "plano", "chamadas", "materiais"];
+      : ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"];
     const ABAS = ordem.map(id => [id, TODAS_ABAS[id]]);
+    // Quem é só professora: o recorte dela muda o caminho de volta e
+    // tira os botões de coordenação da página.
+    const soProf = !tem("gestora") && !tem("operacao") && !tem("comercial");
     // a aba pedida na URL só vale se o papel a tiver
     const pedida = this.subParam();
     const aba = this.state.aba
@@ -664,10 +868,51 @@ class Component extends DCLogic {
     return Object.assign({
       ok: true, naoEncontrada: false,
       abas: ABAS.map(([id, label]) => ({ label,
-        bg: aba === id ? "var(--color-primary-900)" : "transparent",
-        fg: aba === id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        fg: aba === id ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
+        linha: aba === id ? "var(--color-button-primary)" : "transparent",
         onClick: () => this.irParaAba(id) })),
+      // O caminho de volta: a professora veio de "Minhas turmas", no
+      // painel dela; quem cuida da escola veio de Turmas & Projetos.
+      voltarHref: soProf ? "ISR%20-%20Painel%20v3.dc.html?tab=turmas"
+        : "ISR%20-%20Turmas%20v3.dc.html",
+      voltarLabel: soProf ? "Minhas turmas" : "Turmas & Projetos",
+      linhaMeta: [u.nivel, u.turma, u.teacher ? "Prof. " + u.teacher : ""]
+        .filter(Boolean).join(" · "),
+      nomeDaTurma: u.turma || u.nivel,
+      // "Editar turma" é da coordenação. A professora lê a ficha da
+      // turma dela; mudar horário, capacidade e links é outra conversa.
+      podeEditarTurma: !soProf,
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
+      tProjeto: aba === "projeto",
+      // ── o projeto do ciclo e quem entregou ──
+      ...(() => {
+        const e = CRM.entregasDoProjeto ? CRM.entregasDoProjeto(u.label)
+          : { temProjeto: false, linhas: [], faltam: [], feitas: 0, total: 0, pct: 0 };
+        const quem = ((CRM.gestaoUser && CRM.gestaoUser()) || {}).nome || "";
+        return {
+          projTem: e.temProjeto,
+          projSemProjeto: !e.temProjeto,
+          projVazioTexto: "Esta turma ainda não tem projeto do ciclo. O projeto é escrito na ficha da turma.",
+          projTitulo: "Projeto " + e.projeto + " · entregas",
+          projValor: e.feitas + "/" + e.total,
+          projPct: e.pct + "%",
+          projFaltam: e.faltam.length
+            ? "Faltam: " + e.faltam.join(", ")
+            : (e.total ? "Todas entregaram." : ""),
+          projVazio: e.total === 0,
+          projLinhas: e.linhas.map(l => ({
+            nome: l.nome,
+            estado: l.entregue ? ("entregue · " + CRM.ddmm(l.em)) : "falta entregar",
+            bg: l.entregue ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
+            fg: l.entregue ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
+            title: l.entregue ? "Desmarcar a entrega" : "Marcar como entregue",
+            onToggle: () => {
+              CRM.marcarEntregaProjeto(u.label, l.id, !l.entregue, quem);
+              this.bump();
+            }
+          }))
+        };
+      })(),
       tPlano: aba === "plano",
       // ── o syllabus do nível ──
       // Quem edita é quem cuida da escola: o syllabus vale para todas
@@ -724,20 +969,47 @@ class Component extends DCLogic {
         + (u.cycle || "atual") + " ainda não tem sessões. Elas são da escola, não da turma: "
         + "quando entrarem, aparecem aqui já com as seis fases, e a professora ajusta o que não couber.",
       planoTem: !!pAtual,
-      planoFases: (CRM.fasesDoPlano ? CRM.fasesDoPlano() : []),
-      planoTira: pSessoes.map(x => {
+      planoFases: (CRM.fasesDoPlano ? CRM.fasesDoPlano() : []).map(fs => ({
+        label: fs.label, id: fs.id,
+        bg: (this.state.planoFase || "warmup") === fs.id ? "var(--color-primary-900)" : fs.cor,
+        fg: (this.state.planoFase || "warmup") === fs.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ planoFase: fs.id })
+      })),
+      planoTira: (() => { const quando = quandoSessoes;
+        return pSessoes.map(x => {
         const e = EST_PLANO[x.estado] || EST_PLANO.rascunho;
         const sel = pAtual && x.n === pAtual.n;
+        // A faixa mostra o estado da SESSÃO — dada, esta semana, ou a
+        // semana em que ela cai —, não o estado do plano: o plano
+        // (rascunho / publicada) está nas pílulas da sessão aberta, e
+        // repeti-lo aqui gastava a única linha que a professora usa
+        // para se localizar no ciclo.
+        const q = quando[x.n] || null;
+        // "esta semana" é a semana do calendário, não "nos próximos
+        // sete dias": com a segunda que vem a seis dias daqui, a
+        // contagem corrida chamava a aula da semana seguinte de "esta
+        // semana" e a professora se preparava para o dia errado.
+        const estaSemana = q && !q.dada && this.segundaDe(q.data) === this.segundaDe(new Date().toISOString().slice(0, 10));
         return {
-          n: "Sessão " + x.n, estadoCurto: e[3],
+          n: "S" + x.n,
+          estadoCurto: !q ? "" : q.dada ? "dada"
+            : estaSemana ? "esta semana" : ("sem. " + this.diaMes(q.data)),
+          data: "",
           titulo: x.titulo || "sem título ainda",
           bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
           fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          op: (q && q.dada && !sel) ? "0.55" : "1",
           onClick: () => { this.setState({ planoSessao: x.n, planoAjuste: false, planoErro: "" }); }
         };
-      }),
+      }); })(),
       planoEyebrow: pAtual
-        ? ("Sessão " + pAtual.n + (pAtual.projeto ? " · " + pAtual.projeto : "")) : "",
+        ? (() => {
+            const q = quandoSessoes[pAtual.n];
+            const quandoTxt = !q ? "" : q.dada
+              ? ("dada em " + CRM.ddmm(q.data))
+              : ("semana de " + this.diaMes(q.data));
+            return ["sessão " + pAtual.n, quandoTxt, u.turma].filter(Boolean).join(" · ");
+          })() : "",
       planoTitulo: pAtual ? (pAtual.titulo || "Sessão sem título") : "",
       planoEstado: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[0] : "",
       planoEstadoBg: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[1] : "",
@@ -748,7 +1020,12 @@ class Component extends DCLogic {
           : (pAtual.etapas.filter(e => e.minha).length
             ? "syllabus · " + pAtual.etapas.filter(e => e.minha).length + " atividade(s) sua(s)"
             : "syllabus · ajustado por você")),
-      planoPodeEditar: !!pAtual,
+      // Sessão que já aconteceu é registro: as alunas responderam no
+      // caderno sobre o roteiro daquele dia, e mexer nele depois
+      // muda a pergunta debaixo da resposta.
+      planoPodeEditar: !!pAtual && !planoJaDada,
+      planoJaDada: !!planoJaDada,
+      planoJaDadaTexto: "Esta sessão já foi dada. O roteiro dela fica como ficou — as alunas responderam no caderno sobre ele.",
       planoAjustarLabel: pAjuste ? "Concluir ajustes" : "Ajustar",
       planoOnAjustar: () => {
         if (!pAtual) return;
@@ -785,12 +1062,15 @@ class Component extends DCLogic {
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",
       planoEditando: pAjuste, planoLendo: !pAjuste,
       planoEtapas: !pAtual ? [] : pAtual.etapas.map(e => ({
-        fase: CRM.faseLabel(e.fase), titulo: e.titulo,
+        fase: CRM.faseLabel(e.fase),
+        faseCor: CRM.faseCor ? CRM.faseCor(e.fase) : "var(--color-button-secondary)",
+        titulo: e.titulo,
         // etapa sem descrição mostra só a fase e o tempo: seis linhas de
         // "sem título" seria a tela repetindo que não sabe de nada
         mostraTitulo: !pAjuste && !!e.titulo,
         min: String(e.min), minha: e.minha,
-        temPergunta: !!e.pergunta, pergunta: e.pergunta,
+        temPergunta: !!e.pergunta, pergunta: e.pergunta || "",
+        mostraPergunta: !pAjuste && !!e.pergunta,
         editando: pAjuste, lendo: !pAjuste,
         // desmarcada continua à vista, apagada some: a professora
         // precisa ver o que a escola planejou e ela tirou
@@ -816,12 +1096,20 @@ class Component extends DCLogic {
           const l = pAtual.etapas.map(x => x.id === e.id
             ? Object.assign({}, x, { min: ev.target.value }) : x);
           CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
+        },
+        // A pergunta é o que a aluna responde no caderno, e era a
+        // única parte do roteiro que não dava para corrigir: para
+        // trocar uma palavra era preciso apagar a etapa e refazer.
+        onPergunta: (ev) => {
+          const l = pAtual.etapas.map(x => x.id === e.id
+            ? Object.assign({}, x, { pergunta: ev.target.value }) : x);
+          CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
         }
       })),
       planoOnAddEtapa: () => {
         if (!pAtual) return;
         const r = CRM.addEtapaPlano(u.id, pAtual.n, {
-          fase: this.val(this.peFaseRef) || undefined,
+          fase: this.state.planoFase || "warmup",
           titulo: this.val(this.peTituloRef),
           min: this.val(this.peMinRef),
           pergunta: this.val(this.pePerguntaRef)
@@ -842,18 +1130,80 @@ class Component extends DCLogic {
       },
       tMateriais: aba === "materiais", tRenovacao: aba === "renov",
 
-      geralLinhas: [
-        { k: "dia e horário", v: u.turma, cor: "var(--color-primary-900)" },
-        { k: "professora", v: u.teacher || "sem professora",
-          cor: u.teacher ? "var(--color-primary-900)" : "var(--color-error-dark)" },
-        { k: "projeto do ciclo", v: u.projeto || "—", cor: "var(--color-primary-900)" },
-        { k: "ciclo", v: u.cycle || "—", cor: "var(--color-primary-900)" },
-        { k: "ocupação", v: u.ocupadas + " de " + u.capacidade
-            + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga aberta" : " vagas abertas") : " · turma cheia"),
-          cor: u.vagas > 0 ? "var(--color-primary-900)" : "var(--color-warning-dark)" },
-        { k: "caderno", v: raw.notebook || "sem caderno vinculado neste ciclo",
-          cor: raw.notebook ? "var(--color-primary-900)" : "var(--color-tertiary-500)" }
-      ],
+      // ── a ficha da turma ──
+      ...(() => {
+        const cheia = u.vagas <= 0;
+        // Duas cores: a da barra, que é um bloco grande e aceita tom
+        // claro, e a do número, que é texto pequeno sobre branco e
+        // precisa de contraste. Usar a mesma nos dois deixava "3/5 ·
+        // 2 vagas" em amarelo claro, ilegível.
+        const cor = cheia ? "var(--color-button-primary)"
+          : (u.ocupadas < 4 ? "var(--color-warning-light)" : "var(--color-secondary-500)");
+        const corTexto = cheia ? "var(--color-error-dark)"
+          : (u.ocupadas < 4 ? "var(--color-warning-dark)" : "var(--color-success-dark)");
+        // o plano da próxima sessão: é o que diz se a aula de amanhã
+        // está pronta, e é a pergunta que a professora faz aqui
+        const prox = (CRM.planoSessoes ? CRM.planoSessoes(u.id) : [])
+          .filter(x => x.estado !== "publicada")[0]
+          || (CRM.planoSessoes ? CRM.planoSessoes(u.id) : [])[0] || null;
+        return {
+          gFaixa: [u.nivel, u.cycle ? "ciclo " + u.cycle : ""].filter(Boolean).join(" · "),
+          gFaixaBg: this.corDoNivel(u.nivel),
+          gQuem: [u.turma, u.teacher ? "Prof. " + u.teacher : "sem professora"]
+            .filter(Boolean).join(" · "),
+          gOcup: u.ocupadas + "/" + u.capacidade
+            + (cheia ? " · lotada" : " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
+          gOcupCor: cor, gOcupTextoCor: corTexto,
+          gOcupPct: (u.capacidade ? Math.round((u.ocupadas / u.capacidade) * 100) : 0) + "%",
+          gProjeto: u.projeto || "sem projeto do ciclo",
+          gCaderno: !prox ? "sem sessões no syllabus deste nível"
+            : prox.estado === "publicada" ? "plano da próxima aula publicado"
+            : prox.estado === "pronta" ? ("sessão " + prox.n + " pronta, falta publicar")
+            : ("sessão " + prox.n + " ainda não revisada"),
+          gCadernoCor: (prox && prox.estado === "publicada")
+            ? "var(--color-success-dark)" : "var(--color-tertiary-500)"
+        };
+      })(),
+
+      // ── o professor substituto ──
+      ...(() => {
+        const lista = CRM.substituicoesDaTurma ? CRM.substituicoesDaTurma(u.label) : [];
+        const docentes = CRM.equipeDocente ? CRM.equipeDocente() : [];
+        const quem = ((CRM.gestaoUser && CRM.gestaoUser()) || {}).nome || "";
+        const MOT = {};
+        (CRM.SUBS_MOTIVOS || []).forEach(m => { MOT[m.id] = m.label; });
+        return {
+          subVazio: lista.length === 0,
+          subVazioTexto: soProf
+            ? "Nenhuma substituição marcada nesta turma. Para pedir uma, use a aba Hoje do seu painel."
+            : "Nenhuma substituição pedida nesta turma.",
+          subNota: !soProf && lista.some(x => x.status === "pedida"),
+          subNotaTexto: "O substituto recebe o link da aula, a chamada e os materiais só desta aula. A aula conta na folha dele.",
+          subLista: lista.map(sb => ({
+            quando: CRM.ddmm(sb.data) + (sb.hora ? " · " + sb.hora : ""),
+            quem: sb.status === "atribuida"
+              ? (sb.cobre + " cobre, no lugar de " + sb.pedidoPor)
+              : sb.status === "cancelada" ? "Pedido cancelado"
+              : ("Pedido por " + sb.pedidoPor + " · ainda sem quem cubra"),
+            motivo: [MOT[sb.motivo] || sb.motivo, sb.observacao].filter(Boolean).join(" · ")
+              + (sb.urgente ? " · pedido em cima da hora" : ""),
+            podeAtribuir: !soProf && sb.status !== "cancelada",
+            temErro: this.state.subErro && this.state.subErro.id === sb.id,
+            erro: (this.state.subErro && this.state.subErro.id === sb.id)
+              ? this.state.subErro.texto : "",
+            candidatas: docentes.filter(n => n !== sb.pedidoPor).map(n => ({
+              label: n,
+              bg: sb.cobre === n ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: sb.cobre === n ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: () => {
+                const r = CRM.atribuirSubstituta(sb.id, n, quem);
+                this.setState({ subErro: r.ok ? null : { id: sb.id, texto: r.erro } });
+                this.bump();
+              }
+            }))
+          }))
+        };
+      })(),
 
       renovNumeros: [
         { v: String(nRenov), k: nRenov === 1 ? "renovou" : "renovaram", cor: "var(--color-success-dark)" },
@@ -935,6 +1285,7 @@ class Component extends DCLogic {
         if (cap > 0) patch.capacidade = cap;
         set(this.edProjetoRef, "projeto"); set(this.edMeetRef, "meet"); set(this.edGuideRef, "guide");
         set(this.edCadernoRef, "notebook"); set(this.edSlidesRef, "slides");
+        set(this.edFormatoRef, "formato");
         set(this.edSyllabusRef, "syllabus"); set(this.edCalRef, "calendario");
         set(this.edGravadasRef, "gravadas");
         // mudar nível ou horário muda o rótulo: as alunas vão junto
@@ -947,6 +1298,19 @@ class Component extends DCLogic {
         this.setState({ editando: false });
         this.bump();
       },
+      formatoOpts: [
+        { id: "digital", label: "Caderno digital, no app" },
+        { id: "papel", label: "Sem computador: no papel" }
+      ].map(o => Object.assign({ sel: (u.formato || "digital") === o.id }, o)),
+      // O rodapé do 07: como esta turma trabalha, e a porta para ver o
+      // plano com os olhos da aluna antes de publicar.
+      planoRodape: (u.formato === "papel")
+        ? "Turma sem computador: as tarefas vão no papel. Para mudar, edite a turma."
+        : "Turma com caderno digital: as tarefas abrem no app da aluna quando a aula começa. Para mudar, edite a turma.",
+      planoVerComoAluna: alunas[0]
+        ? ("ISR%20-%20Aluna%20v4.dc.html?id=" + encodeURIComponent(alunas[0].id))
+        : "",
+      planoTemAluna: alunas.length > 0,
       pedidoEnviado: this.state.pedidoEnviado,
       onPedirGabi: () => {
         const tipo = this.val(this.pgTipoRef) || "Revisar aula";
