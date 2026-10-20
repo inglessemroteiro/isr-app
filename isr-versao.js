@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-j",
+  numero: "2026.10.20-k",
   data: "20/10/2026",
-  nota: "Alunas e Materiais conferidas contra os arquivos 06 e 10"
+  nota: "A página da turma em inglês, as datas do clube que se deixam escrever, e a escala do desenho"
 };

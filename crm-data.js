@@ -9689,6 +9689,34 @@
     wrapup: "var(--color-error-light)"
   };
   function faseCor(id) { return FASE_CORES[id] || "var(--color-button-secondary)"; }
+
+  // ── A COR DO NÍVEL ───────────────────────────────────────────
+  //
+  // Mora aqui porque o arquivo 04 do handoff exige que a faixa do
+  // cartão da turma, no painel, tenha a MESMA cor da tela de Turmas da
+  // coordenação. Eram dois mapas, cada tela com o seu, e já tinham
+  // divergido: no painel o A1 era bege, na página da turma era o A0.
+  //
+  // Nenhuma é #f2ebe3: esse é o fundo da página, e a faixa pintada
+  // com ele simplesmente não aparecia — era o caso do First Steps.
+  // Do quente ao frio, na ordem dos níveis: a faixa vira uma régua, e
+  // quem tem seis turmas na tela acha a que procura sem ler o rótulo.
+  var CORES_NIVEL = [
+    ["A0", "FIRST STEPS", "var(--color-error-light)"],
+    ["A1", "BASICS", "var(--color-warning-light)"],
+    ["A2", "ESSENTIALS", "var(--color-secondary-100)"],
+    ["B1", "SPEAKING", "var(--color-primary-50)"],
+    ["B2", "ADVANCED", "var(--color-primary-100)"]
+  ];
+  function corDoNivel(nivel) {
+    var n = String(nivel || "").toUpperCase();
+    for (var i = 0; i < CORES_NIVEL.length; i++) {
+      if (n.indexOf(CORES_NIVEL[i][0]) >= 0 || n.indexOf(CORES_NIVEL[i][1]) >= 0) {
+        return CORES_NIVEL[i][2];
+      }
+    }
+    return "var(--color-tertiary-50)";
+  }
   function fasesDoPlano() {
     return FASES.map(function (f) { return Object.assign({ cor: faseCor(f.id) }, f); });
   }
@@ -12082,18 +12110,25 @@
   // O que um clube precisa ter para ser publicado. Rascunho pode
   // estar pela metade — é para isso que rascunho existe —, mas o que
   // a aluna vê no catálogo não pode estar sem horário ou sem onde é.
+  // Devolve CÓDIGOS, não frases: a tela do professor fala português ou
+  // inglês conforme quem está logado, e uma frase pronta em português
+  // vinda daqui aparecia em inglês no meio do resto traduzido.
+  // FALTA_ROTULOS tem as palavras, para quem precisa escrever a frase.
+  var FALTA_ROTULOS = { nome: "nome", descricao: "descrição", nivel: "nível",
+    horario: "horário", encontros: "as 4 datas dos encontros", vagas: "vagas",
+    endereco: "o endereço", link: "o link" };
   function faltaParaPublicar(c) {
     var falta = [];
     if (!String(c.nome || "").trim()) falta.push("nome");
-    if (!String(c.descricao || "").trim()) falta.push("descrição");
-    if (!String(c.nivel || "").trim() || c.nivel === "") falta.push("nível");
-    if (!String(c.dia || "").trim() || !String(c.hora || "").trim()) falta.push("horário");
+    if (!String(c.descricao || "").trim()) falta.push("descricao");
+    if (!String(c.nivel || "").trim()) falta.push("nivel");
+    if (!String(c.dia || "").trim() || !String(c.hora || "").trim()) falta.push("horario");
     if ((c.encontros || []).filter(function (e) { return e && e.data; }).length < 4) {
-      falta.push("as 4 datas dos encontros");
+      falta.push("encontros");
     }
     if (!(parseInt(c.vagas, 10) > 0)) falta.push("vagas");
     if (c.formato === "presencial" ? !String(c.local || "").trim() : !String(c.link || "").trim()) {
-      falta.push(c.formato === "presencial" ? "o endereço" : "o link");
+      falta.push(c.formato === "presencial" ? "endereco" : "link");
     }
     return falta;
   }
@@ -12132,7 +12167,8 @@
     if (!c) return { ok: false, erro: "Clube não encontrado." };
     var falta = faltaParaPublicar(c);
     if (falta.length) {
-      return { ok: false, erro: "Falta " + falta.join(", ") + " para publicar." };
+      return { ok: false, erro: "Falta " + falta.map(function (k) {
+        return FALTA_ROTULOS[k] || k; }).join(", ") + " para publicar." };
     }
     var l = clubesRaw();
     var reg = l.filter(function (x) { return x.id === id; })[0];
@@ -15668,6 +15704,7 @@
     materiaisDoCiclo: materiaisDoCiclo, guiaDoNivel: guiaDoNivel,
     salvarMateriais: salvarMateriais,
     fasesDoPlano: fasesDoPlano, faseCor: faseCor, faseLabel: faseLabel,
+    CORES_NIVEL: CORES_NIVEL, corDoNivel: corDoNivel,
     syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
     semearSyllabus: semearSyllabus,
     apagarSessaoSyllabus: apagarSessaoSyllabus,
@@ -15716,6 +15753,7 @@
     faltasSeguidas: faltasSeguidas, alunasComFaltasSeguidas: alunasComFaltasSeguidas,
     clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
     clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
+    FALTA_ROTULOS: FALTA_ROTULOS,
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
     faltasSeguidasNoClube: faltasSeguidasNoClube,
