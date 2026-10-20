@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-e",
+  numero: "2026.10.20-f",
   data: "20/10/2026",
-  nota: "A aba Hoje, pelo 01"
+  nota: "Particulares e a chamada que se edita de propósito"
 };
