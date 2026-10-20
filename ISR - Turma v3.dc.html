@@ -23,7 +23,7 @@
 
     <sc-if value="{{ naoEncontrada }}">
       <div class="isr-cartao" style="text-align: center; padding: 60px 20px; border: 1px dashed var(--color-tertiary-50); border-radius: 18px; color: var(--color-tertiary-500)">
-        <p style="margin: 0; font-size: 14px;">Turma não encontrada. Abra pela tela Turmas & Projetos.</p>
+        <p style="margin: 0; font-size: 14px;">{{ tSemTurma }}</p>
       </div>
     </sc-if>
 
@@ -41,12 +41,18 @@
           <div style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ linhaMeta }}</div>
           <h1 style="margin: 3px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.15; color: var(--color-primary-900);">{{ nomeDaTurma }}</h1>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <!-- PT / EN · a mesma escolha do painel, porque é aqui dentro
+               que a professora passa a aula inteira. -->
+          <div style="display: flex; gap: 3px; background: var(--color-neutral-0); border-radius: 999px; padding: 4px;">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onPT }}" style="padding: 7px 13px; font-size: 12px; background: {{ ptBg }}; color: {{ ptFg }}">PT</button>
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onEN }}" style="padding: 7px 13px; font-size: 12px; background: {{ enBg }}; color: {{ enFg }}">EN</button>
+          </div>
           <sc-if value="{{ podeEditarTurma }}">
             <button class="isr-botao isr-botao--pilula" onclick="{{ onToggleEditar }}" style="background: {{ edBg }}; color: {{ edFg }}; font-size: 12px; padding: 9px 14px">{{ edLabel }}</button>
           </sc-if>
           <sc-if value="{{ temMeet }}">
-            <a href="{{ meet }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">Entrar na aula →</a>
+            <a href="{{ meet }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 999px;">{{ tEntrarAula }}</a>
           </sc-if>
         </div>
       </header>
@@ -71,7 +77,7 @@
         <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 
           <!-- 1 · A FICHA DA TURMA -->
-          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column">
+          <section class="isr-cartao" style="flex: 1 1 0; min-width: 300px; padding: 0; overflow: hidden; display: flex; flex-direction: column">
             <div style="background: {{ gFaixaBg }}; color: var(--color-primary-900); padding: 11px 20px; font-size: 12px; font-weight: 800;">{{ gFaixa }}</div>
             <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
               <div>
@@ -81,7 +87,7 @@
 
               <div>
                 <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline;">
-                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">ocupação</span>
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tOcupacao }}</span>
                   <span style="font-size: 13px; font-weight: 800; color: {{ gOcupTextoCor }};">{{ gOcup }}</span>
                 </div>
                 <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden; margin-top: 6px;">
@@ -104,8 +110,8 @@
           <!-- Quem marca é a coordenação. A professora lê: ela pede a
                substituição pela aba Hoje, e não escolhe quem cobre a
                própria aula. -->
-          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
-            <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Professor substituto</div>
+          <section class="isr-cartao" style="flex: 1 1 0; min-width: 300px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ tSubstituto }}</div>
 
             <sc-if value="{{ subVazio }}">
               <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">{{ subVazioTexto }}</div>
@@ -139,32 +145,32 @@
       <!-- EDITAR TURMA / MATERIAIS -->
       <sc-if value="{{ editando }}">
         <div class="isr-cartao" style="padding: 16px 18px; margin-bottom: 16px">
-          <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 4px;">Editar turma</div>
-          <p style="margin: 0 0 10px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">Campos em branco não são alterados. A professora vem do cadastro da Equipe; a troca reflete na folha de pagamento dela.</p>
+          <div style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500); margin-bottom: 4px;">{{ tEditarTurma }}</div>
+          <p style="margin: 0 0 10px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ tEditarNota }}</p>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-            <input class="isr-campo" ref="{{ edNivelRef }}" placeholder="Nível: {{ nivel }}" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edHorarioRef }}" placeholder="Dia e horário: {{ horario }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edNivelRef }}" placeholder="{{ tNivel }}: {{ nivel }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edHorarioRef }}" placeholder="{{ tDiaHora }}: {{ horario }}" style="padding: 9px 11px; font-size: 12px" />
             <select class="isr-campo" ref="{{ edTeacherRef }}" style="padding: 9px 11px; font-size: 12px">
               <sc-for list="{{ profOpts }}" as="po" hint-placeholder-count="6">
                 <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
               </sc-for>
             </select>
-            <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ capacidade }}" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="Projeto: {{ projeto }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="{{ tCapacidade }}: {{ capacidade }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="{{ tProjetoRot }}: {{ projeto }}" style="padding: 9px 11px; font-size: 12px" />
             <select class="isr-campo" ref="{{ edFormatoRef }}" style="padding: 9px 11px; font-size: 12px">
               <sc-for list="{{ formatoOpts }}" as="fo" hint-placeholder-count="2">
                 <option value="{{ fo.id }}" selected="{{ fo.sel }}">{{ fo.label }}</option>
               </sc-for>
             </select>
-            <input class="isr-campo" ref="{{ edMeetRef }}" defaultValue="{{ edMeetAtual }}" placeholder="Link da aula (Meet)" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edGuideRef }}" defaultValue="{{ edGuideAtual }}" placeholder="Link do Teacher's Guide" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edCadernoRef }}" defaultValue="{{ edCadernoAtual }}" placeholder="Link do Caderno de tarefas" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edSlidesRef }}" defaultValue="{{ edSlidesAtual }}" placeholder="Link dos Slides" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edSyllabusRef }}" defaultValue="{{ edSyllabusAtual }}" placeholder="Link do Syllabus" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edCalRef }}" defaultValue="{{ edCalAtual }}" placeholder="Link do Calendário" style="padding: 9px 11px; font-size: 12px" />
-            <input class="isr-campo" ref="{{ edGravadasRef }}" defaultValue="{{ edGravadasAtual }}" placeholder="Link das aulas gravadas da turma" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edMeetRef }}" defaultValue="{{ edMeetAtual }}" placeholder="{{ tLinkMeet }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edGuideRef }}" defaultValue="{{ edGuideAtual }}" placeholder="{{ tLinkGuia }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edCadernoRef }}" defaultValue="{{ edCadernoAtual }}" placeholder="{{ tLinkCaderno }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edSlidesRef }}" defaultValue="{{ edSlidesAtual }}" placeholder="{{ tLinkSlides }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edSyllabusRef }}" defaultValue="{{ edSyllabusAtual }}" placeholder="{{ tLinkSyllabus }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edCalRef }}" defaultValue="{{ edCalAtual }}" placeholder="{{ tLinkCalendario }}" style="padding: 9px 11px; font-size: 12px" />
+            <input class="isr-campo" ref="{{ edGravadasRef }}" defaultValue="{{ edGravadasAtual }}" placeholder="{{ tLinkGravacoes }}" style="padding: 9px 11px; font-size: 12px" />
           </div>
-          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarEdicao }}" style="font-size: 12px; padding: 10px 20px">Salvar</button>
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarEdicao }}" style="font-size: 12px; padding: 10px 20px">{{ tSalvar }}</button>
         </div>
       </sc-if>
 
@@ -187,12 +193,12 @@
              lado do nome — dinheiro na tela de quem dá aula —, e o
              botão de remover ficava à mão de quem não remove. -->
         <sc-if value="{{ tAlunas }}">
-          <section class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+          <section class="isr-cartao" style="padding: 26px 28px; display: flex; flex-direction: column; gap: 10px">
             <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
-              <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Alunas · {{ ocupLabel }}</div>
+              <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ tAlunasTit }} {{ ocupLabel }}</div>
             </div>
             <sc-if value="{{ semAlunas }}">
-              <div style="font-size: 14px; color: var(--color-primary-800);">Nenhuma aluna nesta turma ainda.</div>
+              <div style="font-size: 14px; color: var(--color-primary-800);">{{ tSemAlunas }}</div>
             </sc-if>
             <div style="display: flex; flex-direction: column;">
               <sc-for list="{{ alunas }}" as="al" hint-placeholder-count="5">
@@ -204,7 +210,7 @@
                     <span style="flex: none; font-size: 12.5px; font-weight: 700; color: #a3392c;">{{ al.alerta }}</span>
                   </sc-if>
                   <sc-if value="{{ al.podeTirar }}">
-                    <button class="isr-botao isr-botao--texto" onclick="{{ al.onTirar }}" title="Remove da turma. A matrícula e o contrato permanecem." style="flex: none; color: var(--color-tertiary-200); font-size: 11px; padding: 4px 6px">remover</button>
+                    <button class="isr-botao isr-botao--texto" onclick="{{ al.onTirar }}" title="{{ tRemoverTit }}" style="flex: none; color: var(--color-tertiary-200); font-size: 11px; padding: 4px 6px">{{ tRemover }}</button>
                   </sc-if>
                 </div>
               </sc-for>
@@ -214,10 +220,10 @@
                  coordenação: a professora lê a lista dela. -->
             <sc-if value="{{ podeMexerAlunas }}">
               <div style="border-top: 1px solid var(--color-button-secondary); padding-top: 12px; margin-top: 2px;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">Adicionar aluna à turma</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ tAddAluna }}</div>
                 <input class="isr-campo" ref="{{ buscaRef }}" oninput="{{ onBuscar }}" placeholder="{{ buscaPlaceholder }}" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13px" />
                 <sc-if value="{{ semVaga }}">
-                  <p style="margin: 8px 0 0; font-size: 12px; color: var(--color-error-dark); line-height: 1.5;">A turma está lotada. Aumente a capacidade em "Editar turma" antes de incluir.</p>
+                  <p style="margin: 8px 0 0; font-size: 12px; color: var(--color-error-dark); line-height: 1.5;">{{ tLotada }}</p>
                 </sc-if>
                 <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
                   <sc-for list="{{ candidatas }}" as="ca" hint-placeholder-count="6">
@@ -239,8 +245,8 @@
              dela e nenhuma correção desfaz o ajuste. -->
         <sc-if value="{{ tPlano }}">
           <sc-if value="{{ planoVazio }}">
-            <div class="isr-cartao" style="padding: 18px 22px">
-              <div style="font-size: 16px; font-weight: 600;">Plano das aulas</div>
+            <div class="isr-cartao" style="padding: 24px 26px">
+              <div style="font-size: 16px; font-weight: 600;">{{ tPlanoTit }}</div>
               <p style="margin: 6px 0 0; font-size: 13px; color: var(--color-tertiary-500); line-height: 1.6;">{{ planoVazioTexto }}</p>
             </div>
           </sc-if>
@@ -254,7 +260,7 @@
           <sc-if value="{{ podeSyllabus }}">
             <div class="isr-cartao" style="padding: 16px 20px; margin-top: 14px; background: var(--color-button-secondary)">
               <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">Syllabus de {{ syNivel }} · ciclo {{ syCiclo }}</div>
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">{{ tSyllabusDe }} {{ syNivel }} {{ tCiclo }} {{ syCiclo }}</div>
                 <button class="isr-botao isr-botao--texto" onclick="{{ onAbrirSyllabus }}" style="font-size: 12.5px; color: var(--color-primary-900)">{{ syAbrirLabel }}</button>
               </div>
               <p style="margin: 5px 0 0; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ sySubtitulo }}</p>
@@ -264,10 +270,10 @@
                   <div style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-neutral-0)">
                     <span style="flex: 0 0 56px; font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500); padding-top: 9px">S{{ sy.n }}</span>
                     <div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-                      <input class="isr-campo" value="{{ sy.titulo }}" onchange="{{ sy.onTitulo }}" placeholder="Título da sessão" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 13px; background: var(--color-neutral-0)" />
-                      <input class="isr-campo" value="{{ sy.objetivo }}" onchange="{{ sy.onObjetivo }}" placeholder="O que a aluna sai sabendo" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 12.5px; background: var(--color-neutral-0)" />
+                      <input class="isr-campo" value="{{ sy.titulo }}" onchange="{{ sy.onTitulo }}" placeholder="{{ phSessaoTitulo }}" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 13px; background: var(--color-neutral-0)" />
+                      <input class="isr-campo" value="{{ sy.objetivo }}" onchange="{{ sy.onObjetivo }}" placeholder="{{ phSessaoObjetivo }}" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 12.5px; background: var(--color-neutral-0)" />
                     </div>
-                    <button class="isr-botao" onclick="{{ sy.onApagar }}" title="Tirar esta sessão do syllabus" style="flex: none; width: 28px; height: 28px; margin-top: 7px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
+                    <button class="isr-botao" onclick="{{ sy.onApagar }}" title="{{ tTirarSessao }}" style="flex: none; width: 28px; height: 28px; margin-top: 7px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
                   </div>
                 </sc-for>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px">
@@ -332,7 +338,7 @@
 
               <sc-if value="{{ planoTemGuia }}">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-neutral-0); border-radius: 20px; padding: 14px 18px">
-                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); flex: 1 1 160px">{{ tMaterialRef }}</span>
                   <sc-if value="{{ planoTemSyllabus }}">
                     <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
                   </sc-if>
@@ -344,7 +350,7 @@
 
               <sc-if value="{{ planoTemObjetivo }}">
                 <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
-                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">o que a aluna sai sabendo</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tSaiSabendo }}</div>
                   <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.4; margin-top: 5px;">{{ planoObjetivo }}</div>
                 </div>
               </sc-if>
@@ -352,13 +358,13 @@
               <!-- O ROTEIRO -->
               <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
-                  <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Roteiro</div>
+                  <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ tRoteiro }}</div>
                   <span style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoMinutos }}</span>
                 </div>
                 <sc-for list="{{ planoEtapas }}" as="pe" hint-placeholder-count="6">
                   <div style="display: flex; gap: 11px; padding: 11px 0; border-top: 1px solid var(--color-button-secondary); opacity: {{ pe.op }}">
                     <sc-if value="{{ pe.editando }}">
-                      <button class="isr-botao" onclick="{{ pe.onAlternar }}" title="Incluir nesta aula" style="flex: none; width: 24px; height: 24px; border-radius: 7px; font-size: 13px; font-weight: 700; background: {{ pe.chkBg }}; color: {{ pe.chkFg }}; border: 2px solid {{ pe.chkBorda }}">{{ pe.chk }}</button>
+                      <button class="isr-botao" onclick="{{ pe.onAlternar }}" title="{{ tIncluirNaAula }}" style="flex: none; width: 24px; height: 24px; border-radius: 7px; font-size: 13px; font-weight: 700; background: {{ pe.chkBg }}; color: {{ pe.chkFg }}; border: 2px solid {{ pe.chkBorda }}">{{ pe.chk }}</button>
                     </sc-if>
                     <sc-if value="{{ pe.lendo }}">
                       <div style="flex: none; width: 50px; font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500); padding-top: 2px">{{ pe.min }} min</div>
@@ -374,26 +380,26 @@
                         </sc-if>
                       </div>
                       <sc-if value="{{ pe.editando }}">
-                        <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" placeholder="O que acontece nesta etapa" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
+                        <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" placeholder="{{ phEtapa }}" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
                       </sc-if>
                       <sc-if value="{{ pe.mostraPergunta }}">
                         <div style="background: var(--color-primary-50); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
-                          <div style="font-size: 11.5px; font-weight: 700; color: var(--color-primary-800);">as alunas respondem no caderno</div>
+                          <div style="font-size: 11.5px; font-weight: 700; color: var(--color-primary-800);">{{ tRespondemCaderno }}</div>
                           <div style="font-size: 13.5px; line-height: 1.5; margin-top: 2px;">{{ pe.pergunta }}</div>
                         </div>
                       </sc-if>
                       <sc-if value="{{ pe.editando }}">
-                        <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" placeholder="Pergunta para o caderno da aluna (opcional)" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 6px; background: var(--color-primary-50)" />
+                        <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" placeholder="{{ phPergunta }}" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 6px; background: var(--color-primary-50)" />
                       </sc-if>
                     </div>
                     <sc-if value="{{ pe.editando }}">
                       <div style="display: flex; gap: 4px; align-items: center; flex: none; align-self: flex-start">
                         <input class="isr-campo" value="{{ pe.min }}" onchange="{{ pe.onMin }}" style="width: 46px; text-align: center; padding: 6px; font-size: 13px" />
                         <span style="font-size: 11px; color: var(--color-tertiary-500); margin-right: 3px">min</span>
-                        <button class="isr-botao" onclick="{{ pe.onSubir }}" title="Subir" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↑</button>
-                        <button class="isr-botao" onclick="{{ pe.onDescer }}" title="Descer" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↓</button>
+                        <button class="isr-botao" onclick="{{ pe.onSubir }}" title="{{ tSubir }}" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↑</button>
+                        <button class="isr-botao" onclick="{{ pe.onDescer }}" title="{{ tDescer }}" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↓</button>
                         <sc-if value="{{ pe.podeApagar }}">
-                          <button class="isr-botao" onclick="{{ pe.onApagar }}" title="Apagar esta atividade" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
+                          <button class="isr-botao" onclick="{{ pe.onApagar }}" title="{{ tApagarAtividade }}" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
                         </sc-if>
                       </div>
                     </sc-if>
@@ -403,7 +409,7 @@
                 <!-- ACRESCENTAR UMA ATIVIDADE DELA -->
                 <sc-if value="{{ planoEditando }}">
                   <div style="background: var(--color-button-secondary); border-radius: 16px; padding: 13px 15px; margin-top: 12px; display: flex; flex-direction: column; gap: 8px">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">acrescentar atividade sua · desmarque ✓ para tirar uma etapa desta turma</div>
+                    <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ tAcrescentar }}</div>
                     <!-- A etapa em pílulas, com a cor de cada uma: num
                          campo de seleção a professora não via as seis
                          fases, e escolhia a primeira. -->
@@ -414,12 +420,12 @@
                       </sc-for>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
-                      <input class="isr-campo" ref="{{ peTituloRef }}" placeholder="Ex.: Roleplay at the market" style="flex: 1; min-width: 190px; padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
+                      <input class="isr-campo" ref="{{ peTituloRef }}" placeholder="{{ phExemploAtividade }}" style="flex: 1; min-width: 190px; padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
                       <input class="isr-campo" ref="{{ peMinRef }}" value="10" style="width: 54px; text-align: center; padding: 9px 6px; font-size: 13px; background: var(--color-neutral-0)" />
                       <span style="font-size: 12px; color: var(--color-tertiary-500)">min</span>
                     </div>
-                    <input class="isr-campo" ref="{{ pePerguntaRef }}" placeholder="Pergunta para o caderno da aluna (opcional)" style="padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
-                    <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnAddEtapa }}" style="align-self: flex-start; padding: 9px 15px; font-size: 12.5px">Acrescentar ao roteiro</button>
+                    <input class="isr-campo" ref="{{ pePerguntaRef }}" placeholder="{{ phPergunta }}" style="padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
+                    <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnAddEtapa }}" style="align-self: flex-start; padding: 9px 15px; font-size: 12.5px">{{ tAcrescentarRoteiro }}</button>
                   </div>
                 </sc-if>
               </div>
@@ -427,7 +433,7 @@
               <!-- PALAVRAS E HOMEWORK -->
               <div style="display: flex; gap: 16px; flex-wrap: wrap">
                 <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
-                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">palavras · vão para o Review da aluna</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tPalavras }}</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px">
                       <sc-for list="{{ planoPalavras }}" as="pw" hint-placeholder-count="5">
@@ -435,16 +441,16 @@
                       </sc-for>
                     </div>
                     <sc-if value="{{ planoSemPalavras }}">
-                      <div style="font-size: 12.5px; color: var(--color-tertiary-500); margin-top: 6px">Nenhuma palavra nesta sessão.</div>
+                      <div style="font-size: 12.5px; color: var(--color-tertiary-500); margin-top: 6px">{{ tSemPalavras }}</div>
                     </sc-if>
                   </sc-if>
                   <sc-if value="{{ planoEditando }}">
                     <textarea class="isr-campo" ref="{{ pePalavrasRef }}" rows="2" style="width: 100%; padding: 9px 11px; font-size: 13px; margin-top: 7px; resize: vertical; line-height: 1.5; box-sizing: border-box"></textarea>
-                    <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">Separe por vírgula.</div>
+                    <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">{{ tSepareVirgula }}</div>
                   </sc-if>
                 </div>
                 <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
-                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">homework · abre quando a aula termina</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tHomework }}</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="font-size: 13.5px; line-height: 1.55; margin-top: 7px">{{ planoHomework }}</div>
                   </sc-if>
@@ -455,7 +461,7 @@
               </div>
 
               <sc-if value="{{ planoEditando }}">
-                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnSalvar }}" style="align-self: flex-start; padding: 10px 17px; font-size: 13px">Salvar o roteiro</button>
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnSalvar }}" style="align-self: flex-start; padding: 10px 17px; font-size: 13px">{{ tSalvarRoteiro }}</button>
               </sc-if>
 
               <!-- O RODAPÉ -->
@@ -464,7 +470,7 @@
               <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; padding-top: 4px">
                 <span style="flex: 1; min-width: 220px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ planoRodape }}</span>
                 <sc-if value="{{ planoTemAluna }}">
-                  <a href="{{ planoVerComoAluna }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Ver como aluna →</a>
+                  <a href="{{ planoVerComoAluna }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">{{ tVerComoAluna }}</a>
                 </sc-if>
               </div>
             </div>
@@ -475,17 +481,17 @@
         <sc-if value="{{ tChamadas }}">
           <div class="isr-cartao" style="padding: 14px 16px">
             <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px;">
-              <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">Chamadas recentes</span>
-              <a href="{{ chamadaRetroHref }}" style="text-decoration: none; font-size: 11px; font-weight: 600; color: var(--color-tertiary-500);">Chamada retroativa →</a>
+              <span style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--color-tertiary-500);">{{ tChamadasRecentes }}</span>
+              <a href="{{ chamadaRetroHref }}" style="text-decoration: none; font-size: 11px; font-weight: 600; color: var(--color-tertiary-500);">{{ tChamadaRetroativa }}</a>
             </div>
             <sc-if value="{{ semChamadas }}">
-              <div style="font-size: 12px; color: var(--color-tertiary-300);">Nenhuma chamada registrada. Use "Fazer chamada" ou "Chamada retroativa" para uma aula passada.</div>
+              <div style="font-size: 12px; color: var(--color-tertiary-300);">{{ tSemChamadas }}</div>
             </sc-if>
             <sc-for list="{{ chamadas }}" as="ch" hint-placeholder-count="3">
-              <a href="{{ ch.href }}" title="Abrir esta chamada no Painel do Professor" style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--color-bg-default); font-size: 12px; text-decoration: none;">
+              <a href="{{ ch.href }}" title="{{ tAbrirChamadaTit }}" style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--color-bg-default); font-size: 12px; text-decoration: none;">
                 <strong style="color: var(--color-primary-900); border-bottom: 1px solid rgba(22,73,81,0.25);">{{ ch.data }}</strong>
                 <span style="color: var(--color-primary-800); flex: 1;">{{ ch.resumo }}</span>
-                <span style="color: var(--color-primary-500); font-weight: 600; font-size: 11px;">Abrir →</span>
+                <span style="color: var(--color-primary-500); font-weight: 600; font-size: 11px;">{{ tAbrir }}</span>
               </a>
             </sc-for>
           </div>
@@ -498,12 +504,12 @@
              Marcar a entrega é da professora: é ela que recebe. -->
         <sc-if value="{{ tProjeto }}">
           <sc-if value="{{ projSemProjeto }}">
-            <div class="isr-cartao" style="padding: 20px 22px; font-size: 14px; color: var(--color-primary-800);">{{ projVazioTexto }}</div>
+            <div class="isr-cartao" style="padding: 26px 28px; font-size: 14px; color: var(--color-primary-800);">{{ projVazioTexto }}</div>
           </sc-if>
           <sc-if value="{{ projTem }}">
-            <div class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+            <div class="isr-cartao" style="padding: 26px 28px; display: flex; flex-direction: column; gap: 12px">
               <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap">
-                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">{{ projTitulo }}</div>
+                <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ projTitulo }}</div>
                 <div style="font-size: 16px; font-weight: 800; color: var(--color-primary-900);">{{ projValor }}</div>
               </div>
               <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden;">
@@ -519,7 +525,7 @@
                 </sc-for>
               </div>
               <sc-if value="{{ projVazio }}">
-                <div style="font-size: 13px; color: var(--color-tertiary-500);">Nenhuma aluna matriculada nesta turma.</div>
+                <div style="font-size: 13px; color: var(--color-tertiary-500);">{{ tSemMatriculadas }}</div>
               </sc-if>
             </div>
           </sc-if>
@@ -533,9 +539,9 @@
         <sc-if value="{{ tMateriais }}">
           <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 
-            <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+            <section class="isr-cartao" style="flex: 1 1 0; min-width: 300px; padding: 26px 28px; display: flex; flex-direction: column; gap: 10px">
               <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
-                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Materiais da turma</div>
+                <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ tMateriaisTit }}</div>
                 <sc-if value="{{ podeEditarLinks }}">
                   <button class="isr-botao isr-botao--texto" onclick="{{ onEditarLinks }}" style="font-size: 13px; font-weight: 700; color: var(--color-primary-500); padding: 2px 0">{{ editarLinksLabel }}</button>
                 </sc-if>
@@ -546,35 +552,35 @@
                     <span style="flex: none; width: 8px; height: 8px; border-radius: 50%; background: {{ mt.cor }};"></span>
                     <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 700; color: {{ mt.labelCor }};">{{ mt.label }}</span>
                     <sc-if value="{{ mt.temLink }}">
-                      <a href="{{ mt.link }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Abrir →</a>
+                      <a href="{{ mt.link }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">{{ tAbrir }}</a>
                     </sc-if>
                     <sc-if value="{{ mt.semLink }}">
-                      <span style="flex: none; font-size: 12.5px; color: var(--color-tertiary-500);">sem link</span>
+                      <span style="flex: none; font-size: 12.5px; color: var(--color-tertiary-500);">{{ tSemLink }}</span>
                     </sc-if>
                   </div>
                   <sc-if value="{{ linksEditando }}">
-                    <input class="isr-campo" value="{{ mt.valor }}" onchange="{{ mt.onMuda }}" placeholder="Colar link…" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 12.5px; margin: 2px 0 8px" />
+                    <input class="isr-campo" value="{{ mt.valor }}" onchange="{{ mt.onMuda }}" placeholder="{{ phColarLink }}" style="width: 100%; box-sizing: border-box; padding: 9px 12px; font-size: 12.5px; margin: 2px 0 8px" />
                   </sc-if>
                 </sc-for>
               </div>
               <sc-if value="{{ linksEditando }}">
-                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarLinks }}" style="align-self: flex-start; font-size: 13px; padding: 11px 18px">Salvar links</button>
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onSalvarLinks }}" style="align-self: flex-start; font-size: 13px; padding: 11px 18px">{{ tSalvarLinks }}</button>
               </sc-if>
             </section>
 
-            <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
-              <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Apoio pedagógico</div>
+            <section class="isr-cartao" style="flex: 1 1 0; min-width: 300px; padding: 26px 28px; display: flex; flex-direction: column; gap: 10px">
+              <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.03em;">{{ tApoio }}</div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <select class="isr-campo" ref="{{ pgTipoRef }}" style="padding: 11px 13px; font-size: 13px">
-                  <option value="Revisar aula">Revisar aula</option>
-                  <option value="Planejar aula">Planejar aula</option>
-                  <option value="Revisar material">Revisar material</option>
+                  <option value="Revisar aula">{{ tRevisarAula }}</option>
+                  <option value="Planejar aula">{{ tPlanejarAula }}</option>
+                  <option value="Revisar material">{{ tRevisarMaterial }}</option>
                 </select>
-                <input class="isr-campo" ref="{{ pgDetalheRef }}" placeholder="Qual aula ou material" style="flex: 1; min-width: 150px; font-size: 13px; padding: 11px 13px" />
-                <button class="isr-botao isr-botao--pilula" onclick="{{ onPedirGabi }}" style="background: var(--color-primary-500); color: var(--color-neutral-0); font-size: 13px; font-weight: 700; padding: 11px 18px">Solicitar</button>
+                <input class="isr-campo" ref="{{ pgDetalheRef }}" placeholder="{{ phQualAula }}" style="flex: 1; min-width: 150px; font-size: 13px; padding: 11px 13px" />
+                <button class="isr-botao isr-botao--pilula" onclick="{{ onPedirGabi }}" style="background: var(--color-primary-500); color: var(--color-neutral-0); font-size: 13px; font-weight: 700; padding: 11px 18px">{{ tSolicitar }}</button>
               </div>
               <sc-if value="{{ semPedidos }}">
-                <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.55;">Nenhum pedido de apoio nesta turma.</div>
+                <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.55;">{{ tSemPedidos }}</div>
               </sc-if>
               <div style="display: flex; flex-direction: column;">
                 <sc-for list="{{ pedidosApoio }}" as="pa" hint-placeholder-count="3">
@@ -585,7 +591,7 @@
                 </sc-for>
               </div>
               <sc-if value="{{ pedidoEnviado }}">
-                <p style="margin: 0; font-size: 12.5px; font-weight: 700; color: var(--color-success-dark);">Solicitação enviada.</p>
+                <p style="margin: 0; font-size: 12.5px; font-weight: 700; color: var(--color-success-dark);">{{ tEnviada }}</p>
               </sc-if>
             </section>
           </div>
@@ -596,8 +602,8 @@
              não respondeu. É desta conta que sai a vaga do ciclo
              seguinte, e ela estava só na soma da escola. -->
         <sc-if value="{{ tRenovacao }}">
-          <div class="isr-cartao" style="padding: 18px 22px">
-            <div style="font-size: 16px; font-weight: 600;">Renovação e vagas</div>
+          <div class="isr-cartao" style="padding: 24px 26px">
+            <div style="font-size: 16px; font-weight: 600;">{{ tRenovTit }}</div>
             <p style="margin: 4px 0 12px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ renovResumo }}</p>
             <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 4px;">
               <sc-for list="{{ renovNumeros }}" as="rn" hint-placeholder-count="4">
@@ -614,7 +620,7 @@
               </div>
             </sc-for>
             <sc-if value="{{ semRenov }}">
-              <div style="padding: 14px 0 2px; font-size: 13.5px; color: var(--color-primary-800);">Nenhuma aluna matriculada nesta turma.</div>
+              <div style="padding: 14px 0 2px; font-size: 13.5px; color: var(--color-primary-800);">{{ tSemMatriculadas }}</div>
             </sc-if>
           </div>
         </sc-if>
@@ -654,17 +660,321 @@ class Component extends DCLogic {
     }, 0);
   }
 
+
+  // ── PT / EN ──
+  // A professora que não fala português trabalha o dia inteiro aqui
+  // dentro: é desta tela que ela dá aula. A escolha é a MESMA do
+  // painel — mesma chave no navegador —, senão trocar para EN no
+  // painel e abrir uma turma devolvia tudo em português.
+  DIC = {
+      "tSemTurma": [
+          "Turma não encontrada. Abra pela tela Turmas & Projetos.",
+          "Class not found. Open it from the Classes & Projects screen."
+      ],
+      "tEntrarAula": [
+          "Entrar na aula →",
+          "Join the class →"
+      ],
+      "tOcupacao": [
+          "ocupação",
+          "occupancy"
+      ],
+      "tSubstituto": [
+          "Professor substituto",
+          "Cover teacher"
+      ],
+      "tEditarTurma": [
+          "Editar turma",
+          "Edit class"
+      ],
+      "tEditarNota": [
+          "Campos em branco não são alterados. A professora vem do cadastro da Equipe; a troca reflete na folha de pagamento dela.",
+          "Blank fields are left as they are. The teacher comes from the Team records; changing her shows up on her payroll."
+      ],
+      "tNivel": [
+          "Nível",
+          "Level"
+      ],
+      "tDiaHora": [
+          "Dia e horário",
+          "Day and time"
+      ],
+      "tCapacidade": [
+          "Capacidade",
+          "Capacity"
+      ],
+      "tProjetoRot": [
+          "Projeto",
+          "Project"
+      ],
+      "tLinkMeet": [
+          "Link da aula (Meet)",
+          "Class link (Meet)"
+      ],
+      "tLinkGuia": [
+          "Link do Teacher’s Guide",
+          "Teacher’s Guide link"
+      ],
+      "tLinkCaderno": [
+          "Link do Caderno de tarefas",
+          "Notebook link"
+      ],
+      "tLinkSlides": [
+          "Link dos Slides",
+          "Slides link"
+      ],
+      "tLinkSyllabus": [
+          "Link do Syllabus",
+          "Syllabus link"
+      ],
+      "tLinkCalendario": [
+          "Link do Calendário",
+          "Calendar link"
+      ],
+      "tLinkGravacoes": [
+          "Link das aulas gravadas da turma",
+          "Link to the class recordings"
+      ],
+      "tSalvar": [
+          "Salvar",
+          "Save"
+      ],
+      "tAlunasTit": [
+          "Alunas ·",
+          "Students ·"
+      ],
+      "tSemAlunas": [
+          "Nenhuma aluna nesta turma ainda.",
+          "No student in this class yet."
+      ],
+      "tRemover": [
+          "remover",
+          "remove"
+      ],
+      "tRemoverTit": [
+          "Remove da turma. A matrícula e o contrato permanecem.",
+          "Removes her from the class. The enrolment and the contract stay."
+      ],
+      "tAddAluna": [
+          "Adicionar aluna à turma",
+          "Add a student to the class"
+      ],
+      "tLotada": [
+          "A turma está lotada. Aumente a capacidade em \"Editar turma\" antes de incluir.",
+          "The class is full. Raise the capacity under \"Edit class\" before adding anyone."
+      ],
+      "tPlanoTit": [
+          "Plano das aulas",
+          "Lesson plans"
+      ],
+      "tSyllabusDe": [
+          "Syllabus de",
+          "Syllabus for"
+      ],
+      "tCiclo": [
+          "· ciclo",
+          "· cycle"
+      ],
+      "phSessaoTitulo": [
+          "Título da sessão",
+          "Session title"
+      ],
+      "phSessaoObjetivo": [
+          "O que a aluna sai sabendo",
+          "What the student leaves knowing"
+      ],
+      "tTirarSessao": [
+          "Tirar esta sessão do syllabus",
+          "Take this session out of the syllabus"
+      ],
+      "tMaterialRef": [
+          "material de referência",
+          "reference material"
+      ],
+      "tSaiSabendo": [
+          "o que a aluna sai sabendo",
+          "what the student leaves knowing"
+      ],
+      "tRoteiro": [
+          "Roteiro",
+          "Lesson flow"
+      ],
+      "tIncluirNaAula": [
+          "Incluir nesta aula",
+          "Include in this class"
+      ],
+      "tMin": [
+          "min",
+          "min"
+      ],
+      "tSua": [
+          "sua",
+          "yours"
+      ],
+      "phEtapa": [
+          "O que acontece nesta etapa",
+          "What happens in this step"
+      ],
+      "tRespondemCaderno": [
+          "as alunas respondem no caderno",
+          "students answer in the notebook"
+      ],
+      "phPergunta": [
+          "Pergunta para o caderno da aluna (opcional)",
+          "Question for the student’s notebook (optional)"
+      ],
+      "tSubir": [
+          "Subir",
+          "Move up"
+      ],
+      "tDescer": [
+          "Descer",
+          "Move down"
+      ],
+      "tApagarAtividade": [
+          "Apagar esta atividade",
+          "Delete this activity"
+      ],
+      "tAcrescentar": [
+          "acrescentar atividade sua · desmarque ✓ para tirar uma etapa desta turma",
+          "add your own activity · untick ✓ to drop a step from this class"
+      ],
+      "tEtapa": [
+          "etapa",
+          "step"
+      ],
+      "phExemploAtividade": [
+          "Ex.: Roleplay at the market",
+          "e.g. Roleplay at the market"
+      ],
+      "tAcrescentarRoteiro": [
+          "Acrescentar ao roteiro",
+          "Add to the lesson"
+      ],
+      "tPalavras": [
+          "palavras · vão para o Review da aluna",
+          "words · they go to the student’s Review"
+      ],
+      "tSemPalavras": [
+          "Nenhuma palavra nesta sessão.",
+          "No words in this session."
+      ],
+      "tSepareVirgula": [
+          "Separe por vírgula.",
+          "Separate them with commas."
+      ],
+      "tHomework": [
+          "homework · abre quando a aula termina",
+          "homework · opens when the class ends"
+      ],
+      "tSalvarRoteiro": [
+          "Salvar o roteiro",
+          "Save the lesson"
+      ],
+      "tVerComoAluna": [
+          "Ver como aluna →",
+          "View as a student →"
+      ],
+      "tChamadasRecentes": [
+          "Chamadas recentes",
+          "Recent attendance"
+      ],
+      "tChamadaRetroativa": [
+          "Chamada retroativa →",
+          "Backdated attendance →"
+      ],
+      "tSemChamadas": [
+          "Nenhuma chamada registrada. Use \"Fazer chamada\" ou \"Chamada retroativa\" para uma aula passada.",
+          "No attendance recorded. Use \"Take attendance\" or \"Backdated attendance\" for a past class."
+      ],
+      "tAbrirChamadaTit": [
+          "Abrir esta chamada no Painel do Professor",
+          "Open this attendance in the Teacher panel"
+      ],
+      "tAbrir": [
+          "Abrir →",
+          "Open →"
+      ],
+      "tSemMatriculadas": [
+          "Nenhuma aluna matriculada nesta turma.",
+          "No student enrolled in this class."
+      ],
+      "tMateriaisTit": [
+          "Materiais da turma",
+          "Class materials"
+      ],
+      "tSemLink": [
+          "sem link",
+          "no link"
+      ],
+      "phColarLink": [
+          "Colar link…",
+          "Paste link…"
+      ],
+      "tSalvarLinks": [
+          "Salvar links",
+          "Save links"
+      ],
+      "tApoio": [
+          "Apoio pedagógico",
+          "Teaching support"
+      ],
+      "tRevisarAula": [
+          "Revisar aula",
+          "Review a lesson"
+      ],
+      "tPlanejarAula": [
+          "Planejar aula",
+          "Plan a lesson"
+      ],
+      "tRevisarMaterial": [
+          "Revisar material",
+          "Review material"
+      ],
+      "phQualAula": [
+          "Qual aula ou material",
+          "Which lesson or material"
+      ],
+      "tSolicitar": [
+          "Solicitar",
+          "Request"
+      ],
+      "tSemPedidos": [
+          "Nenhum pedido de apoio nesta turma.",
+          "No support request for this class."
+      ],
+      "tEnviada": [
+          "Solicitação enviada.",
+          "Request sent."
+      ],
+      "tRenovTit": [
+          "Renovação e vagas",
+          "Renewals & spots"
+      ]
+  };
+  idioma() {
+    try { return localStorage.getItem("isr_painel_lang") === "en" ? "en" : "pt"; } catch (e) { return "pt"; }
+  }
+  setIdioma(v) {
+    try { localStorage.setItem("isr_painel_lang", v); } catch (e) {}
+    this.bump();
+  }
+  T(en, pt) { return this.idioma() === "en" ? en : pt; }
+  textos() {
+    const en = this.idioma() === "en";
+    const out = {};
+    Object.keys(this.DIC).forEach(k => { out[k] = en ? this.DIC[k][1] : this.DIC[k][0]; });
+    return out;
+  }
+
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
   // A cor da faixa do nível: a mesma de Turmas na gestão, para a
   // turma se reconhecer de longe nas duas telas.
-  CORES_NIVEL = { "First Steps": "var(--color-button-secondary)",
-    "Basics": "var(--color-primary-50)", "Essentials": "var(--color-secondary-100)",
-    "Speaking": "var(--color-warning-light)", "Advanced": "var(--color-error-light)" };
+  // A cor é da camada de dados: ver crm-data.js, CORES_NIVEL.
   corDoNivel(nivel) {
-    const n = String(nivel || "");
-    const k = Object.keys(this.CORES_NIVEL).filter(x => n.indexOf(x) >= 0)[0];
-    return k ? this.CORES_NIVEL[k] : "var(--color-button-secondary)";
+    const C = window.ISRCRM;
+    return C && C.corDoNivel ? C.corDoNivel(nivel) : "var(--color-tertiary-50)";
   }
 
   // "19 out": o dia e o mês por extenso curto. A faixa das sessões
@@ -710,7 +1020,18 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { edFormatoRef: this.edFormatoRef, formatoOpts: [],
+    // Tr para o que os dados montam; o dicionário, para os textos fixos.
+    // Os dois entram em TODO caminho de saída, inclusive os de erro —
+    // val que falta num caminho é campo em branco na tela.
+    const Tr = (en, pt) => this.T(en, pt);
+    const en = this.idioma() === "en";
+    const refs = { ...this.textos(),
+      onPT: () => this.setIdioma("pt"), onEN: () => this.setIdioma("en"),
+      ptBg: en ? "transparent" : "var(--color-primary-900)",
+      ptFg: en ? "var(--color-tertiary-500)" : "var(--color-neutral-0)",
+      enBg: en ? "var(--color-primary-900)" : "transparent",
+      enFg: en ? "var(--color-neutral-0)" : "var(--color-tertiary-500)",
+      edFormatoRef: this.edFormatoRef, formatoOpts: [],
       edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
       edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
       edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef,
@@ -763,7 +1084,9 @@ class Component extends DCLogic {
     })();
     const alunas = CRM.alunasDaTurma(u.label).map(p => {
       const tirar = () => {
-        if (!window.confirm("Remover " + p.nome + " desta turma? A matrícula e o contrato permanecem."))
+        if (!window.confirm(Tr(
+          "Remove " + p.nome + " from this class? The enrolment and the contract stay.",
+          "Remover " + p.nome + " desta turma? A matrícula e o contrato permanecem.")))
           return;
         CRM.setTurmaDaPessoa(p.id, "", "");
         this.bump();
@@ -795,7 +1118,7 @@ class Component extends DCLogic {
       const n = e => est.filter(x => x === e).length;
       return {
         data: CRM.ddmm(ch.data),
-        resumo: (n("presente") + n("atraso")) + " presentes · " + n("falta") + " faltas" + (n("justificada") ? " · " + n("justificada") + " justif." : ""),
+        resumo: (n("presente") + n("atraso")) + Tr(" present · ", " presentes · ") + n("falta") + " faltas" + (n("justificada") ? " · " + n("justificada") + Tr(" excused", " justif.") : ""),
         // abre exatamente esta chamada no Painel, para conferir ou corrigir
         href: "ISR%20-%20Painel%20v3.dc.html?turma=" + encodeURIComponent(u.label)
           + "&data=" + ch.data
@@ -803,13 +1126,13 @@ class Component extends DCLogic {
     });
 
     const MATERIAIS = [
-      { key: "guide", label: "Teacher's Guide", cor: "#6b5b95" },
-      { key: "notebook", label: "Caderno de tarefas", cor: "var(--color-primary-500)" },
+      { key: "guide", label: Tr("Teacher's Guide", "Teacher's Guide"), cor: "#6b5b95" },
+      { key: "notebook", label: Tr("Notebook", "Caderno de tarefas"), cor: "var(--color-primary-500)" },
       { key: "slides", label: "Slides", cor: "var(--color-error)" },
       { key: "syllabus", label: "Syllabus", cor: "var(--color-warning)" },
-      { key: "calendario", label: "Calendário", cor: "var(--color-secondary-500)" },
-      { key: "gravadas", label: "Aulas gravadas da turma", cor: "var(--color-warning)" },
-      { key: "meet", label: "Link da aula (Meet)", cor: "var(--color-primary-900)" }
+      { key: "calendario", label: Tr("Calendar", Tr("Calendar", "Calendário")), cor: "var(--color-secondary-500)" },
+      { key: "gravadas", label: Tr("Class recordings", Tr("Class recordings", "Aulas gravadas da turma")), cor: "var(--color-warning)" },
+      { key: "meet", label: Tr("Class link (Meet)", Tr("Class link (Meet)", "Link da aula (Meet)")), cor: "var(--color-primary-900)" }
     ];
     const linkDe = k => {
       const v = raw[k] || "";
@@ -846,9 +1169,9 @@ class Component extends DCLogic {
     // publicada não se edita por acidente: a aluna já está lendo
     const pAjuste = !!this.state.planoAjuste && !!pAtual;
     const EST_PLANO = {
-      rascunho: ["ainda não revisada", "var(--color-button-secondary)", "var(--color-tertiary-700)", "rascunho"],
-      pronta: ["pronta ✓", "var(--color-warning-light)", "var(--color-warning-dark)", "pronta"],
-      publicada: ["publicada · as alunas já veem", "var(--color-secondary-100)", "var(--color-success-dark)", "publicada"]
+      rascunho: [Tr("not reviewed yet", Tr("not reviewed yet", "ainda não revisada")), "var(--color-button-secondary)", "var(--color-tertiary-700)", "rascunho"],
+      pronta: [Tr("ready ✓", "pronta ✓"), "var(--color-warning-light)", "var(--color-warning-dark)", "pronta"],
+      publicada: [Tr("published · students can see it", Tr("published · students can see it", "publicada · as alunas já veem")), "var(--color-secondary-100)", "var(--color-success-dark)", "publicada"]
     };
     // quando cada sessão cai, e se já caiu: a faixa, o eyebrow e a
     // trava de edição leem daqui
@@ -877,9 +1200,9 @@ class Component extends DCLogic {
     //
     // Quem olha é a VISÃO: com "vendo como" ligado, a gestora vê a
     // página pelos olhos de quem escolheu.
-    const TODAS_ABAS = { geral: "Visão geral", alunas: "Alunas", plano: "Plano das aulas",
-      chamadas: "Chamadas", projeto: "Projeto", materiais: "Materiais",
-      renov: "Renovação e vagas" };
+    const TODAS_ABAS = { geral: Tr("Overview", Tr("Overview", "Visão geral")), alunas: Tr("Students", "Alunas"), plano: Tr("Lesson plans", Tr("Lesson plans", "Plano das aulas")),
+      chamadas: Tr("Attendance", Tr("Attendance", "Chamadas")), projeto: Tr("Project", "Projeto"), materiais: Tr("Materials", "Materiais"),
+      renov: Tr("Renewals & spots", Tr("Renewals & spots", "Renovação e vagas")) };
     const vis = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
     const papeisVis = (vis.papeis || []).concat(vis.perfil ? [vis.perfil] : []);
     const tem = (p) => papeisVis.indexOf(p) >= 0;
@@ -902,11 +1225,11 @@ class Component extends DCLogic {
     // conta da escola inteira.
     const RENOV = {
       renovada: { estado: "renovou", bg: "var(--color-success-light)", fg: "var(--color-success-dark)" },
-      nao_renovou: { estado: "não renovou", bg: "var(--color-error-light)", fg: "var(--color-error-dark)" }
+      nao_renovou: { estado: Tr("did not renew", Tr("did not renew", "não renovou")), bg: "var(--color-error-light)", fg: "var(--color-error-dark)" }
     };
     const renovLista = alunas.map(al => {
       const p = CRM.getPessoa(al.id) || {};
-      const r = RENOV[p.renovacao] || { estado: "sem resposta", bg: "var(--color-button-secondary)", fg: "var(--color-tertiary-500)" };
+      const r = RENOV[p.renovacao] || { estado: Tr("no answer", "sem resposta"), bg: "var(--color-button-secondary)", fg: "var(--color-tertiary-500)" };
       return { nome: p.nome || al.nome, href: "ISR%20-%20Perfil%20v3.dc.html?id=" + al.id,
         estado: r.estado, bg: r.bg, fg: r.fg, chave: p.renovacao || "sem" };
     });
@@ -920,15 +1243,15 @@ class Component extends DCLogic {
         fg: aba === id ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
         linha: aba === id ? "var(--color-button-primary)" : "transparent",
         onClick: () => this.irParaAba(id) })),
-      // O caminho de volta: a professora veio de "Minhas turmas", no
+      // O caminho de volta: a professora veio de Tr("My classes", "Minhas turmas"), no
       // painel dela; quem cuida da escola veio de Turmas & Projetos.
       voltarHref: soProf ? "ISR%20-%20Painel%20v3.dc.html?tab=turmas"
         : "ISR%20-%20Turmas%20v3.dc.html",
-      voltarLabel: soProf ? "Minhas turmas" : "Turmas & Projetos",
+      voltarLabel: soProf ? Tr("My classes", "Minhas turmas") : Tr("Classes & Projects", "Turmas & Projetos"),
       linhaMeta: [u.nivel, u.turma, u.teacher ? "Prof. " + u.teacher : ""]
         .filter(Boolean).join(" · "),
       nomeDaTurma: u.turma || u.nivel,
-      // "Editar turma" é da coordenação. A professora lê a ficha da
+      // Tr("Edit class", "Editar turma") é da coordenação. A professora lê a ficha da
       // turma dela; mudar horário, capacidade e links é outra conversa.
       podeEditarTurma: !soProf,
       tGeral: aba === "geral", tAlunas: aba === "alunas", tChamadas: aba === "chamadas",
@@ -942,8 +1265,8 @@ class Component extends DCLogic {
         return {
           projTem: e.temProjeto,
           projSemProjeto: !e.temProjeto,
-          projVazioTexto: "Esta turma ainda não tem projeto do ciclo. O projeto é escrito na ficha da turma.",
-          projTitulo: "Projeto " + e.projeto + " · entregas",
+          projVazioTexto: Tr("This class has no cycle project yet. The project is written on the class record.", "Esta turma ainda não tem projeto do ciclo. O projeto é escrito na ficha da turma."),
+          projTitulo: Tr("Project ", "Projeto ") + e.projeto + Tr(" · submissions", " · entregas"),
           projValor: e.feitas + "/" + e.total,
           projPct: e.pct + "%",
           projFaltam: e.faltam.length
@@ -969,17 +1292,17 @@ class Component extends DCLogic {
       // as turmas do nível, e uma professora mudando aqui mudaria a
       // aula das colegas sem saber.
       podeSyllabus: !!user && (user.perfil === "gestora" || user.perfil === "operacao"),
-      syNivel: u.nivel || "este nível",
+      syNivel: u.nivel || Tr("this level", "este nível"),
       syCiclo: u.cycle || "atual",
       sySubtitulo: "O que está aqui vale para TODAS as turmas de "
-        + (u.nivel || "este nível") + " neste ciclo. Cada turma ajusta o roteiro dela "
+        + (u.nivel || Tr("this level", "este nível")) + " neste ciclo. Cada turma ajusta o roteiro dela "
         + "no plano, sem mexer nisto.",
       syAberto: !!this.state.syAberto,
-      syAbrirLabel: this.state.syAberto ? "fechar" : "editar as sessões",
+      syAbrirLabel: this.state.syAberto ? "fechar" : Tr("edit the sessions", "editar as sessões"),
       syAddLabel: "+ Sessão " + (pSessoes.length + 1),
       syNota: pSessoes.length
-        ? "Apagar uma sessão aqui não apaga o ajuste que alguma turma já fez nela."
-        : "Comece criando a sessão 1. O roteiro de cada uma se escreve depois, na própria sessão.",
+        ? Tr("Deleting a session here does not undo the tweak a class already made to it.", "Apagar uma sessão aqui não apaga o ajuste que alguma turma já fez nela.")
+        : Tr("Start by creating session 1. Each lesson flow is written later, inside the session itself.", "Comece criando a sessão 1. O roteiro de cada uma se escreve depois, na própria sessão."),
       syTemErro: !!this.state.syErro,
       syErro: this.state.syErro || "",
       sySessoes: (CRM.syllabusDoNivel ? CRM.syllabusDoNivel(u.nivel, u.cycle) : []).map(sx => ({
@@ -1010,12 +1333,12 @@ class Component extends DCLogic {
         let n = 1; while (usados.indexOf(n) >= 0) n++;
         const r = CRM.salvarSessaoSyllabus({ nivel: u.nivel, ciclo: u.cycle, n: n,
           projeto: u.projeto || "" });
-        this.setState({ syErro: r.ok ? "" : (r.erro || "Não foi possível."), syAberto: true });
+        this.setState({ syErro: r.ok ? "" : (r.erro || Tr("That did not work.", "Não foi possível.")), syAberto: true });
         this.bump();
       },
 
       planoVazio: !pAtual,
-      planoVazioTexto: "O syllabus de " + (u.nivel || "este nível") + " no ciclo "
+      planoVazioTexto: "O syllabus de " + (u.nivel || Tr("this level", "este nível")) + " no ciclo "
         + (u.cycle || "atual") + " ainda não tem sessões. Elas são da escola, não da turma: "
         + "quando entrarem, aparecem aqui já com as seis fases, e a professora ajusta o que não couber.",
       planoTem: !!pAtual,
@@ -1035,7 +1358,7 @@ class Component extends DCLogic {
         // repeti-lo aqui gastava a única linha que a professora usa
         // para se localizar no ciclo.
         const q = quando[x.n] || null;
-        // "esta semana" é a semana do calendário, não "nos próximos
+        // Tr("this week", "esta semana") é a semana do calendário, não "nos próximos
         // sete dias": com a segunda que vem a seis dias daqui, a
         // contagem corrida chamava a aula da semana seguinte de "esta
         // semana" e a professora se preparava para o dia errado.
@@ -1043,9 +1366,9 @@ class Component extends DCLogic {
         return {
           n: "S" + x.n,
           estadoCurto: !q ? "" : q.dada ? "dada"
-            : estaSemana ? "esta semana" : ("sem. " + this.diaMes(q.data)),
+            : estaSemana ? Tr("this week", "esta semana") : ("sem. " + this.diaMes(q.data)),
           data: "",
-          titulo: x.titulo || "sem título ainda",
+          titulo: x.titulo || Tr("no title yet", "sem título ainda"),
           bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
           fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
           op: (q && q.dada && !sel) ? "0.55" : "1",
@@ -1060,7 +1383,7 @@ class Component extends DCLogic {
               : ("semana de " + this.diaMes(q.data));
             return ["sessão " + pAtual.n, quandoTxt, u.turma].filter(Boolean).join(" · ");
           })() : "",
-      planoTitulo: pAtual ? (pAtual.titulo || "Sessão sem título") : "",
+      planoTitulo: pAtual ? (pAtual.titulo || Tr("Untitled session", "Sessão sem título")) : "",
       planoEstado: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[0] : "",
       planoEstadoBg: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[1] : "",
       planoEstadoFg: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[2] : "",
@@ -1069,13 +1392,13 @@ class Component extends DCLogic {
         : (!pAtual.tocado ? "igual ao syllabus"
           : (pAtual.etapas.filter(e => e.minha).length
             ? "syllabus · " + pAtual.etapas.filter(e => e.minha).length + " atividade(s) sua(s)"
-            : "syllabus · ajustado por você")),
+            : Tr("syllabus · tweaked by you", "syllabus · ajustado por você"))),
       // Sessão que já aconteceu é registro: as alunas responderam no
       // caderno sobre o roteiro daquele dia, e mexer nele depois
       // muda a pergunta debaixo da resposta.
       planoPodeEditar: !!pAtual && !planoJaDada,
       planoJaDada: !!planoJaDada,
-      planoJaDadaTexto: "Esta sessão já foi dada. O roteiro dela fica como ficou — as alunas responderam no caderno sobre ele.",
+      planoJaDadaTexto: Tr("This session has been taught. Its lesson flow stays as it was — the students answered in their notebooks about it.", "Esta sessão já foi dada. O roteiro dela fica como ficou — as alunas responderam no caderno sobre ele."),
       planoAjustarLabel: pAjuste ? "Concluir ajustes" : "Ajustar",
       planoOnAjustar: () => {
         if (!pAtual) return;
@@ -1085,17 +1408,17 @@ class Component extends DCLogic {
         // versão guardada, então o que ela mudar a aluna vê na hora
         this.setState({ planoAjuste: true,
           planoErro: pAtual.estado === "publicada"
-            ? "Esta aula está publicada: o que você mudar aqui as alunas veem na hora." : "" });
+            ? Tr("This class is published: whatever you change here, the students see at once.", "Esta aula está publicada: o que você mudar aqui as alunas veem na hora.") : "" });
       },
-      planoPublicarLabel: pAtual && pAtual.estado === "publicada" ? "Já está publicada"
-        : (pAtual && pAtual.estado === "pronta" ? "Publicar para as alunas" : "Marcar como pronta"),
+      planoPublicarLabel: pAtual && pAtual.estado === "publicada" ? Tr("Already published", "Já está publicada")
+        : (pAtual && pAtual.estado === "pronta" ? Tr("Publish to students", "Publicar para as alunas") : "Marcar como pronta"),
       planoOnPublicar: () => {
         if (!pAtual) return;
         if (pAjuste) pSalvarCampos();
         const r = pAtual.estado === "pronta" || pAtual.estado === "publicada"
           ? CRM.publicarPlano(u.id, pAtual.n)
           : CRM.marcarPlanoPronto(u.id, pAtual.n, true);
-        this.setState({ planoErro: r.ok ? "" : (r.erro || "Não foi possível."), planoAjuste: false });
+        this.setState({ planoErro: r.ok ? "" : (r.erro || Tr("That did not work.", "Não foi possível.")), planoAjuste: false });
         this.bump();
       },
       planoTemErro: !!this.state.planoErro,
@@ -1103,10 +1426,10 @@ class Component extends DCLogic {
       planoTemGuia: !!(pAtual && (pAtual.guia || pAtual.syllabusDoCiclo)),
       planoGuia: (pAtual && pAtual.guia) || "#",
       planoTemGuiaDoNivel: !!(pAtual && pAtual.guia),
-      planoGuiaLabel: "Guia " + (u.nivel || "do professor"),
+      planoGuiaLabel: "Guia " + (u.nivel || Tr("teacher’s", "do professor")),
       planoTemSyllabus: !!(pAtual && pAtual.syllabusDoCiclo),
       planoSyllabus: (pAtual && pAtual.syllabusDoCiclo) || "#",
-      planoSyllabusLabel: "Syllabus " + (u.cycle || "do ciclo"),
+      planoSyllabusLabel: "Syllabus " + (u.cycle || Tr("of the cycle", "do ciclo")),
       planoTemObjetivo: !!(pAtual && pAtual.objetivo),
       planoObjetivo: (pAtual && pAtual.objetivo) || "",
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",
@@ -1167,12 +1490,12 @@ class Component extends DCLogic {
         if (r.ok) {
           [this.peTituloRef, this.pePerguntaRef].forEach(x => { if (x.current) x.current.value = ""; });
           this.setState({ planoErro: "" });
-        } else this.setState({ planoErro: r.erro || "Não foi possível." });
+        } else this.setState({ planoErro: r.erro || Tr("That did not work.", "Não foi possível.") });
         this.bump();
       },
       planoPalavras: (pAtual && pAtual.palavras) || [],
       planoSemPalavras: !(pAtual && pAtual.palavras.length),
-      planoHomework: (pAtual && pAtual.homework) || "Sem homework nesta sessão.",
+      planoHomework: (pAtual && pAtual.homework) || Tr("No homework in this session.", "Sem homework nesta sessão."),
       planoOnSalvar: () => {
         pSalvarCampos();
         this.setState({ planoAjuste: false, planoErro: "" });
@@ -1197,17 +1520,18 @@ class Component extends DCLogic {
           .filter(x => x.estado !== "publicada")[0]
           || (CRM.planoSessoes ? CRM.planoSessoes(u.id) : [])[0] || null;
         return {
-          gFaixa: [u.nivel, u.cycle ? "ciclo " + u.cycle : ""].filter(Boolean).join(" · "),
+          gFaixa: [u.nivel, u.cycle ? Tr("cycle ", "ciclo ") + u.cycle : ""].filter(Boolean).join(" · "),
           gFaixaBg: this.corDoNivel(u.nivel),
-          gQuem: [u.turma, u.teacher ? "Prof. " + u.teacher : "sem professora"]
+          gQuem: [u.turma, u.teacher ? "Prof. " + u.teacher : Tr("no teacher", "sem professora")]
             .filter(Boolean).join(" · "),
           gOcup: u.ocupadas + "/" + u.capacidade
-            + (cheia ? " · lotada" : " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
+            + (cheia ? Tr(" · full", " · lotada")
+              : " · " + u.vagas + (u.vagas === 1 ? Tr(" spot", " vaga") : Tr(" spots", " vagas"))),
           gOcupCor: cor, gOcupTextoCor: corTexto,
           gOcupPct: (u.capacidade ? Math.round((u.ocupadas / u.capacidade) * 100) : 0) + "%",
-          gProjeto: u.projeto || "sem projeto do ciclo",
-          gCaderno: !prox ? "sem sessões no syllabus deste nível"
-            : prox.estado === "publicada" ? "plano da próxima aula publicado"
+          gProjeto: u.projeto || Tr("no cycle project", "sem projeto do ciclo"),
+          gCaderno: !prox ? Tr("no sessions in this level’s syllabus", "sem sessões no syllabus deste nível")
+            : prox.estado === "publicada" ? Tr("next class plan published", "plano da próxima aula publicado")
             : prox.estado === "pronta" ? ("sessão " + prox.n + " pronta, falta publicar")
             : ("sessão " + prox.n + " ainda não revisada"),
           gCadernoCor: (prox && prox.estado === "publicada")
@@ -1225,10 +1549,10 @@ class Component extends DCLogic {
         return {
           subVazio: lista.length === 0,
           subVazioTexto: soProf
-            ? "Nenhuma substituição marcada nesta turma. Para pedir uma, use a aba Hoje do seu painel."
-            : "Nenhuma substituição pedida nesta turma.",
+            ? Tr("No cover assigned for this class. To ask for one, use the Today tab of your panel.", "Nenhuma substituição marcada nesta turma. Para pedir uma, use a aba Hoje do seu painel.")
+            : Tr("No cover requested for this class.", "Nenhuma substituição pedida nesta turma."),
           subNota: !soProf && lista.some(x => x.status === "pedida"),
-          subNotaTexto: "O substituto recebe o link da aula, a chamada e os materiais só desta aula. A aula conta na folha dele.",
+          subNotaTexto: Tr("The cover teacher gets the class link, the attendance and the materials for this class only. The class counts on their payroll.", "O substituto recebe o link da aula, a chamada e os materiais só desta aula. A aula conta na folha dele."),
           subLista: lista.map(sb => ({
             quando: CRM.ddmm(sb.data) + (sb.hora ? " · " + sb.hora : ""),
             quem: sb.status === "atribuida"
@@ -1257,15 +1581,16 @@ class Component extends DCLogic {
 
       renovNumeros: [
         { v: String(nRenov), k: nRenov === 1 ? "renovou" : "renovaram", cor: "var(--color-success-dark)" },
-        { v: String(nSem), k: "sem resposta", cor: nSem ? "var(--color-warning-dark)" : "var(--color-primary-900)" },
-        { v: String(nSaiu), k: nSaiu === 1 ? "não renovou" : "não renovaram", cor: nSaiu ? "var(--color-error-dark)" : "var(--color-primary-900)" },
-        { v: String(u.vagas + nSaiu), k: "vagas no ciclo seguinte", cor: "var(--color-primary-900)" }
+        { v: String(nSem), k: Tr("no answer", "sem resposta"), cor: nSem ? "var(--color-warning-dark)" : "var(--color-primary-900)" },
+        { v: String(nSaiu), k: nSaiu === 1 ? Tr("did not renew", Tr("did not renew", "não renovou")) : Tr("did not renew", "não renovaram"), cor: nSaiu ? "var(--color-error-dark)" : "var(--color-primary-900)" },
+        { v: String(u.vagas + nSaiu), k: Tr("spots in the next cycle", "vagas no ciclo seguinte"), cor: "var(--color-primary-900)" }
       ],
       renovLista, semRenov: renovLista.length === 0,
       renovResumo: "As vagas do ciclo seguinte são as que estão abertas hoje mais as de quem não renovou. Quem está sem resposta ainda não conta.",
       nivel: u.nivel, horario: u.turma, ciclo: u.cycle,
       professora: u.teacher || "—", projeto: u.projeto || "—",
-      contexto: u.turma + " · Prof. " + (u.teacher || "—") + " · " + u.ocupadas + "/" + u.capacidade + " alunas" + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas") : " · lotada"),
+      contexto: u.turma + " · Prof. " + (u.teacher || "—") + " · " + u.ocupadas + "/" + u.capacidade + Tr(" students", " alunas")
+        + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? Tr(" spot", " vaga") : Tr(" spots", " vagas")) : Tr(" · full", " · lotada")),
       temMeet: !!raw.meet, meet: raw.meet || "#",
       edMeetAtual: raw.meet || "", edGuideAtual: raw.guide || "",
       edCadernoAtual: raw.notebook || "", edSlidesAtual: raw.slides || "",
@@ -1276,7 +1601,7 @@ class Component extends DCLogic {
       alunas, semAlunas: alunas.length === 0,
 
       // ── a turma é uma coisa só: horário, alunas e professora ──
-      profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
+      profOpts: [{ id: "", label: "Professora: " + (u.teacher || Tr("no teacher", "sem professora")) }]
         .concat(CRM.equipeLista()
           .filter(m => (m.papeis || []).indexOf("professora") >= 0)
           .map(m => ({ id: m.nome, label: m.nome, sel: m.nome === u.teacher }))),
@@ -1286,7 +1611,7 @@ class Component extends DCLogic {
       nivel: u.nivel, horario: u.turma, capacidade: String(u.capacidade),
 
       buscaRef: this.buscaRef,
-      buscaPlaceholder: "Buscar aluna pelo nome",
+      buscaPlaceholder: Tr("Search a student by name", "Buscar aluna pelo nome"),
       onBuscar: () => this.setState({ busca: (this.buscaRef.current && this.buscaRef.current.value) || "" }),
       semVaga: u.vagas <= 0,
       candidatas: (function () {
@@ -1298,7 +1623,7 @@ class Component extends DCLogic {
           : fora.filter(p => !p.turma).slice(0, 8);
         return lista.slice(0, 12).map(p => ({
           label: p.nome,
-          title: p.turma ? "Hoje está em " + p.turma : "Sem turma",
+          title: p.turma ? "Hoje está em " + p.turma : Tr("No class", "Sem turma"),
           onPor: () => {
             if (u.vagas <= 0) return;
             CRM.setTurmaDaPessoa(p.id, u.label, u.teacher);
@@ -1321,7 +1646,7 @@ class Component extends DCLogic {
         this.bump();
       },
       editando: this.state.editando,
-      edLabel: this.state.editando ? "Fechar" : "Editar turma",
+      edLabel: this.state.editando ? "Fechar" : Tr("Edit class", "Editar turma"),
       edBg: this.state.editando ? "var(--color-primary-900)" : "var(--color-neutral-0)",
       edFg: this.state.editando ? "var(--color-neutral-0)" : "var(--color-primary-900)",
       onToggleEditar: () => this.setState({ editando: !this.state.editando }),
@@ -1349,13 +1674,13 @@ class Component extends DCLogic {
       },
       formatoOpts: [
         { id: "digital", label: "Caderno digital, no app" },
-        { id: "papel", label: "Sem computador: no papel" }
+        { id: "papel", label: Tr("No computer: on paper", "Sem computador: no papel") }
       ].map(o => Object.assign({ sel: (u.formato || "digital") === o.id }, o)),
       // O rodapé do 07: como esta turma trabalha, e a porta para ver o
       // plano com os olhos da aluna antes de publicar.
       planoRodape: (u.formato === "papel")
-        ? "Turma sem computador: as tarefas vão no papel. Para mudar, edite a turma."
-        : "Turma com caderno digital: as tarefas abrem no app da aluna quando a aula começa. Para mudar, edite a turma.",
+        ? Tr("No-computer class: the tasks go on paper. To change it, edit the class.", "Turma sem computador: as tarefas vão no papel. Para mudar, edite a turma.")
+        : Tr("Digital-notebook class: the tasks open in the student app when the class starts. To change it, edit the class.", "Turma com caderno digital: as tarefas abrem no app da aluna quando a aula começa. Para mudar, edite a turma."),
       planoVerComoAluna: alunas[0]
         ? ("ISR%20-%20Aluna%20v4.dc.html?id=" + encodeURIComponent(alunas[0].id))
         : "",
@@ -1363,7 +1688,7 @@ class Component extends DCLogic {
       // ── os links, editados aqui mesmo ──
       podeEditarLinks: !soProf,
       linksEditando: editandoLinks,
-      editarLinksLabel: editandoLinks ? "fechar" : "Editar links",
+      editarLinksLabel: editandoLinks ? "fechar" : Tr("Edit links", "Editar links"),
       onEditarLinks: () => this.setState({ linksEditando: !editandoLinks, linksRascunho: {} }),
       onSalvarLinks: () => {
         const r = this.state.linksRascunho || {};
@@ -1393,7 +1718,7 @@ class Component extends DCLogic {
       })(),
       pedidoEnviado: this.state.pedidoEnviado,
       onPedirGabi: () => {
-        const tipo = this.val(this.pgTipoRef) || "Revisar aula";
+        const tipo = this.val(this.pgTipoRef) || Tr("Review a lesson", "Revisar aula");
         const det = this.val(this.pgDetalheRef);
         CRM.addTarefa({ titulo: tipo + " · " + u.nivel + " (" + u.turma + ")" + (det ? " — " + det : ""),
           dono: "Gabi", prazo: "", por: (user && user.nome) || u.teacher || "" });
