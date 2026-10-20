@@ -62,16 +62,78 @@
       </div>
 
       <!-- VISÃO GERAL -->
+      <!-- Dois cartões lado a lado, como no 05: a ficha da turma e o
+           professor substituto. Antes era uma lista de rótulo e valor
+           — "ocupação: 3 de 5" escrito por extenso —, que obriga a ler
+           a frase inteira para saber se a turma está cheia. A barra se
+           lê de longe. -->
       <sc-if value="{{ tGeral }}">
-        <section class="isr-cartao" style="padding: 18px 22px; margin-bottom: 16px">
-          <div style="font-size: 16px; font-weight: 600;">Visão geral</div>
-          <sc-for list="{{ geralLinhas }}" as="gl" hint-placeholder-count="6">
-            <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding: 11px 0; border-top: 1px solid var(--color-button-secondary);">
-              <span style="flex: none; width: 150px; font-size: 12.5px; color: var(--color-tertiary-500);">{{ gl.k }}</span>
-              <span style="flex: 1; min-width: 180px; font-size: 14px; font-weight: 600; color: {{ gl.cor }};">{{ gl.v }}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+          <!-- 1 · A FICHA DA TURMA -->
+          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column">
+            <div style="background: {{ gFaixaBg }}; color: var(--color-primary-900); padding: 11px 20px; font-size: 12px; font-weight: 800;">{{ gFaixa }}</div>
+            <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+              <div>
+                <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">{{ nomeDaTurma }}</div>
+                <div style="font-size: 13px; color: var(--color-primary-800); margin-top: 3px;">{{ gQuem }}</div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline;">
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">ocupação</span>
+                  <span style="font-size: 13px; font-weight: 800; color: {{ gOcupTextoCor }};">{{ gOcup }}</span>
+                </div>
+                <div style="height: 10px; border-radius: 999px; background: var(--color-button-secondary); overflow: hidden; margin-top: 6px;">
+                  <div style="height: 100%; width: {{ gOcupPct }}; background: {{ gOcupCor }};"></div>
+                </div>
+              </div>
+
+              <div style="background: var(--color-bg-default); border-radius: 16px; padding: 13px 15px;">
+                <div style="font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ gProjeto }}</div>
+                <div style="font-size: 13px; font-weight: 700; color: {{ gCadernoCor }}; margin-top: 3px;">{{ gCaderno }}</div>
+              </div>
+
+              <sc-if value="{{ podeEditarTurma }}">
+                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onToggleEditar }}" style="align-self: flex-start; font-size: 13px; padding: 11px 18px">✎ {{ edLabel }}</button>
+              </sc-if>
             </div>
-          </sc-for>
-        </section>
+          </section>
+
+          <!-- 2 · O PROFESSOR SUBSTITUTO -->
+          <!-- Quem marca é a coordenação. A professora lê: ela pede a
+               substituição pela aba Hoje, e não escolhe quem cobre a
+               própria aula. -->
+          <section class="isr-cartao" style="flex: 1 1 320px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+            <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Professor substituto</div>
+
+            <sc-if value="{{ subVazio }}">
+              <div style="font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">{{ subVazioTexto }}</div>
+            </sc-if>
+
+            <sc-for list="{{ subLista }}" as="sb" hint-placeholder-count="2">
+              <div style="background: var(--color-primary-50); border-radius: 16px; padding: 13px 15px; display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-size: 13.5px; font-weight: 800; color: var(--color-primary-900);">{{ sb.quando }}</div>
+                <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.5;">{{ sb.quem }}</div>
+                <div style="font-size: 12px; color: var(--color-tertiary-500); line-height: 1.5;">{{ sb.motivo }}</div>
+                <sc-if value="{{ sb.podeAtribuir }}">
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                    <sc-for list="{{ sb.candidatas }}" as="cd" hint-placeholder-count="3">
+                      <button class="isr-botao isr-botao--pilula" onclick="{{ cd.onClick }}" style="background: {{ cd.bg }}; color: {{ cd.fg }}; font-size: 12px; padding: 8px 14px">{{ cd.label }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sb.temErro }}">
+                  <div style="font-size: 12px; color: var(--color-error-dark); line-height: 1.5; margin-top: 4px;">{{ sb.erro }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+
+            <sc-if value="{{ subNota }}">
+              <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.6;">{{ subNotaTexto }}</div>
+            </sc-if>
+          </section>
+        </div>
       </sc-if>
 
       <!-- EDITAR TURMA / MATERIAIS -->
@@ -521,7 +583,10 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1000px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
-  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "" };
+  state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "",
+    // o erro de atribuir substituta fica preso ao pedido: sem o id,
+    // o aviso de um pedido aparecia embaixo de outro
+    subErro: null };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
   edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
@@ -544,6 +609,17 @@ class Component extends DCLogic {
   }
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  // A cor da faixa do nível: a mesma de Turmas na gestão, para a
+  // turma se reconhecer de longe nas duas telas.
+  CORES_NIVEL = { "First Steps": "var(--color-button-secondary)",
+    "Basics": "var(--color-primary-50)", "Essentials": "var(--color-secondary-100)",
+    "Speaking": "var(--color-warning-light)", "Advanced": "var(--color-error-light)" };
+  corDoNivel(nivel) {
+    const n = String(nivel || "");
+    const k = Object.keys(this.CORES_NIVEL).filter(x => n.indexOf(x) >= 0)[0];
+    return k ? this.CORES_NIVEL[k] : "var(--color-button-secondary)";
+  }
 
   // "19 out": o dia e o mês por extenso curto. A faixa das sessões
   // mostra a SEMANA em que a aula cai, e "19/10" ali ao lado de "S5"
@@ -598,7 +674,12 @@ class Component extends DCLogic {
       tProjeto: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
       podeEditarTurma: false, projTem: false, projTitulo: "", projValor: "", projPct: "0%",
       projFaltam: "", projLinhas: [], projVazio: true, projSemProjeto: true, projVazioTexto: "",
-      geralLinhas: [], renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
+      renovNumeros: [], renovLista: [], renovResumo: "", semRenov: true,
+      gFaixa: "", gFaixaBg: "var(--color-button-secondary)", gQuem: "", gOcup: "",
+      gOcupCor: "var(--color-secondary-500)", gOcupTextoCor: "var(--color-primary-900)",
+      gOcupPct: "0%", gProjeto: "",
+      gCaderno: "", gCadernoCor: "var(--color-tertiary-500)",
+      subVazio: true, subVazioTexto: "", subLista: [], subNota: false, subNotaTexto: "",
       tPlano: false, planoVazio: true, planoVazioTexto: "", planoTem: false, planoTira: [],
       podeSyllabus: false, syNivel: "", syCiclo: "", sySubtitulo: "", syAberto: false,
       syAbrirLabel: "", sySessoes: [], onAbrirSyllabus: () => {}, onAddSessao: () => {},
@@ -991,18 +1072,80 @@ class Component extends DCLogic {
       },
       tMateriais: aba === "materiais", tRenovacao: aba === "renov",
 
-      geralLinhas: [
-        { k: "dia e horário", v: u.turma, cor: "var(--color-primary-900)" },
-        { k: "professora", v: u.teacher || "sem professora",
-          cor: u.teacher ? "var(--color-primary-900)" : "var(--color-error-dark)" },
-        { k: "projeto do ciclo", v: u.projeto || "—", cor: "var(--color-primary-900)" },
-        { k: "ciclo", v: u.cycle || "—", cor: "var(--color-primary-900)" },
-        { k: "ocupação", v: u.ocupadas + " de " + u.capacidade
-            + (u.vagas > 0 ? " · " + u.vagas + (u.vagas === 1 ? " vaga aberta" : " vagas abertas") : " · turma cheia"),
-          cor: u.vagas > 0 ? "var(--color-primary-900)" : "var(--color-warning-dark)" },
-        { k: "caderno", v: raw.notebook || "sem caderno vinculado neste ciclo",
-          cor: raw.notebook ? "var(--color-primary-900)" : "var(--color-tertiary-500)" }
-      ],
+      // ── a ficha da turma ──
+      ...(() => {
+        const cheia = u.vagas <= 0;
+        // Duas cores: a da barra, que é um bloco grande e aceita tom
+        // claro, e a do número, que é texto pequeno sobre branco e
+        // precisa de contraste. Usar a mesma nos dois deixava "3/5 ·
+        // 2 vagas" em amarelo claro, ilegível.
+        const cor = cheia ? "var(--color-button-primary)"
+          : (u.ocupadas < 4 ? "var(--color-warning-light)" : "var(--color-secondary-500)");
+        const corTexto = cheia ? "var(--color-error-dark)"
+          : (u.ocupadas < 4 ? "var(--color-warning-dark)" : "var(--color-success-dark)");
+        // o plano da próxima sessão: é o que diz se a aula de amanhã
+        // está pronta, e é a pergunta que a professora faz aqui
+        const prox = (CRM.planoSessoes ? CRM.planoSessoes(u.id) : [])
+          .filter(x => x.estado !== "publicada")[0]
+          || (CRM.planoSessoes ? CRM.planoSessoes(u.id) : [])[0] || null;
+        return {
+          gFaixa: [u.nivel, u.cycle ? "ciclo " + u.cycle : ""].filter(Boolean).join(" · "),
+          gFaixaBg: this.corDoNivel(u.nivel),
+          gQuem: [u.turma, u.teacher ? "Prof. " + u.teacher : "sem professora"]
+            .filter(Boolean).join(" · "),
+          gOcup: u.ocupadas + "/" + u.capacidade
+            + (cheia ? " · lotada" : " · " + u.vagas + (u.vagas === 1 ? " vaga" : " vagas")),
+          gOcupCor: cor, gOcupTextoCor: corTexto,
+          gOcupPct: (u.capacidade ? Math.round((u.ocupadas / u.capacidade) * 100) : 0) + "%",
+          gProjeto: u.projeto || "sem projeto do ciclo",
+          gCaderno: !prox ? "sem sessões no syllabus deste nível"
+            : prox.estado === "publicada" ? "plano da próxima aula publicado"
+            : prox.estado === "pronta" ? ("sessão " + prox.n + " pronta, falta publicar")
+            : ("sessão " + prox.n + " ainda não revisada"),
+          gCadernoCor: (prox && prox.estado === "publicada")
+            ? "var(--color-success-dark)" : "var(--color-tertiary-500)"
+        };
+      })(),
+
+      // ── o professor substituto ──
+      ...(() => {
+        const lista = CRM.substituicoesDaTurma ? CRM.substituicoesDaTurma(u.label) : [];
+        const docentes = CRM.equipeDocente ? CRM.equipeDocente() : [];
+        const quem = ((CRM.gestaoUser && CRM.gestaoUser()) || {}).nome || "";
+        const MOT = {};
+        (CRM.SUBS_MOTIVOS || []).forEach(m => { MOT[m.id] = m.label; });
+        return {
+          subVazio: lista.length === 0,
+          subVazioTexto: soProf
+            ? "Nenhuma substituição marcada nesta turma. Para pedir uma, use a aba Hoje do seu painel."
+            : "Nenhuma substituição pedida nesta turma.",
+          subNota: !soProf && lista.some(x => x.status === "pedida"),
+          subNotaTexto: "O substituto recebe o link da aula, a chamada e os materiais só desta aula. A aula conta na folha dele.",
+          subLista: lista.map(sb => ({
+            quando: CRM.ddmm(sb.data) + (sb.hora ? " · " + sb.hora : ""),
+            quem: sb.status === "atribuida"
+              ? (sb.cobre + " cobre, no lugar de " + sb.pedidoPor)
+              : sb.status === "cancelada" ? "Pedido cancelado"
+              : ("Pedido por " + sb.pedidoPor + " · ainda sem quem cubra"),
+            motivo: [MOT[sb.motivo] || sb.motivo, sb.observacao].filter(Boolean).join(" · ")
+              + (sb.urgente ? " · pedido em cima da hora" : ""),
+            podeAtribuir: !soProf && sb.status !== "cancelada",
+            temErro: this.state.subErro && this.state.subErro.id === sb.id,
+            erro: (this.state.subErro && this.state.subErro.id === sb.id)
+              ? this.state.subErro.texto : "",
+            candidatas: docentes.filter(n => n !== sb.pedidoPor).map(n => ({
+              label: n,
+              bg: sb.cobre === n ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: sb.cobre === n ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              onClick: () => {
+                const r = CRM.atribuirSubstituta(sb.id, n, quem);
+                this.setState({ subErro: r.ok ? null : { id: sb.id, texto: r.erro } });
+                this.bump();
+              }
+            }))
+          }))
+        };
+      })(),
 
       renovNumeros: [
         { v: String(nRenov), k: nRenov === 1 ? "renovou" : "renovaram", cor: "var(--color-success-dark)" },

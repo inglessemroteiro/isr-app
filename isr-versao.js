@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-b",
+  numero: "2026.10.20-c",
   data: "20/10/2026",
-  nota: "A moldura do painel e os slides da aula"
+  nota: "A visão geral da turma e o professor substituto"
 };
