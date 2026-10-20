@@ -92,7 +92,16 @@
         </div>
       </sc-if>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
+      <!-- O conteúdo da aba é uma COLUNA.
+           Aqui havia um grid de duas colunas, de quando a página
+           mostrava os seis blocos de uma vez. Com as abas, a aba que
+           tem mais de um bloco — o Plano das aulas tem três: o
+           syllabus, a tira de sessões e a sessão aberta — era partida
+           em colunas pelo grid: a tira de sessões ficava espremida e
+           cortada ao meio, e sobrava meia tela vazia embaixo.
+           Quem quer dois cartões lado a lado diz isso no próprio
+           bloco; o container não decide por ele. -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
 
         <!-- ALUNAS -->
         <sc-if value="{{ tAlunas }}">
@@ -184,24 +193,33 @@
           </sc-if>
 
           <sc-if value="{{ planoTem }}">
-            <!-- a tira das sessões do ciclo -->
-            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px">
+            <!-- A FAIXA DE SESSÕES -->
+            <!-- Cartões de 128px rolando na horizontal, a aberta escura
+                 e as passadas mais apagadas. A faixa ocupa a largura
+                 inteira: espremida numa coluna, ela cortava o cartão no
+                 meio e não dava para ler o título da sessão. -->
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px">
               <sc-for list="{{ planoTira }}" as="ps" hint-placeholder-count="10">
-                <button class="isr-botao" onclick="{{ ps.onClick }}" style="flex: none; width: 132px; text-align: left; border-radius: 16px; padding: 10px 12px; background: {{ ps.bg }}; color: {{ ps.fg }}">
-                  <div style="display: flex; justify-content: space-between; gap: 6px; align-items: baseline">
-                    <span style="font-size: 13px; font-weight: 700;">{{ ps.n }}</span>
-                    <span style="font-size: 10.5px; font-weight: 600; opacity: .85;">{{ ps.estadoCurto }}</span>
-                  </div>
-                  <div style="font-size: 12px; font-weight: 600; line-height: 1.35; margin-top: 3px;">{{ ps.titulo }}</div>
+                <button class="isr-botao" onclick="{{ ps.onClick }}" style="flex: none; width: 128px; text-align: left; border-radius: 16px; padding: 11px 13px; background: {{ ps.bg }}; color: {{ ps.fg }}; opacity: {{ ps.op }}; display: flex; flex-direction: column; gap: 2px; align-items: stretch">
+                  <span style="display: flex; justify-content: space-between; gap: 6px; align-items: baseline">
+                    <span style="font-size: 14px; font-weight: 800; letter-spacing: -0.02em;">{{ ps.n }}</span>
+                    <span style="font-size: 10.5px; font-weight: 700; opacity: .85;">{{ ps.estadoCurto }}</span>
+                  </span>
+                  <span style="font-size: 11px; font-weight: 700; opacity: .75;">{{ ps.data }}</span>
+                  <span style="font-size: 12px; font-weight: 600; line-height: 1.35; margin-top: 2px;">{{ ps.titulo }}</span>
                 </button>
               </sc-for>
             </div>
 
-            <div class="isr-cartao" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+            <!-- A ÁREA DA SESSÃO -->
+            <!-- Painel bege com os cartões brancos dentro, como no
+                 desenho: o roteiro, o material e os dois cartões de
+                 palavras e homework. -->
+            <div style="background: var(--color-button-secondary); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
               <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start">
                 <div style="min-width: 0">
                   <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoEyebrow }}</div>
-                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25;">{{ planoTitulo }}</div>
+                  <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2;">{{ planoTitulo }}</div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px;">
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: {{ planoEstadoBg }}; color: {{ planoEstadoFg }};">{{ planoEstado }}</span>
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: var(--color-button-secondary); color: var(--color-primary-800);">{{ planoOrigem }}</span>
@@ -220,28 +238,28 @@
               </sc-if>
 
               <sc-if value="{{ planoTemGuia }}">
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-button-secondary); border-radius: 14px; padding: 11px 14px">
-                  <span style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-neutral-0); border-radius: 20px; padding: 14px 18px">
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
                   <sc-if value="{{ planoTemSyllabus }}">
-                    <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
+                    <a href="{{ planoSyllabus }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--color-primary-900);">{{ planoSyllabusLabel }} ↗</a>
                   </sc-if>
                   <sc-if value="{{ planoTemGuiaDoNivel }}">
-                    <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-900);">{{ planoGuiaLabel }} ↗</a>
+                    <a href="{{ planoGuia }}" target="_blank" rel="noopener" style="text-decoration: none; background: var(--color-button-secondary); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--color-primary-900);">{{ planoGuiaLabel }} ↗</a>
                   </sc-if>
                 </div>
               </sc-if>
 
               <sc-if value="{{ planoTemObjetivo }}">
-                <div>
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">o que a aluna sai sabendo</div>
-                  <div style="font-size: 15px; line-height: 1.55; margin-top: 3px;">{{ planoObjetivo }}</div>
+                <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">o que a aluna sai sabendo</div>
+                  <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.4; margin-top: 5px;">{{ planoObjetivo }}</div>
                 </div>
               </sc-if>
 
               <!-- O ROTEIRO -->
-              <div>
+              <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
-                  <div style="font-size: 15px; font-weight: 600;">Roteiro</div>
+                  <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.02em;">Roteiro</div>
                   <span style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoMinutos }}</span>
                 </div>
                 <sc-for list="{{ planoEtapas }}" as="pe" hint-placeholder-count="6">
@@ -307,9 +325,9 @@
               </div>
 
               <!-- PALAVRAS E HOMEWORK -->
-              <div style="display: flex; gap: 14px; flex-wrap: wrap">
-                <div style="flex: 1 1 260px; min-width: 0">
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">palavras · vão para o Review da aluna</div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap">
+                <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">palavras · vão para o Review da aluna</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px">
                       <sc-for list="{{ planoPalavras }}" as="pw" hint-placeholder-count="5">
@@ -325,8 +343,8 @@
                     <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">Separe por vírgula.</div>
                   </sc-if>
                 </div>
-                <div style="flex: 1 1 260px; min-width: 0">
-                  <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">homework · abre quando a aula termina</div>
+                <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">homework · abre quando a aula termina</div>
                   <sc-if value="{{ planoLendo }}">
                     <div style="font-size: 13.5px; line-height: 1.55; margin-top: 7px">{{ planoHomework }}</div>
                   </sc-if>
@@ -728,11 +746,18 @@ class Component extends DCLogic {
       planoTira: pSessoes.map(x => {
         const e = EST_PLANO[x.estado] || EST_PLANO.rascunho;
         const sel = pAtual && x.n === pAtual.n;
+        // A data vem da chamada que disse qual sessão foi dada.
+        // Sessão ainda não dada não tem data, e a faixa fica sem ela:
+        // inventar uma data a partir do horário da turma erraria em
+        // todo feriado e remarcação.
+        const dada = CRM.dataDaSessao ? CRM.dataDaSessao(u.label, x.n) : "";
         return {
-          n: "Sessão " + x.n, estadoCurto: e[3],
+          n: "S" + x.n, estadoCurto: e[3],
+          data: dada ? CRM.ddmm(dada) : "",
           titulo: x.titulo || "sem título ainda",
           bg: sel ? "var(--color-primary-900)" : "var(--color-neutral-0)",
           fg: sel ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          op: (dada && !sel) ? "0.6" : "1",
           onClick: () => { this.setState({ planoSessao: x.n, planoAjuste: false, planoErro: "" }); }
         };
       }),

@@ -6710,6 +6710,28 @@
     localStorage.setItem("isr_gestao_user", JSON.stringify(u));
     return u;
   }
+  // POR QUE este e-mail não entrou.
+  //
+  // A tela dizia sempre a mesma frase — "não está no cadastro de
+  // Equipe" —, e ela é falsa em dois dos três casos: a pessoa pode
+  // estar no cadastro sem nenhuma função que dê acesso, e pode estar
+  // cadastrada como aluna. Mandar a escola procurar no lugar errado
+  // custa uma tarde de cada lado.
+  //
+  // Devolve: { caso, nome, papeis }
+  //   "sem_funcao"  está na Equipe, mas nenhum papel abre o sistema
+  //   "e_aluna"     o e-mail está na ficha de uma aluna
+  //   "fora"        o e-mail não está em lugar nenhum
+  function motivoSemAcesso(email) {
+    var e = String(email || "").trim().toLowerCase();
+    var eq = equipeLista().filter(function (x) { return mesmoEmail(x.email, e); })[0];
+    if (eq) {
+      return { caso: "sem_funcao", nome: eq.nome || "", papeis: (eq.papeis || []).slice() };
+    }
+    var pes = getPessoas().filter(function (x) { return mesmoEmail(x.email, e); })[0];
+    if (pes) return { caso: "e_aluna", nome: pes.nome || "", papeis: [] };
+    return { caso: "fora", nome: "", papeis: [] };
+  }
   function sairGestao() {
     localStorage.removeItem("isr_gestao_user");
     // o "ver como" não pode sobreviver à troca de pessoa: quem entrar
@@ -9991,6 +10013,7 @@
       objetivo: String(dados.objetivo || "").trim().slice(0, PLANO_LIMITES.objetivo),
       homework: String(dados.homework || "").trim().slice(0, PLANO_LIMITES.homework),
       guia: String(dados.guia || "").trim().slice(0, 300),
+      slides: String(dados.slides || "").trim().slice(0, 300),
       palavras: limpaPalavras(dados.palavras),
       etapas: limpaEtapas(dados.etapas && dados.etapas.length ? dados.etapas
         : FASES.map(function (f) { return { fase: f.id, titulo: "", min: f.min }; }))
@@ -10034,6 +10057,10 @@
       // sessões, e repeti-lo por sessão era convidar dez links
       // diferentes para o mesmo guia
       guia: base.guia || guiaDoNivel(t.nivel, t.cycle),
+      // Os slides são da SESSÃO: cada aula tem o seu deck. Vêm do
+      // syllabus do nível e a turma pode trocar o link — há turma que
+      // usa uma cópia própria do deck.
+      slides: (meu && meu.slides !== undefined) ? meu.slides : (base.slides || ""),
       syllabusDoCiclo: materiaisDoCiclo(t.cycle).syllabus,
       doSyllabus: !!sess, tocado: !!meu,
       etapas: limpaEtapas(meu ? meu.etapas : base.etapas),
@@ -10071,6 +10098,25 @@
       .map(function (n) { return planoDaTurma(turmaId, n); })
       .filter(Boolean);
   }
+  // A data em que esta sessão foi dada: a da chamada que disse qual
+  // sessão foi. Sessão que ainda não aconteceu não tem data — e
+  // projetar uma a partir do horário da turma seria chutar por cima de
+  // feriado e remarcação. Quando não há, a faixa não mostra data.
+  function dataDaSessao(turmaLabel, n) {
+    var alvo = parseInt(n, 10) || 0;
+    if (!alvo || !turmaLabel) return "";
+    var m = chamadasAll();
+    var datas = [];
+    Object.keys(m).forEach(function (k) {
+      var ch = m[k];
+      if (!ch || ch.turma !== turmaLabel) return;
+      if ((parseInt(ch.sessao, 10) || 0) !== alvo) return;
+      if (ch.data) datas.push(ch.data);
+    });
+    datas.sort();
+    return datas[0] || "";
+  }
+
   // Grava o plano da turma. Na primeira gravação copia a sessão do
   // syllabus inteira: a partir daí o plano é dela.
   function salvarPlano(turmaId, n, patch) {
@@ -10079,12 +10125,23 @@
     var m = planosAll();
     var k = planoChave(turmaId, n);
     var base = m[k] || { turma: turmaId, n: n, etapas: atual.etapas,
-      palavras: atual.palavras, homework: atual.homework, estado: atual.estado };
+      palavras: atual.palavras, homework: atual.homework,
+      slides: atual.slides, estado: atual.estado };
     patch = patch || {};
     if (patch.etapas !== undefined) base.etapas = limpaEtapas(patch.etapas);
     if (patch.palavras !== undefined) base.palavras = limpaPalavras(patch.palavras);
     if (patch.homework !== undefined) {
       base.homework = String(patch.homework || "").trim().slice(0, PLANO_LIMITES.homework);
+    }
+    if (patch.slides !== undefined) {
+      var sl = String(patch.slides || "").trim().slice(0, 300);
+      // Link que não começa com https:// não abre: o navegador o trata
+      // como caminho dentro do sistema e a professora cai num 404 no
+      // meio da aula. Melhor recusar na hora de salvar.
+      if (sl && sl.indexOf("https://") !== 0) {
+        return { ok: false, erro: "O link dos slides precisa começar com https://" };
+      }
+      base.slides = sl;
     }
     if (patch.estado !== undefined) base.estado = patch.estado;
     if (patch.publicadoEm !== undefined) base.publicadoEm = patch.publicadoEm;
@@ -10164,7 +10221,7 @@
     if (!p || p.estado !== "publicada") return null;
     return {
       n: p.n, titulo: p.titulo, objetivo: p.objetivo, homework: p.homework,
-      palavras: p.palavras,
+      palavras: p.palavras, slides: p.slides || "",
       // só o que ficou marcado: etapa desmarcada não aconteceu na aula
       atividades: p.etapas.filter(function (e) { return e.on; }).map(function (e) {
         return { fase: faseLabel(e.fase), titulo: e.titulo, min: e.min,
@@ -14600,6 +14657,7 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    motivoSemAcesso: motivoSemAcesso,
     gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
     soProfessora: soProfessora,
     verComo: verComo, setVerComo: setVerComo,
@@ -14840,6 +14898,7 @@
     reabrirAula: reabrirAula, respostasDaAluna: respostasDaAluna,
     salvarResposta: salvarResposta, comentarResposta: comentarResposta,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
+    dataDaSessao: dataDaSessao,
     aulaVivaDaAluna: aulaVivaDaAluna,
     CHAMADA_ESTADOS: CHAMADA_ESTADOS,
     particularesDaSemana: particularesDaSemana, marcarAulaParticular: marcarAulaParticular,

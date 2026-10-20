@@ -157,8 +157,32 @@
   // Dizer o e-mail que foi recusado é o que permite ver o erro: quase
   // sempre é o endereço do convite diferente do que está na ficha.
   function naoAutorizada(idErro, email) {
-    msg(idErro, (email ? "O e-mail " + email + " não está" : "Este e-mail não está")
-      + " no cadastro de Equipe da escola. Fale com a Gabi para liberar o acesso.");
+    var quem = email ? "O e-mail " + email : "Este e-mail";
+    var m = null;
+    try { m = window.ISRCRM && window.ISRCRM.motivoSemAcesso
+      ? window.ISRCRM.motivoSemAcesso(email) : null; } catch (e) {}
+    // A frase antiga — "não está no cadastro de Equipe" — era a mesma
+    // nos três casos, e falsa em dois deles. Dizer qual é o caso é o
+    // que transforma "não funciona" em algo que a escola resolve.
+    if (m && m.caso === "sem_funcao") {
+      msg(idErro, quem + " está no cadastro de Equipe"
+        + (m.nome ? " (" + m.nome + ")" : "")
+        + (m.papeis.length ? ", como " + m.papeis.join(" e ") : ", sem função marcada")
+        + " — e nenhuma dessas funções abre o sistema. Peça à Gabi para marcar"
+        + " a função de professora, comercial, operação, aulas extras ou shadow"
+        + " na tela Equipe.");
+      return;
+    }
+    if (m && m.caso === "e_aluna") {
+      msg(idErro, quem + " está cadastrado como aluna"
+        + (m.nome ? " (" + m.nome + ")" : "")
+        + ", não como equipe. A porta das alunas é o endereço do site sem o"
+        + " /gestao.html. Se esta pessoa também dá aula, a Gabi precisa"
+        + " cadastrá-la na tela Equipe.");
+      return;
+    }
+    msg(idErro, quem + " não está no cadastro de Equipe da escola."
+      + " Fale com a Gabi para liberar o acesso.");
   }
 
   function entrar() {
