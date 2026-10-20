@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-l",
+  numero: "2026.10.20-m",
   data: "20/10/2026",
-  nota: "As datas do clube no calendário, com a data escrita por extenso ao lado"
+  nota: "O app da aluna abre sem ?id= e o celular alcança as oito telas"
 };
