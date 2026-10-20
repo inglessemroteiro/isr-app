@@ -447,47 +447,299 @@
     </sc-if>
   </sc-if>
 
+  <!-- ══ CLUBES ══ -->
+  <!-- A ordem é a do arquivo 12: cabeçalho, grade de cartões, e o
+       painel do clube selecionado com quatro abas sublinhadas.
+       Criar, editar e publicar ficam aqui porque o menu da professora
+       tem um item só — o Painel. A tela de Clubes do menu, que é da
+       coordenação, grava nos mesmos clubeSalvar/clubePublicar, então
+       as duas não têm como discordar. -->
   <sc-if value="{{ ptClubes }}">
-    <sc-if value="{{ semClubes }}">
-      <section class="isr-cartao" style="padding: 18px 22px">
-        <div style="font-size: 16px; font-weight: 600;">{{ L44 }}</div>
-        <p style="margin: 6px 0 10px; font-size: 13.5px; color: var(--color-primary-800); line-height: 1.6;">Nenhum clube no seu nome. Clube é encontro aberto a todas as alunas, com tema por encontro e lista de espera.</p>
-        <a href="ISR%20-%20Clubes%20v3.dc.html" style="text-decoration: none; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); border-radius: 999px; padding: 11px 18px; font-size: 12.5px; font-weight: 600;">{{ L18 }}</a>
+
+    <!-- 1 · CABEÇALHO -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 4px;">
+      <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.035em; color: var(--color-primary-900);">{{ C1 }}</div>
+      <button onclick="{{ onClNovo }}" style="flex: none; border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); border-radius: 999px; padding: 11px 18px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C2 }}</button>
+    </div>
+
+    <sc-if value="{{ clVazio }}">
+      <section class="isr-cartao" style="padding: 20px 22px;">
+        <p style="margin: 0; font-size: 14px; color: var(--color-primary-800); line-height: 1.6;">{{ C3 }}</p>
       </section>
     </sc-if>
-    <sc-for list="{{ clubes }}" as="cl" hint-placeholder-count="3">
-      <section class="isr-cartao" style="padding: 18px 22px">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-          <div style="font-size: 17px; font-weight: 700; letter-spacing: -0.02em;">{{ cl.nome }}</div>
-          <span style="font-size: 12px; font-weight: 600; color: {{ cl.estadoCor }};">{{ cl.estado }}</span>
+
+    <!-- 2 · A GRADE. Um clube ou cinco, é o mesmo cartão. -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+      <sc-for list="{{ clCartoes }}" as="cc" hint-placeholder-count="3">
+        <button onclick="{{ cc.pick }}" style="text-align: left; cursor: pointer; font-family: inherit; background: var(--color-neutral-0); border: {{ cc.borda }}; border-radius: 20px; padding: 16px 17px; display: block;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="flex: none; background: {{ cc.statusBg }}; color: {{ cc.statusFg }}; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700;">{{ cc.status }}</span>
+            <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ cc.meta }}</span>
+          </div>
+          <div style="margin-top: 10px; font-size: 17px; font-weight: 800; letter-spacing: -0.03em; color: var(--color-primary-900);">{{ cc.nome }}</div>
+          <div style="margin-top: 5px; font-size: 13px; line-height: 1.5; color: var(--color-text-body); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ cc.descricao }}</div>
+          <div style="margin-top: 10px; font-size: 12.5px; color: var(--color-primary-800);">{{ cc.quando }}</div>
+          <div style="margin-top: 11px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ cc.inscritas }}</div>
+          <div style="margin-top: 5px; height: 8px; border-radius: 999px; background: var(--color-bg-cell); overflow: hidden;">
+            <div style="height: 8px; width: {{ cc.barra }}; background: var(--color-secondary-500);"></div>
+          </div>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- 3 · O PAINEL DO CLUBE SELECIONADO -->
+    <sc-if value="{{ clSelAberto }}">
+      <section class="isr-cartao" style="padding: 22px 24px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div style="min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 22px; font-weight: 800; letter-spacing: -0.035em; color: var(--color-primary-900);">{{ clSelNome }}</span>
+              <span style="flex: none; background: {{ clSelStatusBg }}; color: {{ clSelStatusFg }}; border-radius: 999px; padding: 3px 11px; font-size: 11px; font-weight: 700;">{{ clSelStatus }}</span>
+            </div>
+            <div style="margin-top: 5px; font-size: 13px; color: var(--color-tertiary-500);">{{ clSelQuandoOnde }}</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <sc-for list="{{ clAcoes }}" as="ac" hint-placeholder-count="2">
+              <button onclick="{{ ac.pick }}" style="flex: none; border: {{ ac.borda }}; background: {{ ac.bg }}; color: {{ ac.fg }}; box-shadow: {{ ac.sombra }}; border-radius: 999px; padding: 10px 15px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ ac.label }}</button>
+            </sc-for>
+          </div>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px;">
-          <div style="flex: 1 1 150px; min-width: 0;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">{{ L50 }}</div>
-            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.quando }}</div>
+
+        <sc-if value="{{ clAviso }}">
+          <div style="margin-top: 14px; background: {{ clAvisoBg }}; color: {{ clAvisoFg }}; border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.55;">{{ clAvisoTexto }}</div>
+        </sc-if>
+
+        <!-- abas sublinhadas -->
+        <div style="display: flex; gap: 22px; margin-top: 18px; border-bottom: 1px solid var(--color-divider);">
+          <sc-for list="{{ clAbas }}" as="ab" hint-placeholder-count="4">
+            <button onclick="{{ ab.pick }}" style="border: 0; background: none; font-family: inherit; cursor: pointer; padding: 0 0 10px; font-size: 14px; font-weight: 700; color: {{ ab.cor }}; border-bottom: 3px solid {{ ab.linha }}; margin-bottom: -1px;">{{ ab.label }}</button>
+          </sc-for>
+        </div>
+
+        <!-- 4 · PÁGINA DO CLUBE · leitura -->
+        <sc-if value="{{ clPaginaLeitura }}">
+          <div style="margin-top: 18px;">
+            <sc-for list="{{ clFatos }}" as="ft" hint-placeholder-count="6">
+              <div style="display: flex; gap: 14px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--color-divider);">
+                <div style="flex: none; width: 110px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ ft.rotulo }}</div>
+                <div style="flex: 1 1 auto; min-width: 0; font-size: 14px; line-height: 1.55; color: {{ ft.cor }};">{{ ft.valor }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ clFalta }}">
+              <div style="margin-top: 14px; background: var(--color-warning-light); border-radius: 16px; padding: 14px 16px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-warning-dark);">{{ C4 }}</div>
+                <div style="margin-top: 4px; font-size: 13.5px; line-height: 1.55; color: var(--color-primary-900);">{{ clFaltaTexto }}</div>
+              </div>
+            </sc-if>
+            <div style="margin-top: 16px;">
+              <button onclick="{{ onClEditar }}" style="border: 1.5px solid var(--color-primary-900); background: none; color: var(--color-primary-900); border-radius: 999px; padding: 10px 17px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C5 }}</button>
+            </div>
           </div>
-          <div style="flex: 1 1 150px; min-width: 0;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">{{ L55 }}</div>
-            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.onde }}</div>
+        </sc-if>
+
+        <!-- 5 · PÁGINA DO CLUBE · edição, com a prévia do cartão da aluna ao lado -->
+        <sc-if value="{{ clPaginaEdicao }}">
+          <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 18px;">
+            <div style="flex: 1 1 380px; min-width: 0;">
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <label style="flex: 2 1 220px; min-width: 0;">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C6 }}</div>
+                  <input value="{{ clFnome }}" onchange="{{ onClFnome }}" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                </label>
+                <label style="flex: 1 1 110px; min-width: 0;">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C7 }}</div>
+                  <input value="{{ clFvagas }}" onchange="{{ onClFvagas }}" inputmode="numeric" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                </label>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C8 }}</div>
+                <textarea value="{{ clFdesc }}" onchange="{{ onClFdesc }}" rows="3" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; line-height: 1.55; color: var(--color-primary-900);"></textarea>
+                <div style="margin-top: 4px; font-size: 12px; color: var(--color-tertiary-500);">{{ C9 }}</div>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ C10 }}</div>
+                <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+                  <sc-for list="{{ clNiveis }}" as="nv" hint-placeholder-count="5">
+                    <button onclick="{{ nv.pick }}" style="flex: none; border: 1px solid var(--color-border); background: {{ nv.bg }}; color: {{ nv.fg }}; border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ nv.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ C11 }}</div>
+                <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+                  <sc-for list="{{ clFormatos }}" as="fo" hint-placeholder-count="2">
+                    <button onclick="{{ fo.pick }}" style="flex: none; border: 1px solid var(--color-border); background: {{ fo.bg }}; color: {{ fo.fg }}; border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ fo.label }}</button>
+                  </sc-for>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;">
+                  <label style="flex: 1 1 200px; min-width: 0;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ clOndeRotulo }}</div>
+                    <input value="{{ clFonde }}" onchange="{{ onClFonde }}" placeholder="{{ clOndePlaceholder }}" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                  </label>
+                  <label style="flex: 1 1 120px; min-width: 0;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C12 }}</div>
+                    <input value="{{ clFdia }}" onchange="{{ onClFdia }}" placeholder="{{ phDia }}" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                  </label>
+                  <label style="flex: 1 1 100px; min-width: 0;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C13 }}</div>
+                    <input value="{{ clFhora }}" onchange="{{ onClFhora }}" placeholder="19:00" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                  </label>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 6px;">{{ C14 }}</div>
+                <sc-for list="{{ clFencontros }}" as="en" hint-placeholder-count="4">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+                    <span style="flex: none; width: 26px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ en.n }}</span>
+                    <input value="{{ en.data }}" onchange="{{ en.onData }}" placeholder="{{ en.dica }}" style="flex: 1 1 120px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                    <input value="{{ en.hora }}" onchange="{{ en.onHora }}" placeholder="19:00" style="flex: 0 1 90px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                    <input value="{{ en.tema }}" onchange="{{ en.onTema }}" placeholder="{{ phTema }}" style="flex: 2 1 160px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C15 }}</div>
+                <textarea value="{{ clFbio }}" onchange="{{ onClFbio }}" rows="3" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; line-height: 1.55; color: var(--color-primary-900);"></textarea>
+              </div>
+
+              <sc-if value="{{ clErro }}">
+                <div style="margin-top: 12px; background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 13px; font-size: 13px;">{{ clErroTexto }}</div>
+              </sc-if>
+
+              <div style="display: flex; gap: 9px; flex-wrap: wrap; margin-top: 16px;">
+                <button onclick="{{ onClSalvar }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); border-radius: 999px; padding: 11px 18px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C16 }}</button>
+                <button onclick="{{ onClCancelar }}" style="border: 0; background: none; color: var(--color-primary-500); border-radius: 999px; padding: 11px 6px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C17 }}</button>
+              </div>
+            </div>
+
+            <!-- a prévia: o mesmo cartão que a aluna vê, em inglês -->
+            <div style="flex: 0 1 280px; min-width: 240px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 7px;">{{ C18 }}</div>
+              <div style="background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 20px; padding: 16px 17px;">
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <sc-if value="{{ clPrevNovo }}">
+                    <span style="flex: none; background: var(--color-button-primary); color: var(--color-primary-900); border-radius: 999px; padding: 3px 9px; font-size: 10.5px; font-weight: 800;">New</span>
+                  </sc-if>
+                  <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ clPrevMeta }}</span>
+                </div>
+                <div style="margin-top: 9px; font-size: 17px; font-weight: 800; letter-spacing: -0.03em; color: var(--color-primary-900);">{{ clPrevNome }}</div>
+                <div style="margin-top: 5px; font-size: 13px; line-height: 1.5; color: var(--color-text-body);">{{ clPrevDesc }}</div>
+                <div style="margin-top: 10px; font-size: 12.5px; color: var(--color-primary-800);">{{ clPrevQuando }}</div>
+                <div style="margin-top: 3px; font-size: 12.5px; color: var(--color-primary-800);">{{ clPrevOnde }}</div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-border); font-size: 12.5px; line-height: 1.5; color: var(--color-text-body);">{{ clPrevBio }}</div>
+                <div style="margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ clPrevVagas }}</div>
+              </div>
+            </div>
           </div>
-          <div style="flex: 1 1 150px; min-width: 0;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">{{ L38 }}</div>
-            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.inscritas }}</div>
-            <sc-if value="{{ cl.temEspera }}">
-              <div style="font-size: 12px; color: var(--color-warning-dark);">{{ cl.espera }}</div>
+        </sc-if>
+
+        <!-- ABA INSCRITAS -->
+        <sc-if value="{{ clAbaInscritas }}">
+          <div style="margin-top: 18px;">
+            <sc-if value="{{ clSemInscritas }}">
+              <p style="margin: 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C19 }}</p>
+            </sc-if>
+            <sc-for list="{{ clInscritas }}" as="in" hint-placeholder-count="3">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--color-divider);">
+                <a href="{{ in.href }}" class="lk" style="font-size: 14px; font-weight: 600; color: var(--color-primary-900); text-decoration: none; min-width: 0;">{{ in.nome }}</a>
+                <div style="display: flex; gap: 10px; align-items: center; flex: none;">
+                  <sc-if value="{{ in.temAlerta }}">
+                    <span style="font-size: 12px; font-weight: 700; color: var(--color-error-dark);">{{ in.alerta }}</span>
+                  </sc-if>
+                  <button onclick="{{ in.onTirar }}" style="border: 0; background: none; color: var(--color-primary-500); font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; padding: 4px;">{{ C20 }}</button>
+                </div>
+              </div>
+            </sc-for>
+            <div style="margin-top: 14px; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ C21 }}</div>
+            <sc-if value="{{ clSemEspera }}">
+              <p style="margin: 5px 0 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C22 }}</p>
+            </sc-if>
+            <sc-for list="{{ clEspera }}" as="es" hint-placeholder-count="2">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--color-divider);">
+                <span style="font-size: 13.5px; color: var(--color-primary-900);">{{ es.nome }}</span>
+                <button onclick="{{ es.onEntrar }}" style="flex: none; border: 1.5px solid var(--color-primary-900); background: none; color: var(--color-primary-900); border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C23 }}</button>
+              </div>
+            </sc-for>
+            <div style="margin-top: 14px; background: var(--color-primary-50); border-radius: 14px; padding: 12px 14px; font-size: 13px; line-height: 1.55; color: var(--color-primary-900);">{{ C24 }}</div>
+          </div>
+        </sc-if>
+
+        <!-- ABA ENCONTROS -->
+        <sc-if value="{{ clAbaEncontros }}">
+          <div style="margin-top: 18px;">
+            <sc-if value="{{ clSemEncontros }}">
+              <p style="margin: 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C25 }}</p>
+            </sc-if>
+            <sc-for list="{{ clEncontros }}" as="en" hint-placeholder-count="4">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 11px 0; border-bottom: 1px solid var(--color-divider);">
+                <div style="min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ en.titulo }}</div>
+                  <div style="margin-top: 2px; font-size: 12.5px; color: var(--color-tertiary-500);">{{ en.sub }}</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex: none;">
+                  <span style="font-size: 12px; font-weight: 700; color: {{ en.estadoCor }};">{{ en.estado }}</span>
+                  <sc-if value="{{ en.podeChamada }}">
+                    <button onclick="{{ en.onChamada }}" style="border: 1.5px solid var(--color-primary-900); background: none; color: var(--color-primary-900); border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ en.botao }}</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+
+            <sc-if value="{{ clChamadaAberta }}">
+              <div style="margin-top: 16px; background: var(--color-button-secondary); border-radius: 20px; padding: 18px 20px;">
+                <div style="font-size: 14px; font-weight: 700; color: var(--color-primary-900);">{{ clChamadaTitulo }}</div>
+                <sc-if value="{{ clChamadaSemGente }}">
+                  <p style="margin: 8px 0 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C19 }}</p>
+                </sc-if>
+                <sc-for list="{{ clChamadaLista }}" as="ch" hint-placeholder-count="3">
+                  <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--color-border);">
+                    <span style="font-size: 13.5px; color: var(--color-primary-900); min-width: 0;">{{ ch.nome }}</span>
+                    <div style="display: flex; gap: 6px; flex: none;">
+                      <button onclick="{{ ch.onP }}" style="border: 1px solid var(--color-border); background: {{ ch.pBg }}; color: {{ ch.pFg }}; border-radius: 999px; padding: 6px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C26 }}</button>
+                      <button onclick="{{ ch.onF }}" style="border: 1px solid var(--color-border); background: {{ ch.fBg }}; color: {{ ch.fFg }}; border-radius: 999px; padding: 6px 13px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C27 }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="display: flex; gap: 9px; flex-wrap: wrap; margin-top: 14px;">
+                  <button onclick="{{ onClSalvarChamada }}" style="border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); box-shadow: 0 3px 0 var(--color-primary-950); border-radius: 999px; padding: 10px 17px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C28 }}</button>
+                  <button onclick="{{ onClFecharChamada }}" style="border: 0; background: none; color: var(--color-primary-500); border-radius: 999px; padding: 10px 6px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C17 }}</button>
+                </div>
+              </div>
             </sc-if>
           </div>
-          <div style="flex: 1 1 150px; min-width: 0;">
-            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-tertiary-300); margin-bottom: 2px;">{{ L37 }}</div>
-            <div style="font-size: 13.5px; color: var(--color-primary-900);">{{ cl.encontrosMes }}</div>
-            <div style="font-size: 12px; color: var(--color-tertiary-500);">{{ cl.proximo }}</div>
+        </sc-if>
+
+        <!-- ABA MATERIAL -->
+        <sc-if value="{{ clAbaMaterial }}">
+          <div style="margin-top: 18px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ C29 }}</div>
+            <sc-if value="{{ clSemMateriais }}">
+              <p style="margin: 6px 0 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C30 }}</p>
+            </sc-if>
+            <sc-for list="{{ clMateriais }}" as="ma" hint-placeholder-count="2">
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--color-divider);">
+                <div style="min-width: 0;">
+                  <div style="font-size: 14px; color: var(--color-primary-900);">{{ ma.titulo }}</div>
+                  <a href="{{ ma.link }}" target="_blank" rel="noopener" class="lk" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">{{ C31 }}</a>
+                </div>
+                <button onclick="{{ ma.onRemover }}" style="flex: none; border: 0; background: none; color: var(--color-primary-500); font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; padding: 4px;">{{ C32 }}</button>
+              </div>
+            </sc-for>
+            <div style="display: flex; gap: 9px; flex-wrap: wrap; margin-top: 14px;">
+              <input value="{{ clMatTitulo }}" onchange="{{ onClMatTitulo }}" placeholder="{{ phMatTitulo }}" style="flex: 2 1 200px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+              <input value="{{ clMatLink }}" onchange="{{ onClMatLink }}" placeholder="{{ phMatLink }}" style="flex: 2 1 200px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+              <button onclick="{{ onClMatAdd }}" style="flex: none; border: 1.5px solid var(--color-primary-900); background: none; color: var(--color-primary-900); border-radius: 999px; padding: 10px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C33 }}</button>
+            </div>
+            <div style="margin-top: 6px; font-size: 12px; color: var(--color-tertiary-500);">{{ C34 }}</div>
           </div>
-        </div>
-        <div style="margin-top: 12px;">
-          <a href="{{ cl.href }}" class="lk" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500);">{{ L19 }}</a>
-        </div>
+        </sc-if>
       </section>
-    </sc-for>
+    </sc-if>
   </sc-if>
 
   <!-- RESUMO DO DIA -->
@@ -1086,7 +1338,14 @@ class Component extends DCLogic {
             subAberto: false, subAula: "", subMotivo: "doenca", subObs: "", subErro: "",
             // qual aluna particular está aberta, e se o seletor de
             // programa dela está aberto
-            partSel: "", partTrocando: false };
+            partSel: "", partTrocando: false,
+            // ── Clubes ──
+            // clSel é o clube aberto; clForm é o rascunho em edição,
+            // separado do clube gravado para que fechar sem salvar não
+            // mexa em nada. clChamada é o número do encontro cuja
+            // chamada está aberta.
+            clSel: "", clAba: "pagina", clForm: null, clErro: "", clAviso: "",
+            clChamada: null, clPres: {}, clMatTitulo: "", clMatLink: "" };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -1204,7 +1463,52 @@ class Component extends DCLogic {
     L99: ["programa que ela segue", "the programme she follows"],
     L100: ["Trocar o programa recomeça a marcha dela: o que você pulou ou reordenou vale para o programa de agora, e as sessões do novo entram na ordem do syllabus.",
       "Changing the programme restarts her sequence: what you skipped or reordered belongs to the current one, and the new programme comes in syllabus order."],
-    phTopico: ["O que foi dado nesta aula", "What was taught in this class"]
+    phTopico: ["O que foi dado nesta aula", "What was taught in this class"],
+    // ── Clubes (arquivo 12) ──
+    C1: ["Seus clubes", "Your clubs"],
+    C2: ["+ Oferecer novo clube", "+ Offer a new club"],
+    C3: ["Nenhum clube no seu nome ainda. Clube é encontro aberto a todas as alunas, com tema por encontro e lista de espera.",
+      "No club in your name yet. A club is a meeting open to every student, with a topic per meeting and a waitlist."],
+    C4: ["Falta para publicar", "Missing before publishing"],
+    C5: ["Editar clube", "Edit club"],
+    C6: ["nome do clube", "club name"],
+    C7: ["vagas", "spots"],
+    C8: ["descrição para as alunas · em inglês", "description for students · in English"],
+    C9: ["Aparece no cartão do clube no app das alunas.", "This shows on the club card in the student app."],
+    C10: ["nível", "level"],
+    C11: ["formato", "format"],
+    C12: ["dia", "day"],
+    C13: ["horário", "time"],
+    C14: ["datas dos 4 encontros e tema de cada um", "dates of the 4 meetings and the topic of each"],
+    C15: ["sobre você · aparece ao lado da sua foto", "about you · shown next to your photo"],
+    C16: ["Salvar clube", "Save club"],
+    C17: ["cancelar", "cancel"],
+    C18: ["prévia · o cartão no app das alunas", "preview · the card in the student app"],
+    C19: ["Nenhuma aluna inscrita.", "No student signed up."],
+    C20: ["tirar", "remove"],
+    C21: ["lista de espera", "waitlist"],
+    C22: ["Nenhuma pessoa na lista de espera.", "Nobody on the waitlist."],
+    C23: ["Oferecer vaga", "Offer spot"],
+    C24: ["Duas faltas seguidas tiram a aluna do clube e a vaga vai para a primeira da lista de espera. Quem tira é você: o sistema avisa, não executa.",
+      "Two absences in a row remove a student and the spot goes to the first on the waitlist. You do the removing: the system flags it, it doesn’t act."],
+    C25: ["Nenhum encontro marcado. As datas entram na página do clube, em Editar clube.",
+      "No meeting scheduled. Dates go in the club page, under Edit club."],
+    C26: ["presente", "present"],
+    C27: ["falta", "absent"],
+    C28: ["Salvar chamada", "Save attendance"],
+    C29: ["material de consulta · aparece na página do clube para as alunas",
+      "reference material · shown on the club page for students"],
+    C30: ["Nenhum material publicado.", "No material published."],
+    C31: ["Abrir →", "Open →"],
+    C32: ["remover", "remove"],
+    C33: ["+ Adicionar", "+ Add"],
+    C34: ["O material fica visível para quem está inscrita no clube.",
+      "The material is visible to whoever is signed up for the club."],
+    phDia: ["Quinta-feira", "Thursday"],
+    phData: ["dd/mm/aaaa", "dd/mm/yyyy"],
+    phTema: ["Tema do encontro", "Meeting topic"],
+    phMatTitulo: ["Título (ex.: Recipe vocabulary list)", "Title (e.g. Recipe vocabulary list)"],
+    phMatLink: ["Link do Drive, YouTube…", "Drive, YouTube link…"]
   };
   idioma() {
     try { return localStorage.getItem("isr_painel_lang") === "en" ? "en" : "pt"; } catch (e) { return "pt"; }
@@ -1900,35 +2204,77 @@ class Component extends DCLogic {
         temLink: !!g.link, label: g.titulo || ("Aula de " + CRM.ddmm(g.data))
       }));
 
-    // ── os clubes dela ──
+    // ── OS CLUBES DELA (arquivo 12) ──────────────────────────────
+    //
+    // A professora só vê e mexe nos clubes no nome dela. Tudo o que
+    // esta aba grava passa por clubeSalvar / clubePublicar /
+    // clubeDespublicar / clubeRemover, que são as mesmas funções da
+    // tela de Clubes da coordenação — por isso as duas telas não têm
+    // como mostrar coisas diferentes.
     const MESES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun",
       "jul", "ago", "set", "out", "nov", "dez"];
-    const clubesDelaLista = (CRM.clubesLista ? CRM.clubesLista() : [])
+    const CL_NIVEIS = [
+      ["todos", Tr("All levels", "Todos os níveis")],
+      ["a1", Tr("A1 and up", "A partir do A1")],
+      ["a2", Tr("A2 and up", "A partir do A2")],
+      ["b1", Tr("B1 and up", "A partir do B1")],
+      ["b2", Tr("B2 and up", "A partir do B2")]
+    ];
+    const clNivelCurto = (n) => {
+      const k = String(n || "todos").toLowerCase();
+      return k === "todos" ? Tr("all levels", "todos") : k.toUpperCase() + "+";
+    };
+    const clNivelLabel = (n) => {
+      const achado = CL_NIVEIS.filter(x => x[0] === String(n || "todos").toLowerCase())[0];
+      return achado ? achado[1] : CL_NIVEIS[0][1];
+    };
+    const clFormatoLabel = (f) => f === "presencial"
+      ? Tr("in person", "presencial") : Tr("online", "online");
+    const clDur = (d) => { const v = String(d || "").trim();
+      return !v ? "" : (/^\d+$/.test(v) ? v + " min" : v); };
+    const clQuando = (c) => [c.dia, c.hora, clDur(c.duracao)]
+      .filter(Boolean).join(" · ") || Tr("no time set", "sem horário");
+    const clOnde = (c) => c.formato === "presencial"
+      ? (c.local || Tr("in person · no address", "presencial · sem endereço"))
+      : (c.link ? Tr("online", "online") : Tr("online · no link", "online · sem link"));
+
+    const clubesNoNome = (CRM.clubesLista ? CRM.clubesLista() : [])
       .filter(c => c.professora === teacher)
-      .map(c => {
-        const enc = (c.encontros || []).filter(e => e && e.data).sort((a, b) => a.data < b.data ? -1 : 1);
-        const prox = enc.filter(e => e.data >= hojeIso)[0] || null;
-        const doMes = enc.filter(e => e.data.slice(0, 7) === hojeIso.slice(0, 7)).length;
-        return {
-          nome: c.nome,
-          estado: c.status === "publicado"
-            ? ((c.membros || []).length ? "em andamento" : "aguardando inscrições")
-            : "rascunho · só você vê",
-          estadoCor: c.status === "publicado"
-            ? ((c.membros || []).length ? "var(--color-success-dark)" : "var(--color-primary-800)")
-            : "var(--color-tertiary-500)",
-          quando: [c.dia, c.hora, c.duracao ? c.duracao + " min" : ""].filter(Boolean).join(" · ") || "sem horário",
-          onde: c.formato === "presencial" ? (c.local || "presencial") : (c.link ? "online" : "online · sem link"),
-          inscritas: (c.membros || []).length + (c.vagas ? " de " + c.vagas : "") + " inscritas",
-          espera: (c.espera || []).length
-            ? (c.espera || []).length + " na lista de espera" : "",
-          temEspera: ((c.espera || []).length > 0),
-          encontrosMes: doMes + (doMes === 1 ? " encontro em " : " encontros em ")
-            + MESES_CURTO[new Date().getMonth()],
-          proximo: prox ? ("próximo: " + CRM.ddmm(prox.data) + (prox.tema ? " · " + prox.tema : "")) : "sem encontro marcado",
-          href: "ISR%20-%20Clubes%20v3.dc.html"
-        };
-      });
+      .sort((a, b) => a.nome < b.nome ? -1 : 1);
+
+    // Sem nada selecionado, abre o primeiro: a tela do arquivo tem
+    // sempre um clube aberto embaixo da grade.
+    const clSelId = (clubesNoNome.filter(c => c.id === this.state.clSel)[0] || clubesNoNome[0] || {}).id || "";
+    const clSel = clubesNoNome.filter(c => c.id === clSelId)[0] || null;
+    const clPub = !!(clSel && clSel.status === "publicado");
+    const clFalta = clSel && CRM.faltaParaPublicar ? CRM.faltaParaPublicar(clSel) : [];
+
+    const clAbrir = (id) => this.setState({ clSel: id, clAba: "pagina",
+      clForm: null, clErro: "", clAviso: "", clChamada: null, clPres: {} });
+
+    // O rascunho em edição. Enquanto clForm é null, a aba mostra o
+    // modo leitura.
+    const clF = this.state.clForm;
+    const clCampo = (k, v) => this.setState({
+      clForm: Object.assign({}, clF, { [k]: v }), clErro: "" });
+    const clEncF = (clF && clF.encontros) || [];
+
+    const clNome = (c) => c.nome || Tr("Untitled club", "Clube sem nome");
+
+    // A data do encontro é digitada como dd/mm ou dd/mm/aaaa e guardada
+    // em ISO, que é o formato que o resto do app lê. Sem ano, vale o
+    // ano corrente; o que não der data volta vazio em vez de virar
+    // "NaN-NaN-NaN" dentro do clube.
+    const clIsoDeData = (txt) => {
+      const m = String(txt || "").trim().match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+      if (!m) return "";
+      const d = parseInt(m[1], 10), mes = parseInt(m[2], 10);
+      let ano = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+      if (ano < 100) ano += 2000;
+      if (d < 1 || d > 31 || mes < 1 || mes > 12) return "";
+      const dd = (d < 10 ? "0" : "") + d, mm = (mes < 10 ? "0" : "") + mes;
+      return ano + "-" + mm + "-" + dd;
+    };
 
     // ── EM AULA · RESPOSTAS AO VIVO ──────────────────────────────
     //
@@ -2245,12 +2591,357 @@ class Component extends DCLogic {
       tGravacoes: gravacoesDaTurma,
       semGravacoes: gravacoesDaTurma.length === 0,
 
-      // ── Clubes ──
-      // Os clubes dela e os encontros do mês. Criar, editar e publicar
-      // ficam na tela de Clubes: duas telas que fazem a mesma coisa
-      // acabam discordando, e a tela de Clubes já existe no menu.
-      clubes: clubesDelaLista,
-      semClubes: clubesDelaLista.length === 0,
+      // ── CLUBES (arquivo 12) ──
+      clVazio: clubesNoNome.length === 0,
+      onClNovo: () => {
+        const r = CRM.clubeSalvar({ nome: Tr("New club", "Clube novo"),
+          professora: teacher, formato: "online", nivel: "todos", vagas: 8,
+          encontros: [{}, {}, {}, {}] });
+        if (!r.ok) return this.setState({ clErro: r.erro });
+        this.setState({ clSel: r.id, clAba: "pagina", clErro: "", clAviso: "",
+          clForm: Object.assign({}, CRM.getClube ? CRM.getClube(r.id) : {}) });
+        this.bump();
+      },
+      clCartoes: clubesNoNome.map(c => {
+        const inscritas = (c.membros || []).length;
+        const pct = c.vagas ? Math.min(100, Math.round(inscritas / c.vagas * 100)) : 0;
+        return {
+          nome: clNome(c),
+          status: c.status === "publicado"
+            ? Tr("published", "publicado") : Tr("draft", "rascunho"),
+          statusBg: c.status === "publicado"
+            ? "var(--color-secondary-100)" : "var(--color-bg-cell)",
+          statusFg: c.status === "publicado"
+            ? "var(--color-secondary-900)" : "var(--color-tertiary-500)",
+          meta: clFormatoLabel(c.formato) + " · " + clNivelCurto(c.nivel),
+          descricao: c.descricao || Tr("No description yet.", "Sem descrição ainda."),
+          quando: clQuando(c),
+          inscritas: inscritas + (c.vagas ? "/" + c.vagas : "") + Tr(" signed up", " inscritas"),
+          barra: pct + "%",
+          borda: c.id === clSelId
+            ? "2px solid var(--color-primary-900)" : "1px solid var(--color-border)",
+          pick: () => clAbrir(c.id)
+        };
+      }),
+
+      clSelAberto: !!clSel,
+      clSelNome: clSel ? clNome(clSel) : "",
+      clSelStatus: clPub ? Tr("published", "publicado") : Tr("draft", "rascunho"),
+      clSelStatusBg: clPub ? "var(--color-secondary-100)" : "var(--color-bg-cell)",
+      clSelStatusFg: clPub ? "var(--color-secondary-900)" : "var(--color-tertiary-500)",
+      clSelQuandoOnde: clSel ? (clQuando(clSel) + " · " + clOnde(clSel)) : "",
+
+      // As ações do arquivo, cada uma com a sua trava. Nenhuma delas
+      // aparece quando não pode ser feita: botão que recusa é pior do
+      // que botão que não está lá.
+      clAcoes: !clSel ? [] : (() => {
+        const out = [];
+        const prox = CRM.proximoEncontroDoClube ? CRM.proximoEncontroDoClube(clSel) : null;
+        if (clPub && prox) {
+          out.push({
+            label: Tr("Take attendance · next meeting", "Fazer chamada · próximo encontro"),
+            bg: "var(--color-primary-900)", fg: "var(--color-neutral-0)",
+            borda: "0", sombra: "0 3px 0 var(--color-primary-950)",
+            pick: () => {
+              const pres = {};
+              (clSel.membros || []).forEach(pid => { pres[pid] = "P"; });
+              this.setState({ clAba: "encontros", clForm: null,
+                clChamada: prox.n, clPres: pres, clErro: "", clAviso: "" });
+            }
+          });
+        }
+        if (!clPub) {
+          out.push({
+            label: Tr("Publish to students", "Publicar para as alunas"),
+            bg: "var(--color-primary-900)", fg: "var(--color-neutral-0)",
+            borda: "0", sombra: "0 3px 0 var(--color-primary-950)",
+            pick: () => {
+              const r = CRM.clubePublicar(clSel.id);
+              this.setState(r.ok
+                ? { clErro: "", clForm: null,
+                    clAviso: Tr("Published. It is in the students’ catalogue now.",
+                               "Publicado. Já está no catálogo das alunas.") }
+                : { clErro: r.erro, clAviso: "" });
+              this.bump();
+            }
+          });
+        }
+        if (clPub && !(clSel.membros || []).length) {
+          out.push({
+            label: Tr("Unpublish", "Despublicar"),
+            bg: "none", fg: "var(--color-primary-900)",
+            borda: "1.5px solid var(--color-primary-900)", sombra: "none",
+            pick: () => {
+              const r = CRM.clubeDespublicar(clSel.id);
+              this.setState(r.ok
+                ? { clErro: "", clAviso: Tr("Out of the catalogue. It is a draft again.",
+                                            "Saiu do catálogo. Voltou a ser rascunho.") }
+                : { clErro: r.erro, clAviso: "" });
+              this.bump();
+            }
+          });
+        }
+        if (!clPub) {
+          out.push({
+            label: Tr("Delete draft", "Apagar rascunho"),
+            bg: "none", fg: "var(--color-error-dark)",
+            borda: "1.5px solid var(--color-error-light)", sombra: "none",
+            pick: () => {
+              const r = CRM.clubeRemover(clSel.id);
+              this.setState(r.ok
+                ? { clSel: "", clForm: null, clErro: "",
+                    clAviso: Tr("Draft deleted.", "Rascunho apagado.") }
+                : { clErro: r.erro, clAviso: "" });
+              this.bump();
+            }
+          });
+        }
+        return out;
+      })(),
+      clAviso: !!this.state.clAviso,
+      clAvisoTexto: this.state.clAviso,
+      clAvisoBg: "var(--color-primary-50)",
+      clAvisoFg: "var(--color-primary-900)",
+
+      clAbas: [["pagina", Tr("Club page", "Página do clube")],
+               ["inscritas", Tr("Signed up", "Inscritas")],
+               ["encontros", Tr("Meetings", "Encontros")],
+               ["material", Tr("Material", "Material")]].map(([k, label]) => ({
+        label,
+        cor: this.state.clAba === k
+          ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
+        linha: this.state.clAba === k ? "var(--color-button-primary)" : "transparent",
+        pick: () => this.setState({ clAba: k, clForm: null, clErro: "", clChamada: null })
+      })),
+
+      // ── aba Página do clube ──
+      clPaginaLeitura: !!clSel && this.state.clAba === "pagina" && !clF,
+      clPaginaEdicao: !!clSel && this.state.clAba === "pagina" && !!clF,
+      clFatos: !clSel ? [] : [
+        [Tr("description", "descrição"), clSel.descricao],
+        [Tr("level", "nível"), clNivelLabel(clSel.nivel)],
+        [Tr("when", "quando"), clQuando(clSel)],
+        [Tr("format", "formato"), clFormatoLabel(clSel.formato)],
+        [clSel.formato === "presencial" ? Tr("address", "endereço") : Tr("room link", "link da sala"),
+         clSel.formato === "presencial" ? clSel.local : clSel.link],
+        [Tr("spots", "vagas"), clSel.vagas
+          ? ((clSel.membros || []).length + "/" + clSel.vagas) : ""],
+        [Tr("about you", "sobre você"), clSel.bio]
+      ].map(([rotulo, valor]) => ({
+        rotulo,
+        valor: String(valor || "").trim() || Tr("— missing", "— falta preencher"),
+        cor: String(valor || "").trim()
+          ? "var(--color-primary-900)" : "var(--color-tertiary-300)"
+      })),
+      clFalta: clFalta.length > 0,
+      clFaltaTexto: clFalta.length
+        ? (Tr("Still missing: ", "Ainda falta: ") + clFalta.join(", ") + ".") : "",
+      onClEditar: () => this.setState({
+        clForm: Object.assign({}, clSel, {
+          encontros: [0, 1, 2, 3].map(i => Object.assign({}, (clSel.encontros || [])[i] || {}))
+        }), clErro: "", clAviso: "" }),
+
+      // ── modo edição ──
+      clFnome: clF ? (clF.nome || "") : "",
+      onClFnome: (e) => clCampo("nome", e.target.value),
+      clFvagas: clF ? String(clF.vagas || "") : "",
+      onClFvagas: (e) => clCampo("vagas", parseInt(e.target.value, 10) || 0),
+      clFdesc: clF ? (clF.descricao || "") : "",
+      onClFdesc: (e) => clCampo("descricao", e.target.value),
+      clFbio: clF ? (clF.bio || "") : "",
+      onClFbio: (e) => clCampo("bio", e.target.value),
+      clNiveis: CL_NIVEIS.map(([k, label]) => {
+        const on = clF && String(clF.nivel || "todos").toLowerCase() === k;
+        return { label,
+          bg: on ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          fg: on ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          pick: () => clCampo("nivel", k) };
+      }),
+      clFormatos: [["online", clFormatoLabel("online")],
+                   ["presencial", clFormatoLabel("presencial")]].map(([k, label]) => {
+        const on = clF && (clF.formato || "online") === k;
+        return { label,
+          bg: on ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          fg: on ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          pick: () => clCampo("formato", k) };
+      }),
+      clOndeRotulo: clF && clF.formato === "presencial"
+        ? Tr("address", "endereço") : Tr("room link", "link da sala"),
+      clOndePlaceholder: clF && clF.formato === "presencial"
+        ? Tr("Street, number, city", "Rua, número, cidade")
+        : "https://…",
+      clFonde: clF ? (clF.formato === "presencial" ? (clF.local || "") : (clF.link || "")) : "",
+      onClFonde: (e) => clCampo(clF && clF.formato === "presencial" ? "local" : "link", e.target.value),
+      clFdia: clF ? (clF.dia || "") : "",
+      onClFdia: (e) => clCampo("dia", e.target.value),
+      clFhora: clF ? (clF.hora || "") : "",
+      onClFhora: (e) => clCampo("hora", e.target.value),
+      clFencontros: [0, 1, 2, 3].map(i => {
+        const e0 = clEncF[i] || {};
+        const mexe = (k, v) => {
+          const l = [0, 1, 2, 3].map(j => Object.assign({}, clEncF[j] || {}));
+          l[i][k] = v;
+          clCampo("encontros", l);
+        };
+        return { n: String(i + 1),
+          data: e0.data ? CRM.ddmm(e0.data) : "",
+          dica: e0.data ? Tr("dd/mm/yyyy", "dd/mm/aaaa") : (e0.quando || Tr("dd/mm/yyyy", "dd/mm/aaaa")),
+          hora: e0.hora || "",
+          tema: e0.tema || "",
+          // A data chega como dd/mm e é guardada em ISO: é o formato
+          // que todo o resto do app lê.
+          onData: (ev) => mexe("data", clIsoDeData(ev.target.value)),
+          onHora: (ev) => mexe("hora", ev.target.value),
+          onTema: (ev) => mexe("tema", ev.target.value) };
+      }),
+      clErro: !!this.state.clErro,
+      clErroTexto: this.state.clErro,
+      onClSalvar: () => {
+        if (!clF) return;
+        const r = CRM.clubeSalvar({
+          id: clF.id, nome: clF.nome, professora: teacher,
+          descricao: clF.descricao, nivel: clF.nivel, formato: clF.formato,
+          local: clF.local, link: clF.link, dia: clF.dia, hora: clF.hora,
+          vagas: clF.vagas, bio: clF.bio,
+          encontros: (clF.encontros || []).map(e => {
+            const o = { data: e.data || "", hora: e.hora || "", tema: e.tema || "" };
+            if (!o.data && e.quando) o.quando = e.quando;
+            return o;
+          })
+        });
+        this.setState(r.ok
+          ? { clForm: null, clErro: "", clAviso: Tr("Club saved.", "Clube salvo.") }
+          : { clErro: r.erro, clAviso: "" });
+        this.bump();
+      },
+      onClCancelar: () => this.setState({ clForm: null, clErro: "" }),
+
+      // A prévia é o cartão da aluna, montado do rascunho em edição e
+      // sempre em inglês: é assim que ela vai ler.
+      clPrevNome: clF ? (clF.nome || "Untitled club") : "",
+      clPrevDesc: clF ? (clF.descricao || "No description yet.") : "",
+      clPrevMeta: clF
+        ? ((clF.formato === "presencial" ? "in person" : "online") + " · "
+           + clNivelCurto(clF.nivel).replace("todos", "all levels"))
+        : "",
+      clPrevQuando: clF
+        ? ([clF.dia, clF.hora, clDur(clF.duracao)].filter(Boolean).join(" · ") || "no time set")
+        : "",
+      clPrevOnde: clF
+        ? (clF.formato === "presencial" ? (clF.local || "no address yet") : (clF.link ? "online room" : "no room link yet"))
+        : "",
+      clPrevBio: clF ? (clF.bio || "No teacher bio yet.") : "",
+      clPrevVagas: clF ? ((clF.vagas || 0) + " spots") : "",
+      clPrevNovo: !!(clSel && CRM.clubeEhNovo && CRM.clubeEhNovo(clSel)),
+
+      // ── aba Inscritas ──
+      clAbaInscritas: !!clSel && this.state.clAba === "inscritas",
+      clSemInscritas: !clSel || !(clSel.membros || []).length,
+      clInscritas: !clSel ? [] : (clSel.membros || []).map(pid => {
+        const p = CRM.getPessoa ? CRM.getPessoa(pid) : null;
+        const faltas = CRM.faltasSeguidasNoClube ? CRM.faltasSeguidasNoClube(clSel.id, pid) : 0;
+        return {
+          nome: (p && p.nome) || pid,
+          href: "ISR%20-%20Perfil%20v3.dc.html?id=" + encodeURIComponent(pid),
+          temAlerta: faltas >= 2,
+          alerta: faltas >= 2
+            ? (faltas + Tr(" absences in a row", " faltas seguidas")) : "",
+          onTirar: () => { CRM.clubeSair(clSel.id, pid); this.bump(); }
+        };
+      }),
+      clSemEspera: !clSel || !(clSel.espera || []).length,
+      clEspera: !clSel ? [] : (clSel.espera || []).map(pid => {
+        const p = CRM.getPessoa ? CRM.getPessoa(pid) : null;
+        return { nome: (p && p.nome) || pid,
+          onEntrar: () => { CRM.clubeEntrar(clSel.id, pid, { forcar: true }); this.bump(); } };
+      }),
+
+      // ── aba Encontros ──
+      clAbaEncontros: !!clSel && this.state.clAba === "encontros",
+      clSemEncontros: !clSel || !(clSel.encontros || []).length,
+      clEncontros: !clSel ? [] : (clSel.encontros || []).map((e, i) => {
+        const ch = CRM.chamadaDoEncontro ? CRM.chamadaDoEncontro(clSel.id, i + 1) : null;
+        const presentes = ch
+          ? Object.keys(ch.presencas || {}).filter(k => ch.presencas[k] === "P").length : 0;
+        return {
+          titulo: Tr("Meeting ", "Encontro ") + (i + 1)
+            + (e && e.tema ? " · " + e.tema : ""),
+          sub: e && e.data
+            ? (CRM.ddmm(e.data) + (e.hora ? " · " + e.hora : ""))
+            : ((e && e.quando) || Tr("no date yet", "sem data ainda")),
+          estado: ch
+            ? (presentes + Tr(" present", " presentes"))
+            : (e && e.data
+                ? Tr("attendance pending", "chamada pendente")
+                : Tr("not scheduled", "não marcado")),
+          estadoCor: ch ? "var(--color-secondary-900)"
+            : (e && e.data ? "var(--color-warning-dark)" : "var(--color-tertiary-300)"),
+          podeChamada: !!(clPub && e && e.data),
+          botao: ch ? Tr("Redo", "Refazer") : Tr("Attendance", "Chamada"),
+          onChamada: () => {
+            const pres = {};
+            (clSel.membros || []).forEach(pid => {
+              pres[pid] = ch && ch.presencas && ch.presencas[pid] === "F" ? "F" : "P";
+            });
+            this.setState({ clChamada: i + 1, clPres: pres, clErro: "", clAviso: "" });
+          }
+        };
+      }),
+      clChamadaAberta: !!clSel && this.state.clAba === "encontros" && !!this.state.clChamada,
+      clChamadaTitulo: clSel && this.state.clChamada
+        ? (Tr("Attendance · meeting ", "Chamada · encontro ") + this.state.clChamada)
+        : "",
+      clChamadaSemGente: !clSel || !(clSel.membros || []).length,
+      clChamadaLista: !clSel ? [] : (clSel.membros || []).map(pid => {
+        const p = CRM.getPessoa ? CRM.getPessoa(pid) : null;
+        const v = this.state.clPres[pid] === "F" ? "F" : "P";
+        const marca = (x) => this.setState({
+          clPres: Object.assign({}, this.state.clPres, { [pid]: x }) });
+        return { nome: (p && p.nome) || pid,
+          pBg: v === "P" ? "var(--color-secondary-100)" : "var(--color-neutral-0)",
+          pFg: v === "P" ? "var(--color-secondary-900)" : "var(--color-tertiary-500)",
+          fBg: v === "F" ? "var(--color-error-light)" : "var(--color-neutral-0)",
+          fFg: v === "F" ? "var(--color-error-dark)" : "var(--color-tertiary-500)",
+          onP: () => marca("P"), onF: () => marca("F") };
+      }),
+      onClSalvarChamada: () => {
+        const r = CRM.salvarChamadaDoClube(clSel.id, this.state.clChamada, this.state.clPres);
+        this.setState(r.ok
+          ? { clChamada: null, clPres: {}, clErro: "",
+              clAviso: Tr("Attendance saved.", "Chamada salva.") }
+          : { clErro: r.erro });
+        this.bump();
+      },
+      onClFecharChamada: () => this.setState({ clChamada: null, clPres: {} }),
+
+      // ── aba Material ──
+      clAbaMaterial: !!clSel && this.state.clAba === "material",
+      clSemMateriais: !clSel || !(clSel.materiais || []).length,
+      clMateriais: !clSel ? [] : (clSel.materiais || []).map((m, i) => ({
+        titulo: (m && (m.label || m.titulo)) || (m && m.link) || "—",
+        link: (m && m.link) || "#",
+        onRemover: () => {
+          CRM.clubeSalvar({ id: clSel.id,
+            materiais: (clSel.materiais || []).filter((x, j) => j !== i) });
+          this.bump();
+        }
+      })),
+      clMatTitulo: this.state.clMatTitulo,
+      onClMatTitulo: (e) => this.setState({ clMatTitulo: e.target.value }),
+      clMatLink: this.state.clMatLink,
+      onClMatLink: (e) => this.setState({ clMatLink: e.target.value }),
+      onClMatAdd: () => {
+        const t = String(this.state.clMatTitulo || "").trim();
+        const u = String(this.state.clMatLink || "").trim();
+        if (!t || !u) {
+          return this.setState({ clErro: Tr("A material needs a title and a link.",
+                                            "Material precisa de título e link.") });
+        }
+        CRM.clubeSalvar({ id: clSel.id,
+          materiais: (clSel.materiais || []).concat([{ label: t, link: u }]) });
+        this.setState({ clMatTitulo: "", clMatLink: "", clErro: "" });
+        this.bump();
+      },
 
       // O 00 do desenho: o eyebrow diz em que tela a pessoa está, e
       // "pedagógico" é o nome do bloco do menu, não o da tela.

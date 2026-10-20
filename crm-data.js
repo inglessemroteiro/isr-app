@@ -6139,6 +6139,8 @@
       // projeto e a sequência da particular são registro da aluna
       substituicoes: subsRaw(), reunioes: reunioesRaw(),
       projetoEntregas: projEntregasAll(), sequencias: seqAll(),
+      // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
+      clubeChamadas: clubeChamadasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
@@ -6163,6 +6165,7 @@
     grava(AULA_VIVA_KEY, d.aulasVivas);
     grava(SUBS_KEY, d.substituicoes); grava(REUNIOES_KEY, d.reunioes);
     grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
+    grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
@@ -6213,6 +6216,7 @@
       reunioes: lista("reunioes"),
       projetoEntregas: mesclarMapa(local.projetoEntregas, remoto.projetoEntregas),
       sequencias: mesclarMapa(local.sequencias, remoto.sequencias),
+      clubeChamadas: mesclarMapa(local.clubeChamadas, remoto.clubeChamadas),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
@@ -12319,6 +12323,75 @@
     };
   }
 
+  // ── A CHAMADA DOS ENCONTROS DE CLUBE ─────────────────────────
+  //
+  // Clube não é turma: não entra na folha, não tem ciclo e não tem
+  // tópico obrigatório. Por isso não cabe em `chamadasLista()`, que
+  // existe para validar aula de turma. Aqui a chamada serve a uma
+  // coisa só: a regra de que duas faltas seguidas abrem a vaga para a
+  // primeira da lista de espera.
+  //
+  // Guardada por clube e por número do encontro (1 a 4), porque o
+  // encontro é a unidade que a professora vê na tela — a data pode
+  // mudar depois de marcada, e a chamada não deve se perder com ela.
+  var CLUBE_CHAMADAS_KEY = "isr_clube_chamadas_v1";
+  function clubeChamadasAll() {
+    try { return JSON.parse(localStorage.getItem(CLUBE_CHAMADAS_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function clubeChamadasSalvar(m) {
+    try { localStorage.setItem(CLUBE_CHAMADAS_KEY, JSON.stringify(m || {})); } catch (e) {}
+    agendarSync();
+  }
+  function chaveEncontro(clubeId, n) { return clubeId + "|" + (parseInt(n, 10) || 0); }
+  // { presencas: { pessoaId: "P"|"F" }, data, _v }
+  function chamadaDoEncontro(clubeId, n) {
+    return clubeChamadasAll()[chaveEncontro(clubeId, n)] || null;
+  }
+  function salvarChamadaDoClube(clubeId, n, presencas) {
+    var c = getClube(clubeId);
+    if (!c) return { ok: false, erro: "Clube não encontrado." };
+    var num = parseInt(n, 10) || 0;
+    if (num < 1) return { ok: false, erro: "Diga de qual encontro é a chamada." };
+    var limpo = {};
+    (c.membros || []).forEach(function (pid) {
+      limpo[pid] = (presencas || {})[pid] === "F" ? "F" : "P";
+    });
+    var m = clubeChamadasAll();
+    var enc = (c.encontros || [])[num - 1] || {};
+    m[chaveEncontro(clubeId, num)] = { presencas: limpo,
+      data: enc.data || iso(today()), _v: Date.now() };
+    clubeChamadasSalvar(m);
+    return { ok: true, encontro: num };
+  }
+  // O próximo encontro é o primeiro com data de hoje em diante que
+  // ainda não tem chamada. Sem data em nenhum, não há próximo.
+  function proximoEncontroDoClube(c) {
+    if (!c) return null;
+    var hoje = iso(today());
+    var achado = null;
+    (c.encontros || []).forEach(function (e, i) {
+      if (achado || !e || !e.data) return;
+      if (e.data < hoje) return;
+      if (chamadaDoEncontro(c.id, i + 1)) return;
+      achado = { n: i + 1, data: e.data, hora: e.hora || c.hora || "", tema: e.tema || "" };
+    });
+    return achado;
+  }
+  // Duas faltas seguidas, contando só os encontros que já tiveram
+  // chamada: é a regra do clube, e é a professora que decide tirar.
+  function faltasSeguidasNoClube(clubeId, pessoaId) {
+    var c = getClube(clubeId);
+    if (!c) return 0;
+    var seguidas = 0;
+    (c.encontros || []).forEach(function (e, i) {
+      var ch = chamadaDoEncontro(clubeId, i + 1);
+      if (!ch || !ch.presencas || ch.presencas[pessoaId] === undefined) return;
+      if (ch.presencas[pessoaId] === "F") seguidas++; else seguidas = 0;
+    });
+    return seguidas;
+  }
+
   var BOOKCLUB_KEY = "isr_bookclub_v1";
   function bookclubUrl() {
     try { return localStorage.getItem(BOOKCLUB_KEY) || "https://app.inglessemroteiro.com.br"; }
@@ -15643,6 +15716,9 @@
     faltasSeguidas: faltasSeguidas, alunasComFaltasSeguidas: alunasComFaltasSeguidas,
     clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
     clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
+    chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
+    proximoEncontroDoClube: proximoEncontroDoClube,
+    faltasSeguidasNoClube: faltasSeguidasNoClube,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
     dataDaSessao: dataDaSessao, datasDasSessoes: datasDasSessoes,
     aulaVivaDaAluna: aulaVivaDaAluna,
