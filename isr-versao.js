@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-c",
+  numero: "2026.10.20-d",
   data: "20/10/2026",
-  nota: "A visão geral da turma e o professor substituto"
+  nota: "O plano das aulas, pelo 07"
 };

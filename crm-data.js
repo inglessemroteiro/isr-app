@@ -3392,6 +3392,12 @@
       }).length;
       return { id: u.id, nivel: u.nivel, turma: u.turma, teacher: u.teacher, cycle: u.cycle,
         projeto: u.projeto, notebook: u.notebook, label: label,
+        // Como a turma trabalha DURANTE a aula: no caderno do app, ou
+        // no papel. Não é o mesmo que ser online ou presencial — há
+        // turma online com aluna que prefere escrever à mão, e turma
+        // presencial em que todas levam o celular. É por este campo
+        // que a professora sabe se precisa imprimir.
+        formato: u.formato === "papel" ? "papel" : "digital",
         capacidade: cap, ocupadas: ocup, vagas: cap - ocup };
     });
   }
@@ -9664,7 +9670,24 @@
     { id: "shareout", label: "Share Out", min: 10 },
     { id: "wrapup", label: "Wrap-up", min: 5 }
   ];
-  function fasesDoPlano() { return FASES.map(function (f) { return Object.assign({}, f); }); }
+  // A cor de cada fase. O desenho tem cinco fases (warm-up, listen,
+  // learn, practice, mission) e a ISR tem seis — as dos guias da
+  // escola, que é o que as professoras usam. Ficam as seis, com as
+  // cores do desenho distribuídas pela mesma lógica: abertura em
+  // areia, escuta em azul, língua em amarelo, mão na massa em verde,
+  // apresentação em verde claro e fechamento em coral.
+  var FASE_CORES = {
+    warmup: "var(--color-button-secondary)",
+    mindson: "var(--color-primary-50)",
+    language: "var(--color-warning-light)",
+    handson: "var(--color-secondary-100)",
+    shareout: "var(--color-secondary-100)",
+    wrapup: "var(--color-error-light)"
+  };
+  function faseCor(id) { return FASE_CORES[id] || "var(--color-button-secondary)"; }
+  function fasesDoPlano() {
+    return FASES.map(function (f) { return Object.assign({ cor: faseCor(f.id) }, f); });
+  }
   function faseLabel(id) {
     var f = FASES.filter(function (x) { return x.id === id; })[0];
     return f ? f.label : String(id || "");
@@ -15480,7 +15503,7 @@
     convidarAluna: convidarAluna, conviteDaAluna: conviteDaAluna,
     materiaisDoCiclo: materiaisDoCiclo, guiaDoNivel: guiaDoNivel,
     salvarMateriais: salvarMateriais,
-    fasesDoPlano: fasesDoPlano, faseLabel: faseLabel,
+    fasesDoPlano: fasesDoPlano, faseCor: faseCor, faseLabel: faseLabel,
     syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
     semearSyllabus: semearSyllabus,
     apagarSessaoSyllabus: apagarSessaoSyllabus,

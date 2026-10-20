@@ -151,6 +151,11 @@
             </select>
             <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ capacidade }}" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="Projeto: {{ projeto }}" style="padding: 9px 11px; font-size: 12px" />
+            <select class="isr-campo" ref="{{ edFormatoRef }}" style="padding: 9px 11px; font-size: 12px">
+              <sc-for list="{{ formatoOpts }}" as="fo" hint-placeholder-count="2">
+                <option value="{{ fo.id }}" selected="{{ fo.sel }}">{{ fo.label }}</option>
+              </sc-for>
+            </select>
             <input class="isr-campo" ref="{{ edMeetRef }}" defaultValue="{{ edMeetAtual }}" placeholder="Link da aula (Meet)" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edGuideRef }}" defaultValue="{{ edGuideAtual }}" placeholder="Link do Teacher's Guide" style="padding: 9px 11px; font-size: 12px" />
             <input class="isr-campo" ref="{{ edCadernoRef }}" defaultValue="{{ edCadernoAtual }}" placeholder="Link do Caderno de tarefas" style="padding: 9px 11px; font-size: 12px" />
@@ -308,6 +313,10 @@
                 <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 12px; padding: 10px 13px; font-size: 12.5px; line-height: 1.5">{{ planoErro }}</div>
               </sc-if>
 
+              <sc-if value="{{ planoJaDada }}">
+                <div style="background: var(--color-neutral-0); border-radius: 16px; padding: 11px 14px; font-size: 12.5px; line-height: 1.55; color: var(--color-primary-800)">{{ planoJaDadaTexto }}</div>
+              </sc-if>
+
               <sc-if value="{{ planoTemGuia }}">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--color-neutral-0); border-radius: 20px; padding: 14px 18px">
                   <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); flex: 1 1 160px">material de referência</span>
@@ -343,7 +352,7 @@
                     </sc-if>
                     <div style="flex: 1; min-width: 0">
                       <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap">
-                        <span class="isr-selo" style="padding: 2px 9px; font-size: 10.5px; background: var(--color-secondary-100); color: var(--color-primary-900);">{{ pe.fase }}</span>
+                        <span class="isr-selo" style="padding: 2px 9px; font-size: 10.5px; font-weight: 700; background: {{ pe.faseCor }}; color: var(--color-primary-900);">{{ pe.fase }}</span>
                         <sc-if value="{{ pe.mostraTitulo }}">
                           <span style="font-size: 14px; font-weight: 600; text-decoration: {{ pe.deco }}">{{ pe.titulo }}</span>
                         </sc-if>
@@ -354,11 +363,14 @@
                       <sc-if value="{{ pe.editando }}">
                         <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" placeholder="O que acontece nesta etapa" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
                       </sc-if>
-                      <sc-if value="{{ pe.temPergunta }}">
-                        <div style="background: var(--color-secondary-100); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
-                          <div style="font-size: 11.5px; font-weight: 600; color: var(--color-success-dark);">a aluna responde no caderno</div>
+                      <sc-if value="{{ pe.mostraPergunta }}">
+                        <div style="background: var(--color-primary-50); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
+                          <div style="font-size: 11.5px; font-weight: 700; color: var(--color-primary-800);">as alunas respondem no caderno</div>
                           <div style="font-size: 13.5px; line-height: 1.5; margin-top: 2px;">{{ pe.pergunta }}</div>
                         </div>
+                      </sc-if>
+                      <sc-if value="{{ pe.editando }}">
+                        <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" placeholder="Pergunta para o caderno da aluna (opcional)" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 6px; background: var(--color-primary-50)" />
                       </sc-if>
                     </div>
                     <sc-if value="{{ pe.editando }}">
@@ -379,12 +391,16 @@
                 <sc-if value="{{ planoEditando }}">
                   <div style="background: var(--color-button-secondary); border-radius: 16px; padding: 13px 15px; margin-top: 12px; display: flex; flex-direction: column; gap: 8px">
                     <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">acrescentar atividade sua · desmarque ✓ para tirar uma etapa desta turma</div>
+                    <!-- A etapa em pílulas, com a cor de cada uma: num
+                         campo de seleção a professora não via as seis
+                         fases, e escolhia a primeira. -->
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+                      <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">etapa</span>
+                      <sc-for list="{{ planoFases }}" as="pf" hint-placeholder-count="6">
+                        <button class="isr-botao isr-botao--pilula" onclick="{{ pf.onClick }}" style="background: {{ pf.bg }}; color: {{ pf.fg }}; font-size: 12px; font-weight: 700; padding: 8px 14px">{{ pf.label }}</button>
+                      </sc-for>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
-                      <select class="isr-campo" ref="{{ peFaseRef }}" style="padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)">
-                        <sc-for list="{{ planoFases }}" as="pf" hint-placeholder-count="6">
-                          <option value="{{ pf.id }}">{{ pf.label }}</option>
-                        </sc-for>
-                      </select>
                       <input class="isr-campo" ref="{{ peTituloRef }}" placeholder="Ex.: Roleplay at the market" style="flex: 1; min-width: 190px; padding: 9px 11px; font-size: 13px; background: var(--color-neutral-0)" />
                       <input class="isr-campo" ref="{{ peMinRef }}" value="10" style="width: 54px; text-align: center; padding: 9px 6px; font-size: 13px; background: var(--color-neutral-0)" />
                       <span style="font-size: 12px; color: var(--color-tertiary-500)">min</span>
@@ -428,6 +444,16 @@
               <sc-if value="{{ planoEditando }}">
                 <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnSalvar }}" style="align-self: flex-start; padding: 10px 17px; font-size: 13px">Salvar o roteiro</button>
               </sc-if>
+
+              <!-- O RODAPÉ -->
+              <!-- Como a turma trabalha, e a porta para ver o plano com
+                   os olhos da aluna antes de publicar. -->
+              <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; padding-top: 4px">
+                <span style="flex: 1; min-width: 220px; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ planoRodape }}</span>
+                <sc-if value="{{ planoTemAluna }}">
+                  <a href="{{ planoVerComoAluna }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; font-size: 13px; font-weight: 700; color: var(--color-primary-500);">Ver como aluna →</a>
+                </sc-if>
+              </div>
             </div>
           </sc-if>
         </sc-if>
@@ -586,8 +612,11 @@ class Component extends DCLogic {
   state = { editando: false, pedidoEnviado: false, tick: 0, busca: "", aba: "",
     // o erro de atribuir substituta fica preso ao pedido: sem o id,
     // o aviso de um pedido aparecia embaixo de outro
-    subErro: null };
+    subErro: null,
+    // a etapa escolhida no formulário de acrescentar atividade
+    planoFase: "warmup" };
   edProjetoRef = React.createRef(); edMeetRef = React.createRef(); edGuideRef = React.createRef();
+  edFormatoRef = React.createRef();
   edNivelRef = React.createRef(); edGravadasRef = React.createRef(); edHorarioRef = React.createRef();
   edTeacherRef = React.createRef(); edCapRef = React.createRef(); buscaRef = React.createRef();
   edCadernoRef = React.createRef(); edSlidesRef = React.createRef(); edSyllabusRef = React.createRef();
@@ -664,7 +693,8 @@ class Component extends DCLogic {
 
   renderVals() {
     const CRM = window.ISRCRM;
-    const refs = { edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
+    const refs = { edFormatoRef: this.edFormatoRef, formatoOpts: [],
+      edProjetoRef: this.edProjetoRef, edMeetRef: this.edMeetRef, edGuideRef: this.edGuideRef,
       edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
       edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef,
       peFaseRef: this.peFaseRef, peTituloRef: this.peTituloRef, peMinRef: this.peMinRef,
@@ -686,6 +716,8 @@ class Component extends DCLogic {
       syAddLabel: "", syNota: "", syTemErro: false, syErro: "",
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
+      planoJaDada: false, planoJaDadaTexto: "", planoRodape: "", planoVerComoAluna: "#",
+      planoTemAluna: false, formatoOpts: [],
       planoOnPublicar: () => {}, planoPublicarLabel: "", planoTemErro: false, planoErro: "",
       planoTemGuia: false, planoGuia: "", planoGuiaLabel: "", planoTemGuiaDoNivel: false,
       planoTemSyllabus: false, planoSyllabus: "", planoSyllabusLabel: "",
@@ -769,6 +801,11 @@ class Component extends DCLogic {
       pronta: ["pronta ✓", "var(--color-warning-light)", "var(--color-warning-dark)", "pronta"],
       publicada: ["publicada · as alunas já veem", "var(--color-secondary-100)", "var(--color-success-dark)", "publicada"]
     };
+    // quando cada sessão cai, e se já caiu: a faixa, o eyebrow e a
+    // trava de edição leem daqui
+    const quandoSessoes = CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {};
+    const planoJaDada = !!(pAtual && quandoSessoes[pAtual.n] && quandoSessoes[pAtual.n].dada);
+
     const pSalvarCampos = () => {
       if (!pAtual) return;
       CRM.salvarPlano(u.id, pAtual.n, {
@@ -932,8 +969,13 @@ class Component extends DCLogic {
         + (u.cycle || "atual") + " ainda não tem sessões. Elas são da escola, não da turma: "
         + "quando entrarem, aparecem aqui já com as seis fases, e a professora ajusta o que não couber.",
       planoTem: !!pAtual,
-      planoFases: (CRM.fasesDoPlano ? CRM.fasesDoPlano() : []),
-      planoTira: (() => { const quando = CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {};
+      planoFases: (CRM.fasesDoPlano ? CRM.fasesDoPlano() : []).map(fs => ({
+        label: fs.label, id: fs.id,
+        bg: (this.state.planoFase || "warmup") === fs.id ? "var(--color-primary-900)" : fs.cor,
+        fg: (this.state.planoFase || "warmup") === fs.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ planoFase: fs.id })
+      })),
+      planoTira: (() => { const quando = quandoSessoes;
         return pSessoes.map(x => {
         const e = EST_PLANO[x.estado] || EST_PLANO.rascunho;
         const sel = pAtual && x.n === pAtual.n;
@@ -962,7 +1004,7 @@ class Component extends DCLogic {
       }); })(),
       planoEyebrow: pAtual
         ? (() => {
-            const q = (CRM.datasDasSessoes ? CRM.datasDasSessoes(u.id) : {})[pAtual.n];
+            const q = quandoSessoes[pAtual.n];
             const quandoTxt = !q ? "" : q.dada
               ? ("dada em " + CRM.ddmm(q.data))
               : ("semana de " + this.diaMes(q.data));
@@ -978,7 +1020,12 @@ class Component extends DCLogic {
           : (pAtual.etapas.filter(e => e.minha).length
             ? "syllabus · " + pAtual.etapas.filter(e => e.minha).length + " atividade(s) sua(s)"
             : "syllabus · ajustado por você")),
-      planoPodeEditar: !!pAtual,
+      // Sessão que já aconteceu é registro: as alunas responderam no
+      // caderno sobre o roteiro daquele dia, e mexer nele depois
+      // muda a pergunta debaixo da resposta.
+      planoPodeEditar: !!pAtual && !planoJaDada,
+      planoJaDada: !!planoJaDada,
+      planoJaDadaTexto: "Esta sessão já foi dada. O roteiro dela fica como ficou — as alunas responderam no caderno sobre ele.",
       planoAjustarLabel: pAjuste ? "Concluir ajustes" : "Ajustar",
       planoOnAjustar: () => {
         if (!pAtual) return;
@@ -1015,12 +1062,15 @@ class Component extends DCLogic {
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",
       planoEditando: pAjuste, planoLendo: !pAjuste,
       planoEtapas: !pAtual ? [] : pAtual.etapas.map(e => ({
-        fase: CRM.faseLabel(e.fase), titulo: e.titulo,
+        fase: CRM.faseLabel(e.fase),
+        faseCor: CRM.faseCor ? CRM.faseCor(e.fase) : "var(--color-button-secondary)",
+        titulo: e.titulo,
         // etapa sem descrição mostra só a fase e o tempo: seis linhas de
         // "sem título" seria a tela repetindo que não sabe de nada
         mostraTitulo: !pAjuste && !!e.titulo,
         min: String(e.min), minha: e.minha,
-        temPergunta: !!e.pergunta, pergunta: e.pergunta,
+        temPergunta: !!e.pergunta, pergunta: e.pergunta || "",
+        mostraPergunta: !pAjuste && !!e.pergunta,
         editando: pAjuste, lendo: !pAjuste,
         // desmarcada continua à vista, apagada some: a professora
         // precisa ver o que a escola planejou e ela tirou
@@ -1046,12 +1096,20 @@ class Component extends DCLogic {
           const l = pAtual.etapas.map(x => x.id === e.id
             ? Object.assign({}, x, { min: ev.target.value }) : x);
           CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
+        },
+        // A pergunta é o que a aluna responde no caderno, e era a
+        // única parte do roteiro que não dava para corrigir: para
+        // trocar uma palavra era preciso apagar a etapa e refazer.
+        onPergunta: (ev) => {
+          const l = pAtual.etapas.map(x => x.id === e.id
+            ? Object.assign({}, x, { pergunta: ev.target.value }) : x);
+          CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
         }
       })),
       planoOnAddEtapa: () => {
         if (!pAtual) return;
         const r = CRM.addEtapaPlano(u.id, pAtual.n, {
-          fase: this.val(this.peFaseRef) || undefined,
+          fase: this.state.planoFase || "warmup",
           titulo: this.val(this.peTituloRef),
           min: this.val(this.peMinRef),
           pergunta: this.val(this.pePerguntaRef)
@@ -1227,6 +1285,7 @@ class Component extends DCLogic {
         if (cap > 0) patch.capacidade = cap;
         set(this.edProjetoRef, "projeto"); set(this.edMeetRef, "meet"); set(this.edGuideRef, "guide");
         set(this.edCadernoRef, "notebook"); set(this.edSlidesRef, "slides");
+        set(this.edFormatoRef, "formato");
         set(this.edSyllabusRef, "syllabus"); set(this.edCalRef, "calendario");
         set(this.edGravadasRef, "gravadas");
         // mudar nível ou horário muda o rótulo: as alunas vão junto
@@ -1239,6 +1298,19 @@ class Component extends DCLogic {
         this.setState({ editando: false });
         this.bump();
       },
+      formatoOpts: [
+        { id: "digital", label: "Caderno digital, no app" },
+        { id: "papel", label: "Sem computador: no papel" }
+      ].map(o => Object.assign({ sel: (u.formato || "digital") === o.id }, o)),
+      // O rodapé do 07: como esta turma trabalha, e a porta para ver o
+      // plano com os olhos da aluna antes de publicar.
+      planoRodape: (u.formato === "papel")
+        ? "Turma sem computador: as tarefas vão no papel. Para mudar, edite a turma."
+        : "Turma com caderno digital: as tarefas abrem no app da aluna quando a aula começa. Para mudar, edite a turma.",
+      planoVerComoAluna: alunas[0]
+        ? ("ISR%20-%20Aluna%20v4.dc.html?id=" + encodeURIComponent(alunas[0].id))
+        : "",
+      planoTemAluna: alunas.length > 0,
       pedidoEnviado: this.state.pedidoEnviado,
       onPedirGabi: () => {
         const tipo = this.val(this.pgTipoRef) || "Revisar aula";
