@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-f",
+  numero: "2026.10.20-g",
   data: "20/10/2026",
-  nota: "Particulares e a chamada que se edita de propósito"
+  nota: "O programa que a particular segue, e as abas Alunas e Materiais da turma"
 };

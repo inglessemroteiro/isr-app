@@ -10960,10 +10960,70 @@
     if (!ciclo) ciclo = metasAtuais().cicloLabel || "";
     return { nivel: nivel, ciclo: ciclo };
   }
+  // ── O PROGRAMA DA ALUNA PARTICULAR ────────────────────────────
+  //
+  // A particular segue o MESMO programa das turmas de grupo: o
+  // syllabus de um nível, num ciclo. O que muda é a marcha, que é
+  // dela.
+  //
+  // Qual programa ela segue é escolha da professora, e por isso é
+  // campo da FICHA dela, não da aula: a sequência inteira — o que já
+  // foi dado, o que foi pulado, a ordem trocada — pendura nesse
+  // programa. Guardá-lo na aula faria cada aula poder apontar para
+  // uma trilha diferente, e a sequência perderia o sentido.
+  //
+  // Sem escolha, vale o nível da ficha (ou o da turma de grupo, para
+  // quem é híbrida): é o que a escola já sabe sobre ela.
+  function programasDisponiveis() {
+    // sem isto a lista vem vazia para quem nunca abriu o plano de uma
+    // turma: o syllabus da escola só entra em cena na primeira leitura
+    garantirSyllabus();
+    var vistos = {};
+    var out = [];
+    syllabusAll().forEach(function (sx) {
+      if (!sx || sx.apagado || !sx.nivel) return;
+      var k = sx.nivel + "|" + (sx.ciclo || "");
+      if (vistos[k]) { vistos[k].sessoes++; return; }
+      vistos[k] = { nivel: sx.nivel, ciclo: sx.ciclo || "", sessoes: 1 };
+      out.push(vistos[k]);
+    });
+    return out.sort(function (a2, b2) {
+      return (a2.nivel + a2.ciclo).localeCompare(b2.nivel + b2.ciclo);
+    });
+  }
+  // Nome distinto de propósito: "programaDaAluna" já existe e é o
+  // desafio de semanas do app da aluna. São duas coisas diferentes, e
+  // o nome repetido fazia uma apagar a outra.
+  function programaDeEstudo(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { nivel: "", ciclo: "", escolhido: false };
+    if (p.programa && p.programa.nivel) {
+      return { nivel: p.programa.nivel, ciclo: p.programa.ciclo || "", escolhido: true };
+    }
+    var nc = nivelDaAluna(p);
+    return { nivel: nc.nivel, ciclo: nc.ciclo, escolhido: false };
+  }
+  // Trocar de programa zera a marcha dela: os números das sessões são
+  // de um programa, e "pulei a 3" não quer dizer nada na trilha nova.
+  function salvarProgramaDeEstudo(pessoaId, nivel, ciclo) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    var n = String(nivel || "").trim();
+    if (!n) return { ok: false, erro: "Escolha o programa." };
+    var antes = programaDeEstudo(pessoaId);
+    mutate(pessoaId, function (p) { p.programa = { nivel: n, ciclo: String(ciclo || "") }; });
+    if (antes.nivel !== n || antes.ciclo !== String(ciclo || "")) {
+      var m = seqAll();
+      if (m[pessoaId]) { m[pessoaId] = { ordem: [], puladas: [], _v: Date.now() }; seqSalvar(m); }
+    }
+    agendarSync();
+    return { ok: true, programa: { nivel: n, ciclo: String(ciclo || "") } };
+  }
+
   function sequenciaDaAluna(pessoaId) {
     var p = getPessoa(pessoaId);
     if (!p) return { nivel: "", sessoes: [], atual: null };
-    var nc = nivelDaAluna(p);
+    garantirSyllabus();
+    var nc = programaDeEstudo(pessoaId);
     var nivel = nc.nivel;
     var base = syllabusDoNivel(nivel, nc.ciclo) || [];
     var cfg = seqAll()[pessoaId] || { ordem: [], puladas: [] };
@@ -11000,7 +11060,8 @@
         pulada: pulada, dada: dada, data: dadas[n] || "", atual: atual,
         estado: pulada ? "pulada" : dada ? "dada" : atual ? "esta aula" : "a vir" };
     });
-    return { nivel: nivel, sessoes: sessoes,
+    return { nivel: nivel, ciclo: nc.ciclo, programaEscolhido: nc.escolhido,
+      sessoes: sessoes,
       atual: sessoes.filter(function (x) { return x.atual; })[0] || null };
   }
   function pularSessaoDaAluna(pessoaId, n, pular) {
@@ -15574,6 +15635,8 @@
     removerReuniaoPedagogica: removerReuniaoPedagogica, reunioesDoMes: reunioesDoMes,
     entregasDoProjeto: entregasDoProjeto, marcarEntregaProjeto: marcarEntregaProjeto,
     sequenciaDaAluna: sequenciaDaAluna, pularSessaoDaAluna: pularSessaoDaAluna,
+    programasDisponiveis: programasDisponiveis, programaDeEstudo: programaDeEstudo,
+    salvarProgramaDeEstudo: salvarProgramaDeEstudo,
     moverSessaoDaAluna: moverSessaoDaAluna,
     salvarObjetivoDaAluna: salvarObjetivoDaAluna, objetivoDaAluna: objetivoDaAluna,
     salvarNotaDaEquipe: salvarNotaDaEquipe, notaDaEquipe: notaDaEquipe,
