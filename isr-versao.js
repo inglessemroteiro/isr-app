@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-f",
+  numero: "2026.10.21-g",
   data: "21/10/2026",
-  nota: "As metas \"I can…\" do projeto, na Home e no Progresso"
+  nota: "A loja pelo lado da escola: o que está em cartaz e cancelar resgate"
 };

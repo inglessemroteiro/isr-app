@@ -103,6 +103,16 @@
           <div style="font-size:13px;font-weight:700;color:var(--color-primary-500);margin-top:auto">{{ L.verProgresso }} →</div>
         </section>
 
+        <!-- Os clubes ficam na Home a pedido da Gabi. O arquivo 01 põe
+             o mural da escola neste lugar; o mural está desligado, e
+             o clube é o que a aluna de fato abre daqui. -->
+        <section onclick="{{ goClubs }}" style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
+          <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.clubes }}</div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ clubesCartaoTitulo }}</div>
+          <div style="font-size:14px;color:var(--color-primary-800);line-height:1.5">{{ clubesCartaoLinha }}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--color-primary-500);margin-top:auto">{{ L.verClubes }} →</div>
+        </section>
+
         <!-- A GRAVAÇÃO DA ÚLTIMA AULA · arquivo 01
              Com gravação, o cartão é o link. Sem, ele continua na
              fileira e diz que a escola ainda não publicou — tirá-lo
@@ -114,14 +124,6 @@
           <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none;color:var(--color-tertiary-500)">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ultimaGravacao }}</div><div style="font-size:14px;color:var(--color-primary-800);line-height:1.5;margin-top:2px">{{ L.semGravacao }}</div></div></section>
         </sc-if>
 
-        <!-- MURAL DA ESCOLA · arquivo 01
-             O cartão pede autor, quando e texto. A escola não tem onde
-             escrever isso: não existe mural no sistema. Fica dito aqui,
-             com o que falta decidir, em vez de sumir da tela. -->
-        <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.muralEscola }}</div>
-          <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55">{{ L.muralEscolaFalta }}</div>
-        </section>
       </div>
       <!-- COMO FOI A AULA · fora dos arquivos novos, mantida a pedido
            da Gabi: é por esta nota que a professora ajusta a aula
@@ -948,39 +950,6 @@
 
         <div style="background:var(--color-primary-50);border-radius:16px;padding:14px 16px;font-size:13.5px;line-height:1.6;color:var(--color-primary-900)">{{ regra75 }}</div>
 
-        <!-- a falta avisada -->
-        <sc-if value="{{ faltaLendo }}">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button onclick="{{ onFaltaAbrir }}" style="border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.avisarFalta }}</button>
-            <sc-if value="{{ faltaEnviada }}">
-              <span style="font-size:13px;font-weight:700;color:var(--color-success-dark)">{{ L.faltaEnviada }}</span>
-            </sc-if>
-          </div>
-        </sc-if>
-        <sc-if value="{{ faltaEditando }}">
-          <div style="background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;gap:11px">
-            <div style="font-size:15px;font-weight:800">{{ L.avisarFaltaTit }}</div>
-            <sc-if value="{{ temFaltas }}">
-              <div style="display:flex;gap:7px;flex-wrap:wrap">
-                <sc-for list="{{ faltasDias }}" as="fd" hint-placeholder-count="3">
-                  <button onclick="{{ fd.go }}" style="flex:none;border:1px solid var(--color-border);background:{{ fd.bg }};color:{{ fd.fg }};border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">{{ fd.label }}</button>
-                </sc-for>
-              </div>
-            </sc-if>
-            <sc-if value="{{ semFaltas }}">
-              <div style="font-size:13.5px;line-height:1.55;color:var(--color-primary-800)">{{ L.semFaltas }}</div>
-            </sc-if>
-            <textarea value="{{ faltaMotivo }}" onchange="{{ onFaltaMotivo }}" rows="2" placeholder="{{ L.faltaPh }}" style="width:100%;box-sizing:border-box;background:var(--color-neutral-0);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical"></textarea>
-            <div style="font-size:12.5px;color:var(--color-tertiary-700);line-height:1.55">{{ L.faltaNota }}</div>
-            <sc-if value="{{ faltaErro }}">
-              <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:14px;padding:11px 14px;font-size:13.5px">{{ faltaErroTexto }}</div>
-            </sc-if>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button onclick="{{ onFaltaEnviar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 3px 0 var(--color-primary-950);border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.faltaEnviar }}</button>
-              <button onclick="{{ onFaltaCancelar }}" style="border:0;background:none;color:var(--color-primary-500);border-radius:999px;padding:12px 6px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.muCancelar }}</button>
-            </div>
-          </div>
-        </sc-if>
       </section>
 
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
@@ -1078,8 +1047,6 @@ class Component extends DCLogic {
             clubeSel: "", clubeVendo: "",
             // a loja: qual subaba, e o mural de trocas
             shopTab: "rewards", muFiltro: "todos", muPagina: 1, muForm: null, muErro: "",
-            // a conta: o aviso de falta
-            faltaForm: null, faltaErro: "", faltaEnviada: false,
             // review: a palavra virada, e o que está sendo cadastrado
             virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
   notaRef = React.createRef();
@@ -1296,25 +1263,13 @@ class Component extends DCLogic {
         "Dúvida de pagamento é com a escola, no WhatsApp."),
       miles: T("ISR Miles", "ISR Miles"),
       // ── metas e mural, arquivos 01 e 06 ──
-      muralEscola: T("School feed", "Mural da escola"),
       semGravacao: T("The school has not published the recording of your last class yet.",
         "A escola ainda não publicou a gravação da sua última aula."),
-      muralEscolaFalta: T("The school has no place to write notices to students yet, so there is nothing to show here. It needs its own decisions: who writes, who reads it, and how long a notice stays up.",
-        "A escola ainda não tem onde escrever recados para as alunas, então não há o que mostrar aqui. Isso precisa das próprias decisões: quem escreve, quem lê e por quanto tempo o recado fica."),
       semMetas: T("The session plan for your class is not open yet, so there are no goals to show. They are the objectives your teacher writes for each session.",
         "O plano de sessões da sua turma ainda não está aberto, então não há metas para mostrar. Elas são os objetivos que a sua professora escreve para cada sessão."),
       // ── conta, arquivo 08 ──
       semGrade: T("The school has not opened the session plan for your class yet, so there is no grid to show.",
         "A escola ainda não abriu o plano de sessões da sua turma, então não há quadro para mostrar."),
-      avisarFalta: T("Tell the school about an absence", "Avisar a escola sobre uma falta"),
-      avisarFaltaTit: T("Which class, and why", "De que aula, e por quê"),
-      faltaEnviada: T("Sent to the school.", "Avisado. A escola recebeu."),
-      faltaPh: T("What happened, in your words.", "O que aconteceu, com as suas palavras."),
-      faltaEnviar: T("Send", "Avisar"),
-      semFaltas: T("You have no absence recorded in this cycle.",
-        "Você não tem falta registrada neste ciclo."),
-      faltaNota: T("Sending a medical certificate as a file does not exist in the system yet. What you write here reaches whoever looks after your class, and it is the school that marks the absence as justified.",
-        "Enviar atestado em arquivo ainda não existe no sistema. O que você escreve aqui chega a quem cuida da sua turma, e quem marca a falta como justificada é a escola."),
       pagar: T("Pay", "Pagar"),
       contrato: T("your contract", "o seu contrato"),
       config: T("Settings", "Configurações"),
@@ -1417,10 +1372,6 @@ class Component extends DCLogic {
       semContrato: true, temContrato: false, contratoLinha: "", parcelas: [],
       milesExtrato: [],
       temGrade: false, semGrade: true, grade: [], legenda: [], regra75: "",
-      faltaLendo: true, faltaEditando: false, faltaEnviada: false,
-      onFaltaAbrir: () => {}, onFaltaCancelar: () => {}, onFaltaEnviar: () => {},
-      temFaltas: false, semFaltas: true, faltasDias: [],
-      faltaMotivo: "", onFaltaMotivo: () => {}, faltaErro: false, faltaErroTexto: "",
       temDocs: false, docs: [], langTabs: [], goPerfil: () => {}, linkSenha: "aluna.html",
       semLinkPag: false,
       temMetas: false, semMetas: true, metas: [], metasBarras: [],
@@ -2791,39 +2742,12 @@ class Component extends DCLogic {
           ["falta", T("absent", "falta")], ["avir", T("to come", "a vir")]
         ].map(([k, label]) => ({ label, bg: CORQ[k][0], borda: CORQ[k][2] }));
 
-        // as faltas que ela pode avisar: só as que já foram marcadas
-        const faltas = (g ? g.aulas : []).filter(a => a.estado === "falta");
-        const f = this.state.faltaForm;
         const docsRaw = (p.documentos || []).filter(d => d && d.nome && d.link);
 
         return {
           temGrade: grade.length > 0, semGrade: grade.length === 0, grade, legenda,
           regra75: T("The certificate asks for at least " + pc.minimo + "% attendance in the cycle. A justified absence does not count against you — that is what justifying is for.",
             "O certificado pede pelo menos " + pc.minimo + "% de presença no ciclo. Falta justificada não pesa contra você — justificar serve exatamente para isso."),
-
-          faltaLendo: !f, faltaEditando: !!f,
-          faltaEnviada: !!this.state.faltaEnviada,
-          onFaltaAbrir: () => this.setState({
-            faltaForm: { data: faltas.length ? faltas[0].data : "", motivo: "" },
-            faltaErro: "", faltaEnviada: false }),
-          onFaltaCancelar: () => this.setState({ faltaForm: null, faltaErro: "" }),
-          temFaltas: faltas.length > 0, semFaltas: faltas.length === 0,
-          faltasDias: faltas.map(a => ({
-            label: CRM.ddmm(a.data),
-            bg: f && f.data === a.data ? "var(--color-primary-900)" : "var(--color-neutral-0)",
-            fg: f && f.data === a.data ? "var(--color-neutral-0)" : "var(--color-primary-900)",
-            go: () => this.setState({ faltaForm: Object.assign({}, f, { data: a.data }), faltaErro: "" })
-          })),
-          faltaMotivo: (f && f.motivo) || "",
-          onFaltaMotivo: (e) => this.setState({
-            faltaForm: Object.assign({}, f, { motivo: e.target.value }), faltaErro: "" }),
-          faltaErro: !!this.state.faltaErro, faltaErroTexto: this.state.faltaErro || "",
-          onFaltaEnviar: () => {
-            const r = CRM.avisarFalta(p.id, (f || {}).data, (f || {}).motivo);
-            if (!r.ok) return this.setState({ faltaErro: r.erro });
-            this.setState({ faltaForm: null, faltaErro: "", faltaEnviada: true });
-            this.bump();
-          },
 
           temDocs: docsRaw.length > 0, docs: docsRaw,
           // parcela em aberto sem link é parcela que ela não tem como
