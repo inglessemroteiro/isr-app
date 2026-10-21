@@ -6140,6 +6140,10 @@
       substituicoes: subsRaw(), reunioes: reunioesRaw(),
       projetoEntregas: projEntregasAll(), sequencias: seqAll(),
       revisaoDias: revisaoDiasAll(), anuncios: anunciosRaw(),
+      // O resgate acontece no telefone da aluna e quem entrega é a
+      // escola: sem viajar, o limite de "um por ciclo" valia por
+      // aparelho e a gestão não via o que cancelar.
+      resgates: resgatesAll(), recompensasFora: recompensasForaAll(),
       // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
       clubeChamadas: clubeChamadasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
@@ -6167,6 +6171,7 @@
     grava(SUBS_KEY, d.substituicoes); grava(REUNIOES_KEY, d.reunioes);
     grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
     grava(REVISAO_KEY, d.revisaoDias); grava(ANUNCIOS_KEY, d.anuncios);
+    grava(RESGATES_KEY, d.resgates); grava(RECOMPENSAS_OFF_KEY, d.recompensasFora);
     grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
@@ -6220,6 +6225,9 @@
       sequencias: mesclarMapa(local.sequencias, remoto.sequencias),
       revisaoDias: mesclarMapa(local.revisaoDias, remoto.revisaoDias),
       anuncios: lista("anuncios"),
+      resgates: lista("resgates"),
+      // lista de ids, sem carimbo por registro: vale a última edição
+      recompensasFora: local.recompensasFora,
       clubeChamadas: mesclarMapa(local.clubeChamadas, remoto.clubeChamadas),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
@@ -6282,7 +6290,8 @@
             // não têm carimbo por registro: no puxe, vale o servidor —
             // é o que garante que um aparelho novo receba tudo.
             ["custos", "templates", "metas", "calc", "cambio", "ciclos",
-             "assinaturaCfg", "bookclub", "bookclubAula"].forEach(function (k) {
+             "assinaturaCfg", "bookclub", "bookclubAula",
+             "recompensasFora"].forEach(function (k) {
               if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
             });
             aplicarRemoto(resultado);
@@ -12060,14 +12069,59 @@
       detalhe: "Disponível a partir do segundo ciclo." }
   ];
 
+  // ── O QUE A ESCOLA DEIXA NA VITRINE ───────────────────────────
+  //
+  // O catálogo de prêmios é fixo no código: é a política da escola, e
+  // mudar política em campo de texto é como se perde política. O que
+  // muda é o que está EM CARTAZ — há mês em que a escola não quer
+  // oferecer a conversa 1:1, por exemplo. Guarda-se então só a lista
+  // do que está fora, e não uma segunda cópia do catálogo.
+  var RECOMPENSAS_OFF_KEY = "isr_recompensas_fora_v1";
+  function recompensasForaAll() {
+    try { return JSON.parse(localStorage.getItem(RECOMPENSAS_OFF_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function recompensaVisivel(id) {
+    return recompensasForaAll().indexOf(id) < 0;
+  }
+  function setRecompensaVisivel(id, visivel) {
+    if (!MOEDAS_RESGATES.some(function (x) { return x.id === id; })) {
+      return { ok: false, erro: "Recompensa não encontrada." };
+    }
+    var fora = recompensasForaAll().filter(function (x) { return x !== id; });
+    if (visivel === false) fora.push(id);
+    try { localStorage.setItem(RECOMPENSAS_OFF_KEY, JSON.stringify(fora)); } catch (e) {}
+    agendarSync();
+    return { ok: true, visivel: visivel !== false };
+  }
+  // O catálogo inteiro, com a marca de quem está em cartaz. É o que a
+  // gestão vê; a aluna só recebe as visíveis.
+  function catalogoDeRecompensas() {
+    return MOEDAS_RESGATES.map(function (r) {
+      return { id: r.id, nome: r.nome, custo: r.custo, nivel: r.nivel,
+        detalhe: r.detalhe || "", visivel: recompensaVisivel(r.id) };
+    }).sort(function (a, b) { return a.custo - b.custo; });
+  }
+  function recompensasEmCartaz() {
+    return MOEDAS_RESGATES.filter(function (r) { return recompensaVisivel(r.id); });
+  }
+
   // ── LIMITES DE RESGATE ────────────────────────────────────────
   var RESGATES_KEY = "isr_resgates_v1";
   function resgatesAll() {
     try { return JSON.parse(localStorage.getItem(RESGATES_KEY)) || []; } catch (e) { return []; }
   }
   function resgatesSave(l) {
+    carimbarLista(l);
     try { localStorage.setItem(RESGATES_KEY, JSON.stringify(l)); } catch (e) {}
     agendarSync();
+  }
+  // Resgate cancelado pela escola não vale mais: não conta limite, não
+  // aparece como resgatado e as milhas já voltaram. O registro fica —
+  // apagar esconderia da escola o que ela mesma fez. Quem grava usa
+  // resgatesAll (a lista crua); quem lê o que vale usa esta.
+  function resgatesValidos() {
+    return resgatesAll().filter(function (x) { return x && !x.cancelado; });
   }
   function ciclosDe(pessoaOuId) {
     var p = typeof pessoaOuId === "string" ? getPessoa(pessoaOuId) : pessoaOuId;
@@ -12078,7 +12132,7 @@
   function bloqueioDoResgate(pessoaId, r) {
     var hoje = iso(today());
     var mes = hoje.slice(0, 7);
-    var todos = resgatesAll();
+    var todos = resgatesValidos();
     if (r.umaVez && todos.some(function (x) { return x.pessoaId === pessoaId && x.resgateId === r.id; }))
       return { motivo: "ja", texto: "Já resgatado." };
     if (r.minCiclos && ciclosDe(pessoaId) < r.minCiclos)
@@ -12104,7 +12158,7 @@
     var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
     if (!r || !r.vagasMes) return null;
     var mes = iso(today()).slice(0, 7);
-    var usadas = resgatesAll().filter(function (x) {
+    var usadas = resgatesValidos().filter(function (x) {
       return x.resgateId === resgateId && (x.em || "").slice(0, 7) === mes;
     }).length;
     return { usadas: usadas, total: r.vagasMes, restam: Math.max(0, r.vagasMes - usadas),
@@ -12723,6 +12777,11 @@
     var r = MOEDAS_RESGATES.filter(function (x) { return x.id === resgateId; })[0];
     var p = getPessoa(pessoaId);
     if (!r || !p) return { ok: false };
+    // prêmio tirado de cartaz não se resgata, nem por link antigo
+    if (!recompensaVisivel(r.id)) {
+      return { ok: false, bloqueio: { motivo: "fora",
+        texto: "Esta recompensa não está disponível agora." } };
+    }
     var saldo = moedasDe(pessoaId).total;
     if (saldo < r.custo) return { ok: false, faltam: r.custo - saldo };
     var bloqueio = bloqueioDoResgate(pessoaId, r);
@@ -12750,6 +12809,48 @@
     addTarefa({ titulo: "Entregar resgate · " + r.nome + " · " + p.nome,
       dono: "Gabi", prazo: iso(today()), por: p.nome });
     return { ok: true };
+  }
+
+  // A escola cancela um resgate: as milhas voltam com o motivo escrito,
+  // e é esse motivo que a aluna lê no aviso dela — addMoedas grava
+  // valor, motivo e data, e o app da aluna lê os ajustes dos últimos
+  // 30 dias. O registro do resgate não é apagado: fica marcado como
+  // cancelado, para a escola ver depois o que foi feito.
+  //
+  // O FLIN é o caso que não se desfaz: o acesso já foi aberto, e tirar
+  // dias de uma janela de acesso é decisão, não desfazer. Aqui o
+  // cancelamento é recusado com esse motivo em vez de mexer calado.
+  function cancelarResgate(resgateId, motivo) {
+    var l = resgatesAll();
+    var reg = l.filter(function (x) { return x.id === resgateId; })[0];
+    if (!reg) return { ok: false, erro: "Resgate não encontrado." };
+    if (reg.cancelado) return { ok: false, erro: "Este resgate já foi cancelado." };
+    var texto = String(motivo || "").trim();
+    if (!texto) return { ok: false, erro: "Escreva o motivo do cancelamento." };
+    var r = MOEDAS_RESGATES.filter(function (x) { return x.id === reg.resgateId; })[0];
+    if (r && r.flin) {
+      return { ok: false, erro: "O FLIN já foi liberado para ela. Esse resgate não se desfaz por aqui." };
+    }
+    reg.cancelado = iso(today());
+    reg.motivoCancelamento = texto;
+    resgatesSave(l);
+    addMoedas(reg.pessoaId, reg.custo || 0, "Resgate cancelado: " + (reg.premio || "") + " · " + texto);
+    if (r && r.id === "rg11") {
+      mutate(reg.pessoaId, function (x) {
+        x.passesLivres = Math.max(0, (x.passesLivres || 0) - 1);
+      });
+    }
+    mutate(reg.pessoaId, function (x) {
+      pushHist(x, "moedas", "Resgate cancelado · " + (reg.premio || "") + " · " + texto);
+    });
+    return { ok: true, devolvidas: reg.custo || 0 };
+  }
+  // Os resgates de uma aluna, do mais novo para o mais antigo, com os
+  // cancelados — é a lista que a gestão precisa ver para cancelar.
+  function resgatesDaAluna(pessoaId) {
+    return resgatesAll()
+      .filter(function (x) { return x && x.pessoaId === pessoaId; })
+      .sort(function (a, b) { return (a.em || "") < (b.em || "") ? 1 : -1; });
   }
   function moedasAjustesAll() {
     try { return JSON.parse(localStorage.getItem(MOEDAS_KEY)) || {}; } catch (e) { return {}; }
@@ -12946,28 +13047,6 @@
     };
   }
 
-  // ── ALUNA AVISA SOBRE UMA FALTA ───────────────────────────────
-  //
-  // O arquivo 08 pede "enviar atestado". O sistema não guarda arquivo
-  // nenhum, e inventar um lugar para guardar documento de saúde de
-  // aluna não é decisão de tela. O que dá para fazer com o que
-  // existe: ela avisa qual aula e por quê, isso vira tarefa de quem
-  // cuida da turma dela, e quem justifica a falta na chamada continua
-  // sendo a escola — que é onde a justificativa já mora.
-  function avisarFalta(pessoaId, data, motivo) {
-    var p = getPessoa(pessoaId);
-    if (!p) return { ok: false, erro: "Aluna não encontrada." };
-    if (!data) return { ok: false, erro: "Diga de que aula você está falando." };
-    if (!String(motivo || "").trim()) return { ok: false, erro: "Escreva o motivo." };
-    var dono = ["Gabi", "Érika", "Carla"].indexOf(p.professora) >= 0 ? p.professora : "Gabi";
-    addTarefa({ titulo: "Justificar falta · " + p.nome + " · " + ddmm(data)
-      + " — " + String(motivo).trim(), dono: dono, prazo: iso(today()), por: p.nome });
-    mutate(pessoaId, function (pp) {
-      pushHist(pp, "contato", "Avisou sobre a falta de " + ddmm(data) + " · " + String(motivo).trim());
-    });
-    return { ok: true };
-  }
-
   // ── O QUE A ALUNA VÊ DO PRÓPRIO PERCURSO ─────────────────────
   //
   // Até aqui o app da aluna só mostrava o que a escola sabia dela:
@@ -13118,7 +13197,7 @@
     // Prêmio fechado por regra (tempo de casa, vagas, um por ciclo) sai da
     // conta: não adianta dizer "faltam 315 miles" para algo que miles
     // nenhum destrava hoje.
-    var ordenados = MOEDAS_RESGATES.slice()
+    var ordenados = recompensasEmCartaz()
       .filter(function (r) { return !bloqueioDoResgate(pessoaId, r); })
       .sort(function (a, b) { return a.custo - b.custo; });
     var disponiveis = ordenados.filter(function (r) { return saldo >= r.custo; });
@@ -13148,7 +13227,7 @@
     var porId = {};
     niveis.forEach(function (n) { porId[n.id] = n; });
 
-    MOEDAS_RESGATES.slice().sort(function (a, b) { return a.custo - b.custo; })
+    recompensasEmCartaz().sort(function (a, b) { return a.custo - b.custo; })
       .forEach(function (r) {
         var grupo = porId[r.nivel] || porId.facil;
         var bloqueio = bloqueioDoResgate(pessoaId, r);
@@ -15860,6 +15939,10 @@
     ajustesDeMilhas: ajustesDeMilhas,
     MOEDAS_NIVEIS: MOEDAS_NIVEIS, bloqueioDoResgate: bloqueioDoResgate,
     vagasDoMes: vagasDoMes, resgatesAll: resgatesAll,
+    resgatesValidos: resgatesValidos, resgatesDaAluna: resgatesDaAluna,
+    cancelarResgate: cancelarResgate,
+    catalogoDeRecompensas: catalogoDeRecompensas, recompensaVisivel: recompensaVisivel,
+    setRecompensaVisivel: setRecompensaVisivel,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
     equipeLista: equipeLista, addEquipe: addEquipe, updateEquipe: updateEquipe, removeEquipe: removeEquipe,
     entradaNaEquipe: entradaNaEquipe,
@@ -15905,7 +15988,7 @@
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
-    avisarFalta: avisarFalta, metasDoProjeto: metasDoProjeto,
+    metasDoProjeto: metasDoProjeto,
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,

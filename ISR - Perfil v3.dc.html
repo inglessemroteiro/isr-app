@@ -294,6 +294,37 @@
                 <button class="isr-botao" onclick="{{ onAddMoedas }}" style="background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 11px; padding: 8px 12px; border-radius: 12px">Ajustar</button>
               </div>
               <p style="margin: 8px 0 0; font-size: 10px; color: var(--color-tertiary-200);">Presença, parcela em dia e onboarding são pontuados automaticamente. Este campo registra bônus (indicação, desafios) e resgates (valor negativo).</p>
+
+              <!-- O QUE ELA RESGATOU -->
+              <!-- Cancelar devolve as milhas com o motivo escrito, e é
+                   esse motivo que ela lê no aviso dela. -->
+              <sc-if value="{{ temResgates }}">
+                <div style="margin-top: 12px; border-top: 1px solid var(--color-divider); padding-top: 10px;">
+                  <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 600; margin-bottom: 6px;">Resgates dela</div>
+                  <sc-for list="{{ resgates }}" as="rg" hint-placeholder-count="3">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 0;">
+                      <span style="flex: 1; min-width: 150px; font-size: 11.5px; font-weight: 600; color: {{ rg.cor }}">{{ rg.premio }}</span>
+                      <span style="flex: none; font-size: 11px; color: var(--color-tertiary-500)">{{ rg.quando }}</span>
+                      <sc-if value="{{ rg.podeCancelar }}">
+                        <button class="isr-botao" onclick="{{ rg.onCancelar }}" style="flex: none; background: var(--color-neutral-0); color: var(--color-primary-800); font-size: 10.5px; padding: 6px 11px; border-radius: 999px">cancelar</button>
+                      </sc-if>
+                      <sc-if value="{{ rg.cancelado }}">
+                        <span style="flex: none; font-size: 10.5px; font-weight: 700; color: var(--color-tertiary-300)">{{ rg.canceladoTexto }}</span>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ cancelando }}">
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                      <input class="isr-campo" ref="{{ cancelMotivoRef }}" placeholder="{{ cancelPh }}" style="flex: 1; min-width: 150px; font-size: 11px; padding: 8px 10px" />
+                      <button class="isr-botao isr-botao--escuro" onclick="{{ onConfirmarCancelar }}" style="font-size: 11px; padding: 8px 13px; border-radius: 12px">Devolver as milhas</button>
+                      <button class="isr-botao" onclick="{{ onDesistirCancelar }}" style="background: var(--color-neutral-0); color: var(--color-tertiary-500); font-size: 11px; padding: 8px 12px; border-radius: 12px">deixa</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ cancelErro }}">
+                    <p style="margin: 6px 0 0; font-size: 11px; color: var(--color-error); font-weight: 600; line-height: 1.5">{{ cancelErroTexto }}</p>
+                  </sc-if>
+                </div>
+              </sc-if>
             </div>
           </sc-if>
           </sc-if>
@@ -856,6 +887,8 @@ class Component extends DCLogic {
             abrindoProduto: "",
             renegAberto: false, renegMeses: 3, renegParcelas: 0, renegTick: 0, renegErro: "",
             marcandoReuniao: false, erroReuniao: "",
+            // qual resgate está sendo cancelado, e o que deu errado
+            cancelarResgate: "", cancelErro: "",
             ajustando: false, abatido: undefined };
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
@@ -891,7 +924,7 @@ class Component extends DCLogic {
   renegValorRef = React.createRef();
   renegNovoRef = React.createRef(); renegDescRef = React.createRef();
   moedasValorRef = React.createRef(); moedasMotivoRef = React.createRef();
-  moedasBonusRef = React.createRef();
+  moedasBonusRef = React.createRef(); cancelMotivoRef = React.createRef();
   reuDataRef = React.createRef(); reuHoraRef = React.createRef();
   bookingRef = React.createRef();
 
@@ -1572,6 +1605,37 @@ class Component extends DCLogic {
         if (!v) return;
         CRM.addMoedas(p.id, v, ((this.moedasMotivoRef.current && this.moedasMotivoRef.current.value) || "").trim());
         this.moedasValorRef.current.value = ""; if (this.moedasMotivoRef.current) this.moedasMotivoRef.current.value = "";
+        this.bump();
+      };
+
+      // ── os resgates dela, e o cancelamento ──
+      // Cancelar devolve as milhas com o motivo escrito; o motivo é o
+      // que ela lê no aviso. Por isso ele é obrigatório, e por isso o
+      // cancelamento pede confirmação em vez de ser um clique só.
+      const meusResg = (CRM.resgatesDaAluna && CRM.resgatesDaAluna(p.id)) || [];
+      const alvo = this.state.cancelarResgate || "";
+      out.temResgates = meusResg.length > 0;
+      out.cancelando = !!alvo;
+      out.cancelMotivoRef = this.cancelMotivoRef;
+      out.cancelPh = "Por que está cancelando? Ela vai ler isto.";
+      out.cancelErro = !!this.state.cancelErro;
+      out.cancelErroTexto = this.state.cancelErro || "";
+      out.resgates = meusResg.map(r => ({
+        premio: r.premio || "",
+        quando: (r.em ? CRM.ddmm(r.em) : "") + (r.custo ? " · " + r.custo + " mi" : ""),
+        cor: r.cancelado ? "var(--color-tertiary-300)" : "var(--color-primary-900)",
+        podeCancelar: !r.cancelado && !alvo,
+        cancelado: !!r.cancelado,
+        canceladoTexto: r.cancelado ? "cancelado em " + CRM.ddmm(r.cancelado) : "",
+        onCancelar: () => this.setState({ cancelarResgate: r.id, cancelErro: "" })
+      }));
+      out.onDesistirCancelar = () => this.setState({ cancelarResgate: "", cancelErro: "" });
+      out.onConfirmarCancelar = () => {
+        const motivo = ((this.cancelMotivoRef.current && this.cancelMotivoRef.current.value) || "").trim();
+        const res = CRM.cancelarResgate(alvo, motivo);
+        if (!res.ok) return this.setState({ cancelErro: res.erro });
+        if (this.cancelMotivoRef.current) this.cancelMotivoRef.current.value = "";
+        this.setState({ cancelarResgate: "", cancelErro: "" });
         this.bump();
       };
     }

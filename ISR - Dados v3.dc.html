@@ -99,6 +99,25 @@
       <p style="margin: 8px 0 0; font-size: 11.5px; color: {{ flinAvisoCor }};">{{ flinAviso }}</p>
     </section>
 
+    <!-- RECOMPENSAS DA LOJA -->
+    <!-- O catálogo é política da escola e vive no código. O que muda
+         aqui é o que está EM CARTAZ: tirar a conversa 1:1 do mês não
+         é mudar a política, é fechar uma porta por um tempo. -->
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px; margin-bottom: 12px;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Recompensas da loja de milhas</div>
+      <p style="margin: 0 0 12px; font-size: 12.5px; color: var(--color-primary-800); line-height: 1.6;">O que a aluna vê na Loja. Tirar de cartaz esconde a recompensa do app dela e impede o resgate; o que já foi resgatado antes não muda. {{ recCartazLinha }}</p>
+      <sc-for list="{{ recompensas }}" as="rc" hint-placeholder-count="6">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 9px 0; border-bottom: 1px solid var(--color-divider);">
+          <div style="flex: 1; min-width: 190px">
+            <div style="font-size: 13px; font-weight: 700; color: {{ rc.cor }}">{{ rc.nome }}</div>
+            <div style="font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.5">{{ rc.detalhe }}</div>
+          </div>
+          <span style="flex: none; font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500)">{{ rc.custo }}</span>
+          <button class="isr-botao" onclick="{{ rc.onTrocar }}" style="flex: none; font-size: 11.5px; padding: 8px 14px; border-radius: 999px; background: {{ rc.btBg }}; color: {{ rc.btFg }}">{{ rc.btLabel }}</button>
+        </div>
+      </sc-for>
+    </section>
+
     <!-- MATERIAIS DO CICLO -->
     <!-- O sistema guarda a PORTA para cada documento, não uma cópia do
          texto. Copiar os guias para dentro criaria uma segunda versão
@@ -185,7 +204,8 @@ class Component extends DCLogic {
     if (!CRM) return { numeros: [], backups: [], semBackups: true, temAviso: false, temErro: false,
       copiarLabel: "Copiar", tamanho: "",
       matCiclo: "", matNiveis: [], matSyllabusRef: this.matSyllabusRef,
-      matSyllabusAtual: "", matAviso: "", matAvisoCor: "", onSalvarMateriais: () => {} };
+      matSyllabusAtual: "", matAviso: "", matAvisoCor: "", onSalvarMateriais: () => {},
+      recompensas: [], recCartazLinha: "" };
 
     const bks = CRM.backupsLista();
     const arq = CRM.exportarTudo();
@@ -254,6 +274,25 @@ class Component extends DCLogic {
         } else this.setState({ matAviso: r.erro, matErro: true });
         this.bump();
       },
+      // ── o que está em cartaz na loja de milhas ──
+      ...(() => {
+        const cat = (CRM.catalogoDeRecompensas && CRM.catalogoDeRecompensas()) || [];
+        const fora = cat.filter(r => !r.visivel).length;
+        return {
+          recCartazLinha: fora
+            ? fora + (fora === 1 ? " está fora de cartaz." : " estão fora de cartaz.")
+            : "Todas estão em cartaz.",
+          recompensas: cat.map(r => ({
+            nome: r.nome, detalhe: r.detalhe, custo: r.custo + " mi",
+            cor: r.visivel ? "var(--color-primary-900)" : "var(--color-tertiary-300)",
+            btLabel: r.visivel ? "em cartaz" : "fora",
+            btBg: r.visivel ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
+            btFg: r.visivel ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
+            onTrocar: () => { CRM.setRecompensaVisivel(r.id, !r.visivel); this.bump(); }
+          }))
+        };
+      })(),
+
       onSalvarFlin: () => {
         const v = ((this.flinRef.current && this.flinRef.current.value) || "").trim();
         if (v) CRM.setFlinUrl(v);
