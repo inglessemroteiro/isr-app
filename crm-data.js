@@ -6139,7 +6139,7 @@
       // projeto e a sequência da particular são registro da aluna
       substituicoes: subsRaw(), reunioes: reunioesRaw(),
       projetoEntregas: projEntregasAll(), sequencias: seqAll(),
-      revisaoDias: revisaoDiasAll(),
+      revisaoDias: revisaoDiasAll(), anuncios: anunciosRaw(),
       // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
       clubeChamadas: clubeChamadasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
@@ -6166,7 +6166,7 @@
     grava(AULA_VIVA_KEY, d.aulasVivas);
     grava(SUBS_KEY, d.substituicoes); grava(REUNIOES_KEY, d.reunioes);
     grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
-    grava(REVISAO_KEY, d.revisaoDias);
+    grava(REVISAO_KEY, d.revisaoDias); grava(ANUNCIOS_KEY, d.anuncios);
     grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
@@ -6219,6 +6219,7 @@
       projetoEntregas: mesclarMapa(local.projetoEntregas, remoto.projetoEntregas),
       sequencias: mesclarMapa(local.sequencias, remoto.sequencias),
       revisaoDias: mesclarMapa(local.revisaoDias, remoto.revisaoDias),
+      anuncios: lista("anuncios"),
       clubeChamadas: mesclarMapa(local.clubeChamadas, remoto.clubeChamadas),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
@@ -12149,7 +12150,16 @@
   }
 
   var CLUBES_KEY = "isr_clubes_v1";
+  // O plano inclui dois clubes. Do terceiro em diante é cobrado à
+  // parte, e este é o preço da escola — num lugar só, para a tela da
+  // aluna e a da gestão nunca dizerem números diferentes.
   var CLUBES_INCLUIDOS = 2;
+  var CLUBE_EXTRA_PRECO = 50;
+  var CLUBE_EXTRA_MOEDA = "€";
+  function clubeExtraPreco() {
+    return { valor: CLUBE_EXTRA_PRECO, moeda: CLUBE_EXTRA_MOEDA,
+      label: CLUBE_EXTRA_MOEDA + CLUBE_EXTRA_PRECO };
+  }
   function clubesRaw() {
     try { return JSON.parse(localStorage.getItem(CLUBES_KEY)) || []; } catch (e) { return []; }
   }
@@ -12515,6 +12525,116 @@
     return seguidas;
   }
 
+  // ── O MURAL DE TROCAS ENTRE ALUNAS (arquivo 07) ──────────────
+  //
+  // Quadro de anúncios da escola: trocar, vender, pedir em milhas ou
+  // oferecer um serviço. É entre alunas, e por isso duas decisões:
+  //
+  // 1. A escola modera. Anúncio oculto ou apagado some do mural na
+  //    hora, e some para todo mundo — inclusive para quem o escreveu.
+  //    Sem isso, um quadro aberto numa escola de adolescentes e
+  //    adultas vira problema da escola sem a escola poder agir.
+  //
+  // 2. O contato é da DONA do anúncio, escrito por ela em "como falar
+  //    comigo". A escola não publica telefone de aluna para outra
+  //    aluna — quem decide o que expor é quem anuncia.
+  var ANUNCIOS_KEY = "isr_anuncios_v1";
+  var ANUNCIO_TIPOS = ["troca", "venda", "milhas", "servico"];
+  function anunciosRaw() {
+    try { return JSON.parse(localStorage.getItem(ANUNCIOS_KEY)) || []; } catch (e) { return []; }
+  }
+  function anunciosSalvar(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(ANUNCIOS_KEY, JSON.stringify(l || [])); } catch (e) {}
+    agendarSync();
+  }
+  function anuncioNormal(a) {
+    return {
+      id: a.id, pessoaId: a.pessoaId || "",
+      tipo: ANUNCIO_TIPOS.indexOf(a.tipo) >= 0 ? a.tipo : "troca",
+      titulo: String(a.titulo || "").trim().slice(0, 90),
+      descricao: String(a.descricao || "").trim().slice(0, 600),
+      preco: String(a.preco || "").trim().slice(0, 40),
+      contato: String(a.contato || "").trim().slice(0, 120),
+      // vendido é da dona; oculto e apagado são da escola
+      vendido: !!a.vendido, oculto: !!a.oculto, apagado: a.apagado || "",
+      em: a.em || iso(today()), _v: a._v
+    };
+  }
+  // O que o mural mostra: nem apagado, nem oculto pela escola.
+  function anunciosLista() {
+    return anunciosRaw()
+      .filter(function (a) { return a && a.id && !a.apagado && !a.oculto; })
+      .map(anuncioNormal)
+      .sort(function (x, y) { return x.em < y.em ? 1 : -1; });
+  }
+  // O que a escola vê: tudo o que não foi apagado, inclusive o oculto.
+  function anunciosParaGestao() {
+    return anunciosRaw()
+      .filter(function (a) { return a && a.id && !a.apagado; })
+      .map(anuncioNormal)
+      .sort(function (x, y) { return x.em < y.em ? 1 : -1; });
+  }
+  function anunciosDe(pessoaId) {
+    return anunciosLista().filter(function (a) { return a.pessoaId === pessoaId; });
+  }
+  function salvarAnuncio(pessoaId, dados) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    dados = dados || {};
+    var titulo = String(dados.titulo || "").trim();
+    if (!titulo) return { ok: false, erro: "Escreva o que você está anunciando." };
+    var l = anunciosRaw();
+    var i = -1;
+    if (dados.id) l.forEach(function (a, k) { if (a.id === dados.id) i = k; });
+    // só a dona edita o próprio anúncio
+    if (i >= 0 && l[i].pessoaId !== pessoaId) {
+      return { ok: false, erro: "Este anúncio não é seu." };
+    }
+    if (i < 0) {
+      l.push(anuncioNormal(Object.assign({
+        id: "an" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+        pessoaId: pessoaId, em: iso(today())
+      }, dados)));
+    } else {
+      l[i] = anuncioNormal(Object.assign({}, l[i], dados,
+        { id: l[i].id, pessoaId: l[i].pessoaId }));
+    }
+    anunciosSalvar(l);
+    return { ok: true, id: i < 0 ? l[l.length - 1].id : dados.id };
+  }
+  function marcarAnuncioVendido(pessoaId, id, vendido) {
+    var l = anunciosRaw(), achou = false;
+    l.forEach(function (a) {
+      if (a.id !== id || a.pessoaId !== pessoaId) return;
+      a.vendido = vendido !== false; a._v = Date.now(); achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Anúncio não encontrado." };
+    anunciosSalvar(l);
+    return { ok: true };
+  }
+  function removerAnuncio(pessoaId, id) {
+    var l = anunciosRaw(), achou = false;
+    l.forEach(function (a, k) {
+      if (a.id !== id || a.pessoaId !== pessoaId) return;
+      l[k] = { id: a.id, apagado: iso(today()), _v: Date.now() }; achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Anúncio não encontrado." };
+    anunciosSalvar(l);
+    return { ok: true };
+  }
+  // Moderação da escola: esconder tira do mural sem apagar o que foi
+  // escrito, para a conversa com a aluna ainda ter o texto na mão.
+  function ocultarAnuncio(id, oculto) {
+    var l = anunciosRaw(), achou = false;
+    l.forEach(function (a) {
+      if (a.id !== id) return;
+      a.oculto = oculto !== false; a._v = Date.now(); achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Anúncio não encontrado." };
+    anunciosSalvar(l);
+    return { ok: true };
+  }
+
   var BOOKCLUB_KEY = "isr_bookclub_v1";
   function bookclubUrl() {
     try { return localStorage.getItem(BOOKCLUB_KEY) || "https://app.inglessemroteiro.com.br"; }
@@ -12727,6 +12847,23 @@
       validadeDias: MOEDAS_VALIDADE_DIAS,
       extrato: extrato.filter(function (e) { return !e.expirado; }),
       extratoCompleto: extrato };
+  }
+
+  // Quando a escola mexe no saldo à mão, a aluna tem de saber por quê.
+  // O ajuste já é gravado com motivo e data por addMoedas; o que
+  // faltava era um jeito de ler os recentes para avisar na tela dela.
+  // Resgate não entra: o débito do resgate é a própria ação dela.
+  function ajustesDeMilhas(pessoaId, dias) {
+    var corte = addDays(-(dias || 30));
+    return (moedasAjustesAll()[pessoaId] || [])
+      .filter(function (a) {
+        if (!a || !a.em || a.em < corte) return false;
+        return String(a.motivo || "").indexOf("Resgate:") !== 0;
+      })
+      .map(function (a) {
+        return { em: a.em, valor: parseInt(a.valor, 10) || 0, motivo: a.motivo || "" };
+      })
+      .sort(function (x, y) { return x.em < y.em ? 1 : -1; });
   }
 
   // ── RSVP DE AULAS EXTRAS (aluna confirma presença) ────────────
@@ -15639,6 +15776,7 @@
     aulaAAvaliar: aulaAAvaliar, jornadaDaAluna: jornadaDaAluna,
     recompensasDaAluna: recompensasDaAluna, catalogoDaAluna: catalogoDaAluna,
     moedasDe: moedasDe, addMoedas: addMoedas, MOEDAS_REGRAS: MOEDAS_REGRAS,
+    ajustesDeMilhas: ajustesDeMilhas,
     MOEDAS_NIVEIS: MOEDAS_NIVEIS, bloqueioDoResgate: bloqueioDoResgate,
     vagasDoMes: vagasDoMes, resgatesAll: resgatesAll,
     MOEDAS_BONUS: MOEDAS_BONUS, MOEDAS_RESGATES: MOEDAS_RESGATES, resgatarRecompensa: resgatarRecompensa,
@@ -15846,6 +15984,11 @@
     faltasSeguidas: faltasSeguidas, alunasComFaltasSeguidas: alunasComFaltasSeguidas,
     clubePublicar: clubePublicar, clubeDespublicar: clubeDespublicar,
     clubeEhNovo: clubeEhNovo, faltaParaPublicar: faltaParaPublicar,
+    clubeExtraPreco: clubeExtraPreco,
+    anunciosLista: anunciosLista, anunciosParaGestao: anunciosParaGestao,
+    anunciosDe: anunciosDe, salvarAnuncio: salvarAnuncio,
+    marcarAnuncioVendido: marcarAnuncioVendido, removerAnuncio: removerAnuncio,
+    ocultarAnuncio: ocultarAnuncio, ANUNCIO_TIPOS: ANUNCIO_TIPOS,
     FALTA_ROTULOS: FALTA_ROTULOS,
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
