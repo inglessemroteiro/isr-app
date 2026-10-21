@@ -12403,7 +12403,12 @@
         return Object.assign({}, c, {
           duracao: cl.duracao || "", local: cl.local || "", link: cl.link || "",
           descricao: cl.descricao || "", materiais: cl.materiais || [],
-          encontros: cl.encontros || [], vagas: cl.vagas || 0
+          encontros: cl.encontros || [], vagas: cl.vagas || 0,
+          // o nível e a bio da professora: o arquivo 04 os pede no
+          // cartão e na página do clube, e sem eles a aluna não sabe
+          // para quem o clube é nem quem vai estar na frente
+          nivel: cl.nivel || "todos", bio: cl.bio || "",
+          membros: (cl.membros || []).length, status: cl.status || ""
         });
       }),
       abertos: abertos,
