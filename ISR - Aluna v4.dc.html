@@ -642,6 +642,12 @@
          próxima e o que ela já resgatou. O mural de trocas entre alunas
          está no desenho e não tem dado: fica dito no fim da página. -->
     <sc-if value="{{ isShop }}">
+      <!-- as duas subabas do arquivo 07 -->
+      <div style="display:flex;gap:6px;background:var(--color-neutral-0);border-radius:999px;padding:6px;align-self:flex-start;max-width:100%;overflow-x:auto">
+        <sc-for list="{{ shopTabs }}" as="st" hint-placeholder-count="2"><div onclick="{{ st.go }}" style="flex:none;white-space:nowrap;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:{{ st.bg }};color:{{ st.fg }}">{{ st.label }}</div></sc-for>
+      </div>
+
+      <sc-if value="{{ lojaRewards }}">
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
         <section style="flex:1 1 280px;min-width:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:6px">
           <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ L.meuSaldo }}</div>
@@ -709,7 +715,82 @@
         </section>
       </sc-if>
 
-      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.muralEmObra }}</section>
+      </sc-if>
+
+      <!-- ══ SWAP & SELL · arquivo 07 ═══════════════════════════
+           O mural entre alunas. A escola modera: anúncio oculto ou
+           apagado não chega aqui. -->
+      <sc-if value="{{ muAberto }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <sc-for list="{{ muFiltros }}" as="fl" hint-placeholder-count="6">
+            <button onclick="{{ fl.go }}" style="flex:none;border:1px solid var(--color-border);background:{{ fl.bg }};color:{{ fl.fg }};border-radius:999px;padding:9px 16px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ fl.label }}</button>
+          </sc-for>
+          <button onclick="{{ onMuNovo }}" style="flex:none;margin-left:auto;border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 3px 0 var(--color-primary-950);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.muNovo }}</button>
+        </div>
+
+        <sc-if value="{{ muEditando }}">
+          <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ muFormTitulo }}</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ muTipos }}" as="tp" hint-placeholder-count="4">
+                <button onclick="{{ tp.go }}" style="flex:none;border:1px solid var(--color-border);background:{{ tp.bg }};color:{{ tp.fg }};border-radius:999px;padding:8px 15px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">{{ tp.label }}</button>
+              </sc-for>
+            </div>
+            <input value="{{ muTitulo }}" onchange="{{ onMuTitulo }}" placeholder="{{ L.muPhTitulo }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--color-primary-900)">
+            <textarea value="{{ muDescricao }}" onchange="{{ onMuDescricao }}" rows="3" placeholder="{{ L.muPhDescricao }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical"></textarea>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <input value="{{ muPreco }}" onchange="{{ onMuPreco }}" placeholder="{{ muPhPreco }}" style="flex:1 1 160px;min-width:0;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--color-primary-900)">
+              <input value="{{ muContato }}" onchange="{{ onMuContato }}" placeholder="{{ L.muPhContato }}" style="flex:2 1 220px;min-width:0;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--color-primary-900)">
+            </div>
+            <div style="font-size:12.5px;color:var(--color-tertiary-700);line-height:1.55">{{ L.muNotaContato }}</div>
+            <sc-if value="{{ muErro }}">
+              <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:14px;padding:11px 14px;font-size:13.5px">{{ muErroTexto }}</div>
+            </sc-if>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onclick="{{ onMuSalvar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 3px 0 var(--color-primary-950);border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.muSalvar }}</button>
+              <button onclick="{{ onMuCancelar }}" style="border:0;background:none;color:var(--color-primary-500);border-radius:999px;padding:12px 6px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.muCancelar }}</button>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ muVazio }}">
+          <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;font-size:15px;line-height:1.6;color:var(--color-primary-800)">{{ muVazioTexto }}</section>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px">
+          <sc-for list="{{ muAnuncios }}" as="an" hint-placeholder-count="4">
+            <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                <span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ an.tipoBg }};color:{{ an.tipoFg }}">{{ an.tipoLabel }}</span>
+                <sc-if value="{{ an.vendido }}"><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-bg-cell);color:var(--color-tertiary-500)">{{ L.muVendido }}</span></sc-if>
+              </div>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-0.025em;color:{{ an.cor }}">{{ an.titulo }}</div>
+              <sc-if value="{{ an.temDescricao }}"><div style="font-size:14px;line-height:1.55;color:var(--color-primary-800)">{{ an.descricao }}</div></sc-if>
+              <sc-if value="{{ an.temPreco }}"><div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ an.preco }}</div></sc-if>
+              <div style="font-size:12.5px;color:var(--color-tertiary-700)">{{ an.quem }}</div>
+              <sc-if value="{{ an.dosOutros }}">
+                <sc-if value="{{ an.temContato }}">
+                  <div style="font-size:13.5px;line-height:1.55;color:var(--color-primary-900)">{{ an.contato }}</div>
+                </sc-if>
+                <sc-if value="{{ an.semContato }}">
+                  <div style="font-size:12.5px;color:var(--color-tertiary-700);line-height:1.55">{{ L.muSemContato }}</div>
+                </sc-if>
+              </sc-if>
+              <sc-if value="{{ an.meu }}">
+                <div style="display:flex;gap:9px;flex-wrap:wrap">
+                  <button onclick="{{ an.onEditar }}" style="border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.muEditar }}</button>
+                  <button onclick="{{ an.onVendido }}" style="border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ an.vendidoBotao }}</button>
+                  <button onclick="{{ an.onApagar }}" style="border:0;background:none;color:var(--color-tertiary-700);border-radius:999px;padding:9px 4px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.muApagar }}</button>
+                </div>
+              </sc-if>
+            </section>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ muTemMais }}">
+          <div><button onclick="{{ onMuMais }}" style="border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:12px 20px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ muMaisLabel }}</button></div>
+        </sc-if>
+      </sc-if>
     </sc-if>
 
     <!-- MEU PERFIL -->
@@ -854,6 +935,8 @@ class Component extends DCLogic {
             revCorrendo: false, revTotal: 0,
             // qual clube dela está aberto, e qual do catálogo está sendo visto
             clubeSel: "", clubeVendo: "",
+            // a loja: qual subaba, e o mural de trocas
+            shopTab: "rewards", muFiltro: "todos", muPagina: 1, muForm: null, muErro: "",
             // review: a palavra virada, e o que está sendo cadastrado
             virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
   notaRef = React.createRef();
@@ -940,6 +1023,19 @@ class Component extends DCLogic {
       pulsoEnviar: T("Send", "Enviar"),
       revPronta: T("Ready for today’s words?", "Pronta para as palavras de hoje?"),
       novo: T("New", "Novo"),
+      muNovo: T("+ New listing", "+ Anunciar"),
+      muSalvar: T("Publish", "Publicar"),
+      muCancelar: T("cancel", "cancelar"),
+      muEditar: T("Edit", "Editar"),
+      muApagar: T("delete", "apagar"),
+      muVendido: T("sold", "vendido"),
+      muPhTitulo: T("What are you offering?", "O que você está oferecendo?"),
+      muPhDescricao: T("Say a bit more. Optional.", "Conte um pouco mais. É opcional."),
+      muPhContato: T("how to reach you", "como falar com você"),
+      muNotaContato: T("Only what you write here is shown. The school does not publish your phone number.",
+        "Só o que você escrever aqui aparece. A escola não publica o seu telefone."),
+      muSemContato: T("She did not leave a contact. Ask the school.",
+        "Ela não deixou contato. Fale com a escola."),
       verDatas: T("See dates and details →", "Ver datas e detalhes →"),
       voltarClubes: T("← Back to all clubs", "← Voltar para todos os clubes"),
       sobreProf: T("about your teacher", "sobre a professora"),
@@ -1011,8 +1107,6 @@ class Component extends DCLogic {
       resgatar: T("Redeem", "Resgatar"),
       confirmar: T("Confirm", "Confirmar"),
       cancelar: T("cancel", "cancelar"),
-      muralEmObra: T("The swap & sell board, where students trade things with each other, is in the design and comes next. It needs its own decisions: what each listing shows and how two students get in touch.",
-        "O mural de trocas, em que as alunas trocam coisas entre si, está no desenho e vem em seguida. Ele precisa das próprias decisões: o que cada anúncio mostra e como duas alunas se falam."),
       // ── perfil ──
       sobreMim: T("About me", "Sobre mim"),
       editar: T("Edit", "Editar"),
@@ -1129,6 +1223,13 @@ class Component extends DCLogic {
       temPassados: false, passados: [],
       cbRecado: "", showMine: true, showCatalog: false, semMeus: true, semAbertos: true,
       myClubs: [], catalog: [],
+      muAberto: false, muFiltros: [], onMuNovo: () => {}, muEditando: false,
+      muFormTitulo: "", muTipos: [], muTitulo: "", onMuTitulo: () => {},
+      muDescricao: "", onMuDescricao: () => {}, muPreco: "", muPhPreco: "",
+      onMuPreco: () => {}, muContato: "", onMuContato: () => {},
+      muErro: false, muErroTexto: "", onMuSalvar: () => {}, onMuCancelar: () => {},
+      muVazio: true, muVazioTexto: "", muAnuncios: [], muTemMais: false,
+      muMaisLabel: "", onMuMais: () => {}, shopTabs: [], lojaRewards: true,
       cbTemPills: false, cbPills: [], cbAberto: false, cbNome: "", cbQuem: "",
       cbPlanoLabel: "", cbPlanoBg: "", cbPlanoFg: "", cbTemEncontros: false, cbEncontros: [],
       cbTemSala: false, cbLink: "#", cbTemMateriais: false, cbMats: [], cbSair: () => {},
@@ -1323,6 +1424,7 @@ class Component extends DCLogic {
     // Meus clubes: pílulas para escolher, e UM aberto no cartão
     // escuro. Todos os clubes: a grade com nível e "New", e a página
     // do clube atrás do "ver datas e detalhes".
+    const precoExtra = (CRM.clubeExtraPreco && CRM.clubeExtraPreco()) || { label: "" };
     const NIVEL_LABEL = (n) => {
       const k = String(n || "todos").toLowerCase();
       return k === "todos" ? T("All levels", "Todos os níveis")
@@ -1428,6 +1530,17 @@ class Component extends DCLogic {
     if (pc.ok === false) notifs.push({ icon: "▲",
       text: T("Your attendance is below the minimum for the certificate.",
         "A sua presença está abaixo do mínimo do certificado."), when: "" });
+    // Milhas mexidas à mão pela escola, com o motivo que a escola
+    // escreveu. Sem isto o saldo mudava e ela não sabia por quê.
+    ((CRM.ajustesDeMilhas && CRM.ajustesDeMilhas(p.id, 30)) || []).forEach(a => {
+      notifs.push({ icon: "◆",
+        text: (a.valor > 0
+          ? T("The school added ", "A escola somou ")
+          : T("The school took back ", "A escola tirou "))
+          + Math.abs(a.valor) + T(" miles", " milhas")
+          + (a.motivo ? " · " + a.motivo : ""),
+        when: CRM.ddmm(a.em) });
+    });
 
     // ── as páginas, no menu do desenho ──
     // Oito itens, nos quatro grupos. As quatro que ainda não têm dado
@@ -2204,6 +2317,114 @@ class Component extends DCLogic {
       showCatalog: (this.state.clubTab || "mine") === "catalog",
       semMeus: myClubs.length === 0, semAbertos: catalog.length === 0,
       myClubs, catalog,
+      // ══ SWAP & SELL · arquivo 07 ══════════════════════════════
+      ...(() => {
+        const TIPOS = [
+          ["troca", T("Swap", "Troca"), "var(--color-primary-50)", "var(--color-primary-800)"],
+          ["venda", T("Sell", "Venda"), "var(--color-warning-light)", "var(--color-warning-dark)"],
+          ["milhas", T("Miles", "Milhas"), "var(--color-miles-bg)", "var(--color-miles-text)"],
+          ["servico", T("Services", "Serviço"), "var(--color-secondary-100)", "var(--color-secondary-900)"]
+        ];
+        const filtro = this.state.muFiltro || "todos";
+        const pagina = this.state.muPagina || 1;
+        const POR_PAGINA = 8;
+        const todos = (CRM.anunciosLista && CRM.anunciosLista()) || [];
+        const filtrados = todos.filter(a => {
+          if (filtro === "todos") return true;
+          if (filtro === "meus") return a.pessoaId === p.id;
+          return a.tipo === filtro;
+        });
+        const mostrados = filtrados.slice(0, pagina * POR_PAGINA);
+        const f = this.state.muForm;
+        const tipoDe = (t) => TIPOS.filter(x => x[0] === t)[0] || TIPOS[0];
+        const nomeDe = (pid) => {
+          if (pid === p.id) return T("you", "você");
+          const q = CRM.getPessoa(pid);
+          return q ? CRM.firstName(q.nome) : T("a student", "uma aluna");
+        };
+        return {
+          muAberto: (this.state.shopTab || "rewards") === "mural",
+          muFiltros: [["todos", T("All", "Todos")]].concat(TIPOS.map(x => [x[0], x[1]]))
+            .concat([["meus", T("My listings", "Meus anúncios")]])
+            .map(([k, label]) => ({
+              label,
+              bg: filtro === k ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+              fg: filtro === k ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+              go: () => this.setState({ muFiltro: k, muPagina: 1 })
+            })),
+          onMuNovo: () => this.setState({ muForm: { tipo: "troca", titulo: "", descricao: "", preco: "", contato: "" }, muErro: "" }),
+          muEditando: !!f,
+          muFormTitulo: f && f.id ? T("Edit your listing", "Editar o seu anúncio")
+            : T("New listing", "Anúncio novo"),
+          muTipos: TIPOS.map(([k, label]) => ({
+            label,
+            bg: f && f.tipo === k ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+            fg: f && f.tipo === k ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            go: () => this.setState({ muForm: Object.assign({}, f, { tipo: k }) })
+          })),
+          muTitulo: (f && f.titulo) || "",
+          onMuTitulo: (e) => this.setState({ muForm: Object.assign({}, f, { titulo: e.target.value }), muErro: "" }),
+          muDescricao: (f && f.descricao) || "",
+          onMuDescricao: (e) => this.setState({ muForm: Object.assign({}, f, { descricao: e.target.value }) }),
+          muPreco: (f && f.preco) || "",
+          muPhPreco: f && f.tipo === "milhas" ? T("how many miles", "quantas milhas")
+            : T("price, or leave empty", "preço, ou deixe vazio"),
+          onMuPreco: (e) => this.setState({ muForm: Object.assign({}, f, { preco: e.target.value }) }),
+          muContato: (f && f.contato) || "",
+          onMuContato: (e) => this.setState({ muForm: Object.assign({}, f, { contato: e.target.value }) }),
+          muErro: !!this.state.muErro, muErroTexto: this.state.muErro || "",
+          onMuSalvar: () => {
+            const r = CRM.salvarAnuncio(p.id, f || {});
+            if (!r.ok) return this.setState({ muErro: r.erro });
+            this.setState({ muForm: null, muErro: "" });
+            this.bump();
+          },
+          onMuCancelar: () => this.setState({ muForm: null, muErro: "" }),
+          muVazio: mostrados.length === 0,
+          muVazioTexto: filtro === "meus"
+            ? T("You have no listing yet. Use + New listing.",
+                "Você ainda não anunciou nada. Use + Anunciar.")
+            : T("Nothing on the board right now.", "Nada no mural agora."),
+          muAnuncios: mostrados.map(a => {
+            const tp = tipoDe(a.tipo);
+            const meu = a.pessoaId === p.id;
+            return {
+              tipoLabel: tp[1], tipoBg: tp[2], tipoFg: tp[3],
+              titulo: a.titulo,
+              cor: a.vendido ? "var(--color-tertiary-500)" : "var(--color-primary-900)",
+              vendido: a.vendido,
+              temDescricao: !!a.descricao, descricao: a.descricao,
+              temPreco: !!a.preco, preco: a.preco,
+              quem: (meu ? T("your listing", "seu anúncio") : (T("by ", "de ") + nomeDe(a.pessoaId)))
+                + " · " + CRM.ddmm(a.em),
+              meu, dosOutros: !meu,
+              temContato: !meu && !!a.contato, semContato: !meu && !a.contato,
+              contato: a.contato,
+              vendidoBotao: a.vendido ? T("Put back", "Voltar para o mural")
+                : T("Mark sold", "Marcar vendido"),
+              onEditar: () => this.setState({ muForm: Object.assign({}, a), muErro: "" }),
+              onVendido: () => { CRM.marcarAnuncioVendido(p.id, a.id, !a.vendido); this.bump(); },
+              onApagar: () => { CRM.removerAnuncio(p.id, a.id); this.bump(); }
+            };
+          }),
+          muTemMais: filtrados.length > mostrados.length,
+          muMaisLabel: T("Show more", "Ver mais") + " (" + (filtrados.length - mostrados.length) + ")",
+          onMuMais: () => this.setState({ muPagina: pagina + 1 }),
+          // as subabas da loja
+          // Em PT o par cabe no telefone sem "da escola": o contraste
+          // que importa é com "entre alunas", e a página já se chama
+          // Loja de milhas.
+          shopTabs: [["rewards", T("School rewards", "Recompensas")],
+                     ["mural", T("Swap & sell", "Trocas entre alunas")]].map(([k, label]) => ({
+            label,
+            bg: (this.state.shopTab || "rewards") === k ? "var(--color-primary-900)" : "transparent",
+            fg: (this.state.shopTab || "rewards") === k ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            go: () => this.setState({ shopTab: k, muForm: null, muErro: "" })
+          })),
+          lojaRewards: (this.state.shopTab || "rewards") === "rewards"
+        };
+      })(),
+
       // ── meus clubes, pelo arquivo 04 ──
       cbTemPills: cl.meus.length > 1,
       cbPills: cl.meus.map(c => ({
@@ -2242,9 +2463,11 @@ class Component extends DCLogic {
                  "Cada clube tem 4 encontros por ciclo. O seu plano inclui ")
         + cl.incluidos + T(" clubs", " clubes")
         + (cl.usados >= cl.incluidos
-            ? T(" — you are using them all, so the next one is paid.",
-                " — você já está usando todos, então o próximo é pago.")
-            : (T(" — you are using ", " — você está usando ") + cl.usados + ".")),
+            ? (T(" — you are using them all, so the next one costs ", " — você já está usando todos, então o próximo custa ")
+               + precoExtra.label + ".")
+            : (T(" — you are using ", " — você está usando ") + cl.usados
+               + T(". From the ", ". A partir do ") + (cl.incluidos + 1) + T("rd, it costs ", "º, custa ")
+               + precoExtra.label + ".")),
       cbSemDetalhe: !dt,
 
       // ── a página do clube ──
@@ -2267,8 +2490,8 @@ class Component extends DCLogic {
       // O preço do 3º clube não está no sistema: o protótipo escreve
       // "€50", que é dado de mentira. A tela diz a regra, não o número.
       dtPreco: cl.usados >= cl.incluidos
-        ? T("This is beyond the clubs your plan includes, so it is charged separately. The school will confirm the amount.",
-            "Este passa dos clubes que o seu plano inclui, então é cobrado à parte. A escola confirma o valor com você.")
+        ? (T("This is beyond the clubs your plan includes: ", "Este passa dos clubes que o seu plano inclui: ")
+           + precoExtra.label + T(" per cycle.", " por ciclo."))
         : T("Included in your plan.", "Incluído no seu plano."),
       onDtEntrar: () => {
         if (!dt) return;

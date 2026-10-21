@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-c",
+  numero: "2026.10.21-d",
   data: "21/10/2026",
-  nota: "Os clubes da aluna: pílulas, cartão escuro e a página do clube"
+  nota: "A loja da aluna: recompensas e o mural de trocas entre alunas"
 };
