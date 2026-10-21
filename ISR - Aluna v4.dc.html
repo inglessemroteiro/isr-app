@@ -172,45 +172,138 @@
     <sc-if value="{{ isClubs }}">
       <sc-if value="{{ cbRecado }}"><div style="background:var(--color-neutral-0);border-radius:16px;padding:14px 18px;font-size:14px;font-weight:700">{{ cbRecado }}</div></sc-if>
 
+      <!-- ══ MEUS CLUBES · arquivo 04 ══════════════════════════
+           Pílulas para escolher, e UM clube aberto no cartão escuro.
+           Eram todos empilhados, e com três clubes a tela virava uma
+           rolagem sem fim. -->
       <sc-if value="{{ showMine }}">
-        <sc-if value="{{ semMeus }}"><section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;font-size:15px;color:var(--color-primary-800);line-height:1.6">{{ L.semClube }}</section></sc-if>
-        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
-          <sc-for list="{{ myClubs }}" as="c" hint-placeholder-count="2">
-            <section style="flex:1 1 340px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><div style="flex:1;min-width:140px;font-size:18px;font-weight:800;letter-spacing:-0.02em">{{ c.name }}</div><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.planoBg }};color:{{ c.planoFg }}">{{ c.planoLabel }}</span></div>
-              <div style="font-size:13px;color:var(--color-primary-800)">{{ c.slot }}</div>
-              <sc-if value="{{ c.temEncontros }}">
-                <div style="display:flex;flex-direction:column">
-                  <sc-for list="{{ c.meetings }}" as="m" hint-placeholder-count="4">
-                    <div style="display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--color-button-secondary)"><div style="flex:none;width:52px;font-size:13px;font-weight:800;color:var(--color-primary-500)">{{ m.date }}</div><div style="flex:1;min-width:0;font-size:14px">{{ m.topic }}</div></div>
-                  </sc-for>
-                </div>
-              </sc-if>
-              <sc-if value="{{ c.temSala }}"><div><a href="{{ c.link }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;display:inline-block">{{ L.entrarEncontro }}</a></div></sc-if>
-              <sc-if value="{{ c.temMateriais }}">
-                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-top:4px">{{ L.material }}</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ c.mats }}" as="m" hint-placeholder-count="2"><a href="{{ m.href }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-bg-default);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--color-primary-900)">{{ m.t }}</a></sc-for></div>
-              </sc-if>
-              <div><span onclick="{{ c.sair }}" style="font-size:13px;font-weight:700;color:var(--color-tertiary-700);cursor:pointer">{{ L.sairClube }}</span></div>
+        <sc-if value="{{ semMeus }}"><section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;font-size:15px;color:var(--color-primary-800);line-height:1.6">{{ L.semClube }}</section></sc-if>
+
+        <sc-if value="{{ cbTemPills }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ cbPills }}" as="pl" hint-placeholder-count="3">
+              <button onclick="{{ pl.go }}" style="flex:none;border:1px solid var(--color-border);background:{{ pl.bg }};color:{{ pl.fg }};border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">{{ pl.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ cbAberto }}">
+          <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:32px;padding:30px 32px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+              <div style="flex:1;min-width:160px;font-size:26px;font-weight:800;letter-spacing:-0.035em">{{ cbNome }}</div>
+              <span style="flex:none;border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:800;background:{{ cbPlanoBg }};color:{{ cbPlanoFg }}">{{ cbPlanoLabel }}</span>
+            </div>
+            <div style="font-size:14.5px;opacity:.85">{{ cbQuem }}</div>
+            <sc-if value="{{ cbTemEncontros }}">
+              <div style="display:flex;flex-direction:column;margin-top:4px">
+                <sc-for list="{{ cbEncontros }}" as="m" hint-placeholder-count="4">
+                  <div style="display:flex;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.14)">
+                    <div style="flex:none;width:62px;font-size:14px;font-weight:800;color:var(--color-button-primary)">{{ m.date }}</div>
+                    <div style="flex:1;min-width:0;font-size:15px">{{ m.topic }}</div>
+                    <span style="flex:none;font-size:11.5px;font-weight:700;opacity:.7">{{ m.tag }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ cbTemSala }}">
+              <div><a href="{{ cbLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:15px 26px;font-size:16px;font-weight:800;display:inline-block">{{ L.entrarEncontro }}</a></div>
+            </sc-if>
+            <div><span onclick="{{ cbSair }}" style="font-size:13px;font-weight:700;opacity:.7;cursor:pointer">{{ L.sairClube }}</span></div>
+          </section>
+
+          <sc-if value="{{ cbTemMateriais }}">
+            <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.material }}</div>
+              <div style="display:flex;gap:9px;flex-wrap:wrap">
+                <sc-for list="{{ cbMats }}" as="m" hint-placeholder-count="2">
+                  <a href="{{ m.href }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-bg-default);border-radius:999px;padding:10px 17px;font-size:14px;font-weight:700;color:var(--color-primary-900)">{{ m.t }}</a>
+                </sc-for>
+              </div>
             </section>
-          </sc-for>
-        </div>
+          </sc-if>
+
+          <div style="font-size:13px;line-height:1.6;color:var(--color-tertiary-700);max-width:680px">{{ cbForumFalta }}</div>
+        </sc-if>
       </sc-if>
 
+      <!-- ══ TODOS OS CLUBES ═══════════════════════════════════ -->
       <sc-if value="{{ showCatalog }}">
-        <sc-if value="{{ semAbertos }}"><section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;font-size:15px;color:var(--color-primary-800);line-height:1.6">{{ L.semAberto }}</section></sc-if>
-        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
-          <sc-for list="{{ catalog }}" as="c" hint-placeholder-count="3">
-            <section style="flex:1 1 340px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-primary-50);color:var(--color-primary-800)">{{ c.formatLabel }}</span><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.vagasBg }};color:{{ c.vagasFg }}">{{ c.spotsLabel }}</span></div>
-              <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ c.name }}</div>
-              <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55">{{ c.desc }}</div>
-              <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ c.facts }}" as="k"><div style="flex:1 1 110px;min-width:0"><div style="font-size:11px;font-weight:700;color:var(--color-tertiary-700)">{{ k.k }}</div><div style="font-size:14px;font-weight:700">{{ k.v }}</div></div></sc-for></div>
-              <div style="font-size:13px;color:var(--color-tertiary-700);line-height:1.55">{{ c.price }}</div>
-              <div><button onclick="{{ c.toggle }}" style="border:0;background:{{ c.btnBg }};color:var(--color-neutral-0);border-radius:999px;padding:13px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.btn }}</button></div>
+        <section style="background:var(--color-primary-50);border-radius:20px;padding:16px 20px;font-size:14px;line-height:1.6;color:var(--color-primary-900)">{{ cbAviso }}</section>
+        <sc-if value="{{ semAbertos }}"><section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;font-size:15px;color:var(--color-primary-800);line-height:1.6">{{ L.semAberto }}</section></sc-if>
+
+        <sc-if value="{{ cbSemDetalhe }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px">
+            <sc-for list="{{ catalog }}" as="c" hint-placeholder-count="3">
+              <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                  <span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ c.nivelLabel }}</span>
+                  <sc-if value="{{ c.ehNovo }}"><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-button-primary);color:var(--color-primary-900)">{{ L.novo }}</span></sc-if>
+                  <span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.vagasBg }};color:{{ c.vagasFg }}">{{ c.spotsLabel }}</span>
+                </div>
+                <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ c.name }}</div>
+                <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55">{{ c.desc }}</div>
+                <div style="font-size:13px;color:var(--color-tertiary-700);line-height:1.6">{{ c.linha }}</div>
+                <div><span onclick="{{ c.verDetalhe }}" style="font-size:13.5px;font-weight:800;color:var(--color-primary-500);cursor:pointer">{{ L.verDatas }}</span></div>
+                <div><button onclick="{{ c.toggle }}" style="border:0;background:{{ c.btnBg }};color:var(--color-neutral-0);border-radius:999px;padding:13px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.btn }}</button></div>
+              </section>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- ══ A PÁGINA DO CLUBE ═══════════════════════════════ -->
+        <sc-if value="{{ cbDetalhe }}">
+          <div><span onclick="{{ onFecharDetalhe }}" style="font-size:13.5px;font-weight:800;color:var(--color-primary-500);cursor:pointer">{{ L.voltarClubes }}</span></div>
+          <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:40px;padding:36px 38px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span style="border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:800;background:rgba(255,255,255,.14);color:var(--color-neutral-0)">{{ dtFormato }}</span>
+              <span style="border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:800;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ dtNivel }}</span>
+              <sc-if value="{{ dtNovo }}"><span style="border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:800;background:var(--color-button-primary);color:var(--color-primary-900)">{{ L.novo }}</span></sc-if>
+            </div>
+            <div style="font-size:clamp(30px,4vw,48px);font-weight:800;letter-spacing:-0.04em;line-height:1.08">{{ dtNome }}</div>
+            <div style="font-size:16px;line-height:1.6;opacity:.88;max-width:620px">{{ dtDesc }}</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px">
+              <sc-for list="{{ dtFatos }}" as="f" hint-placeholder-count="4">
+                <div style="flex:1 1 130px;min-width:0;background:rgba(255,255,255,.08);border-radius:16px;padding:13px 15px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-button-primary)">{{ f.k }}</div>
+                  <div style="margin-top:2px;font-size:15px;font-weight:700">{{ f.v }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:4px"><button onclick="{{ onDtEntrar }}" style="border:0;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:16px 28px;font-size:16.5px;font-weight:800;font-family:inherit;cursor:pointer">{{ dtBotao }}</button></div>
+            <div style="font-size:13.5px;opacity:.8">{{ dtPreco }}</div>
+          </section>
+
+          <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+            <section style="flex:1 1 0;min-width:280px;background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ dtEncontrosTitulo }}</div>
+              <sc-if value="{{ dtSemEncontros }}"><div style="font-size:14.5px;color:var(--color-tertiary-700);line-height:1.6">{{ L.semDatas }}</div></sc-if>
+              <sc-for list="{{ dtEncontros }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid var(--color-button-secondary)">
+                  <div style="flex:none;min-width:58px;background:var(--color-bg-default);border-radius:12px;padding:8px 10px;text-align:center">
+                    <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ m.dia }}</div>
+                    <div style="font-size:11px;color:var(--color-tertiary-700)">{{ m.mes }}</div>
+                  </div>
+                  <div style="flex:1;min-width:0;font-size:15px;color:var(--color-primary-900)">{{ m.topic }}</div>
+                </div>
+              </sc-for>
             </section>
-          </sc-for>
-        </div>
+
+            <section style="flex:1 1 0;min-width:280px;background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ L.sobreProf }}</div>
+              <div style="font-size:15px;font-weight:700;color:var(--color-primary-900)">{{ dtProf }}</div>
+              <div style="font-size:14.5px;line-height:1.6;color:var(--color-primary-800)">{{ dtBio }}</div>
+              <div style="margin-top:6px;font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ dtVagasRotulo }}</div>
+              <div style="height:10px;border-radius:999px;background:var(--color-bg-cell);overflow:hidden">
+                <div style="height:100%;width:{{ dtVagasPct }};background:var(--color-secondary-500)"></div>
+              </div>
+              <div style="margin-top:8px;font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ondeEncontra }}</div>
+              <div style="font-size:14.5px;line-height:1.6;color:var(--color-primary-900)">{{ dtOnde }}</div>
+              <sc-if value="{{ dtTemMapa }}">
+                <div><a href="{{ dtMapa }}" target="_blank" rel="noopener" style="font-size:13.5px;font-weight:800;color:var(--color-primary-500);text-decoration:none">{{ L.verNoMapa }}</a></div>
+              </sc-if>
+            </section>
+          </div>
+        </sc-if>
       </sc-if>
     </sc-if>
 
@@ -759,6 +852,8 @@ class Component extends DCLogic {
             pulsoId: "", pulsoNota: 0, pulsoTexto: "",
             // a revisão do dia: se está correndo, e de quantas partiu
             revCorrendo: false, revTotal: 0,
+            // qual clube dela está aberto, e qual do catálogo está sendo visto
+            clubeSel: "", clubeVendo: "",
             // review: a palavra virada, e o que está sendo cadastrado
             virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
   notaRef = React.createRef();
@@ -844,6 +939,13 @@ class Component extends DCLogic {
       sair: T("Log out", "Sair"),
       pulsoEnviar: T("Send", "Enviar"),
       revPronta: T("Ready for today’s words?", "Pronta para as palavras de hoje?"),
+      novo: T("New", "Novo"),
+      verDatas: T("See dates and details →", "Ver datas e detalhes →"),
+      voltarClubes: T("← Back to all clubs", "← Voltar para todos os clubes"),
+      sobreProf: T("about your teacher", "sobre a professora"),
+      ondeEncontra: T("where we meet", "onde a gente se encontra"),
+      verNoMapa: T("See on Google Maps →", "Ver no Google Maps →"),
+      semDatas: T("The dates are not set yet.", "As datas ainda não foram marcadas."),
       revComecar: T("Start", "Começar"),
       revPausar: T("pause", "pausar"),
       aindaNao: T("Not yet", "Ainda não"),
@@ -1027,6 +1129,14 @@ class Component extends DCLogic {
       temPassados: false, passados: [],
       cbRecado: "", showMine: true, showCatalog: false, semMeus: true, semAbertos: true,
       myClubs: [], catalog: [],
+      cbTemPills: false, cbPills: [], cbAberto: false, cbNome: "", cbQuem: "",
+      cbPlanoLabel: "", cbPlanoBg: "", cbPlanoFg: "", cbTemEncontros: false, cbEncontros: [],
+      cbTemSala: false, cbLink: "#", cbTemMateriais: false, cbMats: [], cbSair: () => {},
+      cbForumFalta: "", cbAviso: "", cbSemDetalhe: true, cbDetalhe: false,
+      onFecharDetalhe: () => {}, dtNome: "", dtDesc: "", dtFormato: "", dtNivel: "",
+      dtNovo: false, dtFatos: [], dtBotao: "", dtPreco: "", onDtEntrar: () => {},
+      dtEncontrosTitulo: "", dtSemEncontros: true, dtEncontros: [], dtProf: "", dtBio: "",
+      dtVagasRotulo: "", dtVagasPct: "0%", dtOnde: "", dtTemMapa: false, dtMapa: "#",
       semContrato: true, temContrato: false, contratoLinha: "", parcelas: [],
       milesExtrato: []
     });
@@ -1208,6 +1318,39 @@ class Component extends DCLogic {
       ? (c.local ? T("In person · ", "Presencial · ") + c.local : T("In person", "Presencial"))
       : T("Online", "Online");
     const quandoDe = (c) => [c.dia, c.hora, c.duracao].filter(Boolean).join(" · ");
+    // ══ CLUBES · arquivo 04 ═══════════════════════════════════
+    //
+    // Meus clubes: pílulas para escolher, e UM aberto no cartão
+    // escuro. Todos os clubes: a grade com nível e "New", e a página
+    // do clube atrás do "ver datas e detalhes".
+    const NIVEL_LABEL = (n) => {
+      const k = String(n || "todos").toLowerCase();
+      return k === "todos" ? T("All levels", "Todos os níveis")
+        : (T("From ", "A partir do ") + k.toUpperCase());
+    };
+    const encontrosDe = (c) => (c.encontros || []).map((e, i) => {
+      const iso = e && e.data ? e.data : "";
+      const d = iso ? new Date(iso + "T12:00:00") : null;
+      const MES = T(["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+                    ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]);
+      // Clube criado na tela antiga guarda o horário em texto livre,
+      // sem data. O bloco do dia mostra esse texto em vez de "—": é o
+      // que a aluna tem, e é melhor do que um travessão.
+      const texto = (e && e.quando) ? String(e.quando) : "";
+      return {
+        date: iso ? CRM.ddmm(iso) : (texto || "—"),
+        dia: d ? String(d.getDate()) : (texto ? texto.split(/[ ·]/)[0] : "—"),
+        mes: d ? MES[d.getMonth()] : "",
+        topic: (e && e.tema) || T("topic to come", "tema a definir"),
+        tag: T("meeting ", "encontro ") + (i + 1)
+      };
+    });
+    // qual dos clubes dela está aberto
+    const cbSelId = (cl.meus.filter(c => c.id === this.state.clubeSel)[0]
+      || cl.meus[0] || {}).id || "";
+    const cbA = cl.meus.filter(c => c.id === cbSelId)[0] || null;
+    // qual clube do catálogo está sendo olhado por dentro
+    const dt = cl.abertos.filter(c => c.id === this.state.clubeVendo)[0] || null;
     const myClubs = cl.meus.filter(c => {
       const t = String(this.state.busca || "").trim().toLowerCase();
       return !t || (c.nome + " " + (c.professora || "")).toLowerCase().indexOf(t) >= 0;
@@ -1233,6 +1376,11 @@ class Component extends DCLogic {
       .toLowerCase().indexOf(q) >= 0;
     const catalog = cl.abertos.filter(bate).map(c => ({
       name: c.nome,
+      nivelLabel: NIVEL_LABEL(c.nivel),
+      ehNovo: !!(CRM.clubeEhNovo && CRM.clubeEhNovo(c)),
+      linha: [c.professora ? T("with ", "com ") + c.professora : "", quandoDe(c), ondeDe(c)]
+        .filter(Boolean).join(" · "),
+      verDetalhe: () => this.setState({ clubeVendo: c.id }),
       formatLabel: ondeDe(c),
       spotsLabel: c.lotado ? T("no spot now", "sem vaga agora")
         : (c.livres === null ? T("open", "com vaga")
@@ -2056,6 +2204,102 @@ class Component extends DCLogic {
       showCatalog: (this.state.clubTab || "mine") === "catalog",
       semMeus: myClubs.length === 0, semAbertos: catalog.length === 0,
       myClubs, catalog,
+      // ── meus clubes, pelo arquivo 04 ──
+      cbTemPills: cl.meus.length > 1,
+      cbPills: cl.meus.map(c => ({
+        label: c.nome,
+        bg: c.id === cbSelId ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+        fg: c.id === cbSelId ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        go: () => this.setState({ clubeSel: c.id, recado: "" })
+      })),
+      cbAberto: !!cbA,
+      cbNome: cbA ? cbA.nome : "",
+      cbQuem: cbA ? [cbA.professora ? T("with ", "com ") + cbA.professora : "",
+        quandoDe(cbA), ondeDe(cbA)].filter(Boolean).join(" · ") : "",
+      cbPlanoLabel: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[0] : "",
+      cbPlanoBg: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[1] : "",
+      cbPlanoFg: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[2] : "",
+      cbTemEncontros: !!(cbA && (cbA.encontros || []).length),
+      cbEncontros: cbA ? encontrosDe(cbA) : [],
+      cbTemSala: !!(cbA && cbA.link), cbLink: (cbA && cbA.link) || "#",
+      cbTemMateriais: !!(cbA && (cbA.materiais || []).length),
+      cbMats: cbA ? (cbA.materiais || []).map(m => ({
+        t: m.label || m.titulo || T("material", "material"), href: m.link || "#" })) : [],
+      cbSair: () => {
+        if (!cbA) return;
+        CRM.clubeSair(cbA.id, p.id);
+        this.setState({ clubeSel: "", recado: T("You left ", "Você saiu do ") + cbA.nome + "." });
+        this.bump();
+      },
+      // O fórum do arquivo — posts, respostas e áudio — não tem nada no
+      // sistema para guardá-lo. Fica dito em vez de fingido.
+      cbForumFalta: T(
+        "The design also has a club forum, with written and voice replies. That needs somewhere to store posts and audio, which the system does not have yet.",
+        "O desenho tem também um fórum do clube, com respostas escritas e em áudio. Isso precisa de um lugar para guardar post e áudio, que o sistema ainda não tem."),
+
+      // ── todos os clubes ──
+      cbAviso: T("Each club has 4 live meetings per cycle. Your plan includes ",
+                 "Cada clube tem 4 encontros por ciclo. O seu plano inclui ")
+        + cl.incluidos + T(" clubs", " clubes")
+        + (cl.usados >= cl.incluidos
+            ? T(" — you are using them all, so the next one is paid.",
+                " — você já está usando todos, então o próximo é pago.")
+            : (T(" — you are using ", " — você está usando ") + cl.usados + ".")),
+      cbSemDetalhe: !dt,
+
+      // ── a página do clube ──
+      cbDetalhe: !!dt,
+      onFecharDetalhe: () => this.setState({ clubeVendo: "" }),
+      dtNome: dt ? dt.nome : "",
+      dtDesc: dt ? (dt.descricao || T("No description yet.", "Sem descrição ainda.")) : "",
+      dtFormato: dt ? ondeDe(dt) : "",
+      dtNivel: dt ? NIVEL_LABEL(dt.nivel) : "",
+      dtNovo: !!(dt && CRM.clubeEhNovo && CRM.clubeEhNovo(dt)),
+      dtFatos: dt ? [
+        [T("when", "quando"), quandoDe(dt) || T("to be set", "a definir")],
+        [T("teacher", "professora"), dt.professora || "—"],
+        [T("meetings", "encontros"), String((dt.encontros || []).filter(e => e && (e.data || e.quando)).length) + "/4"],
+        [T("spots", "vagas"), dt.lotado ? T("full", "lotado")
+          : (dt.livres === null ? T("open", "com vaga") : String(dt.livres))]
+      ].map(([k, v]) => ({ k, v })) : [],
+      dtBotao: dt ? (dt.lotado ? T("Join the waitlist", "Entrar na lista de espera")
+        : T("Join this club", "Entrar neste clube")) : "",
+      // O preço do 3º clube não está no sistema: o protótipo escreve
+      // "€50", que é dado de mentira. A tela diz a regra, não o número.
+      dtPreco: cl.usados >= cl.incluidos
+        ? T("This is beyond the clubs your plan includes, so it is charged separately. The school will confirm the amount.",
+            "Este passa dos clubes que o seu plano inclui, então é cobrado à parte. A escola confirma o valor com você.")
+        : T("Included in your plan.", "Incluído no seu plano."),
+      onDtEntrar: () => {
+        if (!dt) return;
+        const r = CRM.clubeEntrar(dt.id, p.id, {});
+        this.setState({ clubeVendo: "", clubeSel: dt.id, clubTab: "mine",
+          recado: r && r.espera
+            ? (T("You are on the waitlist for ", "Você entrou na lista de espera do ") + dt.nome + ".")
+            : (r && r.plano === "pendente"
+                ? (T("You are in ", "Você entrou no ") + dt.nome + T(". The school will confirm the extra charge.", ". A escola confirma a cobrança extra."))
+                : (T("You are in ", "Você entrou no ") + dt.nome + ".")) });
+        this.bump();
+      },
+      dtEncontrosTitulo: T("4 meetings", "os 4 encontros"),
+      dtSemEncontros: !!(dt && !(dt.encontros || []).filter(e => e && (e.data || e.quando)).length),
+      dtEncontros: dt ? encontrosDe(dt).filter(m => m.date !== "—") : [],
+      dtProf: dt ? (dt.professora || "—") : "",
+      dtBio: dt ? (dt.bio || T("Your teacher has not written her bio yet.",
+        "A professora ainda não escreveu a bio dela.")) : "",
+      dtVagasRotulo: dt ? (T("spots", "vagas") + " · " + (dt.vagas
+        ? ((dt.vagas - (dt.livres === null ? 0 : dt.livres)) + "/" + dt.vagas)
+        : T("open", "com vaga"))) : "",
+      dtVagasPct: dt && dt.vagas
+        ? Math.min(100, Math.round(((dt.vagas - (dt.livres === null ? 0 : dt.livres)) / dt.vagas) * 100)) + "%"
+        : "0%",
+      dtOnde: dt ? (dt.formato === "presencial"
+        ? (dt.local || T("Address to be confirmed.", "Endereço a confirmar."))
+        : T("Online, on Google Meet.", "Online, no Google Meet.")) : "",
+      dtTemMapa: !!(dt && dt.formato === "presencial" && dt.local),
+      dtMapa: dt && dt.local
+        ? ("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(dt.local)) : "#",
+
 
       // ── conta ──
       semContrato: !contrato || !meses.length,

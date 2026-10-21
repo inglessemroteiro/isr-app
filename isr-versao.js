@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-b",
+  numero: "2026.10.21-c",
   data: "21/10/2026",
-  nota: "O Review ganha começo, meio e fim — e as +15 milhas do dia"
+  nota: "Os clubes da aluna: pílulas, cartão escuro e a página do clube"
 };
