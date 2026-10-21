@@ -12887,6 +12887,65 @@
     });
   }
 
+  // ── AS METAS "I CAN…" DO PROJETO ──────────────────────────────
+  //
+  // Os arquivos 01 e 06 pedem metas "I can…" com status. Elas já
+  // existem e estão escritas: é o objetivo de cada sessão do plano,
+  // que a escola redigiu no syllabus justamente nessa forma ("Telling
+  // the story of a family dish as a simple sequence of points").
+  // Inventar uma segunda lista de metas seria pedir que a escola
+  // escrevesse duas vezes a mesma coisa e depois as mantivesse iguais.
+  //
+  // O status vem da chamada, não de um campo novo: sessão dada é meta
+  // feita, a primeira que falta é a que está em andamento, o resto é a
+  // fazer.
+  function metasDoProjeto(pessoaId) {
+    var p = getPessoa(pessoaId);
+    var vazio = { projeto: "", nivel: "", metas: [], feitas: 0, total: 0 };
+    if (!p || !p.turma) return vazio;
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === p.turma;
+    })[0];
+    if (!t) return vazio;
+    var sess = planoSessoes(t.id) || [];
+    var datas = datasDasSessoes(t.id, { encaixarPorOrdem: true }) || {};
+    // O syllabus às vezes abre o objetivo com a fórmula do guia do
+    // professor ("By the end of this session the student can…"). Para
+    // a aluna isso é cabeçalho de documento, não meta dela. Tira-se a
+    // fórmula e nada mais: o texto é da escola.
+    var PREFIXOS = [
+      /^by the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i,
+      /^ao final (desta|da) sess[ãa]o,? a aluna (consegue|vai conseguir)\s*/i,
+      /^at the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i
+    ];
+    var semFormula = function (txt) {
+      var t = String(txt || "").trim();
+      for (var i = 0; i < PREFIXOS.length; i++) {
+        if (PREFIXOS[i].test(t)) {
+          t = t.replace(PREFIXOS[i], "");
+          return t.charAt(0).toUpperCase() + t.slice(1);
+        }
+      }
+      return t;
+    };
+    var achouAndando = false;
+    var metas = sess.filter(function (s) { return !!s.objetivo; }).map(function (s) {
+      var dada = !!(datas[s.n] || {}).dada;
+      var estado;
+      if (dada) estado = "feita";
+      else if (!achouAndando) { estado = "andando"; achouAndando = true; }
+      else estado = "aFazer";
+      return { n: s.n, titulo: s.titulo || "", objetivo: semFormula(s.objetivo),
+        estado: estado, data: (datas[s.n] || {}).data || "" };
+    });
+    return {
+      projeto: t.projeto || "", nivel: t.nivel || "",
+      metas: metas,
+      feitas: metas.filter(function (m) { return m.estado === "feita"; }).length,
+      total: metas.length
+    };
+  }
+
   // ── ALUNA AVISA SOBRE UMA FALTA ───────────────────────────────
   //
   // O arquivo 08 pede "enviar atestado". O sistema não guarda arquivo
@@ -15846,7 +15905,7 @@
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
-    avisarFalta: avisarFalta,
+    avisarFalta: avisarFalta, metasDoProjeto: metasDoProjeto,
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,

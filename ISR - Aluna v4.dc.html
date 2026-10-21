@@ -93,20 +93,35 @@
           <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.meuProgresso }}</div>
           <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ prog.level }}</div>
           <div style="font-size:14px;color:var(--color-primary-800);line-height:1.5">{{ prog.homeLinha }}</div>
-          <div style="display:flex;gap:4px"><sc-for list="{{ prog.barras }}" as="g" hint-placeholder-count="8"><span style="flex:1;height:8px;border-radius:4px;background:{{ g.bar }}"></span></sc-for></div>
+          <!-- as metas "I can…" do projeto, em barras segmentadas -->
+          <sc-if value="{{ temMetas }}">
+            <div>
+              <div style="display:flex;gap:4px"><sc-for list="{{ metasBarras }}" as="g" hint-placeholder-count="10"><span title="{{ g.title }}" style="flex:1;height:8px;border-radius:4px;background:{{ g.bar }}"></span></sc-for></div>
+              <div style="font-size:12.5px;color:var(--color-tertiary-700);margin-top:6px">{{ metasContagem }}</div>
+            </div>
+          </sc-if>
           <div style="font-size:13px;font-weight:700;color:var(--color-primary-500);margin-top:auto">{{ L.verProgresso }} →</div>
         </section>
 
-        <section onclick="{{ goClubs }}" style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
-          <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.clubes }}</div>
-          <div style="font-size:20px;font-weight:800;letter-spacing:-0.03em">{{ clubesCartaoTitulo }}</div>
-          <div style="font-size:14px;color:var(--color-primary-800);line-height:1.5">{{ clubesCartaoLinha }}</div>
-          <div style="font-size:13px;font-weight:700;color:var(--color-primary-500);margin-top:auto">{{ L.verClubes }} →</div>
-        </section>
-
+        <!-- A GRAVAÇÃO DA ÚLTIMA AULA · arquivo 01
+             Com gravação, o cartão é o link. Sem, ele continua na
+             fileira e diz que a escola ainda não publicou — tirá-lo
+             deixava a fileira de três cartões com dois. -->
         <sc-if value="{{ temUltimaGravacao }}">
           <a href="{{ ultimaGravacaoLink }}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ultimaGravacao }}</div><div style="font-size:15px;font-weight:800;margin-top:2px">{{ ultimaGravacaoTitulo }}</div><div style="font-size:12px;color:var(--color-primary-800);margin-top:2px">{{ ultimaGravacaoSub }}</div></div></a>
         </sc-if>
+        <sc-if value="{{ semUltimaGravacao }}">
+          <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none;color:var(--color-tertiary-500)">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ultimaGravacao }}</div><div style="font-size:14px;color:var(--color-primary-800);line-height:1.5;margin-top:2px">{{ L.semGravacao }}</div></div></section>
+        </sc-if>
+
+        <!-- MURAL DA ESCOLA · arquivo 01
+             O cartão pede autor, quando e texto. A escola não tem onde
+             escrever isso: não existe mural no sistema. Fica dito aqui,
+             com o que falta decidir, em vez de sumir da tela. -->
+        <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.muralEscola }}</div>
+          <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55">{{ L.muralEscolaFalta }}</div>
+        </section>
       </div>
       <!-- COMO FOI A AULA · fora dos arquivos novos, mantida a pedido
            da Gabi: é por esta nota que a professora ajusta a aula
@@ -145,6 +160,32 @@
 
       <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ prog.stats }}" as="m" hint-placeholder-count="4"><section style="flex:1 1 150px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:18px 20px"><div style="font-size:26px;font-weight:800;letter-spacing:-0.035em;color:{{ m.color }}">{{ m.v }}</div><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ m.k }}</div><div style="font-size:12px;color:var(--color-primary-800);margin-top:2px">{{ m.sub }}</div></section></sc-for></div>
 
+      <!-- AS METAS "I CAN…" DO PROJETO · arquivos 01 e 06
+           São os objetivos das sessões do plano, escritos pela escola
+           no syllabus. Feita = sessão dada; em andamento = a próxima;
+           a fazer = o resto. -->
+      <sc-if value="{{ temMetas }}">
+        <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+            <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ metasTitulo }}</div>
+            <span style="font-size:12.5px;font-weight:700;color:var(--color-tertiary-700)">{{ metasContagem }}</span>
+          </div>
+          <sc-for list="{{ metas }}" as="mt" hint-placeholder-count="6">
+            <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--color-button-secondary)">
+              <span style="flex:none;width:28px;height:28px;border-radius:999px;display:grid;place-items:center;font-size:12px;font-weight:800;background:{{ mt.dotBg }};color:{{ mt.dotFg }}">{{ mt.mark }}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700;line-height:1.5;color:{{ mt.cor }}">{{ mt.objetivo }}</div>
+                <div style="font-size:12.5px;color:var(--color-tertiary-700);margin-top:2px">{{ mt.sub }}</div>
+              </div>
+              <span style="flex:none;border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ mt.stBg }};color:{{ mt.stFg }}">{{ mt.st }}</span>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+      <sc-if value="{{ semMetas }}">
+        <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;font-size:14.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.semMetas }}</section>
+      </sc-if>
+
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:stretch">
         <section style="flex:1 1 340px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><div style="font-size:18px;font-weight:800">{{ prog.projTitle }}</div><span style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ prog.projCiclo }}</span></div>
@@ -158,7 +199,19 @@
 
         <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
           <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.presencaCiclo }}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ attendance }}" as="a" hint-placeholder-count="10"><span title="{{ a.title }}" style="flex:1 1 10px;min-width:10px;height:10px;border-radius:5px;background:{{ a.bar }}"></span></sc-for></div>
+          <!-- o mesmo quadro da Conta: presença por SESSÃO, não por
+               chamada solta. Duas telas desenhando a presença de
+               jeitos diferentes davam duas leituras do mesmo fato. -->
+          <sc-if value="{{ temGrade }}">
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ grade }}" as="q" hint-placeholder-count="10">
+                <span title="{{ q.title }}" style="flex:none;width:30px;height:30px;border-radius:10px;background:{{ q.bg }};border:1px solid {{ q.borda }};color:{{ q.fg }};display:grid;place-items:center;font-size:11.5px;font-weight:800">{{ q.n }}</span>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ semGrade }}">
+            <div style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ attendance }}" as="a" hint-placeholder-count="10"><span title="{{ a.title }}" style="flex:1 1 10px;min-width:10px;height:10px;border-radius:5px;background:{{ a.bar }}"></span></sc-for></div>
+          </sc-if>
           <div style="font-size:13px;color:var(--color-primary-800);line-height:1.5">{{ presencaLinha }}</div>
           <sc-if value="{{ temPassados }}">
             <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-top:8px">{{ L.projetosFeitos }}</div>
@@ -1242,6 +1295,14 @@ class Component extends DCLogic {
       financeiroNota: T("Payment questions go to the school on WhatsApp.",
         "Dúvida de pagamento é com a escola, no WhatsApp."),
       miles: T("ISR Miles", "ISR Miles"),
+      // ── metas e mural, arquivos 01 e 06 ──
+      muralEscola: T("School feed", "Mural da escola"),
+      semGravacao: T("The school has not published the recording of your last class yet.",
+        "A escola ainda não publicou a gravação da sua última aula."),
+      muralEscolaFalta: T("The school has no place to write notices to students yet, so there is nothing to show here. It needs its own decisions: who writes, who reads it, and how long a notice stays up.",
+        "A escola ainda não tem onde escrever recados para as alunas, então não há o que mostrar aqui. Isso precisa das próprias decisões: quem escreve, quem lê e por quanto tempo o recado fica."),
+      semMetas: T("The session plan for your class is not open yet, so there are no goals to show. They are the objectives your teacher writes for each session.",
+        "O plano de sessões da sua turma ainda não está aberto, então não há metas para mostrar. Elas são os objetivos que a sua professora escreve para cada sessão."),
       // ── conta, arquivo 08 ──
       semGrade: T("The school has not opened the session plan for your class yet, so there is no grid to show.",
         "A escola ainda não abriu o plano de sessões da sua turma, então não há quadro para mostrar."),
@@ -1331,7 +1392,8 @@ class Component extends DCLogic {
         projTitle: "", projCiclo: "", projTexto: "" },
       goProgress: () => {}, goClubs: () => {},
       clubesCartaoTitulo: "", clubesCartaoLinha: "",
-      temUltimaGravacao: false, ultimaGravacaoLink: "#", ultimaGravacaoTitulo: "", ultimaGravacaoSub: "",
+      temUltimaGravacao: false, semUltimaGravacao: true,
+      ultimaGravacaoLink: "#", ultimaGravacaoTitulo: "", ultimaGravacaoSub: "",
       cert: { cor: "var(--color-primary-900)", titulo: "", texto: "", numeros: [], pronto: false, href: "#" },
       attendance: [], presencaLinha: "", presencaPct: "—", presencaCor: "var(--color-primary-900)",
       temPassados: false, passados: [],
@@ -1360,7 +1422,9 @@ class Component extends DCLogic {
       temFaltas: false, semFaltas: true, faltasDias: [],
       faltaMotivo: "", onFaltaMotivo: () => {}, faltaErro: false, faltaErroTexto: "",
       temDocs: false, docs: [], langTabs: [], goPerfil: () => {}, linkSenha: "aluna.html",
-      semLinkPag: false
+      semLinkPag: false,
+      temMetas: false, semMetas: true, metas: [], metasBarras: [],
+      metasTitulo: "", metasContagem: ""
     });
     if (!CRM) return vazio;
 
@@ -2410,7 +2474,7 @@ class Component extends DCLogic {
             ? cl.abertos.length + (cl.abertos.length === 1 ? T(" club open", " clube aberto") : T(" clubs open", " clubes abertos"))
             : T("Nothing open right now.", "Nada aberto agora.")),
 
-      temUltimaGravacao: !!ultima,
+      temUltimaGravacao: !!ultima, semUltimaGravacao: !ultima,
       ultimaGravacaoLink: (ultima && ultima.url) || "#",
       ultimaGravacaoTitulo: (ultima && (ultima.titulo || ultima.turma)) || "",
       ultimaGravacaoSub: ultima && ultima.data ? CRM.ddmm(ultima.data) : "",
@@ -2660,6 +2724,44 @@ class Component extends DCLogic {
            contrato.fim ? T("to ", "até ") + CRM.ddmm(contrato.fim) : ""].filter(Boolean).join(" · ")
         : "",
       parcelas,
+      // ══ METAS "I CAN…" DO PROJETO · arquivos 01 e 06 ══════════
+      ...(() => {
+        const mp = (CRM.metasDoProjeto && CRM.metasDoProjeto(p.id))
+          || { projeto: "", metas: [], feitas: 0, total: 0 };
+        const EST = {
+          feita: ["✓", "var(--color-secondary-500)", "var(--color-neutral-0)",
+            T("done", "feita"), "var(--color-secondary-100)", "var(--color-secondary-900)",
+            "var(--color-primary-900)", "var(--color-secondary-500)"],
+          andando: ["•", "var(--color-primary-900)", "var(--color-neutral-0)",
+            T("in progress", "em andamento"), "var(--color-primary-50)", "var(--color-primary-800)",
+            "var(--color-primary-900)", "var(--color-primary-300)"],
+          aFazer: ["", "var(--color-bg-cell)", "var(--color-tertiary-500)",
+            T("to come", "a fazer"), "var(--color-bg-cell)", "var(--color-tertiary-700)",
+            "var(--color-tertiary-700)", "var(--color-button-secondary)"]
+        };
+        return {
+          temMetas: mp.metas.length > 0, semMetas: mp.metas.length === 0,
+          metasTitulo: mp.projeto
+            ? T("What you can do by the end of ", "O que você vai saber fazer ao fim de ") + mp.projeto
+            : T("What you can do by the end of the project", "O que você vai saber fazer ao fim do projeto"),
+          metasContagem: mp.feitas + T(" of ", " de ") + mp.total + T(" done", " feitas"),
+          metas: mp.metas.map(m => {
+            const e = EST[m.estado] || EST.aFazer;
+            return {
+              mark: e[0], dotBg: e[1], dotFg: e[2],
+              st: e[3], stBg: e[4], stFg: e[5], cor: e[6],
+              objetivo: m.objetivo,
+              sub: [T("session ", "sessão ") + m.n, m.titulo,
+                    m.data ? CRM.ddmm(m.data) : ""].filter(Boolean).join(" · ")
+            };
+          }),
+          // as mesmas metas, em barras, para o cartão da Home
+          metasBarras: mp.metas.map(m => ({
+            bar: (EST[m.estado] || EST.aFazer)[7],
+            title: (EST[m.estado] || EST.aFazer)[3] + " · " + m.objetivo
+          }))
+        };
+      })(),
       // ══ CONTA · arquivo 08 ════════════════════════════════════
       ...(() => {
         // A grade é o plano de sessões da turma cruzado com a
