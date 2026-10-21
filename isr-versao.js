@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-d",
+  numero: "2026.10.21-e",
   data: "21/10/2026",
-  nota: "A loja da aluna: recompensas e o mural de trocas entre alunas"
+  nota: "A conta da aluna: presença por sessão, financeiro e configurações"
 };

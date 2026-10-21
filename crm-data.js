@@ -12887,6 +12887,28 @@
     });
   }
 
+  // ── ALUNA AVISA SOBRE UMA FALTA ───────────────────────────────
+  //
+  // O arquivo 08 pede "enviar atestado". O sistema não guarda arquivo
+  // nenhum, e inventar um lugar para guardar documento de saúde de
+  // aluna não é decisão de tela. O que dá para fazer com o que
+  // existe: ela avisa qual aula e por quê, isso vira tarefa de quem
+  // cuida da turma dela, e quem justifica a falta na chamada continua
+  // sendo a escola — que é onde a justificativa já mora.
+  function avisarFalta(pessoaId, data, motivo) {
+    var p = getPessoa(pessoaId);
+    if (!p) return { ok: false, erro: "Aluna não encontrada." };
+    if (!data) return { ok: false, erro: "Diga de que aula você está falando." };
+    if (!String(motivo || "").trim()) return { ok: false, erro: "Escreva o motivo." };
+    var dono = ["Gabi", "Érika", "Carla"].indexOf(p.professora) >= 0 ? p.professora : "Gabi";
+    addTarefa({ titulo: "Justificar falta · " + p.nome + " · " + ddmm(data)
+      + " — " + String(motivo).trim(), dono: dono, prazo: iso(today()), por: p.nome });
+    mutate(pessoaId, function (pp) {
+      pushHist(pp, "contato", "Avisou sobre a falta de " + ddmm(data) + " · " + String(motivo).trim());
+    });
+    return { ok: true };
+  }
+
   // ── O QUE A ALUNA VÊ DO PRÓPRIO PERCURSO ─────────────────────
   //
   // Até aqui o app da aluna só mostrava o que a escola sabia dela:
@@ -15824,6 +15846,7 @@
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
+    avisarFalta: avisarFalta,
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
