@@ -433,34 +433,76 @@
          14, 30, 60 dias) e um erro volta para amanhã. É isso que faz
          Review ser Review e não uma lista. -->
     <sc-if value="{{ isReview }}">
-      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
-        <section style="flex:1 1 300px;min-width:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
-          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ revisaoTitulo }}</div>
-          <sc-if value="{{ temRevisao }}">
-            <div>
-              <div style="font-size:30px;font-weight:800;letter-spacing:-0.035em;line-height:1.1">{{ cartaoPalavra }}</div>
-              <sc-if value="{{ cartaoVirado }}">
-                <div style="font-size:18px;font-weight:600;color:var(--color-button-primary);margin-top:8px">{{ cartaoTraducao }}</div>
-                <sc-if value="{{ cartaoTemExemplo }}">
-                  <div style="font-size:14px;opacity:.85;line-height:1.55;margin-top:6px;font-style:italic">{{ cartaoExemplo }}</div>
-                </sc-if>
-              </sc-if>
+      <!-- ══ REVIEW · arquivo 03 ═════════════════════════════════
+           Três estados, um por vez: o convite, a revisão correndo, e
+           o fim do dia. Antes era só o cartão solto, sem começo nem
+           fim — e sem fim não há as +15 milhas do arquivo. -->
+
+      <!-- O CONVITE -->
+      <sc-if value="{{ revIntro }}">
+        <section style="max-width:720px;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:32px;padding:32px 34px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:13px;font-weight:700;color:var(--color-button-primary)">{{ revEyebrow }}</div>
+          <div style="font-size:28px;font-weight:800;letter-spacing:-0.035em;line-height:1.2">{{ L.revPronta }}</div>
+          <div style="font-size:15px;line-height:1.6;opacity:.85">{{ revSub }}</div>
+          <button onclick="{{ onRevComecar }}" style="align-self:flex-start;margin-top:6px;border:0;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:16px 28px;font-size:16.5px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.revComecar }}</button>
+        </section>
+      </sc-if>
+
+      <!-- A REVISÃO CORRENDO -->
+      <sc-if value="{{ revAndando }}">
+        <div style="max-width:720px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="flex:1;height:8px;border-radius:999px;background:var(--color-neutral-0);overflow:hidden">
+              <div style="height:100%;width:{{ revPct }};background:var(--color-secondary-500)"></div>
             </div>
+            <span style="flex:none;font-size:13px;font-weight:700;color:var(--color-tertiary-700)">{{ revPasso }}</span>
+            <button onclick="{{ onRevPausar }}" title="{{ L.revPausar }}" style="flex:none;border:0;background:var(--color-neutral-0);color:var(--color-tertiary-700);border-radius:999px;width:34px;height:34px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">✕</button>
+          </div>
+
+          <section onclick="{{ onVirar }}" style="min-height:240px;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:28px;padding:30px 32px;display:flex;flex-direction:column;justify-content:center;gap:10px;cursor:pointer">
+            <div style="font-size:34px;font-weight:800;letter-spacing:-0.04em;line-height:1.1">{{ cartaoPalavra }}</div>
             <sc-if value="{{ cartaoFechado }}">
-              <button onclick="{{ onVirar }}" style="align-self:flex-start;border:0;background:var(--color-button-primary);color:var(--color-primary-900);border-radius:999px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.virar }}</button>
+              <div style="font-size:14px;opacity:.7">{{ L.virar }}</div>
             </sc-if>
             <sc-if value="{{ cartaoVirado }}">
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button onclick="{{ onErrei }}" style="border:0;background:rgba(255,255,255,.14);color:var(--color-neutral-0);border-radius:999px;padding:12px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.errei }}</button>
-                <button onclick="{{ onAcertei }}" style="border:0;background:var(--color-secondary-500);color:var(--color-primary-900);border-radius:999px;padding:12px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.acertei }}</button>
-              </div>
+              <div style="font-size:19px;font-weight:600;color:var(--color-button-primary)">{{ cartaoTraducao }}</div>
+              <sc-if value="{{ cartaoTemExemplo }}">
+                <div style="font-size:15px;opacity:.85;line-height:1.55;font-style:italic">{{ cartaoExemplo }}</div>
+              </sc-if>
             </sc-if>
-            <div style="font-size:12.5px;opacity:.8">{{ revisaoLinha }}</div>
+          </section>
+
+          <sc-if value="{{ cartaoVirado }}">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onclick="{{ onErrei }}" style="flex:1 1 0;min-width:120px;border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:15px 18px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.aindaNao }}</button>
+              <button onclick="{{ onQuase }}" style="flex:1 1 0;min-width:120px;border:1px solid var(--color-border);background:var(--color-warning-light);color:var(--color-warning-dark);border-radius:999px;padding:15px 18px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.quase }}</button>
+              <button onclick="{{ onAcertei }}" style="flex:1 1 0;min-width:120px;border:0;background:var(--color-secondary-500);color:var(--color-primary-900);border-radius:999px;padding:15px 18px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.sei }}</button>
+            </div>
           </sc-if>
-          <sc-if value="{{ semRevisao }}">
-            <div style="font-size:16px;line-height:1.55">{{ revisaoVaziaTexto }}</div>
+          <div style="font-size:13px;color:var(--color-tertiary-700);line-height:1.55">{{ revisaoLinha }}</div>
+        </div>
+      </sc-if>
+
+      <!-- O FIM DO DIA -->
+      <sc-if value="{{ revFim }}">
+        <section style="max-width:720px;background:var(--color-secondary-100);border-radius:32px;padding:32px 34px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;color:var(--color-primary-900)">{{ revFimTitulo }}</div>
+          <div style="font-size:15.5px;line-height:1.6;color:var(--color-primary-800)">{{ revFimSub }}</div>
+          <sc-if value="{{ revTemSequencia }}">
+            <div style="font-size:13.5px;font-weight:700;color:var(--color-secondary-900)">{{ revSequencia }}</div>
           </sc-if>
         </section>
+      </sc-if>
+
+      <!-- SEM PALAVRA NENHUMA -->
+      <sc-if value="{{ revSemNada }}">
+        <section style="max-width:720px;background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;font-size:15px;line-height:1.6;color:var(--color-primary-800)">{{ revisaoVaziaTexto }}</section>
+      </sc-if>
+
+      <!-- o que o arquivo pede e ainda não tem dado -->
+      <div style="max-width:720px;font-size:13px;line-height:1.6;color:var(--color-tertiary-700)">{{ revFaltaNota }}</div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
 
         <section style="flex:1 1 320px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
           <div style="font-size:18px;font-weight:800">{{ L.novaPalavra }}</div>
@@ -715,6 +757,8 @@ class Component extends DCLogic {
             aulaAberta: null, notaSalva: "",
             // "como foi a aula": a nota dada agora, e o comentário opcional
             pulsoId: "", pulsoNota: 0, pulsoTexto: "",
+            // a revisão do dia: se está correndo, e de quantas partiu
+            revCorrendo: false, revTotal: 0,
             // review: a palavra virada, e o que está sendo cadastrado
             virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
   notaRef = React.createRef();
@@ -799,6 +843,12 @@ class Component extends DCLogic {
     const L = {
       sair: T("Log out", "Sair"),
       pulsoEnviar: T("Send", "Enviar"),
+      revPronta: T("Ready for today’s words?", "Pronta para as palavras de hoje?"),
+      revComecar: T("Start", "Começar"),
+      revPausar: T("pause", "pausar"),
+      aindaNao: T("Not yet", "Ainda não"),
+      quase: T("Almost", "Quase"),
+      sei: T("Yes!", "Sei!"),
       pulsoPular: T("no, thanks", "não, obrigada"),
       // ── caderno, arquivo 02 ──
       vaiSaber: T("today you will…", "hoje você vai…"),
@@ -936,7 +986,12 @@ class Component extends DCLogic {
       temRevisao: false, semRevisao: true, revisaoVaziaTexto: "",
       cartaoPalavra: "", cartaoTraducao: "", cartaoExemplo: "", cartaoTemExemplo: false,
       cartaoVirado: false, cartaoFechado: true, revisaoLinha: "", revisaoTitulo: "",
-      onVirar: () => {}, onAcertei: () => {}, onErrei: () => {},
+      onVirar: () => {}, onAcertei: () => {}, onErrei: () => {}, onQuase: () => {},
+      revIntro: false, revAndando: false, revFim: false, revSemNada: true,
+      revEyebrow: "", revSub: "", revPct: "0%", revPasso: "",
+      onRevComecar: () => {}, onRevPausar: () => {},
+      revFimTitulo: "", revFimSub: "", revTemSequencia: false, revSequencia: "",
+      revFaltaNota: "",
       palavras: [], cofreVazio: true, cofreResumo: "",
       palavraErro: false, palavraErroTexto: "", palavraSalva: false,
       onSalvarPalavra: () => {},
@@ -1658,6 +1713,41 @@ class Component extends DCLogic {
       }),
 
       // ── REVIEW ──
+      // ══ REVIEW · arquivo 03 ══════════════════════════════
+      //
+      // Três estados: o convite, a revisão correndo, e o fim do dia.
+      // Sem o fim não haveria as +15 milhas — e sem elas o arquivo
+      // ficava com um número que a tela nunca dava.
+      ...(() => {
+        const feitaHoje = CRM.revisaoFeitaHoje ? CRM.revisaoFeitaHoje(p.id) : false;
+        const correndo = !!this.state.revCorrendo;
+        const faltam = rev.devidas.length;
+        const total0 = this.state.revTotal || faltam;
+        const seq = CRM.sequenciaDeRevisao ? CRM.sequenciaDeRevisao(p.id) : 0;
+        return {
+          // só convida quem tem o que revisar e ainda não começou
+          revIntro: faltam > 0 && !correndo && !feitaHoje,
+          revAndando: faltam > 0 && correndo,
+          revFim: feitaHoje && faltam === 0,
+          revSemNada: rev.total === 0 || (faltam === 0 && !feitaHoje),
+          revEyebrow: T("today’s review · about 5 min", "a revisão de hoje · uns 5 min"),
+          revSub: faltam + T(" word", " palavra") + (faltam === 1 ? "" : "s")
+            + T(" come back today.", " voltam hoje."),
+          revPct: total0 ? Math.round(((total0 - faltam) / total0) * 100) + "%" : "0%",
+          revPasso: (total0 - faltam + 1) + "/" + total0,
+          onRevComecar: () => this.setState({ revCorrendo: true, revTotal: faltam, virada: false }),
+          onRevPausar: () => this.setState({ revCorrendo: false, virada: false }),
+          revFimTitulo: T("✓ done for today · +15 miles", "✓ feito por hoje · +15 milhas"),
+          revFimSub: T("See you tomorrow.", "Até amanhã."),
+          revTemSequencia: seq > 1,
+          revSequencia: seq + T(" days in a row.", " dias seguidos."),
+          // O arquivo pede quatro passos. Três não têm dado nenhum no
+          // sistema, e ficam escritos em vez de fingidos.
+          revFaltaNota: T(
+            "The design also has sentence building, listening and speaking. Those need audio and sentences the system does not have yet — only the flashcards are real for now.",
+            "O desenho tem também montar frases, listening e speaking. Esses três precisam de áudio e de frases que o sistema ainda não tem — por enquanto só os flashcards são de verdade.")
+        };
+      })(),
       temRevisao: !!cartao, semRevisao: !cartao,
       // "para revisar hoje" acima de "nada para revisar hoje" é a mesma
       // etiqueta contando as duas histórias; o título segue a fila.
@@ -1676,14 +1766,22 @@ class Component extends DCLogic {
         ? T(rev.devidas.length + " to go today", rev.devidas.length + " para hoje")
         : "",
       onVirar: () => this.setState({ virada: true }),
-      onAcertei: () => {
-        if (cartao) CRM.revisarPalavra(p.id, cartao.id, true);
-        this.setState({ virada: false, tick: this.state.tick + 1 });
-      },
-      onErrei: () => {
-        if (cartao) CRM.revisarPalavra(p.id, cartao.id, false);
-        this.setState({ virada: false, tick: this.state.tick + 1 });
-      },
+      // Respondida a última da fila, o dia fecha: é o que dá as +15
+      // milhas, e é por data, então fechar duas vezes não paga duas.
+      ...(() => {
+        const responder = (como) => {
+          if (!cartao) return;
+          CRM.revisarPalavra(p.id, cartao.id, como);
+          const sobra = (CRM.revisaoDeHoje(p.id) || { devidas: [] }).devidas.length;
+          if (!sobra && CRM.fecharRevisaoDoDia) CRM.fecharRevisaoDoDia(p.id);
+          this.setState({ virada: false, revCorrendo: sobra > 0, tick: this.state.tick + 1 });
+        };
+        return {
+          onAcertei: () => responder(true),
+          onQuase: () => responder("quase"),
+          onErrei: () => responder(false)
+        };
+      })(),
 
       palavraErro: !!this.state.palavraErro,
       palavraErroTexto: this.state.palavraErro || "",

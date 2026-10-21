@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-a",
+  numero: "2026.10.21-b",
   data: "21/10/2026",
-  nota: "O login da aluna passa a abrir o app novo"
+  nota: "O Review ganha começo, meio e fim — e as +15 milhas do dia"
 };

@@ -6139,6 +6139,7 @@
       // projeto e a sequência da particular são registro da aluna
       substituicoes: subsRaw(), reunioes: reunioesRaw(),
       projetoEntregas: projEntregasAll(), sequencias: seqAll(),
+      revisaoDias: revisaoDiasAll(),
       // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
       clubeChamadas: clubeChamadasAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
@@ -6165,6 +6166,7 @@
     grava(AULA_VIVA_KEY, d.aulasVivas);
     grava(SUBS_KEY, d.substituicoes); grava(REUNIOES_KEY, d.reunioes);
     grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
+    grava(REVISAO_KEY, d.revisaoDias);
     grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
@@ -6216,6 +6218,7 @@
       reunioes: lista("reunioes"),
       projetoEntregas: mesclarMapa(local.projetoEntregas, remoto.projetoEntregas),
       sequencias: mesclarMapa(local.sequencias, remoto.sequencias),
+      revisaoDias: mesclarMapa(local.revisaoDias, remoto.revisaoDias),
       clubeChamadas: mesclarMapa(local.clubeChamadas, remoto.clubeChamadas),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
@@ -11306,7 +11309,14 @@
     var l = (m[pessoaId] || []).slice();
     var reg = l.filter(function (x) { return x.id === id; })[0];
     if (!reg) return { ok: false };
-    if (acertou) {
+    // "quase" existe porque o desenho tem três botões — Not yet,
+    // Almost, Yes! — e dois deles caindo no mesmo lugar seria mentira
+    // na tela. Quase não zera a palavra: volta um passo, e ela aparece
+    // de novo mais cedo sem perder tudo o que já tinha sido ganho.
+    if (acertou === "quase") {
+      reg.erros = (reg.erros || 0) + 1;
+      reg.nivel = Math.max(0, (reg.nivel || 0) - 1);
+    } else if (acertou) {
       reg.acertos = (reg.acertos || 0) + 1;
       reg.nivel = Math.min(INTERVALOS.length, (reg.nivel || 0) + 1);
     } else {
@@ -11320,6 +11330,49 @@
     palavrasSave(m);
     return { ok: true, palavra: reg, proxima: reg.proxima };
   }
+  // ── A REVISÃO FECHADA DO DIA ─────────────────────────────
+  //
+  // Guardada por DIA, não por contagem: é a chave que faz as +15
+  // milhas valerem uma vez só por dia, sem nenhuma trava à parte.
+  // Fechar a revisão duas vezes no mesmo dia grava a mesma chave.
+  //
+  // As milhas não são creditadas em lugar nenhum: moedasDe soma o que
+  // aconteceu, e isto é o "o que aconteceu" da revisão.
+  var REVISAO_KEY = "isr_revisao_dias_v1";
+  function revisaoDiasAll() {
+    try { return JSON.parse(localStorage.getItem(REVISAO_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function revisaoDiasSalvar(m) {
+    try { localStorage.setItem(REVISAO_KEY, JSON.stringify(m || {})); } catch (e) {}
+    agendarSync();
+  }
+  function fecharRevisaoDoDia(pessoaId) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    var m = revisaoDiasAll();
+    var l = (m[pessoaId] || []).slice();
+    var hoje = iso(today());
+    if (l.indexOf(hoje) < 0) l.push(hoje);
+    m[pessoaId] = l; m._v = Date.now();
+    revisaoDiasSalvar(m);
+    return { ok: true, dias: l.length, jaEra: l.indexOf(hoje) < l.length - 1 };
+  }
+  function revisoesFeitas(pessoaId) {
+    return ((revisaoDiasAll()[pessoaId] || []).slice()).sort();
+  }
+  function revisaoFeitaHoje(pessoaId) {
+    return revisoesFeitas(pessoaId).indexOf(iso(today())) >= 0;
+  }
+  // Dias seguidos até hoje. É o número que o app chama de sequência.
+  function sequenciaDeRevisao(pessoaId) {
+    var l = revisoesFeitas(pessoaId);
+    if (!l.length) return 0;
+    var n = 0;
+    var d = today();
+    if (l.indexOf(iso(d)) < 0) { d.setDate(d.getDate() - 1); }
+    while (l.indexOf(iso(d)) >= 0) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+
   function revisaoDeHoje(pessoaId) {
     var hoje = iso(today());
     var todas = palavrasDaAluna(pessoaId);
@@ -11931,7 +11984,7 @@
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
   var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
   var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30,
-    avaliouAula: 5, renovouCiclo: 100 };
+    avaliouAula: 5, renovouCiclo: 100, revisaoDoDia: 15 };
   var MOEDAS_VALIDADE_DIAS = 365;
   function somaDias(isoStr, n) {
     var d = parseISO(isoStr);
@@ -12634,6 +12687,10 @@
           valor: MOEDAS_PROGRAMA.resposta });
       }
       var part = (pg.participacao || {})[pessoaId] || 0;
+      revisoesFeitas(pessoaId).forEach(function (dia) {
+        extrato.push({ em: dia, label: "Revisão do dia",
+          valor: MOEDAS_REGRAS.revisaoDoDia });
+      });
       if (part) extrato.push({ em: "", label: "Participação no grupo (" + part + ")",
         valor: part * MOEDAS_PROGRAMA.participacao });
     });
@@ -15744,7 +15801,9 @@
     minutosDoPlano: minutosDoPlano, PLANO_LIMITES: PLANO_LIMITES,
     planoPublicadoDaAula: planoPublicadoDaAula,
     sincronizarPalavrasDaAula: sincronizarPalavrasDaAula,
-    palavrasDaAluna: palavrasDaAluna, salvarPalavra: salvarPalavra, removerPalavra: removerPalavra,
+    palavrasDaAluna: palavrasDaAluna,
+    fecharRevisaoDoDia: fecharRevisaoDoDia, revisoesFeitas: revisoesFeitas,
+    revisaoFeitaHoje: revisaoFeitaHoje, sequenciaDeRevisao: sequenciaDeRevisao, salvarPalavra: salvarPalavra, removerPalavra: removerPalavra,
     revisarPalavra: revisarPalavra, revisaoDeHoje: revisaoDeHoje, acessoDaAluna: acessoDaAluna, usoDoApp: usoDoApp,
     horasDaAluna: horasDaAluna, minutosDaAula: minutosDaAula, setMinutosDaAula: setMinutosDaAula,
     aulasPorCiclo: aulasPorCiclo, setAulasPorCiclo: setAulasPorCiclo,
