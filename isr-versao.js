@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.20-n",
-  data: "20/10/2026",
-  nota: "O caderno da aluna passa a ser uma sessão por vez, pela faixa de cima"
+  numero: "2026.10.21-a",
+  data: "21/10/2026",
+  nota: "O login da aluna passa a abrir o app novo"
 };

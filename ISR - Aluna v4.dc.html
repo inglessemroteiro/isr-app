@@ -108,6 +108,31 @@
           <a href="{{ ultimaGravacaoLink }}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ultimaGravacao }}</div><div style="font-size:15px;font-weight:800;margin-top:2px">{{ ultimaGravacaoTitulo }}</div><div style="font-size:12px;color:var(--color-primary-800);margin-top:2px">{{ ultimaGravacaoSub }}</div></div></a>
         </sc-if>
       </div>
+      <!-- COMO FOI A AULA · fora dos arquivos novos, mantida a pedido
+           da Gabi: é por esta nota que a professora ajusta a aula
+           seguinte, e ela some junto com a tela antiga se não vier. -->
+      <sc-if value="{{ temPulso }}">
+        <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em;color:var(--color-primary-900)">{{ pulsoTitulo }}</div>
+            <div style="margin-top:4px;font-size:13.5px;line-height:1.5;color:var(--color-tertiary-700)">{{ pulsoSub }}</div>
+          </div>
+          <sc-if value="{{ pulsoPerguntar }}">
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <sc-for list="{{ pulsoNotas }}" as="nt" hint-placeholder-count="5">
+                <button onclick="{{ nt.onClick }}" title="{{ nt.titulo }}" style="flex:none;width:52px;height:52px;border:1px solid var(--color-border);background:var(--color-bg-cell);color:var(--color-primary-900);border-radius:999px;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer">{{ nt.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pulsoComentar }}">
+            <textarea value="{{ pulsoTexto }}" onchange="{{ onPulsoTexto }}" rows="3" style="width:100%;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical"></textarea>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onclick="{{ onPulsoEnviar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 3px 0 var(--color-primary-950);border-radius:999px;padding:12px 20px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.pulsoEnviar }}</button>
+              <button onclick="{{ onPulsoPular }}" style="border:0;background:none;color:var(--color-primary-500);border-radius:999px;padding:12px 6px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.pulsoPular }}</button>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
     </sc-if>
 
     <!-- PROGRESSO -->
@@ -688,6 +713,8 @@ class Component extends DCLogic {
             perfilEditando: false, perfilErro: "", perfilSalvo: false,
             // caderno: qual aula está aberta para escrever
             aulaAberta: null, notaSalva: "",
+            // "como foi a aula": a nota dada agora, e o comentário opcional
+            pulsoId: "", pulsoNota: 0, pulsoTexto: "",
             // review: a palavra virada, e o que está sendo cadastrado
             virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
   notaRef = React.createRef();
@@ -771,6 +798,8 @@ class Component extends DCLogic {
     // ── as palavras da casca, nos dois idiomas ──
     const L = {
       sair: T("Log out", "Sair"),
+      pulsoEnviar: T("Send", "Enviar"),
+      pulsoPular: T("no, thanks", "não, obrigada"),
       // ── caderno, arquivo 02 ──
       vaiSaber: T("today you will…", "hoje você vai…"),
       semPlano: T("Your teacher has not published this session yet. When she does, what you will learn and the activities appear here.",
@@ -898,6 +927,9 @@ class Component extends DCLogic {
       cadHwFeito: false, cadHwBorda: "", cadHwEstado: "",
       cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {}, cadFaltaNota: "",
       cadSemObjetivo: false, cadTemMaterial: false,
+      temPulso: false, pulsoTitulo: "", pulsoSub: "", pulsoPerguntar: false,
+      pulsoNotas: [], pulsoComentar: false, pulsoTexto: "",
+      onPulsoTexto: () => {}, onPulsoEnviar: () => {}, onPulsoPular: () => {},
       temAulaViva: false, vivoEtiqueta: "", vivoTitulo: "", vivoTexto: "",
       vivoTarefas: [], vivoSemTarefas: false,
       tarefaAtualTexto: "", tarefaAtualQuando: "", notaRef: this.notaRef,
@@ -1419,6 +1451,54 @@ class Component extends DCLogic {
       }),
       cadernoVazio: cadLista.length === 0 && !viva,
       notaRef: this.notaRef,
+      // ══ COMO FOI A AULA ══════════════════════════════════════
+      //
+      // Veio da tela antiga por pedido da Gabi. Não está nos arquivos
+      // novos, e é o único pedaço dela que fica: a professora usa a
+      // nota no acompanhamento da turma para ajustar a aula seguinte.
+      //
+      // Só aparece quando há aula para avaliar — aulaAAvaliar devolve
+      // a última em que ela esteve presente e ainda não avaliou.
+      ...(() => {
+        const aval = CRM.aulaAAvaliar ? CRM.aulaAAvaliar(p.id) : null;
+        const deu = !!this.state.pulsoId;
+        const NOTAS = [
+          [1, T("Very hard to follow", "Muito difícil de acompanhar")],
+          [2, T("Hard", "Difícil")],
+          [3, T("I could follow", "Consegui acompanhar")],
+          [4, T("Good", "Boa")],
+          [5, T("Great", "Ótima")]
+        ];
+        return {
+          temPulso: !!aval || deu,
+          pulsoTitulo: deu
+            ? T("Thanks — noted.", "Obrigada, anotado.")
+            : (aval ? (T("How was your class on ", "Como foi a aula de ")
+                + CRM.ddmm(aval.data) + "?") : ""),
+          pulsoSub: deu
+            ? T("Want to say anything else? Optional.", "Quer dizer mais alguma coisa? É opcional.")
+            : T("Only your teacher sees this. She uses it to adjust the next class.",
+                "Só a professora vê. Ela usa para ajustar a próxima aula."),
+          pulsoPerguntar: !deu,
+          pulsoNotas: NOTAS.map(([n, titulo]) => ({
+            label: String(n), titulo,
+            onClick: () => {
+              const novo = CRM.registrarPulso(p.id, n, "", p.nome);
+              this.setState({ pulsoId: novo ? novo.id : "", pulsoNota: n, pulsoTexto: "" });
+            }
+          })),
+          pulsoComentar: deu,
+          pulsoTexto: this.state.pulsoTexto || "",
+          onPulsoTexto: (e) => this.setState({ pulsoTexto: e.target.value }),
+          onPulsoEnviar: () => {
+            const txt = String(this.state.pulsoTexto || "").trim();
+            if (txt && CRM.comentarPulso) CRM.comentarPulso(this.state.pulsoId, txt);
+            this.setState({ pulsoId: "", pulsoNota: 0, pulsoTexto: "" });
+            this.bump();
+          },
+          onPulsoPular: () => this.setState({ pulsoId: "", pulsoNota: 0, pulsoTexto: "" })
+        };
+      })(),
       // ══ CADERNO · arquivo 02 ═════════════════════════════════
       //
       // A tela deixa de ser uma lista de todas as aulas e passa a ser
