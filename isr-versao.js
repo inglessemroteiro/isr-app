@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-a",
+  numero: "2026.10.22-b",
   data: "22/10/2026",
-  nota: "Quem é da equipe e aluna escolhe por onde entra, e troca de lado"
+  nota: "Recibo e fatura: a Conta diz onde pedir, em vez de prometer"
 };
