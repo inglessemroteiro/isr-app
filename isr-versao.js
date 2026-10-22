@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-f",
+  numero: "2026.10.22-g",
   data: "22/10/2026",
-  nota: "O clube da aluna pelo arquivo 04: emoji, encontros e material"
+  nota: "O caderno: datas nas sessões, começos de frase e o objetivo limpo"
 };

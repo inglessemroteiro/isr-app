@@ -10394,7 +10394,13 @@
     var mm = (t.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
     if (!mm) return out;
     var alvo = DIAS_SEMANA[mm[1]];
-    var pendentes = (syllabusDoNivel(t.nivel, t.cycle) || [])
+    // As sessões são as do PLANO DA TURMA, não as do syllabus do
+    // nível. Turma com plano próprio — sessão criada ou renumerada
+    // pela professora — não aparece em syllabusDoNivel, e aí não se
+    // projetava data nenhuma: a aluna via "S1 … S10 · sem data". A
+    // faixa de sessões do caderno usa planoSessoes, então projetar
+    // sobre a mesma lista é o que mantém as duas de acordo.
+    var pendentes = (planoSessoes(turmaId) || [])
       .map(function (x) { return x.n; })
       .filter(function (n) { return !dadas[n]; })
       .sort(function (a2, b2) { return a2 - b2; });
@@ -13052,6 +13058,29 @@
     });
   }
 
+  // O syllabus às vezes abre o objetivo com a fórmula do guia do
+  // professor ("By the end of this session the student can…"). Para a
+  // aluna isso é cabeçalho de documento, não meta dela. Tira-se a
+  // fórmula e nada mais: o texto é da escola.
+  //
+  // Vale para as metas do projeto E para o objetivo no caderno — as
+  // duas telas mostram a mesma frase, e tinham de tratá-la igual.
+  var OBJ_PREFIXOS = [
+    /^by the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i,
+    /^ao final (desta|da) sess[ãa]o,? a aluna (consegue|vai conseguir)\s*/i,
+    /^at the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i
+  ];
+  function objetivoSemFormula(txt) {
+    var t = String(txt || "").trim();
+    for (var i = 0; i < OBJ_PREFIXOS.length; i++) {
+      if (OBJ_PREFIXOS[i].test(t)) {
+        t = t.replace(OBJ_PREFIXOS[i], "");
+        return t.charAt(0).toUpperCase() + t.slice(1);
+      }
+    }
+    return t;
+  }
+
   // ── AS METAS "I CAN…" DO PROJETO ──────────────────────────────
   //
   // Os arquivos 01 e 06 pedem metas "I can…" com status. Elas já
@@ -13074,25 +13103,6 @@
     if (!t) return vazio;
     var sess = planoSessoes(t.id) || [];
     var datas = datasDasSessoes(t.id, { encaixarPorOrdem: true }) || {};
-    // O syllabus às vezes abre o objetivo com a fórmula do guia do
-    // professor ("By the end of this session the student can…"). Para
-    // a aluna isso é cabeçalho de documento, não meta dela. Tira-se a
-    // fórmula e nada mais: o texto é da escola.
-    var PREFIXOS = [
-      /^by the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i,
-      /^ao final (desta|da) sess[ãa]o,? a aluna (consegue|vai conseguir)\s*/i,
-      /^at the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i
-    ];
-    var semFormula = function (txt) {
-      var t = String(txt || "").trim();
-      for (var i = 0; i < PREFIXOS.length; i++) {
-        if (PREFIXOS[i].test(t)) {
-          t = t.replace(PREFIXOS[i], "");
-          return t.charAt(0).toUpperCase() + t.slice(1);
-        }
-      }
-      return t;
-    };
     var achouAndando = false;
     var metas = sess.filter(function (s) { return !!s.objetivo; }).map(function (s) {
       var dada = !!(datas[s.n] || {}).dada;
@@ -13100,7 +13110,7 @@
       if (dada) estado = "feita";
       else if (!achouAndando) { estado = "andando"; achouAndando = true; }
       else estado = "aFazer";
-      return { n: s.n, titulo: s.titulo || "", objetivo: semFormula(s.objetivo),
+      return { n: s.n, titulo: s.titulo || "", objetivo: objetivoSemFormula(s.objetivo),
         estado: estado, data: (datas[s.n] || {}).data || "" };
     });
     return {
@@ -16053,7 +16063,7 @@
     equipeCustosMensais: equipeCustosMensais,
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
-    metasDoProjeto: metasDoProjeto,
+    metasDoProjeto: metasDoProjeto, objetivoSemFormula: objetivoSemFormula,
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,
