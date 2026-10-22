@@ -6239,7 +6239,7 @@
       // aparelho e a gestão não via o que cancelar.
       resgates: resgatesAll(), recompensasFora: recompensasForaAll(),
       // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
-      clubeChamadas: clubeChamadasAll(),
+      clubeChamadas: clubeChamadasAll(), clubeForum: forumAll(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
@@ -6266,7 +6266,7 @@
     grava(PROJ_KEY, d.projetoEntregas); grava(SEQ_KEY, d.sequencias);
     grava(REVISAO_KEY, d.revisaoDias); grava(ANUNCIOS_KEY, d.anuncios);
     grava(RESGATES_KEY, d.resgates); grava(RECOMPENSAS_OFF_KEY, d.recompensasFora);
-    grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas);
+    grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas); grava(FORUM_KEY, d.clubeForum);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
@@ -6323,6 +6323,10 @@
       // lista de ids, sem carimbo por registro: vale a última edição
       recompensasFora: local.recompensasFora,
       clubeChamadas: mesclarMapa(local.clubeChamadas, remoto.clubeChamadas),
+      // o fórum é um mapa de tópicos com _v por tópico: a resposta que
+      // a aluna escreveu no celular e a que a professora escreveu no
+      // computador são o mesmo tópico, e vale a mais recente
+      clubeForum: mesclarMapa(local.clubeForum, remoto.clubeForum),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
@@ -12827,6 +12831,144 @@
     return seguidas;
   }
 
+  // ── O FÓRUM DO CLUBE (arquivo 04) ────────────────────────────
+  //
+  // Entre um encontro e outro passam sete dias, e o clube só existe
+  // nas duas horas do encontro. O fórum é o que o mantém de pé no
+  // meio: a professora deixa a pergunta da semana, e quem leu
+  // responde quando dá.
+  //
+  // Em TEXTO. O desenho pede também resposta em áudio, e áudio
+  // precisa de um lugar para o arquivo morar — o sistema não tem um.
+  // Em vez de um botão de gravar que não grava, o fórum é o que o
+  // sistema sabe guardar hoje, inteiro e funcionando.
+  //
+  // Guardado por clube, com as respostas dentro do tópico: é como a
+  // tela lê, e evita uma segunda tabela para juntar na hora de
+  // mostrar.
+  var FORUM_KEY = "isr_clube_forum_v1";
+  var FORUM_LIMITES = { titulo: 120, corpo: 2000, resposta: 2000 };
+  function forumAll() {
+    try { return JSON.parse(localStorage.getItem(FORUM_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function forumSalvar(m) {
+    try { localStorage.setItem(FORUM_KEY, JSON.stringify(m || {})); } catch (e) {}
+    agendarSync();
+  }
+  // Quem escreve: a aluna é o id da pessoa; quem é da equipe entra
+  // pelo e-mail, com "equipe:" na frente, porque a professora não tem
+  // ficha de aluna e mesmo assim precisa poder falar no clube dela.
+  function forumAutor(quem) {
+    var q = quem || {};
+    if (q.pessoaId) {
+      var p = getPessoa(q.pessoaId);
+      return { id: q.pessoaId, nome: (p && p.nome) || q.nome || "",
+        equipe: false };
+    }
+    var email = String(q.email || "").trim().toLowerCase();
+    if (!email) return null;
+    return { id: "equipe:" + email, nome: q.nome || email.split("@")[0],
+      equipe: true };
+  }
+  // Só quem está no clube escreve nele. A professora do clube entra
+  // pelo nome que o cadastro guarda — é o que o cadastro tem.
+  function podeFalarNoClube(clube, autor) {
+    if (!clube || !autor) return false;
+    if (!autor.equipe) return (clube.membros || []).indexOf(autor.id) >= 0;
+    return true;
+  }
+  function forumDoClube(clubeId) {
+    var m = forumAll();
+    var out = [];
+    Object.keys(m).forEach(function (k) {
+      var t = m[k];
+      if (!t || t.clubeId !== clubeId || t.apagado) return;
+      var respostas = (t.respostas || []).filter(function (r) {
+        return r && !r.apagado;
+      }).sort(function (a, b) { return a.em < b.em ? -1 : 1; });
+      out.push({
+        id: t.id, clubeId: t.clubeId, titulo: t.titulo || "", corpo: t.corpo || "",
+        por: t.por, porNome: t.porNome || "", daEquipe: !!t.daEquipe,
+        em: t.em, respostas: respostas,
+        // a conversa viva é a que teve resposta agora, não a que foi
+        // aberta primeiro
+        mexidoEm: respostas.length ? respostas[respostas.length - 1].em : t.em
+      });
+    });
+    return out.sort(function (a, b) { return a.mexidoEm < b.mexidoEm ? 1 : -1; });
+  }
+  function abrirTopicoNoClube(clubeId, quem, titulo, corpo) {
+    var c = getClube(clubeId);
+    if (!c) return { ok: false, erro: "Clube não encontrado." };
+    var autor = forumAutor(quem);
+    if (!autor) return { ok: false, erro: "Não sei quem está escrevendo." };
+    if (!podeFalarNoClube(c, autor)) {
+      return { ok: false, erro: "Só quem está no clube escreve nele." };
+    }
+    var tit = String(titulo || "").trim().slice(0, FORUM_LIMITES.titulo);
+    var txt = String(corpo || "").trim().slice(0, FORUM_LIMITES.corpo);
+    if (!tit && !txt) return { ok: false, erro: "Escreva alguma coisa." };
+    if (!tit) tit = txt.split("\n")[0].slice(0, FORUM_LIMITES.titulo);
+    var m = forumAll();
+    var id = "fo" + Date.now() + Math.floor(Math.random() * 1000);
+    m[id] = { id: id, clubeId: clubeId, titulo: tit, corpo: txt,
+      por: autor.id, porNome: autor.nome, daEquipe: autor.equipe,
+      em: new Date().toISOString(), respostas: [], _v: Date.now() };
+    forumSalvar(m);
+    return { ok: true, id: id };
+  }
+  function responderNoForum(topicoId, quem, texto) {
+    var m = forumAll();
+    var t = m[topicoId];
+    if (!t || t.apagado) return { ok: false, erro: "Conversa não encontrada." };
+    var c = getClube(t.clubeId);
+    var autor = forumAutor(quem);
+    if (!autor) return { ok: false, erro: "Não sei quem está escrevendo." };
+    if (!podeFalarNoClube(c, autor)) {
+      return { ok: false, erro: "Só quem está no clube escreve nele." };
+    }
+    var txt = String(texto || "").trim().slice(0, FORUM_LIMITES.resposta);
+    if (!txt) return { ok: false, erro: "Escreva a sua resposta." };
+    t.respostas = t.respostas || [];
+    t.respostas.push({ id: "re" + Date.now() + Math.floor(Math.random() * 1000),
+      por: autor.id, porNome: autor.nome, daEquipe: autor.equipe,
+      texto: txt, em: new Date().toISOString() });
+    t._v = Date.now();
+    forumSalvar(m);
+    return { ok: true };
+  }
+  // Apagar é marcar, não sumir: o registro viaja entre aparelhos, e um
+  // apagão de verdade voltaria do outro aparelho na próxima sincronia.
+  // Apaga quem escreveu, e quem é da equipe — é ela que responde pelo
+  // que fica escrito no clube.
+  function apagarDoForum(topicoId, quem, respostaId) {
+    var m = forumAll();
+    var t = m[topicoId];
+    if (!t || t.apagado) return { ok: false, erro: "Conversa não encontrada." };
+    var autor = forumAutor(quem);
+    if (!autor) return { ok: false, erro: "Não sei quem está apagando." };
+    var alvo = respostaId
+      ? (t.respostas || []).filter(function (r) { return r.id === respostaId; })[0]
+      : t;
+    if (!alvo) return { ok: false, erro: "Não encontrei o que apagar." };
+    if (!autor.equipe && alvo.por !== autor.id) {
+      return { ok: false, erro: "Só quem escreveu pode apagar." };
+    }
+    alvo.apagado = true;
+    t._v = Date.now();
+    forumSalvar(m);
+    return { ok: true };
+  }
+  // Quantas conversas e qual a última: é o que o cartão do clube mostra
+  // sem abrir o fórum.
+  function resumoDoForum(clubeId) {
+    var l = forumDoClube(clubeId);
+    return { conversas: l.length,
+      respostas: l.reduce(function (s, t) { return s + t.respostas.length; }, 0),
+      ultima: l.length ? l[0].mexidoEm : "" };
+  }
+
   // ── O MURAL DE TROCAS ENTRE ALUNAS (arquivo 07) ──────────────
   //
   // Quadro de anúncios da escola: trocar, vender, pedir em milhas ou
@@ -16440,6 +16582,9 @@
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
     horaDoEncontro: horaDoEncontro,
+    forumDoClube: forumDoClube, abrirTopicoNoClube: abrirTopicoNoClube,
+    responderNoForum: responderNoForum, apagarDoForum: apagarDoForum,
+    resumoDoForum: resumoDoForum,
     faltasSeguidasNoClube: faltasSeguidasNoClube,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
     dataDaSessao: dataDaSessao, datasDasSessoes: datasDasSessoes,

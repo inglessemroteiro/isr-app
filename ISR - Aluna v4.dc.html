@@ -303,6 +303,78 @@
             </section>
           </sc-if>
           </div>
+
+          <!-- ══ O FÓRUM DO CLUBE · arquivo 04 ══════════════════
+               Entre um encontro e outro passam sete dias. O fórum é o
+               que mantém o clube de pé no meio deles.
+
+               Em texto: o desenho pede também resposta em áudio, e
+               áudio precisa de um lugar para o arquivo morar — o
+               sistema não tem um. Um botão de gravar que não grava
+               seria pior do que não ter o botão. -->
+          <section style="background:var(--color-neutral-0);border-radius:28px;padding:24px 26px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em;color:var(--color-primary-900)">{{ L.forum }}</div>
+              <span style="font-size:12.5px;color:var(--color-tertiary-700)">{{ fmResumo }}</span>
+            </div>
+
+            <sc-if value="{{ fmFechado }}">
+              <div onclick="{{ onFmAbrir }}" style="background:var(--color-bg-default);border-radius:999px;padding:13px 18px;font-size:14px;color:var(--color-tertiary-700);cursor:pointer">{{ L.fmComecar }}</div>
+            </sc-if>
+            <sc-if value="{{ fmAberto }}">
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <input value="{{ fmTitulo }}" onchange="{{ onFmTitulo }}" maxlength="120" placeholder="{{ L.fmTituloPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-default);border:1px solid var(--color-tertiary-100);border-radius:14px;padding:12px 16px;font-size:15px;font-weight:700;font-family:inherit;color:var(--color-primary-900);outline:none">
+                <textarea value="{{ fmCorpo }}" onchange="{{ onFmCorpo }}" rows="3" maxlength="2000" placeholder="{{ L.fmCorpoPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-default);border:1px solid var(--color-tertiary-100);border-radius:14px;padding:12px 16px;font-size:15px;font-family:inherit;line-height:1.5;color:var(--color-primary-900);resize:vertical;outline:none"></textarea>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <button onclick="{{ onFmPublicar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 4px 0 var(--color-primary-950);border-radius:999px;padding:12px 20px;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.fmPublicar }}</button>
+                  <button onclick="{{ onFmCancelar }}" style="border:0;background:transparent;color:var(--color-tertiary-700);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;padding:12px 4px">{{ L.cancelar }}</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ fmErro }}">
+              <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:14px;padding:11px 14px;font-size:13.5px">{{ fmErroTexto }}</div>
+            </sc-if>
+
+            <sc-if value="{{ fmVazio }}">
+              <div style="font-size:14.5px;line-height:1.6;color:var(--color-tertiary-700)">{{ L.fmVazio }}</div>
+            </sc-if>
+
+            <sc-for list="{{ fmTopicos }}" as="tp" hint-placeholder-count="2">
+              <article style="background:var(--color-bg-default);border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;gap:10px;align-items:center">
+                  <div style="flex:none;width:36px;height:36px;border-radius:999px;background:{{ tp.cor }};display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--color-primary-900)">{{ tp.inicial }}</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--color-primary-900)">{{ tp.quem }} <span style="color:var(--color-tertiary-700);font-weight:600">· {{ tp.quando }}</span></div>
+                </div>
+                <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-primary-900)">{{ tp.titulo }}</div>
+                <sc-if value="{{ tp.temCorpo }}">
+                  <div style="font-size:14.5px;line-height:1.55;color:var(--color-primary-800);white-space:pre-wrap">{{ tp.corpo }}</div>
+                </sc-if>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;font-weight:700;color:var(--color-text-light)">
+                  <span onclick="{{ tp.onAbrir }}" style="cursor:pointer">{{ tp.respostasLabel }}</span>
+                  <sc-if value="{{ tp.podeApagar }}">
+                    <span onclick="{{ tp.onApagar }}" style="cursor:pointer;color:var(--color-tertiary-700)">{{ L.apagar }}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ tp.aberto }}">
+                  <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-tertiary-50);padding-top:12px">
+                    <sc-for list="{{ tp.respostas }}" as="rp" hint-placeholder-count="2">
+                      <div style="display:flex;gap:10px">
+                        <div style="flex:none;width:30px;height:30px;border-radius:999px;background:{{ rp.cor }};display:grid;place-items:center;font-weight:800;font-size:12px;color:var(--color-primary-900)">{{ rp.inicial }}</div>
+                        <div style="flex:1;min-width:0;background:var(--color-neutral-0);border-radius:16px;padding:10px 14px;font-size:14px;line-height:1.5;color:var(--color-primary-800)">
+                          <div><b style="color:var(--color-primary-900)">{{ rp.quem }}</b> <span style="color:var(--color-tertiary-700);font-size:12px">· {{ rp.quando }}</span><sc-if value="{{ rp.podeApagar }}"> <span onclick="{{ rp.onApagar }}" style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);cursor:pointer">{{ L.apagar }}</span></sc-if></div>
+                          <div style="white-space:pre-wrap;margin-top:2px">{{ rp.texto }}</div>
+                        </div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <input value="{{ tp.rascunho }}" onchange="{{ tp.onRascunho }}" maxlength="2000" placeholder="{{ L.fmRespostaPh }}" style="flex:1 1 220px;min-width:0;background:var(--color-neutral-0);border:1px solid var(--color-tertiary-100);border-radius:999px;padding:11px 16px;font-size:15px;font-family:inherit;color:var(--color-primary-900);outline:none">
+                      <button onclick="{{ tp.onResponder }}" style="flex:none;border:0;background:var(--color-primary-900);color:var(--color-neutral-0);box-shadow:0 4px 0 var(--color-primary-950);border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">{{ L.fmResponder }}</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </article>
+            </sc-for>
+          </section>
         </sc-if>
       </sc-if>
 
@@ -1148,6 +1220,12 @@ class Component extends DCLogic {
             revCorrendo: false, revTotal: 0,
             // qual clube dela está aberto, e qual do catálogo está sendo visto
             clubeSel: "", clubeVendo: "",
+            // o fórum do clube: a conversa que está sendo escrita, a
+            // que está aberta para ler, e o rascunho de resposta de
+            // cada uma — um por tópico, senão escrever numa apagava a
+            // resposta começada na outra
+            fmNovo: "", fmTitulo: "", fmCorpo: "", fmLendo: "",
+            fmRascunho: {}, fmErro: "",
             // a loja: qual subaba, e o mural de trocas
             shopTab: "rewards", muFiltro: "todos", muPagina: 1, muForm: null, muErro: "",
             // review: a palavra virada, e o que está sendo cadastrado
@@ -1373,6 +1451,20 @@ class Component extends DCLogic {
       cbSemDatas: T("The school has not set the meeting dates for this club yet.",
         "A escola ainda não marcou as datas dos encontros deste clube."),
       abrir: T("Open", "Abrir"),
+      // ── o fórum do clube, arquivo 04 ──
+      forum: T("Club forum", "Fórum do clube"),
+      fmComecar: T("Start a new topic…", "Começar uma conversa…"),
+      fmTituloPh: T("What is it about?", "Sobre o que é?"),
+      fmCorpoPh: T("Write in English. The others read when they can.",
+        "Escreva em inglês. As outras leem quando der."),
+      fmPublicar: T("Post", "Publicar"),
+      fmRespostaPh: T("Write a reply in English…", "Escreva uma resposta em inglês…"),
+      fmResponder: T("Reply", "Responder"),
+      fmVazio: T("No conversation here yet. The first one can be yours.",
+        "Nenhuma conversa aqui ainda. A primeira pode ser sua."),
+      fmSoTexto: T("In text for now: the system has nowhere to keep an audio file yet.",
+        "Em texto por enquanto: o sistema ainda não tem onde guardar arquivo de áudio."),
+      apagar: T("delete", "apagar"),
       semClube: T("You are not in a club yet. In \"All clubs\" you can see what the school offers.",
         "Você ainda não está em nenhum clube. Em \"Todos os clubes\" estão os que a escola oferece."),
       semAberto: T("No other club is open right now.", "Não há outro clube aberto agora."),
@@ -1503,6 +1595,10 @@ class Component extends DCLogic {
       cbAviso: "", cbSemDetalhe: true, cbDetalhe: false,
       cbTemEmoji: false, cbEmoji: "", cbSemEncontros: false, cbRodape: "",
       cbMaterialTitulo: "",
+      fmResumo: "", fmFechado: true, fmAberto: false, fmVazio: true,
+      fmTitulo: "", fmCorpo: "", fmTopicos: [], fmErro: false, fmErroTexto: "",
+      onFmAbrir: () => {}, onFmCancelar: () => {}, onFmTitulo: () => {},
+      onFmCorpo: () => {}, onFmPublicar: () => {},
       onFecharDetalhe: () => {}, dtNome: "", dtDesc: "", dtFormato: "", dtNivel: "",
       dtNovo: false, dtFatos: [], dtBotao: "", dtPreco: "", onDtEntrar: () => {},
       dtEncontrosTitulo: "", dtSemEncontros: true, dtEncontros: [], dtProf: "", dtBio: "",
@@ -2890,6 +2986,106 @@ class Component extends DCLogic {
            cbA.ate ? T("Member until ", "Membro até ") + CRM.ddmm(cbA.ate) + "." : ""]
             .filter(Boolean).join(" ")
         : "",
+      // ══ O FÓRUM DO CLUBE · arquivo 04 ═══════════════════════
+      //
+      // Em texto. O desenho tem resposta em áudio, e áudio precisa de
+      // um lugar para o arquivo morar — o sistema não tem um, e um
+      // botão de gravar que não grava é pior do que botão nenhum.
+      ...(() => {
+        const vazio = { fmResumo: "", fmFechado: true, fmAberto: false,
+          fmVazio: true, fmTitulo: "", fmCorpo: "", fmTopicos: [],
+          fmErro: false, fmErroTexto: "",
+          onFmAbrir: () => {}, onFmCancelar: () => {}, onFmTitulo: () => {},
+          onFmCorpo: () => {}, onFmPublicar: () => {} };
+        if (!cbA || !CRM.forumDoClube) return vazio;
+        const topicos = CRM.forumDoClube(cbA.id) || [];
+        const resumo = CRM.resumoDoForum ? CRM.resumoDoForum(cbA.id) : null;
+        const escrevendo = this.state.fmNovo === cbA.id;
+        const eu = { pessoaId: p.id, nome: p.nome };
+        // A inicial e a cor são do nome: o perfil tem foto, mas o
+        // fórum é uma lista longa e a foto de dez pessoas a deixaria
+        // pesada de carregar num clube com conversa de um ciclo.
+        const CORES = ["var(--color-button-primary)", "var(--color-secondary-300)",
+          "var(--color-primary-200)", "var(--color-tertiary-100)"];
+        const corDe = (id) => {
+          let n = 0; String(id || "").split("").forEach(ch => { n += ch.charCodeAt(0); });
+          return CORES[n % CORES.length];
+        };
+        const quando = (iso) => {
+          if (!iso) return "";
+          const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+          if (dias <= 0) return T("today", "hoje");
+          if (dias === 1) return T("yesterday", "ontem");
+          if (dias < 7) return dias + T(" days ago", " dias atrás");
+          return CRM.ddmm(String(iso).slice(0, 10));
+        };
+        const nomeDe = (t) => t.daEquipe ? t.porNome : CRM.firstName(t.porNome || "");
+        return {
+          fmResumo: resumo && resumo.conversas
+            ? (resumo.conversas + T(" conversation", " conversa") + (resumo.conversas === 1 ? "" : "s")
+               + " · " + resumo.respostas + T(" reply", " resposta") + (resumo.respostas === 1 ? "" : "s"))
+            : L.fmSoTexto,
+          fmFechado: !escrevendo, fmAberto: escrevendo,
+          fmVazio: topicos.length === 0 && !escrevendo,
+          fmTitulo: this.state.fmTitulo || "",
+          fmCorpo: this.state.fmCorpo || "",
+          fmErro: !!this.state.fmErro, fmErroTexto: this.state.fmErro || "",
+          onFmAbrir: () => this.setState({ fmNovo: cbA.id, fmErro: "" }),
+          onFmCancelar: () => this.setState({ fmNovo: "", fmTitulo: "", fmCorpo: "", fmErro: "" }),
+          // onchange dispara a cada letra: guarda-se o texto cru, e a
+          // gravação acontece no botão
+          onFmTitulo: (e) => this.setState({ fmTitulo: e.target.value }),
+          onFmCorpo: (e) => this.setState({ fmCorpo: e.target.value }),
+          onFmPublicar: () => {
+            const r = CRM.abrirTopicoNoClube(cbA.id, eu,
+              this.state.fmTitulo || "", this.state.fmCorpo || "");
+            if (!r.ok) return this.setState({ fmErro: r.erro });
+            this.setState({ fmNovo: "", fmTitulo: "", fmCorpo: "", fmErro: "",
+              fmLendo: r.id, tick: this.state.tick + 1 });
+          },
+          fmTopicos: topicos.map(t => ({
+            titulo: t.titulo,
+            temCorpo: !!t.corpo, corpo: t.corpo,
+            quem: nomeDe(t), quando: quando(t.em),
+            inicial: (nomeDe(t) || "?").slice(0, 1).toUpperCase(),
+            cor: corDe(t.por),
+            respostasLabel: "💬 " + (t.respostas.length
+              ? (t.respostas.length + (t.respostas.length === 1
+                  ? T(" reply", " resposta") : T(" replies", " respostas")))
+              : T("reply", "responder")),
+            aberto: this.state.fmLendo === t.id,
+            onAbrir: () => this.setState({
+              fmLendo: this.state.fmLendo === t.id ? "" : t.id, fmErro: "" }),
+            podeApagar: t.por === p.id,
+            onApagar: () => {
+              CRM.apagarDoForum(t.id, eu);
+              this.setState({ fmLendo: "", tick: this.state.tick + 1 });
+            },
+            respostas: t.respostas.map(r => ({
+              quem: r.daEquipe ? r.porNome : CRM.firstName(r.porNome || ""),
+              quando: quando(r.em), texto: r.texto,
+              inicial: ((r.daEquipe ? r.porNome : CRM.firstName(r.porNome || "")) || "?").slice(0, 1).toUpperCase(),
+              cor: corDe(r.por),
+              podeApagar: r.por === p.id,
+              onApagar: () => {
+                CRM.apagarDoForum(t.id, eu, r.id);
+                this.setState({ tick: this.state.tick + 1 });
+              }
+            })),
+            rascunho: (this.state.fmRascunho || {})[t.id] || "",
+            onRascunho: (e) => this.setState({
+              fmRascunho: Object.assign({}, this.state.fmRascunho, { [t.id]: e.target.value }) }),
+            onResponder: () => {
+              const txt = (this.state.fmRascunho || {})[t.id] || "";
+              const r = CRM.responderNoForum(t.id, eu, txt);
+              if (!r.ok) return this.setState({ fmErro: r.erro });
+              this.setState({ fmErro: "",
+                fmRascunho: Object.assign({}, this.state.fmRascunho, { [t.id]: "" }),
+                tick: this.state.tick + 1 });
+            }
+          }))
+        };
+      })(),
       cbMaterialTitulo: cbA && cbA.professora
         ? T("reference material · from ", "material de apoio · de ") + cbA.professora
         : T("reference material", "material de apoio"),

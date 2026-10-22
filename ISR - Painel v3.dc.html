@@ -750,6 +750,47 @@
           </div>
         </sc-if>
 
+        <!-- ABA FÓRUM -->
+        <!-- O fórum é da aluna, mas quem o mantém vivo é quem conduz:
+             é ela que deixa a pergunta entre um encontro e outro, e é
+             ela que responde pelo que fica escrito ali. -->
+        <sc-if value="{{ clAbaForum }}">
+          <div style="margin-top: 18px;">
+            <div style="display: flex; gap: 9px; flex-wrap: wrap; align-items: flex-start;">
+              <input value="{{ clFoTitulo }}" onchange="{{ onClFoTitulo }}" placeholder="{{ phFoTitulo }}" style="flex: 2 1 220px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+              <input value="{{ clFoCorpo }}" onchange="{{ onClFoCorpo }}" placeholder="{{ phFoCorpo }}" style="flex: 3 1 260px; min-width: 0; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+              <button onclick="{{ onClFoPublicar }}" style="flex: none; border: 1.5px solid var(--color-primary-900); background: none; color: var(--color-primary-900); border-radius: 999px; padding: 10px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C36 }}</button>
+            </div>
+            <div style="margin-top: 6px; font-size: 12px; color: var(--color-tertiary-500);">{{ C37 }}</div>
+
+            <sc-if value="{{ clSemForum }}">
+              <p style="margin: 14px 0 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C38 }}</p>
+            </sc-if>
+            <sc-for list="{{ clForum }}" as="fo" hint-placeholder-count="2">
+              <div style="margin-top: 14px; background: var(--color-bg-cell); border-radius: 18px; padding: 14px 16px;">
+                <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; align-items: baseline;">
+                  <div style="font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500);">{{ fo.quem }} · {{ fo.quando }}</div>
+                  <button onclick="{{ fo.onApagar }}" style="flex: none; border: 0; background: none; color: var(--color-primary-500); font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; padding: 2px 4px;">{{ C32 }}</button>
+                </div>
+                <div style="margin-top: 3px; font-size: 15px; font-weight: 700; color: var(--color-primary-900);">{{ fo.titulo }}</div>
+                <sc-if value="{{ fo.temCorpo }}">
+                  <div style="margin-top: 3px; font-size: 13.5px; line-height: 1.55; color: var(--color-primary-800); white-space: pre-wrap;">{{ fo.corpo }}</div>
+                </sc-if>
+                <sc-for list="{{ fo.respostas }}" as="re" hint-placeholder-count="2">
+                  <div style="margin-top: 9px; background: var(--color-neutral-0); border-radius: 14px; padding: 10px 13px;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ re.quem }} · {{ re.quando }} <span onclick="{{ re.onApagar }}" style="color: var(--color-primary-500); cursor: pointer;">{{ C32 }}</span></div>
+                    <div style="margin-top: 2px; font-size: 13.5px; line-height: 1.55; color: var(--color-primary-900); white-space: pre-wrap;">{{ re.texto }}</div>
+                  </div>
+                </sc-for>
+                <div style="display: flex; gap: 9px; flex-wrap: wrap; margin-top: 10px;">
+                  <input value="{{ fo.rascunho }}" onchange="{{ fo.onRascunho }}" placeholder="{{ phFoResposta }}" style="flex: 1 1 220px; min-width: 0; box-sizing: border-box; background: var(--color-neutral-0); border: 1px solid var(--color-border); border-radius: 999px; padding: 9px 14px; font-size: 13.5px; font-family: inherit; color: var(--color-primary-900);">
+                  <button onclick="{{ fo.onResponder }}" style="flex: none; border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 999px; padding: 9px 15px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ C39 }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
         <!-- ABA MATERIAL -->
         <sc-if value="{{ clAbaMaterial }}">
           <div style="margin-top: 18px;">
@@ -1397,7 +1438,10 @@ class Component extends DCLogic {
             // mexa em nada. clChamada é o número do encontro cuja
             // chamada está aberta.
             clSel: "", clAba: "pagina", clForm: null, clErro: "", clAviso: "",
-            clChamada: null, clPres: {}, clMatTitulo: "", clMatLink: "" };
+            clChamada: null, clPres: {}, clMatTitulo: "", clMatLink: "",
+            // o fórum: a conversa que ela está escrevendo, e o
+            // rascunho de resposta de cada tópico
+            clFoTitulo: "", clFoCorpo: "", clFoResp: {} };
   chamadaRef = React.createRef(); gravacaoRef = React.createRef(); buscaExtraRef = React.createRef();
 
   // ── PT / EN ──
@@ -1561,7 +1605,15 @@ class Component extends DCLogic {
     phData: ["dd/mm/aaaa", "dd/mm/yyyy"],
     phTema: ["Tema do encontro", "Meeting topic"],
     phMatTitulo: ["Título (ex.: Recipe vocabulary list)", "Title (e.g. Recipe vocabulary list)"],
-    phMatLink: ["Link do Drive, YouTube…", "Drive, YouTube link…"]
+    phMatLink: ["Link do Drive, YouTube…", "Drive, YouTube link…"],
+    C36: ["Publicar", "Post"],
+    C37: ["O fórum é onde o clube continua entre um encontro e outro. Em texto: o sistema ainda não tem onde guardar arquivo de áudio.",
+      "The forum is where the club carries on between meetings. In text: the system has nowhere to keep an audio file yet."],
+    C38: ["Nenhuma conversa neste clube ainda.", "No conversation in this club yet."],
+    C39: ["Responder", "Reply"],
+    phFoTitulo: ["A pergunta da semana", "The question of the week"],
+    phFoCorpo: ["O que elas devem responder", "What they should answer"],
+    phFoResposta: ["Responder aqui", "Reply here"]
   };
   idioma() {
     try { return localStorage.getItem("isr_painel_lang") === "en" ? "en" : "pt"; } catch (e) { return "pt"; }
@@ -2825,7 +2877,8 @@ class Component extends DCLogic {
       clAbas: [["pagina", Tr("Club page", "Página do clube")],
                ["inscritas", Tr("Signed up", "Inscritas")],
                ["encontros", Tr("Meetings", "Encontros")],
-               ["material", Tr("Material", "Material")]].map(([k, label]) => ({
+               ["material", Tr("Material", "Material")],
+               ["forum", Tr("Forum", "Fórum")]].map(([k, label]) => ({
         label,
         cor: this.state.clAba === k
           ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
@@ -3091,6 +3144,63 @@ class Component extends DCLogic {
       onClFecharChamada: () => this.setState({ clChamada: null, clPres: {} }),
 
       // ── aba Material ──
+      // ── a aba do fórum ──
+      //
+      // Quem é da equipe entra pelo e-mail: a professora não tem ficha
+      // de aluna, e mesmo assim é dela a pergunta da semana.
+      ...(() => {
+        const eu = CRM.gestaoUser ? (CRM.gestaoUser() || {}) : {};
+        const quem = { email: eu.email || "", nome: eu.nome || teacher || "" };
+        const vazio = { clAbaForum: false, clForum: [], clSemForum: true,
+          clFoTitulo: "", clFoCorpo: "",
+          onClFoTitulo: () => {}, onClFoCorpo: () => {}, onClFoPublicar: () => {} };
+        if (!clSel || !CRM.forumDoClube) return vazio;
+        const topicos = CRM.forumDoClube(clSel.id) || [];
+        const quando = (isoTxt) => {
+          if (!isoTxt) return "";
+          const dias = Math.floor((Date.now() - new Date(isoTxt).getTime()) / 86400000);
+          if (dias <= 0) return Tr("today", "hoje");
+          if (dias === 1) return Tr("yesterday", "ontem");
+          if (dias < 7) return dias + Tr(" days ago", " dias atrás");
+          return CRM.ddmm(String(isoTxt).slice(0, 10));
+        };
+        return {
+          clAbaForum: this.state.clAba === "forum",
+          clSemForum: topicos.length === 0,
+          clFoTitulo: this.state.clFoTitulo || "",
+          clFoCorpo: this.state.clFoCorpo || "",
+          onClFoTitulo: (e) => this.setState({ clFoTitulo: e.target.value }),
+          onClFoCorpo: (e) => this.setState({ clFoCorpo: e.target.value }),
+          onClFoPublicar: () => {
+            const r = CRM.abrirTopicoNoClube(clSel.id, quem,
+              this.state.clFoTitulo || "", this.state.clFoCorpo || "");
+            this.setState(r.ok
+              ? { clFoTitulo: "", clFoCorpo: "", clErro: "" }
+              : { clErro: r.erro });
+            this.bump();
+          },
+          clForum: topicos.map(t => ({
+            titulo: t.titulo, temCorpo: !!t.corpo, corpo: t.corpo,
+            quem: t.porNome || "—", quando: quando(t.em),
+            onApagar: () => { CRM.apagarDoForum(t.id, quem); this.bump(); },
+            respostas: t.respostas.map(r => ({
+              quem: r.porNome || "—", quando: quando(r.em), texto: r.texto,
+              onApagar: () => { CRM.apagarDoForum(t.id, quem, r.id); this.bump(); }
+            })),
+            rascunho: (this.state.clFoResp || {})[t.id] || "",
+            onRascunho: (e) => this.setState({
+              clFoResp: Object.assign({}, this.state.clFoResp, { [t.id]: e.target.value }) }),
+            onResponder: () => {
+              const txt = (this.state.clFoResp || {})[t.id] || "";
+              const r = CRM.responderNoForum(t.id, quem, txt);
+              this.setState(r.ok
+                ? { clErro: "", clFoResp: Object.assign({}, this.state.clFoResp, { [t.id]: "" }) }
+                : { clErro: r.erro });
+              this.bump();
+            }
+          }))
+        };
+      })(),
       clAbaMaterial: !!clSel && this.state.clAba === "material",
       clSemMateriais: !clSel || !(clSel.materiais || []).length,
       clMateriais: !clSel ? [] : (clSel.materiais || []).map((m, i) => ({

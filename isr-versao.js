@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-j",
+  numero: "2026.10.22-k",
   data: "22/10/2026",
-  nota: "O fuso do clube: a hora de quem conduz, no relógio de quem olha"
+  nota: "O fórum do clube, em texto: conversa, resposta e moderação"
 };
