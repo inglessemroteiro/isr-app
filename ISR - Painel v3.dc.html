@@ -1688,7 +1688,46 @@ class Component extends DCLogic {
   }
   turmaCurta(turma) {
     const m = String(turma || "").match(/^([A-Z]{3})\s*(\d{1,2}h\d{0,2})/);
-    return m ? ((this.DIAS_CURTOS[m[1]] || m[1]) + " " + m[2]) : String(turma || "");
+    if (!m) return String(turma || "");
+    // numa tela em inglês a sigla fica como está no rótulo (MON, TUE):
+    // traduzir para SEG no meio de uma frase em inglês era a metade
+    // da linha em português
+    const dia = this.idioma() === "en" ? m[1] : (this.DIAS_CURTOS[m[1]] || m[1]);
+    return dia + " " + m[2];
+  }
+  // ── A AULA COMO SE LÊ, NÃO COMO SE GUARDA ──
+  //
+  // O rótulo da turma é a chave da chamada e traz as duas horas
+  // escritas à mão: "MON 7h BR | 11h NL". Isso só serve a quem está
+  // num desses dois países, e só metade do ano — a Holanda tem
+  // horário de verão e o Brasil não. A escola tem professora no
+  // Brasil, na Holanda, na Indonésia e no Paquistão.
+  //
+  // Quando a turma tem fuso, a tela mostra a hora no relógio de quem
+  // está olhando, com a da turma ao lado. Sem fuso, o rótulo fica
+  // como está: inventar um fuso seria marcar aula na hora errada.
+  turmaDoRotulo(label) {
+    const C = window.ISRCRM;
+    if (!C || !C.turmasLista) return null;
+    return (C.turmasLista() || [])
+      .filter(x => (x.nivel + " · " + x.turma) === label)[0] || null;
+  }
+  aulaPorExtenso(label, dataIso) {
+    const C = window.ISRCRM;
+    const u = this.turmaDoRotulo(label);
+    if (!u || !u.fuso || !C.horaDaTurmaLabel) return String(label || "");
+    const dia = this.turmaCurta(u.turma).split(" ")[0];
+    const quando = dataIso || this.isoDe(new Date());
+    const h = C.horaDaTurmaLabel(u, quando);
+    return [this.faixaNivel(u.nivel), [dia, h].filter(Boolean).join(" ")]
+      .filter(Boolean).join(" · ");
+  }
+  // O mesmo, para onde a hora já ia escrita antes do rótulo: com fuso
+  // a hora está dentro do rótulo e escrevê-la de novo a repetiria.
+  aulaComHora(label, dataIso, hora) {
+    const u = this.turmaDoRotulo(label);
+    if (u && u.fuso) return this.aulaPorExtenso(label, dataIso);
+    return (hora && hora !== "—" ? hora + " · " : "") + String(label || "");
   }
   // ── a semana da chamada ──
   // As aulas de uma semana qualquer, não só as sete próximas: para
@@ -1767,7 +1806,9 @@ class Component extends DCLogic {
     const d = new Date(isoStr + "T12:00:00");
     const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
     const dif = Math.round((d0 - hoje) / 86400000);
-    const sem = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][d.getDay()];
+    const sem = (this.idioma() === "en"
+      ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+      : ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"])[d.getDay()];
     const dm = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
     if (dif === 0) return { label: this.T("Today", "Hoje"), cor: "var(--color-error)" };
     if (dif === 1) return { label: this.T("Tomorrow", "Amanhã"), cor: "var(--color-tertiary-500)" };
@@ -1780,17 +1821,24 @@ class Component extends DCLogic {
   DIA_LONGO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
   MES_LONGO = ["janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  DIA_LONGO_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  MES_LONGO_EN = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
 
-  // "hoje, segunda, 27 de julho" em vez de 07/25/2026
+  // "hoje, segunda, 27 de julho" em vez de 07/25/2026 — e em inglês
+  // para quem lê a tela em inglês, que é metade da equipe
   dataPorExtenso(iso) {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     const d = new Date(iso + "T12:00:00");
     const d0 = new Date(d); d0.setHours(0, 0, 0, 0);
     const dif = Math.round((d0 - hoje) / 86400000);
-    const base = this.DIA_LONGO[d.getDay()] + ", " + d.getDate() + " de " + this.MES_LONGO[d.getMonth()];
-    if (dif === 0) return "hoje · " + base;
-    if (dif === -1) return "ontem · " + base;
-    if (dif === 1) return "amanhã · " + base;
+    const en = this.idioma() === "en";
+    const base = en
+      ? (this.DIA_LONGO_EN[d.getDay()] + ", " + this.MES_LONGO_EN[d.getMonth()] + " " + d.getDate())
+      : (this.DIA_LONGO[d.getDay()] + ", " + d.getDate() + " de " + this.MES_LONGO[d.getMonth()]);
+    if (dif === 0) return (en ? "today · " : "hoje · ") + base;
+    if (dif === -1) return (en ? "yesterday · " : "ontem · ") + base;
+    if (dif === 1) return (en ? "tomorrow · " : "amanhã · ") + base;
     return base;
   }
 
@@ -3309,7 +3357,7 @@ class Component extends DCLogic {
             const mapa = CRM.datasDasSessoes(tu.id);
             Object.keys(mapa).forEach(k => { if (mapa[k] && mapa[k].data === dt) n = parseInt(k, 10); });
           }
-          if (!n) return a.nivel || "";
+          if (!n) return this.aulaPorExtenso(a.label, dt) || a.nivel || "";
           const pl = (tu && CRM.planoDaTurma) ? CRM.planoDaTurma(tu.id, n) : null;
           return "Session " + n + (pl && pl.titulo ? " · " + pl.titulo : "");
         };
@@ -3321,8 +3369,8 @@ class Component extends DCLogic {
 
         if (A) {
           return {
-            heroQuando: Tr("next class · today ", "próxima aula · hoje ")
-              + (aulaDoDia.hora !== "—" ? aulaDoDia.hora + " · " : "") + aulaDoDia.label,
+            heroQuando: Tr("next class · today · ", "próxima aula · hoje · ")
+              + this.aulaComHora(aulaDoDia.label, aulaDoDia.data, aulaDoDia.hora),
             heroTitulo: sessaoDe(aulaDoDia) || aulaDoDia.nivel,
             temHeroPrincipal: true,
             heroPrincipal: "▶ " + Tr("Start class", "Começar aula"),
@@ -3345,7 +3393,8 @@ class Component extends DCLogic {
           return {
             heroQuando: nAulas + Tr(nAulas === 1 ? " class without attendance" : " classes without attendance", nAulas === 1 ? " aula sem chamada" : " aulas sem chamada"),
             heroTitulo: maisAntiga
-              ? Tr("Take the attendance of ", "Faça a chamada de ") + CRM.ddmm(maisAntiga.data) + " · " + maisAntiga.label
+              ? Tr("Take the attendance of ", "Faça a chamada de ") + CRM.ddmm(maisAntiga.data)
+                  + " · " + this.aulaPorExtenso(maisAntiga.label, maisAntiga.data)
               : Tr("Catch up on the attendance you owe", "Faça as chamadas que ficaram para trás"),
             temHeroPrincipal: true,
             heroPrincipal: Tr("Take attendance", "Fazer chamada"),
@@ -3358,7 +3407,7 @@ class Component extends DCLogic {
         if (C) {
           return {
             heroQuando: Tr("next class · ", "próxima aula · ") + aulaDoDia.dia.toLowerCase()
-              + (aulaDoDia.hora !== "—" ? " " + aulaDoDia.hora : ""),
+              + " · " + this.aulaComHora(aulaDoDia.label, aulaDoDia.data, aulaDoDia.hora),
             heroTitulo: sessaoDe(aulaDoDia) || aulaDoDia.nivel,
             temHeroPrincipal: true,
             heroPrincipal: Tr("See the plan", "Ver plano"),
@@ -3501,10 +3550,16 @@ class Component extends DCLogic {
       // misturava o dia com a semana, e para saber o que era de hoje
       // era preciso ler sete linhas.
       ...(() => {
-        const MES_C = ["jan", "fev", "mar", "abr", "mai", "jun",
-          "jul", "ago", "set", "out", "nov", "dez"];
+        // o dia e o mês seguem o idioma da tela: "qui 22 out" numa
+        // tela em inglês era metade da frase em português
+        const EN = this.idioma() === "en";
+        const MES_C = EN
+          ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+          : ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
         const hd = new Date();
-        const DIAS_C = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+        const DIAS_C = EN
+          ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+          : ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
         const itens = aulas.filter(a => a.dia === "Hoje");
         return {
           agendaTitulo: Tr("Today · ", "Agenda de hoje · ") + DIAS_C[hd.getDay()]
@@ -3516,7 +3571,7 @@ class Component extends DCLogic {
             const feita = a.temChamada;
             return {
               hora: a.hora === "—" ? "—" : a.hora,
-              texto: a.titulo || a.label || a.nivel,
+              texto: this.aulaPorExtenso(a.label, a.data) || a.titulo || a.label || a.nivel,
               // o ⚠ no desenho dela: o que falta se vê de longe, sem ler
               estado: feita ? Tr("attendance saved", "chamada salva")
                 : "⚠ " + Tr("diary pending", "diário pendente"),
@@ -3558,7 +3613,7 @@ class Component extends DCLogic {
       // ── AS TURMAS DELA, COM AS VAGAS ──
       semTurmasMes: turmasProfOcup.length === 0,
       turmasDoMes: turmasProfOcup.map(u => ({
-        nome: u.nivel + " · " + u.turma,
+        nome: this.aulaPorExtenso(u.nivel + " · " + u.turma),
         vagas: u.ocupadas + "/" + u.capacidade + Tr(" students", " alunas"),
         onClick: () => { window.location.href = "ISR%20-%20Turma%20v3.dc.html?id=" + u.id + "&sub=geral"; }
       })),
@@ -4403,7 +4458,10 @@ class Component extends DCLogic {
           faixa: this.faixaNivel(u.nivel),
           faixaBg: this.corDoNivel(u.nivel),
           nome: this.turmaCurta(u.turma) + " · " + this.nivelSemCodigo(u.nivel),
-          sub: u.turma + " · " + u.ocupadas + "/" + u.capacidade + Tr(" spots", " vagas"),
+          // o rótulo cru traz as duas horas escritas à mão; com fuso,
+          // a linha diz a hora no relógio de quem está olhando
+          sub: (u.fuso ? this.aulaPorExtenso(u.label) : u.turma)
+            + " · " + u.ocupadas + "/" + u.capacidade + Tr(" spots", " vagas"),
           projeto: u.projeto || "",
           semanaRotulo: Tr("this week · ", "esta semana · "),
           semana: sx ? ("Session " + sx.n + (sx.titulo ? " · " + sx.titulo : ""))

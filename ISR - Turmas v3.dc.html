@@ -53,6 +53,17 @@
           <input class="isr-campo" ref="{{ ntProjetoRef }}" placeholder="Projeto do ciclo" style="padding: 10px 12px; font-size: 12.5px" />
           <input class="isr-campo" ref="{{ ntMaterialRef }}" placeholder="Material / caderno" style="padding: 10px 12px; font-size: 12.5px" />
           <input class="isr-campo" ref="{{ ntCapRef }}" type="number" placeholder="Capacidade (padrão 10)" style="padding: 10px 12px; font-size: 12.5px" />
+          <!-- A HORA DE VERDADE, E O FUSO DELA -->
+          <!-- O rótulo acima é a chave da chamada e fica como está. A
+               hora que as telas mostram sai daqui: guardada com o fuso
+               em que é lida, ela se converte sozinha para quem está em
+               Jacarta ou em Carachi, e acompanha o horário de verão. -->
+          <input class="isr-campo" ref="{{ ntHoraRef }}" type="time" placeholder="07:00" style="padding: 10px 12px; font-size: 12.5px" />
+          <select class="isr-campo" ref="{{ ntFusoRef }}" style="padding: 10px 12px; font-size: 12.5px">
+            <sc-for list="{{ fusoOpts }}" as="fz" hint-placeholder-count="6">
+              <option value="{{ fz.id }}">{{ fz.label }}</option>
+            </sc-for>
+          </select>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onCriarTurma }}" style="font-size: 12.5px; padding: 10px 20px">Criar turma</button>
@@ -182,7 +193,14 @@
                 <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px" />
                 <input class="isr-campo" ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px" />
                 <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ u.capacidade }}" style="padding: 9px 11px; font-size: 12px" />
+                <input class="isr-campo" ref="{{ edHoraRef }}" type="time" style="padding: 9px 11px; font-size: 12px" />
+                <select class="isr-campo" ref="{{ edFusoRef }}" style="padding: 9px 11px; font-size: 12px">
+                  <sc-for list="{{ u.fusoOpts }}" as="fz" hint-placeholder-count="6">
+                    <option value="{{ fz.id }}" selected="{{ fz.sel }}">{{ fz.label }}</option>
+                  </sc-for>
+                </select>
               </div>
+              <div style="font-size: 11px; color: var(--color-tertiary-500); margin-bottom: 10px;">{{ u.fusoNota }}</div>
               <div style="display: flex; gap: 8px;">
                 <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ u.onSalvarEdicao }}" style="font-size: 12px; padding: 9px 18px">Salvar</button>
                 <button class="isr-botao isr-botao--texto" onclick="{{ u.onCancelarEdicao }}" style="color: var(--color-tertiary-500); font-size: 12px; padding: 9px 8px">cancelar</button>
@@ -234,6 +252,8 @@ class Component extends DCLogic {
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
   edTeacherRef = React.createRef();
   edNivelRef = React.createRef(); edHorarioRef = React.createRef(); edProjetoRef = React.createRef();
+  ntHoraRef = React.createRef(); ntFusoRef = React.createRef();
+  edHoraRef = React.createRef(); edFusoRef = React.createRef();
   edMaterialRef = React.createRef(); edCapRef = React.createRef();
 
   // Esta tela só se redesenhava ao mexer nela própria. Com o sync
@@ -263,6 +283,8 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true,
       capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,
+      edHoraRef: this.edHoraRef, edFusoRef: this.edFusoRef, fusoOpts: [],
       cicloBg: "var(--color-neutral-0)", cicloCor: "var(--color-primary-800)", cicloTexto: "", cicloAcao: "" };
 
     // A professora vê as turmas dela, não as da escola.
@@ -386,6 +408,21 @@ class Component extends DCLogic {
         // da folha de pagamento sem avisar ninguém.
         profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
           .concat(professoras.map(n => ({ id: n, label: n, sel: n === u.teacher }))),
+        // o fuso em que a hora da turma é lida. Sem ele, "7h" é hora de
+        // quem escreveu o rótulo — e a escola tem professora em quatro
+        // países.
+        fusoOpts: [{ id: "", label: u.fuso ? "Fuso: " + CRM.fusoLabel(u.fuso) : "Fuso do horário…" }]
+          .concat(((CRM.FUSOS_ESCOLA) || []).map(fz =>
+            ({ id: fz.id, label: fz.label, sel: fz.id === u.fuso }))),
+        fusoNota: (() => {
+          const h = CRM.horaBaseDaTurma ? CRM.horaBaseDaTurma(u) : "";
+          if (!u.fuso) {
+            return "A hora e o fuso dizem a que horas a aula é, para quem está em qualquer país."
+              + (h ? " Hoje as telas leem \"" + h + "\" do rótulo, sem saber de onde." : "");
+          }
+          return "A aula é às " + (h || "—") + " em " + CRM.fusoLabel(u.fuso)
+            + ". Cada tela mostra no relógio de quem está olhando.";
+        })(),
         editLabel: editando ? "editando…" : "editar",
         editBg: editando ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         editFg: editando ? "var(--color-neutral-0)" : "var(--color-primary-900)",
@@ -399,6 +436,10 @@ class Component extends DCLogic {
           const cp = parseInt(this.val(this.edCapRef), 10); if (cp > 0) patch.capacidade = cp;
           const nv = this.val(this.edNivelRef); if (nv) patch.nivel = nv;
           const hr = this.val(this.edHorarioRef); if (hr) patch.turma = hr;
+          const ho = this.val(this.edHoraRef); if (ho) patch.hora = ho;
+          // o fuso sai de um seletor: o valor em branco é "não mexer",
+          // e não "apagar o que já estava"
+          const fz = this.val(this.edFusoRef); if (fz) patch.fuso = fz;
           // mudar nível ou horário muda o rótulo da turma: as alunas vão junto
           if (patch.nivel || patch.turma) {
             const antes = u.nivel + " · " + u.turma;
@@ -489,6 +530,10 @@ class Component extends DCLogic {
       edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef,
       edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
       edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
+      ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,
+      edHoraRef: this.edHoraRef, edFusoRef: this.edFusoRef,
+      fusoOpts: [{ id: "", label: "fuso do horário…" }].concat(
+        ((CRM.FUSOS_ESCOLA) || []).map(fz => ({ id: fz.id, label: fz.label }))),
       onCriarTurma: () => {
         const nivel = this.val(this.ntNivelRef), turma = this.val(this.ntTurmaRef);
         if (!nivel || !turma) { window.alert("Preencha pelo menos o nível e o horário da turma."); return; }
@@ -497,9 +542,11 @@ class Component extends DCLogic {
           teacher: this.val(this.ntTeacherRef),
           projeto: this.val(this.ntProjetoRef),
           notebook: this.val(this.ntMaterialRef),
-          capacidade: this.val(this.ntCapRef)
+          capacidade: this.val(this.ntCapRef),
+          hora: this.val(this.ntHoraRef), fuso: this.val(this.ntFusoRef)
         });
-        [this.ntNivelRef, this.ntTurmaRef, this.ntTeacherRef, this.ntProjetoRef, this.ntMaterialRef, this.ntCapRef]
+        [this.ntNivelRef, this.ntTurmaRef, this.ntTeacherRef, this.ntProjetoRef,
+         this.ntMaterialRef, this.ntCapRef, this.ntHoraRef]
           .forEach(r => { if (r.current) r.current.value = ""; });
         this.setState({ novaAberta: false });
       }
