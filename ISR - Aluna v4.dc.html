@@ -2047,9 +2047,16 @@ class Component extends DCLogic {
           cadTemGravacao: !!(sel && sel.aula && sel.aula.gravacao),
           cadGravacao: (sel && sel.aula && sel.aula.gravacao) || "#",
 
-          cadTemPalavras: !!(plano && (plano.palavras || "").trim()),
-          cadPalavras: ((plano && plano.palavras) || "").split(",")
-            .map(w => w.trim()).filter(Boolean),
+          // plano.palavras é LISTA — limpaPalavras devolve array. Aqui
+          // era tratada como texto, e .trim() numa lista derrubava o
+          // renderVals inteiro assim que a aluna abria uma sessão com
+          // palavras. Aceita os dois: plano antigo guardou texto.
+          ...(() => {
+            const v = plano && plano.palavras;
+            const l = (Array.isArray(v) ? v : String(v || "").split(","))
+              .map(w => String(w || "").trim()).filter(Boolean);
+            return { cadTemPalavras: l.length > 0, cadPalavras: l };
+          })(),
 
           // 🔒 enquanto a professora não abre a aula, as tarefas não
           // aceitam resposta. Não é enfeite: o que ela escreve antes

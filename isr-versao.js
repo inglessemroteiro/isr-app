@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-b",
+  numero: "2026.10.22-c",
   data: "22/10/2026",
-  nota: "Recibo e fatura: a Conta diz onde pedir, em vez de prometer"
+  nota: "Conserto: o app da aluna parava de montar com o plano publicado"
 };
