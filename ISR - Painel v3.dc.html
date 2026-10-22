@@ -487,6 +487,25 @@
       </sc-for>
     </div>
 
+    <!-- OS CLUBES DAS OUTRAS PROFESSORAS -->
+    <!-- A aba é "Seus clubes", e assim deve continuar. Mas quem cuida
+         da escola abria aqui, via só os próprios rascunhos e concluía
+         que o clube publicado da colega tinha sumido. A lista fica
+         curta e é só para saber que existem: mexer no clube da colega
+         não é trabalho desta tela, e a aba não manda para fora. -->
+    <sc-if value="{{ clTemDosOutros }}">
+      <section class="isr-cartao" style="padding: 16px 18px; margin-top: 4px;">
+        <div style="font-size: 11.5px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 8px;">{{ clDosOutrosTitulo }}</div>
+        <sc-for list="{{ clDosOutros }}" as="co" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 6px 0;">
+            <span style="flex: none; background: {{ co.statusBg }}; color: {{ co.statusFg }}; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700;">{{ co.status }}</span>
+            <span style="flex: 1; min-width: 140px; font-size: 13.5px; font-weight: 700; color: var(--color-primary-900);">{{ co.nome }}</span>
+            <span style="flex: none; font-size: 12.5px; color: var(--color-tertiary-500);">{{ co.quem }}</span>
+          </div>
+        </sc-for>
+      </section>
+    </sc-if>
+
     <!-- 3 · O PAINEL DO CLUBE SELECIONADO -->
     <sc-if value="{{ clSelAberto }}">
       <section class="isr-cartao" style="padding: 22px 24px;">
@@ -1005,6 +1024,22 @@
   <!-- PRÓXIMAS AULAS -->
   <!-- CHAMADA -->
   <sc-if value="{{ tChamadas }}">
+  <!-- ABRIR A AULA, QUANDO A PROFESSORA QUISER -->
+  <!-- Antes só dava para começar a aula pelo hero de Hoje, e só se a
+       aula fosse hoje. Professora que abre o caderno mais cedo, que
+       remarca, que dá a aula fora do horário fixo — nenhuma dessas
+       conseguia abrir. A barra fica aqui, em cima da turma e do dia
+       que ela acabou de escolher, e vale para qualquer data. -->
+  <sc-if value="{{ podeComecarAula }}">
+    <div style="background: var(--color-primary-900); border-radius: 22px; padding: 14px 16px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+      <button onclick="{{ onComecarAula }}" style="flex: none; border: 0; background: var(--color-button-primary); color: var(--color-primary-900); box-shadow: 0 4px 0 var(--color-error); border-radius: 999px; padding: 13px 22px; font-size: 14.5px; font-weight: 800; font-family: inherit; cursor: pointer;">{{ comecarAulaLabel }}</button>
+      <span style="flex: 1; min-width: 200px; font-size: 13.5px; line-height: 1.5; color: var(--color-primary-50);">{{ comecarAulaNota }}</span>
+      <sc-if value="{{ temSlidesDaAula }}">
+        <a href="{{ slidesDaAula }}" target="_blank" rel="noopener" style="flex: none; text-decoration: none; background: rgba(255,255,255,0.14); color: var(--color-neutral-0); border-radius: 999px; padding: 11px 18px; font-size: 13px; font-weight: 700;">{{ slidesLabel }}</a>
+      </sc-if>
+    </div>
+  </sc-if>
+
   <!-- A SEMANA, O DIA E AS AULAS DO DIA -->
   <!-- A chamada começa por onde a professora pensa: que semana, que
        dia, que aula. Antes ela abria numa aula escolhida pelo sistema e
@@ -1360,7 +1395,7 @@ class Component extends DCLogic {
   // escolher de novo a cada manhã.
   DIC = {
     L1: ["Toque na coluna do dia para alterar o estado.", "Tap the day column to change the status."],
-    L2: ["tópico da lição · é ele que valida a aula", "lesson topic · this is what validates the class"],
+    L2: ["tópico da aula · sem ele a aula não conta", "lesson topic · without it the class does not count"],
     L3: ["Nenhuma aluna matriculada nesta turma.", "No student enrolled in this class."],
     L4: ["Nenhuma aluna ativa com esse nome.", "No active student with that name."],
     L5: ["Nenhuma aula gravada nesta turma.", "No recorded class for this group."],
@@ -1385,7 +1420,7 @@ class Component extends DCLogic {
     L24: ["abrir no Drive →", "open in Drive →"],
     L25: ["Nova aula extra", "New extra class"],
     L26: ["Todas presentes", "Everyone present"],
-    L27: ["sessão do ciclo", "cycle session"],
+    L27: ["qual sessão você deu", "which session you taught"],
     L28: ["Tarefa de hoje", "Today’s homework"],
     L29: ["Abrir o painel", "Open the panel"],
     L30: ["Aulas gravadas", "Recorded classes"],
@@ -1466,7 +1501,7 @@ class Component extends DCLogic {
     L99: ["programa que ela segue", "the programme she follows"],
     L100: ["Trocar o programa recomeça a marcha dela: o que você pulou ou reordenou vale para o programa de agora, e as sessões do novo entram na ordem do syllabus.",
       "Changing the programme restarts her sequence: what you skipped or reordered belongs to the current one, and the new programme comes in syllabus order."],
-    phTopico: ["O que foi dado nesta aula", "What was taught in this class"],
+    phTopico: ["O que vocês viram nesta aula", "What you covered in this class"],
     // ── Clubes (arquivo 12) ──
     C1: ["Seus clubes", "Your clubs"],
     C2: ["+ Oferecer novo clube", "+ Offer a new club"],
@@ -1778,10 +1813,12 @@ class Component extends DCLogic {
       alunaNome: "", alunaEstado: "", alunaPonto: "", alunaTarefas: [],
       onVoltarTodas: () => {}, onComentar: () => {}, comentouAgora: false,
       comentarioTexto: "", onComentarioMuda: () => {}, phComentario: "",
-      podeComecarAula: false, onComecarAula: () => {},
+      podeComecarAula: false, onComecarAula: () => {}, comecarAulaLabel: "",
+      comecarAulaNota: "", temSlidesDaAula: false, slidesDaAula: "#", slidesLabel: "",
       temErroChamada: false, erroChamada: "",
       presentesLabel: "", temDiario: false, diarioLabel: "", onDiario: () => {},
       podeTrocar: false, teachers: [], aulas: [], aulasVazio: true, turmasChamada: [], presencas: [], chamadaVazia: true, temAlunas: false, turmasProf: [], turmasVazio: true, chamadaData: "", jaSalva: false, salvouAgora: false, resumoChamada: "", turmaVaziaLabel: "", chamadaRef: this.chamadaRef, ehAulaExtra: false, candidatosExtra: [], semCandidatos: false, horasLabel: "", buscaExtraRef: this.buscaExtraRef,
+      clTemDosOutros: false, clDosOutros: [], clDosOutrosTitulo: "",
       temAComecar: false, aComecarLabel: "", salvarLabel: "Salvar chamada", filaTitulo: "Fila pedagógica",
       temSessoes: false, sessoesOpts: [], onSessao: () => {},
       topicoValor: "", onTopico: () => {},
@@ -2537,17 +2574,48 @@ class Component extends DCLogic {
       // "Começar aula" abre a tela da aula e, se ela ainda não tinha
       // sido aberta, abre o caderno das alunas junto: é o que a
       // professora quer dizer quando aperta o botão.
-      podeComecarAula: !!(aulaDoDia && aulaDoDia.dia === "Hoje" && aulaDoDia.label),
-      onComecarAula: () => {
-        if (!aulaDoDia || !aulaDoDia.label) return;
-        const lbl = aulaDoDia.label, dt = aulaDoDia.data || hojeAgora;
-        const v = CRM.aulaViva ? CRM.aulaViva(lbl, dt) : null;
-        if (v && v.estado === "nao_comecou" && CRM.iniciarAula) {
-          CRM.iniciarAula(lbl, dt, (realUser && realUser.nome) || "");
+      // A aula que a professora abre é a que ela está olhando: a turma
+      // e o dia escolhidos na chamada. Sem amarrar a hoje — ela abre
+      // quando quiser.
+      ...(() => {
+        const ehTurma = !!turmaSel && !evSel && !partSel;
+        const viva = ehTurma && CRM.aulaViva ? CRM.aulaViva(turmaSel, dataSel) : null;
+        const aberta = !!(viva && viva.estado === "aberta");
+        // os slides são da SESSÃO: achar qual sessão é esta data
+        const uCh = ehTurma ? (CRM.turmasLista() || [])
+          .filter(x => (x.nivel + " · " + x.turma) === turmaSel)[0] : null;
+        const chSal = ehTurma && CRM.getChamada ? CRM.getChamada(turmaSel, dataSel) : null;
+        let nSessao = (chSal && parseInt(chSal.sessao, 10)) || 0;
+        if (!nSessao && uCh && CRM.datasDasSessoes) {
+          const mapa = CRM.datasDasSessoes(uCh.id) || {};
+          Object.keys(mapa).forEach(k => { if (mapa[k] && mapa[k].data === dataSel) nSessao = parseInt(k, 10); });
         }
-        this.setState({ emAula: { label: lbl, data: dt }, vivoAluna: null,
-          vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });
-      },
+        const plano = uCh && nSessao && CRM.planoDaTurma
+          ? CRM.planoDaTurma(uCh.id, nSessao) : null;
+        return {
+          podeComecarAula: ehTurma,
+          comecarAulaLabel: aberta
+            ? "▶ " + Tr("Back to the open class", "Voltar para a aula aberta")
+            : "▶ " + Tr("Start class and open the notebook", "Iniciar aula e abrir o caderno"),
+          comecarAulaNota: aberta
+            ? Tr("The notebook is open for writing. It closes when you end the class.",
+                 "O caderno está aberto para escrita. Ele fecha quando você encerrar a aula.")
+            : Tr("The students' notebook only opens for writing when you start the class.",
+                 "O caderno das alunas só abre para edição quando você inicia a aula."),
+          temSlidesDaAula: !!(plano && plano.slides),
+          slidesDaAula: (plano && plano.slides) || "#",
+          slidesLabel: "▶ " + Tr("Slides", "Slides"),
+          onComecarAula: () => {
+            if (!turmaSel || !dataSel) return;
+            const v = CRM.aulaViva ? CRM.aulaViva(turmaSel, dataSel) : null;
+            if ((!v || v.estado === "nao_comecou") && CRM.iniciarAula) {
+              CRM.iniciarAula(turmaSel, dataSel, (realUser && realUser.nome) || "");
+            }
+            this.setState({ emAula: { label: turmaSel, data: dataSel }, vivoAluna: null,
+              vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });
+          }
+        };
+      })(),
       onVoltarTurmas: () => this.setState({ turmaAberta: false }),
       // O título é de quem trabalha. Quando a escola confere o painel
       // de outra pessoa, ele diz isso em voz alta: olhar o painel da
@@ -2601,6 +2669,26 @@ class Component extends DCLogic {
 
       // ── CLUBES (arquivo 12) ──
       clVazio: clubesNoNome.length === 0,
+      // quem cuida da escola também vê que existem os das colegas
+      ...(() => {
+        const vêTudo = !(CRM.professoraDaVisao && CRM.professoraDaVisao());
+        const dosOutros = vêTudo
+          ? (CRM.clubesLista ? CRM.clubesLista() : [])
+              .filter(c => (c.professora || "") !== teacher)
+              .sort((a2, b2) => (a2.nome || "") < (b2.nome || "") ? -1 : 1)
+          : [];
+        return {
+          clTemDosOutros: dosOutros.length > 0,
+          clDosOutrosTitulo: Tr("Clubs of the other teachers", "Clubes das outras professoras"),
+          clDosOutros: dosOutros.map(c => ({
+            nome: c.nome,
+            quem: c.professora || Tr("no teacher", "sem professora"),
+            status: c.status === "publicado" ? Tr("published", "publicado") : Tr("draft", "rascunho"),
+            statusBg: c.status === "publicado" ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
+            statusFg: c.status === "publicado" ? "var(--color-success-dark)" : "var(--color-tertiary-500)"
+          }))
+        };
+      })(),
       onClNovo: () => {
         const r = CRM.clubeSalvar({ nome: Tr("New club", "Clube novo"),
           professora: teacher, formato: "online", nivel: "todos", vagas: 8,
@@ -2992,9 +3080,46 @@ class Component extends DCLogic {
         const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
         const B = !A && grupos.length > 0;
         const C = !A && !B && !!aulaDoDia;
-        const maisAntiga = (grupos[0] && grupos[0].aulas && grupos[0].aulas[0]) || null;
+        // A MAIS ANTIGA DE VERDADE.
+        // Era grupos[0].aulas[0]: a primeira aula do grupo com MAIS
+        // pendências, que não é a mais antiga nem por acaso. O hero
+        // escrevia uma data e o resto da tela trabalhava com outra.
+        const pendentesTodas = grupos
+          .reduce((acc, g) => acc.concat(g.aulas || []), [])
+          .slice()
+          .sort((x, y) => (x.data < y.data ? -1 : x.data > y.data ? 1 : 0));
+        const maisAntiga = pendentesTodas[0] || null;
         const outraData = () => this.setState({ aba: "turmas", turmaAberta: true,
           tTab: "chamadas", escolhendoData: true });
+        // ABRIR A AULA QUE O BOTÃO PROMETE.
+        // O botão dizia "Faça a chamada de 05/10 · Basics" e chamava
+        // outraData, que abre o seletor de data em HOJE. A professora
+        // lia uma data, clicava, e caía noutra.
+        const abrirPendente = (c) => {
+          if (!c) return outraData();
+          if (c.tipo === "particular") {
+            this.setState({ eventoChamada: null, particularChamada: c.pessoaId || null,
+              turmaChamada: null, chamadaData: c.data,
+              presencas: this.carregarChamada(c.label, c.data),
+              tarefas: null, salvouAgora: false });
+          } else if (c.tipo === "extra") {
+            this.setState({ eventoChamada: c.eventoId || null, particularChamada: null,
+              turmaChamada: c.label, chamadaData: c.data,
+              presencas: this.carregarChamada(c.label, c.data, c.eventoId),
+              tarefas: null, salvouAgora: false });
+          } else {
+            this.setState({ eventoChamada: null, particularChamada: null,
+              turmaChamada: c.label, chamadaData: c.data,
+              presencas: this.carregarChamada(c.label, c.data),
+              tarefas: null, salvouAgora: false });
+          }
+          this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas",
+            escolhendoData: false });
+          setTimeout(() => {
+            const el = this.chamadaRef.current;
+            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 60);
+        };
         // a sessão e o tema da aula que o hero mostra
         // Qual sessão é esta aula, e com que tema.
         //
@@ -3052,7 +3177,7 @@ class Component extends DCLogic {
               : Tr("Catch up on the attendance you owe", "Faça as chamadas que ficaram para trás"),
             temHeroPrincipal: true,
             heroPrincipal: Tr("Take attendance", "Fazer chamada"),
-            onHeroPrincipal: outraData,
+            onHeroPrincipal: maisAntiga ? () => abrirPendente(maisAntiga) : outraData,
             heroAcoes: [
               { label: Tr("See all", "Ver todas"), onClick: () => this.setState({ verSemChamada: true }) }
             ]
@@ -3786,7 +3911,7 @@ class Component extends DCLogic {
       })(),
       // Regravar diz o que o botão faz quando já existe chamada salva: a
       // nova entra no lugar da anterior, não ao lado dela.
-      salvarLabel: salva ? "Regravar chamada" : "Salvar chamada",
+      salvarLabel: salva ? Tr("Save attendance again", "Regravar chamada") : Tr("Save attendance", "Salvar chamada"),
 
       // ── chamadas já feitas: abrir para corrigir ──
       // Antes, corrigir uma chamada salva exigia lembrar em que dia ela foi
@@ -3975,24 +4100,25 @@ class Component extends DCLogic {
         { letra: "F", label: "faltou", bg: "rgba(207,107,92,0.14)", fg: "var(--color-error)" },
         { letra: "J", label: "justificada", bg: "rgba(107,91,149,0.14)", fg: "#6b5b95" }
       ],
-      turmaVaziaLabel: turmaSel || "Esta turma",
+      turmaVaziaLabel: turmaSel || Tr("This class", "Esta turma"),
       resumoChamada: alunas.length
         ? (nFal + nJus === 0
-            ? "Todas presentes" + (nAtr ? ", " + nAtr + " com atraso" : "") + "."
-            : nPres + " de " + alunas.length + " presentes"
-              + (nAtr ? " (" + nAtr + " com atraso)" : "")
-              + " · " + (nFal + nJus) + (nFal + nJus === 1 ? " ausente" : " ausentes")
-              + (nJus ? ", " + nJus + " com aviso" : "") + ".")
+            ? Tr("Everyone present", "Todas presentes")
+              + (nAtr ? ", " + nAtr + Tr(" late", " com atraso") : "") + "."
+            : nPres + Tr(" of ", " de ") + alunas.length + Tr(" present", " presentes")
+              + (nAtr ? " (" + nAtr + Tr(" late", " com atraso") + ")" : "")
+              + " · " + (nFal + nJus) + (nFal + nJus === 1 ? Tr(" absent", " ausente") : Tr(" absent", " ausentes"))
+              + (nJus ? ", " + nJus + Tr(" with notice", " com aviso") : "") + ".")
         : "",
       salvouAgora: this.state.salvouAgora,
       gravacaoRef: this.gravacaoRef,
       gravacaoAtual: (() => {
         const g = turmaSel && dataSel && CRM.gravacaoDaAula ? CRM.gravacaoDaAula(turmaSel, dataSel) : null;
-        return g && g.link ? g.link : "Link da gravação desta aula";
+        return g && g.link ? g.link : Tr("Link to this class recording", "Link da gravação desta aula");
       })(),
       gravacaoBtn: (() => {
         const g = turmaSel && dataSel && CRM.gravacaoDaAula ? CRM.gravacaoDaAula(turmaSel, dataSel) : null;
-        return g && g.link ? "Trocar" : "Salvar gravação";
+        return g && g.link ? Tr("Replace", "Trocar") : Tr("Save recording", "Salvar gravação");
       })(),
       onSalvarGravacao: () => {
         const link = (this.gravacaoRef.current && this.gravacaoRef.current.value || "").trim();
@@ -4030,10 +4156,13 @@ class Component extends DCLogic {
             this.setState({ topicoChamada: e.target.value, sessaoChave: chave });
           },
           temSessoes: sessoes.length > 0,
-          sessoesOpts: [{ v: "0", label: "— não digo qual —", sel: !sessaoSel }]
+          // "— não digo qual —" era o texto desta opção. Numa lista que
+          // a professora abre no fim da aula, o normal é escolher, e o
+          // rótulo tem de dizer o que fazer, não resmungar.
+          sessoesOpts: [{ v: "0", label: Tr("Choose the session", "Escolha a sessão"), sel: !sessaoSel }]
             .concat(sessoes.map(x => ({ v: String(x.n),
-              label: "Sessão " + x.n + (x.titulo ? " · " + x.titulo : "")
-                + (x.estado === "publicada" ? "" : " (não publicada)"),
+              label: Tr("Session ", "Sessão ") + x.n + (x.titulo ? " · " + x.titulo : "")
+                + (x.estado === "publicada" ? "" : Tr(" (plan not published)", " (plano não publicado)")),
               sel: x.n === sessaoSel }))),
           onSessao: (e) => {
             const n = parseInt(e.target.value, 10) || 0;
@@ -4044,13 +4173,16 @@ class Component extends DCLogic {
               ? nova.titulo : topicoValor;
             this.setState({ sessaoChamada: n, sessaoChave: chave, topicoChamada: novoTopico });
           },
-          validaLabel: valida ? "aula validada" : "falta o tópico",
+          validaLabel: valida ? Tr("class counts", "aula validada")
+            : Tr("needs the topic", "falta o tópico"),
           validaBg: valida ? "var(--color-secondary-100)" : "var(--color-warning-light)",
           validaFg: valida ? "var(--color-success-dark)" : "var(--color-warning-dark)",
           temAvisoPlano: !!(sess && sess.estado !== "publicada"),
           avisoPlano: sess && sess.estado !== "publicada"
-            ? "O plano da sessão " + sess.n + " ainda não está publicado, então as "
-              + "atividades não aparecem no caderno das alunas. Publique em Turma → Plano das aulas."
+            ? Tr("The plan for session " + sess.n + " is not published yet, so its activities "
+                 + "do not reach the students' notebooks. Publish it in Class → Lesson plan.",
+                 "O plano da sessão " + sess.n + " ainda não está publicado, então as "
+                 + "atividades não aparecem no caderno das alunas. Publique em Turma → Plano das aulas.")
             : ""
         };
       })(),
