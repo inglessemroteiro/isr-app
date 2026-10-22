@@ -455,16 +455,30 @@
           </div>
         </sc-if>
 
-        <!-- as palavras da aula -->
-        <sc-if value="{{ cadTemPalavras }}">
-          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.palavrasDaAula }}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <sc-for list="{{ cadPalavras }}" as="pw" hint-placeholder-count="6">
-                <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ pw }}</span>
-              </sc-for>
-            </div>
-          </section>
+        <!-- os cartões de apoio: palavras e começos de frase -->
+        <sc-if value="{{ cadTemApoio }}">
+          <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+            <sc-if value="{{ cadTemPalavras }}">
+              <section style="flex:1 1 280px;min-width:260px;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.palavrasDaAula }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ cadPalavras }}" as="pw" hint-placeholder-count="6">
+                    <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ pw }}</span>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+            <sc-if value="{{ cadTemStarters }}">
+              <section style="flex:1 1 280px;min-width:260px;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.startersDaAula }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ cadStarters }}" as="st" hint-placeholder-count="4">
+                    <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-primary-50);color:var(--color-primary-800)">{{ st }}</span>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-if>
+          </div>
         </sc-if>
 
         <!-- 🔒 enquanto a professora não abre a aula -->
@@ -483,8 +497,6 @@
           </section>
         </sc-if>
 
-        <!-- o que ainda não tem onde morar -->
-        <div style="font-size:13px;line-height:1.6;color:var(--color-tertiary-700);max-width:640px">{{ cadFaltaNota }}</div>
       </sc-if>
       <!-- A AULA AO VIVO -->
       <!-- Enquanto a professora mantém a aula aberta, as tarefas do
@@ -1189,6 +1201,7 @@ class Component extends DCLogic {
       slidesDaAula: T("class slides", "slides da aula"),
       abrirSlides: T("Open the slides →", "Abrir os slides →"),
       gravacaoDaAula: T("class recording", "gravação da aula"),
+      startersDaAula: T("sentence starters", "começos de frase"),
       palavrasDaAula: T("words from this class", "palavras desta aula"),
       homework: T("homework", "tarefa de casa"),
       // ── caderno ──
@@ -1333,7 +1346,8 @@ class Component extends DCLogic {
       cadTemGravacao: false, cadGravacao: "#", cadTemPalavras: false, cadPalavras: [],
       cadTrancado: false, cadTrancadoTexto: "", cadTemHomework: false, cadHomework: "",
       cadHwFeito: false, cadHwBorda: "", cadHwEstado: "",
-      cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {}, cadFaltaNota: "",
+      cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {},
+      cadTemStarters: false, cadStarters: [], cadTemApoio: false,
       cadSemObjetivo: false, cadTemMaterial: false,
       temPulso: false, pulsoTitulo: "", pulsoSub: "", pulsoPerguntar: false,
       pulsoNotas: [], pulsoComentar: false, pulsoTexto: "",
@@ -2077,7 +2091,10 @@ class Component extends DCLogic {
 
           // 🎯 o que você vai saber ao sair daqui
           cadTemObjetivo: !!(plano && plano.objetivo),
-          cadObjetivo: (plano && plano.objetivo) || "",
+          // o mesmo corte das metas: "By the end of this session the
+          // student can…" é cabeçalho de documento, não fala com ela
+          cadObjetivo: (CRM.objetivoSemFormula && plano
+            ? CRM.objetivoSemFormula(plano.objetivo) : (plano && plano.objetivo)) || "",
 
           cadTemSlides: !!(plano && plano.slides),
           cadSlides: (plano && plano.slides) || "#",
@@ -2124,9 +2141,15 @@ class Component extends DCLogic {
           // sistema. Ficam escritas na tela em vez de inventadas.
           cadSemObjetivo: !(plano && plano.objetivo),
           cadTemMaterial: !!((plano && plano.slides) || (sel && sel.aula && sel.aula.gravacao)),
-          cadFaltaNota: T(
-            "Recording audio, sending a photo and the sentence starters are in the design but have nowhere to be stored yet.",
-            "Gravar áudio, mandar foto e os sentence starters estão no desenho, mas ainda não têm onde ser guardados no sistema.")
+          // os começos de frase que a professora escreveu no plano
+          ...(() => {
+            const st = (plano && plano.starters) || [];
+            const pw = (plano && plano.palavras) || [];
+            return {
+              cadTemStarters: st.length > 0, cadStarters: st,
+              cadTemApoio: st.length > 0 || pw.length > 0
+            };
+          })()
         };
       })(),
       // Só a aula da sessão aberta: a faixa de cima é a navegação
