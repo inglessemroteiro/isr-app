@@ -995,6 +995,14 @@
             <span style="font-size:14px;font-weight:700">{{ L.editarPerfil }}</span>
             <span style="font-size:14px;color:var(--color-text-light);font-weight:800">→</span>
           </div>
+          <!-- Quem é da equipe E aluna tem porta para o outro lado:
+               sem isso, quem entrou por aqui ficava preso aqui. -->
+          <sc-if value="{{ tambemEquipe }}">
+            <a href="ISR%20-%20Central%20v3.dc.html" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--color-button-secondary);text-decoration:none;color:inherit">
+              <span style="font-size:14px;font-weight:700">{{ L.areaEquipe }}</span>
+              <span style="font-size:14px;color:var(--color-text-light);font-weight:800">→</span>
+            </a>
+          </sc-if>
           <a href="{{ linkSenha }}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--color-button-secondary);text-decoration:none;color:inherit">
             <span style="font-size:14px;font-weight:700">{{ L.trocarSenha }}</span>
             <span style="font-size:14px;color:var(--color-text-light);font-weight:800">→</span>
@@ -1276,6 +1284,7 @@ class Component extends DCLogic {
       idioma: T("Language", "Idioma"),
       editarPerfil: T("Edit my profile", "Editar o meu perfil"),
       trocarSenha: T("Change my password", "Trocar a minha senha"),
+      areaEquipe: T("School team area", "Área da equipe"),
       configNota: T("There is no notification switch yet: the school does not store that choice anywhere.",
         "Ainda não há chave de avisos: a escola não guarda essa escolha em lugar nenhum."),
       semLinkPag: T("The school has not registered a payment link yet, so there is no button to pay here. Until then, payment is arranged with the school.",
@@ -1373,6 +1382,7 @@ class Component extends DCLogic {
       milesExtrato: [],
       temGrade: false, semGrade: true, grade: [], legenda: [], regra75: "",
       temDocs: false, docs: [], langTabs: [], goPerfil: () => {}, linkSenha: "aluna.html",
+      tambemEquipe: false,
       semLinkPag: false,
       temMetas: false, semMetas: true, metas: [], metasBarras: [],
       metasTitulo: "", metasContagem: ""
@@ -2763,7 +2773,9 @@ class Component extends DCLogic {
           // a senha é do Netlify Identity e se troca no portão, que é
           // onde ela já existe. Repetir o formulário aqui seria uma
           // segunda porta para a mesma fechadura.
-          linkSenha: "aluna.html"
+          linkSenha: "aluna.html",
+          // ela é colaboradora também? então tem porta para a gestão
+          tambemEquipe: !!(CRM.papeisDeGestao && CRM.papeisDeGestao(p.email || "").length)
         };
       })(),
       milesExtrato: (moedas.extrato || []).slice().reverse().slice(0, 6).map(m => ({

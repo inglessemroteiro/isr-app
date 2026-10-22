@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.21-g",
-  data: "21/10/2026",
-  nota: "A loja pelo lado da escola: o que está em cartaz e cancelar resgate"
+  numero: "2026.10.22-a",
+  data: "22/10/2026",
+  nota: "Quem é da equipe e aluna escolhe por onde entra, e troca de lado"
 };

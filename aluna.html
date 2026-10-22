@@ -82,6 +82,19 @@
     <button class="suave" onclick="voltarAoLogin()">Voltar</button>
   </div>
 
+  <!-- QUEM É DAS DUAS COISAS -->
+  <!-- A Érika é colaboradora e aluna. O portão testava a equipe
+       primeiro e mandava para a gestão: ela nunca conseguia abrir o
+       próprio app. Quem é das duas escolhe, toda vez — é um toque, e
+       não há jeito de adivinhar em qual dos dois papéis ela entrou
+       hoje. -->
+  <div class="tela" id="telaEscolher">
+    <h1>Por onde você entra hoje?</h1>
+    <p>Você é da equipe da escola e também é aluna. Escolha a área — dá para voltar à outra a qualquer momento, sem sair.</p>
+    <button onclick="irParaGestao()">Área da equipe</button>
+    <button class="suave" onclick="irParaAluna()">Meu app de aluna</button>
+  </div>
+
   <!-- fluxo antigo, só quando o Identity não responde -->
   <div class="tela" id="telaEmail">
     <p>Entre com o e-mail usado na matrícula.</p>
@@ -93,7 +106,7 @@
   <p class="nota" id="notaRodape">Equipe da escola entra por aqui também — o sistema identifica o e-mail e abre a gestão.</p>
 </div>
 <script>
-  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail"];
+  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
   // O título era "Área da aluna" em cima de TODAS as telas — e o
   // e-mail de convite e de redefinição de senha do Netlify aponta para
   // a raiz do site, que é esta página, tanto para a aluna quanto para a
@@ -173,8 +186,16 @@
       setTimeout(segue, 12000);
       return;
     }
-    // liberarGestao devolve null para quem não é da equipe (ou é
-    // prestadora sem acesso) — aí a busca segue pelo lado das alunas
+    // Quem é das duas coisas escolhe. papeisDeGestao pergunta sem
+    // abrir sessão: liberarGestao grava a sessão da gestão como
+    // efeito, e usá-la para perguntar já logava a pessoa antes de ela
+    // decidir.
+    if (C.ehEquipeEAluna && C.ehEquipeEAluna(e)) {
+      emailEscolhendo = e;
+      mostrar("telaEscolher");
+      return;
+    }
+    // só equipe: direto para a gestão
     if (C.liberarGestao(e)) {
       window.location.replace(voltar || "ISR%20-%20Central%20v3.dc.html");
       return;
@@ -190,6 +211,27 @@
     if (acesso.situacao === "encerrado") { mostrarReativar(); return; }
     document.getElementById("emailNaoEncontrado").textContent = email;
     mostrar("telaNaoEncontrada");
+  }
+
+  // ── quem é das duas coisas escolheu ──
+  var emailEscolhendo = "";
+  function irParaGestao() {
+    var C = window.ISRCRM;
+    if (!C || !emailEscolhendo) return;
+    C.liberarGestao(emailEscolhendo);
+    window.location.replace("ISR%20-%20Central%20v3.dc.html");
+  }
+  function irParaAluna() {
+    var C = window.ISRCRM;
+    if (!C || !emailEscolhendo) return;
+    var acesso = C.acessoPorEmail(emailEscolhendo);
+    if (!acesso || !acesso.pessoa) return;
+    // a sessão de gestão fica fora: ela entrou como aluna
+    try {
+      localStorage.setItem("isr_aluna_id", acesso.pessoa.id);
+      localStorage.removeItem("isr_gestao_user");
+    } catch (er) {}
+    window.location.replace("ISR%20-%20Aluna%20v4.dc.html");
   }
 
   // ── acesso encerrado: quem resolve é a escola, pelo WhatsApp ──

@@ -420,6 +420,40 @@
       catch (e) { try { localStorage.removeItem("isr_gestao_user"); } catch (e2) {} }
       window.location.href = "gestao.html";
     };
+    // ── quem é da equipe E aluna da escola ──────────────────────
+    // A Érika é as duas coisas. Sem esta porta, quem entrou pela
+    // gestão não chega ao próprio app sem deslogar.
+    //
+    // Vale o e-mail REAL, não o do "ver como": a gestora olhando pelos
+    // olhos de outra pessoa não deve ganhar porta para o app dela.
+    // O botão só nasce se for o caso: um controle escondido no DOM
+    // ainda é um controle, e aparece em busca, em leitor de tela e em
+    // qualquer conferência automática.
+    //
+    // O shell desenha antes de o crm-data existir, então a pergunta é
+    // feita depois — e de novo quando os dados chegam do servidor.
+    var verSeEhAluna = function () {
+      try {
+        if (!window.ISRCRM || !window.ISRCRM.ehEquipeEAluna) return;
+        if (document.getElementById("isr-shell-meu-app")) return;
+        if (!window.ISRCRM.ehEquipeEAluna(real.email || "")) return;
+        var meuApp = document.createElement("button");
+        meuApp.id = "isr-shell-meu-app";
+        meuApp.textContent = "meu app de aluna";
+        meuApp.style.cssText = "border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.7);"
+          + "font-size:10.5px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;font-family:inherit;";
+        meuApp.onclick = function () {
+          var a = window.ISRCRM.acessoPorEmail(real.email || "");
+          if (!a || !a.pessoa) return;
+          try { localStorage.setItem("isr_aluna_id", a.pessoa.id); } catch (e) {}
+          window.location.href = "ISR%20-%20Aluna%20v4.dc.html";
+        };
+        linha.insertBefore(meuApp, ver);
+      } catch (e) {}
+    };
+    setTimeout(verSeEhAluna, 0);
+    try { window.addEventListener("isr-dados", verSeEhAluna); } catch (e) {}
+
     linha.appendChild(ver); linha.appendChild(sair);
     pe.appendChild(linha);
     aside.appendChild(pe);
