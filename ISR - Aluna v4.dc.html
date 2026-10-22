@@ -466,6 +466,12 @@
                     <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ pw }}</span>
                   </sc-for>
                 </div>
+                <sc-if value="{{ cadPodeGuardar }}">
+                  <div><button onclick="{{ onGuardarPalavras }}" style="margin-top:4px;border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:10px 17px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ cadGuardarLabel }}</button></div>
+                </sc-if>
+                <sc-if value="{{ cadJaGuardou }}">
+                  <div style="font-size:12.5px;font-weight:700;color:var(--color-secondary-900)">{{ L.palavrasGuardadas }}</div>
+                </sc-if>
               </section>
             </sc-if>
             <sc-if value="{{ cadTemStarters }}">
@@ -485,6 +491,26 @@
         <sc-if value="{{ cadTrancado }}">
           <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;font-size:15px;line-height:1.6;color:var(--color-primary-800)">🔒 {{ cadTrancadoTexto }}</section>
         </sc-if>
+
+        <!-- AS TAREFAS DA SESSÃO, UM CARTÃO CADA -->
+        <sc-for list="{{ cadTarefas }}" as="tf" hint-placeholder-count="3">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ tf.rotulo }}</div>
+            <div style="font-size:17px;font-weight:700;line-height:1.45;color:var(--color-primary-900)">{{ tf.pergunta }}</div>
+            <sc-if value="{{ tf.aberta }}">
+              <textarea value="{{ tf.resposta }}" onchange="{{ tf.onResposta }}" rows="4" maxlength="4000" placeholder="{{ L.respostaPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical"></textarea>
+            </sc-if>
+            <sc-if value="{{ tf.lida }}">
+              <div style="background:var(--color-bg-cell);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.6;white-space:pre-wrap;color:var(--color-primary-900)">{{ tf.respostaLida }}</div>
+            </sc-if>
+            <sc-if value="{{ tf.espera }}">
+              <div style="background:var(--color-bg-cell);border:1px dashed var(--color-border);border-radius:14px;padding:13px 16px;font-size:14.5px;line-height:1.55;color:var(--color-tertiary-500)">{{ tf.esperaTexto }}</div>
+            </sc-if>
+            <sc-for list="{{ tf.comentarios }}" as="cm" hint-placeholder-count="1">
+              <div style="background:var(--color-primary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.55;color:var(--color-primary-900)">{{ cm.texto }} <span style="color:var(--color-tertiary-700)">· {{ cm.quem }}</span></div>
+            </sc-for>
+          </section>
+        </sc-for>
 
         <!-- a tarefa de casa -->
         <sc-if value="{{ cadTemHomework }}">
@@ -513,22 +539,6 @@
         <sc-if value="{{ vivoSemTarefas }}">
           <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:14px;line-height:1.6;color:var(--color-primary-800)">{{ L.vivoSemTarefas }}</section>
         </sc-if>
-
-        <sc-for list="{{ vivoTarefas }}" as="vt" hint-placeholder-count="3">
-          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ vt.rotulo }}</div>
-            <div style="font-size:16px;font-weight:700;line-height:1.45;color:var(--color-primary-900)">{{ vt.pergunta }}</div>
-            <sc-if value="{{ vt.aberta }}">
-              <textarea value="{{ vt.resposta }}" onchange="{{ vt.onResposta }}" rows="4" maxlength="4000" placeholder="{{ L.respostaPh }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-tertiary-50);border-radius:16px;padding:12px 14px;font-size:15px;font-family:inherit;color:var(--color-primary-900);resize:vertical"></textarea>
-            </sc-if>
-            <sc-if value="{{ vt.fechada }}">
-              <div style="background:var(--color-bg-default);border-radius:16px;padding:13px 16px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;color:{{ vt.cor }}">{{ vt.respostaLida }}</div>
-            </sc-if>
-            <sc-for list="{{ vt.comentarios }}" as="cm" hint-placeholder-count="1">
-              <div style="background:var(--color-primary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.55;color:var(--color-primary-900)">{{ cm.texto }} <span style="color:var(--color-tertiary-700)">· {{ cm.quem }}</span></div>
-            </sc-for>
-          </section>
-        </sc-for>
       </sc-if>
 
       <sc-if value="{{ temTarefaAtual }}">
@@ -601,7 +611,6 @@
         </section>
       </sc-for>
 
-      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.cadernoEmObra }}</section>
     </sc-if>
 
     <!-- REVIEW · o cofre de palavras -->
@@ -1202,6 +1211,7 @@ class Component extends DCLogic {
       abrirSlides: T("Open the slides →", "Abrir os slides →"),
       gravacaoDaAula: T("class recording", "gravação da aula"),
       startersDaAula: T("sentence starters", "começos de frase"),
+      palavrasGuardadas: T("✓ saved to your Review", "✓ guardadas no seu Review"),
       palavrasDaAula: T("words from this class", "palavras desta aula"),
       homework: T("homework", "tarefa de casa"),
       // ── caderno ──
@@ -1218,8 +1228,6 @@ class Component extends DCLogic {
       semTopico: T("class given", "aula dada"),
       entregou: T("homework delivered", "tarefa entregue"),
       naoEntregou: T("homework not delivered", "tarefa não entregue"),
-      cadernoEmObra: T("The tasks of a lesson show up here while the class is open: your teacher opens the notebook, you answer, and she reads it while you write. What is above is your record of the classes, and it stays.",
-        "As tarefas da aula aparecem aqui enquanto a aula está aberta: a professora abre o caderno, você responde, e ela lê enquanto você escreve. O que está acima é o seu registro das aulas, e ele fica."),
       // ── a aula ao vivo ──
       respostaPh: T("Write your answer here…", "Escreva a sua resposta aqui…"),
       vivoSemTarefas: T("This class has no task with a question yet. When your teacher publishes the lesson plan, the tasks show up here.",
@@ -1348,6 +1356,9 @@ class Component extends DCLogic {
       cadHwFeito: false, cadHwBorda: "", cadHwEstado: "",
       cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {},
       cadTemStarters: false, cadStarters: [], cadTemApoio: false,
+      cadTemTarefas: false, cadTarefas: [],
+      cadPodeGuardar: false, cadJaGuardou: false, cadGuardarLabel: "",
+      onGuardarPalavras: () => {},
       cadSemObjetivo: false, cadTemMaterial: false,
       temPulso: false, pulsoTitulo: "", pulsoSub: "", pulsoPerguntar: false,
       pulsoNotas: [], pulsoComentar: false, pulsoTexto: "",
@@ -2141,13 +2152,79 @@ class Component extends DCLogic {
           // sistema. Ficam escritas na tela em vez de inventadas.
           cadSemObjetivo: !(plano && plano.objetivo),
           cadTemMaterial: !!((plano && plano.slides) || (sel && sel.aula && sel.aula.gravacao)),
+          // ── AS TAREFAS DA SESSÃO, UM CARTÃO CADA (arquivo 02) ──
+          //
+          // Elas só existiam enquanto a aula estava aberta, e antes
+          // disso a tela trazia um parágrafo explicando que iam
+          // aparecer. O arquivo pede os cartões À MOSTRA, com o campo
+          // fechado e dizendo quando abre: a aluna chega na aula
+          // sabendo o que vai fazer.
+          ...(() => {
+            const tarefas = ((plano && plano.atividades) || [])
+              .filter(a2 => a2 && String(a2.pergunta || "").trim());
+            const dataSess = sel ? sel.data : "";
+            const vivaAqui = !!(viva && dataSess && viva.data === dataSess
+              && viva.estado === "ao_vivo");
+            const minhas = (dataSess && CRM.respostasDaAluna)
+              ? CRM.respostasDaAluna(p.id, p.turma, dataSess)
+              : { respostas: {}, comentarios: {} };
+            const quando = dataSess ? CRM.ddmm(dataSess) : "";
+            return {
+              cadTemTarefas: tarefas.length > 0,
+              cadTarefas: tarefas.map((t2, i) => {
+                const r = minhas.respostas[String(i)] || null;
+                const texto = r ? String(r.t || "") : "";
+                return {
+                  rotulo: T("step ", "passo ") + (i + 1)
+                    + (t2.fase ? " · " + t2.fase : ""),
+                  pergunta: t2.pergunta,
+                  aberta: vivaAqui,
+                  resposta: texto,
+                  // fechada com resposta = o que ela escreveu na aula;
+                  // fechada sem resposta = ainda vai abrir
+                  lida: !vivaAqui && !!texto.trim(),
+                  espera: !vivaAqui && !texto.trim(),
+                  respostaLida: texto,
+                  esperaTexto: quando
+                    ? T("Opens when your teacher starts the class, on ",
+                        "Abre quando a professora começar a aula, em ") + quando
+                    : T("Opens when your teacher starts the class.",
+                        "Abre quando a professora começar a aula."),
+                  onResposta: (e) => {
+                    if (!vivaAqui) return;
+                    CRM.salvarResposta(p.id, viva.turma, viva.data, i, e.target.value);
+                    this.bump();
+                  },
+                  comentarios: (minhas.comentarios[String(i)] || []).map(c => ({
+                    texto: c.texto,
+                    quem: [c.por ? CRM.firstName(c.por) : "",
+                      c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
+                  }))
+                };
+              })
+            };
+          })(),
           // os começos de frase que a professora escreveu no plano
           ...(() => {
             const st = (plano && plano.starters) || [];
             const pw = (plano && plano.palavras) || [];
+            // "Add 5 words to my Review Vault" do arquivo 02. A marca
+            // da aula é o que diz se ela já guardou as desta sessão.
+            const marca = p.turma + " · " + (sel ? "sessão " + sel.n : "");
+            const jaGuardou = ((CRM.palavrasDaAluna && CRM.palavrasDaAluna(p.id)) || [])
+              .some(w => w && w.daAula === marca);
             return {
               cadTemStarters: st.length > 0, cadStarters: st,
-              cadTemApoio: st.length > 0 || pw.length > 0
+              cadTemApoio: st.length > 0 || pw.length > 0,
+              cadPodeGuardar: pw.length > 0 && !jaGuardou,
+              cadJaGuardou: pw.length > 0 && jaGuardou,
+              cadGuardarLabel: T("Add these words to my Review", "Guardar estas palavras no meu Review")
+                + " · +" + ((CRM.MOEDAS_REGRAS || {}).palavrasDaAula || 0) + " mi",
+              onGuardarPalavras: () => {
+                if (!sel || !CRM.guardarPalavrasDaAula) return;
+                CRM.guardarPalavrasDaAula(p.id, p.turma, sel.n, pw);
+                this.bump();
+              }
             };
           })()
         };
