@@ -1289,8 +1289,12 @@ class Component extends DCLogic {
         "Ainda não há chave de avisos: a escola não guarda essa escolha em lugar nenhum."),
       semLinkPag: T("The school has not registered a payment link yet, so there is no button to pay here. Until then, payment is arranged with the school.",
         "A escola ainda não cadastrou um link de pagamento, então não há botão para pagar aqui. Até lá, o pagamento é combinado com ela."),
-      semRecibo: T("A saved card and invoice PDFs do not exist in the system.",
-        "Cartão salvo e PDF de fatura não existem no sistema."),
+      // A escola decidiu não trazer fatura nem cartão salvo para cá: a
+      // cobrança vive no Asaas e no Stripe, e o recibo sai de lá. A
+      // tela diz onde pedir, em vez de confessar uma pendência que a
+      // aluna não precisa carregar.
+      semRecibo: T("Receipts and invoices are with the school — ask whenever you need one.",
+        "Recibo e fatura ficam com a escola — é só pedir quando precisar."),
       avisos: T("Notifications", "Avisos"),
       semAviso: T("Nothing new.", "Nada novo por aqui.")
     };
@@ -1551,8 +1555,8 @@ class Component extends DCLogic {
     const parcelas = meses.slice(0, 6).map(m => {
       const pago = !!m.pago;
       // A parcela em aberto leva ao link de pagamento que a escola já
-      // cadastrou (dela ou o padrão). Parcela paga não tem recibo em
-      // PDF: o sistema não guarda recibo nenhum.
+      // cadastrou (dela ou o padrão). Parcela paga não traz recibo: o
+      // recibo é do Asaas ou do Stripe, e a escola o envia.
       const link = pago ? "" : ((CRM.linkDePagamento
         && CRM.linkDePagamento(p.id, { valor: m.valor, mes: m.key })) || "");
       return { month: m.label || m.key, amount: m.valor || contrato.parcelaValor || "—",
@@ -2043,9 +2047,16 @@ class Component extends DCLogic {
           cadTemGravacao: !!(sel && sel.aula && sel.aula.gravacao),
           cadGravacao: (sel && sel.aula && sel.aula.gravacao) || "#",
 
-          cadTemPalavras: !!(plano && (plano.palavras || "").trim()),
-          cadPalavras: ((plano && plano.palavras) || "").split(",")
-            .map(w => w.trim()).filter(Boolean),
+          // plano.palavras é LISTA — limpaPalavras devolve array. Aqui
+          // era tratada como texto, e .trim() numa lista derrubava o
+          // renderVals inteiro assim que a aluna abria uma sessão com
+          // palavras. Aceita os dois: plano antigo guardou texto.
+          ...(() => {
+            const v = plano && plano.palavras;
+            const l = (Array.isArray(v) ? v : String(v || "").split(","))
+              .map(w => String(w || "").trim()).filter(Boolean);
+            return { cadTemPalavras: l.length > 0, cadPalavras: l };
+          })(),
 
           // 🔒 enquanto a professora não abre a aula, as tarefas não
           // aceitam resposta. Não é enfeite: o que ela escreve antes
