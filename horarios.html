@@ -662,7 +662,7 @@ $('#adminLink').addEventListener('click',function(e){ e.preventDefault(); $('#ta
 /* ── cartão do evento ─────────────────────────────────────────── */
 function renderEventCard(){
   var p=S.pesq;
-  if(!p){ $('#evTitle').textContent=PESQ_ID?'Pesquisa não encontrada':'Link sem pesquisa'; $('#evDesc').textContent=PESQ_ID?'Confira o link recebido. Ele precisa terminar com ?p= e o código da pesquisa.':'Este endereço precisa do código da pesquisa (?p=código). A professora gera o link na área de administração.'; $('#evMeta').innerHTML=''; return; }
+  if(!p){ $('#evTitle').textContent=PESQ_ID?'Pesquisa não encontrada':'Link sem pesquisa'; $('#evDesc').textContent=PESQ_ID?'Confira o link recebido. Ele precisa terminar com ?p= e o código da pesquisa.':'Use o link enviado pela professora: ele termina com ?p= e o código da pesquisa. Sem o código, a grade não aparece.'; $('#evMeta').innerHTML=''; return; }
   $('#evTitle').textContent=p.titulo||'Pesquisa sem título'; $('#evDesc').textContent=p.descricao||'';
   var a=p.inicio.split('-'), b=p.fim.split('-');
   var tzNote=p.fuso.replace(/_/g,' ');
@@ -698,10 +698,10 @@ $$('.tab').forEach(function(t){ t.addEventListener('click',function(){showTab(t.
   S.me.name=saved.name||''; S.me.email=saved.email||''; S.me.tz=validTz(saved.tz)?saved.tz:browserTz; S.groupTz=validTz(saved.groupTz)?saved.groupTz:browserTz;
   fillTzSelect($('#meTz'),S.me.tz); fillTzSelect($('#gTz'),S.groupTz);
   $('#meName').value=S.me.name; $('#meEmail').value=S.me.email; tzHint();
-  $('#whoami').textContent=PESQ_ID?'Pesquisa '+PESQ_ID:'';
+  $('#whoami').textContent=PESQ_ID?'Pesquisa '+PESQ_ID:'Nenhuma pesquisa no link';
   var pin=''; try{ pin=sessionStorage.getItem('isr.horarios.pin')||''; }catch(e){}
   if(pin){ $('#pinInput').value=pin; }
-  if(params.has('admin')||!PESQ_ID){ $('#tab-admin').hidden=false; if(!PESQ_ID) showTab('admin'); if(pin) enterAdmin(); }
+  if(params.has('admin')){ $('#tab-admin').hidden=false; showTab('admin'); if(pin) enterAdmin(); }
   loadPesquisa(PESQ_ID,false);
 })();
 })();
