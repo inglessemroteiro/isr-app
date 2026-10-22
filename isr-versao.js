@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-i",
+  numero: "2026.10.22-j",
   data: "22/10/2026",
-  nota: "O caderno da aluna nas duas telas do desenho, e o objetivo editável"
+  nota: "O fuso do clube: a hora de quem conduz, no relógio de quem olha"
 };

@@ -263,7 +263,16 @@
                   <div style="display:flex;gap:13px;align-items:center;background:{{ m.bg }};border-radius:16px;padding:12px 14px">
                     <span style="flex:none;width:30px;height:30px;border-radius:999px;display:grid;place-items:center;font-size:13px;font-weight:800;background:{{ m.nBg }};color:{{ m.nFg }}">{{ m.n }}</span>
                     <div style="flex:1;min-width:0">
-                      <div style="font-size:15px;font-weight:700">{{ m.date }}</div>
+                      <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+                        <span style="font-size:15px;font-weight:700">{{ m.date }}</span>
+                        <sc-if value="{{ m.temHora }}">
+                          <span style="font-size:15px;font-weight:700">{{ m.hora }}</span>
+                        </sc-if>
+                        <!-- a hora de quem conduz, quando o relógio dela é outro -->
+                        <sc-if value="{{ m.temFuso }}">
+                          <span style="font-size:12.5px;font-weight:600;opacity:.7">{{ m.fusoTexto }}</span>
+                        </sc-if>
+                      </div>
                       <div style="font-size:13.5px;opacity:.78;margin-top:1px">{{ m.topic }}</div>
                     </div>
                     <sc-if value="{{ m.temTag }}"><span style="flex:none;font-size:12px;font-weight:800;color:{{ m.tagCor }}">{{ m.tag }}</span></sc-if>
@@ -354,7 +363,12 @@
                     <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ m.dia }}</div>
                     <div style="font-size:11px;color:var(--color-tertiary-700)">{{ m.mes }}</div>
                   </div>
-                  <div style="flex:1;min-width:0;font-size:15px;color:var(--color-primary-900)">{{ m.topic }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:15px;color:var(--color-primary-900)">{{ m.topic }}</div>
+                    <sc-if value="{{ m.temHora }}">
+                      <div style="font-size:12.5px;color:var(--color-tertiary-700);margin-top:2px">{{ m.hora }}<sc-if value="{{ m.temFuso }}"> · {{ m.fusoTexto }}</sc-if></div>
+                    </sc-if>
+                  </div>
                 </div>
               </sc-for>
             </section>
@@ -1238,7 +1252,7 @@ class Component extends DCLogic {
       verDatas: T("See dates and details →", "Ver datas e detalhes →"),
       voltarClubes: T("← Back to all clubs", "← Voltar para todos os clubes"),
       sobreProf: T("about your teacher", "sobre a professora"),
-      ondeEncontra: T("where we meet", "onde a gente se encontra"),
+      ondeEncontra: T("where the club meets", "onde o clube se encontra"),
       verNoMapa: T("See on Google Maps →", "Ver no Google Maps →"),
       semDatas: T("The dates are not set yet.", "As datas ainda não foram marcadas."),
       revComecar: T("Start", "Começar"),
@@ -1685,7 +1699,39 @@ class Component extends DCLogic {
     const ondeDe = (c) => c.formato === "presencial"
       ? (c.local ? T("In person · ", "Presencial · ") + c.local : T("In person", "Presencial"))
       : T("Online", "Online");
-    const quandoDe = (c) => [c.dia, c.hora, c.duracao].filter(Boolean).join(" · ");
+    // ── O FUSO DO CLUBE ──────────────────────────────────────
+    //
+    // A escola tem professora no Brasil, na Holanda, na Indonésia e no
+    // Paquistão, e a aluna pode estar em qualquer um desses lugares. A
+    // hora guardada é a do relógio de quem conduz; aqui ela vira a do
+    // relógio de quem está lendo, com a outra escrita ao lado para a
+    // aluna saber de onde a hora veio.
+    const meuFuso = (CRM.fusoDoNavegador && CRM.fusoDoNavegador()) || "";
+    const horaDaqui = (c, e) => (CRM.horaDoEncontro
+      ? CRM.horaDoEncontro(c, e || {}, meuFuso)
+      : { hora: (e && e.hora) || (c && c.hora) || "", horaVisor: "", mesmoFuso: true, mudouDeDia: 0, semFuso: true });
+    // A hora para a linha de cima do cartão: a dela primeiro, e a de
+    // quem conduz entre parênteses quando os relógios são outros.
+    const horaLinha = (c, e) => {
+      const h = horaDaqui(c, e);
+      if (!h.hora) return "";
+      if (h.semFuso || h.mesmoFuso) return h.hora;
+      const vira = h.mudouDeDia > 0 ? " (+1)" : (h.mudouDeDia < 0 ? " (−1)" : "");
+      return h.horaVisor + vira + " · " + h.hora + " "
+        + CRM.fusoLabel(h.fusoEvento).split(" · ").pop();
+    };
+    // A linha de cima do cartão não é de um encontro: é o horário
+    // semanal. Converter precisa de uma data, porque o horário de
+    // verão muda a conta — usa-se o próximo encontro, e na falta dele
+    // o primeiro, que é a data em que esse horário vale.
+    const dataDeReferencia = (c) => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const l = (c.encontros || []).filter(e => e && e.data).map(e => e.data).sort();
+      return l.filter(d => d >= hoje)[0] || l[0] || hoje;
+    };
+    const quandoDe = (c) => [c.dia,
+      horaLinha(c, { data: dataDeReferencia(c), hora: c.hora }),
+      c.duracao].filter(Boolean).join(" · ");
     // ══ CLUBES · arquivo 04 ═══════════════════════════════════
     //
     // Meus clubes: pílulas para escolher, e UM aberto no cartão
@@ -1721,6 +1767,18 @@ class Component extends DCLogic {
         dia: d ? String(d.getDate()) : (texto ? texto.split(/[ ·]/)[0] : "—"),
         mes: d ? MES[d.getMonth()] : "",
         topic: (e && e.tema) || T("topic to come", "tema a definir"),
+        // a hora deste encontro no relógio dela
+        ...(() => {
+          const h = horaDaqui(c, e);
+          if (!h.hora) return { temHora: false, hora: "", temFuso: false, fusoTexto: "" };
+          if (h.semFuso || h.mesmoFuso) {
+            return { temHora: true, hora: h.hora, temFuso: false, fusoTexto: "" };
+          }
+          const vira = h.mudouDeDia > 0 ? T(" next day", " no dia seguinte")
+            : (h.mudouDeDia < 0 ? T(" day before", " no dia anterior") : "");
+          return { temHora: true, hora: h.horaVisor + vira, temFuso: true,
+            fusoTexto: h.hora + " " + CRM.fusoLabel(h.fusoEvento).split(" · ").pop() };
+        })(),
         passou,
         bg: passou ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.10)",
         nBg: passou ? "var(--color-secondary-500)" : "var(--color-button-primary)",
@@ -1745,7 +1803,10 @@ class Component extends DCLogic {
         name: c.nome, planoLabel: pl[0], planoBg: pl[1], planoFg: pl[2],
         slot: [c.professora ? T("with ", "com ") + c.professora : "", quandoDe(c), ondeDe(c)].filter(Boolean).join(" · "),
         temEncontros: (c.encontros || []).length > 0,
-        meetings: (c.encontros || []).map(e => ({ date: e.quando || "—", topic: e.tema || "" })),
+        meetings: (c.encontros || []).map(e => ({
+          date: [e.quando || (e.data ? CRM.ddmm(e.data) : "—"), horaLinha(c, e)]
+            .filter(Boolean).join(" · "),
+          topic: e.tema || "" })),
         temSala: !!c.link, link: c.link || "#",
         temMateriais: (c.materiais || []).length > 0,
         mats: (c.materiais || []).map(m => ({ t: m.label || T("material", "material"), href: m.link || "#" })),
@@ -2381,8 +2442,8 @@ class Component extends DCLogic {
           // O arquivo pede quatro passos. Três não têm dado nenhum no
           // sistema, e ficam escritos em vez de fingidos.
           revFaltaNota: T(
-            "The design also has sentence building, listening and speaking. Those need audio and sentences the system does not have yet — only the flashcards are real for now.",
-            "O desenho tem também montar frases, listening e speaking. Esses três precisam de áudio e de frases que o sistema ainda não tem — por enquanto só os flashcards são de verdade.")
+            "The design also has sentence building, listening and speaking. Those need audio and sentences the system does not store yet — for now the flashcards are the part that works.",
+            "O desenho tem também montar frases, listening e speaking. Esses três precisam de áudio e de frases que o sistema ainda não guarda — por enquanto os flashcards são a parte que funciona.")
         };
       })(),
       temRevisao: !!cartao, semRevisao: !cartao,
