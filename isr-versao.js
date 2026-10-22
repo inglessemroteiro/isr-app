@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-e",
+  numero: "2026.10.22-f",
   data: "22/10/2026",
-  nota: "A aula aberta vale em qualquer dia, e o plano guarda os começos de frase"
+  nota: "O clube da aluna pelo arquivo 04: emoji, encontros e material"
 };

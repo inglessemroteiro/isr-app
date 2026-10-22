@@ -243,41 +243,57 @@
         </sc-if>
 
         <sc-if value="{{ cbAberto }}">
-          <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:32px;padding:30px 32px;display:flex;flex-direction:column;gap:14px">
-            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
-              <div style="flex:1;min-width:160px;font-size:26px;font-weight:800;letter-spacing:-0.035em">{{ cbNome }}</div>
+          <!-- O cartão do clube, como no arquivo 04: emoji, nome, com
+               quem e quando, os encontros numerados com dia e tema, e
+               o CTA de entrar na reunião. -->
+          <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+          <section style="flex:1 1 420px;min-width:290px;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:32px;padding:30px 32px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+              <sc-if value="{{ cbTemEmoji }}"><span style="flex:none;font-size:30px;line-height:1.1">{{ cbEmoji }}</span></sc-if>
+              <div style="flex:1;min-width:160px">
+                <div style="font-size:26px;font-weight:800;letter-spacing:-0.035em">{{ cbNome }}</div>
+                <div style="font-size:14.5px;opacity:.85;margin-top:3px">{{ cbQuem }}</div>
+              </div>
               <span style="flex:none;border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:800;background:{{ cbPlanoBg }};color:{{ cbPlanoFg }}">{{ cbPlanoLabel }}</span>
             </div>
-            <div style="font-size:14.5px;opacity:.85">{{ cbQuem }}</div>
+
             <sc-if value="{{ cbTemEncontros }}">
-              <div style="display:flex;flex-direction:column;margin-top:4px">
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
                 <sc-for list="{{ cbEncontros }}" as="m" hint-placeholder-count="4">
-                  <div style="display:flex;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.14)">
-                    <div style="flex:none;width:62px;font-size:14px;font-weight:800;color:var(--color-button-primary)">{{ m.date }}</div>
-                    <div style="flex:1;min-width:0;font-size:15px">{{ m.topic }}</div>
-                    <span style="flex:none;font-size:11.5px;font-weight:700;opacity:.7">{{ m.tag }}</span>
+                  <div style="display:flex;gap:13px;align-items:center;background:{{ m.bg }};border-radius:16px;padding:12px 14px">
+                    <span style="flex:none;width:30px;height:30px;border-radius:999px;display:grid;place-items:center;font-size:13px;font-weight:800;background:{{ m.nBg }};color:{{ m.nFg }}">{{ m.n }}</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:15px;font-weight:700">{{ m.date }}</div>
+                      <div style="font-size:13.5px;opacity:.78;margin-top:1px">{{ m.topic }}</div>
+                    </div>
+                    <sc-if value="{{ m.temTag }}"><span style="flex:none;font-size:12px;font-weight:800;color:{{ m.tagCor }}">{{ m.tag }}</span></sc-if>
                   </div>
                 </sc-for>
               </div>
             </sc-if>
-            <sc-if value="{{ cbTemSala }}">
-              <div><a href="{{ cbLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:15px 26px;font-size:16px;font-weight:800;display:inline-block">{{ L.entrarEncontro }}</a></div>
+            <sc-if value="{{ cbSemEncontros }}">
+              <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:13px 15px;font-size:13.5px;line-height:1.55;opacity:.9">{{ L.cbSemDatas }}</div>
             </sc-if>
+
+            <sc-if value="{{ cbTemSala }}">
+              <div style="margin-top:4px"><a href="{{ cbLink }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:16px 28px;font-size:16.5px;font-weight:800;display:block;text-align:center">{{ L.entrarEncontro }} →</a></div>
+            </sc-if>
+            <div style="font-size:12.5px;line-height:1.55;opacity:.72">{{ cbRodape }}</div>
             <div><span onclick="{{ cbSair }}" style="font-size:13px;font-weight:700;opacity:.7;cursor:pointer">{{ L.sairClube }}</span></div>
           </section>
 
           <sc-if value="{{ cbTemMateriais }}">
-            <section style="background:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:10px">
-              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.material }}</div>
-              <div style="display:flex;gap:9px;flex-wrap:wrap">
-                <sc-for list="{{ cbMats }}" as="m" hint-placeholder-count="2">
-                  <a href="{{ m.href }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-bg-default);border-radius:999px;padding:10px 17px;font-size:14px;font-weight:700;color:var(--color-primary-900)">{{ m.t }}</a>
-                </sc-for>
-              </div>
+            <section style="flex:1 1 280px;min-width:260px;background:var(--color-neutral-0);border-radius:28px;padding:24px 26px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ cbMaterialTitulo }}</div>
+              <sc-for list="{{ cbMats }}" as="m" hint-placeholder-count="2">
+                <a href="{{ m.href }}" target="_blank" rel="noopener" style="display:flex;gap:10px;align-items:center;justify-content:space-between;text-decoration:none;padding:11px 0;border-bottom:1px solid var(--color-button-secondary)">
+                  <span style="flex:1;min-width:0;font-size:14.5px;font-weight:700;color:var(--color-primary-900)">{{ m.t }}</span>
+                  <span style="flex:none;font-size:12.5px;font-weight:700;color:var(--color-text-light)">{{ L.abrir }} →</span>
+                </a>
+              </sc-for>
             </section>
           </sc-if>
-
-          <div style="font-size:13px;line-height:1.6;color:var(--color-tertiary-700);max-width:680px">{{ cbForumFalta }}</div>
+          </div>
         </sc-if>
       </sc-if>
 
@@ -1261,6 +1277,9 @@ class Component extends DCLogic {
       material: T("reference material", "material de consulta"),
       entrarEncontro: T("Join live meeting", "Entrar no encontro"),
       sairClube: T("leave this club", "sair deste clube"),
+      cbSemDatas: T("The school has not set the meeting dates for this club yet.",
+        "A escola ainda não marcou as datas dos encontros deste clube."),
+      abrir: T("Open", "Abrir"),
       semClube: T("You are not in a club yet. In \"All clubs\" you can see what the school offers.",
         "Você ainda não está em nenhum clube. Em \"Todos os clubes\" estão os que a escola oferece."),
       semAberto: T("No other club is open right now.", "Não há outro clube aberto agora."),
@@ -1377,7 +1396,9 @@ class Component extends DCLogic {
       cbTemPills: false, cbPills: [], cbAberto: false, cbNome: "", cbQuem: "",
       cbPlanoLabel: "", cbPlanoBg: "", cbPlanoFg: "", cbTemEncontros: false, cbEncontros: [],
       cbTemSala: false, cbLink: "#", cbTemMateriais: false, cbMats: [], cbSair: () => {},
-      cbForumFalta: "", cbAviso: "", cbSemDetalhe: true, cbDetalhe: false,
+      cbAviso: "", cbSemDetalhe: true, cbDetalhe: false,
+      cbTemEmoji: false, cbEmoji: "", cbSemEncontros: false, cbRodape: "",
+      cbMaterialTitulo: "",
       onFecharDetalhe: () => {}, dtNome: "", dtDesc: "", dtFormato: "", dtNivel: "",
       dtNovo: false, dtFatos: [], dtBotao: "", dtPreco: "", onDtEntrar: () => {},
       dtEncontrosTitulo: "", dtSemEncontros: true, dtEncontros: [], dtProf: "", dtBio: "",
@@ -1595,12 +1616,28 @@ class Component extends DCLogic {
       // sem data. O bloco do dia mostra esse texto em vez de "—": é o
       // que a aluna tem, e é melhor do que um travessão.
       const texto = (e && e.quando) ? String(e.quando) : "";
+      // "feito" e "próximo" como no arquivo: a aluna vê de relance
+      // onde o clube está. Quem decide é a data, não um campo.
+      const hojeIso = new Date().toISOString().slice(0, 10);
+      const passou = !!iso && iso < hojeIso;
+      const DIAS = T(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+                     ["dom","seg","ter","qua","qui","sex","sáb"]);
+      const porExtenso = d
+        ? DIAS[d.getDay()] + " " + d.getDate() + " " + MES[d.getMonth()]
+        : (texto || T("date to come", "data a marcar"));
       return {
-        date: iso ? CRM.ddmm(iso) : (texto || "—"),
+        n: i + 1,
+        date: porExtenso,
         dia: d ? String(d.getDate()) : (texto ? texto.split(/[ ·]/)[0] : "—"),
         mes: d ? MES[d.getMonth()] : "",
         topic: (e && e.tema) || T("topic to come", "tema a definir"),
-        tag: T("meeting ", "encontro ") + (i + 1)
+        passou,
+        bg: passou ? "rgba(255,255,255,.05)" : "rgba(255,255,255,.10)",
+        nBg: passou ? "var(--color-secondary-500)" : "var(--color-button-primary)",
+        nFg: "var(--color-primary-900)",
+        temTag: true,
+        tag: passou ? T("done", "feito") : T("meeting ", "encontro ") + (i + 1),
+        tagCor: passou ? "var(--color-secondary-500)" : "rgba(255,255,255,.7)"
       };
     });
     // qual dos clubes dela está aberto
@@ -2591,21 +2628,34 @@ class Component extends DCLogic {
       // ── meus clubes, pelo arquivo 04 ──
       cbTemPills: cl.meus.length > 1,
       cbPills: cl.meus.map(c => ({
-        label: c.nome,
+        label: (c.emoji ? c.emoji + " " : "") + c.nome,
         bg: c.id === cbSelId ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: c.id === cbSelId ? "var(--color-neutral-0)" : "var(--color-primary-900)",
         go: () => this.setState({ clubeSel: c.id, recado: "" })
       })),
       cbAberto: !!cbA,
+      cbTemEmoji: !!(cbA && cbA.emoji), cbEmoji: (cbA && cbA.emoji) || "",
       cbNome: cbA ? cbA.nome : "",
       cbQuem: cbA ? [cbA.professora ? T("with ", "com ") + cbA.professora : "",
         quandoDe(cbA), ondeDe(cbA)].filter(Boolean).join(" · ") : "",
       cbPlanoLabel: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[0] : "",
-      cbPlanoBg: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[1] : "",
-      cbPlanoFg: cbA ? (PLANO[cbA.plano] || PLANO.incluido)[2] : "",
+      // Em cartão escuro o selo tem de ser claro: o verde sobre o teal
+      // sumia, e sobrava uma mancha sem texto no canto.
+      cbPlanoBg: "rgba(255,255,255,.16)", cbPlanoFg: "var(--color-neutral-0)",
       cbTemEncontros: !!(cbA && (cbA.encontros || []).length),
+      cbSemEncontros: !!(cbA && !(cbA.encontros || []).length),
       cbEncontros: cbA ? encontrosDe(cbA) : [],
       cbTemSala: !!(cbA && cbA.link), cbLink: (cbA && cbA.link) || "#",
+      // O rodapé do arquivo: quando o link abre e até quando ela é
+      // membro. Só diz o que o cadastro sabe.
+      cbRodape: cbA
+        ? [cbA.link ? T("The link opens at meeting time.", "O link abre na hora do encontro.") : "",
+           cbA.ate ? T("Member until ", "Membro até ") + CRM.ddmm(cbA.ate) + "." : ""]
+            .filter(Boolean).join(" ")
+        : "",
+      cbMaterialTitulo: cbA && cbA.professora
+        ? T("reference material · from ", "material de apoio · de ") + cbA.professora
+        : T("reference material", "material de apoio"),
       cbTemMateriais: !!(cbA && (cbA.materiais || []).length),
       cbMats: cbA ? (cbA.materiais || []).map(m => ({
         t: m.label || m.titulo || T("material", "material"), href: m.link || "#" })) : [],
@@ -2615,12 +2665,6 @@ class Component extends DCLogic {
         this.setState({ clubeSel: "", recado: T("You left ", "Você saiu do ") + cbA.nome + "." });
         this.bump();
       },
-      // O fórum do arquivo — posts, respostas e áudio — não tem nada no
-      // sistema para guardá-lo. Fica dito em vez de fingido.
-      cbForumFalta: T(
-        "The design also has a club forum, with written and voice replies. That needs somewhere to store posts and audio, which the system does not have yet.",
-        "O desenho tem também um fórum do clube, com respostas escritas e em áudio. Isso precisa de um lugar para guardar post e áudio, que o sistema ainda não tem."),
-
       // ── todos os clubes ──
       cbAviso: T("Each club has 4 live meetings per cycle. Your plan includes ",
                  "Cada clube tem 4 encontros por ciclo. O seu plano inclui ")

@@ -12287,6 +12287,9 @@
   function clubeNormal(c) {
     return {
       id: c.id, nome: c.nome || "", professora: c.professora || "",
+      // O emoji do arquivo 04. É identidade do clube, e quem escolhe é
+      // quem o criou — um caractere, não um arquivo de imagem.
+      emoji: String(c.emoji || "").trim().slice(0, 4),
       formato: c.formato === "presencial" ? "presencial" : "online",
       dia: c.dia || "", hora: c.hora || "", duracao: c.duracao || "",
       local: c.local || "", link: c.link || "",
@@ -12511,7 +12514,7 @@
     }).map(function (c) {
       var livres = clubeVagasLivres(c);
       return {
-        id: c.id, nome: c.nome, professora: c.professora, formato: c.formato,
+        id: c.id, nome: c.nome, emoji: c.emoji || "", professora: c.professora, formato: c.formato,
         dia: c.dia, hora: c.hora, duracao: c.duracao, local: c.local, link: c.link,
         descricao: c.descricao, materiais: c.materiais, encontros: c.encontros,
         vagas: c.vagas, livres: livres, lotado: livres === 0,
@@ -12532,7 +12535,7 @@
           // o nível e a bio da professora: o arquivo 04 os pede no
           // cartão e na página do clube, e sem eles a aluna não sabe
           // para quem o clube é nem quem vai estar na frente
-          nivel: cl.nivel || "todos", bio: cl.bio || "",
+          nivel: cl.nivel || "todos", bio: cl.bio || "", emoji: cl.emoji || "",
           membros: (cl.membros || []).length, status: cl.status || ""
         });
       }),
