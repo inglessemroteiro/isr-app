@@ -9836,6 +9836,9 @@
     return { ok: true, materiais: materiaisDoCiclo(c) };
   }
   var PLANO_LIMITES = { titulo: 120, objetivo: 400, etapa: 200, homework: 600,
+    // os começos de frase do arquivo 02: a aluna recebe a estrutura
+    // pronta para falar, e quem escreve é a professora, no plano
+    starters: 30,
     palavras: 40, etapas: 20, min: 180 };
 
   function syllabusAll() {
@@ -10182,6 +10185,20 @@
       };
     });
   }
+  // Os começos de frase ("She always used to…", "It tastes like…").
+  // São frases, não palavras: separam-se por quebra de linha ou por
+  // ponto-e-vírgula, porque uma frase pode ter vírgula dentro.
+  function limpaStarters(v) {
+    var l = Array.isArray(v) ? v : String(v || "").split(/[\n;]+/);
+    var vistas = {}, out = [];
+    l.forEach(function (x) {
+      var w = String(x || "").trim().slice(0, 120);
+      var k = w.toLowerCase();
+      if (!w || vistas[k]) return;
+      vistas[k] = true; out.push(w);
+    });
+    return out.slice(0, PLANO_LIMITES.starters);
+  }
   function limpaPalavras(v) {
     var l = Array.isArray(v) ? v : String(v || "").split(",");
     var vistas = {}, out = [];
@@ -10216,6 +10233,7 @@
       guia: String(dados.guia || "").trim().slice(0, 300),
       slides: String(dados.slides || "").trim().slice(0, 300),
       palavras: limpaPalavras(dados.palavras),
+      starters: limpaStarters(dados.starters),
       etapas: limpaEtapas(dados.etapas && dados.etapas.length ? dados.etapas
         : FASES.map(function (f) { return { fase: f.id, titulo: "", min: f.min }; }))
     };
@@ -10266,6 +10284,7 @@
       doSyllabus: !!sess, tocado: !!meu,
       etapas: limpaEtapas(meu ? meu.etapas : base.etapas),
       palavras: limpaPalavras(meu && meu.palavras !== undefined ? meu.palavras : base.palavras),
+      starters: limpaStarters(meu && meu.starters !== undefined ? meu.starters : base.starters),
       homework: meu && meu.homework !== undefined ? meu.homework : (base.homework || ""),
       estado: (meu && meu.estado) || "rascunho",
       publicadoEm: (meu && meu.publicadoEm) || ""
@@ -10401,11 +10420,12 @@
     var m = planosAll();
     var k = planoChave(turmaId, n);
     var base = m[k] || { turma: turmaId, n: n, etapas: atual.etapas,
-      palavras: atual.palavras, homework: atual.homework,
+      palavras: atual.palavras, starters: atual.starters, homework: atual.homework,
       slides: atual.slides, estado: atual.estado };
     patch = patch || {};
     if (patch.etapas !== undefined) base.etapas = limpaEtapas(patch.etapas);
     if (patch.palavras !== undefined) base.palavras = limpaPalavras(patch.palavras);
+    if (patch.starters !== undefined) base.starters = limpaStarters(patch.starters);
     if (patch.homework !== undefined) {
       base.homework = String(patch.homework || "").trim().slice(0, PLANO_LIMITES.homework);
     }
@@ -10497,7 +10517,7 @@
     if (!p || p.estado !== "publicada") return null;
     return {
       n: p.n, titulo: p.titulo, objetivo: p.objetivo, homework: p.homework,
-      palavras: p.palavras, slides: p.slides || "",
+      palavras: p.palavras, starters: p.starters || [], slides: p.slides || "",
       // só o que ficou marcado: etapa desmarcada não aconteceu na aula
       atividades: p.etapas.filter(function (e) { return e.on; }).map(function (e) {
         return { fase: faseLabel(e.fase), titulo: e.titulo, min: e.min,
@@ -10649,13 +10669,29 @@
 
   // A aula que está aberta para esta aluna agora: a turma dela, hoje.
   // Só hoje — o caderno de ontem é registro, não aula em curso.
+  // A aula aberta da turma dela — em QUALQUER data.
+  //
+  // Olhava só para hoje. Desde que a professora passou a poder abrir a
+  // aula quando quiser (aula remarcada, caderno aberto mais cedo), a
+  // aula aberta pode não ser a de hoje — e a aluna ficava com o
+  // caderno trancado numa aula que a professora já tinha aberto.
   function aulaVivaDaAluna(pessoaId) {
     var p = getPessoa(pessoaId);
     if (!p || !p.turma) return null;
-    var hoje = addDays(0);
-    var v = aulaViva(p.turma, hoje);
-    if (v.estado === "nao_comecou") return null;
-    return { turma: p.turma, data: hoje, estado: v.estado, minutos: v.minutos };
+    var m = aulasVivasAll();
+    var achada = null;
+    Object.keys(m).forEach(function (k) {
+      var a = m[k];
+      if (!a || a.turma !== p.turma || !a.data) return;
+      var v = aulaViva(p.turma, a.data);
+      if (v.estado !== "ao_vivo") return;
+      // mais de uma aberta não deveria acontecer; se acontecer, vale a
+      // mais recente, que é a que a professora abriu por último
+      if (!achada || a.data > achada.data) {
+        achada = { turma: p.turma, data: a.data, estado: v.estado, minutos: v.minutos };
+      }
+    });
+    return achada;
   }
 
   // ── AS RESPOSTAS DO CADERNO, POR TAREFA ───────────────────────
@@ -16132,6 +16168,7 @@
     addEtapaPlano: addEtapaPlano, removerEtapaPlano: removerEtapaPlano,
     alternarEtapaPlano: alternarEtapaPlano, moverEtapaPlano: moverEtapaPlano,
     marcarPlanoPronto: marcarPlanoPronto, publicarPlano: publicarPlano,
+    limpaStarters: limpaStarters,
     minutosDoPlano: minutosDoPlano, PLANO_LIMITES: PLANO_LIMITES,
     planoPublicadoDaAula: planoPublicadoDaAula,
     sincronizarPalavrasDaAula: sincronizarPalavrasDaAula,
