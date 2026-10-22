@@ -606,7 +606,21 @@
                     <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C13 }}</div>
                     <input value="{{ clFhora }}" onchange="{{ onClFhora }}" placeholder="19:00" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
                   </label>
+                  <!-- O FUSO DE QUEM CONDUZ -->
+                  <!-- As professoras estão no Brasil, na Holanda, na
+                       Indonésia e no Paquistão. A hora acima é a do
+                       relógio de quem conduz; é este campo que diz qual
+                       relógio é, e cada aluna vê no dela. -->
+                  <label style="flex: 1 1 190px; min-width: 0;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ C18 }}</div>
+                    <select value="{{ clFfuso }}" onchange="{{ onClFfuso }}" style="width: 100%; box-sizing: border-box; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--color-primary-900);">
+                      <sc-for list="{{ clFusos }}" as="fz" hint-placeholder-count="6">
+                        <option value="{{ fz.id }}">{{ fz.label }}</option>
+                      </sc-for>
+                    </select>
+                  </label>
                 </div>
+                <div style="font-size: 12px; line-height: 1.5; color: var(--color-tertiary-500); margin-top: 7px;">{{ clFusoNota }}</div>
               </div>
 
               <div style="margin-top: 14px;">
@@ -1521,6 +1535,7 @@ class Component extends DCLogic {
     C15: ["sobre você · aparece ao lado da sua foto", "about you · shown next to your photo"],
     C16: ["Salvar clube", "Save club"],
     C17: ["cancelar", "cancel"],
+    C18: ["fuso de quem conduz", "timezone of whoever runs it"],
     C18: ["prévia · o cartão no app das alunas", "preview · the card in the student app"],
     C19: ["Nenhuma aluna inscrita.", "No student signed up."],
     C20: ["tirar", "remove"],
@@ -2270,7 +2285,15 @@ class Component extends DCLogic {
       ? Tr("in person", "presencial") : Tr("online", "online");
     const clDur = (d) => { const v = String(d || "").trim();
       return !v ? "" : (/^\d+$/.test(v) ? v + " min" : v); };
-    const clQuando = (c) => [c.dia, c.hora, clDur(c.duracao)]
+    // O horário do clube com o lugar do relógio escrito: "20:00 São
+    // Paulo". A escola tem professora em quatro fusos, e uma hora sem
+    // lugar é hora de lugar nenhum.
+    const clHoraComFuso = (c) => {
+      if (!c.hora) return "";
+      if (!c.fuso) return c.hora;
+      return c.hora + " " + CRM.fusoLabel(c.fuso).split(" · ").pop();
+    };
+    const clQuando = (c) => [c.dia, clHoraComFuso(c), clDur(c.duracao)]
       .filter(Boolean).join(" · ") || Tr("no time set", "sem horário");
     const clOnde = (c) => c.formato === "presencial"
       ? (c.local || Tr("in person · no address", "presencial · sem endereço"))
@@ -2836,6 +2859,7 @@ class Component extends DCLogic {
             descricao: Tr("a description", "a descrição"),
             nivel: Tr("the level", "o nível"),
             horario: Tr("day and time", "dia e horário"),
+            fuso: Tr("the timezone of whoever runs it", "o fuso de quem conduz"),
             encontros: Tr("the 4 meeting dates", "as 4 datas dos encontros"),
             vagas: Tr("how many spots", "as vagas"),
             endereco: Tr("the address", "o endereço"),
@@ -2881,6 +2905,28 @@ class Component extends DCLogic {
       onClFdia: (e) => clCampo("dia", e.target.value),
       clFhora: clF ? (clF.hora || "") : "",
       onClFhora: (e) => clCampo("hora", e.target.value),
+      // O fuso começa no de quem está criando o clube: é quem conduz
+      // na maioria das vezes, e sair de um palpite certo é mais rápido
+      // do que escolher numa lista em branco.
+      clFfuso: clF ? (clF.fuso || "") : "",
+      clFusos: [{ id: "", label: Tr("choose…", "escolher…") }]
+        .concat(((CRM.FUSOS_ESCOLA) || []).map(f => ({ id: f.id, label: f.label }))),
+      onClFfuso: (e) => clCampo("fuso", e.target.value),
+      clFusoNota: (() => {
+        const meu = CRM.fusoDoNavegador ? CRM.fusoDoNavegador() : "";
+        const dela = clF && clF.fuso;
+        if (!dela) {
+          return Tr("The hour above is read on somebody’s clock. Say whose, and each student sees it on hers.",
+            "A hora acima é lida no relógio de alguém. Diga de quem, e cada aluna vê no relógio dela.") +
+            (meu ? Tr(" Yours right now: ", " O seu agora: ") + CRM.fusoLabel(meu) + "." : "");
+        }
+        if (dela === meu) {
+          return Tr("Same as your clock. Students in other countries see the converted hour.",
+            "O mesmo do seu relógio. As alunas de outros países veem a hora convertida.");
+        }
+        return Tr("Saved in ", "Guardado em ") + CRM.fusoLabel(dela)
+          + (meu ? (Tr(". Your clock is ", ". O seu relógio é ") + CRM.fusoLabel(meu) + ".") : ".");
+      })(),
       clFencontros: [0, 1, 2, 3].map(i => {
         const e0 = clEncF[i] || {};
         const mexe = (k, v) => {
@@ -2914,7 +2960,7 @@ class Component extends DCLogic {
           id: clF.id, nome: clF.nome, professora: teacher,
           descricao: clF.descricao, nivel: clF.nivel, formato: clF.formato,
           local: clF.local, link: clF.link, dia: clF.dia, hora: clF.hora,
-          vagas: clF.vagas, bio: clF.bio,
+          fuso: clF.fuso || "", vagas: clF.vagas, bio: clF.bio,
           encontros: (clF.encontros || []).map(e => {
             const o = { data: e.data || "", hora: e.hora || "", tema: e.tema || "" };
             // o "quando" em texto livre da tela antiga só se perde
@@ -2938,8 +2984,12 @@ class Component extends DCLogic {
         ? ((clF.formato === "presencial" ? "in person" : "online") + " · "
            + clNivelCurto(clF.nivel).replace("todos", "all levels"))
         : "",
+      // A prévia é o cartão da aluna: a hora dela sai com o fuso
+      // escrito, porque é isso que a aluna lê
       clPrevQuando: clF
-        ? ([clF.dia, clF.hora, clDur(clF.duracao)].filter(Boolean).join(" · ") || "no time set")
+        ? ([clF.dia,
+            clF.hora + (clF.fuso ? " " + CRM.fusoLabel(clF.fuso).split(" · ").pop() : ""),
+            clDur(clF.duracao)].filter(Boolean).join(" · ") || "no time set")
         : "",
       clPrevOnde: clF
         ? (clF.formato === "presencial" ? (clF.local || "no address yet") : (clF.link ? "online room" : "no room link yet"))
@@ -2980,8 +3030,20 @@ class Component extends DCLogic {
         return {
           titulo: Tr("Meeting ", "Encontro ") + (i + 1)
             + (e && e.tema ? " · " + e.tema : ""),
+          // A hora sai no relógio de quem está olhando, com a de quem
+          // conduz ao lado. A professora substituta que abre esta tela
+          // da Indonésia precisa saber a que horas é para ELA.
           sub: e && e.data
-            ? (CRM.ddmm(e.data) + (e.hora ? " · " + e.hora : ""))
+            ? (CRM.ddmm(e.data) + (() => {
+                const h = CRM.horaDoEncontro
+                  ? CRM.horaDoEncontro(clSel, e, CRM.fusoDoNavegador())
+                  : { hora: e.hora || "", mesmoFuso: true, semFuso: true };
+                if (!h.hora) return "";
+                if (h.semFuso || h.mesmoFuso) return " · " + h.hora;
+                const vira = h.mudouDeDia > 0 ? " (+1)" : (h.mudouDeDia < 0 ? " (−1)" : "");
+                return " · " + h.horaVisor + vira + Tr(" yours", " seu") + " · "
+                  + h.hora + " " + CRM.fusoLabel(h.fusoEvento).split(" · ").pop();
+              })())
             : ((e && e.quando) || Tr("no date yet", "sem data ainda")),
           estado: ch
             ? (presentes + Tr(" present", " presentes"))

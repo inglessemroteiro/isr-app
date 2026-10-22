@@ -1032,17 +1032,21 @@
     if (!alunas.length) return;
     var base = [
       { id: "clBook", nome: "Book Club", professora: "Carla", formato: "online",
-        dia: "quinta", hora: "20:00", duracao: "60 min", vagas: 8, status: "publicado",
+        dia: "quinta", hora: "20:00", fuso: "America/Sao_Paulo",
+        duracao: "60 min", vagas: 8, status: "publicado",
         descricao: "Um livro por ciclo, um capítulo por encontro." },
       { id: "clMovie", nome: "Movie Lovers", professora: "Gabi", formato: "online",
-        dia: "quarta", hora: "20:30", duracao: "90 min", vagas: 10, status: "publicado",
+        dia: "quarta", hora: "20:30", fuso: "Europe/Amsterdam",
+        duracao: "90 min", vagas: 10, status: "publicado",
         descricao: "Um filme por mês, conversa na semana seguinte." },
       { id: "clChef", nome: "Chef Traditions", professora: "Adrielly", formato: "presencial",
-        dia: "sábado", hora: "10:00", duracao: "120 min", vagas: 6, status: "publicado",
+        dia: "sábado", hora: "10:00", fuso: "Europe/Amsterdam",
+        duracao: "120 min", vagas: 6, status: "publicado",
         local: "Den Haag · a combinar",
         descricao: "Cozinhar e conversar. Receita de casa de cada uma." },
       { id: "clDutch", nome: "Dutch Life Talk", professora: "Érika", formato: "online",
-        dia: "segunda", hora: "19:30", duracao: "60 min", vagas: 10, status: "rascunho",
+        dia: "segunda", hora: "19:30", fuso: "Asia/Jakarta",
+        duracao: "60 min", vagas: 10, status: "rascunho",
         descricao: "A vida na Holanda, em inglês." }
     ];
     var agora = Date.now();
@@ -1067,7 +1071,10 @@
       c.link = "";
       c.materiais = MATS[c.id] || [];
       c.encontros = (TEMAS[c.id] || []).map(function (t, i) {
-        return { quando: dd(3 + i * 7 + k), tema: t };
+        var d = today(); d.setDate(d.getDate() + 3 + i * 7 + k);
+        // com data de verdade o encontro pode ser convertido de fuso;
+        // o "quando" em texto não dá hora nenhuma a converter
+        return { data: iso(d), hora: c.hora || "", quando: dd(3 + i * 7 + k), tema: t };
       });
       c.vagas = c.vagas || 0;
     });
@@ -3524,6 +3531,93 @@
         hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(t)); };
       return fmt("America/Sao_Paulo") + " no Brasil (" + fmt("Europe/Amsterdam") + " na Holanda)";
     } catch (e) { return horaBR; }
+  }
+
+  // ── O FUSO DE CADA EVENTO, E O DE QUEM ESTÁ OLHANDO ───────────
+  //
+  // A escola guardava a hora como TEXTO: "MON 7h BR | 12h NL". Isso
+  // só funciona enquanto todo mundo está nesses dois lugares — e as
+  // professoras estão no Brasil, na Indonésia e no Paquistão. Pior:
+  // a Holanda tem horário de verão e o Brasil não, então o próprio
+  // "7h BR | 12h NL" fica errado por seis meses do ano.
+  //
+  // A saída é guardar o FUSO do evento (não a diferença) junto com a
+  // hora local dele, e cada tela mostrar no relógio de quem está
+  // olhando. Guardar o fuso, e não o deslocamento, é o que faz o
+  // horário de verão se resolver sozinho.
+  var FUSOS_ESCOLA = [
+    { id: "America/Sao_Paulo", label: "Brasil · São Paulo" },
+    { id: "Europe/Amsterdam", label: "Holanda · Amsterdã" },
+    { id: "Europe/Lisbon", label: "Portugal · Lisboa" },
+    { id: "Asia/Jakarta", label: "Indonésia · Jacarta" },
+    { id: "Asia/Karachi", label: "Paquistão · Karachi" },
+    { id: "UTC", label: "UTC" }
+  ];
+  function fusoDoNavegador() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; }
+    catch (e) { return "UTC"; }
+  }
+  function fusoLabel(id) {
+    var f = FUSOS_ESCOLA.filter(function (x) { return x.id === id; })[0];
+    if (f) return f.label;
+    // fuso que não está na lista aparece pelo nome da cidade
+    return String(id || "").split("/").pop().replace(/_/g, " ");
+  }
+  // "2026-10-27" às "19:00" NO FUSO DO EVENTO, como instante real.
+  // Duas passadas: a primeira estima o deslocamento, a segunda o
+  // corrige para a data certa — é o que acerta a virada do horário
+  // de verão, quando a estimativa cai do lado errado.
+  function instanteDe(dataIso, hora, fuso) {
+    if (!dataIso) return null;
+    var m = /^(\d{1,2})[:h]?(\d{2})?/.exec(String(hora || "0:00"));
+    if (!m) return null;
+    var pd = String(dataIso).split("-").map(Number);
+    if (pd.length !== 3) return null;
+    var base = Date.UTC(pd[0], pd[1] - 1, pd[2],
+      parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0);
+    var t = base;
+    try {
+      for (var i = 0; i < 2; i++) {
+        t = base - fusoOffsetMin(fuso || "UTC", new Date(t)) * 60000;
+      }
+    } catch (e) { return new Date(base); }
+    return new Date(t);
+  }
+  // A mesma hora no relógio de quem está olhando. Devolve também se
+  // caiu noutro dia — em Jacarta a aula das 19h de Amsterdã é no dia
+  // seguinte, e esconder isso marca encontro no dia errado.
+  function horaNoFuso(dataIso, hora, fusoEvento, fusoVisor) {
+    var inst = instanteDe(dataIso, hora, fusoEvento);
+    if (!inst) return null;
+    var visor = fusoVisor || fusoDoNavegador();
+    try {
+      var f = new Intl.DateTimeFormat("en-GB", { timeZone: visor, hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit" });
+      var pp = {};
+      f.formatToParts(inst).forEach(function (x) { pp[x.type] = x.value; });
+      var diaLa = pp.year + "-" + pp.month + "-" + pp.day;
+      return {
+        hora: pp.hour + ":" + pp.minute,
+        dia: diaLa,
+        mudouDeDia: diaLa === dataIso ? 0 : (diaLa > dataIso ? 1 : -1),
+        fuso: visor
+      };
+    } catch (e) { return null; }
+  }
+  // O rótulo pronto: a hora do evento e, quando o relógio de quem
+  // olha é outro, a hora dela também. Mesmo fuso não repete nada.
+  function horaParaVoce(dataIso, hora, fusoEvento, fusoVisor) {
+    if (!dataIso || !hora) return String(hora || "");
+    var visor = fusoVisor || fusoDoNavegador();
+    var evento = fusoEvento || visor;
+    if (!fusoEvento || evento === visor) return String(hora);
+    var r = horaNoFuso(dataIso, hora, evento, visor);
+    if (!r) return String(hora);
+    var sufixo = r.mudouDeDia === 0 ? ""
+      : (r.mudouDeDia > 0 ? " (+1)" : " (−1)");
+    return hora + " " + fusoLabel(evento).split(" · ").pop()
+      + " · " + r.hora + sufixo + " para você";
   }
 
   function donoComercial() {
@@ -12337,6 +12431,13 @@
       emoji: String(c.emoji || "").trim().slice(0, 4),
       formato: c.formato === "presencial" ? "presencial" : "online",
       dia: c.dia || "", hora: c.hora || "", duracao: c.duracao || "",
+      // O fuso de QUEM CONDUZ o clube. A hora guardada é a do relógio
+      // dela; cada tela converte para o relógio de quem está olhando.
+      // As professoras estão no Brasil, na Holanda, na Indonésia e no
+      // Paquistão, e "20:00" sem fuso é hora de quatro países
+      // diferentes. Guardar o fuso, e não a diferença, é o que faz o
+      // horário de verão se resolver sozinho.
+      fuso: String(c.fuso || "").trim(),
       local: c.local || "", link: c.link || "",
       vagas: Math.max(0, parseInt(c.vagas, 10) || 0),
       status: c.status === "publicado" ? "publicado" : "rascunho",
@@ -12371,13 +12472,17 @@
   // FALTA_ROTULOS tem as palavras, para quem precisa escrever a frase.
   var FALTA_ROTULOS = { nome: "nome", descricao: "descrição", nivel: "nível",
     horario: "horário", encontros: "as 4 datas dos encontros", vagas: "vagas",
-    endereco: "o endereço", link: "o link" };
+    endereco: "o endereço", link: "o link", fuso: "o fuso de quem conduz" };
   function faltaParaPublicar(c) {
     var falta = [];
     if (!String(c.nome || "").trim()) falta.push("nome");
     if (!String(c.descricao || "").trim()) falta.push("descricao");
     if (!String(c.nivel || "").trim()) falta.push("nivel");
     if (!String(c.dia || "").trim() || !String(c.hora || "").trim()) falta.push("horario");
+    // Sem o fuso a hora do clube é hora de lugar nenhum: a aluna em
+    // Jacarta e a professora em Amsterdã leem "20:00" e aparecem com
+    // seis horas de diferença.
+    if (!String(c.fuso || "").trim()) falta.push("fuso");
     if ((c.encontros || []).filter(function (e) { return e && e.data; }).length < 4) {
       falta.push("encontros");
     }
@@ -12482,7 +12587,8 @@
       .map(function (c, i) {
         var incluido = i < CLUBES_INCLUIDOS;
         return { id: c.id, nome: c.nome, professora: c.professora,
-          formato: c.formato, dia: c.dia, hora: c.hora, local: c.local,
+          formato: c.formato, dia: c.dia, hora: c.hora, fuso: c.fuso || "",
+          local: c.local,
           ordem: i + 1,
           plano: incluido ? "incluido" : (c.pagos[pessoaId] ? "pago" : "pendente"),
           pagoEm: c.pagos[pessoaId] || "" };
@@ -12560,7 +12666,7 @@
       var livres = clubeVagasLivres(c);
       return {
         id: c.id, nome: c.nome, emoji: c.emoji || "", professora: c.professora, formato: c.formato,
-        dia: c.dia, hora: c.hora, duracao: c.duracao, local: c.local, link: c.link,
+        dia: c.dia, hora: c.hora, fuso: c.fuso || "", duracao: c.duracao, local: c.local, link: c.link,
         descricao: c.descricao, materiais: c.materiais, encontros: c.encontros,
         vagas: c.vagas, livres: livres, lotado: livres === 0,
         naEspera: c.espera.indexOf(pessoaId) >= 0,
@@ -12575,6 +12681,7 @@
         var cl = porId[c.id] || {};
         return Object.assign({}, c, {
           duracao: cl.duracao || "", local: cl.local || "", link: cl.link || "",
+          hora: cl.hora || "", fuso: cl.fuso || "",
           descricao: cl.descricao || "", materiais: cl.materiais || [],
           encontros: cl.encontros || [], vagas: cl.vagas || 0,
           // o nível e a bio da professora: o arquivo 04 os pede no
@@ -12662,6 +12769,38 @@
   }
   // O próximo encontro é o primeiro com data de hoje em diante que
   // ainda não tem chamada. Sem data em nenhum, não há próximo.
+  // ── A HORA DE UM ENCONTRO, NO RELÓGIO DE QUEM OLHA ───────────
+  //
+  // O encontro pode ter hora própria; quando não tem, vale a do
+  // clube. Devolve as duas pontas — a hora de quem conduz e a de quem
+  // está olhando — e se a conversão virou o dia, que é o que acontece
+  // entre Amsterdã e Jacarta.
+  //
+  // Clube sem fuso (os que existiam antes deste campo) devolve a hora
+  // como está: inventar um fuso aqui seria marcar encontro na hora
+  // errada com cara de certeza.
+  function horaDoEncontro(clube, encontro, fusoVisor) {
+    var c = clube || {};
+    var e = encontro || {};
+    var hora = String(e.hora || c.hora || "").trim();
+    var vazio = { hora: hora, horaVisor: hora, fusoEvento: "", fusoVisor: "",
+      mesmoFuso: true, mudouDeDia: 0, semFuso: true };
+    if (!hora) return vazio;
+    var fe = String(c.fuso || "").trim();
+    if (!fe) return vazio;
+    var fv = String(fusoVisor || "").trim() || fusoDoNavegador();
+    if (fe === fv) {
+      return { hora: hora, horaVisor: hora, fusoEvento: fe, fusoVisor: fv,
+        mesmoFuso: true, mudouDeDia: 0, semFuso: false };
+    }
+    var r = e.data ? horaNoFuso(e.data, hora, fe, fv) : null;
+    if (!r) {
+      return { hora: hora, horaVisor: hora, fusoEvento: fe, fusoVisor: fv,
+        mesmoFuso: true, mudouDeDia: 0, semFuso: false };
+    }
+    return { hora: hora, horaVisor: r.hora, fusoEvento: fe, fusoVisor: fv,
+      mesmoFuso: false, mudouDeDia: r.mudouDeDia, semFuso: false };
+  }
   function proximoEncontroDoClube(c) {
     if (!c) return null;
     var hoje = iso(today());
@@ -16020,6 +16159,8 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    FUSOS_ESCOLA: FUSOS_ESCOLA, fusoDoNavegador: fusoDoNavegador, fusoLabel: fusoLabel,
+    instanteDe: instanteDe, horaNoFuso: horaNoFuso, horaParaVoce: horaParaVoce,
     papeisDeGestao: papeisDeGestao, ehEquipeEAluna: ehEquipeEAluna,
     motivoSemAcesso: motivoSemAcesso,
     convidarEquipe: convidarEquipe, conviteDaEquipe: conviteDaEquipe,
@@ -16298,6 +16439,7 @@
     FALTA_ROTULOS: FALTA_ROTULOS,
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
+    horaDoEncontro: horaDoEncontro,
     faltasSeguidasNoClube: faltasSeguidasNoClube,
     respostasDaAula: respostasDaAula, tarefasDaAula: tarefasDaAula,
     dataDaSessao: dataDaSessao, datasDasSessoes: datasDasSessoes,
