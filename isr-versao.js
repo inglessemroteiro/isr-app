@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-d",
+  numero: "2026.10.22-e",
   data: "22/10/2026",
-  nota: "Abrir a aula quando quiser, a chamada que o botão promete, e a língua certa"
+  nota: "A aula aberta vale em qualquer dia, e o plano guarda os começos de frase"
 };
