@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-c",
+  numero: "2026.10.22-d",
   data: "22/10/2026",
-  nota: "Conserto: o app da aluna parava de montar com o plano publicado"
+  nota: "Abrir a aula quando quiser, a chamada que o botão promete, e a língua certa"
 };
