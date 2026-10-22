@@ -2122,7 +2122,20 @@ class Component extends DCLogic {
 
       inicial: (CRM.firstName(p.nome) || "?").slice(0, 1).toUpperCase(),
       primeiroNome: CRM.firstName(p.nome),
-      subNome: [nivel !== "—" ? nivel : p.nivel, turmaRaw && turmaRaw.turma ? turmaRaw.turma : ""].filter(Boolean).join(" · "),
+      // O rótulo da turma traz as duas horas escritas à mão ("TUE 8h
+      // BR | 13h NL"), que só servem a quem está num desses dois
+      // países. Com o fuso da turma guardado, aqui sai a hora no
+      // relógio dela — a aluna pode estar em qualquer lugar.
+      subNome: (() => {
+        const base = nivel !== "—" ? nivel : p.nivel;
+        const t = turmaRaw;
+        if (!t || !t.turma) return base || "";
+        if (!t.fuso || !CRM.horaDaTurmaLabel) return [base, t.turma].filter(Boolean).join(" · ");
+        const dia = String(t.turma).match(/^([A-Z]{3})/);
+        const hoje = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
+        return [base, [dia ? dia[1] : "", CRM.horaDaTurmaLabel(t, hoje)]
+          .filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+      })(),
 
       busca: this.state.busca || "",
       onBusca: (e) => {

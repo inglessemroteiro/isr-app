@@ -323,6 +323,9 @@
   function addTurma(dados) {
     var list = turmasLista();
     list.push({ id: novoTurmaId(), nivel: dados.nivel || "", turma: dados.turma || "",
+      // a hora de verdade e o fuso em que ela é lida; o rótulo acima
+      // continua sendo a chave da chamada e não muda de forma
+      hora: String(dados.hora || "").trim(), fuso: String(dados.fuso || "").trim(),
       teacher: dados.teacher || "", cycle: dados.cycle || metasAtuais().cicloLabel,
       projeto: dados.projeto || "", notebook: dados.notebook || "",
       capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
@@ -3405,6 +3408,9 @@
         // presencial em que todas levam o celular. É por este campo
         // que a professora sabe se precisa imprimir.
         formato: u.formato === "papel" ? "papel" : "digital",
+        // a hora da aula e o fuso em que ela é lida viajam junto: é com
+        // eles que cada tela mostra a hora no relógio de quem olha
+        hora: u.hora || "", fuso: u.fuso || "",
         capacidade: cap, ocupadas: ocup, vagas: cap - ocup };
     });
   }
@@ -12783,27 +12789,33 @@
   // Clube sem fuso (os que existiam antes deste campo) devolve a hora
   // como está: inventar um fuso aqui seria marcar encontro na hora
   // errada com cara de certeza.
-  function horaDoEncontro(clube, encontro, fusoVisor) {
-    var c = clube || {};
-    var e = encontro || {};
-    var hora = String(e.hora || c.hora || "").trim();
-    var vazio = { hora: hora, horaVisor: hora, fusoEvento: "", fusoVisor: "",
+  // O miolo: uma hora lida num fuso, e a mesma hora no relógio de
+  // quem está olhando. Serve ao encontro de clube e à aula de turma —
+  // o problema é o mesmo, e duas cópias dele divergiriam na primeira
+  // vez que alguém mexesse só numa.
+  function horaNoRelogioDe(hora, fusoEvento, dataIso, fusoVisor) {
+    var h = String(hora || "").trim();
+    var vazio = { hora: h, horaVisor: h, fusoEvento: "", fusoVisor: "",
       mesmoFuso: true, mudouDeDia: 0, semFuso: true };
-    if (!hora) return vazio;
-    var fe = String(c.fuso || "").trim();
+    if (!h) return vazio;
+    var fe = String(fusoEvento || "").trim();
     if (!fe) return vazio;
     var fv = String(fusoVisor || "").trim() || fusoDoNavegador();
     if (fe === fv) {
-      return { hora: hora, horaVisor: hora, fusoEvento: fe, fusoVisor: fv,
+      return { hora: h, horaVisor: h, fusoEvento: fe, fusoVisor: fv,
         mesmoFuso: true, mudouDeDia: 0, semFuso: false };
     }
-    var r = e.data ? horaNoFuso(e.data, hora, fe, fv) : null;
+    var r = dataIso ? horaNoFuso(dataIso, h, fe, fv) : null;
     if (!r) {
-      return { hora: hora, horaVisor: hora, fusoEvento: fe, fusoVisor: fv,
+      return { hora: h, horaVisor: h, fusoEvento: fe, fusoVisor: fv,
         mesmoFuso: true, mudouDeDia: 0, semFuso: false };
     }
-    return { hora: hora, horaVisor: r.hora, fusoEvento: fe, fusoVisor: fv,
+    return { hora: h, horaVisor: r.hora, fusoEvento: fe, fusoVisor: fv,
       mesmoFuso: false, mudouDeDia: r.mudouDeDia, semFuso: false };
+  }
+  function horaDoEncontro(clube, encontro, fusoVisor) {
+    var c = clube || {}, e = encontro || {};
+    return horaNoRelogioDe(e.hora || c.hora, c.fuso, e.data, fusoVisor);
   }
   function proximoEncontroDoClube(c) {
     if (!c) return null;
@@ -13666,6 +13678,44 @@
   }
 
   // ── AGENDA DA ESCOLA (próximos N dias, filtrável) ─────────────
+  // ── O HORÁRIO DA TURMA, E O FUSO DELE ────────────────────────
+  //
+  // O rótulo da turma ("MON 7h BR | 11h NL") é a chave com que a
+  // chamada, a folha e a matrícula se encontram: mexer nele quebraria
+  // o histórico inteiro. Então ele fica como está, e o horário de
+  // verdade passa a morar em dois campos ao lado — a hora e o fuso em
+  // que ela é lida.
+  //
+  // As duas horas escritas no rótulo eram um atalho que só funciona
+  // entre Brasil e Holanda, e só metade do ano: a Holanda tem horário
+  // de verão e o Brasil não, então o "7h BR | 11h NL" fica errado por
+  // seis meses. Com o fuso guardado, a conta se refaz sozinha, e
+  // serve também a quem está em Jacarta ou em Carachi.
+  function horaBaseDaTurma(t) {
+    if (!t) return "";
+    var h = String(t.hora || "").trim();
+    if (h) return h;
+    // sem o campo novo, vale a primeira hora escrita no rótulo — é o
+    // que a agenda já lia, e é a hora de quem escreveu o rótulo
+    var m = String(t.turma || "").match(/(\d{1,2})\s*[hH]\s*(\d{2})?/);
+    if (!m) return "";
+    return ("0" + m[1]).slice(-2) + ":" + (m[2] || "00");
+  }
+  function horaDaTurma(turma, dataIso, fusoVisor) {
+    var t = turma || {};
+    return horaNoRelogioDe(horaBaseDaTurma(t), t.fuso, dataIso, fusoVisor);
+  }
+  // O rótulo pronto para uma linha de agenda: a hora de quem olha, e a
+  // da turma ao lado quando os relógios são outros.
+  function horaDaTurmaLabel(turma, dataIso, fusoVisor) {
+    var r = horaDaTurma(turma, dataIso, fusoVisor);
+    if (!r.hora) return "";
+    if (r.semFuso || r.mesmoFuso) return r.hora;
+    var vira = r.mudouDeDia > 0 ? " (+1)" : (r.mudouDeDia < 0 ? " (−1)" : "");
+    return r.horaVisor + vira + " · " + r.hora + " "
+      + fusoLabel(r.fusoEvento).split(" · ").pop();
+  }
+
   var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
     SEG: 1, TER: 2, QUA: 3, QUI: 4, SEX: 5 };
   function agendaItens(nDias, inicioIso) {
@@ -13681,7 +13731,7 @@
       var m = (u.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
       if (!m) return;
       var alvo = DIAS_SEMANA[m[1]];
-      var hora = ((u.turma || "").match(/(\d{1,2})H/i) || [])[1];
+      var horaBase = horaBaseDaTurma(u);
       for (var i = 0; i < nDias; i++) {
         var d = new Date(t0); d.setDate(d.getDate() + i);
         // fora da janela do ciclo não há aula: é o que impede a agenda
@@ -13690,7 +13740,14 @@
         // termina em datas próprias, e usar a janela das online punha
         // aula presencial em semana sem aula presencial
         if (d.getDay() === alvo && !ehFeriado(iso(d)) && temAulaEm(iso(d), tipoDaTurma(u))) {
-          itens.push({ data: iso(d), hora: hora ? (hora + "h") : "", tipo: "aula", turmaId: u.id,
+          // a hora sai no relógio de quem está olhando a agenda: é a
+          // professora em Jacarta que precisa saber a que horas é a
+          // aula que o rótulo escreveu em hora de São Paulo
+          var hv = horaDaTurma(u, iso(d));
+          itens.push({ data: iso(d), hora: horaBase ? hv.horaVisor : "",
+            horaTurma: horaBase, fusoTurma: u.fuso || "",
+            mudouDeDia: hv.mudouDeDia, mesmoFuso: hv.mesmoFuso || hv.semFuso,
+            tipo: "aula", turmaId: u.id,
             titulo: "Aula · " + u.nivel + " (" + u.turma + ")", responsavel: u.teacher || "" });
         }
       }
@@ -16581,7 +16638,9 @@
     FALTA_ROTULOS: FALTA_ROTULOS,
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
-    horaDoEncontro: horaDoEncontro,
+    horaDoEncontro: horaDoEncontro, horaNoRelogioDe: horaNoRelogioDe,
+    horaDaTurma: horaDaTurma, horaBaseDaTurma: horaBaseDaTurma,
+    horaDaTurmaLabel: horaDaTurmaLabel,
     forumDoClube: forumDoClube, abrirTopicoNoClube: abrirTopicoNoClube,
     responderNoForum: responderNoForum, apagarDoForum: apagarDoForum,
     resumoDoForum: resumoDoForum,
