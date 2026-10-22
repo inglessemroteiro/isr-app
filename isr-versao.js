@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-h",
+  numero: "2026.10.22-i",
   data: "22/10/2026",
-  nota: "As tarefas da aula como cartões, e as palavras no Review"
+  nota: "O caderno da aluna nas duas telas do desenho, e o objetivo editável"
 };

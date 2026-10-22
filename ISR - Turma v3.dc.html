@@ -348,10 +348,25 @@
                 </div>
               </sc-if>
 
+              <!-- O QUE A ALUNA LÊ NO CADERNO -->
+              <!-- Título e objetivo vêm do syllabus, e é o objetivo que
+                   aparece em cima do caderno dela. A frase do syllabus
+                   é escrita para o guia do professor; aqui ela pode ser
+                   reescrita, porque tudo o que a aluna vê tem de ser
+                   editável por quem dá a aula. -->
               <sc-if value="{{ planoTemObjetivo }}">
                 <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
                   <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tSaiSabendo }}</div>
                   <div style="font-size: 19px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.4; margin-top: 5px;">{{ planoObjetivo }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ planoEditando }}">
+                <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 7px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tTituloDaSessao }}</div>
+                  <input class="isr-campo" ref="{{ peTituloSessaoRef }}" placeholder="{{ phTituloSessao }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13.5px" />
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-top: 4px">{{ tSaiSabendo }}</div>
+                  <textarea class="isr-campo" ref="{{ peObjetivoRef }}" rows="3" placeholder="{{ phObjetivo }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 13px; resize: vertical; line-height: 1.5"></textarea>
+                  <div style="font-size: 11.5px; color: var(--color-tertiary-500)">{{ tObjetivoNota }}</div>
                 </div>
               </sc-if>
 
@@ -447,6 +462,27 @@
                   <sc-if value="{{ planoEditando }}">
                     <textarea class="isr-campo" ref="{{ pePalavrasRef }}" rows="2" style="width: 100%; padding: 9px 11px; font-size: 13px; margin-top: 7px; resize: vertical; line-height: 1.5; box-sizing: border-box"></textarea>
                     <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">{{ tSepareVirgula }}</div>
+                  </sc-if>
+                </div>
+                <!-- OS COMEÇOS DE FRASE · arquivo 02 -->
+                <!-- A aluna recebe a estrutura pronta para falar, e
+                     quem a escreve é quem dá a aula. Sem este campo as
+                     pílulas do caderno dela só existiam no syllabus. -->
+                <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
+                  <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ tStarters }}</div>
+                  <sc-if value="{{ planoLendo }}">
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px">
+                      <sc-for list="{{ planoStarters }}" as="ps" hint-placeholder-count="4">
+                        <span class="isr-selo" style="padding: 5px 11px; font-size: 12.5px; background: var(--color-primary-50); color: var(--color-primary-900);">{{ ps }}</span>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ planoSemStarters }}">
+                      <div style="font-size: 12.5px; color: var(--color-tertiary-500); margin-top: 6px">{{ tSemStarters }}</div>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ planoEditando }}">
+                    <textarea class="isr-campo" ref="{{ peStartersRef }}" rows="3" style="width: 100%; padding: 9px 11px; font-size: 13px; margin-top: 7px; resize: vertical; line-height: 1.5; box-sizing: border-box"></textarea>
+                    <div style="font-size: 11.5px; color: var(--color-tertiary-500); margin-top: 3px">{{ tSepareLinha }}</div>
                   </sc-if>
                 </div>
                 <div style="flex: 1 1 260px; min-width: 0; background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
@@ -648,6 +684,8 @@ class Component extends DCLogic {
   peFaseRef = React.createRef(); peTituloRef = React.createRef();
   peMinRef = React.createRef(); pePerguntaRef = React.createRef();
   pePalavrasRef = React.createRef(); peHwRef = React.createRef();
+  peStartersRef = React.createRef(); peObjetivoRef = React.createRef();
+  peTituloSessaoRef = React.createRef();
 
   // Os campos do roteiro só existem depois que a tela desenha, então
   // entrar em modo de ajuste espera o campo nascer para escrever nele.
@@ -657,6 +695,9 @@ class Component extends DCLogic {
     setTimeout(() => {
       if (this.pePalavrasRef.current) this.pePalavrasRef.current.value = (p.palavras || []).join(", ");
       if (this.peHwRef.current) this.peHwRef.current.value = p.homework || "";
+      if (this.peStartersRef.current) this.peStartersRef.current.value = (p.starters || []).join("\n");
+      if (this.peObjetivoRef.current) this.peObjetivoRef.current.value = p.objetivo || "";
+      if (this.peTituloSessaoRef.current) this.peTituloSessaoRef.current.value = p.titulo || "";
     }, 0);
   }
 
@@ -863,6 +904,34 @@ class Component extends DCLogic {
           "Separe por vírgula.",
           "Separate them with commas."
       ],
+      "tSepareLinha": [
+          "Um por linha.",
+          "One per line."
+      ],
+      "tStarters": [
+          "começos de frase · a aluna vê no caderno",
+          "sentence starters · the student sees them in her notebook"
+      ],
+      "tSemStarters": [
+          "Nenhum começo de frase nesta sessão.",
+          "No sentence starters in this session."
+      ],
+      "tTituloDaSessao": [
+          "título da sessão",
+          "session title"
+      ],
+      "phTituloSessao": [
+          "Inside a Recipe",
+          "Inside a Recipe"
+      ],
+      "phObjetivo": [
+          "O que ela vai saber fazer ao sair desta aula.",
+          "What she will be able to do when she leaves this class."
+      ],
+      "tObjetivoNota": [
+          "É o que aparece no alto do caderno dela. O syllabus escreve a frase para o guia do professor; aqui você escreve a dela.",
+          "This is what sits at the top of her notebook. The syllabus writes the line for the teacher’s guide; here you write hers."
+      ],
       "tHomework": [
           "homework · abre quando a aula termina",
           "homework · opens when the class ends"
@@ -1036,7 +1105,9 @@ class Component extends DCLogic {
       edCadernoRef: this.edCadernoRef, edSlidesRef: this.edSlidesRef, edSyllabusRef: this.edSyllabusRef,
       edCalRef: this.edCalRef, tcTextoRef: this.tcTextoRef, pgTipoRef: this.pgTipoRef, pgDetalheRef: this.pgDetalheRef,
       peFaseRef: this.peFaseRef, peTituloRef: this.peTituloRef, peMinRef: this.peMinRef,
-      pePerguntaRef: this.pePerguntaRef, pePalavrasRef: this.pePalavrasRef, peHwRef: this.peHwRef };
+      pePerguntaRef: this.pePerguntaRef, pePalavrasRef: this.pePalavrasRef, peHwRef: this.peHwRef,
+      peStartersRef: this.peStartersRef, peObjetivoRef: this.peObjetivoRef,
+      peTituloSessaoRef: this.peTituloSessaoRef };
     if (!CRM) return Object.assign({ ok: false, naoEncontrada: true, materiais: [], alunas: [], chamadas: [],
       abas: [], tGeral: true, tAlunas: false, tChamadas: false, tMateriais: false, tRenovacao: false,
       tProjeto: false, podeMexerAlunas: false, voltarHref: "#", voltarLabel: "", linhaMeta: "", nomeDaTurma: "",
@@ -1064,6 +1135,7 @@ class Component extends DCLogic {
       planoTemObjetivo: false, planoObjetivo: "",
       planoMinutos: "", planoEtapas: [], planoEditando: false, planoLendo: true,
       planoFases: [], planoOnAddEtapa: () => {}, planoPalavras: [], planoSemPalavras: true,
+      planoStarters: [], planoSemStarters: true,
       planoHomework: "", planoOnSalvar: () => {} }, refs);
 
     const ocup = CRM.ocupacaoTurmas();
@@ -1182,7 +1254,10 @@ class Component extends DCLogic {
       if (!pAtual) return;
       CRM.salvarPlano(u.id, pAtual.n, {
         palavras: this.val(this.pePalavrasRef),
-        homework: this.val(this.peHwRef)
+        homework: this.val(this.peHwRef),
+        starters: this.val(this.peStartersRef),
+        titulo: this.val(this.peTituloSessaoRef),
+        objetivo: this.val(this.peObjetivoRef)
       });
     };
 
@@ -1430,7 +1505,9 @@ class Component extends DCLogic {
       planoTemSyllabus: !!(pAtual && pAtual.syllabusDoCiclo),
       planoSyllabus: (pAtual && pAtual.syllabusDoCiclo) || "#",
       planoSyllabusLabel: "Syllabus " + (u.cycle || Tr("of the cycle", "do ciclo")),
-      planoTemObjetivo: !!(pAtual && pAtual.objetivo),
+      // em ajuste o objetivo aparece no campo logo abaixo; mostrar os
+      // dois era a mesma frase duas vezes, uma delas sem poder mexer
+      planoTemObjetivo: !!(pAtual && pAtual.objetivo) && !pAjuste,
       planoObjetivo: (pAtual && pAtual.objetivo) || "",
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",
       planoEditando: pAjuste, planoLendo: !pAjuste,
@@ -1495,6 +1572,8 @@ class Component extends DCLogic {
       },
       planoPalavras: (pAtual && pAtual.palavras) || [],
       planoSemPalavras: !(pAtual && pAtual.palavras.length),
+      planoStarters: (pAtual && pAtual.starters) || [],
+      planoSemStarters: !(pAtual && (pAtual.starters || []).length),
       planoHomework: (pAtual && pAtual.homework) || Tr("No homework in this session.", "Sem homework nesta sessão."),
       planoOnSalvar: () => {
         pSalvarCampos();

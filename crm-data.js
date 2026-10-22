@@ -10270,7 +10270,13 @@
     var base = sess || {};
     return {
       turma: turmaId, n: n,
-      titulo: base.titulo || "", objetivo: base.objetivo || "",
+      // O título e o objetivo vêm do syllabus da escola, mas a turma
+      // pode reescrevê-los: eles aparecem no caderno da aluna, e o que
+      // a aluna vê tem de ser editável pela professora. O syllabus
+      // escreve a frase para o guia do professor ("By the end of this
+      // session every student has…"), que nem sempre fala com ela.
+      titulo: (meu && meu.titulo !== undefined) ? meu.titulo : (base.titulo || ""),
+      objetivo: (meu && meu.objetivo !== undefined) ? meu.objetivo : (base.objetivo || ""),
       projeto: base.projeto || t.projeto || "",
       // o guia é do NÍVEL, não da sessão: é um documento só para as dez
       // sessões, e repeti-lo por sessão era convidar dez links
@@ -10429,6 +10435,12 @@
       palavras: atual.palavras, starters: atual.starters, homework: atual.homework,
       slides: atual.slides, estado: atual.estado };
     patch = patch || {};
+    if (patch.titulo !== undefined) {
+      base.titulo = String(patch.titulo || "").trim().slice(0, PLANO_LIMITES.titulo);
+    }
+    if (patch.objetivo !== undefined) {
+      base.objetivo = String(patch.objetivo || "").trim().slice(0, PLANO_LIMITES.objetivo);
+    }
     if (patch.etapas !== undefined) base.etapas = limpaEtapas(patch.etapas);
     if (patch.palavras !== undefined) base.palavras = limpaPalavras(patch.palavras);
     if (patch.starters !== undefined) base.starters = limpaStarters(patch.starters);
@@ -10694,7 +10706,13 @@
       // mais de uma aberta não deveria acontecer; se acontecer, vale a
       // mais recente, que é a que a professora abriu por último
       if (!achada || a.data > achada.data) {
-        achada = { turma: p.turma, data: a.data, estado: v.estado, minutos: v.minutos };
+        // Qual sessão é vem da chamada, não do registro da aula aberta
+        // — é lá que a professora diz o número. Sem ele o caderno da
+        // aluna não sabe que a sessão de hoje é a que está ao vivo, e
+        // mostrava a aula acontecendo como se já fosse registro.
+        var ch = getChamada(p.turma, a.data);
+        achada = { turma: p.turma, data: a.data, estado: v.estado,
+          minutos: v.minutos, sessao: (ch && parseInt(ch.sessao, 10)) || 0 };
       }
     });
     return achada;
@@ -13095,20 +13113,36 @@
   //
   // Vale para as metas do projeto E para o objetivo no caderno — as
   // duas telas mostram a mesma frase, e tinham de tratá-la igual.
+  // O sujeito vem em várias formas ("the student can", "every student
+  // has", "each student presents"), e a versão antiga só pegava uma
+  // delas — por isso a frase inteira do guia aparecia na tela da aluna.
+  // Aqui tira-se só a abertura: o sujeito fica, porque mexer nele é
+  // reescrever a frase da escola, e reescrever quebra ("every item on
+  // every student's list carries…" não vira segunda pessoa).
   var OBJ_PREFIXOS = [
-    /^by the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i,
-    /^ao final (desta|da) sess[ãa]o,? a aluna (consegue|vai conseguir)\s*/i,
-    /^at the end of (this|the) session,? the (student|learner)s? (can|will be able to)\s*/i
+    /^(by|at) the end of (this|the) (session|class|lesson)[,:]?\s*/i,
+    /^(ao|no) (final|fim) (desta|da) (sess[ãa]o|aula)[,:]?\s*/i
+  ];
+  // O fim da frase às vezes é recado de professor, não meta: o
+  // "Stretch towards B1" é o que ele faz com quem vai além, e o "This
+  // is the first of the two deliverables of the cycle" é controle de
+  // entrega do ciclo. Nenhum dos dois fala com a aluna.
+  var OBJ_CAUDAS = [
+    /\s*stretch(es|ing)? towards?\b[\s\S]*$/i,
+    /\s*this is the (first|second|last|final)\b[\s\S]*$/i,
+    /\s*esta é a (primeira|segunda|última)\b[\s\S]*$/i
   ];
   function objetivoSemFormula(txt) {
     var t = String(txt || "").trim();
+    OBJ_CAUDAS.forEach(function (re) { t = t.replace(re, ""); });
+    t = t.trim();
     for (var i = 0; i < OBJ_PREFIXOS.length; i++) {
       if (OBJ_PREFIXOS[i].test(t)) {
-        t = t.replace(OBJ_PREFIXOS[i], "");
-        return t.charAt(0).toUpperCase() + t.slice(1);
+        t = t.replace(OBJ_PREFIXOS[i], "").trim();
+        break;
       }
     }
-    return t;
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
   }
 
   // ── AS METAS "I CAN…" DO PROJETO ──────────────────────────────

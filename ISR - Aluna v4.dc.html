@@ -391,120 +391,132 @@
     </sc-if>
 
     <!-- CADERNO -->
-    <!-- O caderno do desenho é o plano da aula com as atividades, e o
-         plano ainda não existe. Esta é a metade que não depende dele: o
-         registro das aulas dela, com o que foi dado, se ela estava, a
-         tarefa, a gravação — e a nota que ela escreve. -->
     <sc-if value="{{ isNotebook }}">
       <!-- ══ CADERNO · arquivo 02 ═══════════════════════════════
-           Uma sessão por vez, escolhida na faixa de cima. Era uma
-           lista de todas as aulas passadas, e com ela a aluna não
-           tinha como ver a aula de hoje antes de ela acontecer. -->
+           O desenho tem DUAS telas, não uma: a sessão aberta (objetivo,
+           material, apoio, tarefas, homework) e a sessão passada (herói
+           escuro com Slides e ▶ gravação, as respostas em leitura, o
+           homework e as palavras). Elas eram a mesma, e por isso a aula
+           dada aparecia como a de hoje com os campos fechados. -->
 
       <!-- O BLOQUEIO: tarefa anterior em aberto, no topo de tudo -->
       <sc-if value="{{ cadBloqueio }}">
-        <div onclick="{{ onCadBloqueio }}" style="background:var(--color-warning-light);border-radius:16px;padding:13px 16px;font-size:14px;font-weight:700;color:var(--color-warning-dark);cursor:pointer">{{ cadBloqueioTexto }} →</div>
+        <div onclick="{{ onCadBloqueio }}" style="background:var(--color-warning-light);border-radius:18px;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;cursor:pointer">
+          <span style="font-size:18px">◷</span>
+          <div style="flex:1;min-width:220px;font-size:14px;line-height:1.5;color:var(--color-primary-900)">{{ cadBloqueioTexto }}</div>
+          <span style="font-size:13px;font-weight:800;color:var(--color-primary-500)">{{ L.abrirTarefa }} →</span>
+        </div>
       </sc-if>
 
       <!-- A FAIXA DE SESSÕES -->
       <sc-if value="{{ cadTemSessoes }}">
-        <div style="display:flex;gap:9px;overflow-x:auto;padding-bottom:4px">
-          <sc-for list="{{ cadStrip }}" as="ss" hint-placeholder-count="6">
-            <div onclick="{{ ss.go }}" style="flex:none;min-width:92px;border-radius:16px;border:{{ ss.borda }};background:var(--color-neutral-0);padding:11px 13px;cursor:pointer">
-              <div style="font-size:15px;font-weight:800;letter-spacing:-0.02em;color:var(--color-primary-900)">{{ ss.n }}</div>
-              <div style="font-size:12px;color:var(--color-tertiary-700);margin-top:1px">{{ ss.quando }}</div>
-              <div style="margin-top:7px;display:inline-block;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700;background:{{ ss.bg }};color:{{ ss.fg }}">{{ ss.estado }}</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+          <sc-for list="{{ cadStrip }}" as="ss" hint-placeholder-count="10">
+            <div onclick="{{ ss.go }}" style="flex:none;min-width:92px;white-space:nowrap;border-radius:16px;padding:10px 12px;cursor:pointer;background:{{ ss.bg }};color:{{ ss.fg }};border:2px solid {{ ss.borda }}">
+              <div style="font-size:11px;font-weight:700;opacity:.75">{{ ss.n }} · {{ ss.quando }}</div>
+              <div style="font-size:13px;font-weight:800;margin-top:2px">{{ ss.estado }}</div>
             </div>
           </sc-for>
         </div>
       </sc-if>
 
-      <!-- A SESSÃO ABERTA -->
-      <sc-if value="{{ cadSelAberta }}">
+      <!-- ══ A SESSÃO DE HOJE, OU A QUE VEM ═══════════════════════ -->
+      <sc-if value="{{ cadAtual }}">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span style="border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:800;background:{{ cadSelPillBg }};color:{{ cadSelPillFg }}">{{ cadSelPill }}</span>
+          <span style="white-space:nowrap;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:800;background:{{ cadSelPillBg }};color:{{ cadSelPillFg }}">{{ cadSelPill }}</span>
+          <sc-if value="{{ cadSalvando }}">
+            <span style="background:var(--color-neutral-0);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:var(--color-primary-500)">{{ L.salvoSozinho }}</span>
+          </sc-if>
         </div>
 
         <!-- 🎯 o objetivo, que é o que ela leva da aula -->
-        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:28px;padding:26px 28px;display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:12.5px;font-weight:700;color:var(--color-button-primary)">{{ cadSelTitulo }}</div>
+        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:26px 28px">
+          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">🎯 {{ L.vaiSaber }}</div>
           <sc-if value="{{ cadTemObjetivo }}">
-            <div style="font-size:12px;font-weight:700;opacity:.75">{{ L.vaiSaber }}</div>
-            <div style="font-size:24px;font-weight:800;letter-spacing:-0.035em;line-height:1.25">{{ cadObjetivo }}</div>
+            <div style="font-size:{{ cadObjTam }};font-weight:800;letter-spacing:-0.035em;margin-top:6px;line-height:1.25">{{ cadObjetivo }}</div>
           </sc-if>
           <sc-if value="{{ cadSemObjetivo }}">
-            <div style="font-size:15px;line-height:1.6;opacity:.85">{{ L.semPlano }}</div>
+            <div style="font-size:15px;line-height:1.6;opacity:.85;margin-top:6px">{{ L.semPlano }}</div>
           </sc-if>
         </section>
 
-        <!-- slides e gravação -->
-        <sc-if value="{{ cadTemMaterial }}">
-          <div style="display:flex;flex-wrap:wrap;gap:22px">
-            <sc-if value="{{ cadTemSlides }}">
-              <a href="{{ cadSlides }}" target="_blank" rel="noopener" style="flex:1 1 0;min-width:240px;text-decoration:none;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:block">
-                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.slidesDaAula }}</div>
-                <div style="margin-top:4px;font-size:16px;font-weight:800;color:var(--color-primary-500)">{{ L.abrirSlides }}</div>
-              </a>
-            </sc-if>
-            <sc-if value="{{ cadTemGravacao }}">
-              <a href="{{ cadGravacao }}" target="_blank" rel="noopener" style="flex:1 1 0;min-width:240px;text-decoration:none;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:block">
-                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.gravacaoDaAula }}</div>
-                <div style="margin-top:4px;font-size:16px;font-weight:800;color:var(--color-primary-500)">{{ L.verGravacao }} →</div>
-              </a>
-            </sc-if>
-          </div>
-        </sc-if>
+        <!-- slides e gravação: os dois cartões aparecem sempre, porque
+             a aluna precisa saber que existem antes de existirem -->
+        <div style="display:flex;flex-wrap:wrap;gap:12px">
+          <sc-if value="{{ cadTemSlides }}">
+            <a href="{{ cadSlides }}" target="_blank" rel="noopener" style="flex:1 1 220px;min-width:0;text-decoration:none;background:var(--color-neutral-0);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+              <span style="font-size:26px">📊</span>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ L.slidesDaAula }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--color-primary-500)">{{ L.abrirSlides }}</div>
+              </div>
+            </a>
+          </sc-if>
+          <sc-if value="{{ cadSemSlides }}">
+            <div style="flex:1 1 220px;min-width:0;background:var(--color-neutral-0);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;opacity:.7">
+              <span style="font-size:26px">📊</span>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ L.slidesDaAula }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--color-tertiary-700)">{{ L.slidesDepois }}</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cadTemGravacao }}">
+            <a href="{{ cadGravacao }}" target="_blank" rel="noopener" style="flex:1 1 220px;min-width:0;text-decoration:none;background:var(--color-neutral-0);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+              <span style="font-size:26px">🎥</span>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ L.gravacaoDaAula }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--color-primary-500)">{{ L.verGravacao }} →</div>
+              </div>
+            </a>
+          </sc-if>
+          <sc-if value="{{ cadSemGravacao }}">
+            <div style="flex:1 1 220px;min-width:0;background:var(--color-neutral-0);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;opacity:.7">
+              <span style="font-size:26px">🎥</span>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:var(--color-primary-900)">{{ L.gravacaoDaAula }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--color-tertiary-700)">{{ L.gravacaoDepois }}</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
 
         <!-- os cartões de apoio: palavras e começos de frase -->
         <sc-if value="{{ cadTemApoio }}">
-          <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
-            <sc-if value="{{ cadTemPalavras }}">
-              <section style="flex:1 1 280px;min-width:260px;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
-                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.palavrasDaAula }}</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <sc-for list="{{ cadPalavras }}" as="pw" hint-placeholder-count="6">
-                    <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ pw }}</span>
+          <section style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+            <sc-for list="{{ cadApoio }}" as="ap" hint-placeholder-count="2">
+              <div style="flex:1 1 220px;min-width:0;background:var(--color-neutral-0);border-radius:20px;padding:18px 20px">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ ap.label }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+                  <sc-for list="{{ ap.itens }}" as="w" hint-placeholder-count="5">
+                    <span style="border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;background:{{ ap.tom }};color:var(--color-primary-900)">{{ w }}</span>
                   </sc-for>
                 </div>
-                <sc-if value="{{ cadPodeGuardar }}">
-                  <div><button onclick="{{ onGuardarPalavras }}" style="margin-top:4px;border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:10px 17px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ cadGuardarLabel }}</button></div>
-                </sc-if>
-                <sc-if value="{{ cadJaGuardou }}">
-                  <div style="font-size:12.5px;font-weight:700;color:var(--color-secondary-900)">{{ L.palavrasGuardadas }}</div>
-                </sc-if>
-              </section>
-            </sc-if>
-            <sc-if value="{{ cadTemStarters }}">
-              <section style="flex:1 1 280px;min-width:260px;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
-                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.startersDaAula }}</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <sc-for list="{{ cadStarters }}" as="st" hint-placeholder-count="4">
-                    <span style="border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;background:var(--color-primary-50);color:var(--color-primary-800)">{{ st }}</span>
-                  </sc-for>
-                </div>
-              </section>
-            </sc-if>
-          </div>
+              </div>
+            </sc-for>
+          </section>
         </sc-if>
 
         <!-- 🔒 enquanto a professora não abre a aula -->
         <sc-if value="{{ cadTrancado }}">
-          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;font-size:15px;line-height:1.6;color:var(--color-primary-800)">🔒 {{ cadTrancadoTexto }}</section>
+          <div style="background:var(--color-neutral-0);border-radius:20px;padding:18px 20px;display:flex;gap:12px;align-items:center">
+            <span style="font-size:22px">🔒</span>
+            <div style="font-size:14px;line-height:1.5;color:var(--color-primary-800)">
+              <b style="color:var(--color-primary-900)">{{ cadTrancadoTitulo }}</b><br>{{ L.trancadoSub }}
+            </div>
+          </div>
         </sc-if>
 
         <!-- AS TAREFAS DA SESSÃO, UM CARTÃO CADA -->
         <sc-for list="{{ cadTarefas }}" as="tf" hint-placeholder-count="3">
-          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ tf.rotulo }}</div>
-            <div style="font-size:17px;font-weight:700;line-height:1.45;color:var(--color-primary-900)">{{ tf.pergunta }}</div>
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px;opacity:{{ tf.op }}">
+            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ tf.rotulo }}</div>
+            <div style="font-size:17px;font-weight:700;line-height:1.4;color:var(--color-primary-900)">{{ tf.pergunta }}</div>
             <sc-if value="{{ tf.aberta }}">
-              <textarea value="{{ tf.resposta }}" onchange="{{ tf.onResposta }}" rows="4" maxlength="4000" placeholder="{{ L.respostaPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-cell);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical"></textarea>
+              <textarea value="{{ tf.resposta }}" onchange="{{ tf.onResposta }}" rows="3" maxlength="4000" placeholder="{{ L.respostaPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-default);border:1px solid var(--color-tertiary-100);border-radius:14px;padding:14px 16px;font-size:16px;font-family:inherit;line-height:1.5;color:var(--color-primary-900);resize:vertical;outline:none"></textarea>
             </sc-if>
             <sc-if value="{{ tf.lida }}">
-              <div style="background:var(--color-bg-cell);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.6;white-space:pre-wrap;color:var(--color-primary-900)">{{ tf.respostaLida }}</div>
-            </sc-if>
-            <sc-if value="{{ tf.espera }}">
-              <div style="background:var(--color-bg-cell);border:1px dashed var(--color-border);border-radius:14px;padding:13px 16px;font-size:14.5px;line-height:1.55;color:var(--color-tertiary-500)">{{ tf.esperaTexto }}</div>
+              <div style="background:var(--color-bg-default);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.6;white-space:pre-wrap;color:var(--color-primary-900)">{{ tf.respostaLida }}</div>
             </sc-if>
             <sc-for list="{{ tf.comentarios }}" as="cm" hint-placeholder-count="1">
               <div style="background:var(--color-primary-50);border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.55;color:var(--color-primary-900)">{{ cm.texto }} <span style="color:var(--color-tertiary-700)">· {{ cm.quem }}</span></div>
@@ -512,104 +524,136 @@
           </section>
         </sc-for>
 
+        <sc-if value="{{ cadSemTarefas }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:14.5px;line-height:1.6;color:var(--color-tertiary-500)">{{ L.semTarefas }}</section>
+        </sc-if>
+
+        <!-- as palavras da aula para o Review, durante a aula -->
+        <sc-if value="{{ cadPodeGuardar }}">
+          <div><button onclick="{{ onGuardarPalavras }}" style="border:0;background:var(--color-button-primary);color:var(--color-primary-900);box-shadow:0 4px 0 #d9675a;border-radius:999px;padding:16px 26px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer">{{ cadGuardarLabel }}</button></div>
+        </sc-if>
+        <sc-if value="{{ cadJaGuardou }}">
+          <div style="font-size:14px;font-weight:700;color:var(--color-secondary-900)">{{ L.palavrasGuardadas }}</div>
+        </sc-if>
+
         <!-- a tarefa de casa -->
         <sc-if value="{{ cadTemHomework }}">
-          <section style="background:var(--color-neutral-0);border-left:5px solid {{ cadHwBorda }};border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
-              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.homework }}</div>
-              <span style="font-size:12.5px;font-weight:700;color:var(--color-tertiary-700)">{{ cadHwEstado }}</span>
+          <section style="background:var(--color-neutral-0);border:2px solid {{ cadHwBorda }};border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">🏠 {{ cadHwTitulo }}</div>
+              <span style="font-size:12px;font-weight:700;color:{{ cadHwCor }}">{{ cadHwEstado }}</span>
             </div>
-            <div style="font-size:15.5px;line-height:1.6;color:var(--color-primary-900)">{{ cadHomework }}</div>
+            <div style="font-size:17px;font-weight:700;line-height:1.4;color:var(--color-primary-900)">{{ cadHomework }}</div>
+          </section>
+        </sc-if>
+      </sc-if>
+
+      <!-- ══ A SESSÃO PASSADA, EM LEITURA ═════════════════════════ -->
+      <sc-if value="{{ cadPassada }}">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <span style="white-space:nowrap;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:800;background:var(--color-secondary-100);color:var(--color-secondary-900)">{{ L.aulaDada }}</span>
+          <span style="white-space:nowrap;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;background:{{ cadPresBg }};color:{{ cadPresFg }}">{{ cadPresLabel }}</span>
+        </div>
+
+        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:24px 28px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ cadPassEyebrow }}</div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-0.035em;margin-top:4px;line-height:1.2">{{ cadPassTitulo }}</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-if value="{{ cadTemSlides }}">
+              <a href="{{ cadSlides }}" target="_blank" rel="noopener" style="text-decoration:none;background:rgba(255,255,255,.14);color:var(--color-neutral-0);border-radius:999px;padding:14px 20px;font-size:14px;font-weight:800">📊 {{ L.slides }}</a>
+            </sc-if>
+            <sc-if value="{{ cadTemGravacao }}">
+              <a href="{{ cadGravacao }}" target="_blank" rel="noopener" style="text-decoration:none;background:var(--color-button-primary);color:var(--color-primary-900);border-radius:999px;padding:14px 20px;font-size:14px;font-weight:800;box-shadow:0 4px 0 #d9675a">▶ {{ L.verGravacao }}</a>
+            </sc-if>
+            <sc-if value="{{ cadSemGravacao }}">
+              <span style="background:rgba(255,255,255,.1);color:var(--color-neutral-0);border-radius:999px;padding:14px 20px;font-size:13.5px;font-weight:700;opacity:.8">{{ L.gravacaoNaoPublicada }}</span>
+            </sc-if>
+          </div>
+        </section>
+
+        <!-- 🎯 o que esta aula foi, para quem volta nela -->
+        <sc-if value="{{ cadTemObjetivo }}">
+          <section style="background:var(--color-neutral-0);border-radius:20px;padding:18px 22px">
+            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">🎯 {{ L.oQueFoi }}</div>
+            <div style="font-size:15.5px;line-height:1.6;margin-top:6px;color:var(--color-primary-900)">{{ cadObjetivo }}</div>
           </section>
         </sc-if>
 
-      </sc-if>
-      <!-- A AULA AO VIVO -->
-      <!-- Enquanto a professora mantém a aula aberta, as tarefas do
-           plano publicado aceitam resposta aqui, e o que ela comenta
-           aparece preso à tarefa. Quando a aula é encerrada, o que
-           está escrito fica guardado e o campo fecha. -->
-      <sc-if value="{{ temAulaViva }}">
-        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:6px">
-          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ vivoEtiqueta }}</div>
-          <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em">{{ vivoTitulo }}</div>
-          <div style="font-size:13px;line-height:1.55;opacity:.85">{{ vivoTexto }}</div>
-        </section>
-
-        <sc-if value="{{ vivoSemTarefas }}">
-          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:14px;line-height:1.6;color:var(--color-primary-800)">{{ L.vivoSemTarefas }}</section>
+        <!-- as respostas dela, em leitura -->
+        <sc-if value="{{ cadTemRespostas }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.minhasRespostas }}</div>
+            <sc-for list="{{ cadRespostas }}" as="rp" hint-placeholder-count="3">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--color-primary-900)">{{ rp.pergunta }}</div>
+                <div style="font-size:15px;line-height:1.5;color:var(--color-primary-800);background:var(--color-bg-default);border-radius:12px;padding:12px 14px;margin-top:6px;white-space:pre-wrap">{{ rp.resposta }}</div>
+                <sc-for list="{{ rp.comentarios }}" as="cm" hint-placeholder-count="1">
+                  <div style="background:var(--color-primary-50);border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.55;margin-top:6px;color:var(--color-primary-900)">{{ cm.texto }} <span style="color:var(--color-tertiary-700)">· {{ cm.quem }}</span></div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </section>
         </sc-if>
-      </sc-if>
+        <sc-if value="{{ cadSemRespostas }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:14.5px;line-height:1.6;color:var(--color-tertiary-500)">{{ L.semRespostas }}</section>
+        </sc-if>
 
-      <sc-if value="{{ temTarefaAtual }}">
-        <section style="background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:6px">
-          <div style="font-size:12px;font-weight:700;color:var(--color-button-primary)">{{ L.tarefaAtual }}</div>
-          <div style="font-size:16px;line-height:1.55">{{ tarefaAtualTexto }}</div>
-          <div style="font-size:12.5px;opacity:.8">{{ tarefaAtualQuando }}</div>
-        </section>
+        <!-- a tarefa de casa desta aula -->
+        <sc-if value="{{ cadTemHomework }}">
+          <section style="background:var(--color-neutral-0);border:2px solid {{ cadHwBorda }};border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">🏠 {{ L.homework }}</div>
+              <span style="font-size:12px;font-weight:700;color:{{ cadHwCor }}">{{ cadHwEstado }}</span>
+            </div>
+            <div style="font-size:16px;font-weight:700;line-height:1.4;color:var(--color-primary-900)">{{ cadHomework }}</div>
+          </section>
+        </sc-if>
+
+        <!-- as palavras da aula -->
+        <sc-if value="{{ cadTemPalavras }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:18px 24px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            <span style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-right:6px">{{ L.palavrasDaAula }}</span>
+            <sc-for list="{{ cadPalavras }}" as="pw" hint-placeholder-count="5">
+              <span style="background:var(--color-primary-50);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--color-primary-900)">{{ pw }}</span>
+            </sc-for>
+            <sc-if value="{{ cadPodeGuardar }}">
+              <button onclick="{{ onGuardarPalavras }}" style="margin-left:auto;border:1px solid var(--color-tertiary-100);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">{{ cadGuardarLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ cadJaGuardou }}">
+              <span style="margin-left:auto;font-size:12.5px;font-weight:700;color:var(--color-secondary-900)">{{ L.palavrasGuardadas }}</span>
+            </sc-if>
+          </section>
+        </sc-if>
+
+        <!-- a anotação dela sobre esta aula -->
+        <sc-if value="{{ cadTemNota }}">
+          <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.minhaNota }}</div>
+            <sc-if value="{{ cadNotaTexto }}">
+              <div style="background:var(--color-bg-default);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.6;white-space:pre-wrap;color:var(--color-primary-900)">{{ cadNota }}</div>
+            </sc-if>
+            <sc-if value="{{ cadNotaLendo }}">
+              <button onclick="{{ onCadNotaAbrir }}" style="align-self:flex-start;border:0;background:var(--color-button-secondary);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ cadNotaBotao }}</button>
+            </sc-if>
+            <sc-if value="{{ cadNotaEscrevendo }}">
+              <textarea ref="{{ notaRef }}" defaultValue="{{ cadNota }}" rows="4" maxlength="2000" placeholder="{{ L.notaPh }}" style="width:100%;box-sizing:border-box;background:var(--color-bg-default);border:1px solid var(--color-tertiary-100);border-radius:14px;padding:13px 16px;font-size:15px;font-family:inherit;line-height:1.55;color:var(--color-primary-900);resize:vertical;outline:none"></textarea>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button onclick="{{ onCadNotaSalvar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:11px 18px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.salvar }}</button>
+                <button onclick="{{ onCadNotaFechar }}" style="border:0;background:transparent;color:var(--color-tertiary-700);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:11px 4px">{{ L.cancelar }}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ cadNotaSalvou }}">
+              <span style="font-size:12.5px;font-weight:700;color:var(--color-success-dark)">{{ L.notaSalva }}</span>
+            </sc-if>
+          </section>
+        </sc-if>
       </sc-if>
 
       <sc-if value="{{ cadernoVazio }}">
         <section style="background:var(--color-neutral-0);border-radius:24px;padding:26px 28px;font-size:15px;line-height:1.6;color:var(--color-primary-800);max-width:640px">{{ L.cadernoVazio }}</section>
       </sc-if>
-
-      <sc-for list="{{ caderno }}" as="c" hint-placeholder-count="5">
-        <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
-            <div>
-              <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ c.quando }}</div>
-              <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;margin-top:2px">{{ c.topico }}</div>
-            </div>
-            <span style="flex:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;background:{{ c.presencaBg }};color:{{ c.presencaFg }}">{{ c.presencaLabel }}</span>
-          </div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--color-primary-800)">
-            <sc-if value="{{ c.temTarefa }}">
-              <span style="color:{{ c.tarefaCor }};font-weight:700">{{ c.tarefaLabel }}</span>
-            </sc-if>
-            <sc-if value="{{ c.temGravacao }}">
-              <a href="{{ c.gravacao }}" target="_blank" rel="noopener" style="font-weight:700;color:var(--color-text-light);text-decoration:none">{{ L.verGravacao }} →</a>
-            </sc-if>
-          </div>
-
-          <!-- O QUE A AULA TEVE · só de plano publicado -->
-          <sc-if value="{{ c.temObjetivo }}">
-            <div style="font-size:14px;line-height:1.55;color:var(--color-primary-800)">{{ c.objetivo }}</div>
-          </sc-if>
-          <sc-if value="{{ c.temAtividades }}">
-            <div style="background:var(--color-button-secondary);border-radius:16px;padding:13px 16px;display:flex;flex-direction:column;gap:9px">
-              <div style="font-size:11.5px;font-weight:700;color:var(--color-tertiary-700)">{{ L.oQueTeve }}</div>
-              <sc-for list="{{ c.atividades }}" as="at" hint-placeholder-count="5">
-                <div>
-                  <div style="display:flex;gap:7px;align-items:baseline;flex-wrap:wrap">
-                    <span style="border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ at.fase }}</span>
-                    <span style="font-size:14px;font-weight:600">{{ at.titulo }}</span>
-                  </div>
-                  <sc-if value="{{ at.temPergunta }}">
-                    <div style="font-size:13.5px;line-height:1.5;margin-top:4px;color:var(--color-primary-800)">{{ at.pergunta }}</div>
-                  </sc-if>
-                </div>
-              </sc-for>
-            </div>
-          </sc-if>
-
-          <sc-if value="{{ c.temNota }}">
-            <div style="background:var(--color-button-secondary);border-radius:16px;padding:13px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap">{{ c.nota }}</div>
-          </sc-if>
-          <sc-if value="{{ c.lendo }}">
-            <button onclick="{{ c.onAbrir }}" style="align-self:flex-start;border:0;background:var(--color-button-secondary);color:var(--color-primary-900);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.botaoNota }}</button>
-          </sc-if>
-          <sc-if value="{{ c.escrevendo }}">
-            <textarea ref="{{ notaRef }}" defaultValue="{{ c.nota }}" rows="4" maxlength="2000" placeholder="{{ L.notaPh }}" style="width:100%;border:1px solid var(--color-tertiary-50);border-radius:16px;padding:12px 14px;font-size:14px;font-family:inherit;color:var(--color-primary-900);resize:vertical"></textarea>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <button onclick="{{ c.onSalvar }}" style="border:0;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:11px 18px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">{{ L.salvar }}</button>
-              <button onclick="{{ c.onFechar }}" style="border:0;background:transparent;color:var(--color-tertiary-700);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;padding:11px 4px">{{ L.cancelar }}</button>
-            </div>
-          </sc-if>
-          <sc-if value="{{ c.salvou }}">
-            <span style="font-size:12.5px;font-weight:700;color:var(--color-success-dark)">{{ L.notaSalva }}</span>
-          </sc-if>
-        </section>
-      </sc-for>
 
     </sc-if>
 
@@ -1208,31 +1252,45 @@ class Component extends DCLogic {
       semPlano: T("Your teacher has not published this session yet. When she does, what you will learn and the activities appear here.",
         "A professora ainda não publicou esta sessão. Quando publicar, o que você vai aprender e as atividades aparecem aqui."),
       slidesDaAula: T("class slides", "slides da aula"),
-      abrirSlides: T("Open the slides →", "Abrir os slides →"),
+      slides: T("Slides", "Slides"),
+      abrirSlides: T("open or download", "abrir ou baixar"),
+      slidesDepois: T("your teacher attaches them to the session",
+        "a professora anexa na sessão"),
       gravacaoDaAula: T("class recording", "gravação da aula"),
+      gravacaoDepois: T("appears after the class", "aparece depois da aula"),
+      gravacaoNaoPublicada: T("recording not published yet",
+        "gravação ainda não publicada"),
       startersDaAula: T("sentence starters", "começos de frase"),
       palavrasGuardadas: T("✓ saved to your Review", "✓ guardadas no seu Review"),
       palavrasDaAula: T("words from this class", "palavras desta aula"),
       homework: T("homework", "tarefa de casa"),
+      homeworkDepois: T("homework · opens after the class",
+        "tarefa de casa · abre depois da aula"),
+      abrirTarefa: T("Open it", "Abrir"),
+      salvoSozinho: T("✓ saved as you write", "✓ salvo enquanto você escreve"),
+      trancadoSub: T("You can read the words and the tasks now. Between classes, your homework is the one thing open.",
+        "As palavras e as tarefas você já pode ler. Entre as aulas, a tarefa de casa é o que fica aberto."),
+      aulaDada: T("✓ class done · read only", "✓ aula dada · só leitura"),
+      minhasRespostas: T("my answers in class", "as minhas respostas na aula"),
+      semResposta: T("You did not write an answer for this one.",
+        "Você não escreveu resposta nesta."),
+      semRespostas: T("This class had no task with a question in the published plan.",
+        "Esta aula não teve tarefa com pergunta no plano publicado."),
+      semTarefas: T("Your teacher has not written the questions of this session yet. They show up here when she does.",
+        "A professora ainda não escreveu as perguntas desta sessão. Elas aparecem aqui quando ela escrever."),
+      minhaNota: T("my own notes", "as minhas anotações"),
       // ── caderno ──
-      tarefaAtual: T("homework for next class", "tarefa para a próxima aula"),
       cadernoVazio: T("Your classes appear here once attendance is taken. Each one brings what was taught, your homework and the recording — and a place for your own notes.",
         "As suas aulas aparecem aqui quando a chamada é feita. Cada uma traz o que foi dado, a sua tarefa e a gravação — e um lugar para as suas anotações."),
-      verGravacao: T("watch the class", "ver a gravação"),
-      oQueTeve: T("what this class had", "o que esta aula teve"),
+      verGravacao: T("Watch the recording", "Ver a gravação"),
+      oQueFoi: T("what this class was about", "o que esta aula tinha"),
       escreverNota: T("Write a note", "Escrever uma nota"),
       editarNota: T("Edit my note", "Editar a minha nota"),
       notaPh: T("What you want to remember from this class…",
         "O que você quer lembrar desta aula…"),
       notaSalva: T("saved", "salvo"),
-      semTopico: T("class given", "aula dada"),
-      entregou: T("homework delivered", "tarefa entregue"),
-      naoEntregou: T("homework not delivered", "tarefa não entregue"),
       // ── a aula ao vivo ──
       respostaPh: T("Write your answer here…", "Escreva a sua resposta aqui…"),
-      vivoSemTarefas: T("This class has no task with a question yet. When your teacher publishes the lesson plan, the tasks show up here.",
-        "Esta aula ainda não tem tarefa com pergunta. Quando a professora publicar o plano da aula, as tarefas aparecem aqui."),
-      semResposta: T("You did not answer this one.", "Você não respondeu esta."),
       // ── review ──
       paraHoje: T("to review today", "para revisar hoje"),
       semFila: T("your review", "o seu review"),
@@ -1347,25 +1405,32 @@ class Component extends DCLogic {
       eyebrow: "", title: "—",
       milesFmt: "0", milesLinha: "", goMiles: () => {}, onSair: () => {},
       hasGrupo: false, grupoTabs: [],
-      caderno: [], cadernoVazio: true, temTarefaAtual: false,
-      cadTemSessoes: false, cadStrip: [], cadSelAberta: false, cadSelTitulo: "",
-      cadSelPill: "", cadSelPillBg: "", cadSelPillFg: "",
-      cadTemObjetivo: false, cadObjetivo: "", cadTemSlides: false, cadSlides: "#",
-      cadTemGravacao: false, cadGravacao: "#", cadTemPalavras: false, cadPalavras: [],
-      cadTrancado: false, cadTrancadoTexto: "", cadTemHomework: false, cadHomework: "",
-      cadHwFeito: false, cadHwBorda: "", cadHwEstado: "",
+      cadernoVazio: true,
+      cadTemSessoes: false, cadStrip: [], cadAtual: false, cadPassada: false,
+      cadSelPill: "", cadSelPillBg: "", cadSelPillFg: "", cadSalvando: false,
+      cadTemObjetivo: false, cadObjetivo: "", cadObjTam: "24px",
+      cadSemObjetivo: false,
+      cadTemSlides: false, cadSemSlides: true, cadSlides: "#",
+      cadTemGravacao: false, cadSemGravacao: true, cadGravacao: "#",
+      cadTemPalavras: false, cadPalavras: [],
+      cadTemApoio: false, cadApoio: [],
+      cadTrancado: false, cadTrancadoTitulo: "",
+      cadTemHomework: false, cadHomework: "", cadHwTitulo: "",
+      cadHwBorda: "", cadHwEstado: "", cadHwCor: "",
       cadBloqueio: false, cadBloqueioTexto: "", onCadBloqueio: () => {},
-      cadTemStarters: false, cadStarters: [], cadTemApoio: false,
-      cadTemTarefas: false, cadTarefas: [],
+      cadTemTarefas: false, cadSemTarefas: false, cadTarefas: [],
       cadPodeGuardar: false, cadJaGuardou: false, cadGuardarLabel: "",
       onGuardarPalavras: () => {},
-      cadSemObjetivo: false, cadTemMaterial: false,
+      cadPassEyebrow: "", cadPassTitulo: "",
+      cadPresLabel: "", cadPresBg: "", cadPresFg: "",
+      cadTemRespostas: false, cadSemRespostas: false, cadRespostas: [],
+      cadTemNota: false, cadNota: "", cadNotaTexto: false, cadNotaBotao: "",
+      cadNotaLendo: false, cadNotaEscrevendo: false, cadNotaSalvou: false,
+      onCadNotaAbrir: () => {}, onCadNotaSalvar: () => {}, onCadNotaFechar: () => {},
       temPulso: false, pulsoTitulo: "", pulsoSub: "", pulsoPerguntar: false,
       pulsoNotas: [], pulsoComentar: false, pulsoTexto: "",
       onPulsoTexto: () => {}, onPulsoEnviar: () => {}, onPulsoPular: () => {},
-      temAulaViva: false, vivoEtiqueta: "", vivoTitulo: "", vivoTexto: "",
-      vivoTarefas: [], vivoSemTarefas: false,
-      tarefaAtualTexto: "", tarefaAtualQuando: "", notaRef: this.notaRef,
+      notaRef: this.notaRef,
       temRevisao: false, semRevisao: true, revisaoVaziaTexto: "",
       cartaoPalavra: "", cartaoTraducao: "", cartaoExemplo: "", cartaoTemExemplo: false,
       cartaoVirado: false, cartaoFechado: true, revisaoLinha: "", revisaoTitulo: "",
@@ -1808,11 +1873,19 @@ class Component extends DCLogic {
     const cadDatas = turmaRaw && CRM.datasDasSessoes
       ? (CRM.datasDasSessoes(turmaRaw.id, { encaixarPorOrdem: true }) || {}) : {};
     const cadVivaN = viva && viva.sessao ? parseInt(viva.sessao, 10) : 0;
+    // Qual sessão abre sozinha: a que está ao vivo; senão a de hoje,
+    // mesmo encerrada, porque é nela que ela acabou de escrever e é a
+    // ela que volta; senão a primeira que ainda não foi dada.
+    const cadHoje = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
     const cadPadrao = cadVivaN
+      || ((cadSessoes.filter(x => (cadDatas[x.n] || {}).data === cadHoje)[0] || {}).n)
       || ((cadSessoes.filter(x => !((cadDatas[x.n] || {}).dada))[0] || {}).n)
       || (cadSessoes.length ? cadSessoes[cadSessoes.length - 1].n : 0);
     const cadSelN = this.state.cadSel || cadPadrao;
     const cadSelData = (cadDatas[cadSelN] || {}).data || "";
+    const cadSelSessao = cadSessoes.filter(x => x.n === cadSelN)[0] || null;
+    const cadSelTitulo = (cadSelSessao && cadSelSessao.titulo) || "";
+    const cadProjeto = (cadSessoes[0] && cadSessoes[0].projeto) || "";
     const tcAtual = (turmaDela && turmaDela.tarefaCasa) || null;
     const rev = (CRM.revisaoDeHoje && CRM.revisaoDeHoje(p.id))
       || { devidas: [], total: 0, sabidas: 0, degraus: 6 };
@@ -1833,8 +1906,19 @@ class Component extends DCLogic {
     const PAGINAS = {
       home: { label: T("Home", "Início"), icon: "⌂", eyebrow: dataLonga,
         title: T("Hello, ", "Olá, ") + CRM.firstName(p.nome) + "!" },
-      notebook: { label: T("My Notebook", "Meu caderno"), icon: "✎", eyebrow: T("study", "estudar"),
-        title: T("My Notebook", "Meu caderno") },
+      // O cabeçalho do caderno carrega o projeto e a sessão aberta, como
+      // no desenho ("my notebook · traditions" / "Session 4 · Inside a
+      // Recipe"). Sem isso o herói tinha de dizer as duas coisas, e a
+      // frase do objetivo era empurrada para a terceira linha.
+      notebook: {
+        label: T("My Notebook", "Meu caderno"), icon: "✎",
+        eyebrow: T("my notebook", "meu caderno")
+          + (cadProjeto ? " · " + cadProjeto.toLowerCase() : ""),
+        title: cadSelN
+          ? (T("Session ", "Sessão ") + cadSelN
+              + (cadSelTitulo ? " · " + cadSelTitulo : ""))
+          : T("My Notebook", "Meu caderno")
+      },
       review: { label: T("Review", "Review"), icon: "↻", eyebrow: T("study", "estudar"),
         title: T("Review", "Review") },
       clubs: { label: T("Clubs", "Clubes"), icon: "◎", eyebrow: T("community", "comunidade"),
@@ -1945,45 +2029,10 @@ class Component extends DCLogic {
       },
 
       // ── CADERNO ──
-      temTarefaAtual: !!(tcAtual && tcAtual.texto),
-      tarefaAtualTexto: tcAtual ? tcAtual.texto : "",
-      tarefaAtualQuando: tcAtual && tcAtual.em
-        ? T("given on " + CRM.ddmm(tcAtual.em), "passada em " + CRM.ddmm(tcAtual.em)) : "",
-      temAulaViva: !!viva,
-      vivoEtiqueta: viva && viva.estado === "ao_vivo"
-        ? T("class in progress", "aula acontecendo agora")
-        : T("class ended", "aula encerrada"),
-      vivoTitulo: viva ? viva.turma : "",
-      vivoTexto: viva && viva.estado === "ao_vivo"
-        ? T("Answer below. Your teacher reads it while you write.",
-            "Responda abaixo. A professora lê enquanto você escreve.")
-        : T("The notebook of this class is closed. What you wrote stays here.",
-            "O caderno desta aula está fechado. O que você escreveu fica aqui."),
-      vivoSemTarefas: !!viva && vivaTarefas.length === 0,
-      vivoTarefas: vivaTarefas.map((t, i) => {
-        const r = vivaMinhas.respostas[String(i)] || null;
-        const texto = r ? String(r.t || "") : "";
-        const aberta = !!viva && viva.estado === "ao_vivo";
-        return {
-          rotulo: T("Task ", "Tarefa ") + (i + 1)
-            + [t.fase, t.titulo].filter(Boolean).map(x => " · " + x).join(""),
-          pergunta: t.pergunta,
-          resposta: texto,
-          aberta: aberta, fechada: !aberta,
-          respostaLida: texto.trim() ? texto : L.semResposta,
-          cor: texto.trim() ? "var(--color-primary-900)" : "var(--color-tertiary-700)",
-          onResposta: (e) => {
-            CRM.salvarResposta(p.id, viva.turma, viva.data, i, e.target.value);
-            this.bump();
-          },
-          comentarios: (vivaMinhas.comentarios[String(i)] || []).map(c => ({
-            texto: c.texto,
-            quem: [c.por ? CRM.firstName(c.por) : "",
-              c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
-          }))
-        };
-      }),
-      cadernoVazio: cadLista.length === 0 && !viva,
+      // Uma sessão por vez, e nada embaixo dela: a faixa de cima é a
+      // navegação. A lista de todas as aulas que ficava aqui repetia a
+      // mesma sessão num segundo cartão, com outro desenho.
+      cadernoVazio: cadSessoes.length === 0 && cadLista.length === 0 && !viva,
       notaRef: this.notaRef,
       // ══ COMO FOI A AULA ══════════════════════════════════════
       //
@@ -2068,12 +2117,85 @@ class Component extends DCLogic {
         const hwAnteriorFeito = !anterior || !anterior.aula
           || !(anterior.aula.tarefaCobrada && !anterior.aula.tarefaEntregue);
 
+        // A faixa do desenho é uma pílula CHEIA da cor do estado, com
+        // "S4 · 14 Oct" miúdo em cima e o estado embaixo. Eram três
+        // linhas num cartão branco, e a faixa inteira ficava cinza.
         const EST_SESS = {
-          viva: [T("live now", "ao vivo agora"), "var(--color-button-primary)", "var(--color-primary-900)"],
+          viva: [T("live now", "ao vivo"), "var(--color-button-primary)", "var(--color-primary-900)"],
           dada: [T("done", "dada"), "var(--color-secondary-100)", "var(--color-secondary-900)"],
-          avir: [T("to come", "a vir"), "var(--color-bg-cell)", "var(--color-tertiary-500)"]
+          avir: [T("to come", "a vir"), "var(--color-neutral-0)", "var(--color-tertiary-700)"]
         };
         const chaveEst = (x) => x.viva ? "viva" : (x.dada ? "dada" : "avir");
+
+        // Duas telas, não uma: a sessão de hoje (ou a que vem) e a
+        // sessão passada. O arquivo 02 desenha as duas separadas, e
+        // tratá-las igual era mostrar a aula dada como se fosse a de
+        // hoje, com os campos fechados e sem a gravação em destaque.
+        // Qual dia a sessão aberta é, e se a aula dela está correndo
+        // agora. Vem antes de tudo porque é isto que decide se a tela
+        // é a de hoje ou a de leitura: uma aula com a chamada já feita
+        // continua sendo a aula de hoje enquanto a professora a mantém
+        // aberta.
+        const dataSess = sel ? sel.data : "";
+        const vivaAqui = !!(viva && dataSess && viva.data === dataSess
+          && viva.estado === "ao_vivo");
+        const passada = !!sel && sel.dada && !sel.viva && !vivaAqui;
+        const PRES = {
+          presente: [T("present", "presente"), "var(--color-secondary-100)", "var(--color-secondary-900)"],
+          atraso: [T("late", "cheguei atrasada"), "var(--color-warning-light)", "var(--color-warning-dark)"],
+          falta: [T("missed", "faltei"), "var(--color-error-light)", "var(--color-error-dark)"],
+          justificada: [T("excused", "falta justificada"), "var(--color-button-secondary)", "var(--color-tertiary-700)"]
+        };
+        const pres = (sel && sel.aula && PRES[sel.aula.presenca]) || null;
+
+        // o objetivo é frase de syllabus, e algumas passam de duas
+        // linhas: no corpo de 24px do desenho elas estouram o cartão
+        const obj = (CRM.objetivoSemFormula && plano
+          ? CRM.objetivoSemFormula(plano.objetivo) : (plano && plano.objetivo)) || "";
+
+        const temSlides = !!(plano && plano.slides);
+        const temGrav = !!(sel && sel.aula && sel.aula.gravacao);
+
+        // as tarefas do plano publicado, e o que ela escreveu em cada
+        const tarefas = ((plano && plano.atividades) || [])
+          .filter(a2 => a2 && String(a2.pergunta || "").trim());
+        const minhas = (dataSess && CRM.respostasDaAluna)
+          ? CRM.respostasDaAluna(p.id, p.turma, dataSess)
+          : { respostas: {}, comentarios: {} };
+        const respostaDe = (i) => {
+          const r = minhas.respostas[String(i)] || null;
+          return r ? String(r.t || "") : "";
+        };
+        const comentariosDe = (i) => (minhas.comentarios[String(i)] || []).map(c => ({
+          texto: c.texto,
+          quem: [c.por ? CRM.firstName(c.por) : "",
+            c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
+        }));
+
+        // as palavras: plano.palavras é LISTA — limpaPalavras devolve
+        // array. Aceita texto também: plano antigo guardou string.
+        const pw = (() => {
+          const v = plano && plano.palavras;
+          return (Array.isArray(v) ? v : String(v || "").split(","))
+            .map(w => String(w || "").trim()).filter(Boolean);
+        })();
+        const st = ((plano && plano.starters) || [])
+          .map(x => String(x || "").trim()).filter(Boolean);
+        // "Add 5 words to my Review Vault" do arquivo 02. A marca da
+        // aula é o que diz se ela já guardou as desta sessão.
+        const marca = p.turma + " · " + (sel ? "sessão " + sel.n : "");
+        const jaGuardou = ((CRM.palavrasDaAluna && CRM.palavrasDaAluna(p.id)) || [])
+          .some(w => w && w.daAula === marca);
+
+        // a anotação dela sobre a aula. Fica dentro da sessão passada,
+        // que é onde ela volta para reler; era um cartão à parte que
+        // repetia a aula inteira embaixo da sessão aberta.
+        const chaveNota = sel && sel.aula ? (sel.aula.turma + "|" + sel.aula.data) : "";
+        const notaAberta = !!chaveNota && this.state.aulaAberta === chaveNota;
+        const notaTxt = (sel && sel.aula && sel.aula.nota) || "";
+
+        const hwDado = !!(plano && String(plano.homework || "").trim());
+        const hwEntregue = !!(sel && sel.aula && sel.aula.tarefaEntregue);
 
         return {
           cadTemSessoes: linha.length > 0,
@@ -2083,196 +2205,150 @@ class Component extends DCLogic {
               n: "S" + x.n,
               quando: x.data ? CRM.ddmm(x.data) : T("no date", "sem data"),
               estado: e[0], bg: e[1], fg: e[2],
-              borda: x.n === selN ? "2px solid var(--color-primary-900)" : "1px solid var(--color-border)",
-              go: () => this.setState({ cadSel: x.n })
+              borda: x.n === selN ? "var(--color-primary-900)" : e[1],
+              go: () => this.setState({ cadSel: x.n, aulaAberta: null })
             };
           }),
 
-          cadSelAberta: !!sel,
-          cadSelTitulo: sel ? ("Session " + sel.n + (sel.titulo ? " · " + sel.titulo : "")) : "",
+          cadAtual: !!sel && !passada,
+          cadPassada: passada,
+          cadSalvando: vivaAqui,
           cadSelPill: !sel ? ""
-            : sel.viva ? T("live now", "ao vivo agora")
-            : sel.dada ? T("✓ class done · read only", "✓ aula dada · só leitura")
+            : vivaAqui ? T("● live class · editing open", "● aula ao vivo · pode escrever")
             : (sel.data && sel.data >= hojeIso
-                ? (T("starts ", "começa ") + CRM.ddmm(sel.data)) : T("to come", "a vir")),
-          cadSelPillBg: !sel ? "" : sel.viva ? "var(--color-button-primary)"
-            : sel.dada ? "var(--color-secondary-100)" : "var(--color-bg-cell)",
-          cadSelPillFg: !sel ? "" : sel.viva ? "var(--color-primary-900)"
-            : sel.dada ? "var(--color-secondary-900)" : "var(--color-tertiary-500)",
+                ? ("🔒 " + T("class on ", "aula em ") + CRM.ddmm(sel.data))
+                : T("to come", "a vir")),
+          cadSelPillBg: !sel ? "" : vivaAqui
+            ? "var(--color-button-primary)" : "var(--color-neutral-0)",
+          cadSelPillFg: "var(--color-primary-900)",
 
           // 🎯 o que você vai saber ao sair daqui
-          cadTemObjetivo: !!(plano && plano.objetivo),
-          // o mesmo corte das metas: "By the end of this session the
-          // student can…" é cabeçalho de documento, não fala com ela
-          cadObjetivo: (CRM.objetivoSemFormula && plano
-            ? CRM.objetivoSemFormula(plano.objetivo) : (plano && plano.objetivo)) || "",
+          cadTemObjetivo: !!obj,
+          cadSemObjetivo: !obj,
+          cadObjetivo: obj,
+          cadObjTam: obj.length > 150 ? "18px" : (obj.length > 90 ? "21px" : "24px"),
 
-          cadTemSlides: !!(plano && plano.slides),
+          cadTemSlides: temSlides, cadSemSlides: !temSlides,
           cadSlides: (plano && plano.slides) || "#",
-          cadTemGravacao: !!(sel && sel.aula && sel.aula.gravacao),
+          cadTemGravacao: temGrav, cadSemGravacao: !temGrav,
           cadGravacao: (sel && sel.aula && sel.aula.gravacao) || "#",
 
-          // plano.palavras é LISTA — limpaPalavras devolve array. Aqui
-          // era tratada como texto, e .trim() numa lista derrubava o
-          // renderVals inteiro assim que a aluna abria uma sessão com
-          // palavras. Aceita os dois: plano antigo guardou texto.
-          ...(() => {
-            const v = plano && plano.palavras;
-            const l = (Array.isArray(v) ? v : String(v || "").split(","))
-              .map(w => String(w || "").trim()).filter(Boolean);
-            return { cadTemPalavras: l.length > 0, cadPalavras: l };
-          })(),
+          // os cartões de apoio do desenho: palavras e começos de frase
+          // lado a lado, cada um com a sua cor de pílula
+          cadTemApoio: pw.length > 0 || st.length > 0,
+          cadApoio: [
+            pw.length ? { label: L.palavrasDaAula, itens: pw, tom: "var(--color-secondary-100)" } : null,
+            st.length ? { label: L.startersDaAula, itens: st, tom: "var(--color-primary-50)" } : null
+          ].filter(Boolean),
+          cadTemPalavras: pw.length > 0, cadPalavras: pw,
 
           // 🔒 enquanto a professora não abre a aula, as tarefas não
           // aceitam resposta. Não é enfeite: o que ela escreve antes
           // não chegaria à professora.
-          cadTrancado: !!(sel && !sel.viva && !sel.dada),
-          cadTrancadoTexto: sel && sel.data
+          cadTrancado: !!sel && !passada && !vivaAqui,
+          cadTrancadoTitulo: sel && sel.data
             ? (T("Class activities open when your teacher starts the class, on ", "As atividades abrem quando a professora começar a aula, em ") + CRM.ddmm(sel.data) + ".")
             : T("Class activities open when your teacher starts the class.", "As atividades abrem quando a professora começar a aula."),
 
-          cadTemHomework: !!(plano && (plano.homework || "").trim()),
-          cadHomework: (plano && plano.homework) || "",
-          cadHwFeito: !!(sel && sel.aula && sel.aula.tarefaEntregue),
-          cadHwBorda: (sel && sel.aula && sel.aula.tarefaEntregue)
-            ? "var(--color-secondary-500)"
-            : (sel && sel.dada ? "var(--color-warning)" : "var(--color-border)"),
-          cadHwEstado: !sel || !sel.dada ? T("after the class", "depois da aula")
-            : (sel.aula && sel.aula.tarefaEntregue
-                ? T("delivered", "entregue") : T("not delivered yet", "ainda não entregue")),
-
-          // a faixa amarela do arquivo: homework anterior em aberto
-          cadBloqueio: !hwAnteriorFeito,
-          cadBloqueioTexto: anterior
-            ? (T("Session ", "Sessão ") + anterior.n + T(" homework is still open.", " está com a tarefa em aberto."))
-            : "",
-          onCadBloqueio: () => this.setState({ cadSel: anterior ? anterior.n : selN }),
-
-          // O arquivo pede três coisas que ainda não têm onde morar no
-          // sistema. Ficam escritas na tela em vez de inventadas.
-          cadSemObjetivo: !(plano && plano.objetivo),
-          cadTemMaterial: !!((plano && plano.slides) || (sel && sel.aula && sel.aula.gravacao)),
           // ── AS TAREFAS DA SESSÃO, UM CARTÃO CADA (arquivo 02) ──
           //
           // Elas só existiam enquanto a aula estava aberta, e antes
           // disso a tela trazia um parágrafo explicando que iam
           // aparecer. O arquivo pede os cartões À MOSTRA, com o campo
-          // fechado e dizendo quando abre: a aluna chega na aula
-          // sabendo o que vai fazer.
-          ...(() => {
-            const tarefas = ((plano && plano.atividades) || [])
-              .filter(a2 => a2 && String(a2.pergunta || "").trim());
-            const dataSess = sel ? sel.data : "";
-            const vivaAqui = !!(viva && dataSess && viva.data === dataSess
-              && viva.estado === "ao_vivo");
-            const minhas = (dataSess && CRM.respostasDaAluna)
-              ? CRM.respostasDaAluna(p.id, p.turma, dataSess)
-              : { respostas: {}, comentarios: {} };
-            const quando = dataSess ? CRM.ddmm(dataSess) : "";
+          // fechado: a aluna chega na aula sabendo o que vai fazer.
+          cadTemTarefas: tarefas.length > 0,
+          // E quando o plano está publicado mas sem pergunta nenhuma,
+          // a tela diz isso em vez de ficar com um vão entre o 🔒 e a
+          // tarefa de casa.
+          cadSemTarefas: !!sel && !passada && !!plano && tarefas.length === 0,
+          cadTarefas: tarefas.map((t2, i) => {
+            const texto = respostaDe(i);
             return {
-              cadTemTarefas: tarefas.length > 0,
-              cadTarefas: tarefas.map((t2, i) => {
-                const r = minhas.respostas[String(i)] || null;
-                const texto = r ? String(r.t || "") : "";
-                return {
-                  rotulo: T("step ", "passo ") + (i + 1)
-                    + (t2.fase ? " · " + t2.fase : ""),
-                  pergunta: t2.pergunta,
-                  aberta: vivaAqui,
-                  resposta: texto,
-                  // fechada com resposta = o que ela escreveu na aula;
-                  // fechada sem resposta = ainda vai abrir
-                  lida: !vivaAqui && !!texto.trim(),
-                  espera: !vivaAqui && !texto.trim(),
-                  respostaLida: texto,
-                  esperaTexto: quando
-                    ? T("Opens when your teacher starts the class, on ",
-                        "Abre quando a professora começar a aula, em ") + quando
-                    : T("Opens when your teacher starts the class.",
-                        "Abre quando a professora começar a aula."),
-                  onResposta: (e) => {
-                    if (!vivaAqui) return;
-                    CRM.salvarResposta(p.id, viva.turma, viva.data, i, e.target.value);
-                    this.bump();
-                  },
-                  comentarios: (minhas.comentarios[String(i)] || []).map(c => ({
-                    texto: c.texto,
-                    quem: [c.por ? CRM.firstName(c.por) : "",
-                      c.em ? String(c.em).slice(11, 16) : ""].filter(Boolean).join(" · ")
-                  }))
-                };
-              })
-            };
-          })(),
-          // os começos de frase que a professora escreveu no plano
-          ...(() => {
-            const st = (plano && plano.starters) || [];
-            const pw = (plano && plano.palavras) || [];
-            // "Add 5 words to my Review Vault" do arquivo 02. A marca
-            // da aula é o que diz se ela já guardou as desta sessão.
-            const marca = p.turma + " · " + (sel ? "sessão " + sel.n : "");
-            const jaGuardou = ((CRM.palavrasDaAluna && CRM.palavrasDaAluna(p.id)) || [])
-              .some(w => w && w.daAula === marca);
-            return {
-              cadTemStarters: st.length > 0, cadStarters: st,
-              cadTemApoio: st.length > 0 || pw.length > 0,
-              cadPodeGuardar: pw.length > 0 && !jaGuardou,
-              cadJaGuardou: pw.length > 0 && jaGuardou,
-              cadGuardarLabel: T("Add these words to my Review", "Guardar estas palavras no meu Review")
-                + " · +" + ((CRM.MOEDAS_REGRAS || {}).palavrasDaAula || 0) + " mi",
-              onGuardarPalavras: () => {
-                if (!sel || !CRM.guardarPalavrasDaAula) return;
-                CRM.guardarPalavrasDaAula(p.id, p.turma, sel.n, pw);
+              rotulo: T("step ", "passo ") + (i + 1)
+                + (t2.fase ? " · " + t2.fase : ""),
+              pergunta: t2.pergunta,
+              aberta: vivaAqui,
+              op: vivaAqui || texto.trim() ? "1" : ".75",
+              resposta: texto,
+              lida: !vivaAqui && !!texto.trim(),
+              respostaLida: texto,
+              onResposta: (e) => {
+                if (!vivaAqui) return;
+                CRM.salvarResposta(p.id, viva.turma, viva.data, i, e.target.value);
                 this.bump();
-              }
+              },
+              comentarios: comentariosDe(i)
             };
-          })()
-        };
-      })(),
-      // Só a aula da sessão aberta: a faixa de cima é a navegação
-      // agora, e repetir a lista inteira embaixo dela era mostrar a
-      // mesma coisa duas vezes.
-      caderno: cadLista.filter(c => !cadSelData || c.data === cadSelData).map(c => {
-        const chave = c.turma + "|" + c.data;
-        const aberta = this.state.aulaAberta === chave;
-        const EST = {
-          presente: [T("present", "presente"), "var(--color-secondary-100)", "var(--color-success-dark)"],
-          atraso: [T("late", "cheguei atrasada"), "var(--color-warning-light)", "var(--color-warning-dark)"],
-          falta: [T("missed", "faltei"), "var(--color-error-light)", "var(--color-error-dark)"],
-          justificada: [T("excused", "falta justificada"), "var(--color-button-secondary)", "var(--color-tertiary-700)"]
-        };
-        const e = EST[c.presenca] || EST.presente;
-        return {
-          quando: CRM.ddmm(c.data) + " · " + c.turma,
-          // o título da sessão é melhor que o tópico escrito à mão, mas
-          // só existe quando a professora disse qual sessão foi e
-          // publicou o plano
-          topico: c.tituloSessao || c.topico || L.semTopico,
-          temObjetivo: !!c.objetivo, objetivo: c.objetivo,
-          temAtividades: (c.atividades || []).length > 0,
-          atividades: (c.atividades || []).map(a => ({
-            fase: a.fase, titulo: a.titulo,
-            temPergunta: !!a.pergunta, pergunta: a.pergunta
-          })),
-          presencaLabel: e[0], presencaBg: e[1], presencaFg: e[2],
-          temTarefa: c.tarefaCobrada,
-          tarefaLabel: c.tarefaEntregue ? L.entregou : L.naoEntregou,
-          tarefaCor: c.tarefaEntregue ? "var(--color-success-dark)" : "var(--color-warning-dark)",
-          temGravacao: !!c.gravacao, gravacao: c.gravacao || "#",
-          temNota: !!c.nota && !aberta, nota: c.nota,
-          lendo: !aberta, escrevendo: aberta,
-          botaoNota: c.nota ? L.editarNota : L.escreverNota,
-          salvou: this.state.notaSalva === chave,
-          onAbrir: () => this.setState({ aulaAberta: chave, notaSalva: "" }),
-          onFechar: () => this.setState({ aulaAberta: null }),
-          onSalvar: () => {
+          }),
+
+          // as respostas em leitura, na sessão passada
+          cadTemRespostas: passada && tarefas.length > 0,
+          cadSemRespostas: passada && tarefas.length === 0,
+          cadRespostas: tarefas.map((t2, i) => {
+            const texto = respostaDe(i);
+            return {
+              pergunta: t2.pergunta,
+              resposta: texto.trim() ? texto : L.semResposta,
+              comentarios: comentariosDe(i)
+            };
+          }),
+
+          cadPassEyebrow: sel
+            ? (T("session ", "sessão ") + sel.n
+                + (sel.data ? " · " + CRM.ddmm(sel.data) : "")) : "",
+          cadPassTitulo: (sel && (sel.titulo || (sel.aula && sel.aula.topico))) || "",
+          cadPresLabel: pres ? pres[0] : "",
+          cadPresBg: pres ? pres[1] : "",
+          cadPresFg: pres ? pres[2] : "",
+
+          cadPodeGuardar: pw.length > 0 && !jaGuardou && (vivaAqui || passada),
+          cadJaGuardou: pw.length > 0 && jaGuardou,
+          cadGuardarLabel: T("Add these words to my Review", "Guardar estas palavras no meu Review")
+            + " · +" + ((CRM.MOEDAS_REGRAS || {}).palavrasDaAula || 0) + " mi",
+          onGuardarPalavras: () => {
+            if (!sel || !CRM.guardarPalavrasDaAula) return;
+            CRM.guardarPalavrasDaAula(p.id, p.turma, sel.n, pw);
+            this.bump();
+          },
+
+          cadTemHomework: hwDado,
+          cadHomework: (plano && plano.homework) || "",
+          cadHwTitulo: L.homeworkDepois,
+          cadHwBorda: hwEntregue ? "var(--color-secondary-500)"
+            : (passada ? "var(--color-warning)" : "var(--color-tertiary-100)"),
+          // no cartão de hoje o título já diz "abre depois da aula", e
+          // repetir isso à direita era a mesma frase duas vezes
+          cadHwEstado: !passada ? ""
+            : (hwEntregue ? T("delivered", "entregue")
+                : T("not delivered yet", "ainda não entregue")),
+          cadHwCor: hwEntregue ? "var(--color-secondary-900)"
+            : (passada ? "var(--color-warning-dark)" : "var(--color-tertiary-700)"),
+
+          // a faixa amarela do arquivo: homework anterior em aberto
+          cadBloqueio: !hwAnteriorFeito,
+          cadBloqueioTexto: anterior
+            ? (T("The homework of session ", "A tarefa da sessão ") + anterior.n
+                + T(" is still open.", " está em aberto."))
+            : "",
+          onCadBloqueio: () => this.setState({ cadSel: anterior ? anterior.n : selN }),
+
+          // a anotação dela, só onde faz sentido: a aula já aconteceu
+          cadTemNota: passada && !!chaveNota,
+          cadNota: notaTxt,
+          cadNotaTexto: !!notaTxt && !notaAberta,
+          cadNotaLendo: !notaAberta,
+          cadNotaEscrevendo: notaAberta,
+          cadNotaBotao: notaTxt ? L.editarNota : L.escreverNota,
+          cadNotaSalvou: this.state.notaSalva === chaveNota,
+          onCadNotaAbrir: () => this.setState({ aulaAberta: chaveNota, notaSalva: "" }),
+          onCadNotaFechar: () => this.setState({ aulaAberta: null }),
+          onCadNotaSalvar: () => {
             const txt = ((this.notaRef.current && this.notaRef.current.value) || "");
-            CRM.salvarNotaDaAula(p.id, c.turma, c.data, txt);
-            this.setState({ aulaAberta: null, notaSalva: chave, tick: this.state.tick + 1 });
+            CRM.salvarNotaDaAula(p.id, sel.aula.turma, sel.aula.data, txt);
+            this.setState({ aulaAberta: null, notaSalva: chaveNota, tick: this.state.tick + 1 });
           }
         };
-      }),
-
+      })(),
       // ── REVIEW ──
       // ══ REVIEW · arquivo 03 ══════════════════════════════
       //
