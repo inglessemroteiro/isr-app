@@ -6741,6 +6741,31 @@
   function mesmoEmail(a, b) {
     return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   }
+  // Os papéis de gestão deste e-mail, SEM abrir sessão nenhuma.
+  //
+  // liberarGestao grava isr_gestao_user como efeito: usá-la só para
+  // perguntar "esta pessoa é da equipe?" já deixava a pessoa logada na
+  // gestão antes de qualquer decisão. Quem só quer saber usa esta.
+  function papeisDeGestao(email) {
+    var e = (email || "").toLowerCase().trim();
+    var m = GESTAO_EMAILS[e];
+    var eq = equipeLista().filter(function (x) { return mesmoEmail(x.email, e); })[0];
+    if (m) {
+      var papeis = [m.perfil];
+      if (eq) (eq.papeis || []).forEach(function (pp) { if (papeis.indexOf(pp) < 0) papeis.push(pp); });
+      return papeis;
+    }
+    if (eq && perfilDosPapeis(eq.papeis || [])) return (eq.papeis || []).slice();
+    return [];
+  }
+  // Quem é das duas coisas: está na equipe E tem acesso de aluna
+  // valendo agora. Érika é o caso — colaboradora e aluna da escola.
+  function ehEquipeEAluna(email) {
+    if (!papeisDeGestao(email).length) return false;
+    var a = acessoPorEmail(email);
+    return !!(a && a.situacao === "liberado");
+  }
+
   function liberarGestao(email) {
     var e = (email || "").toLowerCase().trim();
     var m = GESTAO_EMAILS[e];
@@ -15882,6 +15907,7 @@
     salvarModelo: salvarModelo, novoModelo: novoModelo, excluirModelo: excluirModelo,
     restaurarModelo: restaurarModelo, ehModeloCustom: ehModeloCustom,
     gestaoUser: gestaoUser, liberarGestao: liberarGestao, sairGestao: sairGestao,
+    papeisDeGestao: papeisDeGestao, ehEquipeEAluna: ehEquipeEAluna,
     motivoSemAcesso: motivoSemAcesso,
     convidarEquipe: convidarEquipe, conviteDaEquipe: conviteDaEquipe,
     gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
