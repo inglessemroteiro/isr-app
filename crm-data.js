@@ -11300,6 +11300,24 @@
     return (palavrasAll()[pessoaId] || []).slice()
       .sort(function (a, b) { return a.em < b.em ? 1 : -1; });
   }
+  // Guardar as palavras da aula no Review, de uma vez (arquivo 02).
+  //
+  // Marca cada uma com a aula de onde veio, que é o que permite pagar
+  // as milhas sem campo novo: o extrato conta as AULAS cujas palavras
+  // ela guardou, não as palavras. Palavra repetida não entra de novo,
+  // então reenviar a mesma lista não rende nada.
+  function guardarPalavrasDaAula(pessoaId, turmaLabel, sessao, palavras) {
+    if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
+    var lista = (Array.isArray(palavras) ? palavras : String(palavras || "").split(","))
+      .map(function (x) { return String(x || "").trim(); })
+      .filter(Boolean);
+    if (!lista.length) return { ok: false, erro: "Esta aula não tem palavras." };
+    var marca = String(turmaLabel || "") + " · " + (sessao ? "sessão " + sessao : "");
+    var antes = palavrasDaAluna(pessoaId).length;
+    lista.forEach(function (w) { salvarPalavra(pessoaId, { palavra: w, daAula: marca }); });
+    var novas = palavrasDaAluna(pessoaId).length - antes;
+    return { ok: true, novas: novas, total: lista.length };
+  }
   function salvarPalavra(pessoaId, dados) {
     var p = getPessoa(pessoaId);
     if (!p) return { ok: false, erro: "Aluna não encontrada." };
@@ -12061,7 +12079,10 @@
   // ── MOEDAS DA ALUNA (calculadas dos dados + ajustes manuais) ──
   var MOEDAS_KEY = "isr_moedas_v1"; // só os ajustes manuais; o resto é derivado
   var MOEDAS_REGRAS = { presenca: 10, atraso: 5, parcelaPaga: 15, onboardingCompleto: 30,
-    avaliouAula: 5, renovouCiclo: 100, revisaoDoDia: 15 };
+    avaliouAula: 5, renovouCiclo: 100, revisaoDoDia: 15,
+    // o arquivo 02: guardar as palavras da aula no Review vale 20,
+    // uma vez por aula — não por palavra, senão compensa picotar
+    palavrasDaAula: 20 };
   var MOEDAS_VALIDADE_DIAS = 365;
   function somaDias(isoStr, n) {
     var d = parseISO(isoStr);
@@ -12989,6 +13010,15 @@
       });
       if (part) extrato.push({ em: "", label: "Participação no grupo (" + part + ")",
         valor: part * MOEDAS_PROGRAMA.participacao });
+    });
+    // as aulas cujas palavras ela guardou no Review
+    var deAula = {};
+    palavrasDaAluna(pessoaId).forEach(function (w) {
+      if (w && w.daAula) deAula[w.daAula] = (deAula[w.daAula] || w.em || "");
+    });
+    Object.keys(deAula).forEach(function (k) {
+      extrato.push({ em: deAula[k], label: "Palavras da aula no Review · " + k,
+        valor: MOEDAS_REGRAS.palavrasDaAula });
     });
     (moedasAjustesAll()[pessoaId] || []).forEach(function (a) {
       extrato.push({ em: a.em, label: a.motivo || (a.valor > 0 ? "Bônus da escola" : "Resgate"), valor: a.valor });
@@ -16064,6 +16094,7 @@
     calcParams: calcParams, setCalcParams: setCalcParams,
     rsvpEvento: rsvpEvento, solicitarCorrecao: solicitarCorrecao,
     metasDoProjeto: metasDoProjeto, objetivoSemFormula: objetivoSemFormula,
+    guardarPalavrasDaAula: guardarPalavrasDaAula,
     chamadasAll: chamadasAll, estadoPresenca: estadoPresenca,
     tarefasLista: tarefasLista, addTarefa: addTarefa, setTarefaFeita: setTarefaFeita, removeTarefa: removeTarefa,
     feriadosLista: feriadosLista, addFeriado: addFeriado, removeFeriado: removeFeriado, ehFeriado: ehFeriado,

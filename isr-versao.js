@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-g",
+  numero: "2026.10.22-h",
   data: "22/10/2026",
-  nota: "O caderno: datas nas sessões, começos de frase e o objetivo limpo"
+  nota: "As tarefas da aula como cartões, e as palavras no Review"
 };
