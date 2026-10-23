@@ -270,26 +270,30 @@
   // ── PEDAGÓGICO — units of study (demo, estrutura da planilha) ──
   // as turmas da ISR são pequenas de propósito: 2 a 5 alunas.
   var CAPACIDADE_PADRAO = 5;
+  // O fuso de cada turma sai do próprio rótulo: "MON 7h BR | 12h NL"
+  // é lido no relógio do Brasil, e a presencial de Den Haag, no da
+  // Holanda. É leitura do que o rótulo já diz, não palpite — e é o que
+  // permite converter a hora para quem olha de outro país.
   var UNITS = [
-    { id: "t1", nivel: "First Steps (A0)", turma: "WED 14h BR | 19h NL", teacher: "Carla", cycle: "2.2026",
+    { id: "t1", nivel: "First Steps (A0)", turma: "WED 14h BR | 19h NL", fuso: "America/Sao_Paulo", teacher: "Carla", cycle: "2.2026",
       projeto: "My People Map", notebook: "[ON-FIR][Student_Notebook] My_People_Map_26.2" },
-    { id: "t2", nivel: "Basics (A1)", turma: "MON 7h BR | 12h NL", teacher: "Gabi", cycle: "2.2026",
+    { id: "t2", nivel: "Basics (A1)", turma: "MON 7h BR | 12h NL", fuso: "America/Sao_Paulo", teacher: "Gabi", cycle: "2.2026",
       projeto: "The Poetry Project", notebook: "[ON-BAS][MON-7BR|12NL][Students Notebook] The_Poetry_Project_26_2" },
-    { id: "t3", nivel: "Basics (A1)", turma: "TUE 13h BR | 18h NL", teacher: "Carla", cycle: "2.2026",
+    { id: "t3", nivel: "Basics (A1)", turma: "TUE 13h BR | 18h NL", fuso: "America/Sao_Paulo", teacher: "Carla", cycle: "2.2026",
       projeto: "My People Map", notebook: "[ON-BAS][Student_Notebook] My_People_Map_26.2" },
-    { id: "t4", nivel: "Essentials (A2)", turma: "MON 13h BR | 18h NL", teacher: "Gabi", cycle: "2.2026",
+    { id: "t4", nivel: "Essentials (A2)", turma: "MON 13h BR | 18h NL", fuso: "America/Sao_Paulo", teacher: "Gabi", cycle: "2.2026",
       projeto: "My Timeline", notebook: "" },
-    { id: "t5", nivel: "Essentials (A2)", turma: "TUE 8h BR | 13h NL", teacher: "Adrielly", cycle: "2.2026",
+    { id: "t5", nivel: "Essentials (A2)", turma: "TUE 8h BR | 13h NL", fuso: "America/Sao_Paulo", teacher: "Adrielly", cycle: "2.2026",
       projeto: "The Poetry Project", notebook: "[Student-Notebook][ON-ESS-TUE 8BR|13NL]" },
-    { id: "t6", nivel: "Speaking (B1)", turma: "PRESENCIAL MON 9h NL", teacher: "Gabi", cycle: "2.2026",
+    { id: "t6", nivel: "Speaking (B1)", turma: "PRESENCIAL MON 9h NL", fuso: "Europe/Amsterdam", teacher: "Gabi", cycle: "2.2026",
       projeto: "The Culture Map", notebook: "[PRES-SPE][Teacher's Guide] DH001 - Our Sessions" },
-    { id: "t7", nivel: "Speaking (B1)", turma: "WED 8h BR | 13h NL", teacher: "Ricky", cycle: "2.2026",
+    { id: "t7", nivel: "Speaking (B1)", turma: "WED 8h BR | 13h NL", fuso: "America/Sao_Paulo", teacher: "Ricky", cycle: "2.2026",
       projeto: "The Poetry Project", notebook: "[ON-SPE][WED-8BR|13NL][Student Notebook] The_Poetry_Project_26.2" },
-    { id: "t8", nivel: "Speaking (B1)", turma: "FRI 6h BR | 11h NL", teacher: "Gabi", cycle: "2.2026",
+    { id: "t8", nivel: "Speaking (B1)", turma: "FRI 6h BR | 11h NL", fuso: "America/Sao_Paulo", teacher: "Gabi", cycle: "2.2026",
       projeto: "My Timeline", notebook: "ON-SPE_Student_Notebook_My_Timeline_26_2" },
-    { id: "t9", nivel: "Essentials (A2)", turma: "THU 11h BR | 16h NL", teacher: "Carla", cycle: "2.2026",
+    { id: "t9", nivel: "Essentials (A2)", turma: "THU 11h BR | 16h NL", fuso: "America/Sao_Paulo", teacher: "Carla", cycle: "2.2026",
       projeto: "The Culture Map", notebook: "" },
-    { id: "t10", nivel: "Basics (A1)", turma: "WED 14h BR | 19h NL", teacher: "Adrielly", cycle: "2.2026",
+    { id: "t10", nivel: "Basics (A1)", turma: "WED 14h BR | 19h NL", fuso: "America/Sao_Paulo", teacher: "Adrielly", cycle: "2.2026",
       projeto: "My Timeline", notebook: "" }
   ];
 
