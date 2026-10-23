@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.23-b",
+  numero: "2026.10.23-c",
   data: "23/10/2026",
-  nota: "A página da turma pelos arquivos 05 e 06, na régua do painel"
+  nota: "Particulares e Clubes conferidos nos arquivos 11 e 12"
 };
