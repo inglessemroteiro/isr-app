@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.22-l",
-  data: "22/10/2026",
-  nota: "O fuso da turma no painel, e a data em inglês na tela em inglês"
+  numero: "2026.10.23-a",
+  data: "23/10/2026",
+  nota: "A aba Hoje e a moldura do painel nas medidas dos arquivos 00 e 01"
 };
