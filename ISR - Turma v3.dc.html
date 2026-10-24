@@ -374,8 +374,13 @@
               <div style="background: var(--color-neutral-0); border-radius: 20px; padding: 16px 18px">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap">
                   <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.03em;">{{ tRoteiro }}</div>
-                  <span style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoMinutos }}</span>
+                  <span style="font-size: 12.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoMinutos }} · {{ planoQuantasPerguntas }}</span>
                 </div>
+                <!-- Qual etapa vira tarefa no caderno não se via: todas
+                     traziam o mesmo campo azul vazio. -->
+                <sc-if value="{{ planoEditando }}">
+                  <div style="font-size: 12px; line-height: 1.55; color: var(--color-primary-800); background: var(--color-primary-50); border-radius: 12px; padding: 9px 12px; margin-top: 8px">{{ tComoPergunta }}</div>
+                </sc-if>
                 <sc-for list="{{ planoEtapas }}" as="pe" hint-placeholder-count="6">
                   <div style="display: flex; gap: 11px; padding: 11px 0; border-top: 1px solid var(--color-button-secondary); opacity: {{ pe.op }}">
                     <sc-if value="{{ pe.editando }}">
@@ -395,7 +400,7 @@
                         </sc-if>
                       </div>
                       <sc-if value="{{ pe.editando }}">
-                        <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" placeholder="{{ phEtapa }}" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
+                        <input class="isr-campo" value="{{ pe.titulo }}" onchange="{{ pe.onTitulo }}" onblur="{{ pe.onTituloFim }}" placeholder="{{ phEtapa }}" style="width: 100%; padding: 8px 11px; font-size: 13.5px; margin-top: 6px" />
                       </sc-if>
                       <sc-if value="{{ pe.mostraPergunta }}">
                         <div style="background: var(--color-primary-50); border-radius: 12px; padding: 9px 12px; margin-top: 7px">
@@ -404,12 +409,15 @@
                         </div>
                       </sc-if>
                       <sc-if value="{{ pe.editando }}">
-                        <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" placeholder="{{ phPergunta }}" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 6px; background: var(--color-primary-50)" />
+                        <div style="margin-top: 7px">
+                          <div style="font-size: 10.5px; font-weight: 700; color: {{ pe.perguntaCor }}">{{ pe.perguntaRotulo }}</div>
+                          <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" onblur="{{ pe.onPerguntaFim }}" placeholder="{{ phPergunta }}" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 3px; background: var(--color-primary-50)" />
+                        </div>
                       </sc-if>
                     </div>
                     <sc-if value="{{ pe.editando }}">
                       <div style="display: flex; gap: 4px; align-items: center; flex: none; align-self: flex-start">
-                        <input class="isr-campo" value="{{ pe.min }}" onchange="{{ pe.onMin }}" style="width: 46px; text-align: center; padding: 6px; font-size: 13px" />
+                        <input class="isr-campo" value="{{ pe.min }}" onchange="{{ pe.onMin }}" onblur="{{ pe.onMinFim }}" style="width: 46px; text-align: center; padding: 6px; font-size: 13px" />
                         <span style="font-size: 11px; color: var(--color-tertiary-500); margin-right: 3px">min</span>
                         <button class="isr-botao" onclick="{{ pe.onSubir }}" title="{{ tSubir }}" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↑</button>
                         <button class="isr-botao" onclick="{{ pe.onDescer }}" title="{{ tDescer }}" style="width: 26px; height: 26px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--color-button-secondary); color: var(--color-primary-900)">↓</button>
@@ -864,6 +872,22 @@ class Component extends DCLogic {
           "Pergunta para o caderno da aluna (opcional)",
           "Question for the student’s notebook (optional)"
       ],
+      "tComoPergunta": [
+          "O campo azul de cada etapa é a pergunta que vira tarefa no caderno da aluna. Etapa sem pergunta não vira tarefa — é só para você conduzir.",
+          "The blue field in each step is the question that becomes a task in the student’s notebook. A step without a question becomes no task — it is yours to run."
+      ],
+      "tViraTarefa": [
+          "✓ vira tarefa no caderno da aluna",
+          "✓ becomes a task in the student’s notebook"
+      ],
+      "tSemTarefa": [
+          "sem pergunta: esta etapa não vira tarefa",
+          "no question: this step becomes no task"
+      ],
+      "tNoCaderno": [
+          "no caderno",
+          "in the notebook"
+      ],
       "tSubir": [
           "Subir",
           "Move up"
@@ -1177,7 +1201,8 @@ class Component extends DCLogic {
       planoTemGuia: false, planoGuia: "", planoGuiaLabel: "", planoTemGuiaDoNivel: false,
       planoTemSyllabus: false, planoSyllabus: "", planoSyllabusLabel: "",
       planoTemObjetivo: false, planoObjetivo: "",
-      planoMinutos: "", planoEtapas: [], planoEditando: false, planoLendo: true,
+      planoMinutos: "", planoQuantasPerguntas: "",
+      planoEtapas: [], planoEditando: false, planoLendo: true,
       planoFases: [], planoOnAddEtapa: () => {}, planoPalavras: [], planoSemPalavras: true,
       planoStarters: [], planoSemStarters: true,
       planoHomework: "", planoOnSalvar: () => {} }, refs);
@@ -1284,6 +1309,38 @@ class Component extends DCLogic {
     const pAtual = pSessoes.filter(x => x.n === pN)[0] || pSessoes[0] || null;
     // publicada não se edita por acidente: a aluna já está lendo
     const pAjuste = !!this.state.planoAjuste && !!pAtual;
+
+    // ── O QUE ELA ESTÁ DIGITANDO AGORA ───────────────────────────
+    //
+    // Salvar a cada tecla parecia bom e não era: salvarPlano apara as
+    // pontas do texto, como todo lugar onde o dado entra, e a tecla
+    // seguinte reescrevia o campo sem o espaço que acabara de ser
+    // digitado. "What did you learn today?" chegava ao caderno da
+    // aluna como "Whatdidyoulearntoday?".
+    //
+    // Então o texto em andamento mora aqui, no rascunho da tela, e só
+    // vai para o armazenamento quando ela sai do campo.
+    const pRasc = this.state.planoRascunho || {};
+    const rChave = (id, campo) => id + "·" + campo;
+    const rLer = (id, campo, guardado) => {
+      const k = rChave(id, campo);
+      return k in pRasc ? pRasc[k] : guardado;
+    };
+    const rEscrever = (id, campo, v) => {
+      const novo = Object.assign({}, this.state.planoRascunho || {});
+      novo[rChave(id, campo)] = v;
+      this.setState({ planoRascunho: novo });
+    };
+    const rFechar = (id, campo, salvar) => {
+      const atual = this.state.planoRascunho || {};
+      const k = rChave(id, campo);
+      if (!(k in atual)) return;
+      const v = atual[k];
+      const novo = Object.assign({}, atual);
+      delete novo[k];
+      this.setState({ planoRascunho: novo });
+      salvar(v);
+    };
     const EST_PLANO = {
       rascunho: [Tr("not reviewed yet", Tr("not reviewed yet", "ainda não revisada")), "var(--color-button-secondary)", "var(--color-tertiary-700)", "rascunho"],
       pronta: [Tr("ready ✓", "pronta ✓"), "var(--color-warning-light)", "var(--color-warning-dark)", "pronta"],
@@ -1555,17 +1612,36 @@ class Component extends DCLogic {
       planoTemObjetivo: !!(pAtual && pAtual.objetivo) && !pAjuste,
       planoObjetivo: (pAtual && pAtual.objetivo) || "",
       planoMinutos: pAtual ? (CRM.minutosDoPlano(pAtual) + " min no roteiro") : "",
+      // quantas etapas viram tarefa no caderno. Sem esta conta a
+      // professora precisava descer a lista inteira para saber se
+      // alguma pergunta tinha ficado para trás.
+      planoQuantasPerguntas: (() => {
+        // conta também o que ela está digitando agora: a conta que só
+        // enxerga o que já foi gravado diz "nenhuma" com a pergunta
+        // escrita na tela
+        const n = pAtual ? pAtual.etapas.filter(e => e.on !== false
+          && rLer(e.id, "pergunta", e.pergunta || "").trim()).length : 0;
+        if (!n) return Tr("no question in the notebook", "nenhuma pergunta no caderno");
+        return n + (n === 1 ? Tr(" question in the notebook", " pergunta no caderno")
+          : Tr(" questions in the notebook", " perguntas no caderno"));
+      })(),
       planoEditando: pAjuste, planoLendo: !pAjuste,
       planoEtapas: !pAtual ? [] : pAtual.etapas.map(e => ({
         fase: CRM.faseLabel(e.fase),
         faseCor: CRM.faseCor ? CRM.faseCor(e.fase) : "var(--color-button-secondary)",
-        titulo: e.titulo,
+        titulo: rLer(e.id, "titulo", e.titulo),
         // etapa sem descrição mostra só a fase e o tempo: seis linhas de
         // "sem título" seria a tela repetindo que não sabe de nada
         mostraTitulo: !pAjuste && !!e.titulo,
-        min: String(e.min), minha: e.minha,
-        temPergunta: !!e.pergunta, pergunta: e.pergunta || "",
+        min: rLer(e.id, "min", String(e.min)), minha: e.minha,
+        temPergunta: !!e.pergunta,
+        pergunta: rLer(e.id, "pergunta", e.pergunta || ""),
         mostraPergunta: !pAjuste && !!e.pergunta,
+        // em cima do campo, o que acontece com o que está escrito nele
+        perguntaRotulo: rLer(e.id, "pergunta", e.pergunta || "").trim()
+          ? refs.tViraTarefa : refs.tSemTarefa,
+        perguntaCor: rLer(e.id, "pergunta", e.pergunta || "").trim()
+          ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
         editando: pAjuste, lendo: !pAjuste,
         // desmarcada continua à vista, apagada some: a professora
         // precisa ver o que a escola planejou e ela tirou
@@ -1582,24 +1658,30 @@ class Component extends DCLogic {
           const r = CRM.removerEtapaPlano(u.id, pAtual.n, e.id);
           this.setState({ planoErro: r.ok ? "" : (r.erro || "") }); this.bump();
         },
-        onTitulo: (ev) => {
+        // Digitar só mexe no rascunho; sair do campo é que grava. O
+        // texto chegava ao armazenamento letra por letra, e vinha de
+        // volta aparado a cada tecla — sem espaço nenhum.
+        onTitulo: (ev) => rEscrever(e.id, "titulo", ev.target.value),
+        onTituloFim: () => rFechar(e.id, "titulo", (v) => {
           const l = pAtual.etapas.map(x => x.id === e.id
-            ? Object.assign({}, x, { titulo: ev.target.value }) : x);
+            ? Object.assign({}, x, { titulo: v }) : x);
           CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
-        },
-        onMin: (ev) => {
+        }),
+        onMin: (ev) => rEscrever(e.id, "min", ev.target.value),
+        onMinFim: () => rFechar(e.id, "min", (v) => {
           const l = pAtual.etapas.map(x => x.id === e.id
-            ? Object.assign({}, x, { min: ev.target.value }) : x);
+            ? Object.assign({}, x, { min: v }) : x);
           CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
-        },
+        }),
         // A pergunta é o que a aluna responde no caderno, e era a
         // única parte do roteiro que não dava para corrigir: para
         // trocar uma palavra era preciso apagar a etapa e refazer.
-        onPergunta: (ev) => {
+        onPergunta: (ev) => rEscrever(e.id, "pergunta", ev.target.value),
+        onPerguntaFim: () => rFechar(e.id, "pergunta", (v) => {
           const l = pAtual.etapas.map(x => x.id === e.id
-            ? Object.assign({}, x, { pergunta: ev.target.value }) : x);
+            ? Object.assign({}, x, { pergunta: v }) : x);
           CRM.salvarPlano(u.id, pAtual.n, { etapas: l }); this.bump();
-        }
+        })
       })),
       planoOnAddEtapa: () => {
         if (!pAtual) return;

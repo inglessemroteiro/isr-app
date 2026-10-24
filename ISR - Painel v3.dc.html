@@ -344,7 +344,7 @@
             <div style="font-size: 16px; font-weight: 800; line-height: 1.4; margin-top: 4px; color: {{ partObjCor }};">{{ partObjetivo }}</div>
           </sc-if>
           <sc-if value="{{ partObjEditando }}">
-            <input class="isr-campo" value="{{ partObjetivo }}" onchange="{{ onPartObjetivo }}" placeholder="{{ L91 }}" style="width: 100%; box-sizing: border-box; padding: 11px 14px; font-size: 14px; margin-top: 6px; background: var(--color-neutral-0)" />
+            <input class="isr-campo" value="{{ partObjetivo }}" onchange="{{ onPartObjetivo }}" onblur="{{ onPartObjetivoFim }}" placeholder="{{ L91 }}" style="width: 100%; box-sizing: border-box; padding: 11px 14px; font-size: 14px; margin-top: 6px; background: var(--color-neutral-0)" />
           </sc-if>
         </div>
 
@@ -434,7 +434,7 @@
               <span style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">{{ L95 }}</span>
               <span style="font-size: 11.5px; color: var(--color-tertiary-500);">{{ L96 }}</span>
             </div>
-            <textarea class="isr-campo" value="{{ partNotas }}" onchange="{{ onPartNotas }}" rows="3" placeholder="{{ L97 }}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; margin-top: 7px; resize: vertical; line-height: 1.55; background: var(--color-bg-default)"></textarea>
+            <textarea class="isr-campo" value="{{ partNotas }}" onchange="{{ onPartNotas }}" onblur="{{ onPartNotasFim }}" rows="3" placeholder="{{ L97 }}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px; margin-top: 7px; resize: vertical; line-height: 1.55; background: var(--color-bg-default)"></textarea>
           </div>
         </div>
       </sc-if>
@@ -1976,11 +1976,13 @@ class Component extends DCLogic {
       semanaParticulares: [], semanaVazia: true, semanaResumo: "", semanaResumoCor: "var(--color-tertiary-500)",
       particularesChamada: [], temParticulares: false, semParticulares: true, semCaderno: true,
       partPills: [], partNome: "", partMeta: "", partPerfil: "#", partObjetivo: "",
-      partObjLendo: true, partObjEditando: false, partObjCor: "", onPartObjetivo: () => {},
+      partObjLendo: true, partObjEditando: false, partObjCor: "",
+      onPartObjetivo: () => {}, onPartObjetivoFim: () => {},
       partHibrida: false, partHibridaTexto: "", partSeqTitulo: "", partSessoes: [],
       partTemSessao: false, partSemSessao: false, partSessaoEyebrow: "", partSessaoTitulo: "",
       partTemObjetivoSessao: false, partObjetivoSessao: "", partEtapas: [],
-      partSemRoteiro: false, partNotas: "", onPartNotas: () => {},
+      partSemRoteiro: false, partNotas: "",
+      onPartNotas: () => {}, onPartNotasFim: () => {},
       partSemSyllabus: false, partSemSyllabusTexto: "",
       partPrograma: "", partProgramaBotao: "", partProgramaNota: "",
       partTrocando: false, onTrocarPrograma: () => {}, partProgramas: [],
@@ -3961,13 +3963,15 @@ class Component extends DCLogic {
           return { temParticulares: false, semParticulares: true, partPills: [],
             partNome: "", partMeta: "", partPerfil: "#", partObjetivo: "",
             partObjLendo: true, partObjEditando: false, partObjCor: "", onPartObjetivo: () => {},
+            onPartObjetivoFim: () => {},
             partHibrida: false, partHibridaTexto: "", partSeqTitulo: "", partSessoes: [],
             partPrograma: "", partProgramaBotao: "", partProgramaNota: "",
             partTrocando: false, onTrocarPrograma: () => {}, partProgramas: [],
             partTemSessao: false, partSemSessao: false, partSemSyllabus: false,
             partSemSyllabusTexto: "", partSessaoEyebrow: "",
             partSessaoTitulo: "", partTemObjetivoSessao: false, partObjetivoSessao: "",
-            partEtapas: [], partSemRoteiro: false, partNotas: "", onPartNotas: () => {} };
+            partEtapas: [], partSemRoteiro: false, partNotas: "", onPartNotas: () => {},
+            onPartNotasFim: () => {} };
         }
         const sel = minhas.filter(x => x.id === this.state.partSel)[0] || minhas[0];
         const seq = CRM.sequenciaDaAluna ? CRM.sequenciaDaAluna(sel.id) : { sessoes: [], atual: null, nivel: "" };
@@ -3992,6 +3996,30 @@ class Component extends DCLogic {
         const etapas = (doNivel && doNivel.etapas ? doNivel.etapas : [])
           .filter(e => e && e.on !== false);
         const freq = (sel.particular && sel.particular.frequencia) || "";
+        // O texto em andamento mora aqui, e só vai para o
+        // armazenamento quando ela sai do campo: salvar a cada tecla
+        // devolvia o texto aparado, e a barra de espaço nunca
+        // sobrevivia à letra seguinte.
+        const pRasc = this.state.partRascunho || {};
+        const rLer = (campo, guardado) => {
+          const k = sel.id + "·" + campo;
+          return k in pRasc ? pRasc[k] : guardado;
+        };
+        const rEscrever = (campo, v) => {
+          const novo = Object.assign({}, this.state.partRascunho || {});
+          novo[sel.id + "·" + campo] = v;
+          this.setState({ partRascunho: novo });
+        };
+        const rFechar = (campo, salvar) => {
+          const atualR = this.state.partRascunho || {};
+          const k = sel.id + "·" + campo;
+          if (!(k in atualR)) return;
+          const v = atualR[k];
+          const novo = Object.assign({}, atualR);
+          delete novo[k];
+          this.setState({ partRascunho: novo });
+          salvar(v);
+        };
         return {
           temParticulares: true, semParticulares: false,
           partPills: minhas.map(x => ({
@@ -4003,11 +4031,14 @@ class Component extends DCLogic {
           partNome: sel.nome,
           partMeta: [seq.nivel, freq, Tr("private", "particular")].filter(Boolean).join(" · "),
           partPerfil: "ISR%20-%20Perfil%20v3.dc.html?id=" + sel.id,
-          partObjetivo: objetivo,
+          partObjetivo: rLer("objetivo", objetivo),
           partObjLendo: !!objetivo,
           partObjEditando: !objetivo,
           partObjCor: objetivo ? "var(--color-primary-900)" : "var(--color-tertiary-500)",
-          onPartObjetivo: (e) => { CRM.salvarObjetivoDaAluna(sel.id, e.target.value); this.bump(); },
+          onPartObjetivo: (e) => rEscrever("objetivo", e.target.value),
+          onPartObjetivoFim: () => rFechar("objetivo", (v) => {
+            CRM.salvarObjetivoDaAluna(sel.id, v); this.bump();
+          }),
           // Aluna híbrida: a particular revisa e aprofunda o que o
           // grupo dela está vendo nesta semana.
           partHibrida: !!(turmaGrupo && sessaoDoGrupo),
@@ -4095,11 +4126,13 @@ class Component extends DCLogic {
             temPergunta: !!e.pergunta, pergunta: e.pergunta || ""
           })),
           // As notas são da equipe: a aluna não as vê em lugar nenhum.
-          partNotas: (CRM.notaDaEquipe ? CRM.notaDaEquipe(sel.id) : (sel.notaEquipe || "")),
-          onPartNotas: (e) => {
-            if (CRM.salvarNotaDaEquipe) CRM.salvarNotaDaEquipe(sel.id, e.target.value);
+          partNotas: rLer("notas",
+            (CRM.notaDaEquipe ? CRM.notaDaEquipe(sel.id) : (sel.notaEquipe || ""))),
+          onPartNotas: (e) => rEscrever("notas", e.target.value),
+          onPartNotasFim: () => rFechar("notas", (v) => {
+            if (CRM.salvarNotaDaEquipe) CRM.salvarNotaDaEquipe(sel.id, v);
             this.bump();
-          }
+          })
         };
       })(),
 
