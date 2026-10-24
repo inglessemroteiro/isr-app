@@ -35,3 +35,7 @@ Se o React ainda não estiver baixado:
   arquivo `handoff/aluna/04 Clubs.md`: o nível de cada clube, o emoji,
   as três linhas de informação, e a trava que não deixa publicar clube
   sem nível escolhido.
+- `aluna-home.js` — a Home pelo arquivo `handoff/aluna/01 Home.md`: a
+  sala que só abre no dia da aula, os quatro itens da semana, e a
+  varredura que não deixa voltar nenhum recado de obra às telas da
+  aluna.
