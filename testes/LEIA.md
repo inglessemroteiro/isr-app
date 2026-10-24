@@ -39,6 +39,10 @@ Se o React ainda não estiver baixado:
   sala que só abre no dia da aula, os quatro itens da semana, e a
   varredura que não deixa voltar nenhum recado de obra às telas da
   aluna.
+- `pergunta-caderno.js` — a pergunta que vira tarefa no caderno, na
+  tela da turma: a barra de espaço, a conta de quantas perguntas vão
+  para o caderno, o rótulo em cima de cada campo e a frase chegando
+  inteira ao caderno da aluna.
 - `loja-conta.js` — a Loja de milhas e a Conta pelos arquivos
   `handoff/aluna/07 Shop.md` e `08 Account.md`: a vitrine em grade, os
   três estados do botão de resgate, o resgate em duas etapas, as

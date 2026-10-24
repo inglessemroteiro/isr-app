@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.24-c",
+  numero: "2026.10.24-d",
   data: "24/10/2026",
-  nota: "A Loja e a Conta da aluna pelos arquivos 07 e 08"
+  nota: "A barra de espaço volta a funcionar no roteiro da aula"
 };
