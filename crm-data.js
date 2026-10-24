@@ -12242,6 +12242,17 @@
     comunidade: "Comunidade", reconhecimento: "Reconhecimento",
     carreira: "Carreira", desconto: "Desconto", flin: "FLIN", programa: "Acompanhamento"
   };
+  // A cara de cada categoria na vitrine. O desenho da loja mostra o
+  // prêmio num quadro com um símbolo, e símbolo por categoria é o que
+  // não precisa ser escolhido de novo a cada prêmio novo.
+  var MOEDAS_CAT_EMOJI = {
+    aula: "🎓", material: "📓", mentoria: "🎧", comunidade: "🎪",
+    reconhecimento: "🏅", carreira: "✉️", desconto: "🏷️", flin: "🤖",
+    programa: "🗓️"
+  };
+  function emojiDaRecompensa(cat) {
+    return MOEDAS_CAT_EMOJI[cat] || "🎁";
+  }
   // Catálogo em três níveis. Cada prêmio pode ter três limites além do
   // preço: vagas por mês (o que é escasso não se precifica para fora),
   // limite por ciclo e tempo mínimo de casa.
@@ -12313,6 +12324,7 @@
   function catalogoDeRecompensas() {
     return MOEDAS_RESGATES.map(function (r) {
       return { id: r.id, nome: r.nome, custo: r.custo, nivel: r.nivel,
+        emoji: emojiDaRecompensa(r.cat),
         detalhe: r.detalhe || "", visivel: recompensaVisivel(r.id) };
     }).sort(function (a, b) { return a.custo - b.custo; });
   }
@@ -13681,6 +13693,7 @@
         var faltam = Math.max(0, r.custo - saldo);
         grupo.itens.push({
           id: r.id, nome: r.nome, custo: r.custo, cat: MOEDAS_CATS[r.cat] || "",
+          emoji: emojiDaRecompensa(r.cat),
           detalhe: r.detalhe || "", nivel: grupo.id,
           pode: !bloqueio && faltam === 0,
           faltam: faltam,

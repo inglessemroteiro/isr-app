@@ -77,7 +77,12 @@ const P = require("./preparar.js");
     "o desenho tem", "the design also has",
     "a escola decide primeiro", "the school decides",
     "o sistema ainda não", "the system has nowhere",
-    "não há quadro para mostrar"
+    "não há quadro para mostrar",
+    // a Conta ainda trazia um: dizia à aluna que a escola não guarda
+    // a escolha de avisos em lugar nenhum
+    "chave de avisos", "notification switch",
+    "não guarda essa escolha", "does not store that choice",
+    "ainda não cadastrou", "has not registered"
   ];
   const varrer = async (pagina) => {
     await irPara(pagina);

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.24-b",
+  numero: "2026.10.24-c",
   data: "24/10/2026",
-  nota: "A sala só abre no dia da aula, e saem os recados de obra"
+  nota: "A Loja e a Conta da aluna pelos arquivos 07 e 08"
 };
