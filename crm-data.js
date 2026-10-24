@@ -12458,7 +12458,12 @@
       descricao: c.descricao || "",
       // O nível diz para quem o clube é, e sem ele a aluna de A1 via
       // na lista um clube de B2 que não ia conseguir acompanhar.
-      nivel: c.nivel || "todos",
+      //
+      // Vazio quando ninguém escolheu. Antes caía em "todos" sozinho, e
+      // como faltaParaPublicar exige o nível, o campo preenchido pela
+      // porta dos fundos fazia a trava passar: todo clube publicado
+      // nascia "todos os níveis" sem que ninguém tivesse decidido isso.
+      nivel: String(c.nivel || "").trim(),
       // A bio aparece no cartão que a aluna vê: quem vai estar lá na
       // frente é metade da decisão de entrar num clube.
       bio: c.bio || "",
@@ -12682,6 +12687,12 @@
         id: c.id, nome: c.nome, emoji: c.emoji || "", professora: c.professora, formato: c.formato,
         dia: c.dia, hora: c.hora, fuso: c.fuso || "", duracao: c.duracao, local: c.local, link: c.link,
         descricao: c.descricao, materiais: c.materiais, encontros: c.encontros,
+        // O nível e a bio ficavam de fora, e o catálogo então lia
+        // undefined: TODO clube aparecia para a aluna como "todos os
+        // níveis", qualquer que fosse o nível escolhido pela
+        // professora. A bio tem a mesma história na página do clube.
+        nivel: c.nivel || "", bio: c.bio || "",
+        publicadoEm: c.publicadoEm || "",
         vagas: c.vagas, livres: livres, lotado: livres === 0,
         naEspera: c.espera.indexOf(pessoaId) >= 0,
         posicaoEspera: c.espera.indexOf(pessoaId) + 1,
