@@ -5,8 +5,8 @@
 //   node cores-snapshot.js antes.json
 //   node cores-snapshot.js depois.json
 //   node cores-snapshot.js --diff antes.json depois.json
-const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
-const PKG = process.env.ISR_CDN || (__dirname + '/cdnpkg/node_modules');
+const { chromium } = require('playwright'); const PREP = require('./testes/preparar.js'); const fs = require('fs'), path = require('path');
+const PKG = process.env.ISR_CDN || (__dirname + '/testes/node_modules');
 const MAP = { 'react@18.3.1/umd/react.development.js': 'react/umd/react.development.js', 'react-dom@18.3.1/umd/react-dom.development.js': 'react-dom/umd/react-dom.development.js', 'react@18.3.1/umd/react.production.min.js': 'react/umd/react.production.min.js', 'react-dom@18.3.1/umd/react-dom.production.min.js': 'react-dom/umd/react-dom.production.min.js' };
 
 const TELAS = fs.readdirSync('.')
@@ -38,7 +38,7 @@ if (process.argv[2] === '--diff') {
 }
 
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const b = await chromium.launch({ executablePath: PREP.acharChromium() });
   const ctx = await b.newContext({ viewport: { width: 1280, height: 1400 } });
   await ctx.route('**/unpkg.com/**', r => { const u = r.request().url(); for (const k of Object.keys(MAP)) if (u.indexOf(k) >= 0) return r.fulfill({ body: fs.readFileSync(path.join(PKG, MAP[k])), contentType: 'application/javascript' }); return r.abort(); });
   await ctx.route('**/script.google.com/**', r => r.abort());
