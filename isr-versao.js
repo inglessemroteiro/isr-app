@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.24-a",
+  numero: "2026.10.24-b",
   data: "24/10/2026",
-  nota: "O nível do clube chega ao catálogo, e o cartão pelo arquivo 04"
+  nota: "A sala só abre no dia da aula, e saem os recados de obra"
 };

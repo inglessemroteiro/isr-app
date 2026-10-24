@@ -827,7 +827,6 @@
       </sc-if>
 
       <!-- o que o arquivo pede e ainda não tem dado -->
-      <div style="max-width:720px;font-size:13px;line-height:1.6;color:var(--color-tertiary-700)">{{ revFaltaNota }}</div>
 
       <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
 
@@ -1094,7 +1093,6 @@
         </section>
       </div>
 
-      <section style="background:var(--color-neutral-0);border-radius:24px;padding:20px 24px;font-size:13.5px;line-height:1.6;color:var(--color-primary-800)">{{ L.perfilEmObra }}</section>
     </sc-if>
 
     <!-- CONTA -->
@@ -1438,8 +1436,6 @@ class Component extends DCLogic {
       perfilSalvo: T("saved", "salvo"),
       perfilNota: T("You write this, not the school. It is what the other students see.",
         "Isto é você que escreve, não a escola. É o que as outras alunas veem."),
-      perfilEmObra: T("The rest of the profile in the design — the attributes other students rate and the wall where they leave messages — is content between students, and the school decides that first.",
-        "O resto do perfil no desenho — os atributos que outras alunas avaliam e o mural de recados — é conteúdo entre alunas, e isso a escola decide primeiro."),
       semBio: T("You have not written your bio yet.", "Você ainda não escreveu a sua bio."),
 
       buscar: T("Search people / clubs…", "Buscar alunas / clubes…"),
@@ -1474,8 +1470,6 @@ class Component extends DCLogic {
       fmResponder: T("Reply", "Responder"),
       fmVazio: T("No conversation here yet. The first one can be yours.",
         "Nenhuma conversa aqui ainda. A primeira pode ser sua."),
-      fmSoTexto: T("In text for now: the system has nowhere to keep an audio file yet.",
-        "Em texto por enquanto: o sistema ainda não tem onde guardar arquivo de áudio."),
       apagar: T("delete", "apagar"),
       semClube: T("You are not in a club yet. In \"All clubs\" you can see what the school offers.",
         "Você ainda não está em nenhum clube. Em \"Todos os clubes\" estão os que a escola oferece."),
@@ -1489,11 +1483,11 @@ class Component extends DCLogic {
       // ── metas e mural, arquivos 01 e 06 ──
       semGravacao: T("The school has not published the recording of your last class yet.",
         "A escola ainda não publicou a gravação da sua última aula."),
-      semMetas: T("The session plan for your class is not open yet, so there are no goals to show. They are the objectives your teacher writes for each session.",
-        "O plano de sessões da sua turma ainda não está aberto, então não há metas para mostrar. Elas são os objetivos que a sua professora escreve para cada sessão."),
+      semMetas: T("Your teacher has not published the goals of this project yet.",
+        "A sua professora ainda não publicou as metas deste projeto."),
       // ── conta, arquivo 08 ──
-      semGrade: T("The school has not opened the session plan for your class yet, so there is no grid to show.",
-        "A escola ainda não abriu o plano de sessões da sua turma, então não há quadro para mostrar."),
+      semGrade: T("Your class has no sessions marked yet.",
+        "A sua turma ainda não tem sessões marcadas."),
       pagar: T("Pay", "Pagar"),
       contrato: T("your contract", "o seu contrato"),
       config: T("Settings", "Configurações"),
@@ -1557,7 +1551,6 @@ class Component extends DCLogic {
       revEyebrow: "", revSub: "", revPct: "0%", revPasso: "",
       onRevComecar: () => {}, onRevPausar: () => {},
       revFimTitulo: "", revFimSub: "", revTemSequencia: false, revSequencia: "",
-      revFaltaNota: "",
       palavras: [], cofreVazio: true, cofreResumo: "",
       palavraErro: false, palavraErroTexto: "", palavraSalva: false,
       onSalvarPalavra: () => {},
@@ -1715,9 +1708,14 @@ class Component extends DCLogic {
     // os encontros de clube que caem nesta semana
     cl.meus.forEach(c => {
       (c.encontros || []).forEach((e, i) => {
-        const m = /(\d{2})\/(\d{2})/.exec(e.quando || "");
-        if (!m) return;
-        const iso = hoje0.getFullYear() + "-" + m[2] + "-" + m[1];
+        // o encontro passou a ter data de verdade; o "dd/mm" em texto
+        // é o jeito antigo, e sem lê-lo o clube sumia da semana
+        let iso = e && e.data ? String(e.data) : "";
+        if (!iso) {
+          const m = /(\d{2})\/(\d{2})/.exec(e.quando || "");
+          if (!m) return;
+          iso = hoje0.getFullYear() + "-" + m[2] + "-" + m[1];
+        }
         if (iso < isoDe(seg) || iso > isoDe(fim)) return;
         const passou = iso < isoDe(hoje0);
         const d = this.dia(iso);
@@ -1728,6 +1726,23 @@ class Component extends DCLogic {
           passou ? "feito" : d.hoje ? "hoje" : "dia"));
       });
     });
+    // A revisão do dia é o quarto item que o arquivo 01 pede na lista
+    // da semana, e era o único que faltava. Só entra quando há palavra
+    // no cofre: antes disso a linha mandaria para uma tela vazia.
+    (() => {
+      const r = (CRM.revisaoDeHoje && CRM.revisaoDeHoje(p.id)) || { devidas: [], total: 0 };
+      if (!r.total) return;
+      const feita = CRM.revisaoFeitaHoje ? CRM.revisaoFeitaHoje(p.id) : false;
+      const faltam = r.devidas.length;
+      week.push(linha(isoDe(hoje0) + "4", feita || faltam === 0,
+        T("Daily review", "Revisão do dia"),
+        r.total + T(" word in your vault", " palavra no seu cofre")
+          + (r.total === 1 ? "" : "s"),
+        feita || faltam === 0
+          ? T("done today", "feita hoje")
+          : faltam + T(" to go", " para hoje"),
+        feita || faltam === 0 ? "feito" : "hoje"));
+    })();
     week.sort((a, b) => (a.ordem < b.ordem ? -1 : a.ordem > b.ordem ? 1 : 0));
     const feitosNaSemana = week.filter(w => w.feito).length;
     const proxima = seteDias[0] || null;
@@ -2149,6 +2164,20 @@ class Component extends DCLogic {
     });
 
     const nivel = g ? (g.nivel || "—") : "—";
+    // "Basics (A1) · QUA 14:00": o nível e o horário da turma numa
+    // linha só, com a hora no relógio dela. Nasce aqui porque a barra
+    // lateral e o perfil mostram a mesma coisa — e escrevê-la duas
+    // vezes foi como o perfil acabou com o nível repetido.
+    const subNomeCurto = (() => {
+      const base = nivel !== "—" ? nivel : p.nivel;
+      const t = turmaRaw;
+      if (!t || !t.turma) return base || "";
+      if (!t.fuso || !CRM.horaDaTurmaLabel) return [base, t.turma].filter(Boolean).join(" · ");
+      const dia = String(t.turma).match(/^([A-Z]{3})/);
+      const hojeIsoT = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
+      return [base, [dia ? dia[1] : "", CRM.horaDaTurmaLabel(t, hojeIsoT)]
+        .filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+    })();
 
     return {
       wide, narrow: !wide,
@@ -2161,16 +2190,7 @@ class Component extends DCLogic {
       // BR | 13h NL"), que só servem a quem está num desses dois
       // países. Com o fuso da turma guardado, aqui sai a hora no
       // relógio dela — a aluna pode estar em qualquer lugar.
-      subNome: (() => {
-        const base = nivel !== "—" ? nivel : p.nivel;
-        const t = turmaRaw;
-        if (!t || !t.turma) return base || "";
-        if (!t.fuso || !CRM.horaDaTurmaLabel) return [base, t.turma].filter(Boolean).join(" · ");
-        const dia = String(t.turma).match(/^([A-Z]{3})/);
-        const hoje = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
-        return [base, [dia ? dia[1] : "", CRM.horaDaTurmaLabel(t, hoje)]
-          .filter(Boolean).join(" ")].filter(Boolean).join(" · ");
-      })(),
+      subNome: subNomeCurto,
 
       busca: this.state.busca || "",
       onBusca: (e) => {
@@ -2582,12 +2602,7 @@ class Component extends DCLogic {
           revFimTitulo: T("✓ done for today · +15 miles", "✓ feito por hoje · +15 milhas"),
           revFimSub: T("See you tomorrow.", "Até amanhã."),
           revTemSequencia: seq > 1,
-          revSequencia: seq + T(" days in a row.", " dias seguidos."),
-          // O arquivo pede quatro passos. Três não têm dado nenhum no
-          // sistema, e ficam escritos em vez de fingidos.
-          revFaltaNota: T(
-            "The design also has sentence building, listening and speaking. Those need audio and sentences the system does not store yet — for now the flashcards are the part that works.",
-            "O desenho tem também montar frases, listening e speaking. Esses três precisam de áudio e de frases que o sistema ainda não guarda — por enquanto os flashcards são a parte que funciona.")
+          revSequencia: seq + T(" days in a row.", " dias seguidos.")
         };
       })(),
       temRevisao: !!cartao, semRevisao: !cartao,
@@ -2752,7 +2767,10 @@ class Component extends DCLogic {
       temFoto: !!perfil.foto, semFoto: !perfil.foto,
       perfilFoto: perfil.foto || "", perfilFotoBruta: perfil.foto || "",
       perfilNome: p.nome,
-      perfilMeta: [p.nivel, p.turma].filter(Boolean).join(" · ") || T("student", "aluna"),
+      // p.turma já começa pelo nível ("Basics (A1) · MON 7h BR…"), e
+      // pôr os dois lado a lado escrevia o nível duas vezes. Aqui vale
+      // a mesma linha curta da barra lateral.
+      perfilMeta: subNomeCurto || T("student", "aluna"),
       perfilInicial: (p.nome || "?").trim().charAt(0).toUpperCase(),
       temAniversario: !!perfil.aniversario,
       perfilAniversario: perfil.aniversario
@@ -2816,7 +2834,14 @@ class Component extends DCLogic {
           : dAula.hoje ? T("next class · today", "próxima aula · hoje") : T("next class", "próxima aula"),
       goNotebook: () => this.setState({ page: "notebook", notif: false }),
       classTitulo, classLinha,
-      temSala: !!(turmaRaw && turmaRaw.meet), salaLink: (turmaRaw && turmaRaw.meet) || "#",
+      // A SALA SÓ ABRE NO DIA DA AULA.
+      //
+      // O botão aparecia sempre que a turma tinha link de Meet, e a
+      // aluna via "Entrar na sala" dois dias antes da aula. Botão que
+      // leva a uma sala vazia não é atalho, é engano. Ele aparece
+      // quando a professora já abriu a aula, ou no próprio dia dela.
+      temSala: !!(turmaRaw && turmaRaw.meet) && (!!viva || !!(dAula && dAula.hoje)),
+      salaLink: (turmaRaw && turmaRaw.meet) || "#",
       weekCount: week.length
         ? feitosNaSemana + T(" of ", " de ") + week.length + T(" done", " feitos")
         : T("nothing this week", "nada esta semana"),
@@ -3072,7 +3097,7 @@ class Component extends DCLogic {
           fmResumo: resumo && resumo.conversas
             ? (resumo.conversas + T(" conversation", " conversa") + (resumo.conversas === 1 ? "" : "s")
                + " · " + resumo.respostas + T(" reply", " resposta") + (resumo.respostas === 1 ? "" : "s"))
-            : L.fmSoTexto,
+            : "",
           fmFechado: !escrevendo, fmAberto: escrevendo,
           fmVazio: topicos.length === 0 && !escrevendo,
           fmTitulo: this.state.fmTitulo || "",
