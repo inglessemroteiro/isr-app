@@ -386,17 +386,29 @@
         <sc-if value="{{ cbSemDetalhe }}">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px">
             <sc-for list="{{ catalog }}" as="c" hint-placeholder-count="3">
-              <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;flex-direction:column;gap:11px">
-                <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
-                  <span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ c.nivelLabel }}</span>
-                  <sc-if value="{{ c.ehNovo }}"><span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:var(--color-button-primary);color:var(--color-primary-900)">{{ L.novo }}</span></sc-if>
-                  <span style="border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;background:{{ c.vagasBg }};color:{{ c.vagasFg }}">{{ c.spotsLabel }}</span>
+              <section style="background:var(--color-neutral-0);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                  <sc-if value="{{ c.temEmoji }}">
+                    <span style="font-size:30px;line-height:1">{{ c.emoji }}</span>
+                  </sc-if>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">
+                    <sc-if value="{{ c.ehNovo }}"><span style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;background:var(--color-button-primary);color:var(--color-primary-900)">{{ L.novo }}</span></sc-if>
+                    <span style="border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;background:var(--color-secondary-100);color:var(--color-primary-900)">{{ c.nivelLabel }}</span>
+                  </div>
                 </div>
-                <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em">{{ c.name }}</div>
-                <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55">{{ c.desc }}</div>
-                <div style="font-size:13px;color:var(--color-tertiary-700);line-height:1.6">{{ c.linha }}</div>
-                <div><span onclick="{{ c.verDetalhe }}" style="font-size:13.5px;font-weight:800;color:var(--color-primary-500);cursor:pointer">{{ L.verDatas }}</span></div>
-                <div><button onclick="{{ c.toggle }}" style="border:0;background:{{ c.btnBg }};color:var(--color-neutral-0);border-radius:999px;padding:13px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">{{ c.btn }}</button></div>
+                <div onclick="{{ c.verDetalhe }}" style="font-size:18px;font-weight:800;letter-spacing:-0.03em;cursor:pointer;color:var(--color-primary-900)">{{ c.name }}</div>
+                <!-- A descrição que a professora escreve não tem limite, e
+                     uma de mil caracteres esticava o cartão — e com ele a
+                     linha inteira da grade. Aqui ela para em quatro linhas;
+                     inteira, fica na página do clube. -->
+                <div style="flex:1;font-size:14px;color:var(--color-primary-800);line-height:1.5;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden">{{ c.desc }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--color-tertiary-700);line-height:1.5">
+                  <sc-if value="{{ c.temProf }}"><div>👩‍🏫 {{ c.prof }}</div></sc-if>
+                  <sc-if value="{{ c.temQuando }}"><div>🗓 {{ c.quando }}</div></sc-if>
+                  <div>{{ c.membrosOnde }}</div>
+                </div>
+                <div><span onclick="{{ c.verDetalhe }}" style="font-size:13px;font-weight:700;color:var(--color-primary-500);cursor:pointer">{{ L.verDatas }}</span></div>
+                <button onclick="{{ c.toggle }}" style="border:0;border-radius:999px;padding:11px;text-align:center;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;background:{{ c.btnBg }};color:{{ c.btnFg }}">{{ c.btn }}</button>
               </section>
             </sc-for>
           </div>
@@ -1834,6 +1846,9 @@ class Component extends DCLogic {
     // escuro. Todos os clubes: a grade com nível e "New", e a página
     // do clube atrás do "ver datas e detalhes".
     const precoExtra = (CRM.clubeExtraPreco && CRM.clubeExtraPreco()) || { label: "" };
+    // Clube publicado sempre tem nível — é trava de publicação. O caso
+    // vazio é o dos clubes publicados antes dessa trava existir, e para
+    // a aluna "todos os níveis" é o que eles de fato são hoje.
     const NIVEL_LABEL = (n) => {
       const k = String(n || "todos").toLowerCase();
       return k === "todos" ? T("All levels", "Todos os níveis")
@@ -1920,8 +1935,22 @@ class Component extends DCLogic {
       name: c.nome,
       nivelLabel: NIVEL_LABEL(c.nivel),
       ehNovo: !!(CRM.clubeEhNovo && CRM.clubeEhNovo(c)),
-      linha: [c.professora ? T("with ", "com ") + c.professora : "", quandoDe(c), ondeDe(c)]
-        .filter(Boolean).join(" · "),
+      // O arquivo 04 pede professor, horário, membros e local em
+      // linhas separadas, não uma corrida de pontos: numa corrida só,
+      // o local presencial empurrava o resto para fora da vista.
+      temEmoji: !!c.emoji, emoji: c.emoji || "",
+      temProf: !!c.professora, prof: c.professora || "",
+      temQuando: !!quandoDe(c),
+      quando: [quandoDe(c),
+        (c.encontros || []).length
+          ? ((c.encontros || []).length
+              + ((c.encontros || []).length === 1 ? T(" meeting", " encontro") : T(" meetings", " encontros")))
+          : ""].filter(Boolean).join(" · "),
+      membrosOnde: [
+        (c.vagas ? (c.vagas - (c.livres === null ? 0 : c.livres)) : 0)
+          + T(" member", " membro")
+          + ((c.vagas ? (c.vagas - (c.livres === null ? 0 : c.livres)) : 0) === 1 ? "" : "s"),
+        ondeDe(c)].filter(Boolean).join(" · "),
       verDetalhe: () => this.setState({ clubeVendo: c.id }),
       formatLabel: ondeDe(c),
       spotsLabel: c.lotado ? T("no spot now", "sem vaga agora")
@@ -1944,7 +1973,13 @@ class Component extends DCLogic {
       btn: c.naEspera ? T("you are on the list", "você está na espera")
         : c.lotado ? T("Join the waiting list", "Entrar na lista de espera")
           : T("Join this club", "Entrar no clube"),
-      btnBg: c.naEspera ? "var(--color-tertiary-400)" : c.lotado ? "var(--color-tertiary-500)" : "var(--color-primary-500)",
+      // No desenho o botão do cartão é uma pílula clara de largura
+      // inteira, não um botão escuro: o cartão é um convite, e a
+      // decisão de verdade está na página do clube.
+      btnBg: c.naEspera ? "var(--color-button-secondary)"
+        : c.lotado ? "var(--color-button-secondary)" : "var(--color-secondary-100)",
+      btnFg: c.naEspera ? "var(--color-tertiary-700)"
+        : c.lotado ? "var(--color-tertiary-700)" : "var(--color-primary-900)",
       toggle: () => {
         if (c.naEspera) return;
         const r = CRM.clubeEntrar(c.id, p.id);

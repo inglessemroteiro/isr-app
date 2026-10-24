@@ -2406,12 +2406,17 @@ class Component extends DCLogic {
       ["b1", Tr("B1 and up", "A partir do B1")],
       ["b2", Tr("B2 and up", "A partir do B2")]
     ];
+    // Nível vazio é "ninguém escolheu ainda", e tem de aparecer assim:
+    // mostrá-lo como "todos" escondia o que falta decidir.
     const clNivelCurto = (n) => {
-      const k = String(n || "todos").toLowerCase();
+      const k = String(n || "").toLowerCase();
+      if (!k) return Tr("no level set", "sem nível");
       return k === "todos" ? Tr("all levels", "todos") : k.toUpperCase() + "+";
     };
     const clNivelLabel = (n) => {
-      const achado = CL_NIVEIS.filter(x => x[0] === String(n || "todos").toLowerCase())[0];
+      const k = String(n || "").toLowerCase();
+      if (!k) return Tr("no level set yet", "nível ainda não escolhido");
+      const achado = CL_NIVEIS.filter(x => x[0] === k)[0];
       return achado ? achado[1] : CL_NIVEIS[0][1];
     };
     const clFormatoLabel = (f) => f === "presencial"
@@ -2846,8 +2851,10 @@ class Component extends DCLogic {
         };
       })(),
       onClNovo: () => {
+        // sem nível: é escolha pedagógica, e preenchê-la aqui era o
+        // que fazia todo clube nascer "todos os níveis"
         const r = CRM.clubeSalvar({ nome: Tr("New club", "Clube novo"),
-          professora: teacher, formato: "online", nivel: "todos", vagas: 8,
+          professora: teacher, formato: "online", vagas: 8,
           encontros: [{}, {}, {}, {}] });
         if (!r.ok) return this.setState({ clErro: r.erro });
         this.setState({ clSel: r.id, clAba: "pagina", clErro: "", clAviso: "",

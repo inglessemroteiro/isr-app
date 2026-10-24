@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.23-c",
-  data: "23/10/2026",
-  nota: "Particulares e Clubes conferidos nos arquivos 11 e 12"
+  numero: "2026.10.24-a",
+  data: "24/10/2026",
+  nota: "O nível do clube chega ao catálogo, e o cartão pelo arquivo 04"
 };
