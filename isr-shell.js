@@ -141,6 +141,10 @@
     { id: "professor", sec: "pedagógico", icone: "✎", label: "Painel do professor", href: "ISR - Painel v3.dc.html", perfis: ["gestora", "professora", "extra", "shadow", "operacao"] },
     { id: "acomp", sec: "pedagógico", icone: "○", label: "Acompanhamento", href: "ISR - Acompanhamento v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
     { id: "turmas", sec: "pedagógico", icone: "▦", label: "Turmas & Projetos", href: "ISR - Turmas v3.dc.html", perfis: ["gestora", "comercial", "operacao"] },
+    // O repositório do que a escola ensina. É da coordenação: a
+    // professora escolhe o programa da turma dela, mas quem escreve as
+    // sessões é quem responde pelo pedagógico da escola inteira.
+    { id: "programas", sec: "pedagógico", icone: "❑", label: "Programas", href: "ISR - Programas v3.dc.html", perfis: ["gestora", "operacao"] },
     // O link da aula gravada sempre se colou dentro da chamada. O que
     // não havia era onde VER o conjunto: quais aulas têm gravação e
     // quais ficaram sem. Sem a lista, descobrir que a aula de três

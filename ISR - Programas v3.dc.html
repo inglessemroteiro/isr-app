@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISR — Programas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ingles-sem-roteiro-design-system-a7985fe4-209b-4350-a2f2-0670d3c36040/tokens/web.css">
+<link rel="stylesheet" href="isr-componentes.css">
+<style>body{margin:0;background:var(--color-button-secondary);font-family:Inter,'Helvetica Neue',Helvetica,sans-serif;color:var(--color-primary-900)}*{box-sizing:border-box}</style>
+<script src="./support.js"></script>
+<script src="./isr-versao.js"></script>
+<script src="./isr-shell.js"></script>
+<script src="./crm-data.js"></script>
+</head>
+<body>
+<x-dc>
+<main style="padding: 22px 24px 60px; max-width: 1180px; color: var(--color-primary-900);">
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="min-width: 0;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--color-tertiary-500);">pedagógico · o que a escola ensina</div>
+        <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Programas</h1>
+      </div>
+      <sc-if value="{{ podeMexer }}">
+        <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onNovo }}" style="font-size: 13.5px; font-weight: 800; padding: 12px 20px">{{ novoLabel }}</button>
+      </sc-if>
+    </header>
+
+    <!-- QUEM NÃO É DA COORDENAÇÃO -->
+    <sc-if value="{{ semPermissao }}">
+      <section class="isr-cartao" style="padding: 22px 24px; font-size: 15px; line-height: 1.6; color: var(--color-primary-800)">
+        Os programas da escola são escritos pela coordenação. Para escolher o programa de uma turma ou de uma aluna particular, abra a turma ou o Painel do professor.
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ podeMexer }}">
+      <section style="background: var(--color-primary-50); border-radius: 20px; padding: 14px 18px; font-size: 13.5px; line-height: 1.6;">
+        Um programa é um projeto com nome, de um nível, com as sessões dele. Ele roda em quantos ciclos a escola quiser: a turma e a aluna particular escolhem o programa, e as sessões são as mesmas para todas. Para o ciclo seguinte, duplique o programa e mude o que precisar — assim a turma do ciclo passado continua com o roteiro que teve.
+      </section>
+
+      <!-- O PROGRAMA ABERTO -->
+      <sc-if value="{{ aberto }}">
+        <section class="isr-cartao" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap">
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500);">programa aberto</div>
+            <button class="isr-botao isr-botao--texto" onclick="{{ onFechar }}" style="font-size: 13px; color: var(--color-primary-900)">fechar</button>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 14px">
+            <label style="flex: 2 1 320px; min-width: 0; display: block">
+              <span style="display: block; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 4px">nome do programa</span>
+              <input class="isr-campo" value="{{ abNome }}" onchange="{{ onAbNome }}" onblur="{{ onAbNomeFim }}" placeholder="{{ phNome }}" style="width: 100%; padding: 11px 14px; font-size: 15px" />
+            </label>
+            <label style="flex: 1 1 200px; min-width: 0; display: block">
+              <span style="display: block; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 4px">nível</span>
+              <select class="isr-campo" onchange="{{ onAbNivel }}" style="width: 100%; padding: 11px 12px; font-size: 14px">
+                <sc-for list="{{ abNiveis }}" as="nv" hint-placeholder-count="5">
+                  <option value="{{ nv.id }}" selected="{{ nv.sel }}">{{ nv.label }}</option>
+                </sc-for>
+              </select>
+            </label>
+          </div>
+          <label style="display: block">
+            <span style="display: block; font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-bottom: 4px">do que trata · a professora lê isto ao escolher</span>
+            <textarea class="isr-campo" value="{{ abDescricao }}" onchange="{{ onAbDescricao }}" onblur="{{ onAbDescricaoFim }}" rows="2" placeholder="{{ phDescricao }}" style="width: 100%; padding: 11px 14px; font-size: 14px; line-height: 1.55; resize: vertical"></textarea>
+          </label>
+
+          <sc-if value="{{ abTemErro }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 13.5px">{{ abErro }}</div>
+          </sc-if>
+
+          <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-top: 4px">as sessões · {{ abQuantas }}</div>
+          <sc-for list="{{ abSessoes }}" as="sy" hint-placeholder-count="10">
+            <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--color-button-secondary)">
+              <span style="flex: 0 0 44px; font-size: 13px; font-weight: 800; color: var(--color-tertiary-500); padding-top: 10px">S{{ sy.n }}</span>
+              <div style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                <input class="isr-campo" value="{{ sy.titulo }}" onchange="{{ sy.onTitulo }}" onblur="{{ sy.onTituloFim }}" placeholder="{{ phSessaoTitulo }}" style="width: 100%; padding: 9px 12px; font-size: 14px" />
+                <input class="isr-campo" value="{{ sy.objetivo }}" onchange="{{ sy.onObjetivo }}" onblur="{{ sy.onObjetivoFim }}" placeholder="{{ phSessaoObjetivo }}" style="width: 100%; padding: 9px 12px; font-size: 13px" />
+              </div>
+              <button class="isr-botao" onclick="{{ sy.onApagar }}" title="Tirar esta sessão do programa" style="flex: none; width: 30px; height: 30px; margin-top: 8px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ abSemSessoes }}">
+            <div style="background: var(--color-bg-cell); border-radius: 16px; padding: 14px 16px; font-size: 13.5px; line-height: 1.55; color: var(--color-primary-800)">Comece criando a sessão 1. O roteiro de cada sessão — as etapas, os minutos e as perguntas do caderno — se escreve depois, na turma que for dar a aula.</div>
+          </sc-if>
+          <div>
+            <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onAddSessao }}" style="font-size: 13px; padding: 10px 16px">{{ abAddLabel }}</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- NOVO PROGRAMA -->
+      <sc-if value="{{ criando }}">
+        <section class="isr-cartao" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+          <div style="font-size: 16px; font-weight: 800">Programa novo</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 14px">
+            <input class="isr-campo" ref="{{ novoNomeRef }}" placeholder="{{ phNome }}" style="flex: 2 1 300px; min-width: 0; padding: 11px 14px; font-size: 15px" />
+            <select class="isr-campo" onchange="{{ onNovoNivel }}" style="flex: 1 1 200px; min-width: 0; padding: 11px 12px; font-size: 14px">
+              <sc-for list="{{ novoNiveis }}" as="nv" hint-placeholder-count="5">
+                <option value="{{ nv.id }}" selected="{{ nv.sel }}">{{ nv.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <sc-if value="{{ novoTemErro }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 13.5px">{{ novoErro }}</div>
+          </sc-if>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+            <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onCriar }}" style="font-size: 13.5px; font-weight: 800; padding: 11px 18px">Criar o programa</button>
+            <button class="isr-botao isr-botao--texto" onclick="{{ onCancelarNovo }}" style="font-size: 13px; color: var(--color-primary-800)">cancelar</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- BUSCA E FILTROS -->
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+        <input class="isr-campo" value="{{ busca }}" onchange="{{ onBusca }}" placeholder="{{ phBusca }}" style="flex: 1 1 260px; min-width: 0; padding: 11px 14px; font-size: 14px; background: var(--color-neutral-0)" />
+        <sc-for list="{{ filtros }}" as="ft" hint-placeholder-count="5">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ ft.onClick }}" style="background: {{ ft.bg }}; color: {{ ft.fg }}; font-size: 12.5px; padding: 9px 15px">{{ ft.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- A LISTA -->
+      <div style="display: flex; flex-wrap: wrap; gap: 20px">
+        <sc-for list="{{ programas }}" as="pg" hint-placeholder-count="6">
+          <section class="isr-cartao" style="flex: 1 1 300px; min-width: 0; max-width: 100%; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; opacity: {{ pg.op }}">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+              <span class="isr-selo" style="padding: 3px 10px; font-size: 11px; font-weight: 700; background: {{ pg.nivelBg }}; color: var(--color-primary-900)">{{ pg.nivel }}</span>
+              <sc-if value="{{ pg.arquivado }}">
+                <span class="isr-selo" style="padding: 3px 10px; font-size: 11px; font-weight: 700; background: var(--color-bg-cell); color: var(--color-tertiary-700)">arquivado</span>
+              </sc-if>
+            </div>
+            <div style="font-size: 16px; font-weight: 800; line-height: 1.3">{{ pg.nome }}</div>
+            <sc-if value="{{ pg.temDescricao }}">
+              <div style="font-size: 13px; line-height: 1.5; color: var(--color-primary-800)">{{ pg.descricao }}</div>
+            </sc-if>
+            <div style="font-size: 12.5px; color: var(--color-tertiary-700); line-height: 1.55">{{ pg.sessoes }}</div>
+            <div style="font-size: 12.5px; color: var(--color-tertiary-700); line-height: 1.55">{{ pg.ondeRoda }}</div>
+            <div style="margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; padding-top: 6px">
+              <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ pg.onAbrir }}" style="font-size: 12.5px; padding: 9px 15px">{{ pg.abrirLabel }}</button>
+              <button class="isr-botao isr-botao--pilula" onclick="{{ pg.onDuplicar }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 12.5px; padding: 9px 15px">Duplicar</button>
+              <button class="isr-botao isr-botao--texto" onclick="{{ pg.onArquivar }}" style="font-size: 12.5px; color: var(--color-tertiary-700)">{{ pg.arquivarLabel }}</button>
+            </div>
+          </section>
+        </sc-for>
+      </div>
+      <sc-if value="{{ vazio }}">
+        <section class="isr-cartao" style="padding: 22px 24px; font-size: 14.5px; line-height: 1.6; color: var(--color-primary-800)">{{ vazioTexto }}</section>
+      </sc-if>
+    </sc-if>
+
+  </div>
+</main>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
+class Component extends DCLogic {
+  // O REPOSITÓRIO DE PROGRAMAS DA ESCOLA
+  //
+  // Aqui moram os projetos que a escola ensina: nome, nível e as
+  // sessões de cada um. Antes disto o programa não existia como
+  // coisa — existiam sessões soltas marcadas com nível e ciclo, e
+  // escolher um programa para a turma era escolher entre linhas
+  // "A1 · Basics · ciclo 3.2026". Com três anos de escola isso vira
+  // uma lista impossível de ler, com o mesmo projeto repetido em cada
+  // ciclo.
+  //
+  // Quem escreve é a coordenação. A professora escolhe, na turma e na
+  // particular, mas não reescreve: o programa vale para todas as
+  // turmas que o seguem.
+  state = { aberto: "", criando: false, novoNivel: "", novoErro: "",
+            busca: "", filtro: "todos", abErro: "", tick: 0,
+            // o texto em andamento mora aqui e só é gravado quando ela
+            // sai do campo: salvar a cada tecla devolvia o texto
+            // aparado, e a barra de espaço não sobrevivia
+            rascunho: {} };
+  novoNomeRef = React.createRef();
+
+  bump() { this.setState(s => ({ tick: s.tick + 1 })); }
+
+  componentDidMount() {
+    this.onDados = () => this.bump();
+    window.addEventListener("isr-dados", this.onDados);
+    window.addEventListener("isr-dados-novos", this.onDados);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("isr-dados", this.onDados);
+    window.removeEventListener("isr-dados-novos", this.onDados);
+  }
+
+  renderVals() {
+    const CRM = window.ISRCRM;
+    const base = {
+      podeMexer: false, semPermissao: false, novoLabel: "+ Novo programa",
+      programas: [], vazio: false, vazioTexto: "", filtros: [],
+      busca: "", onBusca: () => {}, phBusca: "Buscar por nome ou nível…",
+      phNome: "Ex.: Our End of Year Dishes", phDescricao: "Uma linha sobre o projeto.",
+      phSessaoTitulo: "Título da sessão", phSessaoObjetivo: "O que a aluna sai sabendo",
+      criando: false, onNovo: () => {}, onCriar: () => {}, onCancelarNovo: () => {},
+      novoNomeRef: this.novoNomeRef, novoNiveis: [], onNovoNivel: () => {},
+      novoTemErro: false, novoErro: "",
+      aberto: false, abNome: "", onAbNome: () => {}, onAbNomeFim: () => {},
+      abNiveis: [], onAbNivel: () => {},
+      abDescricao: "", onAbDescricao: () => {}, onAbDescricaoFim: () => {},
+      abTemErro: false, abErro: "", abQuantas: "", abSessoes: [], abSemSessoes: true,
+      abAddLabel: "+ Sessão 1", onAddSessao: () => {}, onFechar: () => {}
+    };
+    if (!CRM) return base;
+
+    const user = CRM.gestaoUser ? (CRM.gestaoUser() || {}) : {};
+    const papeis = user.papeis || [];
+    const pode = user.perfil === "gestora" || user.perfil === "operacao"
+      || papeis.indexOf("gestora") >= 0 || papeis.indexOf("operacao") >= 0;
+    if (!pode) return Object.assign({}, base, { semPermissao: true });
+
+    // ── os níveis da escola, para o campo de nível ──
+    // Vêm das turmas: é o conjunto de níveis que a escola realmente
+    // dá, e não uma lista inventada aqui.
+    const niveis = [];
+    (CRM.turmasLista ? CRM.turmasLista() : []).forEach(t => {
+      if (t.nivel && niveis.indexOf(t.nivel) < 0) niveis.push(t.nivel);
+    });
+    (CRM.programasEstudoLista ? CRM.programasEstudoLista({ comArquivados: true }) : [])
+      .forEach(p => { if (p.nivel && niveis.indexOf(p.nivel) < 0) niveis.push(p.nivel); });
+    niveis.sort();
+
+    // ── o rascunho: digitar aqui, gravar ao sair do campo ──
+    const rasc = this.state.rascunho || {};
+    const rLer = (chave, guardado) => (chave in rasc ? rasc[chave] : guardado);
+    const rEscrever = (chave, v) => this.setState({
+      rascunho: Object.assign({}, this.state.rascunho || {}, { [chave]: v }) });
+    const rFechar = (chave, salvar) => {
+      const atual = this.state.rascunho || {};
+      if (!(chave in atual)) return;
+      const v = atual[chave];
+      const novo = Object.assign({}, atual);
+      delete novo[chave];
+      this.setState({ rascunho: novo });
+      salvar(v);
+    };
+
+    const todos = CRM.programasEstudoLista({ comArquivados: true });
+    const busca = (this.state.busca || "").trim().toLowerCase();
+    const filtro = this.state.filtro || "todos";
+    const visiveis = todos.filter(p => {
+      if (filtro === "arquivados") { if (!p.arquivado) return false; }
+      else if (p.arquivado) return false;
+      if (filtro !== "todos" && filtro !== "arquivados" && p.nivel !== filtro) return false;
+      if (!busca) return true;
+      return (p.nome + " " + p.nivel + " " + p.descricao).toLowerCase().indexOf(busca) >= 0;
+    });
+
+    const FILTROS = [{ id: "todos", label: "Todos · " + todos.filter(p => !p.arquivado).length }]
+      .concat(niveis.map(n => ({ id: n,
+        label: n + " · " + todos.filter(p => !p.arquivado && p.nivel === n).length })))
+      .concat([{ id: "arquivados", label: "Arquivados · " + todos.filter(p => p.arquivado).length }]);
+
+    const abertoPg = this.state.aberto ? CRM.getProgramaEstudo(this.state.aberto) : null;
+    const abSessoes = abertoPg ? CRM.syllabusDoPrograma(abertoPg.id) : [];
+
+    const salvarCampo = (campo, v) => {
+      if (!abertoPg) return;
+      const dados = { id: abertoPg.id, nome: abertoPg.nome, nivel: abertoPg.nivel,
+        descricao: abertoPg.descricao || "" };
+      dados[campo] = v;
+      const r = CRM.salvarProgramaEstudo(dados);
+      this.setState({ abErro: r.ok ? "" : (r.erro || "") });
+      this.bump();
+    };
+
+    return Object.assign({}, base, {
+      podeMexer: true,
+      busca: this.state.busca || "",
+      onBusca: (e) => this.setState({ busca: e.target.value }),
+      filtros: FILTROS.map(f => ({ label: f.label,
+        bg: filtro === f.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+        fg: filtro === f.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+        onClick: () => this.setState({ filtro: f.id }) })),
+
+      // ── programa novo ──
+      criando: !!this.state.criando,
+      onNovo: () => this.setState({ criando: !this.state.criando, novoErro: "",
+        novoNivel: this.state.novoNivel || niveis[0] || "" }),
+      novoNiveis: niveis.map(n => ({ id: n, label: n,
+        sel: n === (this.state.novoNivel || niveis[0] || "") })),
+      onNovoNivel: (e) => this.setState({ novoNivel: e.target.value }),
+      novoTemErro: !!this.state.novoErro, novoErro: this.state.novoErro || "",
+      onCancelarNovo: () => this.setState({ criando: false, novoErro: "" }),
+      onCriar: () => {
+        const el = this.novoNomeRef.current;
+        const r = CRM.salvarProgramaEstudo({
+          nome: (el && el.value) || "",
+          nivel: this.state.novoNivel || niveis[0] || "" });
+        if (!r.ok) return this.setState({ novoErro: r.erro || "Não foi possível." });
+        if (el) el.value = "";
+        this.setState({ criando: false, novoErro: "", aberto: r.programa.id });
+        this.bump();
+      },
+
+      // ── o programa aberto ──
+      aberto: !!abertoPg,
+      onFechar: () => this.setState({ aberto: "", abErro: "" }),
+      abNome: rLer("nome", abertoPg ? abertoPg.nome : ""),
+      onAbNome: (e) => rEscrever("nome", e.target.value),
+      onAbNomeFim: () => rFechar("nome", (v) => salvarCampo("nome", v)),
+      abNiveis: niveis.map(n => ({ id: n, label: n,
+        sel: !!abertoPg && n === abertoPg.nivel })),
+      onAbNivel: (e) => salvarCampo("nivel", e.target.value),
+      abDescricao: rLer("descricao", abertoPg ? (abertoPg.descricao || "") : ""),
+      onAbDescricao: (e) => rEscrever("descricao", e.target.value),
+      onAbDescricaoFim: () => rFechar("descricao", (v) => salvarCampo("descricao", v)),
+      abTemErro: !!this.state.abErro, abErro: this.state.abErro || "",
+      abQuantas: abSessoes.length === 1 ? "1 sessão" : abSessoes.length + " sessões",
+      abSemSessoes: abSessoes.length === 0,
+      abAddLabel: "+ Sessão " + (() => {
+        const usados = abSessoes.map(x => x.n);
+        let n = 1; while (usados.indexOf(n) >= 0) n++;
+        return n;
+      })(),
+      onAddSessao: () => {
+        if (!abertoPg) return;
+        const usados = abSessoes.map(x => x.n);
+        let n = 1; while (usados.indexOf(n) >= 0) n++;
+        const r = CRM.salvarSessaoSyllabus({ programaId: abertoPg.id, nivel: abertoPg.nivel,
+          ciclo: "", n: n, projeto: abertoPg.nome });
+        this.setState({ abErro: r.ok ? "" : (r.erro || "Não foi possível.") });
+        this.bump();
+      },
+      abSessoes: abSessoes.map(sx => {
+        const grava = (campo, v) => {
+          const dados = { id: sx.id, programaId: sx.programaId, nivel: sx.nivel,
+            ciclo: sx.ciclo, n: sx.n, titulo: sx.titulo, objetivo: sx.objetivo,
+            palavras: sx.palavras, starters: sx.starters, homework: sx.homework,
+            etapas: sx.etapas, projeto: sx.projeto, guia: sx.guia, slides: sx.slides };
+          dados[campo] = v;
+          CRM.salvarSessaoSyllabus(dados);
+          this.bump();
+        };
+        return {
+          n: String(sx.n),
+          titulo: rLer(sx.id + "·titulo", sx.titulo || ""),
+          objetivo: rLer(sx.id + "·objetivo", sx.objetivo || ""),
+          onTitulo: (e) => rEscrever(sx.id + "·titulo", e.target.value),
+          onTituloFim: () => rFechar(sx.id + "·titulo", (v) => grava("titulo", v)),
+          onObjetivo: (e) => rEscrever(sx.id + "·objetivo", e.target.value),
+          onObjetivoFim: () => rFechar(sx.id + "·objetivo", (v) => grava("objetivo", v)),
+          onApagar: () => {
+            if (!window.confirm("Tirar a sessão " + sx.n + " deste programa? Vale para todas as turmas que o seguem.")) return;
+            CRM.apagarSessaoSyllabus(sx.id);
+            this.bump();
+          }
+        };
+      }),
+
+      // ── a lista ──
+      programas: visiveis.map(p => ({
+        nome: p.nome,
+        nivel: p.nivel || "sem nível",
+        nivelBg: CRM.corDoNivel ? CRM.corDoNivel(p.nivel) : "var(--color-button-secondary)",
+        temDescricao: !!p.descricao, descricao: p.descricao,
+        arquivado: !!p.arquivado,
+        op: p.arquivado ? "0.6" : "1",
+        sessoes: p.sessoes === 1 ? "1 sessão" : p.sessoes + " sessões",
+        ondeRoda: p.turmas.length
+          ? (p.turmas.length === 1 ? "roda em 1 turma · " + p.turmas[0]
+            : "roda em " + p.turmas.length + " turmas · " + p.turmas.slice(0, 2).join(" · "))
+          : "nenhuma turma segue este programa agora",
+        abrirLabel: this.state.aberto === p.id ? "Abrir" : "Abrir",
+        onAbrir: () => { this.setState({ aberto: p.id, abErro: "", rascunho: {} });
+          try { window.scrollTo(0, 0); } catch (e) {} },
+        onDuplicar: () => {
+          const nome = window.prompt("Nome do programa novo:", p.nome + " (cópia)");
+          if (!nome) return;
+          const r = CRM.duplicarProgramaEstudo(p.id, nome);
+          if (r.ok) this.setState({ aberto: r.programa.id, rascunho: {} });
+          this.bump();
+        },
+        arquivarLabel: p.arquivado ? "Desarquivar" : "Arquivar",
+        onArquivar: () => {
+          CRM.arquivarProgramaEstudo(p.id, !p.arquivado);
+          this.bump();
+        }
+      })),
+      vazio: visiveis.length === 0,
+      vazioTexto: busca
+        ? "Nenhum programa com esse nome."
+        : (filtro === "arquivados"
+          ? "Nenhum programa arquivado."
+          : "Nenhum programa ainda. Crie o primeiro em “+ Novo programa”.")
+    });
+  }
+}
+</script>
+</body>
+</html>
