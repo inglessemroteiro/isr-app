@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.25-a",
+  numero: "2026.10.25-b",
   data: "25/10/2026",
-  nota: "O roteiro diz o que fazer, não o que está faltando"
+  nota: "O repositório de programas da escola"
 };

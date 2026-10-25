@@ -3415,6 +3415,8 @@
         // a hora da aula e o fuso em que ela é lida viajam junto: é com
         // eles que cada tela mostra a hora no relógio de quem olha
         hora: u.hora || "", fuso: u.fuso || "",
+        // o programa que a turma segue, do repositório da escola
+        programaId: u.programaId || "",
         capacidade: cap, ocupadas: ocup, vagas: cap - ocup };
     });
   }
@@ -6253,6 +6255,8 @@
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
+      // o repositório de programas é da escola inteira
+      programasEstudo: programasEstudoRaw(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -6278,6 +6282,7 @@
     grava(RESGATES_KEY, d.resgates); grava(RECOMPENSAS_OFF_KEY, d.recompensasFora);
     grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas); grava(FORUM_KEY, d.clubeForum);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
+    grava(PROGRAMAS_EST_KEY, d.programasEstudo);
     grava(MATERIAIS_KEY, d.materiais);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
@@ -6341,6 +6346,7 @@
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
       syllabus: lista("syllabus"),
+      programasEstudo: lista("programasEstudo"),
       planos: mesclarMapa(local.planos, remoto.planos),
       materiais: mesclarMapa(local.materiais, remoto.materiais),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
@@ -10252,8 +10258,12 @@
       if (!u.nivel || !u.cycle) return;
       var k = u.nivel + "|" + u.cycle;
       if (feito[k]) return;
-      // nunca por cima do que a escola já escreveu
-      if (syllabusDoNivel(u.nivel, u.cycle).length) { feito[k] = "ja tinha"; mudou = true; return; }
+      // nunca por cima do que a escola já escreveu — nem do programa
+      // que a turma escolheu no repositório
+      if (syllabusDoNivel(u.nivel, u.cycle).length
+        || (u.programaId && syllabusDoPrograma(u.programaId).length)) {
+        feito[k] = "ja tinha"; mudou = true; return;
+      }
       var tab = tabelaDoNivel(u.nivel);
       if (!tab) return;
       tab.sessoes.forEach(function (sx) {
@@ -10277,6 +10287,183 @@
     return syllabusAll()
       .filter(function (s) { return s && !s.apagado && s.nivel === nivel && s.ciclo === c; })
       .sort(function (a, b) { return (a.n || 0) - (b.n || 0); });
+  }
+
+  // ── O REPOSITÓRIO DE PROGRAMAS ────────────────────────────────
+  //
+  // Um programa é um projeto com nome próprio ("Our End of Year
+  // Dishes"), de um nível, com as sessões dele. Ele mora no
+  // repositório da escola e roda em qualquer ciclo: a turma e a aluna
+  // particular ESCOLHEM um programa, e o ciclo é só quando ele está
+  // acontecendo.
+  //
+  // Antes disto o programa não existia como coisa: existiam sessões
+  // soltas marcadas com nível e ciclo, e "o programa" era a soma das
+  // que tinham o mesmo par. Em três anos isso dá uma cópia do mesmo
+  // projeto por ciclo, e a professora escolhendo entre dezenas de
+  // linhas iguais.
+  //
+  // O par nível+ciclo continua gravado em cada sessão: é por ele que
+  // as turmas antigas, que nunca escolheram programa, continuam
+  // achando o syllabus delas.
+  var PROGRAMAS_EST_KEY = "isr_programas_estudo_v1";
+  function programasEstudoRaw() {
+    try { return JSON.parse(localStorage.getItem(PROGRAMAS_EST_KEY)) || []; } catch (e) { return []; }
+  }
+  function programasEstudoSave(l) {
+    carimbarLista(l);
+    try { localStorage.setItem(PROGRAMAS_EST_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  // O que já existia vira programa sozinho: cada par nível+ciclo com
+  // sessões ganha um programa com o nome do projeto delas. Sem isto a
+  // escola abriria o repositório vazio tendo anos de syllabus dentro.
+  function garantirProgramas() {
+    var todas = syllabusAll();
+    var lista = programasEstudoRaw();
+    var porOrigem = {};
+    lista.forEach(function (pg) {
+      if (pg && pg.origem) porOrigem[pg.origem.nivel + "|" + pg.origem.ciclo] = pg;
+    });
+    var novos = 0, mudou = false;
+    todas.forEach(function (s) {
+      if (!s || s.apagado || s.programaId) return;
+      var k = (s.nivel || "") + "|" + (s.ciclo || "");
+      var pg = porOrigem[k];
+      if (!pg) {
+        pg = { id: "pg" + Date.now() + "-" + novos,
+          nome: String(s.projeto || s.nivel || "Programa").trim().slice(0, PROGRAMA_LIMITES.nome),
+          nivel: s.nivel || "", descricao: "",
+          origem: { nivel: s.nivel || "", ciclo: s.ciclo || "" },
+          criadoEm: iso(today()) };
+        porOrigem[k] = pg; novos++; lista.push(pg);
+      }
+      s.programaId = pg.id;
+      mudou = true;
+    });
+    if (mudou) { syllabusSave(todas); programasEstudoSave(lista); }
+    return lista;
+  }
+  function programasEstudoAll() {
+    garantirSyllabus();
+    garantirProgramas();
+    return programasEstudoRaw().filter(function (p) { return p && !p.apagado; });
+  }
+  function syllabusDoPrograma(programaId) {
+    if (!programaId) return [];
+    return syllabusAll()
+      .filter(function (s) { return s && !s.apagado && s.programaId === programaId; })
+      .sort(function (a, b) { return (a.n || 0) - (b.n || 0); });
+  }
+  function getProgramaEstudo(id) {
+    return programasEstudoAll().filter(function (p) { return p.id === id; })[0] || null;
+  }
+  // O programa que nasceu de um par nível+ciclo. É o que a turma que
+  // nunca escolheu programa segue, e o que a tela mostra como escolha
+  // provável quando a professora vai escolher.
+  function programaPorOrigem(nivel, ciclo) {
+    var c = ciclo || metasAtuais().cicloLabel;
+    var l = programasEstudoAll();
+    return l.filter(function (p) {
+      return p.origem && p.origem.nivel === nivel && p.origem.ciclo === c;
+    })[0] || l.filter(function (p) {
+      return p.origem && p.origem.nivel === nivel;
+    })[0] || null;
+  }
+  // A lista do repositório: nome, nível, quantas sessões, e onde cada
+  // programa está rodando agora.
+  function programasEstudoLista(opcoes) {
+    opcoes = opcoes || {};
+    var turmas = turmasLista();
+    return programasEstudoAll()
+      .filter(function (p) { return opcoes.comArquivados ? true : !p.arquivado; })
+      .map(function (p) {
+        var usos = turmas.filter(function (t) {
+          return t.programaId ? t.programaId === p.id
+            : !!(p.origem && p.origem.nivel === t.nivel && p.origem.ciclo === t.cycle);
+        });
+        return { id: p.id, nome: p.nome, nivel: p.nivel || "", descricao: p.descricao || "",
+          arquivado: !!p.arquivado, criadoEm: p.criadoEm || "",
+          sessoes: syllabusDoPrograma(p.id).length,
+          turmas: usos.map(function (t) { return t.nivel + " · " + t.turma; }) };
+      })
+      .sort(function (a, b) {
+        return (a.nivel + "|" + a.nome).localeCompare(b.nivel + "|" + b.nome);
+      });
+  }
+  var PROGRAMA_LIMITES = { nome: 120, descricao: 400 };
+  function salvarProgramaEstudo(dados) {
+    dados = dados || {};
+    var nome = String(dados.nome || "").trim().slice(0, PROGRAMA_LIMITES.nome);
+    var nivel = String(dados.nivel || "").trim();
+    if (!nome) return { ok: false, erro: "Escreva o nome do programa." };
+    if (!nivel) return { ok: false, erro: "Escolha o nível do programa." };
+    var l = programasEstudoRaw();
+    var reg = dados.id ? l.filter(function (p) { return p && p.id === dados.id; })[0] : null;
+    if (dados.id && !reg) return { ok: false, erro: "Programa não encontrado." };
+    if (!reg) {
+      reg = { id: "pg" + Date.now(), criadoEm: iso(today()) };
+      l.push(reg);
+    }
+    reg.nome = nome;
+    reg.nivel = nivel;
+    if ("descricao" in dados) {
+      reg.descricao = String(dados.descricao || "").trim().slice(0, PROGRAMA_LIMITES.descricao);
+    }
+    programasEstudoSave(l);
+    return { ok: true, programa: reg };
+  }
+  // Programa não se apaga: a turma que o deu no ciclo passado ainda
+  // precisa das sessões dele para a chamada e o caderno fazerem
+  // sentido. Arquivar tira da lista de escolha e deixa o histórico.
+  function arquivarProgramaEstudo(id, arquivar) {
+    var l = programasEstudoRaw();
+    var reg = l.filter(function (p) { return p && p.id === id; })[0];
+    if (!reg) return { ok: false, erro: "Programa não encontrado." };
+    if (arquivar === false) delete reg.arquivado;
+    else reg.arquivado = iso(today());
+    programasEstudoSave(l);
+    return { ok: true, arquivado: !!reg.arquivado };
+  }
+  // Copiar um programa é como a escola escreve o do ciclo seguinte:
+  // parte do que deu certo e muda o que quiser, sem tocar no original
+  // que as turmas antigas seguem.
+  function duplicarProgramaEstudo(id, nome) {
+    var base = getProgramaEstudo(id);
+    if (!base) return { ok: false, erro: "Programa não encontrado." };
+    var r = salvarProgramaEstudo({
+      nome: String(nome || "").trim() || (base.nome + " (cópia)"),
+      nivel: base.nivel, descricao: base.descricao || "" });
+    if (!r.ok) return r;
+    var l = syllabusAll();
+    syllabusDoPrograma(id).forEach(function (s, i) {
+      l.push(Object.assign({}, s, { id: "sy" + Date.now() + "-c" + i,
+        programaId: r.programa.id, _v: Date.now() }));
+    });
+    syllabusSave(l);
+    return { ok: true, programa: r.programa, sessoes: syllabusDoPrograma(r.programa.id).length };
+  }
+  // ── QUEM SEGUE QUAL PROGRAMA ──────────────────────────────────
+  function programaDaTurma(turma) {
+    if (!turma) return null;
+    if (turma.programaId) {
+      var escolhido = getProgramaEstudo(turma.programaId);
+      if (escolhido) return escolhido;
+    }
+    return programaPorOrigem(turma.nivel, turma.cycle);
+  }
+  function syllabusDaTurma(turma) {
+    var pg = programaDaTurma(turma);
+    return pg ? syllabusDoPrograma(pg.id) : [];
+  }
+  function definirProgramaDaTurma(turmaId, programaId) {
+    var t = turmasLista().filter(function (x) { return x.id === turmaId; })[0];
+    if (!t) return { ok: false, erro: "Turma não encontrada." };
+    if (programaId && !getProgramaEstudo(programaId)) {
+      return { ok: false, erro: "Programa não encontrado." };
+    }
+    updateTurma(turmaId, { programaId: programaId || "" });
+    return { ok: true, programa: programaId ? getProgramaEstudo(programaId) : null };
   }
   function limpaEtapas(lista) {
     return (lista || []).slice(0, PLANO_LIMITES.etapas).map(function (e, i) {
@@ -10325,15 +10512,23 @@
     if (!nivel) return { ok: false, erro: "Diga o nível da sessão." };
     if (!isFinite(n) || n < 1) return { ok: false, erro: "A sessão precisa de um número." };
     var ciclo = String(dados.ciclo || metasAtuais().cicloLabel || "").trim();
+    var pgId = String(dados.programaId || "");
     var l = syllabusAll().filter(function (s) { return s && !s.apagado; });
     var reg = dados.id ? l.filter(function (s) { return s.id === dados.id; })[0] : null;
     if (!reg) {
-      reg = l.filter(function (s) {
-        return s.nivel === nivel && s.ciclo === ciclo && s.n === n;
-      })[0];
+      // Dentro de um programa, quem diz "é a mesma sessão" é o par
+      // programa+número. Procurar por nível+ciclo escreveria por cima
+      // da sessão 3 de OUTRO programa do mesmo nível.
+      reg = pgId
+        ? l.filter(function (s) { return s.programaId === pgId && s.n === n; })[0]
+        : l.filter(function (s) {
+            return s.nivel === nivel && s.ciclo === ciclo && s.n === n;
+          })[0];
     }
     var campos = {
       nivel: nivel, ciclo: ciclo, n: n,
+      // a que programa do repositório esta sessão pertence
+      programaId: pgId || (reg && reg.programaId) || "",
       projeto: String(dados.projeto || "").trim().slice(0, PLANO_LIMITES.titulo),
       titulo: String(dados.titulo || "").trim().slice(0, PLANO_LIMITES.titulo),
       objetivo: String(dados.objetivo || "").trim().slice(0, PLANO_LIMITES.objetivo),
@@ -10372,7 +10567,7 @@
   function planoDaTurma(turmaId, n) {
     var t = (turmasLista().filter(function (x) { return x.id === turmaId; })[0]) || null;
     if (!t) return null;
-    var sess = syllabusDoNivel(t.nivel, t.cycle).filter(function (s) { return s.n === n; })[0] || null;
+    var sess = syllabusDaTurma(t).filter(function (s) { return s.n === n; })[0] || null;
     var meu = planosAll()[planoChave(turmaId, n)] || null;
     if (!sess && !meu) return null;
     var base = sess || {};
@@ -10420,7 +10615,7 @@
     var t = (turmasLista().filter(function (x) { return x.id === turmaId; })[0]) || null;
     if (!t) return [];
     var nums = {};
-    syllabusDoNivel(t.nivel, t.cycle).forEach(function (s) { nums[s.n] = true; });
+    syllabusDaTurma(t).forEach(function (s) { nums[s.n] = true; });
     var m = planosAll();
     Object.keys(m).forEach(function (k) {
       var p = k.split("|");
@@ -10495,7 +10690,7 @@
         if (ch && ch.turma === label && ch.data) semNumero.push(ch.data);
       });
       semNumero.sort();
-      var nums = (syllabusDoNivel(t.nivel, t.cycle) || [])
+      var nums = (syllabusDaTurma(t) || [])
         .map(function (x) { return x.n; })
         .sort(function (a2, b2) { return a2 - b2; });
       semNumero.forEach(function (dt, i) { if (nums[i]) dadas[nums[i]] = dt; });
@@ -11229,9 +11424,8 @@
   }
   // ── O PROGRAMA DA ALUNA PARTICULAR ────────────────────────────
   //
-  // A particular segue o MESMO programa das turmas de grupo: o
-  // syllabus de um nível, num ciclo. O que muda é a marcha, que é
-  // dela.
+  // A particular segue um programa do repositório, igual às turmas de
+  // grupo. O que muda é a marcha, que é dela.
   //
   // Qual programa ela segue é escolha da professora, e por isso é
   // campo da FICHA dela, não da aula: a sequência inteira — o que já
@@ -11239,51 +11433,49 @@
   // programa. Guardá-lo na aula faria cada aula poder apontar para
   // uma trilha diferente, e a sequência perderia o sentido.
   //
-  // Sem escolha, vale o nível da ficha (ou o da turma de grupo, para
-  // quem é híbrida): é o que a escola já sabe sobre ela.
+  // Sem escolha, vale o programa do nível da ficha dela (ou o da
+  // turma de grupo, para quem é híbrida): é o que a escola já sabe
+  // sobre ela.
   function programasDisponiveis() {
-    // sem isto a lista vem vazia para quem nunca abriu o plano de uma
-    // turma: o syllabus da escola só entra em cena na primeira leitura
-    garantirSyllabus();
-    var vistos = {};
-    var out = [];
-    syllabusAll().forEach(function (sx) {
-      if (!sx || sx.apagado || !sx.nivel) return;
-      var k = sx.nivel + "|" + (sx.ciclo || "");
-      if (vistos[k]) { vistos[k].sessoes++; return; }
-      vistos[k] = { nivel: sx.nivel, ciclo: sx.ciclo || "", sessoes: 1 };
-      out.push(vistos[k]);
-    });
-    return out.sort(function (a2, b2) {
-      return (a2.nivel + a2.ciclo).localeCompare(b2.nivel + b2.ciclo);
-    });
+    return programasEstudoLista().filter(function (p) { return p.sessoes > 0; });
   }
   // Nome distinto de propósito: "programaDaAluna" já existe e é o
   // desafio de semanas do app da aluna. São duas coisas diferentes, e
   // o nome repetido fazia uma apagar a outra.
   function programaDeEstudo(pessoaId) {
+    var vazio = { id: "", nome: "", nivel: "", escolhido: false };
     var p = getPessoa(pessoaId);
-    if (!p) return { nivel: "", ciclo: "", escolhido: false };
-    if (p.programa && p.programa.nivel) {
-      return { nivel: p.programa.nivel, ciclo: p.programa.ciclo || "", escolhido: true };
+    if (!p) return vazio;
+    var pg = null;
+    if (p.programa && p.programa.id) pg = getProgramaEstudo(p.programa.id);
+    // ficha antiga: a escolha era o par nível+ciclo, e vira o programa
+    // que nasceu desse par
+    if (!pg && p.programa && p.programa.nivel) {
+      pg = programaPorOrigem(p.programa.nivel, p.programa.ciclo || "");
     }
+    if (pg) return { id: pg.id, nome: pg.nome, nivel: pg.nivel || "", escolhido: true };
     var nc = nivelDaAluna(p);
-    return { nivel: nc.nivel, ciclo: nc.ciclo, escolhido: false };
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === p.turma;
+    })[0];
+    pg = (t && programaDaTurma(t)) || programaPorOrigem(nc.nivel, nc.ciclo);
+    if (!pg) return { id: "", nome: "", nivel: nc.nivel || "", escolhido: false };
+    return { id: pg.id, nome: pg.nome, nivel: pg.nivel || nc.nivel || "", escolhido: false };
   }
   // Trocar de programa zera a marcha dela: os números das sessões são
   // de um programa, e "pulei a 3" não quer dizer nada na trilha nova.
-  function salvarProgramaDeEstudo(pessoaId, nivel, ciclo) {
+  function salvarProgramaDeEstudo(pessoaId, programaId) {
     if (!getPessoa(pessoaId)) return { ok: false, erro: "Aluna não encontrada." };
-    var n = String(nivel || "").trim();
-    if (!n) return { ok: false, erro: "Escolha o programa." };
+    var pg = getProgramaEstudo(String(programaId || ""));
+    if (!pg) return { ok: false, erro: "Escolha o programa." };
     var antes = programaDeEstudo(pessoaId);
-    mutate(pessoaId, function (p) { p.programa = { nivel: n, ciclo: String(ciclo || "") }; });
-    if (antes.nivel !== n || antes.ciclo !== String(ciclo || "")) {
+    mutate(pessoaId, function (p) { p.programa = { id: pg.id, nome: pg.nome }; });
+    if (antes.id !== pg.id) {
       var m = seqAll();
       if (m[pessoaId]) { m[pessoaId] = { ordem: [], puladas: [], _v: Date.now() }; seqSalvar(m); }
     }
     agendarSync();
-    return { ok: true, programa: { nivel: n, ciclo: String(ciclo || "") } };
+    return { ok: true, programa: { id: pg.id, nome: pg.nome } };
   }
 
   function sequenciaDaAluna(pessoaId) {
@@ -11292,7 +11484,7 @@
     garantirSyllabus();
     var nc = programaDeEstudo(pessoaId);
     var nivel = nc.nivel;
-    var base = syllabusDoNivel(nivel, nc.ciclo) || [];
+    var base = syllabusDoPrograma(nc.id) || [];
     var cfg = seqAll()[pessoaId] || { ordem: [], puladas: [] };
     var puladas = {};
     (cfg.puladas || []).forEach(function (n) { puladas[n] = true; });
@@ -11327,7 +11519,8 @@
         pulada: pulada, dada: dada, data: dadas[n] || "", atual: atual,
         estado: pulada ? "pulada" : dada ? "dada" : atual ? "esta aula" : "a vir" };
     });
-    return { nivel: nivel, ciclo: nc.ciclo, programaEscolhido: nc.escolhido,
+    return { nivel: nivel, programa: nc.nome || "", programaId: nc.id || "",
+      programaEscolhido: nc.escolhido,
       sessoes: sessoes,
       atual: sessoes.filter(function (x) { return x.atual; })[0] || null };
   }
@@ -16610,6 +16803,13 @@
     syllabusDoNivel: syllabusDoNivel, salvarSessaoSyllabus: salvarSessaoSyllabus,
     semearSyllabus: semearSyllabus,
     apagarSessaoSyllabus: apagarSessaoSyllabus,
+    // o repositório de programas da escola
+    programasEstudoLista: programasEstudoLista, getProgramaEstudo: getProgramaEstudo,
+    salvarProgramaEstudo: salvarProgramaEstudo,
+    arquivarProgramaEstudo: arquivarProgramaEstudo,
+    duplicarProgramaEstudo: duplicarProgramaEstudo,
+    syllabusDoPrograma: syllabusDoPrograma, programaDaTurma: programaDaTurma,
+    syllabusDaTurma: syllabusDaTurma, definirProgramaDaTurma: definirProgramaDaTurma,
     planoDaTurma: planoDaTurma, planoSessoes: planoSessoes, salvarPlano: salvarPlano,
     addEtapaPlano: addEtapaPlano, removerEtapaPlano: removerEtapaPlano,
     alternarEtapaPlano: alternarEtapaPlano, moverEtapaPlano: moverEtapaPlano,

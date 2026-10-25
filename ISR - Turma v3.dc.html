@@ -251,41 +251,47 @@
             </div>
           </sc-if>
 
-          <!-- O SYLLABUS DO NÍVEL -->
-          <!-- O syllabus é da escola e vale para TODAS as turmas deste
-               nível — por isso só quem cuida da escola edita aqui, e a
-               tela diz o alcance antes de deixar mexer. Sem este bloco
-               as sessões existiam no dado e não tinham onde ser
-               escritas, que é o mesmo erro de pôr campo sem tela. -->
-          <sc-if value="{{ podeSyllabus }}">
-            <div class="isr-cartao" style="padding: 16px 20px; margin-top: 14px; background: var(--color-button-secondary)">
-              <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap">
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">{{ tSyllabusDe }} {{ syNivel }} {{ tCiclo }} {{ syCiclo }}</div>
-                <button class="isr-botao isr-botao--texto" onclick="{{ onAbrirSyllabus }}" style="font-size: 12.5px; color: var(--color-primary-900)">{{ syAbrirLabel }}</button>
+          <!-- O PROGRAMA DESTA TURMA -->
+          <!-- O programa é da escola e vale para todas as turmas que o
+               seguem: a turma ESCOLHE um, e ajusta o roteiro de cada
+               sessão no plano, sem mexer no programa. As sessões se
+               escrevem em Programas, que é onde elas moram — ter dois
+               lugares para escrever a mesma sessão é como as duas
+               versões se desencontram. -->
+          <div class="isr-cartao" style="padding: 16px 20px; margin-top: 14px; background: var(--color-button-secondary)">
+            <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap">
+              <div style="min-width: 0">
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">{{ tProgramaDaTurma }}</div>
+                <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.03em; margin-top: 3px;">{{ pgNome }}</div>
+                <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ pgMeta }}</div>
               </div>
-              <p style="margin: 5px 0 0; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ sySubtitulo }}</p>
-
-              <sc-if value="{{ syAberto }}">
-                <sc-for list="{{ sySessoes }}" as="sy" hint-placeholder-count="10">
-                  <div style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; padding: 9px 0; border-top: 1px solid var(--color-neutral-0)">
-                    <span style="flex: 0 0 56px; font-size: 12.5px; font-weight: 700; color: var(--color-tertiary-500); padding-top: 9px">S{{ sy.n }}</span>
-                    <div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
-                      <input class="isr-campo" value="{{ sy.titulo }}" onchange="{{ sy.onTitulo }}" placeholder="{{ phSessaoTitulo }}" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 13px; background: var(--color-neutral-0)" />
-                      <input class="isr-campo" value="{{ sy.objetivo }}" onchange="{{ sy.onObjetivo }}" placeholder="{{ phSessaoObjetivo }}" style="width: 100%; box-sizing: border-box; padding: 8px 11px; font-size: 12.5px; background: var(--color-neutral-0)" />
-                    </div>
-                    <button class="isr-botao" onclick="{{ sy.onApagar }}" title="{{ tTirarSessao }}" style="flex: none; width: 28px; height: 28px; margin-top: 7px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--color-error-light); color: var(--color-error-dark)">×</button>
-                  </div>
-                </sc-for>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px">
-                  <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onAddSessao }}" style="font-size: 12.5px; padding: 9px 15px">{{ syAddLabel }}</button>
-                  <span style="font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.5; flex: 1; min-width: 200px">{{ syNota }}</span>
-                </div>
-                <sc-if value="{{ syTemErro }}">
-                  <p style="margin: 8px 0 0; font-size: 11.5px; color: var(--color-error-dark);">{{ syErro }}</p>
-                </sc-if>
+              <sc-if value="{{ pgPodeTrocar }}">
+                <button class="isr-botao isr-botao--pilula" onclick="{{ onPgTrocar }}" style="flex: none; background: {{ pgBotaoBg }}; color: {{ pgBotaoFg }}; font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ pgBotao }}</button>
               </sc-if>
             </div>
-          </sc-if>
+
+            <sc-if value="{{ pgTrocando }}">
+              <input class="isr-campo" value="{{ pgBusca }}" onchange="{{ onPgBusca }}" placeholder="{{ phBuscaPrograma }}" style="width: 100%; box-sizing: border-box; padding: 10px 13px; font-size: 13.5px; margin-top: 10px; background: var(--color-neutral-0)" />
+              <div style="display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-top: 8px">
+                <sc-for list="{{ pgLista }}" as="pl" hint-placeholder-count="5">
+                  <button class="isr-botao" onclick="{{ pl.onClick }}" style="display: block; width: 100%; text-align: left; border: 1px solid {{ pl.borda }}; background: {{ pl.bg }}; color: {{ pl.fg }}; border-radius: 14px; padding: 10px 13px">
+                    <span style="display: block; font-size: 13.5px; font-weight: 700;">{{ pl.nome }}</span>
+                    <span style="display: block; font-size: 11.5px; font-weight: 600; opacity: .8; margin-top: 2px;">{{ pl.meta }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ pgVazio }}">
+                <p style="margin: 8px 0 0; font-size: 12.5px; color: var(--color-primary-800); line-height: 1.55">{{ pgVazioTexto }}</p>
+              </sc-if>
+              <p style="margin: 10px 0 0; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55">{{ tTrocarProgramaNota }}</p>
+            </sc-if>
+
+            <sc-if value="{{ podeSyllabus }}">
+              <p style="margin: 10px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--color-tertiary-500)">
+                <a href="{{ pgLink }}" style="color: var(--color-text-light); font-weight: 700; text-decoration: none">{{ tEditarSessoes }}</a>
+              </p>
+            </sc-if>
+          </div>
 
           <sc-if value="{{ planoTem }}">
             <!-- A FAIXA DE SESSÕES -->
@@ -818,26 +824,23 @@ class Component extends DCLogic {
           "Plano das aulas",
           "Lesson plans"
       ],
-      "tSyllabusDe": [
-          "Syllabus de",
-          "Syllabus for"
+      "tProgramaDaTurma": [
+          "o programa desta turma",
+          "this class’s programme"
       ],
-      "tCiclo": [
-          "· ciclo",
-          "· cycle"
+      "tTrocarProgramaNota": [
+          "Trocar o programa troca as sessões desta turma. O que a professora já ajustou no plano de uma sessão continua guardado, e volta se o programa voltar.",
+          "Changing the programme changes this class’s sessions. What the teacher already tweaked in a session’s plan stays saved, and comes back if the programme comes back."
       ],
-      "phSessaoTitulo": [
-          "Título da sessão",
-          "Session title"
+      "tEditarSessoes": [
+          "editar as sessões deste programa em Programas →",
+          "edit this programme’s sessions in Programmes →"
       ],
-      "phSessaoObjetivo": [
-          "O que a aluna sai sabendo",
-          "What the student leaves knowing"
+      "phBuscaPrograma": [
+          "Buscar por nome ou nível…",
+          "Search by name or level…"
       ],
-      "tTirarSessao": [
-          "Tirar esta sessão do syllabus",
-          "Take this session out of the syllabus"
-      ],
+
       "tMaterialRef": [
           "material de referência",
           "reference material"
@@ -1190,9 +1193,11 @@ class Component extends DCLogic {
       gCaderno: "", gCadernoCor: "var(--color-tertiary-500)",
       subVazio: true, subVazioTexto: "", subLista: [], subNota: false, subNotaTexto: "",
       tPlano: false, planoVazio: true, planoVazioTexto: "", planoTem: false, planoTira: [],
-      podeSyllabus: false, syNivel: "", syCiclo: "", sySubtitulo: "", syAberto: false,
-      syAbrirLabel: "", sySessoes: [], onAbrirSyllabus: () => {}, onAddSessao: () => {},
-      syAddLabel: "", syNota: "", syTemErro: false, syErro: "",
+      podeSyllabus: false,
+      pgNome: "", pgMeta: "", pgPodeTrocar: false, pgBotao: "",
+      pgBotaoBg: "var(--color-primary-900)", pgBotaoFg: "var(--color-neutral-0)",
+      pgTrocando: false, onPgTrocar: () => {}, pgBusca: "", onPgBusca: () => {},
+      pgVazio: false, pgVazioTexto: "", pgLista: [], pgLink: "#",
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
       planoJaDada: false, planoJaDadaTexto: "", planoRodape: "", planoVerComoAluna: "#",
@@ -1465,54 +1470,59 @@ class Component extends DCLogic {
       })(),
       tPlano: aba === "plano",
       // ── o syllabus do nível ──
-      // Quem edita é quem cuida da escola: o syllabus vale para todas
-      // as turmas do nível, e uma professora mudando aqui mudaria a
-      // aula das colegas sem saber.
+      // Quem escreve as sessões é quem cuida da escola, e elas moram
+      // em Programas. Aqui a turma só ESCOLHE qual programa segue.
       podeSyllabus: !!user && (user.perfil === "gestora" || user.perfil === "operacao"),
-      syNivel: u.nivel || Tr("this level", "este nível"),
-      syCiclo: u.cycle || "atual",
-      sySubtitulo: "O que está aqui vale para TODAS as turmas de "
-        + (u.nivel || Tr("this level", "este nível")) + " neste ciclo. Cada turma ajusta o roteiro dela "
-        + "no plano, sem mexer nisto.",
-      syAberto: !!this.state.syAberto,
-      syAbrirLabel: this.state.syAberto ? "fechar" : Tr("edit the sessions", "editar as sessões"),
-      syAddLabel: "+ Sessão " + (pSessoes.length + 1),
-      syNota: pSessoes.length
-        ? Tr("Deleting a session here does not undo the tweak a class already made to it.", "Apagar uma sessão aqui não apaga o ajuste que alguma turma já fez nela.")
-        : Tr("Start by creating session 1. Each lesson flow is written later, inside the session itself.", "Comece criando a sessão 1. O roteiro de cada uma se escreve depois, na própria sessão."),
-      syTemErro: !!this.state.syErro,
-      syErro: this.state.syErro || "",
-      sySessoes: (CRM.syllabusDoNivel ? CRM.syllabusDoNivel(u.nivel, u.cycle) : []).map(sx => ({
-        n: String(sx.n), titulo: sx.titulo || "", objetivo: sx.objetivo || "",
-        onTitulo: (e) => {
-          CRM.salvarSessaoSyllabus({ id: sx.id, nivel: sx.nivel, ciclo: sx.ciclo, n: sx.n,
-            titulo: e.target.value, objetivo: sx.objetivo, palavras: sx.palavras,
-            homework: sx.homework, etapas: sx.etapas, projeto: sx.projeto, guia: sx.guia });
-          this.bump();
-        },
-        onObjetivo: (e) => {
-          CRM.salvarSessaoSyllabus({ id: sx.id, nivel: sx.nivel, ciclo: sx.ciclo, n: sx.n,
-            titulo: sx.titulo, objetivo: e.target.value, palavras: sx.palavras,
-            homework: sx.homework, etapas: sx.etapas, projeto: sx.projeto, guia: sx.guia });
-          this.bump();
-        },
-        onApagar: () => {
-          if (!window.confirm("Tirar a sessão " + sx.n + " do syllabus de " + sx.nivel
-            + "? Isso vale para todas as turmas deste nível.")) return;
-          CRM.apagarSessaoSyllabus(sx.id);
-          this.setState({ syErro: "" });
-          this.bump();
-        }
-      })),
-      onAbrirSyllabus: () => this.setState({ syAberto: !this.state.syAberto, syErro: "" }),
-      onAddSessao: () => {
-        const usados = (CRM.syllabusDoNivel(u.nivel, u.cycle) || []).map(x => x.n);
-        let n = 1; while (usados.indexOf(n) >= 0) n++;
-        const r = CRM.salvarSessaoSyllabus({ nivel: u.nivel, ciclo: u.cycle, n: n,
-          projeto: u.projeto || "" });
-        this.setState({ syErro: r.ok ? "" : (r.erro || Tr("That did not work.", "Não foi possível.")), syAberto: true });
-        this.bump();
-      },
+      ...(() => {
+        const atual = CRM.programaDaTurma ? CRM.programaDaTurma(u) : null;
+        const lista = CRM.programasEstudoLista ? CRM.programasEstudoLista() : [];
+        const busca = (this.state.pgBusca || "").trim().toLowerCase();
+        const achados = lista.filter(x => !busca
+          || (x.nome + " " + x.nivel).toLowerCase().indexOf(busca) >= 0);
+        const meta = (x) => [x.nivel, x.sessoes
+          + (x.sessoes === 1 ? Tr(" session", " sessão") : Tr(" sessions", " sessões"))]
+          .filter(Boolean).join(" · ");
+        const escolhido = !!u.programaId;
+        return {
+          pgNome: atual ? atual.nome : Tr("no programme chosen", "nenhum programa escolhido"),
+          pgMeta: atual
+            ? meta({ nivel: atual.nivel, sessoes: (CRM.syllabusDoPrograma(atual.id) || []).length })
+              + (escolhido ? "" : Tr(" · from the level of this class", " · veio do nível desta turma"))
+            : Tr("Choose it and this class\u2019s sessions appear in the lesson plan.",
+                 "Escolha e as sessões desta turma aparecem no plano das aulas."),
+          // Quem vê a aba Plano é a coordenação e a professora da
+          // turma, e escolher o programa é parte de planejar: quem
+          // chegou aqui pode escolher.
+          pgPodeTrocar: true,
+          pgBotao: this.state.pgTrocando ? "fechar"
+            : (atual ? Tr("Change", "Trocar") : Tr("Choose the programme", "Escolher o programa")),
+          pgBotaoBg: atual && !this.state.pgTrocando
+            ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+          pgBotaoFg: atual && !this.state.pgTrocando
+            ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+          pgTrocando: !!this.state.pgTrocando,
+          onPgTrocar: () => this.setState({ pgTrocando: !this.state.pgTrocando, pgBusca: "" }),
+          pgBusca: this.state.pgBusca || "",
+          onPgBusca: (e) => this.setState({ pgBusca: e.target.value }),
+          pgVazio: achados.length === 0,
+          pgVazioTexto: lista.length
+            ? Tr("No programme with that name.", "Nenhum programa com esse nome.")
+            : Tr("The school has no programme yet. They are written in Programmes.",
+                 "A escola ainda não tem programa. Eles são escritos em Programas."),
+          pgLista: achados.map(x => ({
+            nome: x.nome, meta: meta(x),
+            bg: atual && x.id === atual.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
+            fg: atual && x.id === atual.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
+            borda: atual && x.id === atual.id ? "var(--color-primary-900)" : "var(--color-border)",
+            onClick: () => {
+              CRM.definirProgramaDaTurma(u.id, x.id);
+              this.setState({ pgTrocando: false, pgBusca: "" });
+              this.bump();
+            }
+          })),
+          pgLink: "ISR%20-%20Programas%20v3.dc.html"
+        };
+      })(),
 
       planoVazio: !pAtual,
       planoVazioTexto: "O syllabus de " + (u.nivel || Tr("this level", "este nível")) + " no ciclo "
