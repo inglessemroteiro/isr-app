@@ -410,8 +410,10 @@
                       </sc-if>
                       <sc-if value="{{ pe.editando }}">
                         <div style="margin-top: 7px">
-                          <div style="font-size: 10.5px; font-weight: 700; color: {{ pe.perguntaCor }}">{{ pe.perguntaRotulo }}</div>
-                          <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" onblur="{{ pe.onPerguntaFim }}" placeholder="{{ phPergunta }}" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 3px; background: var(--color-primary-50)" />
+                          <sc-if value="{{ pe.perguntaEscrita }}">
+                            <div style="font-size: 10.5px; font-weight: 700; color: var(--color-success-dark)">{{ tViraTarefa }}</div>
+                          </sc-if>
+                          <input class="isr-campo" value="{{ pe.pergunta }}" onchange="{{ pe.onPergunta }}" onblur="{{ pe.onPerguntaFim }}" placeholder="{{ phPerguntaEx }}" style="width: 100%; padding: 8px 11px; font-size: 13px; margin-top: 3px; background: var(--color-primary-50)" />
                         </div>
                       </sc-if>
                     </div>
@@ -872,21 +874,19 @@ class Component extends DCLogic {
           "Pergunta para o caderno da aluna (opcional)",
           "Question for the student’s notebook (optional)"
       ],
+      // No campo de cada etapa o rótulo em cima já diz o que o campo
+      // faz; aqui dentro cabe o exemplo, que é o que ensina a escrever.
+      "phPerguntaEx": [
+          "Ex.: What did you learn today?",
+          "e.g. What did you learn today?"
+      ],
       "tComoPergunta": [
-          "O campo azul de cada etapa é a pergunta que vira tarefa no caderno da aluna. Etapa sem pergunta não vira tarefa — é só para você conduzir.",
-          "The blue field in each step is the question that becomes a task in the student’s notebook. A step without a question becomes no task — it is yours to run."
+          "Escreva no campo azul a pergunta que a aluna responde no caderno dela. Deixe vazio se esta etapa for só para você conduzir na aula.",
+          "In the blue field, write the question the student answers in her notebook. Leave it empty if this step is only yours to run in class."
       ],
       "tViraTarefa": [
-          "✓ vira tarefa no caderno da aluna",
-          "✓ becomes a task in the student’s notebook"
-      ],
-      "tSemTarefa": [
-          "sem pergunta: esta etapa não vira tarefa",
-          "no question: this step becomes no task"
-      ],
-      "tNoCaderno": [
-          "no caderno",
-          "in the notebook"
+          "✓ a aluna responde isto no caderno dela",
+          "✓ the student answers this in her notebook"
       ],
       "tSubir": [
           "Subir",
@@ -1637,11 +1637,11 @@ class Component extends DCLogic {
         temPergunta: !!e.pergunta,
         pergunta: rLer(e.id, "pergunta", e.pergunta || ""),
         mostraPergunta: !pAjuste && !!e.pergunta,
-        // em cima do campo, o que acontece com o que está escrito nele
-        perguntaRotulo: rLer(e.id, "pergunta", e.pergunta || "").trim()
-          ? refs.tViraTarefa : refs.tSemTarefa,
-        perguntaCor: rLer(e.id, "pergunta", e.pergunta || "").trim()
-          ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
+        // Em cima do campo escrito, o que a aluna faz com ele. No
+        // campo vazio não vai rótulo nenhum: seis vezes a mesma frase
+        // cinza era só ruído, e quem ensina o que fazer ali é o
+        // exemplo dentro do campo e a linha no alto do roteiro.
+        perguntaEscrita: !!rLer(e.id, "pergunta", e.pergunta || "").trim(),
         editando: pAjuste, lendo: !pAjuste,
         // desmarcada continua à vista, apagada some: a professora
         // precisa ver o que a escola planejou e ela tirou

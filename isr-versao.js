@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.24-d",
-  data: "24/10/2026",
-  nota: "A barra de espaço volta a funcionar no roteiro da aula"
+  numero: "2026.10.25-a",
+  data: "25/10/2026",
+  nota: "O roteiro diz o que fazer, não o que está faltando"
 };
