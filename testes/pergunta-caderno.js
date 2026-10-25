@@ -50,7 +50,7 @@ const P = require("./preparar.js");
   await p.waitForTimeout(1400);
 
   console.log("— a barra de espaço —");
-  const campo = await p.$$("input[placeholder*='caderno'], input[placeholder*='notebook']");
+  const campo = await p.$$("input[placeholder*='What did you learn']");
   T("o campo da pergunta está na tela", campo.length > 0, { n: campo.length });
   const FRASE = "What did you learn today?";
   if (campo.length) {
@@ -77,15 +77,19 @@ const P = require("./preparar.js");
     const txt = document.body.innerText;
     return {
       conta: /\d+ pergunta[s]? no caderno|no question in the notebook|\d+ question[s]? in the notebook|nenhuma pergunta no caderno/.test(txt),
-      explica: /vira tarefa no caderno|becomes a task in the student/.test(txt),
-      marcados: (txt.match(/✓ vira tarefa no caderno|✓ becomes a task/g) || []).length,
-      semTarefa: (txt.match(/sem pergunta: esta etapa não vira tarefa|no question: this step becomes no task/g) || []).length
+      explica: /Escreva no campo azul a pergunta|In the blue field, write the question/.test(txt),
+      marcados: (txt.match(/✓ a aluna responde isto no caderno|✓ the student answers this/g) || []).length,
+      // o rótulo só aparece na etapa que tem pergunta
+      rotulosDemais: (txt.match(/✓ a aluna responde isto no caderno|✓ the student answers this/g) || []).length > 2,
+      exemplos: [...document.querySelectorAll("main input")]
+        .filter(x => /What did you learn today/.test(x.getAttribute("placeholder") || "")).length
     };
   });
   T("o roteiro diz quantas perguntas vão para o caderno", visao.conta, visao);
   T("e explica o que o campo azul faz", visao.explica, visao);
-  T("a etapa com pergunta fica marcada", visao.marcados >= 1, visao);
-  T("e a etapa sem pergunta diz que não vira tarefa", visao.semTarefa >= 1, visao);
+  T("a etapa com pergunta fica marcada", visao.marcados === 1, visao);
+  T("e a marca não se repete nas etapas vazias", !visao.rotulosDemais, visao);
+  T("que trazem um exemplo do que escrever", visao.exemplos >= 1, visao);
 
   console.log("\n— e a aluna lê a mesma frase —");
   // a professora publica o plano e abre a aula: é assim que a
