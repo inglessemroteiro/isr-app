@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-k",
+  numero: "2026.10.26-l",
   data: "26/10/2026",
-  nota: "Carregar a página não gasta o link"
+  nota: "O que foi gravado não fica para trás"
 };

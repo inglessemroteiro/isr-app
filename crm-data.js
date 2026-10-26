@@ -5827,8 +5827,38 @@
     // alguém recarregar.
     try { window.dispatchEvent(new CustomEvent("isr-dados")); } catch (e) {}
     if (!backendUrl()) return;
+    // ── O QUE AINDA NÃO SUBIU FICA ANOTADO ────────────────────────
+    //
+    // A gravação espera 1,5 s para agrupar edições em sequência, e
+    // nada forçava o envio quando a aba fechava. Publicar um clube e
+    // fechar a aba em seguida — ou o celular dormir, ou a pessoa
+    // trocar de app — deixava a alteração só no aparelho dela, em
+    // silêncio: a escola não via o clube no ar porque ele nunca
+    // chegou a sair de lá.
+    //
+    // A marca é gravada ANTES da espera e só sai quando o envio
+    // termina bem. Se a aba morrer no meio, a próxima abertura
+    // encontra a marca e manda na hora.
+    marcarPendente(true);
     clearTimeout(syncTimer);
     syncTimer = setTimeout(enviarSync, 1500); // agrupa edições em sequência
+  }
+  var PENDENTE_KEY = "isr_sync_pendente";
+  function marcarPendente(v) {
+    try {
+      if (v) localStorage.setItem(PENDENTE_KEY, "1");
+      else localStorage.removeItem(PENDENTE_KEY);
+    } catch (e) {}
+  }
+  function temPendente() {
+    try { return !!localStorage.getItem(PENDENTE_KEY); } catch (e) { return false; }
+  }
+  // Manda agora, sem esperar o agrupamento. É o que roda quando a
+  // página sai de vista e quando ela volta carregando uma marca.
+  function sincronizarJa() {
+    if (!backendUrl()) return;
+    clearTimeout(syncTimer);
+    enviarSync();
   }
   // ══════════════════════════════════════════════════════════════
   //  SINCRONIZAÇÃO COM MESCLAGEM
@@ -6452,6 +6482,7 @@
         aplicarRemoto(m.data);            // o local já fica com o resultado da mesclagem
         return chamarBase("sistemaSave", { data: m.data })
           .then(function () {
+            marcarPendente(false);
             setSyncEstado({ status: "ok", em: m.data.atualizadoEm, conflitos: m.conflitos });
           });
       })
@@ -16993,6 +17024,22 @@
   }
   consertarIdsDuplicados();
 
+  // ── O QUE FICOU PARA TRÁS SOBE AGORA ──────────────────────────
+  //
+  // A aba que fecha antes do envio deixa a alteração só no aparelho.
+  // Duas redes de proteção: quando a página sai de vista — trocar de
+  // app no celular, bloquear a tela, fechar a aba — o que está
+  // esperando vai embora na hora; e quando a página abre carregando
+  // uma marca de pendente, ela manda antes de qualquer outra coisa.
+  try {
+    var aoSair = function () { if (temPendente()) sincronizarJa(); };
+    window.addEventListener("pagehide", aoSair);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") aoSair();
+    });
+    if (temPendente()) setTimeout(sincronizarJa, 800);
+  } catch (e) {}
+
   // ── API PÚBLICA ───────────────────────────────────────────────
   window.ISRCRM = {
     // constantes
@@ -17368,6 +17415,7 @@
     // computador da professora se encontram, e é lá que uma metade
     // apagava a outra
     mesclarComRemoto: mesclarComRemoto, definirSenha: definirSenha,
+    sincronizarJa: sincronizarJa, temPendente: temPendente,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
