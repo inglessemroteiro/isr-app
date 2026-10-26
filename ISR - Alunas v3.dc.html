@@ -92,9 +92,27 @@
       <div style="font-size: 14px; font-weight: 600;">Convidar para o app</div>
       <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ loteConviteTexto }}</p>
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onLoteConvite }}" style="font-size: 12.5px; padding: 12px 18px">{{ loteConviteLabel }}</button>
+        <sc-if value="{{ loteConviteSessao }}">
+          <a href="aluna.html?trocar" class="isr-botao isr-botao--pilula isr-botao--escuro" style="font-size: 12.5px; padding: 12px 18px; text-decoration: none">Entrar de novo</a>
+        </sc-if>
+        <sc-if value="{{ loteConvitePode }}">
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onLoteConvite }}" style="font-size: 12.5px; padding: 12px 18px">{{ loteConviteLabel }}</button>
+        </sc-if>
         <span style="font-size: 12.5px; font-weight: 600; color: {{ loteConviteCor }};">{{ loteConviteNota }}</span>
       </div>
+    </section>
+  </sc-if>
+
+  <!-- O CONVITE QUE NÃO SAIU -->
+  <!-- Na linha da aluna cabem duas palavras. O recado inteiro — e o
+       caminho, quando o caminho é entrar de novo — fica aqui, onde há
+       largura para a frase. -->
+  <sc-if value="{{ temConviteErro }}">
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 14px 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <span style="flex: 1 1 260px; font-size: 13px; font-weight: 600; color: var(--color-error-dark); line-height: 1.5;">{{ conviteErroTexto }}</span>
+      <sc-if value="{{ conviteErroEntrar }}">
+        <a href="aluna.html?trocar" class="isr-botao isr-botao--pilula isr-botao--escuro" style="font-size: 12.5px; padding: 10px 18px; flex: none; text-decoration: none">Entrar de novo</a>
+      </sc-if>
     </section>
   </sc-if>
 
@@ -118,7 +136,7 @@
               <button class="isr-botao isr-botao--pilula" onclick="{{ p.onConvidar }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); padding: 7px 13px; font-size: 12px">{{ p.convidarLabel }}</button>
             </sc-if>
             <sc-if value="{{ p.temConviteRes }}">
-              <span style="font-size: 12px; font-weight: 600; color: var(--color-success-dark);">{{ p.conviteRes }}</span>
+              <span style="font-size: 12px; font-weight: 600; color: {{ p.conviteResCor }};">{{ p.conviteRes }}</span>
             </sc-if>
           </span>
         </sc-if>
@@ -160,7 +178,8 @@ class Component extends DCLogic {
   state = { busca: "", turma: "", filtro: "aluna", tick: 0, loteFeito: 0,
             pagina: 1, porPagina: ISRPaginacao.PADRAO,
             // o convite: quem está sendo enviado agora, e o que voltou
-            convidando: "", conviteRes: {}, loteConvite: "", loteConviteBom: true };
+            convidando: "", conviteRes: {}, loteConvite: "", loteConviteBom: true,
+            conviteErro: "", conviteErroEntrar: false };
   buscaRef = React.createRef(); loteRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -172,8 +191,10 @@ class Component extends DCLogic {
       contagem: "", temAlunas: false, temLoteData: false, loteRef: this.loteRef,
       loteLabel: "Aplicar", loteNota: "", loteCor: "var(--color-tertiary-500)", onLote: () => {},
       temLoteConvite: false, loteConviteTexto: "", loteConviteLabel: "",
+      loteConviteSessao: false, loteConvitePode: false,
       loteConviteNota: "", loteConviteCor: "var(--color-tertiary-500)",
-      onLoteConvite: () => {} };
+      onLoteConvite: () => {},
+      temConviteErro: false, conviteErroTexto: "", conviteErroEntrar: false };
 
     const todas = CRM.alunasPainel();
 
@@ -187,6 +208,10 @@ class Component extends DCLogic {
     // inteira para qualquer perfil: a professora abria e encontrava
     // todas as alunas, inclusive as que não são responsabilidade dela.
     const profVisao = CRM.professoraDaVisao ? CRM.professoraDaVisao() : "";
+    // Sem sessão do Identity neste aparelho, o servidor recusa o
+    // convite antes de olhar o e-mail. Quarenta botões que falham
+    // todos é pior que nenhum: o caminho passa a ser entrar de novo.
+    const temSessao = !CRM.podeConvidarAgora || CRM.podeConvidarAgora();
     const gente = (CRM.getPessoas() || [])
       .filter(p => p.status !== "arquivada")
       .filter(p => !profVisao || p.professora === profVisao);
@@ -308,17 +333,24 @@ class Component extends DCLogic {
         acessoRotulo: sa ? sa.rotulo : "",
         acessoAcao: sa ? sa.acao : "",
         acessoCor: sa ? (ACOR[sa.estado] || "var(--color-tertiary-500)") : "",
-        podeConvidar: !!(sa && sa.podeConvidar && sa.estado !== "entrou") && !enviando,
+        podeConvidar: !!(sa && sa.podeConvidar && sa.estado !== "entrou") && !enviando && temSessao,
         convidarLabel: enviando ? "enviando…" : (sa && sa.convidadaEm ? "Convidar de novo" : "Convidar"),
-        temConviteRes: !!res, conviteRes: res,
+        // o resultado cabe na linha, então é curto; o recado inteiro
+        // do servidor, quando falha, vai na caixa do lote, que tem
+        // espaço para a frase e para o botão de entrar de novo
+        temConviteRes: !!(res && res.txt), conviteRes: res ? res.txt : "",
+        conviteResCor: res && res.bom
+          ? "var(--color-success-dark)" : "var(--color-error-dark)",
         onConvidar: () => {
           this.setState({ convidando: p.id });
           CRM.convidarAluna(p.id).then((r) => {
             const m = Object.assign({}, this.state.conviteRes || {});
-            m[p.id] = r.ok
+            m[p.id] = { bom: !!r.ok, txt: r.ok
               ? (r.jaTinhaConta ? "já tinha conta" : "convite enviado")
-              : (r.erro || "não saiu");
-            this.setState({ convidando: "", conviteRes: m });
+              : "não saiu" };
+            this.setState({ convidando: "", conviteRes: m,
+              conviteErro: r.ok ? "" : (r.erro || "O convite não saiu."),
+              conviteErroEntrar: !!r.precisaEntrar });
             this.bump();
           });
         },
@@ -398,14 +430,18 @@ class Component extends DCLogic {
         const enviando = this.state.loteConvite === "…";
         return {
           temLoteConvite: filtroAtivo === "semacesso" && (faltam.length > 0 || travadas.length > 0),
-          loteConviteTexto: (novas.length
-            ? novas.length + (novas.length === 1
-                ? " aluna desta lista nunca foi convidada." : " alunas desta lista nunca foram convidadas.")
-            : "Todas as alunas desta lista já foram convidadas.")
-            + (travadas.length
-              ? " Outras " + travadas.length + " não podem ser convidadas ainda — a linha de cada uma diz o que falta."
-              : "")
-            + " O convite vai para o e-mail da matrícula e cria a senha da aluna.",
+          loteConviteSessao: !temSessao,
+          loteConvitePode: temSessao,
+          loteConviteTexto: !temSessao
+            ? "A sua sessão venceu. Entre de novo para convidar."
+            : (novas.length
+              ? novas.length + (novas.length === 1
+                  ? " aluna desta lista nunca foi convidada." : " alunas desta lista nunca foram convidadas.")
+              : "Todas as alunas desta lista já foram convidadas.")
+              + (travadas.length
+                ? " Outras " + travadas.length + " não podem ser convidadas ainda — a linha de cada uma diz o que falta."
+                : "")
+              + " O convite vai para o e-mail da matrícula: a aluna toca no link e entra.",
           loteConviteLabel: enviando ? "enviando…"
             : "Convidar " + faltam.length + (faltam.length === 1 ? " aluna" : " alunas"),
           loteConviteNota: this.state.loteConvite && !enviando ? this.state.loteConvite : "",
@@ -418,14 +454,19 @@ class Component extends DCLogic {
               const partes = [];
               if (r.enviadas.length) partes.push(r.enviadas.length + " convite" + (r.enviadas.length === 1 ? "" : "s") + " enviado" + (r.enviadas.length === 1 ? "" : "s"));
               if (r.jaTinham.length) partes.push(r.jaTinham.length + " já tinha" + (r.jaTinham.length === 1 ? "" : "m") + " conta");
-              if (r.falhas.length) partes.push(r.falhas.length + " falhou: " + r.falhas[0].erro);
+              if (r.falhas.length) partes.push(r.falhas.length + " não saiu");
               this.setState({ loteConvite: partes.join(" · ") || "Nada a enviar.",
-                loteConviteBom: !r.falhas.length });
+                loteConviteBom: !r.falhas.length,
+                conviteErro: r.falhas.length ? (r.falhas[0].erro || "O convite não saiu.") : "",
+                conviteErroEntrar: !!(r.falhas[0] && r.falhas[0].precisaEntrar) });
               this.bump();
             });
           }
         };
       })(),
+      temConviteErro: !!this.state.conviteErro,
+      conviteErroTexto: this.state.conviteErro || "",
+      conviteErroEntrar: !!this.state.conviteErroEntrar,
       temAlunas: daLista.length > 0,
       temLoteData: daLista.length > 0 && filtroAtivo !== "semacesso",
       loteRef: this.loteRef,

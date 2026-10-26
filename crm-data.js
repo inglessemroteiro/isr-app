@@ -9707,6 +9707,41 @@
   // Netlify Identity, e a função do Netlify valida. A chave do Zapier
   // continua existindo para a automação do systeme, e não passa pelo
   // navegador de ninguém.
+  // ── O QUE A ESCOLA LÊ QUANDO O CONVITE NÃO SAI ────────────────
+  //
+  // A função do Netlify explica a si mesma: fala de chave, de cabeçalho
+  // x-isr-chave, de variável de ambiente. É o que quem mexe no servidor
+  // precisa ler no log, e é exatamente o que a gestora não precisa —
+  // ela está olhando a ficha de uma professora e quer saber o que
+  // fazer agora. "Sem chave e sem sessão de gestão. Entre no app, ou
+  // mande a chave no cabeçalho x-isr-chave" chegou inteiro à tela.
+  //
+  // A tradução mora aqui, num lugar só: as duas telas que convidam —
+  // Alunas e Equipe — leem a mesma resposta.
+  //
+  // precisaEntrar diz à tela que o caminho é entrar de novo, não
+  // tentar o mesmo botão outra vez.
+  var RECADO_CONVITE = {
+    sem_sessao: { erro: "A sua sessão venceu. Entre de novo para convidar.",
+      precisaEntrar: true },
+    fora_da_lista: { erro: "A sua conta não está na lista de quem pode convidar. "
+      + "Quem muda essa lista é quem cuida das configurações do site." },
+    chave_errada: { erro: "A automação que manda convites está com a senha errada. "
+      + "O convite daqui continua saindo." },
+    identity_desligado: { erro: "A entrada por e-mail não está ligada neste site, "
+      + "então não há conta para criar." },
+    identity_recusou: { erro: "O convite não saiu agora. Tente de novo em alguns minutos; "
+      + "se continuar, é coisa do site." }
+  };
+  function recadoDoConvite(d) {
+    var r = RECADO_CONVITE[(d && d.motivo) || ""];
+    if (r) return { ok: false, erro: r.erro, precisaEntrar: !!r.precisaEntrar };
+    return { ok: false, erro: "O convite não saiu." };
+  }
+  // Sem sessão do Identity guardada neste aparelho, a função recusa
+  // antes de olhar o e-mail: vale perguntar antes de oferecer o botão.
+  function podeConvidarAgora() { return !!tokenGestaoGuardado(); }
+
   function convidarAluna(pessoaId) {
     var p = getPessoa(pessoaId);
     if (!p) return Promise.resolve({ ok: false, erro: "Aluna não encontrada." });
@@ -9725,7 +9760,7 @@
       .then(function (r) { return r.json().catch(function () { return {}; }); })
       .then(function (d) {
         if (!d || !d.ok) {
-          return { ok: false, erro: (d && d.erro) || "O convite não saiu.", email: email };
+          return Object.assign(recadoDoConvite(d), { email: email });
         }
         // fica na ficha: quem olhar depois precisa saber que já foi, e
         // quando, para não convidar a mesma pessoa toda semana
@@ -9736,8 +9771,9 @@
         agendarSync();
         return { ok: true, email: email, jaTinhaConta: !!d.jaTinhaConta };
       })
-      .catch(function (e) {
-        return { ok: false, erro: "Não foi possível falar com o servidor: " + String(e && e.message || e) };
+      .catch(function () {
+        return { ok: false, erro: "Não foi possível falar com o servidor. "
+          + "Confira a conexão e tente de novo." };
       });
   }
   // ── O CONVITE DA EQUIPE ───────────────────────────────────────
@@ -9772,13 +9808,14 @@
       .then(function (r) { return r.json().catch(function () { return {}; }); })
       .then(function (d) {
         if (!d || !d.ok) {
-          return { ok: false, erro: (d && d.erro) || "O convite não saiu.", email: email };
+          return Object.assign(recadoDoConvite(d), { email: email });
         }
         updateEquipe(membroId, { convidadaEm: iso(today()), convidadaPara: email });
         return { ok: true, email: email, jaTinhaConta: !!d.jaTinhaConta };
       })
-      .catch(function (e) {
-        return { ok: false, erro: "Não foi possível falar com o servidor: " + String(e && e.message || e) };
+      .catch(function () {
+        return { ok: false, erro: "Não foi possível falar com o servidor. "
+          + "Confira a conexão e tente de novo." };
       });
   }
   function conviteDaEquipe(membroId) {
@@ -9858,9 +9895,13 @@
       var id = fila.shift();
       var p = getPessoa(id) || {};
       return convidarAluna(id).then(function (r) {
-        if (!r.ok) out.falhas.push({ nome: p.nome || id, erro: r.erro || "" });
+        if (!r.ok) out.falhas.push({ nome: p.nome || id, erro: r.erro || "",
+          precisaEntrar: !!r.precisaEntrar });
         else if (r.jaTinhaConta) out.jaTinham.push(p.nome || id);
         else out.enviadas.push(p.nome || id);
+        // sessão vencida não melhora na próxima da fila: insistir
+        // quarenta vezes só atrasa o recado
+        if (r.precisaEntrar) { fila.length = 0; return out; }
         return passo();
       });
     };
@@ -16817,6 +16858,7 @@
     papeisDeGestao: papeisDeGestao, ehEquipeEAluna: ehEquipeEAluna,
     motivoSemAcesso: motivoSemAcesso,
     convidarEquipe: convidarEquipe, conviteDaEquipe: conviteDaEquipe,
+    podeConvidarAgora: podeConvidarAgora,
     gestaoVisao: gestaoVisao, professoraDaVisao: professoraDaVisao,
     soProfessora: soProfessora,
     verComo: verComo, setVerComo: setVerComo,
