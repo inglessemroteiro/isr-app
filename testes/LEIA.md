@@ -44,6 +44,11 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `sync-pendente.js` — o que foi gravado e não subiu. Toda gravação
+  espera 1,5 s para agrupar edições, e nada forçava o envio quando a
+  aba fechava: publicar um clube e sair deixava a alteração só no
+  aparelho, em silêncio. A marca de pendente, o envio quando a página
+  sai de vista, e o envio quando ela abre carregando a marca.
 - `clube-dois-donos.js` — o clube é escrito por duas pessoas: quem o
   conduz mexe no cadastro, as alunas entram e saem. O sync mesclava o
   registro inteiro pelo carimbo mais novo, e uma metade apagava a
