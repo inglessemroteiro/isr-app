@@ -39,6 +39,10 @@ Se o React ainda não estiver baixado:
   sala que só abre no dia da aula, os quatro itens da semana, e a
   varredura que não deixa voltar nenhum recado de obra às telas da
   aluna.
+- `acesso-aluna.js` — quem consegue entrar no app: as três coisas que
+  têm de estar de pé (e-mail, convite, turma ou produto), o chip "Sem
+  acesso", o botão de convidar em cada linha, o convite em lote e o
+  e-mail do convite em português.
 - `programas.js` — o repositório de programas da escola: a migração
   do que já existia, criar, duplicar e arquivar, a escolha do
   programa na turma e na aluna particular, e a importação por texto —

@@ -9788,6 +9788,84 @@
       podeEntrar: !!perfilDosPapeis(m.papeis || []) };
   }
 
+  // ── QUEM CONSEGUE ENTRAR, E QUEM NÃO ──────────────────────────
+  //
+  // Três coisas têm de estar de pé para a aluna abrir o app: um e-mail
+  // na ficha, o convite enviado (é ele que cria a conta e a senha) e o
+  // acesso liberado — turma ou produto contratado. Faltando qualquer
+  // uma, ela esbarra numa tela diferente, e as três mensagens parecem
+  // o mesmo problema para quem está do lado de fora.
+  //
+  // Isto existia espalhado: o convite na ficha, o último acesso na
+  // ficha, e a regra de liberação só dentro do portão. Não havia onde
+  // perguntar "quem ainda não entrou?", que é a pergunta que a escola
+  // faz quando uma turma inteira some.
+  var ACESSO_ESTADOS = {
+    entrou: "já entrou no app",
+    convidada: "convidada, ainda não entrou",
+    semConvite: "sem convite",
+    semEmail: "sem e-mail na ficha",
+    semAcesso: "sem turma nem produto"
+  };
+  function situacaoDeAcesso(pessoaId) {
+    var p = getPessoa(pessoaId);
+    if (!p) return null;
+    var email = String(p.email || "").trim().toLowerCase();
+    var temEmail = !!email && email.indexOf("@") > 0;
+    var liberado = acessoLiberado(p);
+    var uso = acessoDaAluna(pessoaId);
+    var estado = !temEmail ? "semEmail"
+      : (!liberado ? "semAcesso"
+        : (!uso.nunca ? "entrou"
+          : (p.convidadaEm ? "convidada" : "semConvite")));
+    return {
+      id: p.id, nome: p.nome, email: email, temEmail: temEmail,
+      liberado: liberado, estado: estado, rotulo: ACESSO_ESTADOS[estado],
+      // o que fazer a respeito, que é diferente do que está faltando
+      acao: estado === "semEmail" ? "Ponha o e-mail da matrícula na ficha."
+        : estado === "semAcesso" ? "Ponha a turma ou o produto na ficha dela."
+        : (p.status !== "aluna" && p.status !== "mvs")
+          ? ("O convite é para quem já é aluna; ela está como " + (p.status || "lead") + ".")
+        : estado === "semConvite" ? "Falta convidar."
+        : estado === "convidada" ? "O convite foi enviado; ela ainda não criou a senha."
+        : "",
+      // O convite só vale para quem já é aluna: convidarAluna recusa
+      // lead e desafio, e um botão que sempre falha é pior que a
+      // ausência dele.
+      podeConvidar: temEmail && liberado
+        && (p.status === "aluna" || p.status === "mvs"),
+      convidadaEm: p.convidadaEm || "", convidadaPara: p.convidadaPara || "",
+      nunca: uso.nunca, ultimo: uso.ultimo || "", acessos: uso.n || 0,
+      diasSemAbrir: uso.diasSemAbrir
+    };
+  }
+  // A lista inteira, para a tela que responde "quem ainda não entrou".
+  function quemNaoEntrou(ids) {
+    var lista = (ids && ids.length)
+      ? ids.map(getPessoa).filter(Boolean)
+      : loadPessoas().filter(function (p) { return acessoLiberado(p); });
+    return lista.map(function (p) { return situacaoDeAcesso(p.id); })
+      .filter(function (x) { return x && x.estado !== "entrou"; });
+  }
+  // Convidar várias de uma vez. Uma por vez e em fila: o convite é um
+  // e-mail por pessoa, e o erro de uma não pode derrubar as outras —
+  // a escola precisa saber exatamente quais saíram.
+  function convidarAlunas(ids) {
+    var fila = (ids || []).slice();
+    var out = { ok: true, enviadas: [], jaTinham: [], falhas: [] };
+    var passo = function () {
+      if (!fila.length) return Promise.resolve(out);
+      var id = fila.shift();
+      var p = getPessoa(id) || {};
+      return convidarAluna(id).then(function (r) {
+        if (!r.ok) out.falhas.push({ nome: p.nome || id, erro: r.erro || "" });
+        else if (r.jaTinhaConta) out.jaTinham.push(p.nome || id);
+        else out.enviadas.push(p.nome || id);
+        return passo();
+      });
+    };
+    return passo().then(function (r) { r.ok = !r.falhas.length; return r; });
+  }
   function conviteDaAluna(pessoaId) {
     var p = getPessoa(pessoaId) || {};
     return { em: p.convidadaEm || "", para: p.convidadaPara || "",
@@ -16951,6 +17029,8 @@
     salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna,
     cadernoDaAluna: cadernoDaAluna, notaDaAula: notaDaAula, salvarNotaDaAula: salvarNotaDaAula,
     convidarAluna: convidarAluna, conviteDaAluna: conviteDaAluna,
+    convidarAlunas: convidarAlunas, situacaoDeAcesso: situacaoDeAcesso,
+    quemNaoEntrou: quemNaoEntrou,
     materiaisDoCiclo: materiaisDoCiclo, guiaDoNivel: guiaDoNivel,
     salvarMateriais: salvarMateriais,
     fasesDoPlano: fasesDoPlano, faseCor: faseCor, faseLabel: faseLabel,

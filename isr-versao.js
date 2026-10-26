@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-a",
+  numero: "2026.10.26-b",
   data: "26/10/2026",
-  nota: "Os programas reais da escola entram por um texto"
+  nota: "Quem ainda não entrou no app, e o convite em lote"
 };
