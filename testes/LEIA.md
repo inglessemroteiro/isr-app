@@ -39,6 +39,9 @@ Se o React ainda não estiver baixado:
   sala que só abre no dia da aula, os quatro itens da semana, e a
   varredura que não deixa voltar nenhum recado de obra às telas da
   aluna.
+- `sessao-portao.js` — o portão `aluna.html` guardando a sessão do
+  Netlify Identity: o token do login chega às funções do Netlify no
+  cabeçalho, e "voltar" o limpa do aparelho.
 - `acesso-aluna.js` — quem consegue entrar no app: as três coisas que
   têm de estar de pé (e-mail, convite, turma ou produto), o chip "Sem
   acesso", o botão de convidar em cada linha, o convite em lote e o
