@@ -44,6 +44,12 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `liberar-a-aula.js` — liberar a aula, onde a aula está. Publicar o
+  plano faz a aluna LER; liberar faz o caderno dela abrir para
+  ESCREVER, e o botão que fazia isso existia só no herói do painel,
+  que só o mostra no dia. Agora ele está na aba do plano, junto do
+  Ajustar e do Publicar, e a tela diz a diferença entre as duas
+  palavras.
 - `pilha-de-quem-chegou.js` — a pilha de chamadas de quem acabou de
   chegar na turma. A aula é de quem está na turma hoje, e quem assume
   herdava tudo o que ficou para trás. A data em que a professora

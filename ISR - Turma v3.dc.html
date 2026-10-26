@@ -328,9 +328,25 @@
                 </div>
                 <sc-if value="{{ planoPodeEditar }}">
                   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+                    <!-- ── LIBERAR A AULA, ONDE A AULA ESTÁ ──────────
+                         Publicar o plano é uma coisa: a aluna passa a
+                         LER a aula. Liberar é outra: o caderno dela
+                         abre para ESCREVER. O botão que libera existia
+                         só no herói do painel, e o herói só o mostra no
+                         dia da aula — quem estava aqui, olhando a aula,
+                         não tinha como liberá-la. -->
+                    <sc-if value="{{ planoTemAoVivo }}">
+                      <button class="isr-botao isr-botao--pilula" onclick="{{ planoOnAoVivo }}" style="padding: 10px 16px; font-size: 13px; background: {{ planoAoVivoBg }}; color: {{ planoAoVivoFg }}">{{ planoAoVivoLabel }}</button>
+                    </sc-if>
+                    <sc-if value="{{ planoTemChamada }}">
+                      <button class="isr-botao isr-botao--pilula" onclick="{{ planoOnChamada }}" style="padding: 10px 16px; font-size: 13px; background: var(--color-button-secondary); color: var(--color-primary-900)">{{ planoChamadaLabel }}</button>
+                    </sc-if>
                     <button class="isr-botao isr-botao--pilula" onclick="{{ planoOnAjustar }}" style="padding: 10px 16px; font-size: 13px; background: var(--color-button-secondary); color: var(--color-primary-900)">{{ planoAjustarLabel }}</button>
                     <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ planoOnPublicar }}" style="padding: 10px 16px; font-size: 13px">{{ planoPublicarLabel }}</button>
                   </div>
+                </sc-if>
+                <sc-if value="{{ planoAoVivoNota }}">
+                  <div style="flex: 1 1 100%; background: var(--color-secondary-50); border-radius: 14px; padding: 10px 13px; font-size: 12.5px; line-height: 1.55; color: var(--color-primary-800)">{{ planoAoVivoNotaTexto }}</div>
                 </sc-if>
               </div>
 
@@ -1200,6 +1216,9 @@ class Component extends DCLogic {
       pgVazio: false, pgVazioTexto: "", pgLista: [], pgLink: "#",
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
+      planoTemAoVivo: false, planoAoVivoLabel: "", planoAoVivoBg: "", planoAoVivoFg: "",
+      planoOnAoVivo: () => {}, planoAoVivoNota: false, planoAoVivoNotaTexto: "",
+      planoTemChamada: false, planoChamadaLabel: "", planoOnChamada: () => {},
       planoJaDada: false, planoJaDadaTexto: "", planoRodape: "", planoVerComoAluna: "#",
       planoTemAluna: false, formatoOpts: [],
       planoOnPublicar: () => {}, planoPublicarLabel: "", planoTemErro: false, planoErro: "",
@@ -1597,6 +1616,43 @@ class Component extends DCLogic {
           planoErro: pAtual.estado === "publicada"
             ? Tr("This class is published: whatever you change here, the students see at once.", "Esta aula está publicada: o que você mudar aqui as alunas veem na hora.") : "" });
       },
+      // ── liberar a aula para o caderno da aluna ──
+      ...(() => {
+        const q = pAtual ? quandoSessoes[pAtual.n] : null;
+        const dia = q ? q.data : "";
+        const label = u.nivel + " · " + u.turma;
+        const viva = (dia && CRM.aulaViva) ? CRM.aulaViva(label, dia) : null;
+        const hojeIso = new Date().toISOString().slice(0, 10);
+        // libera-se a aula do dia; antes do dia não há o que liberar,
+        // e depois a aula já foi
+        const vale = !!dia && (dia === hojeIso || (viva && viva.estado === "ao_vivo"));
+        const vivo = !!(viva && viva.estado === "ao_vivo");
+        return {
+          planoTemAoVivo: vale,
+          planoAoVivoLabel: vivo
+            ? Tr("End class", "Encerrar aula")
+            : "\u25b6 " + Tr("Start class", "Começar aula"),
+          planoAoVivoBg: vivo ? "var(--color-button-secondary)" : "var(--color-button-primary)",
+          planoAoVivoFg: vivo ? "var(--color-primary-900)" : "var(--color-primary-900)",
+          planoOnAoVivo: () => {
+            if (!dia) return;
+            if (vivo) { if (CRM.encerrarAula) CRM.encerrarAula(label, dia); }
+            else if (CRM.iniciarAula) {
+              CRM.iniciarAula(label, dia, (CRM.gestaoUser() || {}).nome || "");
+            }
+            this.bump();
+          },
+          planoAoVivoNota: vale,
+          planoAoVivoNotaTexto: vivo
+            ? Tr("Class is live: the students\u2019 notebook is open for writing. Ending it closes the notebook.",
+                 "Aula liberada: o caderno das alunas está aberto para escrever. Encerrar fecha o caderno.")
+            : Tr("Publishing lets the students READ this class. Starting it opens their notebook to WRITE.",
+                 "Publicar deixa as alunas LEREM esta aula. Começar abre o caderno delas para ESCREVER."),
+          planoTemChamada: !!dia && dia <= hojeIso,
+          planoChamadaLabel: Tr("Take attendance", "Fazer chamada"),
+          planoOnChamada: () => this.setState({ aba: "chamadas", chamadaData: dia })
+        };
+      })(),
       planoPublicarLabel: pAtual && pAtual.estado === "publicada" ? Tr("Already published", "Já está publicada")
         : (pAtual && pAtual.estado === "pronta" ? Tr("Publish to students", "Publicar para as alunas") : "Marcar como pronta"),
       planoOnPublicar: () => {
