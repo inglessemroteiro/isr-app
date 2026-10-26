@@ -44,6 +44,11 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `pilha-de-quem-chegou.js` — a pilha de chamadas de quem acabou de
+  chegar na turma. A aula é de quem está na turma hoje, e quem assume
+  herdava tudo o que ficou para trás. A data em que a professora
+  passou a ser daquela turma, carimbada na troca e corrigível na tela
+  de Turmas — e o herói do painel de volta à próxima aula, como no V5.
 - `contatos-colados.js` — o e-mail colado na tela Importar que sumia
   sem avisar: nome e e-mail separados por um espaço só viravam uma
   célula, descartada como linha torta e em silêncio. Agora são lidos

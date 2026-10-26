@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-m",
+  numero: "2026.10.26-n",
   data: "26/10/2026",
-  nota: "Nenhuma linha colada some em silêncio"
+  nota: "O herói do painel é a próxima aula"
 };

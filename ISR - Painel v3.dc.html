@@ -3357,49 +3357,21 @@ class Component extends DCLogic {
       // Um botão principal por estado, e é ele que diz o que fazer
       // agora. Antes havia três corais competindo.
       ...(() => {
+        // O HERÓI É A PRÓXIMA AULA. SEMPRE.
+        //
+        // No V5 o herói do painel da professora é a aula que vem: a
+        // sessão, o plano, a chamada, e o botão de começar. Aqui ele
+        // tinha ganhado um segundo papel — quando não havia aula hoje
+        // e havia chamada atrasada, o herói virava a cobrança da
+        // pilha. A professora abria o painel dela e a primeira coisa,
+        // em letra grande, era uma dívida.
+        //
+        // A pilha não se perde: ela já tem lugar em "seu mês", no
+        // número "sem chamada no mês", que abre a lista inteira.
         const A = !!aulaDoDia && aulaDoDia.dia === "Hoje";
-        const B = !A && grupos.length > 0;
-        const C = !A && !B && !!aulaDoDia;
-        // A MAIS ANTIGA DE VERDADE.
-        // Era grupos[0].aulas[0]: a primeira aula do grupo com MAIS
-        // pendências, que não é a mais antiga nem por acaso. O hero
-        // escrevia uma data e o resto da tela trabalhava com outra.
-        const pendentesTodas = grupos
-          .reduce((acc, g) => acc.concat(g.aulas || []), [])
-          .slice()
-          .sort((x, y) => (x.data < y.data ? -1 : x.data > y.data ? 1 : 0));
-        const maisAntiga = pendentesTodas[0] || null;
+        const C = !A && !!aulaDoDia;
         const outraData = () => this.setState({ aba: "turmas", turmaAberta: true,
           tTab: "chamadas", escolhendoData: true });
-        // ABRIR A AULA QUE O BOTÃO PROMETE.
-        // O botão dizia "Faça a chamada de 05/10 · Basics" e chamava
-        // outraData, que abre o seletor de data em HOJE. A professora
-        // lia uma data, clicava, e caía noutra.
-        const abrirPendente = (c) => {
-          if (!c) return outraData();
-          if (c.tipo === "particular") {
-            this.setState({ eventoChamada: null, particularChamada: c.pessoaId || null,
-              turmaChamada: null, chamadaData: c.data,
-              presencas: this.carregarChamada(c.label, c.data),
-              tarefas: null, salvouAgora: false });
-          } else if (c.tipo === "extra") {
-            this.setState({ eventoChamada: c.eventoId || null, particularChamada: null,
-              turmaChamada: c.label, chamadaData: c.data,
-              presencas: this.carregarChamada(c.label, c.data, c.eventoId),
-              tarefas: null, salvouAgora: false });
-          } else {
-            this.setState({ eventoChamada: null, particularChamada: null,
-              turmaChamada: c.label, chamadaData: c.data,
-              presencas: this.carregarChamada(c.label, c.data),
-              tarefas: null, salvouAgora: false });
-          }
-          this.setState({ aba: "turmas", turmaAberta: true, tTab: "chamadas",
-            escolhendoData: false });
-          setTimeout(() => {
-            const el = this.chamadaRef.current;
-            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 60);
-        };
         // a sessão e o tema da aula que o hero mostra
         // Qual sessão é esta aula, e com que tema.
         //
@@ -3446,21 +3418,6 @@ class Component extends DCLogic {
             heroAcoes: [
               { label: Tr("See the plan", "Ver plano"), onClick: irParaOPlano },
               { label: Tr("Take attendance", "Fazer chamada"), onClick: aulaDoDia.onChamada }
-            ]
-          };
-        }
-        if (B) {
-          return {
-            heroQuando: nAulas + Tr(nAulas === 1 ? " class without attendance" : " classes without attendance", nAulas === 1 ? " aula sem chamada" : " aulas sem chamada"),
-            heroTitulo: maisAntiga
-              ? Tr("Take the attendance of ", "Faça a chamada de ") + CRM.ddmm(maisAntiga.data)
-                  + " · " + this.aulaPorExtenso(maisAntiga.label, maisAntiga.data)
-              : Tr("Catch up on the attendance you owe", "Faça as chamadas que ficaram para trás"),
-            temHeroPrincipal: true,
-            heroPrincipal: Tr("Take attendance", "Fazer chamada"),
-            onHeroPrincipal: maisAntiga ? () => abrirPendente(maisAntiga) : outraData,
-            heroAcoes: [
-              { label: Tr("See all", "Ver todas"), onClick: () => this.setState({ verSemChamada: true }) }
             ]
           };
         }
@@ -4563,8 +4520,8 @@ class Component extends DCLogic {
           ? this.state.topicoChamada : ((chAntes && chAntes.topico) || "")).trim();
         if (!topicoAgora && !(chAntes && chAntes.noshow)) {
           this.setState({ erroChamada: this.T(
-            "Write the lesson topic before saving: it is what validates the class for payroll.",
-            "Escreva o tópico da lição antes de salvar: é ele que valida a aula para a folha.") });
+            "The lesson topic is missing. Write what this class covered, then save.",
+            "Falta o tópico da lição. Escreva o que foi esta aula e salve.") });
           return;
         }
         // a grade mostra "presente" para quem não foi tocada, mas quem não
