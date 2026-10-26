@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-c",
+  numero: "2026.10.26-d",
   data: "26/10/2026",
-  nota: "O portão guarda a sessão, e o convite volta a sair"
+  nota: "O portão não explica o sistema a quem está entrando"
 };
