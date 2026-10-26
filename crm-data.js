@@ -10693,14 +10693,32 @@
   // O programa que nasceu de um par nível+ciclo. É o que a turma que
   // nunca escolheu programa segue, e o que a tela mostra como escolha
   // provável quando a professora vai escolher.
+  // O programa que uma turma segue quando ninguém escolheu um.
+  //
+  // Entre dois programas do mesmo nível, vale o que TEM sessões.
+  // Depois de importar os programas da escola, o nível passou a ter
+  // dois: o que a migração criou do syllabus antigo, agora vazio
+  // porque as sessões foram para o novo, e o novo. A busca pegava o
+  // primeiro da lista, e o plano das aulas da turma abria com zero
+  // sessões — sem que nada tivesse sido apagado.
   function programaPorOrigem(nivel, ciclo) {
     var c = ciclo || metasAtuais().cicloLabel;
     var l = programasEstudoAll();
-    return l.filter(function (p) {
-      return p.origem && p.origem.nivel === nivel && p.origem.ciclo === c;
-    })[0] || l.filter(function (p) {
-      return p.origem && p.origem.nivel === nivel;
-    })[0] || null;
+    var doNivel = function (exigirCiclo) {
+      return l.filter(function (p) {
+        if (!p.origem || p.origem.nivel !== nivel) return false;
+        return exigirCiclo ? p.origem.ciclo === c : true;
+      });
+    };
+    var escolher = function (cands) {
+      if (!cands.length) return null;
+      var comSessoes = cands.filter(function (p) {
+        return syllabusDoPrograma(p.id).length > 0;
+      });
+      return comSessoes[0] || null;
+    };
+    return escolher(doNivel(true)) || escolher(doNivel(false))
+      || doNivel(true)[0] || doNivel(false)[0] || null;
   }
   // A lista do repositório: nome, nível, quantas sessões, e onde cada
   // programa está rodando agora.
@@ -10739,6 +10757,13 @@
     }
     reg.nome = nome;
     reg.nivel = nivel;
+    // De onde o programa veio. A migração grava isto para achar o
+    // programa de uma turma que ainda não escolheu o seu; programa
+    // criado à mão ou trazido de um texto nascia sem, e ficava
+    // invisível para essa busca — a turma então resolvia num programa
+    // antigo, vazio, e o plano das aulas aparecia sem nenhuma sessão.
+    if (dados.origem) reg.origem = dados.origem;
+    else if (!reg.origem) reg.origem = { nivel: nivel, ciclo: "" };
     if ("descricao" in dados) {
       reg.descricao = String(dados.descricao || "").trim().slice(0, PROGRAMA_LIMITES.descricao);
     }
@@ -10899,7 +10924,11 @@
         return impChave(x.nome) === impChave(p.nome) && impChave(x.nivel) === impChave(p.nivel);
       })[0] || null;
       var r = salvarProgramaEstudo({ id: igual ? igual.id : undefined, nome: p.nome,
-        nivel: p.nivel, descricao: p.descricao });
+        nivel: p.nivel, descricao: p.descricao,
+        // sem isto o programa trazido de um texto fica fora da busca
+        // por nível, e a turma que não escolheu um continua caindo no
+        // programa antigo, que ficou vazio
+        origem: (igual && igual.origem) || { nivel: p.nivel, ciclo: "" } });
       if (!r.ok) return { ok: false, erro: p.nome + ": " + r.erro, feitos: feitos };
       var pgId = r.programa.id;
       p.sessoes.forEach(function (s) {
