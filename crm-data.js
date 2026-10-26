@@ -6173,8 +6173,33 @@
         return c.replace(/&#13;|\r/g, "").trim();
       }).filter(Boolean);
       if (!celulas.length) return;
+      // ── NOME E E-MAIL NA MESMA CÉLULA ──────────────────────────
+      //
+      // A divisão em colunas espera tabulação, três espaços ou " | ".
+      // Texto copiado de uma tabela da tela, de uma mensagem ou de um
+      // PDF vem com UM espaço entre o nome e o e-mail, e aí a linha
+      // inteira virava uma célula só — que, por conter "@", era
+      // descartada como linha torta. Em silêncio: a linha não entrava
+      // na conferência, e quem colou cinquenta e viu quarenta não
+      // tinha como saber quais dez faltaram.
+      //
+      // Numa célula com "@", o e-mail é a palavra que o tem e o nome
+      // é o resto.
+      if (celulas.length === 1 && celulas[0].indexOf("@") > 0) {
+        var pedacos = celulas[0].split(/\s+/).filter(Boolean);
+        var oEmail = pedacos.filter(function (t) { return t.indexOf("@") > 0; })[0] || "";
+        var oNome = pedacos.filter(function (t) { return t !== oEmail; }).join(" ").trim();
+        if (oNome && oEmail) celulas = [oNome, oEmail];
+      }
       var nome = celulas[0];
-      if (!nome || /^nome$/i.test(nome) || nome.indexOf("@") >= 0) return; // cabeçalho/linha torta
+      if (!nome || /^nome$/i.test(nome)) return; // cabeçalho
+      // LINHA QUE NÃO DÁ PARA LER TAMBÉM APARECE.
+      // Sumir em silêncio é o pior destino de uma linha colada: quem
+      // colou acredita que o e-mail entrou.
+      if (nome.indexOf("@") >= 0) {
+        out.push({ nome: linha.slice(0, 80), acao: "nao-entendi" });
+        return;
+      }
       // o e-mail é a primeira célula com @; célula com dois e-mails
       // ("a@x / b@y") fica com o primeiro
       var email = "";

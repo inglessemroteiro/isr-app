@@ -44,6 +44,11 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `contatos-colados.js` — o e-mail colado na tela Importar que sumia
+  sem avisar: nome e e-mail separados por um espaço só viravam uma
+  célula, descartada como linha torta e em silêncio. Agora são lidos
+  como duas colunas, e a linha que não dá para ler aparece na
+  conferência com o que fazer a respeito.
 - `sync-pendente.js` — o que foi gravado e não subiu. Toda gravação
   espera 1,5 s para agrupar edições, e nada forçava o envio quando a
   aba fechava: publicar um clube e sair deixava a alteração só no

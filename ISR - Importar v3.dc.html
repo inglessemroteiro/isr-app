@@ -944,12 +944,19 @@ class Component extends DCLogic {
           "atualizar": { selo: "ATUALIZA", fg: "var(--color-success)", bg: "var(--color-secondary-50)" },
           "igual": { selo: "já certo", fg: "var(--color-tertiary-500)", bg: "var(--color-button-secondary)" },
           "nao-encontrada": { selo: "não encontrada", fg: "var(--color-warning)", bg: "var(--color-error-light)" },
-          "sem-contato": { selo: "sem e-mail na linha", fg: "var(--color-warning)", bg: "var(--color-error-light)" }
+          "sem-contato": { selo: "sem e-mail na linha", fg: "var(--color-warning)", bg: "var(--color-error-light)" },
+          // linha que o leitor não entendeu. Ela sumia em silêncio, e
+          // quem colou cinquenta e viu quarenta não tinha como saber
+          // quais dez faltaram
+          "nao-entendi": { selo: "não entendi a linha", fg: "var(--color-error-dark)", bg: "var(--color-error-light)" }
         };
         return {
           ctResumo: muda.length + (muda.length === 1 ? " atualização" : " atualizações") + " · "
             + CT.linhas.filter(l => l.acao === "igual").length + " já certos · "
-            + CT.linhas.filter(l => l.acao === "nao-encontrada").length + " não encontradas",
+            + CT.linhas.filter(l => l.acao === "nao-encontrada").length + " não encontradas"
+            + (CT.linhas.filter(l => l.acao === "nao-entendi").length
+              ? " · " + CT.linhas.filter(l => l.acao === "nao-entendi").length + " não entendidas"
+              : ""),
           ctLinhas: CT.linhas.map(l => ({
             nome: l.nome,
             selo: SELOS[l.acao].selo, seloFg: SELOS[l.acao].fg, seloBg: SELOS[l.acao].bg,
@@ -958,7 +965,9 @@ class Component extends DCLogic {
                  l.mudaFone ? "WhatsApp: " + l.fone : "",
                  l.nomeSistema !== l.nome ? "no sistema: " + l.nomeSistema : ""]
                 .filter(Boolean).join(" · ")
-              : (l.acao === "igual" ? (l.email || "") : (l.email || ""))
+              : (l.acao === "nao-entendi"
+                ? "Separe o nome do e-mail com tabulação, ou cole as duas colunas da planilha."
+                : (l.email || ""))
           })),
           ctAplicarLabel: muda.length
             ? "Atualizar " + muda.length + (muda.length === 1 ? " contato" : " contatos")
