@@ -67,11 +67,14 @@ exports.handler = async (event, context) => {
   const daEquipe = !!emailDeQuem && (!EQUIPE.length || EQUIPE.indexOf(emailDeQuem) >= 0);
 
   if (!comChave && !daEquipe) {
-    // a mensagem diz qual das duas portas falhou, senão depurar isto
-    // vira adivinhação
-    return { statusCode: 401, headers, body: JSON.stringify({ ok: false,
+    // "erro" diz qual das duas portas falhou, senão depurar isto vira
+    // adivinhação — e é texto de quem mexe no servidor, não de quem
+    // está olhando a ficha de uma professora. Quem lê essa parte é o
+    // log e o Zapier. Para a tela vai o "motivo", que o app traduz.
+    const motivo = emailDeQuem ? 'fora_da_lista' : (enviada ? 'chave_errada' : 'sem_sessao');
+    return { statusCode: 401, headers, body: JSON.stringify({ ok: false, motivo: motivo,
       erro: emailDeQuem
-        ? 'A sua conta (' + emailDeQuem + ') não está em ISR_EQUIPE_EMAILS, '
+        ? 'A conta ' + emailDeQuem + ' não está em ISR_EQUIPE_EMAILS, '
           + 'a lista de quem pode convidar.'
         : (enviada
           ? 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
@@ -86,8 +89,8 @@ exports.handler = async (event, context) => {
 
   const ident = context && context.clientContext && context.clientContext.identity;
   if (!ident || !ident.url || !ident.token)
-    return { statusCode: 500, headers, body: JSON.stringify({
-      ok: false, erro: 'Identity não está ativo neste site — ative em Site configuration → Identity' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ ok: false, motivo: 'identity_desligado',
+      erro: 'Identity não está ativo neste site — ative em Site configuration → Identity' }) };
 
   try {
     const res = await fetch(ident.url + '/invite', {
@@ -108,8 +111,8 @@ exports.handler = async (event, context) => {
         ok: true, convidada: false, jaTinhaConta: true, email: email }) };
 
     console.error('convidar-aluna · Identity respondeu', res.status, texto.slice(0, 300));
-    return { statusCode: 502, headers, body: JSON.stringify({
-      ok: false, erro: 'Identity respondeu ' + res.status, detalhe: texto.slice(0, 300) }) };
+    return { statusCode: 502, headers, body: JSON.stringify({ ok: false, motivo: 'identity_recusou',
+      erro: 'Identity respondeu ' + res.status, detalhe: texto.slice(0, 300) }) };
   } catch (err) {
     console.error('convidar-aluna erro:', err);
     return { statusCode: 500, headers, body: JSON.stringify({ ok: false, erro: String(err && err.message || err) }) };

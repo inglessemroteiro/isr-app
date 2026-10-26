@@ -70,7 +70,12 @@ async function novoContexto(navegador, opcoes) {
       // reescrever aqui desfaz uma troca de usuária feita no meio
       if (cfg && cfg.gestao && !localStorage.getItem("isr_gestao_user")) {
         localStorage.setItem("isr_gestao_user", JSON.stringify(cfg.gestao));
-        localStorage.setItem("isr_gestao_token", "teste");
+        // o token é o do Netlify Identity, no formato em que o app o
+        // guarda. Era a string "teste", que não é JSON: quem perguntasse
+        // "há sessão?" recebia não, e as telas escondiam o que depende
+        // dela — foi assim que o convite sumiu da suíte
+        localStorage.setItem("isr_gestao_token", JSON.stringify({
+          access: "tk-de-teste", refresh: "rf-de-teste", vence: Date.now() + 3600000 }));
       }
     } catch (e) {}
   }, { gestao: quem, lang: opcoes.lang || "pt" });

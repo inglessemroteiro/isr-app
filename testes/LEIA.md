@@ -44,6 +44,10 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `convite-recusado.js` — o que a escola lê quando o convite não sai:
+  a resposta da função do Netlify traduzida para a tela, o caminho de
+  entrar de novo quando a sessão venceu, o lote que para na primeira
+  recusa, e as duas telas sem "Netlify Identity" nem "criar senha".
 - `clube-quem-conduz.js` — quem conduz o clube, na tela Clubes: a
   lista sai dos papéis da Equipe, o nome que já está no clube não some
   da lista por não ter papel, e clube novo não escolhe sozinho.

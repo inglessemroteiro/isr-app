@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-f",
+  numero: "2026.10.26-g",
   data: "26/10/2026",
-  nota: "A aluna entra por link, sem senha"
+  nota: "O convite diz o estado e o que fazer"
 };

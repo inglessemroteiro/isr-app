@@ -178,13 +178,24 @@
                  conseguia entrar. O convite é o mesmo das alunas — o
                  e-mail do Identity —, e sai daqui. -->
             <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Acesso ao sistema</div>
-            <div style="background: var(--color-neutral-0); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;">
-              <p style="margin: 0 0 9px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ mb.conviteTexto }}</p>
-              <sc-if value="{{ mb.convitePode }}">
-                <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ mb.onConvidar }}" style="font-size: 11.5px; padding: 8px 14px">{{ mb.conviteBotao }}</button>
-              </sc-if>
+            <div style="background: var(--color-neutral-0); border-radius: 14px; padding: 13px 15px; margin-bottom: 14px;">
+              <div style="display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;">
+                <div style="flex: 1 1 220px; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 7px;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: {{ mb.conviteCor }}; flex: none;"></span>
+                    <span style="font-size: 12.5px; font-weight: 600; color: {{ mb.conviteCor }};">{{ mb.conviteEstado }}</span>
+                  </div>
+                  <p style="margin: 5px 0 0; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ mb.conviteTexto }}</p>
+                </div>
+                <sc-if value="{{ mb.convitePode }}">
+                  <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ mb.onConvidar }}" style="font-size: 11.5px; padding: 8px 15px; flex: none">{{ mb.conviteBotao }}</button>
+                </sc-if>
+                <sc-if value="{{ mb.conviteEntrar }}">
+                  <a href="aluna.html?trocar" class="isr-botao isr-botao--pilula" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 11.5px; padding: 8px 15px; flex: none; text-decoration: none">Entrar de novo</a>
+                </sc-if>
+              </div>
               <sc-if value="{{ mb.conviteAviso }}">
-                <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: {{ mb.conviteAvisoCor }};">{{ mb.conviteAvisoTexto }}</p>
+                <p style="margin: 10px 0 0; padding-top: 9px; border-top: 1px solid var(--color-tertiary-50); font-size: 11.5px; line-height: 1.5; color: {{ mb.conviteAvisoCor }};">{{ mb.conviteAvisoTexto }}</p>
               </sc-if>
             </div>
 
@@ -457,25 +468,48 @@ class Component extends DCLogic {
 
         // ── o convite de acesso ──
         // Quem está na Equipe com função que abre o sistema recebe o
-        // convite do Identity daqui. Prestadora sem função não recebe:
-        // criaria uma conta que a porta recusa.
+        // convite daqui. Prestadora sem função não recebe: criaria uma
+        // conta que a porta recusa.
+        //
+        // O bloco era um parágrafo corrido e um botão, e o parágrafo
+        // contava a vida: "o convite do Netlify Identity vai para
+        // fulana@… e é com ele que ela cria a senha". Agora o estado
+        // vem numa linha só, com o mesmo vocabulário da tela Alunas, e
+        // embaixo fica o que fazer. Senha saiu da conversa: o convite
+        // abre o app.
         ...(() => {
           const cv = CRM.conviteDaEquipe ? CRM.conviteDaEquipe(m.id)
             : { em: "", para: "", email: "", podeEntrar: false };
           const res = this.state.conviteRes;
           const temEmail = !!cv.email && cv.email.indexOf("@") > 0;
+          // sem sessão do Identity neste aparelho, a função recusa o
+          // convite antes de olhar o e-mail: botão que sempre falha é
+          // pior que botão nenhum, então aqui o caminho é entrar de novo
+          const temSessao = !CRM.podeConvidarAgora || CRM.podeConvidarAgora();
+          const pode = cv.podeEntrar && temEmail;
+          const estado = !cv.podeEntrar
+            ? ["Sem função no sistema", "var(--color-tertiary-500)"]
+            : !temEmail ? ["Sem e-mail na ficha", "var(--color-error)"]
+              : !temSessao ? ["Sessão vencida", "var(--color-tertiary-500)"]
+                : cv.em ? ["Convidada em " + CRM.ddmm(cv.em), "var(--color-tertiary-500)"]
+                  : ["Ainda sem acesso", "var(--color-warning-dark)"];
           return {
-            convitePode: cv.podeEntrar && temEmail,
-            conviteBotao: cv.em ? "Reenviar o convite" : "Enviar o convite de acesso",
+            conviteEstado: estado[0],
+            conviteCor: estado[1],
+            convitePode: pode && temSessao,
+            conviteEntrar: pode && !temSessao,
+            conviteBotao: cv.em ? "Convidar de novo" : "Enviar o convite",
             conviteTexto: !cv.podeEntrar
-              ? "Nenhuma função marcada abre o sistema, então não há para onde convidar. Marque professora, comercial, operação, aulas extras ou shadow."
+              ? "Marque professora, comercial, operação, aulas extras ou shadow para que ela possa entrar."
               : !temEmail
-                ? "Sem e-mail na ficha não há para onde mandar o convite."
-                : (cv.em
-                  ? "Convidada em " + CRM.ddmm(cv.em) + ", para " + (cv.para || cv.email)
-                    + ". Reenviar não atrapalha: quem já tem conta não recebe de novo."
-                  : "Ainda não foi convidada. O convite do Netlify Identity vai para "
-                    + cv.email + ", e é com ele que ela cria a senha."),
+                ? "O convite vai para o e-mail da ficha. Preencha o e-mail acima."
+                : !temSessao
+                  ? "A sua sessão venceu. Entre de novo para convidar."
+                  : (cv.em
+                    ? "Para " + (cv.para || cv.email)
+                      + ". Convidar de novo não atrapalha: quem já tem conta não recebe outro."
+                    : "O convite vai para " + cv.email
+                      + ". Ela toca no link do e-mail e entra — não há senha para criar."),
             conviteAviso: !!(res && res.id === m.id),
             conviteAvisoTexto: (res && res.id === m.id) ? res.texto : "",
             conviteAvisoCor: (res && res.id === m.id && res.bom)
@@ -486,7 +520,7 @@ class Component extends DCLogic {
                 this.setState({ conviteRes: { id: m.id, bom: !!r.ok,
                   texto: r.ok
                     ? (r.jaTinhaConta
-                      ? "Ela já tinha conta — não precisa de convite de novo. Se não consegue entrar, é senha: peça para usar \u201cEsqueci minha senha\u201d."
+                      ? "Ela já tinha conta — não precisa de convite de novo. Se não consegue entrar, peça o link na tela de entrar."
                       : "Convite enviado para " + r.email + ". Ele chega em minutos; se não aparecer, olhar o spam.")
                     : r.erro } });
                 this.bump();
