@@ -72,7 +72,7 @@
   </div>
 
   <!-- INÍCIO DAS AULAS EM LOTE -->
-  <sc-if value="{{ temAlunas }}">
+  <sc-if value="{{ temLoteData }}">
     <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 22px;">
       <div style="font-size: 14px; font-weight: 600;">Início das aulas em lote</div>
       <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">Filtre a turma acima, escolha a data e aplique. Cada aluna aparece na chamada a partir do dia dela; as exceções se corrigem no campo de cada uma.</p>
@@ -80,6 +80,20 @@
         <input class="isr-campo" ref="{{ loteRef }}" type="date" style="padding: 11px 14px; font-size: 13px" />
         <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onLote }}" style="font-size: 12.5px; padding: 12px 18px">{{ loteLabel }}</button>
         <span style="font-size: 12.5px; font-weight: 600; color: {{ loteCor }};">{{ loteNota }}</span>
+      </div>
+    </section>
+  </sc-if>
+
+  <!-- CONVITE EM LOTE -->
+  <!-- O convite é o que cria a conta e a senha da aluna. Era uma ficha
+       por vez: com uma turma inteira sem acesso, são quarenta telas. -->
+  <sc-if value="{{ temLoteConvite }}">
+    <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 22px;">
+      <div style="font-size: 14px; font-weight: 600;">Convidar para o app</div>
+      <p style="margin: 4px 0 10px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ loteConviteTexto }}</p>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onLoteConvite }}" style="font-size: 12.5px; padding: 12px 18px">{{ loteConviteLabel }}</button>
+        <span style="font-size: 12.5px; font-weight: 600; color: {{ loteConviteCor }};">{{ loteConviteNota }}</span>
       </div>
     </section>
   </sc-if>
@@ -96,6 +110,17 @@
         <span style="flex: 1; min-width: 180px; font-size: 13.5px; color: var(--color-primary-800);">{{ p.ctx }}</span>
         <sc-if value="{{ p.temRisco }}">
           <span style="flex: none; font-size: 12px; font-weight: 600; color: var(--color-error);">⚠︎ {{ p.risco }}</span>
+        </sc-if>
+        <sc-if value="{{ p.temAcesso }}">
+          <span style="flex: none; display: flex; align-items: center; gap: 8px;">
+            <span title="{{ p.acessoAcao }}" style="font-size: 12px; font-weight: 600; color: {{ p.acessoCor }};">{{ p.acessoRotulo }}</span>
+            <sc-if value="{{ p.podeConvidar }}">
+              <button class="isr-botao isr-botao--pilula" onclick="{{ p.onConvidar }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); padding: 7px 13px; font-size: 12px">{{ p.convidarLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ p.temConviteRes }}">
+              <span style="font-size: 12px; font-weight: 600; color: var(--color-success-dark);">{{ p.conviteRes }}</span>
+            </sc-if>
+          </span>
         </sc-if>
         <sc-if value="{{ p.temInicio }}">
           <!-- o par do lote: é aqui que a exceção se corrige -->
@@ -133,7 +158,9 @@ class Component extends DCLogic {
   // A tela abre nas alunas ativas: é a lista que a escola usa todo dia.
   // Lead e pausada continuam a um clique, no chip.
   state = { busca: "", turma: "", filtro: "aluna", tick: 0, loteFeito: 0,
-            pagina: 1, porPagina: ISRPaginacao.PADRAO };
+            pagina: 1, porPagina: ISRPaginacao.PADRAO,
+            // o convite: quem está sendo enviado agora, e o que voltou
+            convidando: "", conviteRes: {}, loteConvite: "", loteConviteBom: true };
   buscaRef = React.createRef(); loteRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -142,8 +169,11 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { filtros: [], turmaOpts: [], profOpts: [], ordemOpts: [],
       temFiltroProf: false, onProf: () => {}, onOrdem: () => {}, pessoas: [], vazio: true,
-      contagem: "", temAlunas: false, loteRef: this.loteRef,
-      loteLabel: "Aplicar", loteNota: "", loteCor: "var(--color-tertiary-500)", onLote: () => {} };
+      contagem: "", temAlunas: false, temLoteData: false, loteRef: this.loteRef,
+      loteLabel: "Aplicar", loteNota: "", loteCor: "var(--color-tertiary-500)", onLote: () => {},
+      temLoteConvite: false, loteConviteTexto: "", loteConviteLabel: "",
+      loteConviteNota: "", loteConviteCor: "var(--color-tertiary-500)",
+      onLoteConvite: () => {} };
 
     const todas = CRM.alunasPainel();
 
@@ -167,7 +197,14 @@ class Component extends DCLogic {
       ["aluna", "Alunas", p => p.status === "aluna" || p.status === "mvs"],
       ["lead", "Leads", p => p.status === "lead"],
       ["pausada", "Pausadas", p => p.status === "pausada"],
-      ["risco", "Em risco", p => !!(painel[p.id] && painel[p.id].riscos.length)]
+      ["risco", "Em risco", p => !!(painel[p.id] && painel[p.id].riscos.length)],
+      // Quem ainda não abriu o app. Não havia onde perguntar isso, e a
+      // escola só descobria pela aluna reclamando que não entra.
+      ["semacesso", "Sem acesso", p => {
+        const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null;
+        return !!sa && sa.estado !== "entrou"
+          && ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
+      }]
     ];
     const filtroAtivo = this.state.filtro || "aluna";
     const fnAtiva = (FILTROS.filter(x => x[0] === filtroAtivo)[0] || FILTROS[0])[2];
@@ -243,6 +280,16 @@ class Component extends DCLogic {
       const st = ST[p.status] || [p.status || "—", "var(--color-button-secondary)", "var(--color-tertiary-500)"];
       const risco = pn && pn.riscos.length ? CRM.RISCOS[pn.riscos[0]].label : "";
       const ehAluna = p.status === "aluna" || p.status === "mvs";
+      // o acesso ao app: três coisas têm de estar de pé, e a linha diz
+      // qual delas falta — "sem convite" e "sem turma" são problemas
+      // diferentes, com donos diferentes
+      const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null;
+      const mostraAcesso = !!sa && sa.estado !== "entrou"
+        && ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
+      const ACOR = { semEmail: "var(--color-error)", semAcesso: "var(--color-error)",
+        semConvite: "var(--color-warning-dark)", convidada: "var(--color-tertiary-500)" };
+      const enviando = this.state.convidando === p.id;
+      const res = (this.state.conviteRes || {})[p.id] || "";
       return {
         nome: p.nome,
         href: "ISR%20-%20Perfil%20v3.dc.html?id=" + p.id,
@@ -257,6 +304,24 @@ class Component extends DCLogic {
              p.desde ? "desde " + CRM.ddmm(p.desde) : ""]
               .filter(Boolean).join(" · "),
         temRisco: !!risco, risco: risco,
+        temAcesso: mostraAcesso,
+        acessoRotulo: sa ? sa.rotulo : "",
+        acessoAcao: sa ? sa.acao : "",
+        acessoCor: sa ? (ACOR[sa.estado] || "var(--color-tertiary-500)") : "",
+        podeConvidar: !!(sa && sa.podeConvidar && sa.estado !== "entrou") && !enviando,
+        convidarLabel: enviando ? "enviando…" : (sa && sa.convidadaEm ? "Convidar de novo" : "Convidar"),
+        temConviteRes: !!res, conviteRes: res,
+        onConvidar: () => {
+          this.setState({ convidando: p.id });
+          CRM.convidarAluna(p.id).then((r) => {
+            const m = Object.assign({}, this.state.conviteRes || {});
+            m[p.id] = r.ok
+              ? (r.jaTinhaConta ? "já tinha conta" : "convite enviado")
+              : (r.erro || "não saiu");
+            this.setState({ convidando: "", conviteRes: m });
+            this.bump();
+          });
+        },
         temInicio: ehAluna,
         inicioIso: p.desde || "",
         inicioNota: !p.desde ? "sem data · já na chamada"
@@ -319,7 +384,50 @@ class Component extends DCLogic {
       vazio: pessoas.length === 0,
       pgPrecisa: pg.precisa, pgBotoes: pg.botoes, pgOpcoes: pg.opcoes,
       pgResumo: pg.resumo, pgOnPorPagina: pg.onPorPagina,
+      // ── o convite em lote ──
+      // Só quem já pode entrar e ainda não foi convidada: convidar
+      // quem está sem turma criaria uma conta que o portão recusa.
+      ...(() => {
+        const faltam = daLista
+          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null)
+          .filter(x => x && x.podeConvidar && (x.estado === "semConvite" || x.estado === "convidada"));
+        const novas = faltam.filter(x => x.estado === "semConvite");
+        const travadas = daLista
+          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null)
+          .filter(x => x && !x.podeConvidar && x.estado !== "entrou");
+        const enviando = this.state.loteConvite === "…";
+        return {
+          temLoteConvite: filtroAtivo === "semacesso" && (faltam.length > 0 || travadas.length > 0),
+          loteConviteTexto: (novas.length
+            ? novas.length + (novas.length === 1
+                ? " aluna desta lista nunca foi convidada." : " alunas desta lista nunca foram convidadas.")
+            : "Todas as alunas desta lista já foram convidadas.")
+            + (travadas.length
+              ? " Outras " + travadas.length + " não podem ser convidadas ainda — a linha de cada uma diz o que falta."
+              : "")
+            + " O convite vai para o e-mail da matrícula e cria a senha da aluna.",
+          loteConviteLabel: enviando ? "enviando…"
+            : "Convidar " + faltam.length + (faltam.length === 1 ? " aluna" : " alunas"),
+          loteConviteNota: this.state.loteConvite && !enviando ? this.state.loteConvite : "",
+          loteConviteCor: this.state.loteConviteBom
+            ? "var(--color-success-dark)" : "var(--color-error-dark)",
+          onLoteConvite: () => {
+            if (enviando || !faltam.length) return;
+            this.setState({ loteConvite: "…", loteConviteBom: true });
+            CRM.convidarAlunas(faltam.map(x => x.id)).then((r) => {
+              const partes = [];
+              if (r.enviadas.length) partes.push(r.enviadas.length + " convite" + (r.enviadas.length === 1 ? "" : "s") + " enviado" + (r.enviadas.length === 1 ? "" : "s"));
+              if (r.jaTinham.length) partes.push(r.jaTinham.length + " já tinha" + (r.jaTinham.length === 1 ? "" : "m") + " conta");
+              if (r.falhas.length) partes.push(r.falhas.length + " falhou: " + r.falhas[0].erro);
+              this.setState({ loteConvite: partes.join(" · ") || "Nada a enviar.",
+                loteConviteBom: !r.falhas.length });
+              this.bump();
+            });
+          }
+        };
+      })(),
       temAlunas: daLista.length > 0,
+      temLoteData: daLista.length > 0 && filtroAtivo !== "semacesso",
       loteRef: this.loteRef,
       // o lote só toca em quem é aluna: data de início não diz nada
       // num lead, e aplicar em todo mundo escreveria no registro errado
