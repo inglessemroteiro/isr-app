@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-g",
+  numero: "2026.10.26-h",
   data: "26/10/2026",
-  nota: "O convite diz o estado e o que fazer"
+  nota: "O portão diz menos e diz melhor"
 };
