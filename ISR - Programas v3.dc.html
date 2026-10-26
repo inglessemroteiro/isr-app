@@ -27,7 +27,10 @@
         <h1 style="margin: 2px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1;">Programas</h1>
       </div>
       <sc-if value="{{ podeMexer }}">
-        <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onNovo }}" style="font-size: 13.5px; font-weight: 800; padding: 12px 20px">{{ novoLabel }}</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onImportar }}" style="background: var(--color-neutral-0); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 12px 18px">{{ importarLabel }}</button>
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onNovo }}" style="font-size: 13.5px; font-weight: 800; padding: 12px 20px">{{ novoLabel }}</button>
+        </div>
       </sc-if>
     </header>
 
@@ -91,6 +94,45 @@
           <div>
             <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onAddSessao }}" style="font-size: 13px; padding: 10px 16px">{{ abAddLabel }}</button>
           </div>
+        </section>
+      </sc-if>
+
+      <!-- TRAZER DE UM TEXTO -->
+      <!-- Cadastrar 25 projetos de 10 sessões a mão são 250 telas de
+           digitação. Aqui a escola cola o syllabus no formato de
+           linhas, confere o que foi entendido e grava. -->
+      <sc-if value="{{ importando }}">
+        <section class="isr-cartao" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
+          <div style="font-size: 16px; font-weight: 800">Trazer programas de um texto</div>
+          <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: var(--color-primary-800); white-space: pre-wrap">{{ exemploImport }}</div>
+          <textarea class="isr-campo" ref="{{ textoRef }}" rows="12" placeholder="{{ phTexto }}" style="width: 100%; padding: 12px 14px; font-size: 13px; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical"></textarea>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onConferir }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 11px 18px">Conferir o texto</button>
+            <sc-if value="{{ podeGravarImport }}">
+              <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onGravarImport }}" style="font-size: 13.5px; font-weight: 800; padding: 11px 18px">{{ gravarImportLabel }}</button>
+            </sc-if>
+            <button class="isr-botao isr-botao--texto" onclick="{{ onFecharImport }}" style="font-size: 13px; color: var(--color-primary-800)">fechar</button>
+          </div>
+
+          <sc-if value="{{ temPrevia }}">
+            <div style="font-size: 12px; font-weight: 700; color: var(--color-tertiary-500); margin-top: 4px">o que vai ser gravado</div>
+            <sc-for list="{{ previa }}" as="pv" hint-placeholder-count="3">
+              <div style="display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--color-button-secondary)">
+                <span style="font-size: 14px; font-weight: 700">{{ pv.nome }}</span>
+                <span style="font-size: 12.5px; color: var(--color-tertiary-700)">{{ pv.meta }}</span>
+                <span style="margin-left: auto; font-size: 11.5px; font-weight: 700; color: {{ pv.cor }}">{{ pv.estado }}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ temAvisos }}">
+            <div style="background: var(--color-warning-light); color: var(--color-warning-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap">{{ avisos }}</div>
+          </sc-if>
+          <sc-if value="{{ temImportErro }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 13px">{{ importErro }}</div>
+          </sc-if>
+          <sc-if value="{{ importFeito }}">
+            <div style="background: var(--color-secondary-100); color: var(--color-secondary-900); border-radius: 14px; padding: 11px 14px; font-size: 13px; line-height: 1.55">{{ importFeitoTexto }}</div>
+          </sc-if>
         </section>
       </sc-if>
 
@@ -174,11 +216,14 @@ class Component extends DCLogic {
   // turmas que o seguem.
   state = { aberto: "", criando: false, novoNivel: "", novoErro: "",
             busca: "", filtro: "todos", abErro: "", tick: 0,
+            // a importação por texto: o que foi conferido e o que foi gravado
+            importando: false, previa: null, importErro: "", importFeito: "",
             // o texto em andamento mora aqui e só é gravado quando ela
             // sai do campo: salvar a cada tecla devolvia o texto
             // aparado, e a barra de espaço não sobrevivia
             rascunho: {} };
   novoNomeRef = React.createRef();
+  textoRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -200,6 +245,12 @@ class Component extends DCLogic {
       busca: "", onBusca: () => {}, phBusca: "Buscar por nome ou nível…",
       phNome: "Ex.: Our End of Year Dishes", phDescricao: "Uma linha sobre o projeto.",
       phSessaoTitulo: "Título da sessão", phSessaoObjetivo: "O que a aluna sai sabendo",
+      importarLabel: "Trazer de um texto", importando: false, onImportar: () => {},
+      textoRef: this.textoRef, phTexto: "Cole aqui o syllabus, no formato de cima.",
+      exemploImport: "", onConferir: () => {}, onGravarImport: () => {},
+      onFecharImport: () => {}, podeGravarImport: false, gravarImportLabel: "",
+      temPrevia: false, previa: [], temAvisos: false, avisos: "",
+      temImportErro: false, importErro: "", importFeito: false, importFeitoTexto: "",
       criando: false, onNovo: () => {}, onCriar: () => {}, onCancelarNovo: () => {},
       novoNomeRef: this.novoNomeRef, novoNiveis: [], onNovoNivel: () => {},
       novoTemErro: false, novoErro: "",
@@ -280,6 +331,57 @@ class Component extends DCLogic {
         bg: filtro === f.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         fg: filtro === f.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
         onClick: () => this.setState({ filtro: f.id }) })),
+
+      // ── trazer de um texto ──
+      importando: !!this.state.importando,
+      importarLabel: this.state.importando ? "fechar" : "Trazer de um texto",
+      onImportar: () => this.setState({ importando: !this.state.importando,
+        previa: null, importErro: "", importFeito: "" }),
+      onFecharImport: () => this.setState({ importando: false, previa: null,
+        importErro: "", importFeito: "" }),
+      exemploImport: "Programa: My People Map\nNível: Basics (A1)\nSobre: uma linha sobre o projeto\n\n"
+        + "S1: The Map Begins\nObjetivo: Students will be able to introduce themselves.\n"
+        + "Começos: I am; I'm from\nTarefa: Find one bio in English and write three facts.\n"
+        + "Warm-up: teacher shows a hand-drawn people map (10)\nMinds On: a real Instagram bio (15)",
+      onConferir: () => {
+        const el = this.textoRef.current;
+        const r = CRM.conferirImportacao((el && el.value) || "");
+        this.setState({ previa: r, importErro: "", importFeito: "" });
+      },
+      temPrevia: !!(this.state.previa && this.state.previa.programas.length),
+      previa: ((this.state.previa && this.state.previa.programas) || []).map(x => ({
+        nome: x.nome || "(sem nome)",
+        meta: [x.nivel || "sem nível",
+          x.sessoes + (x.sessoes === 1 ? " sessão" : " sessões")].join(" · "),
+        estado: x.erro ? x.erro : (x.existe ? "atualiza o que já existe" : "programa novo"),
+        cor: x.erro ? "var(--color-error-dark)"
+          : (x.existe ? "var(--color-warning-dark)" : "var(--color-success-dark)")
+      })),
+      temAvisos: !!(this.state.previa && this.state.previa.avisos.length),
+      avisos: this.state.previa
+        ? (this.state.previa.avisos.length + (this.state.previa.avisos.length === 1
+            ? " linha não foi entendida e vai ser ignorada:\n" : " linhas não foram entendidas e vão ser ignoradas:\n")
+          + this.state.previa.avisos.slice(0, 8).join("\n"))
+        : "",
+      podeGravarImport: !!(this.state.previa && this.state.previa.podeImportar),
+      gravarImportLabel: this.state.previa
+        ? ("Gravar " + this.state.previa.programas.length
+          + (this.state.previa.programas.length === 1 ? " programa" : " programas"))
+        : "Gravar",
+      onGravarImport: () => {
+        const el = this.textoRef.current;
+        const r = CRM.importarProgramas((el && el.value) || "");
+        if (!r.ok) return this.setState({ importErro: r.erro || "Não foi possível." });
+        const n = r.feitos.reduce((s2, x) => s2 + x.sessoes, 0);
+        if (el) el.value = "";
+        this.setState({ previa: null, importErro: "",
+          importFeito: r.feitos.length + (r.feitos.length === 1 ? " programa" : " programas")
+            + " e " + n + (n === 1 ? " sessão" : " sessões") + " no repositório." });
+        this.bump();
+      },
+      temImportErro: !!this.state.importErro, importErro: this.state.importErro || "",
+      importFeito: !!this.state.importFeito,
+      importFeitoTexto: this.state.importFeito || "",
 
       // ── programa novo ──
       criando: !!this.state.criando,

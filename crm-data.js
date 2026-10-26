@@ -10443,6 +10443,161 @@
     syllabusSave(l);
     return { ok: true, programa: r.programa, sessoes: syllabusDoPrograma(r.programa.id).length };
   }
+  // ── TRAZER UM PROGRAMA DE FORA, EM TEXTO ──────────────────────
+  //
+  // Os programas da escola estão escritos em documentos: um syllabus
+  // por projeto, com a tabela das sessões. Cadastrar vinte e cinco
+  // projetos de dez sessões a mão são duzentas e cinquenta telas de
+  // digitação, e ninguém faz isso duas vezes.
+  //
+  // Então o repositório lê um bloco de texto. O formato é o do
+  // próprio syllabus, uma linha por coisa:
+  //
+  //   Programa: My People Map
+  //   Nível: Basics (A1)
+  //   Sobre: uma linha sobre o projeto
+  //
+  //   S1: The Map Begins
+  //   Objetivo: Students will be able to introduce themselves…
+  //   Começos: I am; I'm from
+  //   Tarefa: Find one person on Instagram who writes in English…
+  //   Warm-up: teacher shows a hand-drawn people map (10)
+  //   Minds On: real Instagram bio in English (15)
+  //
+  // Linha que o formato não conhece é ignorada, e o que foi entendido
+  // aparece na tela ANTES de gravar: importação que grava no escuro é
+  // importação que a escola não confere.
+  var IMP_CAMPOS = {
+    "objetivo": "objetivo", "objective": "objetivo",
+    "tarefa": "homework", "homework": "homework", "licao": "homework",
+    "comecos": "starters", "começos": "starters", "starters": "starters",
+    "key language": "starters", "palavras": "palavras", "words": "palavras",
+    "guia": "guia", "slides": "slides"
+  };
+  function impChave(s) {
+    return String(s || "").trim().toLowerCase()
+      .replace(/[áàâã]/g, "a").replace(/[éê]/g, "e").replace(/í/g, "i")
+      .replace(/[óô]/g, "o").replace(/ú/g, "u").replace(/ç/g, "c");
+  }
+  function lerProgramasDeTexto(texto) {
+    var linhas = String(texto || "").split(/\r?\n/);
+    var fasePorLabel = {};
+    FASES.forEach(function (f) { fasePorLabel[impChave(f.label)] = f; });
+    var out = [], prog = null, sess = null, avisos = [];
+    var fecharSessao = function () {
+      if (prog && sess) prog.sessoes.push(sess);
+      sess = null;
+    };
+    var fecharPrograma = function () {
+      fecharSessao();
+      if (prog) out.push(prog);
+      prog = null;
+    };
+    linhas.forEach(function (bruta, i) {
+      var linha = String(bruta || "").replace(/^#+\s*/, "").trim();
+      if (!linha) return;
+      var dois = linha.indexOf(":");
+      var rotulo = dois > 0 ? impChave(linha.slice(0, dois)) : "";
+      var valor = dois > 0 ? linha.slice(dois + 1).trim() : "";
+
+      // começo de programa
+      if (rotulo === "programa" || rotulo === "programme" || rotulo === "projeto") {
+        fecharPrograma();
+        prog = { nome: valor, nivel: "", descricao: "", sessoes: [] };
+        return;
+      }
+      if (!prog) { avisos.push("linha " + (i + 1) + ": fora de um programa"); return; }
+      if (rotulo === "nivel" || rotulo === "level") { prog.nivel = valor; return; }
+      if (rotulo === "sobre" || rotulo === "descricao" || rotulo === "about") {
+        prog.descricao = valor; return;
+      }
+
+      // começo de sessão: "S1: Título" ou "1 | Título" ou "Sessão 1: Título"
+      var mS = linha.match(/^s(?:ess[ãa]o|ession)?\s*(\d{1,2})\s*[:.\-–|]\s*(.*)$/i);
+      if (!mS) mS = linha.match(/^(\d{1,2})\s*[|.\-–]\s*(.*)$/);
+      if (mS) {
+        fecharSessao();
+        sess = { n: parseInt(mS[1], 10), titulo: (mS[2] || "").trim(),
+          objetivo: "", homework: "", starters: "", palavras: "",
+          guia: "", slides: "", etapas: [] };
+        return;
+      }
+      if (!sess) { avisos.push("linha " + (i + 1) + ": fora de uma sessão"); return; }
+
+      // uma fase do roteiro: "Warm-up: o que acontece (10)"
+      var fase = fasePorLabel[rotulo];
+      if (fase) {
+        var t = valor, min = fase.min;
+        var mMin = t.match(/\((\d{1,3})\s*(?:min)?\)\s*$/i);
+        if (mMin) { min = parseInt(mMin[1], 10); t = t.slice(0, mMin.index).trim(); }
+        sess.etapas.push({ fase: fase.id, titulo: t, min: min });
+        return;
+      }
+      var campo = IMP_CAMPOS[rotulo];
+      if (campo) { sess[campo] = valor; return; }
+      avisos.push("linha " + (i + 1) + ": \"" + linha.slice(0, 40) + "\" não foi entendida");
+    });
+    fecharPrograma();
+    return { programas: out, avisos: avisos };
+  }
+  // O que a importação VAI fazer, sem fazer: é o que a tela mostra
+  // antes de gravar.
+  function conferirImportacao(texto) {
+    var lido = lerProgramasDeTexto(texto);
+    var jaTem = programasEstudoAll();
+    var plano = lido.programas.map(function (p) {
+      var igual = jaTem.filter(function (x) {
+        return impChave(x.nome) === impChave(p.nome) && impChave(x.nivel) === impChave(p.nivel);
+      })[0] || null;
+      return { nome: p.nome, nivel: p.nivel, sessoes: p.sessoes.length,
+        existe: !!igual, id: igual ? igual.id : "",
+        erro: !p.nome ? "sem nome" : (!p.nivel ? "sem nível" : "") };
+    });
+    return { programas: plano, avisos: lido.avisos,
+      podeImportar: plano.length > 0 && plano.every(function (x) { return !x.erro; }) };
+  }
+  function importarProgramas(texto) {
+    var lido = lerProgramasDeTexto(texto);
+    if (!lido.programas.length) return { ok: false, erro: "Nenhum programa no texto." };
+    var jaTem = programasEstudoAll();
+    var feitos = [];
+    for (var i = 0; i < lido.programas.length; i++) {
+      var p = lido.programas[i];
+      var igual = jaTem.filter(function (x) {
+        return impChave(x.nome) === impChave(p.nome) && impChave(x.nivel) === impChave(p.nivel);
+      })[0] || null;
+      var r = salvarProgramaEstudo({ id: igual ? igual.id : undefined, nome: p.nome,
+        nivel: p.nivel, descricao: p.descricao });
+      if (!r.ok) return { ok: false, erro: p.nome + ": " + r.erro, feitos: feitos };
+      var pgId = r.programa.id;
+      p.sessoes.forEach(function (s) {
+        // O roteiro da escola tem seis fases. O texto costuma trazer
+        // quatro atividades; as fases que ele não cita entram vazias,
+        // com o tempo padrão, em vez de sumirem — uma aula de 25
+        // minutos no painel seria mentira sobre a aula de uma hora.
+        var etapas = null;
+        if (s.etapas.length) {
+          etapas = [];
+          FASES.forEach(function (f) {
+            var dela = s.etapas.filter(function (e) { return e.fase === f.id; });
+            if (dela.length) etapas = etapas.concat(dela);
+            else etapas.push({ fase: f.id, titulo: "", min: f.min });
+          });
+        }
+        salvarSessaoSyllabus({ programaId: pgId, nivel: p.nivel, ciclo: "", n: s.n,
+          projeto: p.nome, titulo: s.titulo, objetivo: s.objetivo,
+          homework: s.homework, starters: s.starters, palavras: s.palavras,
+          guia: s.guia, slides: s.slides,
+          // sessão sem roteiro nenhum no texto nasce com as seis
+          // fases, que é o que salvarSessaoSyllabus faz sozinho
+          etapas: etapas });
+      });
+      feitos.push({ nome: p.nome, nivel: p.nivel, sessoes: p.sessoes.length,
+        atualizado: !!igual, id: pgId });
+    }
+    return { ok: true, feitos: feitos, avisos: lido.avisos };
+  }
+
   // ── QUEM SEGUE QUAL PROGRAMA ──────────────────────────────────
   function programaDaTurma(turma) {
     if (!turma) return null;
@@ -16808,6 +16963,8 @@
     salvarProgramaEstudo: salvarProgramaEstudo,
     arquivarProgramaEstudo: arquivarProgramaEstudo,
     duplicarProgramaEstudo: duplicarProgramaEstudo,
+    lerProgramasDeTexto: lerProgramasDeTexto, conferirImportacao: conferirImportacao,
+    importarProgramas: importarProgramas,
     syllabusDoPrograma: syllabusDoPrograma, programaDaTurma: programaDaTurma,
     syllabusDaTurma: syllabusDaTurma, definirProgramaDaTurma: definirProgramaDaTurma,
     planoDaTurma: planoDaTurma, planoSessoes: planoSessoes, salvarPlano: salvarPlano,

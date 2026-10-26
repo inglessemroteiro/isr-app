@@ -160,6 +160,64 @@ const P = require("./preparar.js");
     .filter(x => /sess(ão|ões)/.test(x.textContent)).length);
   T("os programas saem em linhas com nome e nível", linhas >= 1, { linhas });
 
+  console.log("\n— trazer os programas de um texto —");
+  await p.goto(P.endereco("ISR - Programas v3.dc.html"));
+  await p.waitForTimeout(2800);
+  // o arquivo dos programas reais da escola tem de ser entendido
+  // inteiro: linha que o formato não conhece é programa que entra
+  // torto no repositório
+  const arquivo = await p.evaluate(async () => {
+    const C = window.ISRCRM;
+    const r = await fetch("/programas/26-2.txt");
+    if (!r.ok) return { achou: false };
+    const txt = await r.text();
+    const conf = C.conferirImportacao(txt);
+    return { achou: true, n: conf.programas.length, avisos: conf.avisos,
+      pode: conf.podeImportar, semSessao: conf.programas.filter(x => !x.sessoes).length,
+      nomes: conf.programas.map(x => x.nome + " · " + x.nivel) };
+  });
+  T("o arquivo dos programas reais está no repositório", arquivo.achou, arquivo);
+  T("e é entendido inteiro, sem linha solta",
+    arquivo.achou && arquivo.avisos.length === 0, arquivo.avisos);
+  T("todos os programas dele têm sessões",
+    arquivo.achou && arquivo.n > 0 && arquivo.semSessao === 0, arquivo);
+
+  // a tela: colar, conferir, gravar
+  const fluxo = await p.evaluate(async () => {
+    const bt = [...document.querySelectorAll("main button, header button")]
+      .filter(x => /Trazer de um texto/.test(x.textContent))[0];
+    if (!bt) return { abriu: false };
+    bt.click();
+    await new Promise(r => setTimeout(r, 700));
+    const ta = document.querySelector("main textarea");
+    if (!ta) return { abriu: true, campo: false };
+    ta.value = "Programa: Teste de importação\nNível: Basics (A1)\n\n"
+      + "S1: Primeira sessão\nObjetivo: Students will be able to try the importer.\n"
+      + "Warm-up: abrir a tela (10)\nlinha que ninguem entende\n";
+    const conferir = [...document.querySelectorAll("main button")]
+      .filter(x => /Conferir o texto/.test(x.textContent))[0];
+    conferir.click();
+    await new Promise(r => setTimeout(r, 700));
+    const txt = document.querySelector("main").innerText;
+    const gravar = [...document.querySelectorAll("main button")]
+      .filter(x => /^Gravar/.test(x.textContent.trim()))[0];
+    const previa = /programa novo/.test(txt);
+    const aviso = /não foi entendida/.test(txt);
+    if (gravar) gravar.click();
+    await new Promise(r => setTimeout(r, 900));
+    const C = window.ISRCRM;
+    const criado = C.programasEstudoLista().filter(x => x.nome === "Teste de importação")[0];
+    return { abriu: true, campo: true, previa, aviso, temGravar: !!gravar,
+      criado: !!criado, sessoes: criado ? criado.sessoes : 0,
+      feito: /no repositório/.test(document.querySelector("main").innerText) };
+  });
+  T("a tela abre o campo de colar", fluxo.abriu && fluxo.campo, fluxo);
+  T("conferir mostra o que vai ser gravado antes de gravar", fluxo.previa, fluxo);
+  T("e avisa a linha que não entendeu", fluxo.aviso, fluxo);
+  T("gravar cria o programa com as sessões",
+    fluxo.criado && fluxo.sessoes === 1, fluxo);
+  T("e a tela diz o que gravou", fluxo.feito, fluxo);
+
   console.log("\n— quem não é da coordenação não escreve programa —");
   await p.evaluate(() => {
     try {

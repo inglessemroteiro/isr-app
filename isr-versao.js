@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.25-b",
-  data: "25/10/2026",
-  nota: "O repositório de programas da escola"
+  numero: "2026.10.26-a",
+  data: "26/10/2026",
+  nota: "Os programas reais da escola entram por um texto"
 };

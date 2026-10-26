@@ -40,8 +40,10 @@ Se o React ainda não estiver baixado:
   varredura que não deixa voltar nenhum recado de obra às telas da
   aluna.
 - `programas.js` — o repositório de programas da escola: a migração
-  do que já existia, criar, duplicar e arquivar, e a escolha do
-  programa na turma e na aluna particular.
+  do que já existia, criar, duplicar e arquivar, a escolha do
+  programa na turma e na aluna particular, e a importação por texto —
+  inclusive conferindo que `programas/26-2.txt`, com os programas
+  reais da escola, é entendido inteiro.
 - `pergunta-caderno.js` — a pergunta que vira tarefa no caderno, na
   tela da turma: a barra de espaço, a conta de quantas perguntas vão
   para o caderno, o rótulo em cima de cada campo e a frase chegando
