@@ -5852,6 +5852,37 @@
 
   // Mescla duas listas de registros por id. Vence o _v mais alto.
   // Sem _v, o registro remoto é considerado antigo (o local acabou de ser escrito).
+  // ── A MESCLAGEM DO CLUBE ──────────────────────────────────────
+  //
+  // Um clube tem dois donos: quem o conduz escreve o cadastro, as
+  // alunas escrevem quem está dentro. Mesclar o registro inteiro pelo
+  // carimbo mais novo fazia uma metade apagar a outra — a professora
+  // salvava as datas no computador e sumiam as inscritas; a aluna
+  // entrava pelo celular e voltavam as datas velhas.
+  //
+  // Aqui cada metade vale pelo seu carimbo. Quem saiu do clube num
+  // aparelho não volta porque o outro ainda o listava: o lado com o
+  // carimbo mais novo das inscritas é a lista que vale, inteira.
+  function mesclarClubes(local, remoto) {
+    var mapa = {}, ordem = [], conflitos = 0;
+    var por = function (l2) {
+      (l2 || []).forEach(function (c) {
+        if (!c || !c.id) return;
+        if (!mapa[c.id]) { mapa[c.id] = c; ordem.push(c.id); return; }
+        var a2 = mapa[c.id], b2 = c;
+        var cadastro = (b2._v || 0) > (a2._v || 0) ? b2 : a2;
+        var inscritas = (b2._vm || 0) > (a2._vm || 0) ? b2 : a2;
+        if ((a2._v || 0) !== (b2._v || 0) || (a2._vm || 0) !== (b2._vm || 0)) conflitos++;
+        var junto = Object.assign({}, cadastro);
+        CLUBE_INSCRITAS.forEach(function (k) { junto[k] = inscritas[k]; });
+        junto._v = Math.max(a2._v || 0, b2._v || 0);
+        junto._vm = Math.max(a2._vm || 0, b2._vm || 0);
+        mapa[c.id] = junto;
+      });
+    };
+    por(remoto); por(local);
+    return { lista: ordem.map(function (k) { return mapa[k]; }), conflitos: conflitos };
+  }
   function mesclarLista(local, remoto, campoId) {
     var id = campoId || "id";
     var mapa = {}, ordem = [], conflitos = 0;
@@ -6353,7 +6384,11 @@
       custos: local.custos,               // lista curta e sem id: última edição vale
       templates: local.templates,
       turmas: lista("turmas"),
-      clubes: lista("clubes"),
+      clubes: (function () {
+        var r = mesclarClubes(local.clubes, remoto.clubes);
+        conflitos += r.conflitos;
+        return r.lista;
+      })(),
       eventos: lista("eventos"),
       chamadas: mesclarMapa(local.chamadas, remoto.chamadas),
       tarefas: lista("tarefas"),
@@ -7021,6 +7056,38 @@
       })
       .catch(function () { return ""; });
   }
+  // ── A SENHA, DEFINIDA DE DENTRO DO APP ────────────────────────
+  //
+  // A aluna entra por link. O link é o caminho bom — nada para
+  // inventar, nada para esquecer —, mas é um caminho só: se o e-mail
+  // não chega, ela não entra, e pedir outro link depende do mesmo
+  // e-mail que não chegou.
+  //
+  // A senha é a saída, e ela se define aqui, com a sessão que a
+  // pessoa já tem aberta. Nenhum e-mail no meio: é o único jeito de a
+  // saída não depender do caminho que falhou.
+  function definirSenha(nova) {
+    var senha = String(nova || "");
+    if (senha.length < 8) {
+      return Promise.resolve({ ok: false,
+        erro: "A senha precisa ter pelo menos 8 caracteres." });
+    }
+    return tokenGestao().then(function (tk) {
+      if (!tk) return { ok: false, precisaEntrar: true,
+        erro: "A sua sessão venceu. Entre de novo para definir a senha." };
+      return fetch(window.location.origin + "/.netlify/identity/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + tk },
+        body: JSON.stringify({ password: senha })
+      }).then(function (r) {
+        if (!r.ok) throw new Error("recusou");
+        return { ok: true };
+      });
+    }).catch(function () {
+      return { ok: false, erro: "Não foi possível salvar a senha agora. Tente de novo." };
+    });
+  }
+
   // Chamada a uma função do Netlify já com o token da pessoa.
   function chamarFuncao(nome, opcoes) {
     var o = opcoes || {};
@@ -12978,6 +13045,24 @@
     agendarSync();
     return clubesLista();
   }
+  // Grava um clube carimbando o que mudou.
+  //
+  // carimbarLista só carimba registro SEM carimbo: clube que já tinha
+  // um ficava com o mesmo para sempre, e a mesclagem, no empate,
+  // prefere o que o aparelho já tem. Era isso que fazia o computador
+  // e o celular nunca verem a alteração um do outro — cada um ficava
+  // com a sua versão, em silêncio, sem conflito registrado.
+  //
+  // "qual" diz qual metade mudou: "cadastro" (o que a professora
+  // escreve) ou "inscritas" (quem entrou, saiu ou pagou).
+  function clubeGravar(lista, i, qual) {
+    var reg = lista[i];
+    if (reg) {
+      if (qual === "inscritas") reg._vm = Date.now();
+      else reg._v = Date.now();
+    }
+    clubesSalvar(lista);
+  }
   function clubeNormal(c) {
     return {
       id: c.id, nome: c.nome || "", professora: c.professora || "",
@@ -13014,9 +13099,20 @@
       materiais: c.materiais || [], encontros: c.encontros || [],
       membros: c.membros || [], espera: c.espera || [],
       entrou: c.entrou || {}, pagos: c.pagos || {},
-      _v: c._v
+      // ── DOIS DONOS, DOIS CARIMBOS ──────────────────────────────
+      //
+      // Um clube é escrito por duas pessoas em dois aparelhos: a
+      // professora mexe no nome, nas datas e na descrição; a aluna
+      // entra, sai e paga. O sync mesclava o registro INTEIRO pelo
+      // carimbo mais novo, então salvar o clube no computador apagava
+      // quem tinha entrado pelo celular, e entrar pelo celular
+      // devolvia as datas antigas ao computador. Cada metade tem o
+      // seu carimbo: _v para o cadastro, _vm para as inscritas.
+      _v: c._v, _vm: c._vm
     };
   }
+  // As quatro coisas que pertencem às alunas, e não a quem conduz.
+  var CLUBE_INSCRITAS = ["membros", "espera", "entrou", "pagos"];
   function clubesLista() {
     return clubesRaw().filter(function (c) { return c && c.id && !c.apagado; }).map(clubeNormal);
   }
@@ -13073,7 +13169,7 @@
     } else {
       l[i] = clubeNormal(Object.assign({}, l[i], cfg, { id: l[i].id, nome: nome }));
     }
-    clubesSalvar(l);
+    clubeGravar(l, i < 0 ? l.length - 1 : i, "cadastro");
     return { ok: true, id: i < 0 ? l[l.length - 1].id : cfg.id };
   }
   // Publicar e despublicar, com as travas do handoff.
@@ -13170,13 +13266,13 @@
     var livres = clubeVagasLivres(c);
     if (livres === 0 && !opcoes.forcar) {
       if (c.espera.indexOf(pessoaId) < 0) c.espera.push(pessoaId);
-      l[i] = c; clubesSalvar(l);
+      l[i] = c; clubeGravar(l, i, "inscritas");
       return { ok: true, espera: true, posicao: c.espera.indexOf(pessoaId) + 1 };
     }
     c.espera = c.espera.filter(function (x) { return x !== pessoaId; });
     c.membros.push(pessoaId);
     c.entrou[pessoaId] = carimboDeEntrada();
-    l[i] = c; clubesSalvar(l);
+    l[i] = c; clubeGravar(l, i, "inscritas");
     var depois = clubesDaAluna(pessoaId).filter(function (x) { return x.id === clubeId; })[0];
     return { ok: true, plano: depois ? depois.plano : "incluido",
       ordem: depois ? depois.ordem : 1 };
@@ -13197,7 +13293,7 @@
       c.membros.push(entrou);
       c.entrou[entrou] = carimboDeEntrada();
     }
-    l[i] = c; clubesSalvar(l);
+    l[i] = c; clubeGravar(l, i, "inscritas");
     return { ok: true, promovida: entrou };
   }
   function clubePagamentoFeito(clubeId, pessoaId, quando) {
@@ -13206,7 +13302,7 @@
     if (i < 0) return { ok: false };
     var c = clubeNormal(l[i]);
     c.pagos[pessoaId] = quando || iso(today());
-    l[i] = c; clubesSalvar(l);
+    l[i] = c; clubeGravar(l, i, "inscritas");
     return { ok: true };
   }
   // O que a gestão precisa ver de uma vez: quanto, quantos e quem
@@ -17268,6 +17364,10 @@
     ticketAlvo: ticketAlvo, setTicketAlvo: setTicketAlvo,
     calcularProposta: calcularProposta, calcularPacote: calcularPacote,
     backendUrl: backendUrl, setBackendUrl: setBackendUrl, carregarDoBackend: carregarDoBackend, enviarSync: enviarSync,
+    // exposta para a suíte: a mesclagem é onde o celular da aluna e o
+    // computador da professora se encontram, e é lá que uma metade
+    // apagava a outra
+    mesclarComRemoto: mesclarComRemoto, definirSenha: definirSenha,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,

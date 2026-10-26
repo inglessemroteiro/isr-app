@@ -141,16 +141,27 @@ function stringsDeDados(js) {
   return literaisDe(semTemplates);
 }
 
+// O \b do JavaScript só conhece A-Z, a-z, 0-9 e _: para ele, a letra
+// acentuada é fronteira de palavra. "saída para" casava com
+// "\bd[áa] para\b", porque entre o "í" e o "d" existe uma fronteira
+// que não existe em português. Tirar o acento antes de comparar é o
+// que faz o \b voltar a significar o que ele deveria significar — e
+// os padrões já aceitam as duas grafias, com e sem acento.
+function semAcento(t) {
+  return String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function achados(nome, conteudo) {
   var out = [];
   conteudo.split("\n").forEach(function (linha, i) {
     var limpa = linha.trim();
     if (!limpa) return;
+    var plana = semAcento(limpa);
     PROIBIDOS.forEach(function (p) {
-      var m = limpa.match(p.re);
+      var m = plana.match(p.re);
       if (!m) return;
       // exclamação só conta dentro de texto, não em código
-      if (p.re.source.indexOf("important") >= 0 && /[=<>&|]/.test(limpa.slice(Math.max(0, limpa.indexOf("!") - 1), limpa.indexOf("!") + 2))) return;
+      if (p.re.source.indexOf("important") >= 0 && /[=<>&|]/.test(plana.slice(Math.max(0, plana.indexOf("!") - 1), plana.indexOf("!") + 2))) return;
       out.push({ arquivo: nome, linha: i + 1, trecho: limpa.slice(0, 110), achou: m[0], por: p.por });
     });
   });
