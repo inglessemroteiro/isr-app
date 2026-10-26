@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-d",
+  numero: "2026.10.26-e",
   data: "26/10/2026",
-  nota: "O portão não explica o sistema a quem está entrando"
+  nota: "As telas de senha dizem só o que fazer"
 };
