@@ -5,6 +5,15 @@
 //     link e entra — sem inventar senha, sem guardar senha. Eram 40
 //     alunas paradas na tela de senha. Quem já tem senha continua
 //     entrando por ela, na mesma tela, um toque abaixo;
+//   — CARREGAR A PÁGINA NÃO GASTA O LINK. O token vale uma vez, e
+//     era a página que o gastava ao carregar, sem ninguém pedir. O
+//     app do Gmail abre o link no navegador interno dele antes de
+//     passar para o navegador de verdade: essa primeira abertura já
+//     gastava o token, e a segunda — a que a pessoa vê — lia "link
+//     já usado". Prévia de e-mail, antivírus de empresa e recarregar
+//     davam no mesmo. Quem gasta o token é o toque;
+//   — link gasto manda pedir outro, com o e-mail já escrito quando
+//     foi deste aparelho que ele foi pedido;
 //   — o link do convite entra sozinho. A API do Identity exige uma
 //     senha para aceitar o convite: ela é sorteada aqui e ninguém
 //     precisa sabê-la. A tela de criar senha fica como alternativa
@@ -172,7 +181,15 @@ const P = require("./preparar.js");
   p.on("pageerror", e => erros.push(String(e).slice(0, 220)));
   await p.goto("http://localhost:8899/aluna.html#recovery_token=tok-de-teste");
   await p.waitForTimeout(2800);
-  T("o token de link é verificado",
+  T("carregar a página não gasta o token", verificacoes.length === 0, verificacoes);
+  T("a tela pede um toque", (await telaDe(p)) === "telaAbrir", { tela: await telaDe(p) });
+  // e recarregar — o que o navegador do Gmail faz — também não gasta
+  await p.reload();
+  await p.waitForTimeout(2600);
+  T("recarregar também não gasta", verificacoes.length === 0, verificacoes);
+  await p.click("#btAbrir");
+  await p.waitForTimeout(2000);
+  T("o toque é que verifica o token",
     verificacoes.length === 1 && verificacoes[0].type === "recovery", verificacoes);
   T("e nenhuma senha vai no pedido", !verificacoes[0] || !verificacoes[0].password, verificacoes);
   const dePois = await p.evaluate(() => ({
@@ -212,6 +229,8 @@ const P = require("./preparar.js");
   await p.waitForTimeout(2600);
   T("a tela é a de escolher a nova senha", (await telaDe(p)) === "telaRecovery",
     { tela: await telaDe(p) });
+  T("e abrir essa tela também não gasta o token",
+    verificacoes.length === 0, verificacoes);
   senhasNovas = [];
   await p.fill("#recoverySenha", "12345678");
   await p.click("#btRecovery");
@@ -228,6 +247,12 @@ const P = require("./preparar.js");
   p.on("pageerror", e => erros.push(String(e).slice(0, 220)));
   await p.goto("http://localhost:8899/aluna.html#invite_token=tok-de-convite");
   await p.waitForTimeout(2800);
+  T("o convite também espera o toque", verificacoes.length === 0, verificacoes);
+  const primeiraVez = await p.evaluate(() =>
+    document.getElementById("abrirTexto").textContent);
+  T("e diz que é a primeira vez", /primeira vez/.test(primeiraVez), { primeiraVez });
+  await p.click("#btAbrir");
+  await p.waitForTimeout(2000);
   const convite = verificacoes.filter(v => v.type === "signup")[0];
   T("o convite é aceito sem a aluna digitar nada", !!convite, verificacoes);
   T("com uma senha sorteada, que ninguém precisa saber",
@@ -242,6 +267,37 @@ const P = require("./preparar.js");
   T("a sessão fica guardada no primeiro acesso",
     !!(apos.token && apos.token.access === "tk-de-teste"), apos);
   T("e a tela de criar senha não aparece", apos.tela !== "telaConvite", apos);
+  await ctx.close();
+
+  // ── 5 · link gasto: o caminho é pedir outro ─────────────────────
+  console.log("\n— link gasto manda pedir outro, com o e-mail escrito —");
+  ctx = await montar();
+  // o Identity recusa: é o que ele responde para token já usado
+  await ctx.route("**/.netlify/identity/verify", r =>
+    r.fulfill({ status: 401, contentType: "application/json",
+      body: JSON.stringify({ error: "invalid_grant" }) }));
+  p = await ctx.newPage();
+  p.on("pageerror", e => erros.push(String(e).slice(0, 220)));
+  await p.goto("http://localhost:8899/aluna.html");
+  await p.waitForTimeout(2400);
+  await p.fill("#linkEmail", "quem@teste.local");
+  await p.click("#btLink");
+  await p.waitForTimeout(900);
+  await p.goto("http://localhost:8899/aluna.html#recovery_token=ja-usado");
+  await p.reload();
+  await p.waitForTimeout(2600);
+  await p.click("#btAbrir");
+  await p.waitForTimeout(1800);
+  const gasto = await p.evaluate(() => ({
+    tela: [...document.querySelectorAll(".tela")]
+      .filter(x => x.style.display === "block").map(x => x.id)[0],
+    erro: document.getElementById("linkErro").textContent,
+    email: document.getElementById("linkEmail").value
+  }));
+  T("volta para a tela de pedir o link", gasto.tela === "telaLink", gasto);
+  T("dizendo que o link foi usado", /já foi usado ou expirou/.test(gasto.erro), gasto);
+  T("e o e-mail já vem escrito, para ser um toque só",
+    gasto.email === "quem@teste.local", gasto);
   await ctx.close();
 
   T("nenhum erro de página", erros.length === 0, erros);

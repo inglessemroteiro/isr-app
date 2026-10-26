@@ -43,6 +43,22 @@
     <button class="link" onclick="mostrar('telaLogin')">Tenho uma senha</button>
   </div>
 
+  <!-- ── O LINK CLICADO PEDE UM TOQUE ──────────────────────────
+       Esta tela existe por um motivo concreto: o token do link vale
+       UMA vez, e a página era quem o gastava, sozinha, ao carregar.
+       O app do Gmail abre o link no navegador interno dele antes de
+       passar para o Safari — e essa primeira abertura, que ninguém
+       pediu, já tinha gastado o token. O Safari então abria a mesma
+       URL e lia "link já usado". Prévia de e-mail, antivírus de
+       empresa e recarregar a página davam no mesmo.
+
+       Um toque resolve: só gente aperta botão. -->
+  <div class="tela" id="telaAbrir">
+    <p id="abrirTexto">Toque para entrar na sua área.</p>
+    <button id="btAbrir" onclick="abrirPeloLink()">Entrar</button>
+    <p class="erro" id="abrirErro"></p>
+  </div>
+
   <!-- quem tem senha entra por ela (Netlify Identity, direto na API) -->
   <div class="tela" id="telaLogin">
     <p>Use o e-mail da sua matrícula.</p>
@@ -118,7 +134,7 @@
 
 </div>
 <script>
-  var TELAS = ["telaCarregando", "telaLink", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
+  var TELAS = ["telaCarregando", "telaAbrir", "telaLink", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
   // O título era "Área da aluna" em cima de TODAS as telas — e o
   // e-mail de convite e de redefinição de senha do Netlify aponta para
   // a raiz do site, que é esta página, tanto para a aluna quanto para a
@@ -126,7 +142,7 @@
   // "Área da aluna": a Carla parou aí, achando que o link estava
   // errado. O título passa a dizer o que a tela faz; depois de salvar,
   // decidirDestino já manda cada uma para a sua área.
-  var TITULOS = { telaLink: "Entrar", telaConvite: "Criar sua senha",
+  var TITULOS = { telaLink: "Entrar", telaAbrir: "Entrar", telaConvite: "Criar sua senha",
     telaRecovery: "Nova senha", telaEsqueci: "Trocar a senha",
     telaLogin: "Entrar com senha" };
   function mostrar(id) {
@@ -389,8 +405,29 @@
     }).then(function (email) {
       decidirDestino(email);
     }).catch(function () {
-      mostrar("telaConvite");
+      // o convite também vale uma vez: gasto, o caminho é o mesmo —
+      // pedir um link novo, que a conta já existe
+      linkFalhou();
     });
+  }
+
+  // O toque: daqui o token é gasto, e só daqui. Qual dos dois
+  // caminhos depende do tipo de link que chegou.
+  function abrirPeloLink() {
+    texto("abrirErro", "");
+    document.getElementById("btAbrir").disabled = true;
+    if (hashToken && hashToken[1] === "invite_token") aceitarConviteSemSenha();
+    else if (hashToken && hashToken[1] === "confirmation_token") confirmarEmail();
+    else entrarPeloLink();
+  }
+  // Link gasto ou vencido: o caminho é pedir outro, e o e-mail já vem
+  // escrito quando foi deste aparelho que ele foi pedido.
+  function linkFalhou() {
+    var e = "";
+    try { e = localStorage.getItem(EMAIL_PEDIDO) || ""; } catch (er) {}
+    if (e) document.getElementById("linkEmail").value = e;
+    mostrar("telaLink");
+    texto("linkErro", "Este link já foi usado ou expirou. Peça outro para receber um novo e-mail.");
   }
 
   // O link de entrada clicado: verifica o token, guarda a sessão e
@@ -410,8 +447,7 @@
     }).then(function (email) {
       decidirDestino(email);
     }).catch(function () {
-      mostrar("telaLink");
-      texto("linkErro", "Este link já foi usado ou expirou. Informe o e-mail para receber outro.");
+      linkFalhou();
     });
   }
 
@@ -467,7 +503,13 @@
   // registro — link aberto em outro aparelho, convite disparado pela
   // escola — o link entra, que é o que a pessoa espera dele.
   var PEDIDO = "isr_pedido_de_link";
-  function guardarPedido(qual) { try { localStorage.setItem(PEDIDO, qual); } catch (e) {} }
+  var EMAIL_PEDIDO = "isr_email_do_pedido";
+  function guardarPedido(qual, email) {
+    try {
+      localStorage.setItem(PEDIDO, qual);
+      if (email) localStorage.setItem(EMAIL_PEDIDO, email);
+    } catch (e) {}
+  }
   function pedidoGuardado() {
     try { var q = localStorage.getItem(PEDIDO); localStorage.removeItem(PEDIDO); return q || ""; }
     catch (e) { return ""; }
@@ -482,7 +524,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email })
     }).then(function () {
-      guardarPedido("entrar");
+      guardarPedido("entrar", email);
       texto("linkInfo", "Se houver uma conta com este e-mail, o link já foi enviado. "
         + "Ele vale uma vez e expira em uma hora.");
     }).catch(function () {
@@ -501,7 +543,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email })
     }).then(function () {
-      guardarPedido("senha");
+      guardarPedido("senha", email);
       texto("esqueciInfo", "Se houver uma conta com este e-mail, o link já foi enviado. "
         + "Ele vale uma vez e expira em uma hora.");
     }).catch(function () {
@@ -526,8 +568,7 @@
     }).then(function (email) {
       decidirDestino(email);
     }).catch(function () {
-      mostrar("telaLink");
-      texto("linkErro", "Este link já foi usado ou expirou. Informe o e-mail para receber outro.");
+      linkFalhou();
     });
   }
 
@@ -585,15 +626,29 @@
     // a página cai no fluxo antigo de e-mail para ninguém ficar trancada
     comTempo(fetch(API + "/settings"), 5000).then(function (r) {
       if (!r.ok) throw new Error("sem identity");
-      // o convite entra sozinho; o link de entrada também. Só vai para
-      // a tela de senha quem pediu para trocar a senha neste aparelho
-      if (hashToken && hashToken[1] === "invite_token") aceitarConviteSemSenha();
-      else if (hashToken && hashToken[1] === "recovery_token") {
-        if (pedidoGuardado() === "senha") mostrar("telaRecovery");
-        else entrarPeloLink();
+      // CARREGAR A PÁGINA NÃO GASTA O LINK.
+      //
+      // O token vale uma vez, e era a página que o gastava ao
+      // carregar, sem ninguém pedir. O app do Gmail abre o link no
+      // navegador interno dele antes de passar para o navegador de
+      // verdade: essa primeira abertura já tinha gastado o token, e a
+      // segunda — a que a pessoa vê — lia "link já usado". Prévia de
+      // e-mail, antivírus de empresa e recarregar a página davam no
+      // mesmo. Daqui em diante quem gasta o token é o toque.
+      //
+      // Quem pediu para TROCAR a senha neste aparelho vai direto à
+      // tela da senha nova: lá o token também só é gasto no Salvar.
+      if (hashToken && pedidoGuardado() === "senha" && hashToken[1] === "recovery_token") {
+        mostrar("telaRecovery");
+      } else if (hashToken) {
+        var oQue = hashToken[1] === "invite_token"
+          ? "Toque para entrar na sua área pela primeira vez."
+          : "Toque para entrar na sua área.";
+        document.getElementById("abrirTexto").textContent = oQue;
+        mostrar("telaAbrir");
+      } else {
+        mostrar("telaLink");
       }
-      else if (hashToken && hashToken[1] === "confirmation_token") confirmarEmail();
-      else mostrar("telaLink");
     }).catch(function () {
       mostrar("telaEmail");
     });
