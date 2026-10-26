@@ -35,7 +35,7 @@
 
   <!-- o caminho principal: o link chega no e-mail e abre o app -->
   <div class="tela" id="telaLink">
-    <p>Digite o seu e-mail. Você recebe um link e entra sem senha.</p>
+    <p>O link de entrada chega no seu e-mail. Não há senha para criar nem lembrar.</p>
     <input id="linkEmail" type="email" placeholder="E-mail" autocomplete="username" />
     <button id="btLink" onclick="pedirLink()">Receber o link</button>
     <p class="info" id="linkInfo"></p>
@@ -45,7 +45,7 @@
 
   <!-- quem tem senha entra por ela (Netlify Identity, direto na API) -->
   <div class="tela" id="telaLogin">
-    <p>Entre com seu e-mail e senha.</p>
+    <p>Use o e-mail da sua matrícula.</p>
     <input id="loginEmail" type="email" placeholder="E-mail" autocomplete="username" />
     <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
     <button id="btLogin" onclick="fazerLogin()">Entrar</button>
@@ -58,7 +58,7 @@
 
   <!-- redefinição de senha: pedir o link -->
   <div class="tela" id="telaEsqueci">
-    <p>Informe o seu e-mail para receber o link de trocar a senha.</p>
+    <p>Você recebe um link para escolher a nova senha.</p>
     <input id="esqueciEmail" type="email" placeholder="E-mail" autocomplete="username" />
     <button id="btEsqueci" onclick="pedirRedefinicao()">Enviar link</button>
     <p class="info" id="esqueciInfo"></p>
@@ -411,7 +411,7 @@
       decidirDestino(email);
     }).catch(function () {
       mostrar("telaLink");
-      texto("linkErro", "Este link já foi usado ou expirou. Peça outro aqui.");
+      texto("linkErro", "Este link já foi usado ou expirou. Informe o e-mail para receber outro.");
     });
   }
 
@@ -444,7 +444,7 @@
     }).catch(function (e) {
       document.getElementById("btRecovery").disabled = false;
       texto("recoveryErro", String(e.message).indexOf("link") >= 0
-        ? "Link expirado. Peça um novo em Esqueci minha senha."
+        ? "Este link expirou. Peça outro em \u201cEsqueci minha senha\u201d."
         : "Falha de conexão. Tente novamente.");
     });
   }
@@ -483,8 +483,8 @@
       body: JSON.stringify({ email: email })
     }).then(function () {
       guardarPedido("entrar");
-      texto("linkInfo", "Se este e-mail estiver cadastrado, o link chegou. "
-        + "Abra o e-mail e toque no link — ele vale uma vez.");
+      texto("linkInfo", "Se houver uma conta com este e-mail, o link já foi enviado. "
+        + "Ele vale uma vez e expira em uma hora.");
     }).catch(function () {
       document.getElementById("btLink").disabled = false;
       texto("linkErro", "Falha de conexão. Tente novamente.");
@@ -502,7 +502,8 @@
       body: JSON.stringify({ email: email })
     }).then(function () {
       guardarPedido("senha");
-      texto("esqueciInfo", "Link enviado. Abra o e-mail e toque no link para escolher a nova senha.");
+      texto("esqueciInfo", "Se houver uma conta com este e-mail, o link já foi enviado. "
+        + "Ele vale uma vez e expira em uma hora.");
     }).catch(function () {
       document.getElementById("btEsqueci").disabled = false;
       texto("esqueciErro", "Falha de conexão. Tente novamente.");
@@ -526,7 +527,7 @@
       decidirDestino(email);
     }).catch(function () {
       mostrar("telaLink");
-      texto("linkErro", "Este link já foi usado ou expirou. Peça outro aqui.");
+      texto("linkErro", "Este link já foi usado ou expirou. Informe o e-mail para receber outro.");
     });
   }
 

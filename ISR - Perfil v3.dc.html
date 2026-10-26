@@ -69,14 +69,14 @@
         <sc-if value="{{ editandoCadastro }}">
           <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-button-secondary); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Nome</div>
-              <input class="isr-campo" ref="{{ cadNomeRef }}" placeholder="{{ nome }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
+              <input class="isr-campo" value="{{ cadNome }}" onchange="{{ onCadNome }}" placeholder="Nome completo" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">WhatsApp</div>
-              <input class="isr-campo" ref="{{ cadZapRef }}" placeholder="{{ whatsappAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
+              <input class="isr-campo" value="{{ cadZap }}" onchange="{{ onCadZap }}" placeholder="+55 11 90000-0000" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">E-mail</div>
-              <input class="isr-campo" ref="{{ cadEmailRef }}" placeholder="{{ emailAtual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
+              <input class="isr-campo" value="{{ cadEmail }}" onchange="{{ onCadEmail }}" placeholder="nome@provedor.com" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             <sc-for list="{{ camposDoc }}" as="cd" hint-placeholder-count="11">
               <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">{{ cd.label }}</div>
-                <input class="isr-campo" ref="{{ cd.ref }}" placeholder="{{ cd.atual }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
+                <input class="isr-campo" value="{{ cd.valor }}" onchange="{{ cd.onMuda }}" placeholder="{{ cd.exemplo }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px" /></div>
             </sc-for>
             <div><div style="font-size: 9px; text-transform: uppercase; color: var(--color-tertiary-200); margin-bottom: 3px;">Turma</div>
               <select class="isr-campo" ref="{{ cadTurmaRef }}" style="width: 100%; box-sizing: border-box; padding: 9px 11px; font-size: 12.5px">
@@ -889,7 +889,18 @@ class Component extends DCLogic {
             marcandoReuniao: false, erroReuniao: "",
             // qual resgate está sendo cancelado, e o que deu errado
             cancelarResgate: "", cancelErro: "",
-            ajustando: false, abatido: undefined };
+            ajustando: false, abatido: undefined,
+            // ── O RASCUNHO DO CADASTRO ──
+            // Os campos mostravam o dado guardado como placeholder, e
+            // input vazio com placeholder cinza parece campo
+            // preenchido. Duas consequências: a ficha de quem NÃO tem
+            // e-mail e a de quem tem ficavam parecidas demais — o
+            // exemplo "000.000.000-00" do CPF tem a mesma cor do
+            // e-mail de verdade —, e corrigir uma letra do e-mail
+            // obrigava a redigitar o endereço inteiro. Agora o campo
+            // traz o valor, e o que a pessoa digita mora aqui até o
+            // Salvar: gravar a cada tecla cortaria o espaço no fim.
+            cadRascunho: {} };
   docRefs = { cpf: React.createRef(), rg: React.createRef(), nascimento: React.createRef(),
               cep: React.createRef(), logradouro: React.createRef(), numero: React.createRef(),
               complemento: React.createRef(), bairro: React.createRef(), cidade: React.createRef(),
@@ -989,6 +1000,16 @@ class Component extends DCLogic {
       { id: "pais", label: "País", exemplo: "Brasil" }
     ];
     const falta = CRM.cadastroIncompleto ? CRM.cadastroIncompleto(p) : [];
+
+    // o rascunho do cadastro: o campo mostra o que está guardado até
+    // alguém digitar, e o que foi digitado só vai para a ficha no
+    // Salvar
+    const rLer = (campo, guardado) => {
+      const r = this.state.cadRascunho || {};
+      return r[campo] === undefined ? guardado : r[campo];
+    };
+    const rEscrever = (campo, valor) => this.setState(s2 => ({
+      cadRascunho: Object.assign({}, s2.cadRascunho, { [campo]: valor }) }));
 
     const st = CRM.STATUS_META[p.status] || CRM.STATUS_META.lead;
     const c = CRM.contratoVigente(p);
@@ -1092,7 +1113,8 @@ class Component extends DCLogic {
       edCadLabel: this.state.editandoCadastro ? "Fechar" : "Editar dados",
       edCadBg: this.state.editandoCadastro ? "var(--color-bg-default)" : "var(--color-neutral-0)",
       edCadFg: this.state.editandoCadastro ? "var(--color-tertiary-500)" : "var(--color-primary-900)",
-      onEditarCadastro: () => this.setState(s => ({ editandoCadastro: !s.editandoCadastro })),
+      onEditarCadastro: () => this.setState(s => ({
+        editandoCadastro: !s.editandoCadastro, cadRascunho: {} })),
       cadNomeRef: this.cadNomeRef, cadZapRef: this.cadZapRef, cadEmailRef: this.cadEmailRef,
       cadTurmaRef: this.cadTurmaRef,
       // a primeira opção descreve o estado atual e não muda nada — assim o
@@ -1102,23 +1124,35 @@ class Component extends DCLogic {
           id: u.id, label: u.nivel + " · " + u.turma + " · " + (u.teacher || "sem professora") })))
         .concat([{ id: "particular", label: "Particular" },
                  { id: "__sem", label: "Remover da turma" }]),
+      cadNome: rLer("nome", p.nome || ""),
+      cadZap: rLer("whatsapp", p.whatsapp || ""),
+      cadEmail: rLer("email", p.email || ""),
+      onCadNome: e => rEscrever("nome", e.target.value),
+      onCadZap: e => rEscrever("whatsapp", e.target.value),
+      onCadEmail: e => rEscrever("email", e.target.value),
       camposDoc: CAMPOS_EXTRA.map(cx => ({
-        label: cx.label, ref: this.docRefs[cx.id],
-        atual: p[cx.id] || cx.exemplo
+        label: cx.label,
+        valor: rLer(cx.id, p[cx.id] || ""),
+        // o exemplo é exemplo: fica cinza, dentro do campo vazio, e
+        // some quando há dado. Antes ele ocupava o mesmo lugar do
+        // valor guardado, e a ficha sem CPF parecia ter CPF
+        exemplo: cx.exemplo,
+        onMuda: e => rEscrever(cx.id, e.target.value)
       })),
       faltaCadastro: falta.length > 0,
       faltaCadastroTexto: falta.length
         ? "Para emitir o contrato falta: " + falta.join(" e ") + "."
         : "",
       onSalvarCadastro: () => {
-        const v = r => (r.current && r.current.value || "").trim();
-        const patch = { nome: v(this.cadNomeRef), whatsapp: v(this.cadZapRef), email: v(this.cadEmailRef) };
-        CAMPOS_EXTRA.forEach(cx => { patch[cx.id] = v(this.docRefs[cx.id]); });
+        const patch = { nome: rLer("nome", p.nome || "").trim(),
+          whatsapp: rLer("whatsapp", p.whatsapp || "").trim(),
+          email: rLer("email", p.email || "").trim() };
+        CAMPOS_EXTRA.forEach(cx => { patch[cx.id] = rLer(cx.id, p[cx.id] || "").trim(); });
         CRM.atualizarCadastro(p.id, patch);
         const tid = this.cadTurmaRef.current && this.cadTurmaRef.current.value;
         if (tid === "__sem") CRM.setTurmaDaPessoa(p.id, "", "");
         else if (tid) CRM.mudarTurma(p.id, tid);
-        this.setState({ editandoCadastro: false });
+        this.setState({ editandoCadastro: false, cadRascunho: {} });
       },
       moeda: p.moeda || "R$", contexto: partes.join("  ·  ") || "—",
       waDireto: CRM.waLink(p.whatsapp, ""),
@@ -1973,7 +2007,7 @@ class Component extends DCLogic {
         ? "var(--color-success-dark)" : "var(--color-error-dark)";
       out.onConvidar = () => {
         this.setState({ conviteRes: { id: p.id, bom: true, texto: "Enviando…" } });
-        CRM.convidarAluna(p.id).then((r) => {
+        CRM.convidarAluna(p).then((r) => {
           this.setState({ conviteRes: { id: p.id, bom: !!r.ok,
             texto: r.ok
               ? (r.jaTinhaConta

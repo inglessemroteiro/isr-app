@@ -44,6 +44,11 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `ficha-diz-que-falta.js` — quando o sistema pede o que a ficha já
+  tem: o CPF, o RG e o endereço que a importação do Slack guardava
+  num lugar que ninguém lê, o resgate deles, o editor da ficha
+  mostrando o valor em vez de uma sugestão cinza, e o id repetido que
+  fazia uma aluna responder pela situação de outra.
 - `convite-recusado.js` — o que a escola lê quando o convite não sai:
   a resposta da função do Netlify traduzida para a tela, o caminho de
   entrar de novo quando a sessão venceu, o lote que para na primeira

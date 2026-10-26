@@ -89,7 +89,8 @@ const P = require("./preparar.js");
       senha: !!document.querySelector("#telaLink input[type=password]") };
   });
   T("ela não pede senha nenhuma", !frente.senha, frente);
-  T("e diz o que vai acontecer", /recebe um link e entra sem senha/i.test(frente.texto), frente);
+  T("e diz o que vai acontecer", /link de entrada chega no seu e-mail/i.test(frente.texto), frente);
+  T("e que não há senha em jogo", /senha para criar nem lembrar/i.test(frente.texto), frente);
 
   await p.fill("#linkEmail", "quem@teste.local");
   await p.click("#btLink");
@@ -98,7 +99,7 @@ const P = require("./preparar.js");
     pedidos.length === 1 && pedidos[0].email === "quem@teste.local", pedidos);
   const aviso = await p.evaluate(() => document.getElementById("linkInfo").textContent);
   T("e a resposta não conta quem está cadastrado",
-    /Se este e-mail estiver cadastrado/.test(aviso), { aviso });
+    /Se houver uma conta com este e-mail/.test(aviso), { aviso });
 
   console.log("\n— quem tem senha entra por ela, um toque abaixo —");
   const caminhos = await p.evaluate(() => {

@@ -1161,7 +1161,40 @@
     catch (e) { return []; }
   }
   function loadPessoas() {
+    resgatarDocs();
     return loadPessoasRaw().filter(function (p) { return !(p && p.apagado); });
+  }
+  // ── RESGATE DO QUE FOI GUARDADO NO LUGAR ERRADO ───────────────
+  //
+  // A importação de matrículas do Slack escrevia CPF, RG e endereço
+  // num objeto p.docs que nada no sistema lê — ficha, contrato e
+  // exportação leem p.cpf, p.rg e p.logradouro, soltos na pessoa. Os
+  // dados estavam lá o tempo todo, invisíveis, e a ficha continuava
+  // pedindo o que já tinha. Isto traz de volta o que foi escrito antes
+  // da correção; roda uma vez por aparelho e não sobrescreve nada que
+  // já esteja preenchido.
+  var DOCS_SOLTOS = { cpf: "cpf", rg: "rg", logradouro: "logradouro",
+    cep: "cep", numero: "numero", complemento: "complemento",
+    bairro: "bairro", cidade: "cidade", uf: "uf", pais: "pais",
+    nascimento: "nascimento" };
+  var docsJaResgatados = false;
+  function resgatarDocs() {
+    if (docsJaResgatados) return;
+    docsJaResgatados = true;
+    try {
+      var lista = loadPessoasRaw();
+      var mexeu = false;
+      lista.forEach(function (p) {
+        if (!p || !p.docs) return;
+        Object.keys(DOCS_SOLTOS).forEach(function (k) {
+          var v = String(p.docs[k] || "").trim();
+          if (v && !String(p[k] || "").trim()) { p[k] = v; mexeu = true; }
+        });
+        delete p.docs;
+        mexeu = true;
+      });
+      if (mexeu) savePessoas(lista);
+    } catch (e) {}
   }
   function savePessoasLocal(list) {
     // quem salva recebeu a lista sem as lápides — devolvê-las aqui é o
@@ -4737,13 +4770,18 @@
         });
         atualizadas++;
       }
-      // endereço e documento entram na ficha, que é onde o contrato os lê
+      // endereço e documento entram na ficha, que é onde o contrato os lê.
+      //
+      // Entravam num objeto x.docs que NADA no sistema lê: a ficha, o
+      // contrato e a exportação leem p.cpf, p.rg e p.logradouro, soltos
+      // na pessoa. Toda matrícula vinda do Slack perdia os três em
+      // silêncio, e a ficha seguia dizendo "para emitir o contrato
+      // falta: CPF e endereço" com o CPF guardado ao lado.
       if (l.cpf || l.rg || l.endereco) {
         mutate(p.id, function (x) {
-          x.docs = x.docs || {};
-          if (l.cpf && !x.docs.cpf) x.docs.cpf = l.cpf;
-          if (l.rg && !x.docs.rg) x.docs.rg = l.rg;
-          if (l.endereco && !x.docs.logradouro) x.docs.logradouro = l.endereco;
+          if (l.cpf && !x.cpf) x.cpf = l.cpf;
+          if (l.rg && !x.rg) x.rg = l.rg;
+          if (l.endereco && !x.logradouro) x.logradouro = l.endereco;
         });
       }
       if (!l.valorParcela || !l.parcelas) { semContrato++; return; }
@@ -6027,6 +6065,13 @@
     var grupos = {};
     vivos.forEach(function (p) {
       var chaves = [];
+      // id repetido: a importação antiga carimbava o mesmo id em várias
+      // pessoas criadas no mesmo milissegundo. É a duplicata mais
+      // perigosa — getPessoa devolve sempre a primeira, então editar uma
+      // mexe na outra e a lista mostra a situação trocada —, e era a
+      // única que este conferidor não via, porque ele pulava pares de
+      // mesmo id achando que eram o mesmo registro.
+      if (p.id) chaves.push("i:" + p.id + "|mesmo id interno");
       if (p.nome) chaves.push("n:" + semAcento(p.nome) + "|mesmo nome");
       if (p.email) chaves.push("e:" + String(p.email).toLowerCase().trim() + "|mesmo e-mail");
       var f = p.whatsapp ? chaveFone(p.whatsapp) : "";
@@ -6035,9 +6080,11 @@
     });
     var pares = {};
     var registrar = function (a, b, motivo) {
-      if (a.id === b.id) return;
+      if (a === b) return;
+      if (a.id === b.id && motivo !== "mesmo id interno") return;
       var par = [a, b].sort(function (x, y) { return pontosDeRegistro(y) - pontosDeRegistro(x); });
-      var k = [par[0].id, par[1].id].join("|");
+      var k = [par[0].id, par[1].id].join("|")
+        + (par[0].id === par[1].id ? "#" + vivos.indexOf(par[0]) + "#" + vivos.indexOf(par[1]) : "");
       if (!pares[k]) pares[k] = { manter: par[0], apagar: par[1], motivo: motivo };
     };
     Object.keys(grupos).forEach(function (k) {
@@ -9742,9 +9789,14 @@
   // antes de olhar o e-mail: vale perguntar antes de oferecer o botão.
   function podeConvidarAgora() { return !!tokenGestaoGuardado(); }
 
-  function convidarAluna(pessoaId) {
-    var p = getPessoa(pessoaId);
+  // Recebe o id ou a própria pessoa, pelo mesmo motivo de
+  // situacaoDeAcesso: com ids repetidos, getPessoa devolve a primeira,
+  // e o convite sairia para o e-mail da outra.
+  function convidarAluna(pessoaOuId) {
+    var p = (pessoaOuId && typeof pessoaOuId === "object")
+      ? pessoaOuId : getPessoa(pessoaOuId);
     if (!p) return Promise.resolve({ ok: false, erro: "Aluna não encontrada." });
+    var pessoaId = p.id;
     if (p.status !== "aluna" && p.status !== "mvs") {
       return Promise.resolve({ ok: false,
         erro: "O convite é para quem já é aluna. " + firstName(p.nome)
@@ -9844,9 +9896,19 @@
     semEmail: "sem e-mail na ficha",
     semAcesso: "sem turma nem produto"
   };
-  function situacaoDeAcesso(pessoaId) {
-    var p = getPessoa(pessoaId);
+  // Recebe o id ou a própria pessoa.
+  //
+  // Só o id não bastava: ids repetidos existem nesta base — a
+  // importação criava várias pessoas no mesmo milissegundo e carimbava
+  // o mesmo id nelas, e getPessoa devolve sempre a primeira. A lista
+  // mostrava o nome de uma aluna com a situação de acesso de outra, e
+  // era assim que uma ficha com e-mail aparecia como "sem e-mail na
+  // ficha". Quem já tem o registro em mãos passa o registro.
+  function situacaoDeAcesso(pessoaOuId) {
+    var p = (pessoaOuId && typeof pessoaOuId === "object")
+      ? pessoaOuId : getPessoa(pessoaOuId);
     if (!p) return null;
+    var pessoaId = p.id;
     var email = String(p.email || "").trim().toLowerCase();
     var temEmail = !!email && email.indexOf("@") > 0;
     var liberado = acessoLiberado(p);
