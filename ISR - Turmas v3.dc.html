@@ -190,6 +190,13 @@
                     <option value="{{ po.id }}" selected="{{ po.sel }}">{{ po.label }}</option>
                   </sc-for>
                 </select>
+                <!-- DESDE QUANDO ESTA PROFESSORA É DESTA TURMA.
+                     A aula é atribuída a quem está na turma hoje, e
+                     quem assume herdava a pilha de chamadas de quem
+                     veio antes. Trocar a professora carimba a data de
+                     hoje sozinho; este campo é para corrigi-la quando
+                     a troca foi antes, ou depois. -->
+                <input class="isr-campo" ref="{{ edDesdeRef }}" type="date" title="{{ u.desdeTitulo }}" value="{{ u.teacherDesde }}" onchange="{{ u.onDesde }}" style="padding: 9px 11px; font-size: 12px" />
                 <input class="isr-campo" ref="{{ edProjetoRef }}" placeholder="Projeto: {{ u.projetoRaw }}" style="padding: 9px 11px; font-size: 12px" />
                 <input class="isr-campo" ref="{{ edMaterialRef }}" placeholder="Material: {{ u.materialCurto }}" style="padding: 9px 11px; font-size: 12px" />
                 <input class="isr-campo" ref="{{ edCapRef }}" type="number" placeholder="Capacidade: {{ u.capacidade }}" style="padding: 9px 11px; font-size: 12px" />
@@ -250,7 +257,7 @@ class Component extends DCLogic {
             selTurmas: {}, confirmaExcluirSel: false };
   ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
-  edTeacherRef = React.createRef();
+  edTeacherRef = React.createRef(); edDesdeRef = React.createRef();
   edNivelRef = React.createRef(); edHorarioRef = React.createRef(); edProjetoRef = React.createRef();
   ntHoraRef = React.createRef(); ntFusoRef = React.createRef();
   edHoraRef = React.createRef(); edFusoRef = React.createRef();
@@ -282,7 +289,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true,
-      capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edDesdeRef: this.edDesdeRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
       ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,
       edHoraRef: this.edHoraRef, edFusoRef: this.edFusoRef, fusoOpts: [],
       cicloBg: "var(--color-neutral-0)", cicloCor: "var(--color-primary-800)", cicloTexto: "", cicloAcao: "" };
@@ -408,6 +415,12 @@ class Component extends DCLogic {
         // da folha de pagamento sem avisar ninguém.
         profOpts: [{ id: "", label: "Professora: " + (u.teacher || "sem professora") }]
           .concat(professoras.map(n => ({ id: n, label: n, sel: n === u.teacher }))),
+        teacherDesde: u.teacherDesde || "",
+        desdeTitulo: u.teacher
+          ? (u.teacher + " é desta turma desde quando? As aulas anteriores a esta data "
+             + "não entram na pilha de chamadas dela.")
+          : "Escolha a professora primeiro.",
+        onDesde: (e) => { CRM.updateTurma(u.id, { teacherDesde: e.target.value || "" }); this.bump(); },
         // o fuso em que a hora da turma é lida. Sem ele, "7h" é hora de
         // quem escreveu o rótulo — e a escola tem professora em quatro
         // países.
@@ -431,6 +444,7 @@ class Component extends DCLogic {
         onSalvarEdicao: () => {
           const patch = {};
           const t = this.val(this.edTeacherRef); if (t) patch.teacher = t;
+          const dd = this.val(this.edDesdeRef); if (dd) patch.teacherDesde = dd;
           const pj = this.val(this.edProjetoRef); if (pj) patch.projeto = pj;
           const mt = this.val(this.edMaterialRef); if (mt) patch.notebook = mt;
           const cp = parseInt(this.val(this.edCapRef), 10); if (cp > 0) patch.capacidade = cp;
@@ -527,7 +541,8 @@ class Component extends DCLogic {
       onToggleNova: () => this.setState({ novaAberta: !this.state.novaAberta, editId: null }),
       ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef,
       ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef,
-      edTeacherRef: this.edTeacherRef, edProjetoRef: this.edProjetoRef,
+      edTeacherRef: this.edTeacherRef, edDesdeRef: this.edDesdeRef,
+      edProjetoRef: this.edProjetoRef,
       edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
       edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
       ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,

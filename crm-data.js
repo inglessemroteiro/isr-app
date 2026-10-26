@@ -330,14 +330,37 @@
       // a hora de verdade e o fuso em que ela é lida; o rótulo acima
       // continua sendo a chave da chamada e não muda de forma
       hora: String(dados.hora || "").trim(), fuso: String(dados.fuso || "").trim(),
-      teacher: dados.teacher || "", cycle: dados.cycle || metasAtuais().cicloLabel,
+      teacher: dados.teacher || "",
+      // desde quando a professora é desta turma: sem isto, quem
+      // assume a turma herda a pilha de chamadas de quem veio antes
+      teacherDesde: dados.teacher ? (dados.teacherDesde || iso(today())) : "",
+      cycle: dados.cycle || metasAtuais().cicloLabel,
       projeto: dados.projeto || "", notebook: dados.notebook || "",
       capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
     turmasSave(list); return list;
   }
+  // ── DESDE QUANDO A PROFESSORA É DESTA TURMA ───────────────────
+  //
+  // A aula é atribuída a quem está na turma HOJE. Quem assumiu a
+  // turma agora herdava a pilha inteira dela: a Gabriela Brotero
+  // começou numa turma no dia 26/10 e o painel dela abriu com 8 aulas
+  // sem chamada, de aulas que ela não deu.
+  //
+  // A data de entrada na EQUIPE não resolve: quem está na escola
+  // desde janeiro e pegou a turma em outubro continuava herdando
+  // agosto e setembro. O que corta é a data em que a professora
+  // passou a ser DESTA TURMA, e é isso que fica gravado aqui, sozinho,
+  // toda vez que o nome muda.
   function updateTurma(id, patch) {
     var list = turmasLista();
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) { Object.assign(list[i], patch); carimbar(list[i]); break; }
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) {
+      var antes = String(list[i].teacher || "").trim();
+      Object.assign(list[i], patch);
+      var agora = String(list[i].teacher || "").trim();
+      if (agora && agora !== antes) list[i].teacherDesde = iso(today());
+      carimbar(list[i]);
+      break;
+    }
     turmasSave(list); return list;
   }
   function removeTurma(id) {
@@ -3437,7 +3460,10 @@
       var ocup = pessoas.filter(function (p) {
         return (p.status === "aluna") && p.turma === label;
       }).length;
-      return { id: u.id, nivel: u.nivel, turma: u.turma, teacher: u.teacher, cycle: u.cycle,
+      return { id: u.id, nivel: u.nivel, turma: u.turma, teacher: u.teacher,
+        // desde quando a professora é desta turma: a tela de Turmas
+        // mostra e corrige, e a pilha de chamadas respeita
+        teacherDesde: u.teacherDesde || "", cycle: u.cycle,
         projeto: u.projeto, notebook: u.notebook, label: label,
         // Como a turma trabalha DURANTE a aula: no caderno do app, ou
         // no papel. Não é o mesmo que ser online ou presencial — há
@@ -8460,9 +8486,11 @@
       if (professora && (u.teacher || "") !== professora) return;
       // A aula é atribuída a quem está na turma HOJE, e quem assumiu a
       // turma agora herdava toda a pilha dela desde agosto — aulas que
-      // essa pessoa nunca deu. A data de entrada da professora corta
-      // isso: antes dela, a aula não é dela.
+      // essa pessoa nunca deu. Dois cortes, e o da turma é o que
+      // importa: quem está na escola desde janeiro e pegou esta turma
+      // em outubro não deve agosto nem setembro dela.
       if (antesDeEntrar(u.teacher, it.data)) return;
+      if (u.teacherDesde && it.data < u.teacherDesde) return;
       var label = u.nivel + " · " + u.turma;
       if (getChamada(label, it.data)) return;
       // turma sem aluna não tem chamada a fazer
