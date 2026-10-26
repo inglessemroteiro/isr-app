@@ -1152,10 +1152,24 @@
               <span style="font-size:14px;color:var(--color-text-light);font-weight:800">→</span>
             </a>
           </sc-if>
-          <a href="{{ linkSenha }}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--color-button-secondary);text-decoration:none;color:inherit">
+          <!-- A SENHA, QUE É A SAÍDA QUANDO O LINK NÃO CHEGA -->
+          <!-- Isto era um link para aluna.html. Com sessão aberta,
+               aluna.html devolve a aluna para cá: o link não fazia
+               nada. E é justamente aqui que precisa funcionar — quem
+               não recebeu o link de entrada não tem como pedir outro
+               pelo mesmo e-mail que falhou. A senha se define aqui,
+               com a sessão que ela já tem, sem e-mail no meio. -->
+          <div style="padding:11px 0;border-bottom:1px solid var(--color-button-secondary);display:flex;flex-direction:column;gap:8px">
             <span style="font-size:14px;font-weight:700">{{ L.trocarSenha }}</span>
-            <span style="font-size:14px;color:var(--color-text-light);font-weight:800">→</span>
-          </a>
+            <span style="font-size:12.5px;color:var(--color-tertiary-700);line-height:1.6">{{ L.senhaTexto }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input ref="{{ senhaRef }}" type="password" autocomplete="new-password" placeholder="{{ L.senhaCampo }}" style="flex:1 1 170px;min-width:0;box-sizing:border-box;border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:12px;padding:11px 13px;font-size:13.5px;font-family:inherit" />
+              <button onclick="{{ onSalvarSenha }}" style="flex:none;border:none;background:var(--color-primary-900);color:var(--color-neutral-0);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.senhaBotao }}</button>
+            </div>
+            <sc-if value="{{ temSenhaAviso }}">
+              <span style="font-size:12.5px;font-weight:700;line-height:1.5;color:{{ senhaAvisoCor }}">{{ senhaAviso }}</span>
+            </sc-if>
+          </div>
           <div><button onclick="{{ onSair }}" style="border:1px solid var(--color-border);background:var(--color-neutral-0);color:var(--color-primary-900);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer">{{ L.sair }}</button></div>
         </section>
       </div>
@@ -1210,8 +1224,11 @@ class Component extends DCLogic {
             // a loja: qual subaba, e o mural de trocas
             shopTab: "rewards", muFiltro: "todos", muPagina: 1, muForm: null, muErro: "",
             // review: a palavra virada, e o que está sendo cadastrado
-            virada: false, palavraErro: "", palavraSalva: false, revisando: 0 };
-  notaRef = React.createRef();
+            virada: false, palavraErro: "", palavraSalva: false, revisando: 0,
+            // a senha definida de dentro do app: o aviso do que
+            // aconteceu, e se foi bom ou ruim
+            senhaAviso: "", senhaAvisoBom: true };
+  notaRef = React.createRef(); senhaRef = React.createRef();
   pvPalavraRef = React.createRef(); pvTraducaoRef = React.createRef();
   pvExemploRef = React.createRef();
   bioRef = React.createRef(); fotoRef = React.createRef(); aniRef = React.createRef();
@@ -1458,7 +1475,13 @@ class Component extends DCLogic {
       config: T("Settings", "Configurações"),
       idioma: T("Language", "Idioma"),
       editarPerfil: T("Edit my profile", "Editar o meu perfil"),
-      trocarSenha: T("Change my password", "Trocar a minha senha"),
+      trocarSenha: T("My password", "A minha senha"),
+      senhaTexto: T("You sign in with the link we e-mail you. A password is the way in when the e-mail does not arrive.",
+                    "Você entra pelo link que chega no seu e-mail. A senha é a saída para quando o e-mail não chegar."),
+      senhaCampo: T("New password (at least 8 characters)", "Senha (mínimo 8 caracteres)"),
+      senhaBotao: T("Save", "Salvar"),
+      senhaOk: T("Password saved. You can sign in with it from now on.",
+                 "Senha salva. A partir de agora você pode entrar com ela."),
       areaEquipe: T("School team area", "Área da equipe"),
       semLinkPag: T("Open instalments are paid with the school on WhatsApp.",
         "A parcela em aberto é paga com a escola, no WhatsApp."),
@@ -1576,6 +1599,8 @@ class Component extends DCLogic {
       milesExtrato: [],
       temGrade: false, semGrade: true, grade: [], legenda: [], regra75: "",
       temDocs: false, docs: [], langTabs: [], goPerfil: () => {}, linkSenha: "aluna.html",
+      senhaRef: this.senhaRef, onSalvarSenha: () => {},
+      temSenhaAviso: false, senhaAviso: "", senhaAvisoCor: "var(--color-primary-800)",
       tambemEquipe: false,
       semLinkPag: false,
       temMetas: false, semMetas: true, metas: [], metasBarras: [],
@@ -3323,6 +3348,21 @@ class Component extends DCLogic {
           // onde ela já existe. Repetir o formulário aqui seria uma
           // segunda porta para a mesma fechadura.
           linkSenha: "aluna.html",
+          senhaRef: this.senhaRef,
+          temSenhaAviso: !!this.state.senhaAviso,
+          senhaAviso: this.state.senhaAviso || "",
+          senhaAvisoCor: this.state.senhaAvisoBom
+            ? "var(--color-success-dark)" : "var(--color-error-dark)",
+          onSalvarSenha: () => {
+            const campo = this.senhaRef.current;
+            const nova = (campo && campo.value) || "";
+            this.setState({ senhaAviso: T("Saving…", "Salvando…"), senhaAvisoBom: true });
+            CRM.definirSenha(nova).then((r) => {
+              if (r.ok && campo) campo.value = "";
+              this.setState({ senhaAvisoBom: !!r.ok,
+                senhaAviso: r.ok ? L.senhaOk : (r.erro || "") });
+            });
+          },
           // ela é colaboradora também? então tem porta para a gestão
           tambemEquipe: !!(CRM.papeisDeGestao && CRM.papeisDeGestao(p.email || "").length)
         };

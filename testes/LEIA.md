@@ -44,6 +44,16 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `clube-dois-donos.js` — o clube é escrito por duas pessoas: quem o
+  conduz mexe no cadastro, as alunas entram e saem. O sync mesclava o
+  registro inteiro pelo carimbo mais novo, e uma metade apagava a
+  outra. Aqui cada metade tem o seu carimbo, e a suíte guarda as duas
+  perdas: a inscrita que sumia quando a professora salvava, e as
+  datas que voltavam atrás quando a aluna entrava.
+- `senha-da-aluna.js` — a senha definida de dentro do app, com a
+  sessão aberta: é a saída para quando o link de entrada não chega.
+  No lugar de um link para o portão que, com sessão, devolvia a aluna
+  ao app sem fazer nada.
 - `ficha-diz-que-falta.js` — quando o sistema pede o que a ficha já
   tem: o CPF, o RG e o endereço que a importação do Slack guardava
   num lugar que ninguém lê, o resgate deles, o editor da ficha
