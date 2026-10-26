@@ -113,13 +113,16 @@ const P = require("./preparar.js");
     // o que a aluna lê é o corpo; o comentário de cima é para quem
     // mexe no arquivo, e cita o texto antigo de propósito
     const corpo = h.replace(/<!--[\s\S]*?-->/g, "");
-    return { achou: true, pt: /Criar a minha senha/.test(corpo),
+    return { achou: true, pt: /Entrar no meu app/.test(corpo),
       link: corpo.indexOf("{{ .ConfirmationURL }}") > 0,
+      pedeSenha: /crie? a (sua|minha) senha|criar a (sua|minha) senha/i.test(corpo),
       ingles: /You have been invited|Accept the invite/i.test(corpo) };
   });
   T("o texto do convite existe no site", email.achou, email);
-  T("está em português e com o botão de criar a senha",
+  T("está em português e com o botão de entrar",
     email.achou && email.pt && !email.ingles, email);
+  T("e não manda a aluna criar senha no primeiro acesso",
+    email.achou && !email.pedeSenha, email);
   T("e carrega o link que o Netlify preenche", email.achou && email.link, email);
 
   T("nenhum erro de página", erros.length === 0, erros);
