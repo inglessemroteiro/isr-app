@@ -226,7 +226,7 @@ class Component extends DCLogic {
       // Quem ainda não abriu o app. Não havia onde perguntar isso, e a
       // escola só descobria pela aluna reclamando que não entra.
       ["semacesso", "Sem acesso", p => {
-        const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null;
+        const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p) : null;
         return !!sa && sa.estado !== "entrou"
           && ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
       }]
@@ -308,7 +308,7 @@ class Component extends DCLogic {
       // o acesso ao app: três coisas têm de estar de pé, e a linha diz
       // qual delas falta — "sem convite" e "sem turma" são problemas
       // diferentes, com donos diferentes
-      const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null;
+      const sa = CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p) : null;
       const mostraAcesso = !!sa && sa.estado !== "entrou"
         && ["aluna", "mvs", "pausada", "programa"].indexOf(p.status) >= 0;
       const ACOR = { semEmail: "var(--color-error)", semAcesso: "var(--color-error)",
@@ -343,7 +343,7 @@ class Component extends DCLogic {
           ? "var(--color-success-dark)" : "var(--color-error-dark)",
         onConvidar: () => {
           this.setState({ convidando: p.id });
-          CRM.convidarAluna(p.id).then((r) => {
+          CRM.convidarAluna(p).then((r) => {
             const m = Object.assign({}, this.state.conviteRes || {});
             m[p.id] = { bom: !!r.ok, txt: r.ok
               ? (r.jaTinhaConta ? "já tinha conta" : "convite enviado")
@@ -421,11 +421,11 @@ class Component extends DCLogic {
       // quem está sem turma criaria uma conta que o portão recusa.
       ...(() => {
         const faltam = daLista
-          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null)
+          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p) : null)
           .filter(x => x && x.podeConvidar && (x.estado === "semConvite" || x.estado === "convidada"));
         const novas = faltam.filter(x => x.estado === "semConvite");
         const travadas = daLista
-          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p.id) : null)
+          .map(p => CRM.situacaoDeAcesso ? CRM.situacaoDeAcesso(p) : null)
           .filter(x => x && !x.podeConvidar && x.estado !== "entrou");
         const enviando = this.state.loteConvite === "…";
         return {
