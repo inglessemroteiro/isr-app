@@ -331,9 +331,26 @@ class Component extends DCLogic {
 
     const f = this.state.form;
     const equipe = (CRM.equipeLista ? CRM.equipeLista() : []) || [];
+    // Quem conduz sai da Equipe: quem tem o papel de professora ou de
+    // gestora. Quem não tem o papel marcado não aparece aqui — é na
+    // Equipe que isso se corrige, não neste campo.
     const profs = equipe
       .filter(m => (m.papeis || []).some(p => p === "professora" || p === "gestora"))
       .map(m => ({ v: m.nome, t: m.nome, sel: !!f && f.professora === m.nome }));
+    // ── o clube de quem saiu da lista ─────────────────────────────
+    //
+    // Clube conduzido por alguém que não está na lista — o papel mudou
+    // na Equipe, ou o nome foi escrito antes — abria com o campo em
+    // BRANCO, e salvar gravava vazio por cima: o clube perdia quem o
+    // conduz sem ninguém pedir. O nome que já está no clube entra na
+    // lista, dito como está.
+    const atual = (f && String(f.professora || "").trim()) || "";
+    if (atual && !profs.some(x => x.v === atual)) {
+      profs.unshift({ v: atual, t: atual + " · fora da equipe", sel: true });
+    }
+    // E sem ninguém escolhido o campo não pode já vir com a primeira
+    // da lista: quem conduz é escolha, não o acaso da ordem alfabética.
+    if (!atual) profs.unshift({ v: "", t: "escolha quem conduz", sel: true });
 
     const formato = this.state.formato;
     const presencial = formato === "presencial";

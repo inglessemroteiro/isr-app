@@ -18,6 +18,8 @@
   .erro { display: none; font-size: 12px; color: #cf6b5c; font-weight: 600; margin: 10px 0 0; }
   .info { display: none; font-size: 12px; color: #2a9d8f; font-weight: 600; margin: 10px 0 0; }
   .link { display: inline-block; margin-top: 14px; font-size: 12px; color: #7d6d63; text-decoration: underline; cursor: pointer; background: none; border: none; width: auto; padding: 0; font-weight: 600; }
+  .links { margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .links .link { margin-top: 0; }
   .nota { font-size: 10.5px; color: #b3a693; line-height: 1.5; margin: 16px 0 0; }
   .tela { display: none; }
 </style>
@@ -31,19 +33,32 @@
     <p>Carregando…</p>
   </div>
 
-  <!-- login com e-mail e senha (Netlify Identity, direto na API) -->
+  <!-- o caminho principal: o link chega no e-mail e abre o app -->
+  <div class="tela" id="telaLink">
+    <p>Digite o seu e-mail. Você recebe um link e entra sem senha.</p>
+    <input id="linkEmail" type="email" placeholder="E-mail" autocomplete="username" />
+    <button id="btLink" onclick="pedirLink()">Receber o link</button>
+    <p class="info" id="linkInfo"></p>
+    <p class="erro" id="linkErro"></p>
+    <button class="link" onclick="mostrar('telaLogin')">Tenho uma senha</button>
+  </div>
+
+  <!-- quem tem senha entra por ela (Netlify Identity, direto na API) -->
   <div class="tela" id="telaLogin">
     <p>Entre com seu e-mail e senha.</p>
     <input id="loginEmail" type="email" placeholder="E-mail" autocomplete="username" />
     <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
     <button id="btLogin" onclick="fazerLogin()">Entrar</button>
     <p class="erro" id="loginErro"></p>
-    <button class="link" onclick="mostrar('telaEsqueci')">Esqueci minha senha</button>
+    <div class="links">
+      <button class="link" onclick="mostrar('telaLink')">Entrar por link, sem senha</button>
+      <button class="link" onclick="mostrar('telaEsqueci')">Esqueci minha senha</button>
+    </div>
   </div>
 
   <!-- redefinição de senha: pedir o link -->
   <div class="tela" id="telaEsqueci">
-    <p>Informe seu e-mail para receber o link de redefinição de senha.</p>
+    <p>Informe o seu e-mail para receber o link de trocar a senha.</p>
     <input id="esqueciEmail" type="email" placeholder="E-mail" autocomplete="username" />
     <button id="btEsqueci" onclick="pedirRedefinicao()">Enviar link</button>
     <p class="info" id="esqueciInfo"></p>
@@ -103,7 +118,7 @@
 
 </div>
 <script>
-  var TELAS = ["telaCarregando", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
+  var TELAS = ["telaCarregando", "telaLink", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
   // O título era "Área da aluna" em cima de TODAS as telas — e o
   // e-mail de convite e de redefinição de senha do Netlify aponta para
   // a raiz do site, que é esta página, tanto para a aluna quanto para a
@@ -111,8 +126,9 @@
   // "Área da aluna": a Carla parou aí, achando que o link estava
   // errado. O título passa a dizer o que a tela faz; depois de salvar,
   // decidirDestino já manda cada uma para a sua área.
-  var TITULOS = { telaConvite: "Criar sua senha", telaRecovery: "Nova senha",
-    telaEsqueci: "Esqueci minha senha" };
+  var TITULOS = { telaLink: "Entrar", telaConvite: "Criar sua senha",
+    telaRecovery: "Nova senha", telaEsqueci: "Trocar a senha",
+    telaLogin: "Entrar com senha" };
   function mostrar(id) {
     for (var i = 0; i < TELAS.length; i++)
       document.getElementById(TELAS[i]).style.display = TELAS[i] === id ? "block" : "none";
@@ -288,7 +304,7 @@
     // senão a próxima pessoa a entrar neste aparelho chamaria as
     // funções do Netlify com o token da anterior
     try { if (window.ISRCRM) window.ISRCRM.guardarTokenGestao(null); } catch (e) {}
-    mostrar("telaLogin");
+    mostrar("telaLink");
   }
 
   function fazerLogin() {
@@ -339,6 +355,66 @@
     });
   }
 
+  // ── O CONVITE NÃO PEDE SENHA ───────────────────────────────────
+  //
+  // O convite do Netlify exige uma senha para ser aceito: é a API que
+  // pede, não a aluna. A tela pedia essa senha, e era a primeira coisa
+  // que a aluna via da escola — inventar e guardar uma senha antes de
+  // ver a primeira aula. O token é aceito com uma senha sorteada aqui,
+  // que ninguém precisa saber: quem entra por link não usa senha, e
+  // quem quiser uma pede em "Esqueci minha senha", que troca esta.
+  //
+  // Se a aceitação automática falhar, a tela de criar senha continua
+  // de pé: é o caminho que ainda funciona sem rede boa.
+  function senhaSorteada() {
+    var n = new Uint8Array(24);
+    try { window.crypto.getRandomValues(n); }
+    catch (e) { for (var i = 0; i < n.length; i++) n[i] = Math.floor(Math.random() * 256); }
+    return Array.prototype.map.call(n, function (x) {
+      return ("0" + x.toString(16)).slice(-2);
+    }).join("");
+  }
+  function aceitarConviteSemSenha() {
+    mostrar("telaCarregando");
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "signup", password: senhaSorteada() })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("convite");
+      return r.json();
+    }).then(function (d) {
+      guardarSessao(d);
+      return emailDoToken(d.access_token);
+    }).then(function (email) {
+      decidirDestino(email);
+    }).catch(function () {
+      mostrar("telaConvite");
+    });
+  }
+
+  // O link de entrada clicado: verifica o token, guarda a sessão e
+  // abre o app. Nenhuma senha é pedida — é esse o ponto.
+  function entrarPeloLink() {
+    mostrar("telaCarregando");
+    fetch(API + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: hashToken[2], type: "recovery" })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("link");
+      return r.json();
+    }).then(function (d) {
+      guardarSessao(d);
+      return emailDoToken(d.access_token);
+    }).then(function (email) {
+      decidirDestino(email);
+    }).catch(function () {
+      mostrar("telaLink");
+      texto("linkErro", "Este link já foi usado ou expirou. Peça outro aqui.");
+    });
+  }
+
   function salvarNovaSenha() {
     var senha = valor("recoverySenha");
     texto("recoveryErro", "");
@@ -373,6 +449,48 @@
     });
   }
 
+  // ── O LINK DE ENTRADA ──────────────────────────────────────────
+  //
+  // O Netlify Identity não tem "link mágico" pronto, mas tem o link de
+  // trocar a senha — e ele já devolve a sessão quando a pessoa clica,
+  // ANTES de qualquer senha nova. É isso que esta tela usa: o mesmo
+  // endereço, outra finalidade. Quem clica entra; quem quiser uma
+  // senha pede em "Tenho uma senha → Esqueci minha senha".
+  //
+  // A resposta é a mesma para e-mail que existe e para e-mail que não
+  // existe: dizer "esse e-mail não está cadastrado" numa tela aberta
+  // na internet é contar quem estuda aqui para quem perguntar.
+  //
+  // O link de entrar e o link de trocar a senha são o mesmo link: o
+  // token que chega não diz qual dos dois a pessoa pediu. Quem sabe é
+  // este aparelho, que registra o pedido antes de o e-mail sair. Sem
+  // registro — link aberto em outro aparelho, convite disparado pela
+  // escola — o link entra, que é o que a pessoa espera dele.
+  var PEDIDO = "isr_pedido_de_link";
+  function guardarPedido(qual) { try { localStorage.setItem(PEDIDO, qual); } catch (e) {} }
+  function pedidoGuardado() {
+    try { var q = localStorage.getItem(PEDIDO); localStorage.removeItem(PEDIDO); return q || ""; }
+    catch (e) { return ""; }
+  }
+  function pedirLink() {
+    var email = valor("linkEmail");
+    texto("linkErro", ""); texto("linkInfo", "");
+    if (!email) { texto("linkErro", "Informe o e-mail."); return; }
+    document.getElementById("btLink").disabled = true;
+    fetch(API + "/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email })
+    }).then(function () {
+      guardarPedido("entrar");
+      texto("linkInfo", "Se este e-mail estiver cadastrado, o link chegou. "
+        + "Abra o e-mail e toque no link — ele vale uma vez.");
+    }).catch(function () {
+      document.getElementById("btLink").disabled = false;
+      texto("linkErro", "Falha de conexão. Tente novamente.");
+    });
+  }
+
   function pedirRedefinicao() {
     var email = valor("esqueciEmail");
     texto("esqueciErro", ""); texto("esqueciInfo", "");
@@ -383,7 +501,8 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email })
     }).then(function () {
-      texto("esqueciInfo", "Link de redefinição enviado para o e-mail informado.");
+      guardarPedido("senha");
+      texto("esqueciInfo", "Link enviado. Abra o e-mail e toque no link para escolher a nova senha.");
     }).catch(function () {
       document.getElementById("btEsqueci").disabled = false;
       texto("esqueciErro", "Falha de conexão. Tente novamente.");
@@ -406,8 +525,8 @@
     }).then(function (email) {
       decidirDestino(email);
     }).catch(function () {
-      mostrar("telaLogin");
-      texto("loginErro", "Link expirado. Entre com sua senha ou peça um novo link.");
+      mostrar("telaLink");
+      texto("linkErro", "Este link já foi usado ou expirou. Peça outro aqui.");
     });
   }
 
@@ -427,6 +546,8 @@
   }
   document.getElementById("email").addEventListener("keydown", function (e) { if (e.key === "Enter") entrar(); });
   document.getElementById("loginSenha").addEventListener("keydown", function (e) { if (e.key === "Enter") fazerLogin(); });
+  document.getElementById("linkEmail").addEventListener("keydown", function (e) { if (e.key === "Enter") pedirLink(); });
+  document.getElementById("esqueciEmail").addEventListener("keydown", function (e) { if (e.key === "Enter") pedirRedefinicao(); });
 
   // ── entrada ──
   mostrar("telaCarregando");
@@ -463,10 +584,15 @@
     // a página cai no fluxo antigo de e-mail para ninguém ficar trancada
     comTempo(fetch(API + "/settings"), 5000).then(function (r) {
       if (!r.ok) throw new Error("sem identity");
-      if (hashToken && hashToken[1] === "invite_token") mostrar("telaConvite");
-      else if (hashToken && hashToken[1] === "recovery_token") mostrar("telaRecovery");
+      // o convite entra sozinho; o link de entrada também. Só vai para
+      // a tela de senha quem pediu para trocar a senha neste aparelho
+      if (hashToken && hashToken[1] === "invite_token") aceitarConviteSemSenha();
+      else if (hashToken && hashToken[1] === "recovery_token") {
+        if (pedidoGuardado() === "senha") mostrar("telaRecovery");
+        else entrarPeloLink();
+      }
       else if (hashToken && hashToken[1] === "confirmation_token") confirmarEmail();
-      else mostrar("telaLogin");
+      else mostrar("telaLink");
     }).catch(function () {
       mostrar("telaEmail");
     });

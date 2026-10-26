@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-e",
+  numero: "2026.10.26-f",
   data: "26/10/2026",
-  nota: "As telas de senha dizem só o que fazer"
+  nota: "A aluna entra por link, sem senha"
 };
