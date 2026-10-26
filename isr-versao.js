@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-b",
+  numero: "2026.10.26-c",
   data: "26/10/2026",
-  nota: "Quem ainda não entrou no app, e o convite em lote"
+  nota: "O portão guarda a sessão, e o convite volta a sair"
 };

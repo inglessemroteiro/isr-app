@@ -264,6 +264,22 @@
       setTimeout(function () { rejeita(new Error("tempo esgotado")); }, ms);
     })]);
   }
+  // ── O TOKEN DO IDENTITY FICA GUARDADO ──────────────────────────
+  //
+  // O Identity devolve o token no login, no convite e na troca de
+  // senha, e este portão jogava os três fora: só o gestao.html
+  // guardava. Quem entrava por aqui — e hoje é por aqui que todo
+  // mundo entra — ficava sem token, e toda função do Netlify que
+  // confere quem está chamando respondia "sem chave e sem sessão de
+  // gestão". Foi o que impediu o convite de sair.
+  //
+  // É o mesmo token do gestao.html, guardado pela mesma função: um
+  // lugar só para a sessão, senão as duas portas divergem de novo.
+  function guardarSessao(tokens) {
+    try { if (window.ISRCRM && tokens && tokens.access_token) window.ISRCRM.guardarTokenGestao(tokens); }
+    catch (e) {}
+    return tokens;
+  }
   function emailDoToken(accessToken) {
     return fetch(API + "/user", { headers: { Authorization: "Bearer " + accessToken } })
       .then(function (r) { if (!r.ok) throw new Error("user"); return r.json(); })
@@ -271,6 +287,10 @@
   }
   function voltarAoLogin() {
     try { localStorage.removeItem("isr_aluna_id"); localStorage.removeItem("isr_gestao_user"); } catch (e) {}
+    // "voltar" aqui é "não sou eu": a sessão do Identity vai junto,
+    // senão a próxima pessoa a entrar neste aparelho chamaria as
+    // funções do Netlify com o token da anterior
+    try { if (window.ISRCRM) window.ISRCRM.guardarTokenGestao(null); } catch (e) {}
     mostrar("telaLogin");
   }
 
@@ -286,7 +306,8 @@
     }).then(function (r) {
       if (!r.ok) throw new Error("credenciais");
       return r.json();
-    }).then(function () {
+    }).then(function (tokens) {
+      guardarSessao(tokens);
       decidirDestino(email);
     }).catch(function (e) {
       document.getElementById("btLogin").disabled = false;
@@ -309,6 +330,7 @@
       if (!r.ok) throw new Error("convite");
       return r.json();
     }).then(function (d) {
+      guardarSessao(d);
       return emailDoToken(d.access_token);
     }).then(function (email) {
       decidirDestino(email);
@@ -335,6 +357,7 @@
       return r.json();
     }).then(function (d) {
       acesso = d.access_token;
+      guardarSessao(d);
       return fetch(API + "/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + acesso },
@@ -381,6 +404,7 @@
       if (!r.ok) throw new Error("link");
       return r.json();
     }).then(function (d) {
+      guardarSessao(d);
       return emailDoToken(d.access_token);
     }).then(function (email) {
       decidirDestino(email);
