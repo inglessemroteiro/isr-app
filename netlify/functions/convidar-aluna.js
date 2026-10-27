@@ -66,8 +66,8 @@ function liberadaNaBase(pessoa) {
   if (pessoa.assinatura && pessoa.assinatura.ativa) return true;
   return false;
 }
-async function ehAlunaDaEscola(email) {
-  if (!URL_BASE) return false;
+async function carregarBase() {
+  if (!URL_BASE) throw new Error("sem base");
   const corpo = { action: "sistemaLoad" };
   if (CHAVE_BASE) corpo.chave = CHAVE_BASE;
   const r = await fetch(URL_BASE, {
@@ -77,13 +77,46 @@ async function ehAlunaDaEscola(email) {
   });
   if (!r.ok) throw new Error("base " + r.status);
   const d = await r.json();
-  const pessoas = (d && d.data && d.data.pessoas) || [];
+  return (d && d.data) || {};
+}
+async function ehAlunaDaEscola(email) {
+  if (!URL_BASE) return false;
+  const base = await carregarBase();
+  const pessoas = base.pessoas || [];
   const achada = pessoas.filter((x) =>
     x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
   return liberadaNaBase(achada);
 }
-const EQUIPE = String(process.env.ISR_EQUIPE_EMAILS || '')
-  .split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+
+// ── QUEM É DA EQUIPE, SEGUNDO A ESCOLA ────────────────────────────
+//
+// Havia duas listas de quem pode convidar: a Equipe, na base, e a
+// ISR_EQUIPE_EMAILS, escrita à mão nas variáveis do Netlify. Elas
+// divergem no primeiro dia — alguém entra na Equipe, ninguém lembra
+// da variável, e o convite recusa com "a sua conta não está na lista
+// de quem pode convidar", sem dizer que lista é essa nem onde fica.
+//
+// A lista que vale é a da escola. A variável continua existindo para
+// ESTREITAR: com ela preenchida, só os e-mails dela convidam, mesmo
+// que a Equipe diga outra coisa.
+const PAPEIS_QUE_CONVIDAM = ["gestora", "comercial", "operacao", "professora",
+  "extra", "shadow"];
+async function ehDaEquipeNaBase(email) {
+  if (!URL_BASE) return false;
+  const base = await carregarBase();
+  const equipe = base.equipe || [];
+  const m = equipe.filter((x) =>
+    x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
+  if (!m) return false;
+  return (m.papeis || []).some((pp) => PAPEIS_QUE_CONVIDAM.indexOf(pp) >= 0);
+}
+// lida a cada chamada, e não na carga do módulo: assim trocar a
+// variável no Netlify vale na chamada seguinte, e a suíte consegue
+// conferir os dois casos — com lista e sem lista
+function equipeDaVariavel() {
+  return String(process.env.ISR_EQUIPE_EMAILS || '')
+    .split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+}
 
 exports.handler = async (event, context) => {
   const headers = { 'Content-Type': 'application/json' };
@@ -110,7 +143,22 @@ exports.handler = async (event, context) => {
   // quando o token do Identity que veio no Authorization é válido
   const quem = context && context.clientContext && context.clientContext.user;
   const emailDeQuem = String((quem && quem.email) || '').trim().toLowerCase();
-  const daEquipe = !!emailDeQuem && (!EQUIPE.length || EQUIPE.indexOf(emailDeQuem) >= 0);
+  // com ISR_EQUIPE_EMAILS preenchida, ela estreita: só esses e-mails.
+  // Sem ela, quem diz é a Equipe da escola — e não uma segunda lista
+  // escrita à mão, que divergiria da primeira no primeiro dia.
+  let daEquipe = false;
+  if (emailDeQuem) {
+    const lista = equipeDaVariavel();
+    if (lista.length) daEquipe = lista.indexOf(emailDeQuem) >= 0;
+    else {
+      try { daEquipe = await ehDaEquipeNaBase(emailDeQuem); }
+      catch (err) {
+        console.error('convidar-aluna · equipe:', err);
+        return { statusCode: 503, headers, body: JSON.stringify({ ok: false, motivo: 'base_fora',
+          erro: 'Não foi possível consultar a base agora.' }) };
+      }
+    }
+  }
 
   // a própria aluna pedindo o acesso dela: a autorização vem da base,
   // e o e-mail do pedido é o único que pode ser convidado
@@ -143,8 +191,8 @@ exports.handler = async (event, context) => {
     const motivo = emailDeQuem ? 'fora_da_lista' : (enviada ? 'chave_errada' : 'sem_sessao');
     return { statusCode: 401, headers, body: JSON.stringify({ ok: false, motivo: motivo,
       erro: emailDeQuem
-        ? 'A conta ' + emailDeQuem + ' não está em ISR_EQUIPE_EMAILS, '
-          + 'a lista de quem pode convidar.'
+        ? 'A conta ' + emailDeQuem + ' não está na Equipe com um papel que '
+          + 'abre o sistema, nem em ISR_EQUIPE_EMAILS.'
         : (enviada
           ? 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
             + 'No campo "chave" vai o VALOR da senha, não o nome da variável.'

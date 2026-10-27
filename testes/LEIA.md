@@ -52,6 +52,10 @@ Se o React ainda não estiver baixado:
   regra de quem pode criar acesso — aluna com turma ou produto sim;
   lead, ex-aluna, sem turma e e-mail de fora não; e a resposta é a
   mesma para todos, para a tela não contar quem estuda na escola.
+  Guarda também que criar o acesso NÃO duplica nada — a conta do
+  Identity é identificada pelo e-mail, e a função nunca cria pessoa —
+  e que quem pode convidar sai da Equipe da escola, não de uma
+  segunda lista escrita à mão nas variáveis do Netlify.
 - `guia-em-pdf.js` — o guia do professor trazido de um PDF, na tela
   Programas: o arquivo é lido no próprio navegador, o cabeçalho dá o
   projeto e o nível, cada "Session N — Título" vira uma sessão com

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-c",
+  numero: "2026.10.27-d",
   data: "27/10/2026",
-  nota: "A aluna cria o próprio acesso"
+  nota: "Quem pode convidar sai da Equipe"
 };
