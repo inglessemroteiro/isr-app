@@ -9942,11 +9942,21 @@
     identity_desligado: { erro: "A entrada por e-mail não está ligada neste site, "
       + "então não há conta para criar." },
     identity_recusou: { erro: "O convite não saiu agora. Tente de novo em alguns minutos; "
-      + "se continuar, é coisa do site." }
+      + "se continuar, é coisa do site." },
+    base_fora: { erro: "A base da escola não respondeu agora, então não há como "
+      + "conferir quem pode convidar. Tente de novo em alguns minutos." },
+    sem_email: { erro: "Falta o e-mail na ficha desta pessoa." },
+    erro_inesperado: { erro: "O site falhou ao criar o convite. Tente de novo; "
+      + "se continuar, o registro do que aconteceu fica nos logs do Netlify, "
+      + "em Functions → convidar-aluna." }
   };
-  function recadoDoConvite(d) {
+  function recadoDoConvite(d, status) {
     var r = RECADO_CONVITE[(d && d.motivo) || ""];
-    if (!r) return { ok: false, erro: "O convite não saiu." };
+    if (!r && status >= 500) r = RECADO_CONVITE.erro_inesperado;
+    if (!r) return { ok: false,
+      erro: "O convite não saiu, e o site não disse por quê. Tente de novo; "
+        + "se continuar, o registro fica nos logs do Netlify, em Functions → "
+        + "convidar-aluna." };
     // dizer QUAL conta foi recusada: quem tem dois e-mails descobre
     // numa olhada que entrou pelo outro
     var erro = r.erro;
@@ -9977,10 +9987,17 @@
           + "O convite vai para o e-mail da matrícula, então ele precisa estar no cadastro." });
     }
     return chamarFuncao("convidar-aluna", { body: { email: email } })
-      .then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (d) {
+      .then(function (r) {
+        // o status importa: função que quebra devolve página de erro,
+        // e sem o status a tela lia isso como "não saiu", sem dizer
+        // que foi o site que falhou
+        return r.json().catch(function () { return {}; })
+          .then(function (d) { return { d: d, status: r.status }; });
+      })
+      .then(function (res) {
+        var d = res.d;
         if (!d || !d.ok) {
-          return Object.assign(recadoDoConvite(d), { email: email });
+          return Object.assign(recadoDoConvite(d, res.status), { email: email });
         }
         // fica na ficha: quem olhar depois precisa saber que já foi, e
         // quando, para não convidar a mesma pessoa toda semana
