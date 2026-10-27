@@ -64,6 +64,14 @@
               <option value="presencial" selected="{{ fPresencial }}">presencial</option>
             </select>
           </label>
+          <label style="flex: 0 1 190px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">nível</div>
+            <select class="isr-campo" ref="{{ fNivelRef }}" style="width: 100%; padding: 11px 12px; font-size: 13px">
+              <sc-for list="{{ fNiveis }}" as="nv" hint-placeholder-count="5">
+                <option value="{{ nv.v }}" selected="{{ nv.sel }}">{{ nv.t }}</option>
+              </sc-for>
+            </select>
+          </label>
         </div>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
           <label style="flex: 0 1 130px;">
@@ -82,19 +90,28 @@
             <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">vagas</div>
             <input class="isr-campo" ref="{{ fVagasRef }}" type="number" min="0" placeholder="25" style="width: 100%; padding: 11px 13px; font-size: 14px">
           </label>
+          <label style="flex: 0 1 200px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">fuso de quem conduz</div>
+            <select class="isr-campo" ref="{{ fFusoRef }}" style="width: 100%; padding: 11px 12px; font-size: 13px">
+              <sc-for list="{{ fFusos }}" as="fu" hint-placeholder-count="5">
+                <option value="{{ fu.v }}" selected="{{ fu.sel }}">{{ fu.t }}</option>
+              </sc-for>
+            </select>
+          </label>
           <label style="flex: 1 1 240px; min-width: 0;">
             <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">{{ fLocalLabel }}</div>
             <input class="isr-campo" ref="{{ fLocalRef }}" placeholder="{{ fLocalPh }}" style="width: 100%; padding: 11px 13px; font-size: 14px">
           </label>
         </div>
+        <p style="margin: 8px 0 0; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">{{ fFusoNota }}</p>
         <label style="display: block; margin-top: 12px;">
           <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">descrição para as alunas</div>
           <textarea class="isr-campo" ref="{{ fDescRef }}" placeholder="Do que é o clube, em duas linhas." style="width: 100%; min-height: 70px; padding: 11px 13px; font-size: 14px; resize: vertical"></textarea>
         </label>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
           <label style="flex: 1 1 300px; min-width: 0;">
-            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">os encontros · um por linha</div>
-            <textarea class="isr-campo" ref="{{ fEncontrosRef }}" placeholder="06/11 · Comida de casa&#10;13/11 · Receita de família" style="width: 100%; min-height: 70px; padding: 11px 13px; font-size: 13.5px; resize: vertical"></textarea>
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">os 4 encontros · data · tema, um por linha</div>
+            <textarea class="isr-campo" ref="{{ fEncontrosRef }}" placeholder="06/11/2026 · Comida de casa&#10;13/11/2026 · Receita de família" style="width: 100%; min-height: 70px; padding: 11px 13px; font-size: 13.5px; resize: vertical"></textarea>
           </label>
           <label style="flex: 1 1 300px; min-width: 0;">
             <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">material de consulta · nome e link</div>
@@ -104,7 +121,7 @@
         <p style="margin: 8px 0 0; font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">Os dois aparecem para as alunas inscritas, na página do clube no app delas.</p>
 
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px;">
-          <button class="isr-botao isr-botao--pilula" onclick="{{ onGravarRascunho }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; padding: 11px 18px">Salvar rascunho</button>
+          <button class="isr-botao isr-botao--pilula" onclick="{{ onGravarRascunho }}" style="background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; padding: 11px 18px">{{ fSalvarLabel }}</button>
           <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onPublicar }}" style="font-size: 13px; padding: 11px 18px">Publicar para as alunas</button>
           <span style="font-size: 12.5px; font-weight: 600; color: var(--color-error);">{{ formErro }}</span>
         </div>
@@ -196,6 +213,59 @@
       </sc-for>
     </sc-if>
 
+    <!-- O CATÁLOGO, COMO ELE CHEGA À ALUNA -->
+    <!-- Os mesmos cartões que ela vê em "All clubs": emoji, nível,
+         "New", descrição, quem conduz, horário, vagas e os encontros.
+         Sai de catalogoDeClubes, que lê o catálogo no mesmo lugar de
+         onde o app da aluna o lê — por isso as duas telas não têm como
+         mostrar coisas diferentes. -->
+    <sc-if value="{{ porCatalogo }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 22px;">
+        <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ catalogoNota }}</div>
+      </section>
+      <sc-if value="{{ semCatalogo }}">
+        <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 24px 22px;">
+          <div style="font-size: 15px; color: var(--color-primary-800); line-height: 1.6;">Nenhum clube publicado. Rascunho fica só para a equipe — publicar é o que põe o clube no catálogo das alunas.</div>
+        </section>
+      </sc-if>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+        <sc-for list="{{ catalogo }}" as="ct" hint-placeholder-count="3">
+          <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 7px;">
+            <div style="display: flex; gap: 7px; align-items: center; flex-wrap: wrap;">
+              <span style="font-size: 21px; line-height: 1;">{{ ct.emoji }}</span>
+              <span class="isr-selo" style="font-size: 11px; background: var(--color-secondary-100); color: var(--color-success-dark); padding: 3px 10px">{{ ct.nivelLabel }}</span>
+              <sc-if value="{{ ct.novo }}">
+                <span class="isr-selo" style="font-size: 11px; background: var(--color-error-light); color: var(--color-error); padding: 3px 10px">New</span>
+              </sc-if>
+            </div>
+            <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em;">{{ ct.nome }}</div>
+            <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.5;">{{ ct.descricao }}</div>
+            <div style="font-size: 12.5px; color: var(--color-tertiary-500);">{{ ct.comQuem }}</div>
+            <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ ct.quando }}</div>
+            <div style="font-size: 12.5px; color: var(--color-primary-800);">{{ ct.onde }}</div>
+            <div style="margin-top: 2px;">
+              <div style="height: 8px; border-radius: 99px; background: var(--color-button-secondary); overflow: hidden;">
+                <div style="height: 8px; width: {{ ct.barra }}; background: var(--color-secondary-500);"></div>
+              </div>
+              <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 4px;">{{ ct.lotacao }}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px; margin-top: 2px;">
+              <sc-for list="{{ ct.encontros }}" as="en" hint-placeholder-count="4">
+                <div style="display: flex; gap: 8px; font-size: 12.5px; color: var(--color-primary-800);">
+                  <span style="font-weight: 600; min-width: 44px;">{{ en.quando }}</span>
+                  <span style="flex: 1; min-width: 0;">{{ en.tema }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ ct.temFalta }}">
+              <div style="background: var(--color-warning-light); border-radius: 14px; padding: 10px 12px; font-size: 12.5px; color: var(--color-warning-dark); line-height: 1.5; margin-top: 2px;">{{ ct.falta }}</div>
+            </sc-if>
+            <span onclick="{{ ct.onEditar }}" style="font-size: 12.5px; font-weight: 600; color: var(--color-primary-500); cursor: pointer; margin-top: 2px;">editar o clube</span>
+          </section>
+        </sc-for>
+      </div>
+    </sc-if>
+
     <!-- POR ALUNA -->
     <sc-if value="{{ porAluna }}">
       <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 8px 22px;">
@@ -234,6 +304,7 @@ class Component extends DCLogic {
   fHoraRef = React.createRef(); fDuracaoRef = React.createRef();
   fVagasRef = React.createRef(); fLocalRef = React.createRef();
   fDescRef = React.createRef();
+  fNivelRef = React.createRef(); fFusoRef = React.createRef();
   fEncontrosRef = React.createRef(); fMateriaisRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
@@ -248,6 +319,42 @@ class Component extends DCLogic {
     window.removeEventListener("isr-dados-novos", this.onDados);
   }
 
+  porExtenso(iso) {
+    const t = String(iso || "");
+    return /^\d{4}-\d{2}-\d{2}$/.test(t)
+      ? t.slice(8, 10) + "/" + t.slice(5, 7) + "/" + t.slice(0, 4) : "";
+  }
+
+  // ── A DATA DO ENCONTRO É DATA, NÃO TEXTO ──────────────────────
+  //
+  // O campo é um texto com uma linha por encontro porque colar quatro
+  // linhas é mais rápido do que preencher doze campos. Mas o que era
+  // guardado era o texto: "06/11" ficava "06/11", e aí a data não
+  // convertia de fuso, não entrava em "próximo encontro" e não
+  // passava na trava de publicação, que pede as 4 datas.
+  //
+  // "06/11", "06/11/2026" e "2026-11-06" viram a mesma data. O que
+  // não der para ler fica escrito como está — inventar uma data seria
+  // marcar encontro no dia errado com cara de certeza.
+  dataDoTexto(s) {
+    const t = String(s || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+    const m = t.match(/^(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?$/);
+    if (!m) return "";
+    const dia = parseInt(m[1], 10), mes = parseInt(m[2], 10);
+    if (!(dia >= 1 && dia <= 31) || !(mes >= 1 && mes <= 12)) return "";
+    let ano = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+    if (ano < 100) ano += 2000;
+    const p = (n) => (n < 10 ? "0" : "") + n;
+    const monta = (a) => a + "-" + p(mes) + "-" + p(dia);
+    // Sem ano escrito, o encontro é o que vem: "06/11" digitado em
+    // dezembro é novembro do ano que vem, não um encontro que já passou.
+    if (!m[3] && (Date.now() - Date.parse(monta(ano) + "T12:00:00")) / 86400000 > 180) {
+      return monta(ano + 1);
+    }
+    return monta(ano);
+  }
+
   // O formulário escreve nos refs depois que a tela desenha: abrir
   // para editar precisa esperar o campo existir.
   preencher(c) {
@@ -259,8 +366,14 @@ class Component extends DCLogic {
       por(this.fVagasRef, c.vagas ? String(c.vagas) : "");
       por(this.fLocalRef, c.formato === "presencial" ? c.local : c.link);
       por(this.fDescRef, c.descricao);
+      por(this.fNivelRef, c.nivel); por(this.fFusoRef, c.fuso);
+      // A data vai escrita por extenso, com ano. Antes só o "quando"
+      // era mostrado, e clube marcado no painel do professor guarda a
+      // data e não o "quando": abrir esse clube aqui trazia as linhas
+      // sem data nenhuma, e salvar apagava as quatro datas dele.
       por(this.fEncontrosRef, (c.encontros || []).map(e =>
-        [e.quando, e.tema].filter(Boolean).join(" · ")).join("\n"));
+        [e.data ? this.porExtenso(e.data) : e.quando, e.tema]
+          .filter(Boolean).join(" · ")).join("\n"));
       por(this.fMateriaisRef, (c.materiais || []).map(m =>
         [m.label, m.link].filter(Boolean).join(" · ")).join("\n"));
     }, 0);
@@ -273,13 +386,18 @@ class Component extends DCLogic {
     return { nome: v(this.fNomeRef), professora: v(this.fProfRef), formato: formato,
       dia: v(this.fDiaRef), hora: v(this.fHoraRef), duracao: v(this.fDuracaoRef),
       vagas: v(this.fVagasRef), descricao: v(this.fDescRef),
+      // Nível e fuso são trava de publicação: sem eles o cartão da
+      // aluna sai dizendo "todos os níveis" numa hora sem lugar. Esta
+      // tela publicava sem pedir nenhum dos dois.
+      nivel: v(this.fNivelRef), fuso: v(this.fFusoRef),
       // uma linha por item, separando o rótulo do resto por " · ".
       // Formulário com campo por linha seria mais bonito e mais lento
       // de preencher do que colar quatro linhas de uma vez.
       encontros: v(this.fEncontrosRef).split("\n").map(l => l.trim()).filter(Boolean)
         .map(l => { const i = l.indexOf("·");
-          return i < 0 ? { quando: "", tema: l }
-            : { quando: l.slice(0, i).trim(), tema: l.slice(i + 1).trim() }; }),
+          const quando = i < 0 ? "" : l.slice(0, i).trim();
+          const tema = i < 0 ? l : l.slice(i + 1).trim();
+          return { quando: quando, tema: tema, data: this.dataDoTexto(quando) }; }),
       materiais: v(this.fMateriaisRef).split("\n").map(l => l.trim()).filter(Boolean)
         .map(l => { const i = l.indexOf("·");
           return i < 0 ? { label: l, link: "" }
@@ -288,13 +406,36 @@ class Component extends DCLogic {
       link: formato === "presencial" ? "" : localOuLink };
   }
 
-  gravar(status) {
+  // ── PUBLICAR PASSA PELAS TRAVAS ───────────────────────────────
+  //
+  // Esta tela gravava o status "publicado" direto, sem chamar
+  // clubePublicar: o clube ia para o catálogo das alunas sem nível,
+  // sem fuso e sem as 4 datas, e o cartão aparecia lá pela metade.
+  // Agora o rascunho é salvo primeiro e a publicação é pedida — se
+  // falta algo, a tela diz o que, e o clube fica em rascunho.
+  // Salvar não mexe no status: clube novo nasce rascunho, clube que
+  // já está no ar continua no ar. Tirar do catálogo é outra ação, e
+  // ela não existe aqui — despublicar com inscritas deixaria alunas
+  // com inscrição para lugar nenhum.
+  gravar(publicar) {
     const CRM = window.ISRCRM;
     const f = this.state.form || {};
-    const dados = Object.assign(this.lerForm(), { status: status });
+    const dados = this.lerForm();
     if (f.id) dados.id = f.id;
     const r = CRM.clubeSalvar(dados);
     if (!r.ok) { this.setState({ formErro: r.erro }); return; }
+    if (publicar) {
+      const pub = CRM.clubePublicar(r.id || f.id);
+      if (!pub.ok) {
+        // O rascunho já foi gravado: o formulário fica aberto AMARRADO
+        // a ele. Sem isto, completar o que falta e apertar de novo
+        // criava um segundo clube com o mesmo nome.
+        this.setState({ form: Object.assign({}, f, { id: r.id || f.id }),
+          formErro: pub.erro });
+        this.bump();
+        return;
+      }
+    }
     this.setState({ form: null, formErro: "" });
     this.bump();
   }
@@ -304,13 +445,16 @@ class Component extends DCLogic {
     const vazio = { numeros: [], clubes: [], alunas: [], visoes: [], pendentes: [],
       temPendentes: false, pendentesN: "0", pendentesTexto: "",
       porClube: true, porAluna: false, semClube: true, semAluna: true,
+      porCatalogo: false, semCatalogo: true, catalogo: [], catalogoNota: "",
       formAberto: false, formTitulo: "", formErro: "", novoBotao: "+ novo clube",
       fProfs: [], fOnline: true, fPresencial: false,
+      fNiveis: [], fFusos: [], fFusoNota: "", fSalvarLabel: "Salvar rascunho",
       fLocalLabel: "link da sala", fLocalPh: "https://meet.google.com/…",
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
       fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
+      fNivelRef: this.fNivelRef, fFusoRef: this.fFusoRef,
       onNovo: () => {}, onFormato: () => {}, onGravarRascunho: () => {}, onPublicar: () => {} };
     if (!CRM || !CRM.clubesLista) return vazio;
 
@@ -355,6 +499,32 @@ class Component extends DCLogic {
     const formato = this.state.formato;
     const presencial = formato === "presencial";
 
+    // Os mesmos cinco níveis do painel do professor, e os mesmos fusos
+    // da escola: duas listas diferentes para a mesma coisa acabariam
+    // divergindo na primeira vez que alguém mexesse só numa.
+    const NIVEIS = [["", "escolha o nível"], ["todos", "todos os níveis"],
+      ["a1", "a partir do A1"], ["a2", "a partir do A2"],
+      ["b1", "a partir do B1"], ["b2", "a partir do B2"]];
+    const nivelLabel = (n) => {
+      const k = String(n || "").toLowerCase();
+      if (!k || k === "todos") return "Todos os níveis";
+      return "A partir do " + k.toUpperCase();
+    };
+    const nivelAtual = (f && String(f.nivel || "")) || "";
+    const fusos = (CRM.FUSOS_ESCOLA || []).map(x => ({ v: x.id, t: x.label }));
+    // Clube criado antes deste campo pode ter um fuso que não está na
+    // lista da escola. Ele entra na lista, dito como está, para salvar
+    // não apagar o que já estava lá.
+    const fusoAtual = (f && String(f.fuso || "")) || "";
+    if (fusoAtual && !fusos.some(x => x.v === fusoAtual)) {
+      fusos.unshift({ v: fusoAtual, t: CRM.fusoLabel ? CRM.fusoLabel(fusoAtual) : fusoAtual });
+    }
+    const meuFuso = CRM.fusoDoNavegador ? CRM.fusoDoNavegador() : "";
+    // Clube novo começa no fuso de quem está criando: é quem conduz, na
+    // maioria das vezes, e um campo em branco aqui trava a publicação.
+    const fusoPadrao = fusos.some(x => x.v === meuFuso) ? meuFuso : "";
+    const fusoCurto = (nome) => String(nome || "").split(" · ").pop();
+
     return {
       numeros: [
         { valor: String(resumo.publicados), label: resumo.publicados === 1 ? "clube no ar" : "clubes no ar", cor: "var(--color-primary-900)" },
@@ -366,8 +536,8 @@ class Component extends DCLogic {
       novoBotao: f ? "fechar" : "+ novo clube",
       onNovo: () => {
         if (this.state.form) { this.setState({ form: null, formErro: "" }); return; }
-        this.setState({ form: {}, formErro: "", formato: "online" });
-        this.preencher({ formato: "online" });
+        this.setState({ form: { fuso: fusoPadrao }, formErro: "", formato: "online" });
+        this.preencher({ formato: "online", fuso: fusoPadrao });
       },
       formAberto: !!f,
       formTitulo: f && f.id ? "Editar o clube" : "Oferecer novo clube",
@@ -376,13 +546,21 @@ class Component extends DCLogic {
       fOnline: !presencial, fPresencial: presencial,
       fLocalLabel: presencial ? "endereço" : "link da sala",
       fLocalPh: presencial ? "Rua, número, cidade" : "https://meet.google.com/…",
+      fNiveis: NIVEIS.map(([v, t]) => ({ v: v, t: t, sel: nivelAtual === v })),
+      fFusos: [{ v: "", t: "escolha o fuso", sel: !fusoAtual }]
+        .concat(fusos.map(x => ({ v: x.v, t: x.t, sel: fusoAtual === x.v }))),
+      fFusoNota: "A hora é a do relógio de quem conduz o clube. "
+        + "Cada aluna lê o horário já convertido para o relógio dela"
+        + (meuFuso && CRM.fusoLabel ? ", e o seu é " + CRM.fusoLabel(meuFuso) + "." : "."),
+      fSalvarLabel: f && f.status === "publicado" ? "Salvar alterações" : "Salvar rascunho",
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
       fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
+      fNivelRef: this.fNivelRef, fFusoRef: this.fFusoRef,
       onFormato: (e) => this.setState({ formato: e.target.value }),
-      onGravarRascunho: () => this.gravar("rascunho"),
-      onPublicar: () => this.gravar("publicado"),
+      onGravarRascunho: () => this.gravar(false),
+      onPublicar: () => this.gravar(true),
 
       temPendentes: resumo.pendentes.length > 0,
       pendentesN: String(resumo.pendentes.length),
@@ -395,7 +573,8 @@ class Component extends DCLogic {
 
       visoes: [
         { id: "clube", label: "Por clube" },
-        { id: "aluna", label: "Por aluna" }
+        { id: "aluna", label: "Por aluna" },
+        { id: "catalogo", label: "Catálogo" }
       ].map(v => {
         const on = this.state.visao === v.id;
         return { label: v.label, bg: on ? "var(--color-primary-900)" : "var(--color-neutral-0)", fg: on ? "var(--color-neutral-0)" : "var(--color-primary-800)",
@@ -404,6 +583,51 @@ class Component extends DCLogic {
       porClube: this.state.visao === "clube",
       porAluna: this.state.visao === "aluna",
       semClube: cs.length === 0,
+
+      // ── O CATÁLOGO ──
+      ...(() => {
+        const cat = (CRM.catalogoDeClubes ? CRM.catalogoDeClubes()
+          : { clubes: [], incluidos: 2, precoExtra: { label: "" } });
+        return {
+          porCatalogo: this.state.visao === "catalogo",
+          semCatalogo: cat.clubes.length === 0,
+          catalogoNota: "É o que a aluna vê em All clubs. Cada clube tem 4 encontros "
+            + "no ciclo; o plano inclui " + cat.incluidos + " clubes, e do terceiro em "
+            + "diante a escola cobra " + cat.precoExtra.label + ".",
+          catalogo: cat.clubes.map(c => ({
+            emoji: c.emoji || "·",
+            nivelLabel: nivelLabel(c.nivel),
+            novo: c.novo,
+            nome: c.nome,
+            descricao: c.descricao || "Sem descrição.",
+            comQuem: c.professora ? "com " + c.professora : "sem quem conduz",
+            quando: [c.dia, c.hora + (c.fusoNome ? " " + fusoCurto(c.fusoNome) : ""),
+                     c.duracao].map(x => String(x || "").trim()).filter(Boolean).join(" · ")
+              || "sem horário",
+            onde: c.formato === "presencial"
+              ? (c.local || "presencial · sem endereço")
+              : (c.link ? "online" : "online · sem link"),
+            barra: (c.vagas ? Math.min(100, Math.round(c.inscritas / c.vagas * 100)) : 0) + "%",
+            lotacao: (c.vagas ? c.inscritas + " de " + c.vagas : String(c.inscritas))
+              + (c.inscritas === 1 ? " inscrita" : " inscritas")
+              + (c.espera ? " · " + c.espera + " na espera" : ""),
+            encontros: c.encontros.filter(e => e.quando || e.tema)
+              .map(e => ({ quando: e.quando || "—", tema: e.tema || "sem tema" })),
+            temFalta: c.falta.length > 0,
+            falta: "Falta no cartão: " + c.falta
+              .map(k => (CRM.FALTA_ROTULOS || {})[k] || k).join(", ") + ".",
+            onEditar: () => {
+              const cl = CRM.getClube(c.id);
+              if (!cl) return;
+              this.setState({ form: cl, formErro: "", formato: cl.formato });
+              this.preencher(cl);
+              // o formulário abre no alto da tela, e o cartão clicado
+              // pode estar bem abaixo dele
+              try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) {}
+            }
+          }))
+        };
+      })(),
 
       clubes: cs.map(c => {
         const aberto = this.state.aberto === c.id;
