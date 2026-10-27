@@ -9922,8 +9922,9 @@
   var RECADO_CONVITE = {
     sem_sessao: { erro: "A sua sessão venceu. Entre de novo para convidar.",
       precisaEntrar: true },
-    fora_da_lista: { erro: "A sua conta não está na lista de quem pode convidar. "
-      + "Quem muda essa lista é quem cuida das configurações do site." },
+    fora_da_lista: { erro: "A sua conta não tem permissão para convidar. "
+      + "Confira, na Equipe, se o seu e-mail está na sua ficha e se você tem "
+      + "um papel marcado." },
     chave_errada: { erro: "A automação que manda convites está com a senha errada. "
       + "O convite daqui continua saindo." },
     identity_desligado: { erro: "A entrada por e-mail não está ligada neste site, "

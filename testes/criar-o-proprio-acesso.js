@@ -38,6 +38,7 @@ function resposta(r) {
 // a base da escola e o Identity, respondidos aqui
 function montarRede(pessoas, opcoes) {
   opcoes = opcoes || {};
+  var equipe = opcoes.equipe || [];
   var convidados = [];
   global.fetch = function (url, init) {
     var u = String(url);
@@ -55,7 +56,9 @@ function montarRede(pessoas, opcoes) {
     if (opcoes.baseFora) return Promise.resolve({ ok: false, status: 500,
       json: function () { return Promise.resolve({}); } });
     return Promise.resolve({ ok: true, status: 200,
-      json: function () { return Promise.resolve({ ok: true, data: { pessoas: pessoas } }); } });
+      json: function () {
+        return Promise.resolve({ ok: true, data: { pessoas: pessoas, equipe: equipe } });
+      } });
   };
   return { convidados: convidados };
 }
@@ -129,6 +132,86 @@ var IDENT = { clientContext: { identity: { url: "https://x.netlify/identity", to
   T("pedido sem chave e sem sessão é recusado",
     r.status === 401 && r.d.motivo === "sem_sessao", r);
   T("e nada é criado", rede.convidados.length === 0, rede.convidados);
+
+  console.log("\n— quem pode convidar sai da Equipe da escola —");
+  // Havia duas listas: a Equipe, na base, e a ISR_EQUIPE_EMAILS, à
+  // mão nas variáveis do Netlify. Elas divergem no primeiro dia, e o
+  // convite recusava quem acabara de entrar na Equipe.
+  const EQUIPE = [
+    { nome: "Gabi Teste", email: "gabi@teste.local", papeis: ["gestora"] },
+    { nome: "Ana Teste", email: "ana@teste.local", papeis: ["professora"] },
+    { nome: "Zeca Teste", email: "zeca@teste.local", papeis: [] }
+  ];
+  const comoEquipe = (email) => ({ clientContext: Object.assign(
+    { user: { email: email } }, IDENT.clientContext) });
+
+  delete process.env.ISR_EQUIPE_EMAILS;
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("a gestora convida sem lista nenhuma no Netlify",
+    r.status === 200 && r.d.ok === true, r);
+  T("e o convite sai para quem ela pediu",
+    rede.convidados.length === 1 && rede.convidados[0] === "rita@teste.local", rede.convidados);
+
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("ana@teste.local")));
+  T("a professora também convida", r.d.ok === true, r);
+
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("zeca@teste.local")));
+  T("quem está na Equipe sem papel não convida",
+    r.status === 401 && r.d.motivo === "fora_da_lista", r);
+  T("e nada é criado", rede.convidados.length === 0, rede.convidados);
+
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("ninguem@teste.local")));
+  T("quem não está na Equipe não convida",
+    r.status === 401 && r.d.motivo === "fora_da_lista", r);
+
+  console.log("\n— a lista do Netlify continua estreitando, quando existe —");
+  process.env.ISR_EQUIPE_EMAILS = "gabi@teste.local";
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("ana@teste.local")));
+  T("com a lista preenchida, quem está fora dela não convida",
+    r.status === 401 && r.d.motivo === "fora_da_lista", r);
+  T("mesmo sendo professora na Equipe", rede.convidados.length === 0, rede.convidados);
+  delete process.env.ISR_EQUIPE_EMAILS;
+
+  console.log("\n— criar o acesso não cria acesso dobrado —");
+  // A conta do Identity é identificada pelo E-MAIL. Pedir duas vezes
+  // não faz duas contas: na segunda o Identity responde que o e-mail
+  // já está registrado, e a função trata isso como sucesso. E a
+  // função nunca CRIA pessoa: ela só convida quem a base já tem.
+  rede = montarRede(BASE);
+  r = resposta(await chamar({ email: "marta@teste.local", autoacesso: true }, {}, IDENT));
+  T("a primeira vez cria", r.d.ok && r.d.convidada === true, r);
+  const primeira = rede.convidados.length;
+  // a segunda vez, com a conta já existindo
+  const rede2 = montarRede(BASE, { jaExiste: true });
+  const r2 = resposta(await chamar({ email: "marta@teste.local", autoacesso: true }, {}, IDENT));
+  T("a segunda vez não cria outra conta",
+    r2.d.ok === true && r2.d.convidada === false && r2.d.jaTinhaConta === true, r2);
+  T("o Identity é quem recusa a repetição, pelo e-mail",
+    primeira === 1 && rede2.convidados.length === 1, { primeira, segunda: rede2.convidados });
+
+  // a escola convida e a aluna também: continua uma conta só
+  const rede3 = montarRede(BASE, { jaExiste: true, equipe: EQUIPE });
+  const r3 = resposta(await chamar({ email: "marta@teste.local" },
+    { "x-isr-chave": "" }, comoEquipe("gabi@teste.local")));
+  T("convite da escola depois do autoacesso não duplica",
+    r3.d.ok === true && r3.d.jaTinhaConta === true, r3);
+
+  // e a função nunca inventa pessoa na base
+  const antesDaBase = BASE.length;
+  const rede4 = montarRede(BASE);
+  await chamar({ email: "marta@teste.local", autoacesso: true }, {}, IDENT);
+  T("a base não ganha pessoa nenhuma", BASE.length === antesDaBase,
+    { antes: antesDaBase, depois: BASE.length });
 
   fim();
 })();
