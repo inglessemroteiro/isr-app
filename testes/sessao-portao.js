@@ -109,6 +109,41 @@ const P = require("./preparar.js");
   const aviso = await p.evaluate(() => document.getElementById("linkInfo").textContent);
   T("e a resposta não conta quem está cadastrado",
     /Se houver uma conta com este e-mail/.test(aviso), { aviso });
+  // o /recover do Identity só manda e-mail para conta que existe, e
+  // responde "ok" de qualquer jeito: quem nunca foi convidada ficava
+  // esperando um e-mail que não ia sair
+  const socorro = await p.evaluate(() => {
+    const d = document.getElementById("linkSocorro");
+    return { visivel: !!d && d.style.display === "block",
+      texto: d ? d.innerText.replace(/\s+/g, " ") : "" };
+  });
+  T("depois de pedir, a tela mostra a saída de quem não recebe",
+    socorro.visivel, socorro);
+  T("dizendo que o acesso ainda não existe",
+    /acesso ainda não foi criado/.test(socorro.texto), socorro);
+  T("e oferecendo o caminho que resolve",
+    /Criar o meu acesso/.test(socorro.texto), socorro);
+
+  console.log("\n— criar o acesso pede à função, com o e-mail digitado —");
+  let pedidoCriar = null;
+  await ctx.route("**/.netlify/functions/convidar-aluna", r => {
+    pedidoCriar = JSON.parse(r.request().postData() || "{}");
+    return r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ ok: true, convidada: true, email: pedidoCriar.email }) });
+  });
+  await p.evaluate(() => {
+    const bt = document.getElementById("btCriar");
+    if (bt) bt.click();
+  });
+  await p.waitForTimeout(1400);
+  T("a função é chamada com autoacesso",
+    !!pedidoCriar && pedidoCriar.autoacesso === true, pedidoCriar);
+  T("e com o e-mail que ela digitou",
+    !!pedidoCriar && pedidoCriar.email === "quem@teste.local", pedidoCriar);
+  const criou = await p.evaluate(() =>
+    document.getElementById("criarInfo").textContent);
+  T("a tela confirma que o link saiu", /link de entrada foi enviado/.test(criou),
+    { criou });
 
   console.log("\n— quem tem senha entra por ela, um toque abaixo —");
   const caminhos = await p.evaluate(() => {
