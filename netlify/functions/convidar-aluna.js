@@ -77,7 +77,16 @@ async function carregarBase() {
   });
   if (!r.ok) throw new Error("base " + r.status);
   const d = await r.json();
-  return (d && d.data) || {};
+  // O Apps Script responde 200 mesmo quando recusa: sem conferir o
+  // "ok", uma recusa dele virava uma base vazia aqui, e base vazia
+  // lida como "essa pessoa não está na Equipe" — a gestora recebia
+  // "o seu e-mail não está em ficha nenhuma" com a ficha na frente
+  // dela, preenchida. Não poder ler a base e a pessoa não estar nela
+  // são coisas diferentes, e agora são tratadas como tais.
+  if (d && d.ok === false) throw new Error("base recusou");
+  const dados = (d && d.data) || {};
+  if (!dados || typeof dados !== "object") throw new Error("base sem dados");
+  return dados;
 }
 async function ehAlunaDaEscola(email) {
   if (!URL_BASE) return false;
@@ -111,6 +120,10 @@ async function situacaoNaEquipe(email) {
   if (!URL_BASE) return "sem_base";
   const base = await carregarBase();
   const equipe = base.equipe || [];
+  // Equipe vazia não é uma escola sem equipe: é uma base que não foi
+  // lida. Dizer "você não está na Equipe" a partir disso manda a
+  // pessoa arrumar uma ficha que já está certa.
+  if (!equipe.length) return "sem_base";
   const m = equipe.filter((x) =>
     x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
   if (!m) return "fora_da_equipe";
