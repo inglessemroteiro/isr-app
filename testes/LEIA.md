@@ -44,6 +44,13 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `guia-em-pdf.js` — o guia do professor trazido de um PDF, na tela
+  Programas: o arquivo é lido no próprio navegador, o cabeçalho dá o
+  projeto e o nível, cada "Session N — Título" vira uma sessão com
+  objetivo e as seis fases com o tempo de cada uma, e o que foi lido
+  cai na mesma caixa de texto do formato da casa — para conferir e
+  completar antes de gravar. O material do teste é um PDF de duas
+  sessões em `testes/materiais/`.
 - `liberar-a-aula.js` — liberar a aula, onde a aula está. Publicar o
   plano faz a aluna LER; liberar faz o caderno dela abrir para
   ESCREVER, e o botão que fazia isso existia só no herói do painel,
