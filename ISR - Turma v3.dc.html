@@ -1623,10 +1623,20 @@ class Component extends DCLogic {
         const label = u.nivel + " · " + u.turma;
         const viva = (dia && CRM.aulaViva) ? CRM.aulaViva(label, dia) : null;
         const hojeIso = new Date().toISOString().slice(0, 10);
-        // libera-se a aula do dia; antes do dia não há o que liberar,
-        // e depois a aula já foi
-        const vale = !!dia && (dia === hojeIso || (viva && viva.estado === "ao_vivo"));
+        // O BOTÃO NÃO ESPERA O DIA.
+        //
+        // Ele só aparecia na sessão de hoje, e aula muda de dia: a
+        // professora remarca, antecipa, repõe. A tela não tem como
+        // saber quando a aula vai acontecer de verdade — quem sabe é
+        // ela, e é ela quem aperta. A data da sessão continua sendo a
+        // que fica gravada, que é a mesma que o caderno da aluna
+        // confere: os dois lados olham a sessão, não o calendário.
+        //
+        // Quando a sessão não é a de hoje, a tela diz de que dia ela
+        // é. Informação, não trava.
+        const vale = !!dia;
         const vivo = !!(viva && viva.estado === "ao_vivo");
+        const noDia = dia === hojeIso;
         return {
           planoTemAoVivo: vale,
           planoAoVivoLabel: vivo
@@ -1644,11 +1654,13 @@ class Component extends DCLogic {
           },
           planoAoVivoNota: vale,
           planoAoVivoNotaTexto: vivo
-            ? Tr("Class is live: the students\u2019 notebook is open for writing. Ending it closes the notebook.",
-                 "Aula liberada: o caderno das alunas está aberto para escrever. Encerrar fecha o caderno.")
-            : Tr("Publishing lets the students READ this class. Starting it opens their notebook to WRITE.",
-                 "Publicar deixa as alunas LEREM esta aula. Começar abre o caderno delas para ESCREVER."),
-          planoTemChamada: !!dia && dia <= hojeIso,
+            ? Tr("Notebook open for writing. End the class to close it.",
+                 "Caderno aberto para escrita. Encerre a aula para fechá-lo.")
+            : (Tr("Publish opens this class for reading. Start opens the students\u2019 notebook for writing.",
+                 "Publicar abre esta aula para leitura. Começar abre o caderno das alunas para escrita.")
+               + (noDia ? "" : " " + Tr("Session scheduled for ", "Sessão marcada para ")
+                  + CRM.ddmm(dia) + ".")),
+          planoTemChamada: !!dia,
           planoChamadaLabel: Tr("Take attendance", "Fazer chamada"),
           planoOnChamada: () => this.setState({ aba: "chamadas", chamadaData: dia })
         };

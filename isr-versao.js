@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.26-o",
-  data: "26/10/2026",
-  nota: "A aula se libera onde a aula está"
+  numero: "2026.10.27-a",
+  data: "27/10/2026",
+  nota: "O botão de começar a aula não espera o dia"
 };
