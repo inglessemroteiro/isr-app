@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-d",
+  numero: "2026.10.27-e",
   data: "27/10/2026",
-  nota: "Quem pode convidar sai da Equipe"
+  nota: "A recusa diz qual é o problema"
 };

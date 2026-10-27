@@ -9922,6 +9922,18 @@
   var RECADO_CONVITE = {
     sem_sessao: { erro: "A sua sessão venceu. Entre de novo para convidar.",
       precisaEntrar: true },
+    // Três recusas diferentes, três coisas diferentes a fazer. Uma
+    // mensagem só para as três mandava procurar no lugar errado.
+    fora_da_equipe: { erro: "O e-mail com que você entrou não está em nenhuma ficha "
+      + "da Equipe. Abra a Equipe e ponha esse mesmo e-mail na sua ficha.",
+      conta: true },
+    sem_papel: { erro: "A sua ficha na Equipe está sem papel marcado. "
+      + "Marque gestora, operação, comercial, professora, aulas extras ou shadow.",
+      conta: true },
+    sem_base: { erro: "O site não está ligado à base da escola, então não há como "
+      + "conferir quem pode convidar." },
+    // o nome antigo, para uma resposta de versão anterior não virar
+    // "o convite não saiu" sem explicação
     fora_da_lista: { erro: "A sua conta não tem permissão para convidar. "
       + "Confira, na Equipe, se o seu e-mail está na sua ficha e se você tem "
       + "um papel marcado." },
@@ -9934,8 +9946,12 @@
   };
   function recadoDoConvite(d) {
     var r = RECADO_CONVITE[(d && d.motivo) || ""];
-    if (r) return { ok: false, erro: r.erro, precisaEntrar: !!r.precisaEntrar };
-    return { ok: false, erro: "O convite não saiu." };
+    if (!r) return { ok: false, erro: "O convite não saiu." };
+    // dizer QUAL conta foi recusada: quem tem dois e-mails descobre
+    // numa olhada que entrou pelo outro
+    var erro = r.erro;
+    if (r.conta && d && d.conta) erro = "Você entrou como " + d.conta + ". " + erro;
+    return { ok: false, erro: erro, precisaEntrar: !!r.precisaEntrar };
   }
   // Sem sessão do Identity guardada neste aparelho, a função recusa
   // antes de olhar o e-mail: vale perguntar antes de oferecer o botão.
