@@ -1064,19 +1064,26 @@
       { id: "clBook", nome: "Book Club", professora: "Carla", formato: "online",
         dia: "quinta", hora: "20:00", fuso: "America/Sao_Paulo",
         duracao: "60 min", vagas: 8, status: "publicado",
+        emoji: "📖", nivel: "a2", link: "https://meet.google.com/exemplo-book",
+        publicadoEm: addDays(-40),
         descricao: "Um livro por ciclo, um capítulo por encontro." },
       { id: "clMovie", nome: "Movie Lovers", professora: "Gabi", formato: "online",
         dia: "quarta", hora: "20:30", fuso: "Europe/Amsterdam",
         duracao: "90 min", vagas: 10, status: "publicado",
+        emoji: "🎬", nivel: "b1", link: "https://meet.google.com/exemplo-movie",
+        publicadoEm: addDays(-4),
         descricao: "Um filme por mês, conversa na semana seguinte." },
       { id: "clChef", nome: "Chef Traditions", professora: "Adrielly", formato: "presencial",
         dia: "sábado", hora: "10:00", fuso: "Europe/Amsterdam",
         duracao: "120 min", vagas: 6, status: "publicado",
+        emoji: "🍲", nivel: "todos",
+        publicadoEm: addDays(-90),
         local: "Den Haag · a combinar",
         descricao: "Cozinhar e conversar. Receita de casa de cada uma." },
       { id: "clDutch", nome: "Dutch Life Talk", professora: "Érika", formato: "online",
         dia: "segunda", hora: "19:30", fuso: "Asia/Jakarta",
         duracao: "60 min", vagas: 10, status: "rascunho",
+        emoji: "💬", nivel: "",
         descricao: "A vida na Holanda, em inglês." }
     ];
     var agora = Date.now();
@@ -13778,6 +13785,58 @@
     };
   }
 
+  // ── O CATÁLOGO, VISTO DE DENTRO ───────────────────────────────
+  //
+  // O catálogo é a única parte do sistema que a escola não tinha como
+  // olhar: ele mora no app de cada aluna, e a gestão via só a lista de
+  // inscrições. Com clubes no ar, "o que está publicado, e como está"
+  // era pergunta sem resposta deste lado.
+  //
+  // É a MESMA leitura que clubesParaAluna faz — clube publicado,
+  // nível, vagas, "New" —, sem a parte que depende de uma aluna
+  // (de quem é o terceiro clube, quem está na espera dele). E traz o
+  // que falta em cada cartão: clube publicado antes das travas pode
+  // estar no ar sem nível e sem fuso, e aí a aluna o lê como "todos os
+  // níveis", numa hora que não é hora de lugar nenhum.
+  function catalogoDeClubes() {
+    // O catálogo não se filtra por quem conduz: a aluna vê os clubes
+    // da escola, não os de uma professora.
+    var cs = clubesLista().filter(function (c) { return c.status === "publicado"; });
+    cs.sort(function (a, b) {
+      var pa = a.publicadoEm || "", pb = b.publicadoEm || "";
+      if (pa !== pb) return pa > pb ? -1 : 1;
+      return a.nome < b.nome ? -1 : 1;
+    });
+    return {
+      incluidos: CLUBES_INCLUIDOS,
+      precoExtra: clubeExtraPreco(),
+      clubes: cs.map(function (c) {
+        var livres = clubeVagasLivres(c);
+        return {
+          id: c.id, nome: c.nome, emoji: c.emoji || "",
+          professora: c.professora || "", bio: c.bio || "",
+          nivel: c.nivel || "", descricao: c.descricao || "",
+          dia: c.dia || "", hora: c.hora || "", duracao: c.duracao || "",
+          fuso: c.fuso || "", fusoNome: c.fuso ? fusoLabel(c.fuso) : "",
+          formato: c.formato, local: c.local || "", link: c.link || "",
+          vagas: c.vagas, inscritas: c.membros.length,
+          livres: livres, lotado: livres === 0, espera: c.espera.length,
+          novo: clubeEhNovo(c), publicadoEm: c.publicadoEm || "",
+          // o encontro escrito à mão guarda "quando" como texto; o do
+          // painel guarda a data. O cartão mostra o que houver.
+          encontros: (c.encontros || []).map(function (e, i) {
+            var d = (e && e.data) || "";
+            return { n: i + 1, data: d,
+              quando: d ? ddmm(d) : ((e && e.quando) || ""),
+              tema: (e && e.tema) || "" };
+          }),
+          materiais: (c.materiais || []).length,
+          falta: faltaParaPublicar(c)
+        };
+      })
+    };
+  }
+
   function clubesResumo() {
     var cs = clubesLista();
     var publicados = cs.filter(function (c) { return c.status === "publicado"; });
@@ -17543,7 +17602,7 @@
     clubeRemover: clubeRemover, clubesDaAluna: clubesDaAluna, clubeEntrar: clubeEntrar,
     clubeSair: clubeSair, clubePagamentoFeito: clubePagamentoFeito,
     clubesResumo: clubesResumo, clubeVagasLivres: clubeVagasLivres,
-    clubesParaAluna: clubesParaAluna,
+    clubesParaAluna: clubesParaAluna, catalogoDeClubes: catalogoDeClubes,
     CLUBES_INCLUIDOS: CLUBES_INCLUIDOS,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,

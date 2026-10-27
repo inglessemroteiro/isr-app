@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-g",
+  numero: "2026.10.27-h",
   data: "27/10/2026",
-  nota: "Toda recusa de convite diz o que é"
+  nota: "A escola vê o catálogo dos clubes"
 };
