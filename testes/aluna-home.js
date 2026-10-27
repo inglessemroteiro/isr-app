@@ -46,7 +46,10 @@ const P = require("./preparar.js");
   let t = await ler();
   const temBotao = () => p.evaluate(() => [...document.querySelectorAll("main a")]
     .some(x => /Entrar na sala|Join live room/.test(x.textContent)));
-  const hojeTemAula = /hoje/.test((t.match(/próxima aula[^·]*/) || [""])[0] || "");
+  // o herói é "próxima aula · hoje em 58 min": parar no primeiro "·"
+  // deixava o "hoje" sempre de fora, e a conferência passava por
+  // acaso nos dias sem aula
+  const hojeTemAula = /hoje/i.test((t.match(/próxima aula.{0,60}/) || [""])[0] || "");
   const antes = await temBotao();
   T("sem aula hoje, a sala não aparece", hojeTemAula || !antes,
     { hojeTemAula, botao: antes, hero: t.slice(0, 220) });

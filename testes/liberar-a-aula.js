@@ -18,8 +18,11 @@
 //   — ao vivo, o botão vira Encerrar, e encerrar fecha o caderno;
 //   — a tela diz a diferença entre publicar e liberar, porque as duas
 //     palavras parecem a mesma coisa e não são;
-//   — sessão que não é hoje não traz o botão: não há aula para
-//     liberar.
+//   — e o botão NÃO espera o dia. Ele só aparecia na sessão de hoje,
+//     e aula muda de dia: a professora remarca, antecipa, repõe. A
+//     tela não tem como saber quando a aula vai acontecer de verdade
+//     — quem sabe é ela. Na sessão de outro dia, a tela diz de que
+//     dia ela é: informação, não trava.
 const { chromium } = require("playwright");
 const P = require("./preparar.js");
 
@@ -71,8 +74,8 @@ const P = require("./preparar.js");
 
   let t = await texto();
   T("a tela separa publicar de liberar",
-    /Publicar deixa as alunas LEREM esta aula\. Começar abre o caderno delas para ESCREVER/.test(t),
-    (t.match(/.{0,10}Publicar deixa.{0,100}/) || [""])[0]);
+    /Publicar abre esta aula para leitura\. Começar abre o caderno das alunas para escrita/.test(t),
+    (t.match(/.{0,10}Publicar abre.{0,100}/) || [""])[0]);
 
   console.log("\n— o toque libera, e o caderno abre —");
   const antes = await p.evaluate((a) => window.ISRCRM.aulaViva(a.label, a.hoje).estado,
@@ -92,8 +95,8 @@ const P = require("./preparar.js");
     && !bts.some(t => /Começar aula/.test(t)), bts);
   t = await texto();
   T("a tela diz que o caderno está aberto",
-    /caderno das alunas está aberto para escrever/.test(t),
-    (t.match(/.{0,10}caderno das alunas está aberto.{0,60}/) || [""])[0]);
+    /Caderno aberto para escrita/.test(t),
+    (t.match(/.{0,10}Caderno aberto para escrita.{0,60}/) || [""])[0]);
 
   console.log("\n— encerrar fecha o caderno —");
   await p.evaluate(() => {
@@ -106,7 +109,7 @@ const P = require("./preparar.js");
     { label: alvo.comHoje.label, hoje: alvo.hoje });
   T("a aula sai do ar", fechada === "encerrada", { fechada });
 
-  console.log("\n— sessão que não é hoje não tem o que liberar —");
+  console.log("\n— a sessão de outro dia também se libera —");
   // na mesma turma, a sessão seguinte: a faixa de cima troca de sessão
   const trocou = await p.evaluate((n) => {
     const chip = [...document.querySelectorAll("main span")]
@@ -117,10 +120,16 @@ const P = require("./preparar.js");
     return true;
   }, alvo.comHoje.n);
   await p.waitForTimeout(1400);
-  const bts2 = await botoes();
   T("a faixa troca para a sessão seguinte", trocou, { trocou });
-  T("nenhum botão de começar numa sessão que não é hoje",
-    !bts2.some(t => /Começar aula|Encerrar aula/.test(t)), bts2);
+  const bts2 = await botoes();
+  T("o botão de começar continua lá",
+    bts2.some(t => /Começar aula/.test(t)), bts2);
+  const t2 = await texto();
+  T("e a tela diz de que dia é essa sessão",
+    /Sessão marcada para \d{2}\/\d{2}/.test(t2),
+    (t2.match(/.{0,10}Sessão marcada para.{0,70}/) || [""])[0]);
+  T("sem dizer que não dá para começar",
+    !/não é possível|só no dia|aguarde/i.test(t2), (t2.match(/.{0,60}só no dia.{0,40}/) || [""])[0]);
 
   T("nenhum erro de página", erros.length === 0, erros);
   await b.close();

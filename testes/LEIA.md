@@ -49,7 +49,8 @@ Se o React ainda não estiver baixado:
   ESCREVER, e o botão que fazia isso existia só no herói do painel,
   que só o mostra no dia. Agora ele está na aba do plano, junto do
   Ajustar e do Publicar, e a tela diz a diferença entre as duas
-  palavras.
+  palavras. O botão não espera o dia: aula muda de dia, e quem sabe
+  quando ela acontece é a professora.
 - `pilha-de-quem-chegou.js` — a pilha de chamadas de quem acabou de
   chegar na turma. A aula é de quem está na turma hoje, e quem assume
   herdava tudo o que ficou para trás. A data em que a professora
