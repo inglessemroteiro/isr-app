@@ -101,14 +101,21 @@ async function ehAlunaDaEscola(email) {
 // que a Equipe diga outra coisa.
 const PAPEIS_QUE_CONVIDAM = ["gestora", "comercial", "operacao", "professora",
   "extra", "shadow"];
-async function ehDaEquipeNaBase(email) {
-  if (!URL_BASE) return false;
+// Devolve POR QUE, e não só sim ou não: sem isso, descobrir o motivo
+// de uma recusa vira troca de mensagens.
+//   "ok"            está na Equipe com papel que abre o sistema
+//   "sem_papel"     está na Equipe, sem papel marcado
+//   "fora_da_equipe" o e-mail logado não está em ficha nenhuma
+//   "sem_base"      o site não sabe onde fica a base
+async function situacaoNaEquipe(email) {
+  if (!URL_BASE) return "sem_base";
   const base = await carregarBase();
   const equipe = base.equipe || [];
   const m = equipe.filter((x) =>
     x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
-  if (!m) return false;
-  return (m.papeis || []).some((pp) => PAPEIS_QUE_CONVIDAM.indexOf(pp) >= 0);
+  if (!m) return "fora_da_equipe";
+  const temPapel = (m.papeis || []).some((pp) => PAPEIS_QUE_CONVIDAM.indexOf(pp) >= 0);
+  return temPapel ? "ok" : "sem_papel";
 }
 // lida a cada chamada, e não na carga do módulo: assim trocar a
 // variável no Netlify vale na chamada seguinte, e a suíte consegue
@@ -143,16 +150,24 @@ exports.handler = async (event, context) => {
   // quando o token do Identity que veio no Authorization é válido
   const quem = context && context.clientContext && context.clientContext.user;
   const emailDeQuem = String((quem && quem.email) || '').trim().toLowerCase();
-  // com ISR_EQUIPE_EMAILS preenchida, ela estreita: só esses e-mails.
-  // Sem ela, quem diz é a Equipe da escola — e não uma segunda lista
-  // escrita à mão, que divergiria da primeira no primeiro dia.
+  // A EQUIPE DA ESCOLA MANDA, E A VARIÁVEL SOMA.
+  //
+  // A ISR_EQUIPE_EMAILS estreitava: preenchida, só os e-mails dela
+  // convidavam. Uma variável esquecida nas configurações do site
+  // passava então a trancar a gestora para fora do próprio sistema,
+  // sem que nada na tela dissesse que ela existia. Agora ela SOMA —
+  // serve para dar permissão a uma conta que não está na Equipe, e
+  // nunca para tirar de quem está.
   let daEquipe = false;
+  let porqueNao = '';
   if (emailDeQuem) {
-    const lista = equipeDaVariavel();
-    if (lista.length) daEquipe = lista.indexOf(emailDeQuem) >= 0;
+    if (equipeDaVariavel().indexOf(emailDeQuem) >= 0) daEquipe = true;
     else {
-      try { daEquipe = await ehDaEquipeNaBase(emailDeQuem); }
-      catch (err) {
+      try {
+        const sit = await situacaoNaEquipe(emailDeQuem);
+        daEquipe = sit === 'ok';
+        if (!daEquipe) porqueNao = sit;
+      } catch (err) {
         console.error('convidar-aluna · equipe:', err);
         return { statusCode: 503, headers, body: JSON.stringify({ ok: false, motivo: 'base_fora',
           erro: 'Não foi possível consultar a base agora.' }) };
@@ -188,11 +203,18 @@ exports.handler = async (event, context) => {
     // adivinhação — e é texto de quem mexe no servidor, não de quem
     // está olhando a ficha de uma professora. Quem lê essa parte é o
     // log e o Zapier. Para a tela vai o "motivo", que o app traduz.
-    const motivo = emailDeQuem ? 'fora_da_lista' : (enviada ? 'chave_errada' : 'sem_sessao');
+    const motivo = emailDeQuem
+      ? (porqueNao === 'sem_papel' ? 'sem_papel'
+        : porqueNao === 'sem_base' ? 'sem_base' : 'fora_da_equipe')
+      : (enviada ? 'chave_errada' : 'sem_sessao');
     return { statusCode: 401, headers, body: JSON.stringify({ ok: false, motivo: motivo,
+      conta: emailDeQuem || undefined,
       erro: emailDeQuem
-        ? 'A conta ' + emailDeQuem + ' não está na Equipe com um papel que '
-          + 'abre o sistema, nem em ISR_EQUIPE_EMAILS.'
+        ? 'A conta ' + emailDeQuem + ' ' + (porqueNao === 'sem_papel'
+            ? 'está na Equipe sem papel que abra o sistema.'
+            : porqueNao === 'sem_base'
+              ? 'não pôde ser conferida: ISR_BASE_URL não está definida.'
+              : 'não foi achada na Equipe por este e-mail.')
         : (enviada
           ? 'A chave enviada não é a mesma que está no Netlify em ISR_CONVITE_CHAVE. '
             + 'No campo "chave" vai o VALOR da senha, não o nome da variável.'

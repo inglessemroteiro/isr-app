@@ -61,6 +61,40 @@ const P = require("./preparar.js");
   T("com a marca de que o caminho é entrar de novo",
     traduzido.precisaEntrar === true, traduzido);
 
+  console.log("\n— cada recusa diz onde se resolve —");
+  const traduz = await p.evaluate(async () => {
+    const C = window.ISRCRM;
+    const a = C.getPessoas().filter(x => x.status === "aluna" && x.email && x.turma)[0];
+    const casos = {};
+    const original = window.fetch;
+    const comResposta = (corpo, st) => {
+      window.fetch = (u, o) => (String(u).indexOf("convidar-aluna") >= 0
+        ? Promise.resolve({ ok: st < 400, status: st,
+            json: () => Promise.resolve(corpo) })
+        : original(u, o));
+    };
+    comResposta({ ok: false, motivo: "fora_da_equipe", conta: "gabi@outro.local" }, 401);
+    casos.foraDaEquipe = (await C.convidarAluna(a)).erro;
+    comResposta({ ok: false, motivo: "sem_papel", conta: "gabi@teste.local" }, 401);
+    casos.semPapel = (await C.convidarAluna(a)).erro;
+    comResposta({ ok: false, motivo: "sem_base" }, 401);
+    casos.semBase = (await C.convidarAluna(a)).erro;
+    window.fetch = original;
+    return casos;
+  });
+  T("quem não está na Equipe é mandado para a Equipe",
+    /não está em nenhuma ficha da Equipe/.test(traduz.foraDaEquipe), traduz.foraDaEquipe);
+  T("e a mensagem diz com qual conta ela entrou",
+    /Você entrou como gabi@outro\.local/.test(traduz.foraDaEquipe), traduz.foraDaEquipe);
+  T("quem está sem papel lê quais papéis existem",
+    /sem papel marcado/.test(traduz.semPapel)
+    && /gestora, operação, comercial, professora/.test(traduz.semPapel), traduz.semPapel);
+  T("e base não configurada não vira culpa de quem clicou",
+    /não está ligado à base da escola/.test(traduz.semBase), traduz.semBase);
+  T("nenhuma das três fala de variável de ambiente",
+    ![traduz.foraDaEquipe, traduz.semPapel, traduz.semBase]
+      .some(x => /ISR_|variável|ambiente/i.test(x || "")), traduz);
+
   console.log("\n— o aviso aparece na tela, com o caminho —");
   await p.evaluate(() => {
     const bt = [...document.querySelectorAll("main button")]

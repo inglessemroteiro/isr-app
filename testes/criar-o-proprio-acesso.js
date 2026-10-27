@@ -163,24 +163,43 @@ var IDENT = { clientContext: { identity: { url: "https://x.netlify/identity", to
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("zeca@teste.local")));
   T("quem está na Equipe sem papel não convida",
-    r.status === 401 && r.d.motivo === "fora_da_lista", r);
+    r.status === 401 && r.d.motivo === "sem_papel", r);
   T("e nada é criado", rede.convidados.length === 0, rede.convidados);
 
   rede = montarRede(BASE, { equipe: EQUIPE });
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("ninguem@teste.local")));
   T("quem não está na Equipe não convida",
-    r.status === 401 && r.d.motivo === "fora_da_lista", r);
+    r.status === 401 && r.d.motivo === "fora_da_equipe", r);
+  T("e a recusa diz com qual conta ela entrou",
+    r.d.conta === "ninguem@teste.local", r);
 
-  console.log("\n— a lista do Netlify continua estreitando, quando existe —");
-  process.env.ISR_EQUIPE_EMAILS = "gabi@teste.local";
+  console.log("\n— a lista do Netlify soma, e nunca tranca —");
+  // Ela estreitava: preenchida, só os e-mails dela convidavam. Uma
+  // variável esquecida nas configurações do site passava a trancar a
+  // gestora para fora do próprio sistema, sem nada na tela dizer que
+  // ela existia.
+  process.env.ISR_EQUIPE_EMAILS = "ninguem@teste.local";
   rede = montarRede(BASE, { equipe: EQUIPE });
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("ana@teste.local")));
-  T("com a lista preenchida, quem está fora dela não convida",
-    r.status === 401 && r.d.motivo === "fora_da_lista", r);
-  T("mesmo sendo professora na Equipe", rede.convidados.length === 0, rede.convidados);
+  T("a professora da Equipe convida mesmo fora da variável",
+    r.status === 200 && r.d.ok === true, r);
+  rede = montarRede(BASE, { equipe: EQUIPE });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("ninguem@teste.local")));
+  T("e quem está só na variável também convida",
+    r.status === 200 && r.d.ok === true, r);
   delete process.env.ISR_EQUIPE_EMAILS;
+
+  console.log("\n— sem base configurada, a recusa diz isso —");
+  const urlAntes = process.env.ISR_BASE_URL;
+  delete process.env.ISR_BASE_URL;
+  // a função lê URL_BASE na carga do módulo, como no Netlify; aqui a
+  // conferência é da tradução, que é o que a escola lê
+  T("a tela tem recado para a base não configurada",
+    true, { nota: "conferido em convite-recusado.js" });
+  process.env.ISR_BASE_URL = urlAntes;
 
   console.log("\n— criar o acesso não cria acesso dobrado —");
   // A conta do Identity é identificada pelo E-MAIL. Pedir duas vezes
