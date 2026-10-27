@@ -196,6 +196,74 @@ const P = require("./preparar.js");
     !/cria a senha|criar a senha|cria a sua senha/i.test(eq),
     (eq.match(/.{0,80}cria[r]? a (sua )?senha.{0,80}/i) || [""])[0]);
 
+  await ctx.close();
+
+  console.log("\n— nenhuma recusa cai no genérico —");
+  // O laço que faltava: a função ganhava um motivo novo, o app não
+  // sabia traduzir, e a tela dizia só "O convite não saiu". Aqui os
+  // motivos são lidos do código da função e cada um tem de chegar
+  // traduzido.
+  const fonte = require("fs")
+    .readFileSync(require("path").join(__dirname, "..", "netlify", "functions",
+      "convidar-aluna.js"), "utf8");
+  const saidasSemMotivo = (fonte.match(/\{ ok: false,[^\n]*/g) || [])
+    .filter(l => l.indexOf("motivo:") < 0);
+  T("toda saída de erro da função leva motivo",
+    saidasSemMotivo.length === 0, saidasSemMotivo);
+
+  const escolhido = (fonte.match(/const motivo =[\s\S]*?;/) || [""])[0];
+  const motivos = [...new Set(
+    [...fonte.matchAll(/motivo: '([a-z_]+)'/g)].map(m => m[1])
+      .concat([...escolhido.matchAll(/'([a-z_]+)'/g)].map(m => m[1])))];
+  T("a lista de motivos foi lida do código", motivos.length >= 8, motivos);
+
+  ctx = await comResposta({ ok: true, convidada: true }, 200);
+  p = await ctx.newPage();
+  p.on("pageerror", e => erros.push(String(e).slice(0, 220)));
+  await p.goto(P.endereco("ISR - Alunas v3.dc.html"));
+  await p.waitForTimeout(3000);
+  await comSessao(p);
+  const todos = await p.evaluate(async (motivos) => {
+    const C = window.ISRCRM;
+    const a = C.getPessoas().filter(x => x.status === "aluna" && x.email && x.turma)[0];
+    const original = window.fetch;
+    const comResposta = (corpo, st) => {
+      window.fetch = (u, o) => (String(u).indexOf("convidar-aluna") >= 0
+        ? Promise.resolve({ ok: st < 400, status: st,
+            json: () => Promise.resolve(corpo) })
+        : original(u, o));
+    };
+    const r = {};
+    for (const m of motivos) {
+      // 401 de propósito: assim o recado só pode vir da tradução,
+      // nunca do atalho que o status 500 abre
+      comResposta({ ok: false, motivo: m, conta: "gabi@teste.local" }, 401);
+      r[m] = (await C.convidarAluna(a)).erro;
+    }
+    comResposta({ ok: false, motivo: "motivo_que_ainda_nao_existe" }, 500);
+    r._novo = (await C.convidarAluna(a)).erro;
+    comResposta({ ok: false }, 401);
+    r._muda = (await C.convidarAluna(a)).erro;
+    window.fetch = original;
+    return r;
+  }, motivos);
+
+  const genericas = motivos.filter(m => !todos[m] || /não disse por quê/.test(todos[m]));
+  T("cada motivo da função chega traduzido", genericas.length === 0,
+    genericas.map(m => [m, todos[m]]));
+  const vazando = motivos.filter(m => /ISR_|x-isr-chave|variável|ambiente/i.test(todos[m] || ""));
+  T("e nenhum deles fala de variável de ambiente", vazando.length === 0, vazando);
+  T("motivo que o app ainda não conhece vira falha do site, com onde olhar",
+    /falhou ao criar o convite/.test(todos._novo) && /logs do Netlify/.test(todos._novo),
+    todos._novo);
+  T("recusa sem motivo nenhum diz isso, e também onde olhar",
+    /não disse por quê/.test(todos._muda) && /logs do Netlify/.test(todos._muda),
+    todos._muda);
+  T("sem e-mail na ficha não manda mexer em configuração",
+    /Falta o e-mail/.test(todos.sem_email || ""), todos.sem_email);
+  T("base fora do ar não vira culpa de quem clicou",
+    /não respondeu/.test(todos.base_fora || ""), todos.base_fora);
+
   T("nenhum erro de página", erros.length === 0, erros);
   await b.close();
   fim();

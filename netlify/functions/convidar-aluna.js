@@ -142,7 +142,7 @@ exports.handler = async (event, context) => {
   const headers = { 'Content-Type': 'application/json' };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   if (event.httpMethod !== 'POST')
-    return { statusCode: 405, headers, body: JSON.stringify({ ok: false, erro: 'use POST' }) };
+    return { statusCode: 405, headers, body: JSON.stringify({ ok: false, motivo: 'erro_inesperado', erro: 'use POST' }) };
 
   let corpo = {};
   try { corpo = JSON.parse(event.body || '{}'); } catch (e) {}
@@ -194,7 +194,7 @@ exports.handler = async (event, context) => {
   let porSiMesma = false;
   if (!comChave && !daEquipe && corpo.autoacesso === true) {
     if (!emailPedido || emailPedido.indexOf('@') < 1) {
-      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, erro: 'e-mail ausente' }) };
+      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, motivo: 'sem_email', erro: 'e-mail ausente' }) };
     }
     try {
       porSiMesma = await ehAlunaDaEscola(emailPedido);
@@ -237,7 +237,7 @@ exports.handler = async (event, context) => {
 
   const email = String(corpo.email || '').trim().toLowerCase();
   if (!email || email.indexOf('@') < 0)
-    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, erro: 'e-mail ausente' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ ok: false, motivo: 'sem_email', erro: 'e-mail ausente' }) };
 
   const ident = context && context.clientContext && context.clientContext.identity;
   if (!ident || !ident.url || !ident.token)
@@ -267,6 +267,6 @@ exports.handler = async (event, context) => {
       erro: 'Identity respondeu ' + res.status, detalhe: texto.slice(0, 300) }) };
   } catch (err) {
     console.error('convidar-aluna erro:', err);
-    return { statusCode: 500, headers, body: JSON.stringify({ ok: false, erro: String(err && err.message || err) }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ ok: false, motivo: 'erro_inesperado', erro: String(err && err.message || err) }) };
   }
 };
