@@ -10836,6 +10836,278 @@
       .replace(/[áàâã]/g, "a").replace(/[éê]/g, "e").replace(/í/g, "i")
       .replace(/[óô]/g, "o").replace(/ú/g, "u").replace(/ç/g, "c");
   }
+  // ── O GUIA DO PROFESSOR, LIDO COMO ESTÁ ───────────────────────
+  //
+  // Os materiais da escola moram no Drive, um guia por nível e por
+  // ciclo, em PDF. O guia é prosa, não formulário — mas tem uma forma
+  // constante, e é dela que este leitor vive:
+  //
+  //   "Traditions 2026.4 — Teacher's Guide: Speaking Group (B1)"
+  //   ...
+  //   "Session 1 — Our End of Year Dishes"
+  //   um parágrafo que diz "By the end of it every student can ..."
+  //   "Phase Time What happens Materials"
+  //   "Warm-up 10 min"   (ou "Language Focus" e "10 min" em duas linhas)
+  //   o que acontece, e os materiais
+  //
+  // O que entra é o que o sistema sabe mostrar: número, título,
+  // objetivo e as seis fases com o tempo de cada uma. O passo a passo
+  // longo de cada fase continua no PDF, que fica linkado no programa
+  // — copiar para dentro do sistema seria guardar duas versões da
+  // mesma coisa, e uma delas envelheceria.
+  //
+  // Nada disto é adivinhação sem rede: o que sai daqui vai para a
+  // tela de conferência antes de ser gravado, exatamente como o texto
+  // colado. O que o leitor errar, a escola vê antes.
+  var NIVEL_DO_GUIA = [
+    [/first\s*steps|\(a0\)/i, "First Steps (A0)"],
+    [/basics|\(a1\)/i, "Basics (A1)"],
+    [/essentials|\(a2\)/i, "Essentials (A2)"],
+    [/speaking|\(b1\)/i, "Speaking (B1)"],
+    [/advanced|\(b2\)/i, "Advanced (B2)"]
+  ];
+  // A extração de PDF quebra onde quer: o nome da fase vira
+  // "Language" numa linha e "Focus" na outra, o tempo vira "10" e
+  // "min" em duas. Antes de interpretar, as linhas da tabela voltam a
+  // ser uma linha — sem isto o leitor perde a fase inteira e cai no
+  // tempo padrão, calado.
+  function juntarLinhasDaTabela(t) {
+    var rotulos = FASES.map(function (f) { return f.label; });
+    var r = t;
+    rotulos.forEach(function (lab) {
+      if (lab.indexOf(" ") < 0) return;
+      var partes = lab.split(" ").map(function (x) {
+        return x.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      });
+      r = r.replace(new RegExp(partes.join("\\s*\\n+\\s*"), "gi"), lab);
+    });
+    // "10" sozinho numa linha, com "min" na seguinte
+    r = r.replace(/(\d{1,3})\s*\n+\s*min\b/gi, "$1 min");
+    // e o nome da fase sozinho, com o tempo na linha de baixo
+    rotulos.forEach(function (lab) {
+      var esc = lab.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      r = r.replace(new RegExp("(\\n\\s*" + esc + ")\\s*\\n+\\s*(\\d{1,3}\\s*min\\b)", "gi"),
+        "$1 $2");
+    });
+    return r;
+  }
+  function lerGuiaDoProfessor(texto) {
+    var t = juntarLinhasDaTabela(String(texto || "").replace(/\r/g, ""));
+    var avisos = [];
+    // o cabeçalho: "<Projeto> <ciclo> — Teacher's Guide: <nível>"
+    var cabecalho = t.slice(0, 400);
+    var mNome = cabecalho.match(/^\s*([^\n—–:]+?)\s*(\d{4}\.\d)?\s*[—–]\s*Teacher/i);
+    var nome = mNome ? mNome[1].trim() : "";
+    var nivel = "";
+    // o nível vem do cabeçalho; "(B1)" vale mais que a palavra solta
+    var linhaNivel = (cabecalho.match(/Teacher[^\n]*/i) || [""])[0];
+    NIVEL_DO_GUIA.forEach(function (par) {
+      if (!nivel && par[0].test(linhaNivel)) nivel = par[1];
+    });
+    if (!nome) avisos.push("Não achei o nome do projeto na primeira linha do guia.");
+    if (!nivel) avisos.push("Não achei o nível no cabeçalho do guia.");
+    // a descrição: o primeiro parágrafo que explica o guia
+    var mSobre = t.match(/\n\s*(This guide covers[^\n]+)/i);
+    var descricao = mSobre ? mSobre[1].trim() : "";
+
+    // as sessões
+    var marcas = [];
+    var re = /\n\s*Session\s+(\d{1,2})\s*[—–-]\s*([^\n]+)/g, m;
+    while ((m = re.exec(t))) {
+      marcas.push({ n: parseInt(m[1], 10), titulo: m[2].trim(), i: m.index, fim: re.lastIndex });
+    }
+    if (!marcas.length) {
+      return { programas: [], avisos: ["Nenhuma sessão encontrada. O guia precisa ter linhas "
+        + "como \u201cSession 1 \u2014 Título da sessão\u201d."] };
+    }
+    var sessoes = marcas.map(function (mk, k) {
+      var corpo = t.slice(mk.fim, k + 1 < marcas.length ? marcas[k + 1].i : t.length);
+      return { n: mk.n, titulo: mk.titulo, corpo: corpo };
+    });
+
+    var fases = FASES.map(function (f) { return f; });
+    var lerEtapas = function (corpo) {
+      // cada fase aparece como "Warm-up 10 min", às vezes com o tempo
+      // na linha de baixo. Entre uma fase e a seguinte vêm os blocos
+      // da linha da tabela: o último é a coluna "Materials" e o
+      // anterior é a coluna "What happens" — é essa que entra.
+      var achadas = [];
+      fases.forEach(function (f) {
+        // o nome da fase, o número e o "min" podem estar na mesma
+        // linha ou partidos em três pela quebra de página ou de
+        // célula; o que vem depois, na mesma linha, é o começo da
+        // célula
+        var rx = new RegExp("\\n\\s*" + f.label.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+          + "\\s*\\n*\\s*(\\d{1,3})\\s*\\n*\\s*min\\b[ \\t]*([^\\n]*)", "i");
+        var mm = corpo.match(rx);
+        if (mm) achadas.push({ fase: f, min: parseInt(mm[1], 10),
+          resto: String(mm[2] || "").trim(),
+          i: mm.index, fim: mm.index + mm[0].length });
+      });
+      achadas.sort(function (a, b) { return a.i - b.i; });
+      if (!achadas.length) return null;
+      // Depois da tabela vêm as seções em prosa, que começam pelo nome
+      // da fase seguido de ponto ou travessão ("Minds On. Show three
+      // end-of-year scenes"). A última linha da tabela não tem a
+      // próxima fase para parar nela, então para aí.
+      var rotulos = fases.map(function (f) { return f.label; }).join("|");
+      var rxProsa = new RegExp("\\n\\s*(?:" + rotulos + ")\\s*[.\\u2014\\u2013]", "i");
+      var porId = {};
+      achadas.forEach(function (a, k) {
+        var ate = k + 1 < achadas.length ? achadas[k + 1].i : corpo.length;
+        var pedaco = corpo.slice(a.fim, ate);
+        if (k + 1 === achadas.length) {
+          var mp = pedaco.match(rxProsa);
+          if (mp) pedaco = pedaco.slice(0, mp.index);
+        }
+        var blocos = pedaco.split(/\n\s*\n/)
+          .map(function (x) { return x.replace(/\s+/g, " ").trim(); })
+          .filter(function (x) { return x && x !== "\u2014" && x !== "-"; });
+        var oQue;
+        if (a.resto) {
+          // a célula começou na mesma linha do tempo e continuou
+          // abaixo: "Wrap-up 5 min Reflection in English; homework" +
+          // "given". O que vem junto é a mesma frase, partida pelo PDF.
+          oQue = [a.resto].concat(blocos.slice(0, 1)).join(" ").trim();
+        } else {
+          // a linha da tabela virou blocos: o último é a coluna
+          // Materials e o anterior é o que acontece
+          oQue = blocos.length > 1 ? blocos[blocos.length - 2] : (blocos[0] || "");
+        }
+        porId[a.fase.id] = { fase: a.fase.id, titulo: oQue.slice(0, 220), min: a.min };
+      });
+      // as seis fases, na ordem da escola; a que o guia não descreve
+      // entra vazia com o tempo padrão, em vez de sumir
+      return fases.map(function (f) {
+        return porId[f.id] || { fase: f.id, titulo: "", min: f.min };
+      });
+    };
+
+    var lerObjetivo = function (corpo) {
+      var mO = corpo.match(/By the end of[^.:]*[.:]/i);
+      if (mO) return mO[0].replace(/[:.]$/, "").replace(/\s+/g, " ").trim();
+      var primeiro = corpo.split(/\n\s*\n/).map(function (x) { return x.trim(); })
+        .filter(Boolean)[0] || "";
+      return primeiro.replace(/\s+/g, " ").slice(0, 300);
+    };
+
+    var prog = { nome: nome, nivel: nivel, descricao: descricao, sessoes: [] };
+    sessoes.forEach(function (sx) {
+      var etapas = lerEtapas(sx.corpo);
+      if (!etapas) avisos.push("Sessão " + sx.n + ": não achei a tabela de fases.");
+      prog.sessoes.push({ n: sx.n, titulo: sx.titulo,
+        objetivo: lerObjetivo(sx.corpo),
+        homework: "", starters: "", palavras: "", guia: "", slides: "",
+        etapas: etapas });
+    });
+    return { programas: [prog], avisos: avisos };
+  }
+
+  // ── LER O PDF NO PRÓPRIO NAVEGADOR ────────────────────────────
+  //
+  // O guia é um PDF no Drive. Ler o Drive de dentro do app exigiria a
+  // conta do Google da escola; ler o PDF exige uma biblioteca. A
+  // segunda metade é a barata: a escola baixa o arquivo e o solta na
+  // tela, e o texto sai aqui mesmo, sem senha, sem permissão e sem
+  // mandar o material da escola para lugar nenhum.
+  //
+  // A biblioteca só é buscada quando alguém solta um PDF: quem nunca
+  // importa nada não paga por ela.
+  var PDFJS_URL = "https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.min.mjs";
+  var PDFJS_WORKER = "https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs";
+  var pdfjsPromessa = null;
+  function carregarPdfJs() {
+    if (pdfjsPromessa) return pdfjsPromessa;
+    pdfjsPromessa = new Promise(function (ok, erro) {
+      if (window.pdfjsLib) return ok(window.pdfjsLib);
+      var pronto = function () { ok(window.pdfjsLib); };
+      window.addEventListener("isr-pdfjs", pronto, { once: true });
+      var sc = document.createElement("script");
+      sc.type = "module";
+      sc.textContent = 'import * as L from "' + PDFJS_URL + '";'
+        + 'L.GlobalWorkerOptions.workerSrc = "' + PDFJS_WORKER + '";'
+        + 'window.pdfjsLib = L;'
+        + 'window.dispatchEvent(new Event("isr-pdfjs"));';
+      sc.onerror = function () { erro(new Error("pdfjs")); };
+      document.head.appendChild(sc);
+      setTimeout(function () {
+        if (!window.pdfjsLib) erro(new Error("pdfjs demorou"));
+      }, 20000);
+    });
+    return pdfjsPromessa;
+  }
+  // Texto de um PDF, página a página. As quebras de página viram
+  // linha em branco, que é o que separa os blocos do guia.
+  function lerPdf(arquivo) {
+    if (!arquivo) return Promise.reject(new Error("sem arquivo"));
+    return carregarPdfJs().then(function (L) {
+      return arquivo.arrayBuffer().then(function (buf) {
+        return L.getDocument({ data: new Uint8Array(buf) }).promise;
+      });
+    }).then(function (doc) {
+      var paginas = [];
+      var uma = function (n) {
+        return doc.getPage(n).then(function (pg) {
+          return pg.getTextContent();
+        }).then(function (c) {
+          // o PDF entrega pedaços soltos com a posição de cada um; a
+          // quebra de linha é a mudança de altura, e é ela que separa
+          // o nome da fase do que acontece nela
+          // Duas quebras, não uma. A altura separa as linhas; o salto
+          // horizontal separa as COLUNAS. Numa tabela as células de
+          // uma mesma linha estão na mesma altura, e sem a segunda
+          // quebra "o que acontece" e "materiais" viravam um texto só.
+          var linhas = [], atual = "", y = null, xFim = null;
+          (c.items || []).forEach(function (it) {
+            if (typeof it.str !== "string") return;
+            var alt = it.transform ? Math.round(it.transform[5]) : y;
+            var x = it.transform ? it.transform[4] : null;
+            var novaLinha = y !== null && Math.abs(alt - y) > 2;
+            var novaColuna = !novaLinha && x !== null && xFim !== null && x - xFim > 12;
+            if (novaLinha || novaColuna) { linhas.push(atual); atual = ""; }
+            y = alt;
+            xFim = (x === null ? null : x + (it.width || 0));
+            atual += it.str;
+            if (it.hasEOL) { linhas.push(atual); atual = ""; xFim = null; }
+          });
+          if (atual) linhas.push(atual);
+          paginas.push(linhas.map(function (l) { return l.trim(); })
+            .filter(function (l) { return l; }).join("\n\n"));
+        });
+      };
+      var fila = Promise.resolve();
+      for (var i = 1; i <= doc.numPages; i++) fila = fila.then(uma.bind(null, i));
+      return fila.then(function () { return "\n\n" + paginas.join("\n\n"); });
+    });
+  }
+
+  // O guia lido vira o MESMO texto que a escola cola à mão. Assim a
+  // conferência e a gravação são as mesmas dos dois caminhos, e o que
+  // o leitor não achou fica à vista, num campo editável, antes de ir
+  // para o repositório.
+  function guiaParaTexto(programas) {
+    var rotulo = {};
+    FASES.forEach(function (f) { rotulo[f.id] = f.label; });
+    var linhas = [];
+    (programas || []).forEach(function (p, k) {
+      if (k) linhas.push("");
+      linhas.push("Programa: " + (p.nome || ""));
+      linhas.push("Nível: " + (p.nivel || ""));
+      if (p.descricao) linhas.push("Sobre: " + p.descricao);
+      (p.sessoes || []).forEach(function (s) {
+        linhas.push("");
+        linhas.push("S" + s.n + ": " + (s.titulo || ""));
+        if (s.objetivo) linhas.push("Objetivo: " + s.objetivo);
+        if (s.palavras) linhas.push("Palavras: " + s.palavras);
+        if (s.homework) linhas.push("Tarefa: " + s.homework);
+        (s.etapas || []).forEach(function (e) {
+          linhas.push(rotulo[e.fase] + ": " + (e.titulo || "") + " (" + e.min + ")");
+        });
+      });
+    });
+    return linhas.join("\n");
+  }
+
   function lerProgramasDeTexto(texto) {
     var linhas = String(texto || "").split(/\r?\n/);
     var fasePorLabel = {};
@@ -17372,7 +17644,9 @@
     salvarProgramaEstudo: salvarProgramaEstudo,
     arquivarProgramaEstudo: arquivarProgramaEstudo,
     duplicarProgramaEstudo: duplicarProgramaEstudo,
-    lerProgramasDeTexto: lerProgramasDeTexto, conferirImportacao: conferirImportacao,
+    lerProgramasDeTexto: lerProgramasDeTexto,
+    lerGuiaDoProfessor: lerGuiaDoProfessor, lerPdf: lerPdf,
+    guiaParaTexto: guiaParaTexto, conferirImportacao: conferirImportacao,
     importarProgramas: importarProgramas,
     syllabusDoPrograma: syllabusDoPrograma, programaDaTurma: programaDaTurma,
     syllabusDaTurma: syllabusDaTurma, definirProgramaDaTurma: definirProgramaDaTurma,

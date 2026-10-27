@@ -38,7 +38,10 @@ var REACT = {
   "react@18.3.1/umd/react.development.js": "react/umd/react.development.js",
   "react-dom@18.3.1/umd/react-dom.development.js": "react-dom/umd/react-dom.development.js",
   "react@18.3.1/umd/react.production.min.js": "react/umd/react.production.min.js",
-  "react-dom@18.3.1/umd/react-dom.production.min.js": "react-dom/umd/react-dom.production.min.js"
+  "react-dom@18.3.1/umd/react-dom.production.min.js": "react-dom/umd/react-dom.production.min.js",
+  // o leitor de PDF da tela Programas, servido local como o React
+  "pdfjs-dist@4.0.379/build/pdf.min.mjs": "pdfjs-dist/build/pdf.min.mjs",
+  "pdfjs-dist@4.0.379/build/pdf.worker.min.mjs": "pdfjs-dist/build/pdf.worker.min.mjs"
 };
 
 // Sobe o contexto já com as rotas presas e o exemplo ligado.

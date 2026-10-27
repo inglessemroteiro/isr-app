@@ -104,6 +104,25 @@
       <sc-if value="{{ importando }}">
         <section class="isr-cartao" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 12px">
           <div style="font-size: 16px; font-weight: 800">Trazer programas de um texto</div>
+          <!-- DO PDF DO GUIA DO PROFESSOR.
+               Os materiais da escola moram no Drive, um guia por nível
+               e por ciclo. O arquivo baixado é solto aqui: o texto sai
+               no próprio navegador e cai na caixa abaixo, no mesmo
+               formato que se cola à mão — é lá que a escola completa o
+               que o guia não disser antes de gravar. -->
+          <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <div style="flex: 1 1 260px; min-width: 0">
+              <div style="font-size: 13px; font-weight: 700; color: var(--color-primary-900)">Do PDF do guia do professor</div>
+              <div style="font-size: 12px; color: var(--color-tertiary-700); line-height: 1.55">{{ pdfNota }}</div>
+            </div>
+            <label class="isr-botao isr-botao--pilula" style="flex: none; background: var(--color-button-secondary); color: var(--color-primary-900); font-size: 13px; font-weight: 700; padding: 11px 18px; cursor: pointer">
+              {{ pdfLabel }}
+              <input type="file" accept="application/pdf,.pdf" onchange="{{ onPdf }}" style="display: none" />
+            </label>
+          </div>
+          <sc-if value="{{ temPdfErro }}">
+            <div style="font-size: 12.5px; font-weight: 700; color: var(--color-error-dark); line-height: 1.5">{{ pdfErro }}</div>
+          </sc-if>
           <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: var(--color-primary-800); white-space: pre-wrap">{{ exemploImport }}</div>
           <textarea class="isr-campo" ref="{{ textoRef }}" rows="12" placeholder="{{ phTexto }}" style="width: 100%; padding: 12px 14px; font-size: 13px; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical"></textarea>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
@@ -218,6 +237,8 @@ class Component extends DCLogic {
             busca: "", filtro: "todos", abErro: "", tick: 0,
             // a importação por texto: o que foi conferido e o que foi gravado
             importando: false, previa: null, importErro: "", importFeito: "",
+            // o PDF do guia sendo lido, e o que o leitor não achou
+            pdfLendo: false, pdfErro: "",
             // o texto em andamento mora aqui e só é gravado quando ela
             // sai do campo: salvar a cada tecla devolvia o texto
             // aparado, e a barra de espaço não sobrevivia
@@ -248,6 +269,8 @@ class Component extends DCLogic {
       importarLabel: "Trazer de um texto", importando: false, onImportar: () => {},
       textoRef: this.textoRef, phTexto: "Cole aqui o syllabus, no formato de cima.",
       exemploImport: "", onConferir: () => {}, onGravarImport: () => {},
+      pdfLabel: "Escolher o PDF", pdfNota: "", onPdf: () => {},
+      temPdfErro: false, pdfErro: "",
       onFecharImport: () => {}, podeGravarImport: false, gravarImportLabel: "",
       temPrevia: false, previa: [], temAvisos: false, avisos: "",
       temImportErro: false, importErro: "", importFeito: false, importFeitoTexto: "",
@@ -343,6 +366,40 @@ class Component extends DCLogic {
         + "S1: The Map Begins\nObjetivo: Students will be able to introduce themselves.\n"
         + "Começos: I am; I'm from\nTarefa: Find one bio in English and write three facts.\n"
         + "Warm-up: teacher shows a hand-drawn people map (10)\nMinds On: a real Instagram bio (15)",
+      pdfLabel: this.state.pdfLendo ? "Lendo o PDF…" : "Escolher o PDF",
+      pdfNota: "O guia baixado do Drive. O que for lido aparece na caixa abaixo "
+        + "para você conferir e completar antes de gravar.",
+      temPdfErro: !!this.state.pdfErro,
+      pdfErro: this.state.pdfErro || "",
+      onPdf: (e) => {
+        const arq = e.target.files && e.target.files[0];
+        e.target.value = "";
+        if (!arq) return;
+        this.setState({ pdfLendo: true, pdfErro: "", previa: null, importFeito: "" });
+        CRM.lerPdf(arq)
+          .then(texto => {
+            const lido = CRM.lerGuiaDoProfessor(texto);
+            if (!lido.programas.length) {
+              throw new Error(lido.avisos[0] || "Não achei sessões neste PDF.");
+            }
+            const el = this.textoRef.current;
+            if (el) el.value = CRM.guiaParaTexto(lido.programas);
+            const pg = lido.programas[0];
+            const vazias = (pg.sessoes || []).reduce((n, s2) =>
+              n + (s2.etapas || []).filter(x => !x.titulo).length, 0);
+            this.setState({ pdfLendo: false,
+              pdfErro: vazias
+                ? vazias + (vazias === 1 ? " fase ficou em branco" : " fases ficaram em branco")
+                  + ": complete na caixa abaixo antes de gravar."
+                : "" });
+            const r = CRM.conferirImportacao((el && el.value) || "");
+            this.setState({ previa: r });
+          })
+          .catch(err => this.setState({ pdfLendo: false,
+            pdfErro: String((err && err.message) || err).indexOf("pdfjs") >= 0
+              ? "Não foi possível abrir o leitor de PDF. Confira a conexão e tente de novo."
+              : ((err && err.message) || "Não foi possível ler este PDF.") }));
+      },
       onConferir: () => {
         const el = this.textoRef.current;
         const r = CRM.conferirImportacao((el && el.value) || "");
