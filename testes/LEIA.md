@@ -44,6 +44,14 @@ Se o React ainda não estiver baixado:
   só abre a tela de senha para quem pediu a troca; e a sessão do
   Netlify Identity guardada, chegando às funções no cabeçalho e saindo
   do aparelho quando a pessoa volta.
+- `criar-o-proprio-acesso.js` — a aluna criando o acesso dela. O
+  /recover do Identity só manda e-mail para conta que existe, e
+  responde "ok" de qualquer jeito: quem nunca foi convidada pedia o
+  link e esperava para sempre. A suíte roda a função do Netlify
+  direto em Node, com a base e o Identity respondidos ali, e guarda a
+  regra de quem pode criar acesso — aluna com turma ou produto sim;
+  lead, ex-aluna, sem turma e e-mail de fora não; e a resposta é a
+  mesma para todos, para a tela não contar quem estuda na escola.
 - `guia-em-pdf.js` — o guia do professor trazido de um PDF, na tela
   Programas: o arquivo é lido no próprio navegador, o cabeçalho dá o
   projeto e o nível, cada "Session N — Título" vira uma sessão com

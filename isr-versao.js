@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-b",
+  numero: "2026.10.27-c",
   data: "27/10/2026",
-  nota: "O guia do professor entra por PDF"
+  nota: "A aluna cria o próprio acesso"
 };

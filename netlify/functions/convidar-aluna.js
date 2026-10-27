@@ -36,6 +36,52 @@
 // ════════════════════════════════════════════════════════════════
 
 const CHAVE = process.env.ISR_CONVITE_CHAVE;
+const URL_BASE = process.env.ISR_BASE_URL;
+const CHAVE_BASE = process.env.ISR_BASE_CHAVE || "";
+
+// ── A TERCEIRA PORTA: A PRÓPRIA ALUNA ─────────────────────────────
+//
+// O /recover do Identity só manda e-mail para conta que já existe, e
+// responde "ok" de qualquer jeito. Quem nunca foi convidada não tem
+// conta: pedia o link de entrada, a tela dizia que o link saiu, e não
+// saía nada. Ela não tinha como se resolver, e a escola não ficava
+// sabendo.
+//
+// Agora ela mesma cria o acesso — e quem autoriza não é o navegador,
+// é o registro da escola. A função carrega a base pelo servidor e só
+// convida quem JÁ É ALUNA com turma ou produto contratado. Criar a
+// conta, aliás, não dá acesso a nada por si: o portão continua
+// conferindo o e-mail na base antes de abrir o app.
+//
+// A resposta é a mesma para quem está e para quem não está na base:
+// dizer "você não é aluna aqui" numa tela aberta na internet é contar
+// quem estuda na escola para quem perguntar.
+function liberadaNaBase(pessoa) {
+  if (!pessoa) return false;
+  var st = String(pessoa.status || "");
+  if (["aluna", "mvs"].indexOf(st) < 0) return false;
+  if (pessoa.turma) return true;
+  // produto contratado, pelas mesmas regras do app
+  if (pessoa.particular) return true;
+  if (pessoa.assinatura && pessoa.assinatura.ativa) return true;
+  return false;
+}
+async function ehAlunaDaEscola(email) {
+  if (!URL_BASE) return false;
+  const corpo = { action: "sistemaLoad" };
+  if (CHAVE_BASE) corpo.chave = CHAVE_BASE;
+  const r = await fetch(URL_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(corpo)
+  });
+  if (!r.ok) throw new Error("base " + r.status);
+  const d = await r.json();
+  const pessoas = (d && d.data && d.data.pessoas) || [];
+  const achada = pessoas.filter((x) =>
+    x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
+  return liberadaNaBase(achada);
+}
 const EQUIPE = String(process.env.ISR_EQUIPE_EMAILS || '')
   .split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
 
@@ -66,7 +112,30 @@ exports.handler = async (event, context) => {
   const emailDeQuem = String((quem && quem.email) || '').trim().toLowerCase();
   const daEquipe = !!emailDeQuem && (!EQUIPE.length || EQUIPE.indexOf(emailDeQuem) >= 0);
 
-  if (!comChave && !daEquipe) {
+  // a própria aluna pedindo o acesso dela: a autorização vem da base,
+  // e o e-mail do pedido é o único que pode ser convidado
+  const emailPedido = String(corpo.email || '').trim().toLowerCase();
+  let porSiMesma = false;
+  if (!comChave && !daEquipe && corpo.autoacesso === true) {
+    if (!emailPedido || emailPedido.indexOf('@') < 1) {
+      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, erro: 'e-mail ausente' }) };
+    }
+    try {
+      porSiMesma = await ehAlunaDaEscola(emailPedido);
+    } catch (err) {
+      console.error('convidar-aluna · base:', err);
+      return { statusCode: 503, headers, body: JSON.stringify({ ok: false, motivo: 'base_fora',
+        erro: 'Não foi possível consultar a base agora.' }) };
+    }
+    if (!porSiMesma) {
+      // mesma resposta de quem está na base: a tela não conta quem
+      // estuda aqui, e a aluna é mandada para a escola
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, convidada: false,
+        semRegistro: true, email: emailPedido }) };
+    }
+  }
+
+  if (!comChave && !daEquipe && !porSiMesma) {
     // "erro" diz qual das duas portas falhou, senão depurar isto vira
     // adivinhação — e é texto de quem mexe no servidor, não de quem
     // está olhando a ficha de uma professora. Quem lê essa parte é o
