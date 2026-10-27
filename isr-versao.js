@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-e",
+  numero: "2026.10.27-f",
   data: "27/10/2026",
-  nota: "A recusa diz qual é o problema"
+  nota: "Base não lida não acusa a pessoa"
 };

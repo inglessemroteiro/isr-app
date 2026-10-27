@@ -192,6 +192,35 @@ var IDENT = { clientContext: { identity: { url: "https://x.netlify/identity", to
     r.status === 200 && r.d.ok === true, r);
   delete process.env.ISR_EQUIPE_EMAILS;
 
+  console.log("\n— base que não foi lida não vira \"você não está na Equipe\" —");
+  // O Apps Script responde 200 mesmo quando recusa. Sem conferir o
+  // "ok", a recusa dele virava uma base vazia, e base vazia lia como
+  // "essa pessoa não está na Equipe": a gestora recebia "o seu
+  // e-mail não está em ficha nenhuma" com a ficha preenchida na
+  // frente dela.
+  const comBaseRuim = (resposta2) => {
+    global.fetch = function (url, init) {
+      if (String(url).indexOf("/invite") >= 0) {
+        return Promise.resolve({ ok: true, status: 200,
+          text: function () { return Promise.resolve("{}"); } });
+      }
+      return Promise.resolve({ ok: true, status: 200,
+        json: function () { return Promise.resolve(resposta2); } });
+    };
+  };
+  comBaseRuim({ ok: false, erro: "chave" });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("base que recusa vira \"não deu para conferir\", não recusa de pessoa",
+    r.status === 503 && r.d.motivo === "base_fora", r);
+  comBaseRuim({ ok: true, data: { pessoas: [], equipe: [] } });
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("equipe vazia também não acusa a pessoa",
+    r.status === 401 && r.d.motivo === "sem_base", r);
+  T("e a mensagem fala do site, não da ficha dela",
+    /ISR_BASE_URL|não pôde ser conferida/.test(r.d.erro || ""), r);
+
   console.log("\n— sem base configurada, a recusa diz isso —");
   const urlAntes = process.env.ISR_BASE_URL;
   delete process.env.ISR_BASE_URL;
