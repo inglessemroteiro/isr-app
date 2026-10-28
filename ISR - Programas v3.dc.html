@@ -143,6 +143,15 @@
               </div>
             </sc-for>
           </sc-if>
+          <!-- O que impede a gravação, e como resolver.
+               O botão some quando falta nome ou nível em algum
+               programa — e sumia sem dizer nada: a prévia mostrava
+               "sem nível" em vermelho, e não havia o que fazer com
+               isso na tela. A caixa acima é editável; é lá que se
+               corrige. -->
+          <sc-if value="{{ temBloqueio }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap">{{ bloqueio }}</div>
+          </sc-if>
           <sc-if value="{{ temAvisos }}">
             <div style="background: var(--color-warning-light); color: var(--color-warning-dark); border-radius: 14px; padding: 11px 14px; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap">{{ avisos }}</div>
           </sc-if>
@@ -273,6 +282,7 @@ class Component extends DCLogic {
       temPdfErro: false, pdfErro: "",
       onFecharImport: () => {}, podeGravarImport: false, gravarImportLabel: "",
       temPrevia: false, previa: [], temAvisos: false, avisos: "",
+      temBloqueio: false, bloqueio: "",
       temImportErro: false, importErro: "", importFeito: false, importFeitoTexto: "",
       criando: false, onNovo: () => {}, onCriar: () => {}, onCancelarNovo: () => {},
       novoNomeRef: this.novoNomeRef, novoNiveis: [], onNovoNivel: () => {},
@@ -420,6 +430,25 @@ class Component extends DCLogic {
             ? " linha não foi entendida e vai ser ignorada:\n" : " linhas não foram entendidas e vão ser ignoradas:\n")
           + this.state.previa.avisos.slice(0, 8).join("\n"))
         : "",
+      ...(() => {
+        const pvs = (this.state.previa && this.state.previa.programas) || [];
+        const travados = pvs.filter(x => x.erro);
+        if (!travados.length) return { temBloqueio: false, bloqueio: "" };
+        const semNivel = travados.filter(x => x.erro === "sem nível");
+        const semNome = travados.filter(x => x.erro === "sem nome");
+        const partes = [];
+        if (semNivel.length) {
+          partes.push("Falta o nível em " + semNivel.map(x => x.nome).join(", ")
+            + ". Na caixa acima, escreva na linha “Nível:” do programa um destes: "
+            + (CRM.NIVEIS || []).join(" · ") + ".");
+        }
+        if (semNome.length) {
+          partes.push("Falta o nome do programa. Na caixa acima, escreva "
+            + "“Programa: ” seguido do nome.");
+        }
+        partes.push("Depois aperte Conferir o texto de novo.");
+        return { temBloqueio: true, bloqueio: partes.join("\n") };
+      })(),
       podeGravarImport: !!(this.state.previa && this.state.previa.podeImportar),
       gravarImportLabel: this.state.previa
         ? ("Gravar " + this.state.previa.programas.length

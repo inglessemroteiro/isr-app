@@ -10949,8 +10949,35 @@
     });
     return r;
   }
+  // ── O QUE SE REPETE EM TODA PÁGINA ────────────────────────────
+  //
+  // O guia leva o próprio título no alto de cada página e "Page 4 of
+  // 39" no pé. Na extração isso cai no meio do texto — às vezes no
+  // meio de uma célula da tabela, porque a linha da tabela atravessa
+  // a virada de página. Sai antes de interpretar qualquer coisa.
+  function limparPaginacao(t) {
+    var partes = String(t || "").split(/(\t|\n\n)/);
+    var conta = {};
+    partes.forEach(function (x, i) {
+      if (i % 2) return;
+      var s = x.trim();
+      if (s && s.length < 140 && /Teacher/i.test(s)) conta[s] = (conta[s] || 0) + 1;
+    });
+    var repetido = Object.keys(conta).filter(function (k) { return conta[k] > 1; });
+    var out = [];
+    partes.forEach(function (x, i) {
+      if (i % 2) { out.push(x); return; }
+      var s = x.trim();
+      if (/^Page \d+ of \d+$/i.test(s) || repetido.indexOf(s) >= 0) {
+        if (out.length) out.pop();
+        return;
+      }
+      out.push(x);
+    });
+    return out.join("");
+  }
   function lerGuiaDoProfessor(texto) {
-    var t = juntarLinhasDaTabela(String(texto || "").replace(/\r/g, ""));
+    var t = juntarLinhasDaTabela(limparPaginacao(String(texto || "").replace(/\r/g, "")));
     var avisos = [];
     // o cabeçalho: "<Projeto> <ciclo> — Teacher's Guide: <nível>"
     var cabecalho = t.slice(0, 400);
@@ -10958,7 +10985,12 @@
     var nome = mNome ? mNome[1].trim() : "";
     var nivel = "";
     // o nível vem do cabeçalho; "(B1)" vale mais que a palavra solta
-    var linhaNivel = (cabecalho.match(/Teacher[^\n]*/i) || [""])[0];
+    // O nível vinha da MESMA linha do "Teacher's Guide:", e no guia de
+    // verdade ele está na linha de baixo: "Traditions 2026.4 —
+    // Teacher's Guide:" / "Advanced (B2)". Sem nível, o programa
+    // importado não encaixava em turma nenhuma.
+    var iT = cabecalho.search(/Teacher/i);
+    var linhaNivel = iT < 0 ? cabecalho : cabecalho.slice(iT, iT + 120);
     NIVEL_DO_GUIA.forEach(function (par) {
       if (!nivel && par[0].test(linhaNivel)) nivel = par[1];
     });
@@ -10970,7 +11002,9 @@
 
     // as sessões
     var marcas = [];
-    var re = /\n\s*Session\s+(\d{1,2})\s*[—–-]\s*([^\n]+)/g, m;
+    // o título da sessão pode vir logo depois de uma célula de tabela,
+    // e aí o que o antecede é uma tabulação, não uma quebra de linha
+    var re = /[\n\t]\s*Session\s+(\d{1,2})\s*[—–-]\s*([^\n\t]+)/g, m;
     while ((m = re.exec(t))) {
       marcas.push({ n: parseInt(m[1], 10), titulo: m[2].trim(), i: m.index, fim: re.lastIndex });
     }
@@ -10984,6 +11018,57 @@
     });
 
     var fases = FASES.map(function (f) { return f; });
+    // ── A TABELA LIDA POR CÉLULA ──────────────────────────────────
+    //
+    // Quando o PDF entrega as células separadas (ver lerPdf), a linha
+    // da tabela é simplesmente: fase · tempo · o que acontece ·
+    // materiais, nessa ordem, uma célula depois da outra. Aí não há
+    // adivinhação nenhuma: "o que acontece" é a célula seguinte ao
+    // tempo.
+    //
+    // Antes disto o leitor contava blocos de trás para frente e
+    // pegava a coluna de materiais: "Minds On" vinha descrita como
+    // "The two accounts, written by you".
+    var escapar = function (s) { return s.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"); };
+    var rotulosRx = fases.map(function (f) { return escapar(f.label); }).join("|");
+    var lerEtapasPorCelula = function (corpo) {
+      if (corpo.indexOf("\t") < 0) return null;
+      var porId = {};
+      var achou = 0;
+      fases.forEach(function (f) {
+        // o nome da fase e o tempo podem estar partidos por quebra de
+        // linha ou por tabulação — \s cobre as duas
+        var mm = corpo.match(new RegExp(escapar(f.label) + "\\s*(\\d{1,3})\\s*min\\b", "i"));
+        if (!mm) return;
+        var depois = corpo.slice(mm.index + mm[0].length);
+        var ate = depois.indexOf("\t");
+        var naMesma = (ate < 0 ? depois : depois.slice(0, ate));
+        var oQue;
+        if (naMesma.trim()) {
+          // a célula do "o que acontece" começou na mesma altura do
+          // tempo: é o resto dela, até a próxima coluna
+          oQue = naMesma;
+        } else {
+          // a coluna veio como célula própria, logo adiante
+          var resto = depois.slice(ate + 1);
+          var fim = resto.indexOf("\t");
+          oQue = fim < 0 ? resto : resto.slice(0, fim);
+        }
+        oQue = oQue.replace(/\s+/g, " ").trim();
+        // a célula pode emendar na linha seguinte da tabela; "—" é a
+        // célula vazia, e depois dela já é outra coluna
+        var corte = oQue.search(new RegExp("\\u2014|\\s(?:" + rotulosRx + ")\\s+\\d{1,3}\\s*min\\b", "i"));
+        if (corte > 0) oQue = oQue.slice(0, corte).trim();
+        if (oQue === "—" || oQue === "-") oQue = "";
+        porId[f.id] = { fase: f.id, titulo: oQue.slice(0, 220),
+          min: parseInt(mm[1], 10) };
+        achou++;
+      });
+      if (!achou) return null;
+      return fases.map(function (f) {
+        return porId[f.id] || { fase: f.id, titulo: "", min: f.min };
+      });
+    };
     var lerEtapas = function (corpo) {
       // cada fase aparece como "Warm-up 10 min", às vezes com o tempo
       // na linha de baixo. Entre uma fase e a seguinte vêm os blocos
@@ -11051,7 +11136,9 @@
 
     var prog = { nome: nome, nivel: nivel, descricao: descricao, sessoes: [] };
     sessoes.forEach(function (sx) {
-      var etapas = lerEtapas(sx.corpo);
+      // a tabela por célula primeiro; o texto colado à mão não tem
+      // célula nenhuma, e aí vale a leitura por blocos
+      var etapas = lerEtapasPorCelula(sx.corpo) || lerEtapas(sx.corpo);
       if (!etapas) avisos.push("Sessão " + sx.n + ": não achei a tabela de fases.");
       prog.sessoes.push({ n: sx.n, titulo: sx.titulo,
         objetivo: lerObjetivo(sx.corpo),
@@ -11115,22 +11202,48 @@
           // horizontal separa as COLUNAS. Numa tabela as células de
           // uma mesma linha estão na mesma altura, e sem a segunda
           // quebra "o que acontece" e "materiais" viravam um texto só.
+          // ── E A TERCEIRA QUEBRA: A CÉLULA ────────────────────────
+          //
+          // O PDF não entrega a tabela linha a linha. Ele entrega
+          // CÉLULA a célula, inteiras, uma depois da outra: primeiro
+          // "Warm-up", depois "8 min", depois as três linhas de "o
+          // que acontece", e só então "materiais". Dentro de uma
+          // célula o texto desce; quando uma célula nova começa, a
+          // altura VOLTA PARA CIMA, para o topo da linha da tabela.
+          //
+          // Esse salto para cima é o que separa uma coluna da outra —
+          // e sem ele o leitor pegava a coluna errada: a fase "Minds
+          // On" vinha descrita como "The two accounts, written by
+          // you", que é a coluna de materiais, não a do que acontece.
+          //
+          // Fica marcado com tabulação. A linha comum de texto segue
+          // com linha em branco, como antes.
           var linhas = [], atual = "", y = null, xFim = null;
+          var fecha = function (sep) {
+            if (atual.trim()) linhas.push({ t: atual.trim(), sep: sep });
+            atual = "";
+          };
           (c.items || []).forEach(function (it) {
             if (typeof it.str !== "string") return;
             var alt = it.transform ? Math.round(it.transform[5]) : y;
             var x = it.transform ? it.transform[4] : null;
             var novaLinha = y !== null && Math.abs(alt - y) > 2;
+            // 6pt de folga: sobrescrito e acento não são célula nova
+            var subiu = y !== null && (alt - y) > 6;
             var novaColuna = !novaLinha && x !== null && xFim !== null && x - xFim > 12;
-            if (novaLinha || novaColuna) { linhas.push(atual); atual = ""; }
+            if (subiu || novaColuna) fecha("\t");
+            else if (novaLinha) fecha("\n\n");
             y = alt;
             xFim = (x === null ? null : x + (it.width || 0));
             atual += it.str;
-            if (it.hasEOL) { linhas.push(atual); atual = ""; xFim = null; }
+            if (it.hasEOL) { fecha("\n\n"); xFim = null; }
           });
-          if (atual) linhas.push(atual);
-          paginas.push(linhas.map(function (l) { return l.trim(); })
-            .filter(function (l) { return l; }).join("\n\n"));
+          fecha("\n\n");
+          var texto = "";
+          linhas.forEach(function (l, i) {
+            texto += (i ? linhas[i - 1].sep : "") + l.t;
+          });
+          paginas.push(texto);
         });
       };
       var fila = Promise.resolve();

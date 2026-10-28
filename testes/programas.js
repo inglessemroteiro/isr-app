@@ -233,6 +233,74 @@ const P = require("./preparar.js");
     /Painel/.test(parou) || /escritos pela coordenação/.test(t), { parou, t: t.slice(0, 160) });
   T("e não vê o formulário de programa novo", !/\+ Novo programa/.test(t), t.slice(0, 200));
 
+  console.log("\n— o que impede a gravação fica dito —");
+  // O botão de gravar some quando falta nome ou nível, e sumia sem
+  // dizer nada: a prévia marcava "sem nível" em vermelho e a tela
+  // acabava ali. A caixa é editável — é lá que se corrige, e agora a
+  // tela diz isso e diz quais níveis existem.
+  const ctx2 = await P.novoContexto(b, {
+    contexto: { viewport: { width: 1280, height: 1500 } },
+    gestao: { nome: "Gabi", perfil: "gestora", papeis: ["gestora"] }
+  });
+  const p2 = await ctx2.newPage();
+  p2.on("pageerror", e => erros.push(String(e).slice(0, 220)));
+  await p2.goto(P.endereco("ISR - Programas v3.dc.html"));
+  await p2.waitForTimeout(2800);
+  await p2.evaluate(() => {
+    const bt = [...document.querySelectorAll("main button")]
+      .filter(x => /Trazer de um texto/.test(x.textContent.trim()))[0];
+    if (bt) bt.click();
+  });
+  await p2.waitForTimeout(1200);
+  const semNivel = await p2.evaluate(() => {
+    const ta = document.querySelector("main textarea");
+    ta.value = "Programa: Programa Teste\nNível:\nSobre: uma linha\n\n"
+      + "S1: Sessao Teste\nObjetivo: a aluna faz a coisa\n"
+      + "Warm-up: abertura (10)\nMinds On: o insumo (15)\n";
+    const bt = [...document.querySelectorAll("main button")]
+      .filter(x => /Conferir o texto/.test(x.textContent.trim()))[0];
+    if (bt) bt.click();
+    return true;
+  });
+  await p2.waitForTimeout(1400);
+  const travado = await p2.evaluate(() => ({
+    texto: document.querySelector("main").innerText.replace(/\s+/g, " "),
+    temGravar: [...document.querySelectorAll("main button")]
+      .some(x => /^Gravar /.test(x.textContent.trim()))
+  }));
+  T("sem nível, o botão de gravar não fica de pé", travado.temGravar === false, travado);
+  T("e a tela diz o que falta e onde se escreve",
+    /Falta o nível em Programa Teste/.test(travado.texto)
+      && /na caixa acima/i.test(travado.texto),
+    (travado.texto.match(/Falta o nível[^.]*\./) || [""])[0]);
+  T("listando os níveis que existem",
+    /Advanced \(B2\)/.test(travado.texto) && /First Steps \(A0\)/.test(travado.texto),
+    (travado.texto.match(/escreva na linha[^.]*\./) || [""])[0]);
+  T("e dizendo o que fazer depois de corrigir",
+    /Conferir o texto de novo/.test(travado.texto),
+    (travado.texto.match(/Depois aperte[^.]*\./) || [""])[0]);
+
+  const corrigido = await p2.evaluate(() => {
+    const ta = document.querySelector("main textarea");
+    ta.value = ta.value.replace("Nível:", "Nível: Advanced (B2)");
+    const bt = [...document.querySelectorAll("main button")]
+      .filter(x => /Conferir o texto/.test(x.textContent.trim()))[0];
+    if (bt) bt.click();
+    return true;
+  });
+  await p2.waitForTimeout(1400);
+  const liberado = await p2.evaluate(() => ({
+    texto: document.querySelector("main").innerText.replace(/\s+/g, " "),
+    temGravar: [...document.querySelectorAll("main button")]
+      .some(x => /^Gravar /.test(x.textContent.trim()))
+  }));
+  T("escrito o nível na caixa, o botão aparece",
+    corrigido && liberado.temGravar === true, liberado);
+  T("e o aviso de bloqueio sai da tela",
+    !/Falta o nível/.test(liberado.texto),
+    (liberado.texto.match(/.{0,40}Falta o nível.{0,40}/) || [""])[0]);
+  await ctx2.close();
+
   T("nenhum erro de página", erros.length === 0, erros);
   await b.close();
   fim();
