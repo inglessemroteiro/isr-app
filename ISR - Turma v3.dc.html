@@ -1648,14 +1648,28 @@ class Component extends DCLogic {
             if (!dia) return;
             if (vivo) { if (CRM.encerrarAula) CRM.encerrarAula(label, dia); }
             else if (CRM.iniciarAula) {
-              CRM.iniciarAula(label, dia, (CRM.gestaoUser() || {}).nome || "");
+              // o número da sessão vai junto: é desta sessão que o
+              // botão foi apertado, e é o que o caderno da aluna usa
+              // para saber quais perguntas são as de hoje antes de a
+              // chamada existir
+              CRM.iniciarAula(label, dia, (CRM.gestaoUser() || {}).nome || "",
+                pAtual ? pAtual.n : 0);
             }
             this.bump();
           },
           planoAoVivoNota: vale,
+          // ── ABERTA, MAS SEM ROTEIRO PUBLICADO ──
+          //
+          // Começar abre o caderno para escrita; publicar é o que põe
+          // as perguntas dentro dele. Quem aperta só o primeiro deixa
+          // a aluna com um caderno aberto e vazio — e a tela não dizia
+          // nada, nem aqui nem lá.
           planoAoVivoNotaTexto: vivo
-            ? Tr("Notebook open for writing. End the class to close it.",
-                 "Caderno aberto para escrita. Encerre a aula para fechá-lo.")
+            ? (pAtual && pAtual.estado === "publicada"
+              ? Tr("Notebook open for writing. End the class to close it.",
+                   "Caderno aberto para escrita. Encerre a aula para fechá-lo.")
+              : Tr("The notebook is open, but this session's lesson flow is not published: it opens with no questions. Publish it for the questions to show up.",
+                   "O caderno está aberto, mas o roteiro desta sessão não está publicado: ele abre sem pergunta nenhuma. Publique para as perguntas aparecerem."))
             : (Tr("Publish opens this class for reading. Start opens the students\u2019 notebook for writing.",
                  "Publicar abre esta aula para leitura. Começar abre o caderno das alunas para escrita.")
                + (noDia ? "" : " " + Tr("Session scheduled for ", "Sessão marcada para ")

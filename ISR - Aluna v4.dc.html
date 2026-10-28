@@ -1253,13 +1253,28 @@ class Component extends DCLogic {
     // caderno sozinho — ficar recarregando a página no meio da aula
     // não é trabalho de aluna. O relógio pula quando ela está
     // digitando: trocar o texto debaixo do cursor seria pior.
+    // ── E A AULA QUE ABRE DEPOIS QUE ELA JÁ ESTÁ NA PÁGINA ──
+    //
+    // O relógio só puxava se já houvesse aula aberta — e quem precisa
+    // saber que a aula ABRIU é justamente quem ainda não tem aula
+    // aberta. A professora apertava "Começar aula", e a página da
+    // aluna, parada no caderno, não mudava: a descoberta esperava o
+    // relógio geral de cinco minutos.
+    //
+    // Com aula aberta, puxa a cada 20 s, que é o ritmo do comentário
+    // da professora chegando. Sem aula aberta, a cada minuto, que é
+    // para descobrir que abriu sem pedir a base inteira três vezes
+    // por minuto no aparelho de cada aluna.
+    this.voltas = 0;
     this.relogioVivo = setInterval(() => {
       try {
         const a = document.activeElement;
         if (a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
         if (this.state.page !== "notebook") return;
         const C = window.ISRCRM, id = this.alunaId();
-        if (!C || !C.aulaVivaDaAluna || !id || !C.aulaVivaDaAluna(id)) return;
+        if (!C || !C.aulaVivaDaAluna || !id) return;
+        this.voltas++;
+        if (!C.aulaVivaDaAluna(id) && this.voltas % 3 !== 0) return;
         if (C.carregarDoBackend) C.carregarDoBackend(() => {});
         this.bump();
       } catch (e) {}
