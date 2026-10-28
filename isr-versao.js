@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.27-h",
-  data: "27/10/2026",
-  nota: "A escola vê o catálogo dos clubes"
+  numero: "2026.10.28-a",
+  data: "28/10/2026",
+  nota: "A aula aberta chega à aluna"
 };

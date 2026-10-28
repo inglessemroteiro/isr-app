@@ -2779,8 +2779,13 @@ class Component extends DCLogic {
             ? "▶ " + Tr("Back to the open class", "Voltar para a aula aberta")
             : "▶ " + Tr("Start class and open the notebook", "Iniciar aula e abrir o caderno"),
           comecarAulaNota: aberta
-            ? Tr("The notebook is open for writing. It closes when you end the class.",
-                 "O caderno está aberto para escrita. Ele fecha quando você encerrar a aula.")
+            ? (plano && plano.estado === "publicada"
+              ? Tr("The notebook is open for writing. It closes when you end the class.",
+                   "O caderno está aberto para escrita. Ele fecha quando você encerrar a aula.")
+              // começar abre o caderno; publicar é o que põe as
+              // perguntas dentro dele
+              : Tr("The notebook is open, but this session's lesson flow is not published: it opens with no questions.",
+                   "O caderno está aberto, mas o roteiro desta sessão não está publicado: ele abre sem pergunta nenhuma."))
             : Tr("The students' notebook only opens for writing when you start the class.",
                  "O caderno das alunas só abre para edição quando você inicia a aula."),
           temSlidesDaAula: !!(plano && plano.slides),
@@ -2790,7 +2795,11 @@ class Component extends DCLogic {
             if (!turmaSel || !dataSel) return;
             const v = CRM.aulaViva ? CRM.aulaViva(turmaSel, dataSel) : null;
             if ((!v || v.estado === "nao_comecou") && CRM.iniciarAula) {
-              CRM.iniciarAula(turmaSel, dataSel, (realUser && realUser.nome) || "");
+              // com o número da sessão: o caderno da aluna precisa
+              // dele para mostrar as perguntas antes de a chamada
+              // existir, e a chamada é o fim da aula
+              CRM.iniciarAula(turmaSel, dataSel, (realUser && realUser.nome) || "",
+                nSessao || 0);
             }
             this.setState({ emAula: { label: turmaSel, data: dataSel }, vivoAluna: null,
               vivoFiltro: "todas", vivoTarefa: 0, comentou: "", emAulaTela: "respostas" });

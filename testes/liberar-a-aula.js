@@ -94,9 +94,17 @@ const P = require("./preparar.js");
   T("e o botão vira Encerrar", bts.some(t => /Encerrar aula/.test(t))
     && !bts.some(t => /Começar aula/.test(t)), bts);
   t = await texto();
+  // Aberta, a tela diz o estado do caderno — e diz qual dos dois
+  // estados é. Com o roteiro publicado: "Caderno aberto para
+  // escrita". Sem ele, e é o caso desta sessão, o caderno abre VAZIO,
+  // e a tela passou a dizer isso em vez de deixar a professora achar
+  // que estava tudo no lugar. Ver testes/aula-chega-na-aluna.js.
   T("a tela diz que o caderno está aberto",
-    /Caderno aberto para escrita/.test(t),
-    (t.match(/.{0,10}Caderno aberto para escrita.{0,60}/) || [""])[0]);
+    /Caderno aberto para escrita|O caderno está aberto/.test(t),
+    (t.match(/.{0,10}(Caderno aberto para escrita|O caderno está aberto).{0,90}/) || [""])[0]);
+  T("e, sem roteiro publicado, que ele abre sem pergunta",
+    /roteiro desta sessão não está publicado/.test(t),
+    (t.match(/.{0,10}roteiro desta sessão.{0,90}/) || [""])[0]);
 
   console.log("\n— encerrar fecha o caderno —");
   await p.evaluate(() => {

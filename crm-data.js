@@ -6580,7 +6580,24 @@
               if (d.data[k] !== undefined && d.data[k] !== null) resultado[k] = d.data[k];
             });
             aplicarRemoto(resultado);
-            try { localStorage.setItem("isr_sync_em", d.data.atualizadoEm || ""); } catch (e) {}
+            // ── QUEM PUXOU AVISA A TELA ───────────────────────────
+            //
+            // Puxar aplicava os dados e não dizia nada a ninguém. A
+            // tela aberta continuava mostrando o estado velho até
+            // alguém recarregar à mão: a professora abria a aula, o
+            // dado chegava no aparelho da aluna, e a página dela
+            // seguia dizendo que o caderno estava fechado.
+            //
+            // O aviso sai só quando o servidor mudou de verdade — o
+            // carimbo de atualização é outro —, senão toda tela se
+            // redesenharia a cada puxada, de graça.
+            var antes = "";
+            try { antes = localStorage.getItem("isr_sync_em") || ""; } catch (e) {}
+            var agoraEm = (d.data && d.data.atualizadoEm) || "";
+            try { localStorage.setItem("isr_sync_em", agoraEm); } catch (e) {}
+            if (agoraEm && agoraEm !== antes) {
+              try { window.dispatchEvent(new CustomEvent("isr-dados")); } catch (e) {}
+            }
             carimbar(true, d.data.atualizadoEm);
           } else carimbar(false);
         }).catch(function () { carimbar(false); });
@@ -11740,6 +11757,11 @@
   function aulasVivasSave(m) {
     try { localStorage.setItem(AULA_VIVA_KEY, JSON.stringify(m)); } catch (e) {}
     agendarSync();
+    // Abrir e encerrar a aula é o único estado que outra pessoa está
+    // esperando AGORA, em outro aparelho. O agrupamento de 1,5 s da
+    // gravação comum vira minutos se a aba sair de vista no meio, e
+    // aí a aluna fica olhando um caderno fechado numa aula aberta.
+    try { sincronizarJa(); } catch (e) {}
   }
   function aulaVivaChave(turmaLabel, dataIso) { return turmaLabel + "|" + dataIso; }
   // "nao_comecou" · "ao_vivo" · "encerrada"
@@ -11750,12 +11772,19 @@
     var min = Math.max(0, Math.round((Date.now() - new Date(r.inicio).getTime()) / 60000));
     return { estado: "ao_vivo", inicio: r.inicio, fim: "", minutos: min, por: r.por || "" };
   }
-  function iniciarAula(turmaLabel, dataIso, por) {
+  // "sessao" é o número da sessão de onde o botão foi apertado. Ele
+  // fica guardado porque a professora abre a aula ANTES de fazer a
+  // chamada — e era só da chamada que o caderno da aluna tirava o
+  // número. Ver sessaoDaAula.
+  function iniciarAula(turmaLabel, dataIso, por, sessao) {
     if (!turmaLabel || !dataIso) return { ok: false, erro: "Aula não identificada." };
     var m = aulasVivasAll();
     var k = aulaVivaChave(turmaLabel, dataIso);
+    var antes = m[k] || {};
     m[k] = { turma: turmaLabel, data: dataIso, inicio: new Date().toISOString(),
-      fim: "", por: por || "", _v: Date.now() };
+      fim: "", por: por || "",
+      sessao: parseInt(sessao, 10) || parseInt(antes.sessao, 10) || 0,
+      _v: Date.now() };
     aulasVivasSave(m);
     return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
   }
@@ -11770,11 +11799,12 @@
     return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
   }
   // Reabrir: a professora encerrou sem querer, ou a aula continuou.
-  function reabrirAula(turmaLabel, dataIso, por) {
+  function reabrirAula(turmaLabel, dataIso, por, sessao) {
     var m = aulasVivasAll();
     var k = aulaVivaChave(turmaLabel, dataIso);
-    if (!m[k] || !m[k].inicio) return iniciarAula(turmaLabel, dataIso, por);
+    if (!m[k] || !m[k].inicio) return iniciarAula(turmaLabel, dataIso, por, sessao);
     m[k].fim = "";
+    if (parseInt(sessao, 10)) m[k].sessao = parseInt(sessao, 10);
     m[k]._v = Date.now();
     aulasVivasSave(m);
     return { ok: true, aula: aulaViva(turmaLabel, dataIso) };
@@ -11787,9 +11817,42 @@
   // resposta é guardada pela posição. Se cada tela filtrasse por conta
   // própria, a resposta da tarefa 2 apareceria na 3 no dia em que
   // alguém mudasse um filtro.
-  function tarefasDaAula(turmaLabel, dataIso) {
+  // ── QUAL SESSÃO É A AULA DESTE DIA ────────────────────────────
+  //
+  // O caderno da aluna precisa do NÚMERO da sessão para saber quais
+  // perguntas são as de hoje. O número vinha só da chamada — e a
+  // chamada é o fim da aula, enquanto "Começar aula" é o começo.
+  // Então a professora abria a aula, o caderno abria para escrita, e
+  // vinha sem pergunta nenhuma: a aluna via a aula acontecendo e uma
+  // página vazia.
+  //
+  // Três fontes, nesta ordem:
+  //   1. a chamada, que é onde a professora diz o número e onde ela
+  //      pode corrigi-lo depois — por isso vem primeiro;
+  //   2. o registro da aula aberta, que agora guarda a sessão de onde
+  //      o botão foi apertado;
+  //   3. a data no plano da turma, para a aula que ninguém numerou.
+  function sessaoDaAula(turmaLabel, dataIso) {
+    if (!turmaLabel || !dataIso) return 0;
     var ch = getChamada(turmaLabel, dataIso);
-    var sessao = ch && ch.sessao ? ch.sessao : 0;
+    var n = (ch && parseInt(ch.sessao, 10)) || 0;
+    if (n) return n;
+    var viva = aulasVivasAll()[aulaVivaChave(turmaLabel, dataIso)];
+    n = (viva && parseInt(viva.sessao, 10)) || 0;
+    if (n) return n;
+    var t = turmasLista().filter(function (x) {
+      return (x.nivel + " · " + x.turma) === turmaLabel;
+    })[0];
+    if (!t) return 0;
+    var datas = datasDasSessoes(t.id) || {};
+    Object.keys(datas).forEach(function (k) {
+      if (!n && datas[k] && datas[k].data === dataIso) n = parseInt(k, 10) || 0;
+    });
+    return n;
+  }
+
+  function tarefasDaAula(turmaLabel, dataIso) {
+    var sessao = sessaoDaAula(turmaLabel, dataIso);
     var plano = sessao ? planoPublicadoDaAula(turmaLabel, sessao) : null;
     if (!plano) return [];
     return (plano.atividades || []).filter(function (a) {
@@ -11838,13 +11901,12 @@
       // mais de uma aberta não deveria acontecer; se acontecer, vale a
       // mais recente, que é a que a professora abriu por último
       if (!achada || a.data > achada.data) {
-        // Qual sessão é vem da chamada, não do registro da aula aberta
-        // — é lá que a professora diz o número. Sem ele o caderno da
-        // aluna não sabe que a sessão de hoje é a que está ao vivo, e
-        // mostrava a aula acontecendo como se já fosse registro.
-        var ch = getChamada(p.turma, a.data);
+        // Sem o número da sessão o caderno não sabe que a sessão de
+        // hoje é a que está ao vivo, e mostrava a aula acontecendo
+        // como se já fosse registro. sessaoDaAula tenta a chamada, o
+        // registro da aula aberta e a data no plano, nessa ordem.
         achada = { turma: p.turma, data: a.data, estado: v.estado,
-          minutos: v.minutos, sessao: (ch && parseInt(ch.sessao, 10)) || 0 };
+          minutos: v.minutos, sessao: sessaoDaAula(p.turma, a.data) };
       }
     });
     return achada;
@@ -17481,8 +17543,15 @@
   try {
     var aoSair = function () { if (temPendente()) sincronizarJa(); };
     window.addEventListener("pagehide", aoSair);
+    // E quando a página VOLTA à vista, puxa: desbloquear o celular no
+    // meio da aula era esperar o relógio de cinco minutos para
+    // descobrir que a aula tinha aberto.
+    var ultimoPuxe = 0;
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden") aoSair();
+      if (document.visibilityState === "hidden") { aoSair(); return; }
+      if (Date.now() - ultimoPuxe < 15000) return;
+      ultimoPuxe = Date.now();
+      try { carregarDoBackend(function () {}); } catch (e) {}
     });
     if (temPendente()) setTimeout(sincronizarJa, 800);
   } catch (e) {}
@@ -17772,6 +17841,7 @@
     chamadaValidada: chamadaValidada, chamadaEstado: chamadaEstado,
     reabrirChamada: reabrirChamada,
     aulaViva: aulaViva, iniciarAula: iniciarAula, encerrarAula: encerrarAula,
+    sessaoDaAula: sessaoDaAula,
     reabrirAula: reabrirAula, respostasDaAluna: respostasDaAluna,
     salvarResposta: salvarResposta, comentarResposta: comentarResposta,
     substituicoesLista: substituicoesLista, pedirSubstituicao: pedirSubstituicao,
