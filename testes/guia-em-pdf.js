@@ -128,6 +128,98 @@ const P = require("./preparar.js");
   T("o botão do PDF está na tela de trazer programas", naTela.temBotao, naTela);
   T("dizendo de onde vem o arquivo", naTela.temNota, naTela);
 
+  console.log("\n— a forma do guia de verdade —");
+  // O PDF do guia não entrega a tabela linha a linha: entrega CÉLULA
+  // a célula, inteiras, em ordem de coluna. O trecho abaixo tem a
+  // geometria exata do guia que a escola usa, com o conteúdo trocado:
+  //   — o nível está na linha DEBAIXO de "Teacher's Guide:";
+  //   — o tempo às vezes parte em "12" e "min";
+  //   — o nome da fase parte em "Language" e "Focus";
+  //   — o cabeçalho e o "Page 4 of 39" caem no meio de uma célula,
+  //     porque a linha da tabela atravessa a virada de página;
+  //   — a coluna "Materials" vem logo depois da coluna que importa.
+  //
+  // Era isso que fazia "Minds On" ser descrita como "The two
+  // accounts, written by you" — que é a coluna de materiais.
+  const CRU = "\n\nProjeto Teste 2026.4 — Teacher's Guide:\n\nAdvanced (B2)\n\n"
+    + "Cycle 2026.4 · October 2026 – January 2027 · Ten sessions\n\n"
+    + "How this guide works\n\nThis guide covers the ten sessions of the Projeto Teste "
+    + "cycle for the Advanced group, the B2\n\nlevel.\n\n"
+    + "Session 1 — Primeira Sessao Teste\n\n"
+    + "By the end of this session every student can hold a position and support it with an\n\n"
+    + "example.\n\n"
+    + "Phase Time What happens Materials\n\n"
+    + "Warm-up 8 min Introductions, and one thing each\n\nstudent has kept and one she has "
+    + "let\n\ngo\t—\tProjeto Teste 2026.4 — Teacher's Guide: Advanced (B2)\n\nPage 4 of 39\n\n"
+    + "Preparing the two accounts. Write two short accounts.\n\n"
+    + "Phase Time What happens Materials\n\nMinds On 12\n\nmin"
+    + "\tTwo opposing accounts of keeping\n\nthings abroad; each student\n\npositions herself"
+    + "\tThe two accounts, written\n\nby you\n\nLanguage\n\nFocus\t12\n\nmin"
+    + "\tThe language of nuance, taken from\n\nwhat the students have just said"
+    + "\tThe slide online, the board\n\nin person\n\nHands On 18\n\nmin"
+    + "\tEach student writes three lines,\n\nworks in pairs, then the group\n\ndiscusses"
+    + "\tHer notebook; breakout\n\nrooms online\n\n"
+    + "Share Out 5 min One line each to the whole group,\n\nwith a challenge question\t—\n\n"
+    + "Wrap-up 5 min Reflection in Portuguese; homework\n\ngiven\t—\n\n";
+  const real = await p.evaluate((cru) => {
+    const r = window.ISRCRM.lerGuiaDoProfessor(cru);
+    const pg = (r.programas || [])[0] || {};
+    const s1 = (pg.sessoes || [])[0] || {};
+    const por = {};
+    (s1.etapas || []).forEach(e => { por[e.fase] = e; });
+    return { avisos: r.avisos, nome: pg.nome, nivel: pg.nivel, titulo: s1.titulo, por: por };
+  }, CRU);
+  T("o nível é lido da linha de baixo do cabeçalho",
+    real.nivel === "Advanced (B2)", real);
+  T("sem aviso nenhum", real.avisos.length === 0, real.avisos);
+  T("o nome do projeto e o título da sessão saem inteiros",
+    real.nome === "Projeto Teste" && real.titulo === "Primeira Sessao Teste", real);
+  T("Minds On recebe o que acontece, não os materiais",
+    /Two opposing accounts/.test((real.por.mindson || {}).titulo || "")
+      && !/written by you/.test((real.por.mindson || {}).titulo || ""),
+    real.por.mindson);
+  T("Language Focus também, com o nome partido em duas linhas",
+    /The language of nuance/.test((real.por.language || {}).titulo || "")
+      && !/slide online/.test((real.por.language || {}).titulo || ""),
+    real.por.language);
+  T("Hands On idem", /writes three lines/.test((real.por.handson || {}).titulo || "")
+      && !/notebook; breakout/.test((real.por.handson || {}).titulo || ""),
+    real.por.handson);
+  T("a fase que atravessa a virada de página sai inteira",
+    /Introductions, and one thing each student has kept and one she has let go$/
+      .test((real.por.warmup || {}).titulo || ""), real.por.warmup);
+  T("sem o cabeçalho nem o número da página dentro dela",
+    !/Teacher's Guide|Page \d+ of/.test((real.por.warmup || {}).titulo || ""),
+    real.por.warmup);
+  T("a célula que começa na mesma altura do tempo também",
+    /One line each to the whole group, with a challenge question$/
+      .test((real.por.shareout || {}).titulo || ""), real.por.shareout);
+  T("os tempos saem certos, partidos ou não",
+    [8, 12, 12, 18, 5, 5].join(",") === ["warmup", "mindson", "language",
+      "handson", "shareout", "wrapup"].map(k => (real.por[k] || {}).min).join(","),
+    Object.keys(real.por).map(k => k + ":" + real.por[k].min));
+
+  console.log("\n— e o texto colado à mão continua valendo —");
+  // Sem célula nenhuma: é o caminho de quem cola o guia como texto.
+  const colado = await p.evaluate(() => {
+    const cru = "\n\nProjeto Colado 2026.4 — Teacher's Guide: Speaking (B1)\n\n"
+      + "This guide covers the ten sessions.\n\n"
+      + "Session 1 — Sessao Colada Teste\n\n"
+      + "By the end of this session every student can do it.\n\n"
+      + "Warm-up 10 min Abertura da aula\n\n—\n\n"
+      + "Minds On 15 min O insumo da aula\n\n—\n\n";
+    const r = window.ISRCRM.lerGuiaDoProfessor(cru);
+    const s1 = (((r.programas || [])[0] || {}).sessoes || [])[0] || {};
+    const por = {};
+    (s1.etapas || []).forEach(e => { por[e.fase] = e; });
+    return { nivel: ((r.programas || [])[0] || {}).nivel, por: por };
+  });
+  T("o nível na mesma linha continua sendo lido",
+    colado.nivel === "Speaking (B1)", colado);
+  T("e as fases do texto colado continuam chegando",
+    /Abertura da aula/.test((colado.por.warmup || {}).titulo || "")
+      && (colado.por.warmup || {}).min === 10, colado.por);
+
   T("nenhum erro de página", erros.length === 0, erros);
   await b.close();
   fim();
