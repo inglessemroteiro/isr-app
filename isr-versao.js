@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.10.28-c",
-  data: "28/10/2026",
-  nota: "O que trava a gravação fica dito"
+  numero: "2026.10.29-a",
+  data: "29/10/2026",
+  nota: "A porta de entrada diz o que fazer"
 };

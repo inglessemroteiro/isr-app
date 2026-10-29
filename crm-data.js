@@ -9969,6 +9969,11 @@
       + "se continuar, é coisa do site." },
     base_fora: { erro: "A base da escola não respondeu agora, então não há como "
       + "conferir quem pode convidar. Tente de novo em alguns minutos." },
+    // Recusa não é demora: tentar de novo amanhã dá na mesma, porque
+    // o que está errado é a ligação entre o site e a base.
+    base_recusou: { erro: "A base da escola respondeu, mas recusou o pedido do site. "
+      + "Tentar de novo não resolve: é a ligação entre o site e a base que "
+      + "precisa ser revista nas configurações." },
     sem_email: { erro: "Falta o e-mail na ficha desta pessoa." },
     erro_inesperado: { erro: "O site falhou ao criar o convite. Tente de novo; "
       + "se continuar, o registro do que aconteceu fica nos logs do Netlify, "
