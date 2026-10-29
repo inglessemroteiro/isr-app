@@ -35,6 +35,16 @@
 //            gestão, a função recusa tudo — não existe modo "aberto".
 // ════════════════════════════════════════════════════════════════
 
+// ── O VOCABULÁRIO DAS RECUSAS ─────────────────────────────────────
+//
+// Todo motivo que esta função pode devolver está aqui, e o app tem
+// de saber traduzir cada um — a suíte lê esta lista e confere. Sem
+// ela, um motivo novo daqui chegava à tela como "o convite não saiu"
+// e nada mais, que é a mensagem de quem não sabe o que aconteceu.
+const MOTIVOS = ["sem_sessao", "fora_da_equipe", "sem_papel", "sem_base",
+  "chave_errada", "base_fora", "base_recusou", "sem_email",
+  "identity_desligado", "identity_recusou", "erro_inesperado"];
+
 const CHAVE = process.env.ISR_CONVITE_CHAVE;
 const URL_BASE = process.env.ISR_BASE_URL;
 const CHAVE_BASE = process.env.ISR_BASE_CHAVE || "";
@@ -66,16 +76,48 @@ function liberadaNaBase(pessoa) {
   if (pessoa.assinatura && pessoa.assinatura.ativa) return true;
   return false;
 }
+// ── NÃO RESPONDEU E RESPONDEU QUE NÃO SÃO COISAS DIFERENTES ───────
+//
+// As duas caíam na mesma mensagem: "a base não respondeu agora,
+// tente de novo em alguns minutos". Tentar de novo resolve a
+// primeira e nunca resolve a segunda — base que recusa o pedido
+// recusa de novo amanhã, porque é a ligação entre o site e a base
+// que está errada. Quem lê a tela ficava tentando.
+function motivado(err, motivo) { err.motivo = motivo; return err; }
+function respostaDaBase(headers, err) {
+  const motivo = (err && err.motivo) || 'base_fora';
+  const erro = motivo === 'base_recusou'
+    ? 'A base da escola respondeu, mas recusou o pedido do site.'
+    : motivo === 'sem_base'
+      ? 'Este site não está ligado a base nenhuma.'
+      : 'A base da escola não respondeu agora.';
+  return { statusCode: motivo === 'base_fora' ? 503 : 502, headers,
+    body: JSON.stringify({ ok: false, motivo: motivo, erro: erro }) };
+}
 async function carregarBase() {
-  if (!URL_BASE) throw new Error("sem base");
+  if (!URL_BASE) throw motivado(new Error("sem base"), "sem_base");
   const corpo = { action: "sistemaLoad" };
   if (CHAVE_BASE) corpo.chave = CHAVE_BASE;
-  const r = await fetch(URL_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(corpo)
-  });
-  if (!r.ok) throw new Error("base " + r.status);
+  // ── E A BASE QUE DEMORA DEMAIS ──────────────────────────────────
+  //
+  // sistemaLoad devolve a base INTEIRA, e ela cresce. A função do
+  // Netlify morre aos 10 s, e quando morre não sobra mensagem
+  // nenhuma: quem apertou "Convidar" fica olhando um erro sem texto.
+  // Sete segundos é menos que o limite, então a desistência é nossa e
+  // chega à tela traduzida, dizendo que é demora e não recusa.
+  const relogio = AbortSignal.timeout ? AbortSignal.timeout(7000) : undefined;
+  let r;
+  try {
+    r = await fetch(URL_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(corpo),
+      signal: relogio
+    });
+  } catch (e) {
+    throw motivado(new Error("base sem resposta: " + (e && e.message)), "base_fora");
+  }
+  if (!r.ok) throw motivado(new Error("base " + r.status), "base_fora");
   const d = await r.json();
   // O Apps Script responde 200 mesmo quando recusa: sem conferir o
   // "ok", uma recusa dele virava uma base vazia aqui, e base vazia
@@ -83,9 +125,9 @@ async function carregarBase() {
   // "o seu e-mail não está em ficha nenhuma" com a ficha na frente
   // dela, preenchida. Não poder ler a base e a pessoa não estar nela
   // são coisas diferentes, e agora são tratadas como tais.
-  if (d && d.ok === false) throw new Error("base recusou");
+  if (d && d.ok === false) throw motivado(new Error("base recusou"), "base_recusou");
   const dados = (d && d.data) || {};
-  if (!dados || typeof dados !== "object") throw new Error("base sem dados");
+  if (!dados || typeof dados !== "object") throw motivado(new Error("base sem dados"), "base_recusou");
   return dados;
 }
 async function ehAlunaDaEscola(email) {
@@ -182,8 +224,7 @@ exports.handler = async (event, context) => {
         if (!daEquipe) porqueNao = sit;
       } catch (err) {
         console.error('convidar-aluna · equipe:', err);
-        return { statusCode: 503, headers, body: JSON.stringify({ ok: false, motivo: 'base_fora',
-          erro: 'Não foi possível consultar a base agora.' }) };
+        return respostaDaBase(headers, err);
       }
     }
   }
@@ -200,8 +241,7 @@ exports.handler = async (event, context) => {
       porSiMesma = await ehAlunaDaEscola(emailPedido);
     } catch (err) {
       console.error('convidar-aluna · base:', err);
-      return { statusCode: 503, headers, body: JSON.stringify({ ok: false, motivo: 'base_fora',
-        erro: 'Não foi possível consultar a base agora.' }) };
+      return respostaDaBase(headers, err);
     }
     if (!porSiMesma) {
       // mesma resposta de quem está na base: a tela não conta quem

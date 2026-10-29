@@ -35,9 +35,14 @@
 
   <!-- o caminho principal: o link chega no e-mail e abre o app -->
   <div class="tela" id="telaLink">
-    <p>O link de entrada chega no seu e-mail. Não há senha para criar nem lembrar.</p>
-    <input id="linkEmail" type="email" placeholder="E-mail" autocomplete="username" />
-    <button id="btLink" onclick="pedirLink()">Receber o link</button>
+    <!-- A primeira coisa que a aluna lê.
+         Ela não precisa saber que não existe senha: precisa saber o
+         que fazer agora e o que vai acontecer em seguida. E precisa
+         saber QUAL e-mail — escrever outro endereço é a falha mais
+         comum, e nem esta tela nem a da escola têm como perceber. -->
+    <p>Escreva o e-mail da sua matrícula. Chega um link nele, e é esse link que abre o seu app.</p>
+    <input id="linkEmail" type="email" placeholder="e-mail da matrícula" autocomplete="username" />
+    <button id="btLink" onclick="pedirLink()">Receber o link por e-mail</button>
     <p class="info" id="linkInfo"></p>
     <p class="erro" id="linkErro"></p>
     <!-- ── QUANDO O LINK NÃO CHEGA ───────────────────────────────
@@ -49,7 +54,7 @@
          Quem cria a conta é a escola, pelo convite, e é para lá que
          esta saída leva. -->
     <div id="linkSocorro" style="display: none">
-      <p class="nota" style="margin-top: 14px">Não chegou em alguns minutos? Confira o spam. Se ainda assim não estiver lá, o seu acesso ainda não foi criado.</p>
+      <p class="nota" style="margin-top: 14px">Não chegou em alguns minutos? Confira o spam e confira se o e-mail acima é o da sua matrícula. Se estiver certo e mesmo assim não chegar, o seu acesso ainda não foi criado — você pode criá-lo agora.</p>
       <button class="suave" id="btCriar" onclick="criarAcesso()">Criar o meu acesso</button>
       <p class="info" id="criarInfo"></p>
       <p class="erro" id="criarErro"></p>
@@ -540,8 +545,12 @@
       body: JSON.stringify({ email: email })
     }).then(function () {
       guardarPedido("entrar", email);
-      texto("linkInfo", "Se houver uma conta com este e-mail, o link já foi enviado. "
-        + "Ele vale uma vez e expira em uma hora.");
+      // O e-mail volta escrito na tela: é assim que ela vê que
+      // digitou errado, ou que usou outro endereço que não o da
+      // matrícula. A frase continua sem dizer se a conta existe —
+      // isso o Identity não conta, de propósito.
+      texto("linkInfo", "Se houver uma conta com este e-mail, o link já foi enviado para "
+        + email + ". Abra o e-mail e toque no link: ele vale uma vez e dura uma hora.");
       var socorro = document.getElementById("linkSocorro");
       var zap = document.getElementById("btLinkWhats");
       if (zap) zap.style.display = linkEscola() ? "block" : "none";

@@ -211,8 +211,27 @@ var IDENT = { clientContext: { identity: { url: "https://x.netlify/identity", to
   comBaseRuim({ ok: false, erro: "chave" });
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("gabi@teste.local")));
-  T("base que recusa vira \"não deu para conferir\", não recusa de pessoa",
+  // Recusa da base e base fora do ar eram a mesma resposta, e a
+  // mensagem mandava tentar de novo em alguns minutos. Tentar de novo
+  // resolve a segunda e nunca resolve a primeira.
+  T("base que recusa diz que recusou, e não acusa a pessoa",
+    r.status === 502 && r.d.motivo === "base_recusou", r);
+  T("e não manda tentar de novo",
+    !/tente de novo/i.test(r.d.erro || ""), r.d);
+  // e a base que simplesmente não responde continua sendo "tente de
+  // novo", porque aí tentar de novo é mesmo o que resolve
+  global.fetch = function (url) {
+    if (String(url).indexOf("/invite") >= 0) {
+      return Promise.resolve({ ok: true, status: 200,
+        text: function () { return Promise.resolve("{}"); } });
+    }
+    return Promise.reject(new Error("rede"));
+  };
+  r = resposta(await chamar({ email: "rita@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("base que não responde continua sendo espera, não configuração",
     r.status === 503 && r.d.motivo === "base_fora", r);
+
   comBaseRuim({ ok: true, data: { pessoas: [], equipe: [] } });
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("gabi@teste.local")));

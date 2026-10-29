@@ -211,11 +211,17 @@ const P = require("./preparar.js");
   T("toda saída de erro da função leva motivo",
     saidasSemMotivo.length === 0, saidasSemMotivo);
 
-  const escolhido = (fonte.match(/const motivo =[\s\S]*?;/) || [""])[0];
-  const motivos = [...new Set(
-    [...fonte.matchAll(/motivo: '([a-z_]+)'/g)].map(m => m[1])
-      .concat([...escolhido.matchAll(/'([a-z_]+)'/g)].map(m => m[1])))];
-  T("a lista de motivos foi lida do código", motivos.length >= 8, motivos);
+  // A função declara o próprio vocabulário; a suíte lê a declaração
+  // em vez de garimpar literais pelo arquivo, que era frágil — bastava
+  // o motivo nascer dentro de um ternário para sumir da conta.
+  const decl = (fonte.match(/const MOTIVOS = \[[\s\S]*?\];/) || [""])[0];
+  const motivos = [...decl.matchAll(/"([a-z_]+)"/g)].map(m => m[1]);
+  T("a função declara os motivos que devolve", motivos.length >= 10, motivos);
+  // e nada escapa da declaração: todo literal escrito ao lado de um
+  // "motivo" no código tem de estar nela
+  const soltos = [...new Set([...fonte.matchAll(/motivo[^\n]*?['"]([a-z_]{4,})['"]/g)]
+    .map(m => m[1]))].filter(x => motivos.indexOf(x) < 0 && x !== "motivo");
+  T("e nenhum motivo do código ficou fora dela", soltos.length === 0, soltos);
 
   ctx = await comResposta({ ok: true, convidada: true }, 200);
   p = await ctx.newPage();

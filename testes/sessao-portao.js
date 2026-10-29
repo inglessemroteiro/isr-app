@@ -98,8 +98,11 @@ const P = require("./preparar.js");
       senha: !!document.querySelector("#telaLink input[type=password]") };
   });
   T("ela não pede senha nenhuma", !frente.senha, frente);
-  T("e diz o que vai acontecer", /link de entrada chega no seu e-mail/i.test(frente.texto), frente);
-  T("e que não há senha em jogo", /senha para criar nem lembrar/i.test(frente.texto), frente);
+  T("e diz o que fazer e o que vai acontecer",
+    /Escreva o e-mail da sua matrícula/i.test(frente.texto)
+      && /é esse link que abre o seu app/i.test(frente.texto), frente);
+  T("dizendo QUAL e-mail, que é o que mais erra",
+    /e-mail da sua matrícula/i.test(frente.texto), frente);
 
   await p.fill("#linkEmail", "quem@teste.local");
   await p.click("#btLink");
@@ -109,6 +112,10 @@ const P = require("./preparar.js");
   const aviso = await p.evaluate(() => document.getElementById("linkInfo").textContent);
   T("e a resposta não conta quem está cadastrado",
     /Se houver uma conta com este e-mail/.test(aviso), { aviso });
+  T("mas devolve o endereço escrito, para ela conferir",
+    /quem@teste\.local/.test(aviso), { aviso });
+  T("e diz o que fazer com o link que chegar",
+    /toque no link/i.test(aviso) && /vale uma vez/.test(aviso), { aviso });
   // o /recover do Identity só manda e-mail para conta que existe, e
   // responde "ok" de qualquer jeito: quem nunca foi convidada ficava
   // esperando um e-mail que não ia sair
