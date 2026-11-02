@@ -131,6 +131,20 @@
     <button class="suave" onclick="voltarAoLogin()">Voltar</button>
   </div>
 
+  <!-- ── NÃO CONSEGUI LER ≠ VOCÊ NÃO ESTÁ LÁ ──────────────────────
+       A aluna entra com o link, o aparelho dela baixa a base da
+       escola pela primeira vez — e se esse download falha ou demora
+       demais, a tela dizia "o seu e-mail não está no sistema da
+       escola". Ela está: quem não conseguiu ler foi o aparelho.
+       Acusar a matrícula de quem acabou de ser matriculada é o pior
+       jeito possível de errar. -->
+  <div class="tela" id="telaSemBase">
+    <p>Não consegui carregar os dados da escola agora, então não dá para abrir o seu app. Isto é do sistema — a sua matrícula não tem nada a ver com isso.</p>
+    <button id="btTentarBase" onclick="tentarDeNovoBase()">Tentar de novo</button>
+    <p class="erro" id="semBaseErro"></p>
+    <button class="link" id="btSemBaseWhats" onclick="falarComEscola()">Falar com a escola</button>
+  </div>
+
   <!-- QUEM É DAS DUAS COISAS -->
   <!-- A Érika é colaboradora e aluna. O portão testava a equipe
        primeiro e mandava para a gestão: ela nunca conseguia abrir o
@@ -154,7 +168,7 @@
 
 </div>
 <script>
-  var TELAS = ["telaCarregando", "telaAbrir", "telaLink", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaEmail", "telaEscolher"];
+  var TELAS = ["telaCarregando", "telaAbrir", "telaLink", "telaLogin", "telaEsqueci", "telaConvite", "telaRecovery", "telaReativar", "telaNaoEncontrada", "telaSemBase", "telaEmail", "telaEscolher"];
   // O título era "Área da aluna" em cima de TODAS as telas — e o
   // e-mail de convite e de redefinição de senha do Netlify aponta para
   // a raiz do site, que é esta página, tanto para a aluna quanto para a
@@ -212,7 +226,12 @@
   // equipe → gestão com os papéis dela · aluna (assinatura, regular ou
   // programa) → app da aluna · e-mail desconhecido → aviso.
   var jaAtualizouBase = false;
+  // a leitura da base falhou nesta tentativa, e o e-mail de quem
+  // entrou — para a tentativa seguinte não precisar do link de novo
+  var baseNaoVeio = false;
+  var ultimoEmail = "";
   function decidirDestino(email) {
+    if (email) ultimoEmail = email;
     if (puxando) { aoTerminarPuxe = function () { decidirDestino(email); }; mostrar("telaCarregando"); return; }
     var C = window.ISRCRM;
     var e = String(email || "").trim().toLowerCase();
@@ -226,13 +245,19 @@
       jaAtualizouBase = true;
       mostrar("telaCarregando");
       var terminou = false;
-      var segue = function () {
+      // o resultado da leitura importa: falhar e não achar a pessoa
+      // são coisas diferentes, e só a segunda é sobre ela
+      var segue = function (ok) {
         if (terminou) return;
         terminou = true;
+        baseNaoVeio = ok === false;
         decidirDestino(email);
       };
-      try { C.carregarDoBackend(segue); } catch (er) { segue(); }
-      setTimeout(segue, 12000);
+      try { C.carregarDoBackend(segue); } catch (er) { segue(false); }
+      // 20 s, e não 12: a base da escola é grande e o aparelho dela
+      // pode estar no celular, na rua. Desistir cedo demais é o que
+      // transformava uma rede lenta em "você não está no sistema".
+      setTimeout(function () { segue(false); }, 20000);
       return;
     }
     // Quem é das duas coisas escolhe. papeisDeGestao pergunta sem
@@ -258,8 +283,30 @@
     // o e-mail está na base, mas nada está contratado agora: assinatura
     // cancelada no systeme, turma encerrada, ex-aluna
     if (acesso.situacao === "encerrado") { mostrarReativar(); return; }
+    // Antes de dizer que ela não está no sistema, é preciso ter LIDO
+    // o sistema. Sem a base — porque a leitura falhou, ou porque não
+    // veio pessoa nenhuma — o que houve foi uma falha nossa.
+    if (baseNaoVeio || !C.getPessoas().length) { mostrarSemBase(); return; }
     document.getElementById("emailNaoEncontrado").textContent = email;
     mostrar("telaNaoEncontrada");
+  }
+  // A tela de "não consegui ler", com o caminho de tentar outra vez:
+  // numa rede ruim a segunda tentativa resolve, e a aluna não tem por
+  // que recarregar a página para conseguir uma.
+  function mostrarSemBase() {
+    var bt = document.getElementById("btSemBaseWhats");
+    if (bt) bt.style.display = linkEscola() ? "block" : "none";
+    mostrar("telaSemBase");
+  }
+  function tentarDeNovoBase() {
+    var bt = document.getElementById("btTentarBase");
+    if (bt) bt.disabled = true;
+    texto("semBaseErro", "");
+    jaAtualizouBase = false;
+    baseNaoVeio = false;
+    if (!ultimoEmail) { voltarAoLogin(); return; }
+    setTimeout(function () { if (bt) bt.disabled = false; }, 4000);
+    decidirDestino(ultimoEmail);
   }
 
   // ── quem é das duas coisas escolheu ──
