@@ -99,8 +99,8 @@ const P = require("./preparar.js");
   });
   T("ela não pede senha nenhuma", !frente.senha, frente);
   T("e diz o que fazer e o que vai acontecer",
-    /Escreva o e-mail da sua matrícula/i.test(frente.texto)
-      && /é esse link que abre o seu app/i.test(frente.texto), frente);
+    /Informe o e-mail da sua matrícula/i.test(frente.texto)
+      && /O link de acesso é enviado para ele/i.test(frente.texto), frente);
   T("dizendo QUAL e-mail, que é o que mais erra",
     /e-mail da sua matrícula/i.test(frente.texto), frente);
 
@@ -371,9 +371,9 @@ const P = require("./preparar.js");
   }));
   T("a tela não acusa a matrícula de quem acabou de entrar",
     semBase.tela === "telaSemBase" && semBase.naoEncontrada !== "block", semBase);
-  T("ela diz que quem falhou foi o sistema",
-    /não consegui carregar os dados da escola/i.test(semBase.texto)
-      && /matrícula não tem nada a ver/i.test(semBase.texto),
+  T("ela diz o estado, sem falar da matrícula dela",
+    /não foi possível carregar os dados da escola/i.test(semBase.texto)
+      && !/matrícula/i.test(semBase.texto),
     semBase.texto.replace(/\s+/g, " ").slice(0, 200));
   T("e oferece tentar de novo",
     /Tentar de novo/.test(semBase.texto), semBase.texto.slice(0, 160));

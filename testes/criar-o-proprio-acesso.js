@@ -232,6 +232,55 @@ var IDENT = { clientContext: { identity: { url: "https://x.netlify/identity", to
   T("base que não responde continua sendo espera, não configuração",
     r.status === 503 && r.d.motivo === "base_fora", r);
 
+  console.log("\n— a porta pergunta pouco à base —");
+  // A base inteira é megabytes e a função morre aos 10 s esperando.
+  // "acessoConfere" responde só quem é da equipe e a ficha de um
+  // e-mail; a base antiga não conhece a ação, e aí vale o caminho
+  // velho — atualizar o Apps Script não pode ser condição para
+  // convidar.
+  let pedidosBase = [];
+  const comBaseCurta = (entende) => {
+    global.fetch = function (url, init) {
+      if (String(url).indexOf("/invite") >= 0) {
+        return Promise.resolve({ ok: true, status: 200,
+          text: function () { return Promise.resolve("{}"); } });
+      }
+      const corpo = JSON.parse((init && init.body) || "{}");
+      pedidosBase.push(corpo.action);
+      if (corpo.action === "acessoConfere") {
+        if (!entende) {
+          return Promise.resolve({ ok: true, status: 200, json: function () {
+            return Promise.resolve({ ok: false, error: "ação desconhecida" }); } });
+        }
+        return Promise.resolve({ ok: true, status: 200, json: function () {
+          return Promise.resolve({ ok: true, data: {
+            equipe: [{ email: "gabi@teste.local", papeis: ["gestora"] }],
+            pessoa: { status: "aluna", turma: "Basics (A1) · MON 7h" } } }); } });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: function () {
+        return Promise.resolve({ ok: true, data: { pessoas: BASE,
+          equipe: [{ email: "gabi@teste.local", papeis: ["gestora"] }] } }); } });
+    };
+  };
+  comBaseCurta(true);
+  pedidosBase = [];
+  r = resposta(await chamar({ email: "marta@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("o convite sai com a resposta curta", r.status === 200 && r.d.ok === true, r);
+  T("e a base inteira não é pedida",
+    pedidosBase.indexOf("acessoConfere") >= 0
+      && pedidosBase.indexOf("sistemaLoad") < 0, pedidosBase);
+
+  comBaseCurta(false);
+  pedidosBase = [];
+  r = resposta(await chamar({ email: "marta@teste.local" }, {},
+    comoEquipe("gabi@teste.local")));
+  T("base que ainda não conhece a pergunta curta não trava o convite",
+    r.status === 200 && r.d.ok === true, r);
+  T("ela tenta a curta e cai na antiga",
+    pedidosBase.indexOf("acessoConfere") >= 0
+      && pedidosBase.indexOf("sistemaLoad") >= 0, pedidosBase);
+
   comBaseRuim({ ok: true, data: { pessoas: [], equipe: [] } });
   r = resposta(await chamar({ email: "rita@teste.local" }, {},
     comoEquipe("gabi@teste.local")));
