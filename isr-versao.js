@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.02-b",
+  numero: "2026.11.02-c",
   data: "02/11/2026",
-  nota: "A porta pergunta pouco à base"
+  nota: "Um pedido, um e-mail"
 };

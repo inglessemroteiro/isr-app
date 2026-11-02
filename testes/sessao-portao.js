@@ -45,6 +45,9 @@ const P = require("./preparar.js");
   let verificacoes = [];
   let senhasNovas = [];
   let autorizacao = null;
+  // o que a porta pediu à função, e o que a função respondeu
+  let pedidosPorta = [];
+  let respostaDaPorta = { ok: true, convidada: true };
   const montar = async () => {
     const ctx = await b.newContext({ viewport: { width: 420, height: 900 } });
     await ctx.route("**/.netlify/identity/settings", r =>
@@ -73,6 +76,11 @@ const P = require("./preparar.js");
     await ctx.route("**/script.google.com/**", r => r.abort());
     await ctx.route("**/.netlify/functions/**", r => {
       autorizacao = r.request().headers()["authorization"] || "";
+      if (/convidar-aluna/.test(r.request().url())) {
+        pedidosPorta.push(JSON.parse(r.request().postData() || "{}"));
+        return r.fulfill({ status: 200, contentType: "application/json",
+          body: JSON.stringify(respostaDaPorta) });
+      }
       return r.fulfill({ status: 200, contentType: "application/json",
         body: JSON.stringify({ ok: true, convidada: true }) });
     });
@@ -104,11 +112,21 @@ const P = require("./preparar.js");
   T("dizendo QUAL e-mail, que é o que mais erra",
     /e-mail da sua matrícula/i.test(frente.texto), frente);
 
+  // ── UM PEDIDO, UM E-MAIL ──
+  // A conta nascia de um convite que a escola mandava; a aluna nova
+  // pedia o link e não recebia nada, porque conta não existia. O
+  // remendo era um segundo botão — um e-mail da escola para ela
+  // pedir outro e-mail. Agora é um toque só.
+  pedidosPorta = [];
+  respostaDaPorta = { ok: true, convidada: true };
   await p.fill("#linkEmail", "quem@teste.local");
   await p.click("#btLink");
-  await p.waitForTimeout(900);
-  T("pedir o link chama o Identity com o e-mail",
-    pedidos.length === 1 && pedidos[0].email === "quem@teste.local", pedidos);
+  await p.waitForTimeout(1200);
+  T("pedir o link pergunta à escola, com o e-mail digitado",
+    pedidosPorta.length === 1 && pedidosPorta[0].email === "quem@teste.local"
+      && pedidosPorta[0].autoacesso === true, pedidosPorta);
+  T("e a conta criada agora não pede um segundo e-mail",
+    pedidos.length === 0, { pedidos });
   const aviso = await p.evaluate(() => document.getElementById("linkInfo").textContent);
   T("e a resposta não conta quem está cadastrado",
     /Se houver uma conta com este e-mail/.test(aviso), { aviso });
@@ -124,33 +142,46 @@ const P = require("./preparar.js");
     return { visivel: !!d && d.style.display === "block",
       texto: d ? d.innerText.replace(/\s+/g, " ") : "" };
   });
-  T("depois de pedir, a tela mostra a saída de quem não recebe",
+  T("depois de pedir, a tela mostra o que fazer se não chegar",
     socorro.visivel, socorro);
-  T("dizendo que o acesso ainda não existe",
-    /acesso ainda não foi criado/.test(socorro.texto), socorro);
-  T("e oferecendo o caminho que resolve",
-    /Criar o meu acesso/.test(socorro.texto), socorro);
+  T("e é só conferir o spam e o endereço",
+    /caixa de spam/.test(socorro.texto) && /endereço acima/.test(socorro.texto), socorro);
+  T("sem um segundo botão para a aluna apertar",
+    !/Criar o meu acesso/.test(socorro.texto), socorro);
 
-  console.log("\n— criar o acesso pede à função, com o e-mail digitado —");
-  let pedidoCriar = null;
-  await ctx.route("**/.netlify/functions/convidar-aluna", r => {
-    pedidoCriar = JSON.parse(r.request().postData() || "{}");
-    return r.fulfill({ status: 200, contentType: "application/json",
-      body: JSON.stringify({ ok: true, convidada: true, email: pedidoCriar.email }) });
-  });
-  await p.evaluate(() => {
-    const bt = document.getElementById("btCriar");
-    if (bt) bt.click();
-  });
-  await p.waitForTimeout(1400);
-  T("a função é chamada com autoacesso",
-    !!pedidoCriar && pedidoCriar.autoacesso === true, pedidoCriar);
-  T("e com o e-mail que ela digitou",
-    !!pedidoCriar && pedidoCriar.email === "quem@teste.local", pedidoCriar);
-  const criou = await p.evaluate(() =>
-    document.getElementById("criarInfo").textContent);
-  T("a tela confirma que o link saiu", /link de entrada foi enviado/.test(criou),
-    { criou });
+  console.log("\n— quem já tem conta recebe pelo caminho do Identity —");
+  pedidos = []; pedidosPorta = [];
+  respostaDaPorta = { ok: true, convidada: false, jaTinhaConta: true };
+  await p.evaluate(() => { document.getElementById("btLink").disabled = false; });
+  await p.click("#btLink");
+  await p.waitForTimeout(1200);
+  T("a escola é consultada primeiro", pedidosPorta.length === 1, pedidosPorta);
+  T("e o link sai pelo Identity",
+    pedidos.length === 1 && pedidos[0].email === "quem@teste.local", pedidos);
+  const jaTinha = await p.evaluate(() =>
+    document.getElementById("linkInfo").textContent);
+  T("com a mesma frase dos outros casos",
+    /Se houver uma conta com este e-mail/.test(jaTinha), { jaTinha });
+
+  console.log("\n— e-mail que não é da escola lê a mesma coisa —");
+  pedidos = []; pedidosPorta = [];
+  respostaDaPorta = { ok: true, convidada: false, semRegistro: true };
+  await p.evaluate(() => { document.getElementById("btLink").disabled = false; });
+  await p.click("#btLink");
+  await p.waitForTimeout(1200);
+  const foraDaEscola = await p.evaluate(() =>
+    document.getElementById("linkInfo").textContent);
+  T("a tela não conta quem estuda aqui",
+    /Se houver uma conta com este e-mail/.test(foraDaEscola)
+      && !/não está|não encontrad/i.test(foraDaEscola), { foraDaEscola });
+
+  console.log("\n— base fora do ar não tranca quem já tem conta —");
+  pedidos = []; pedidosPorta = [];
+  respostaDaPorta = { ok: false, motivo: "base_fora" };
+  await p.evaluate(() => { document.getElementById("btLink").disabled = false; });
+  await p.click("#btLink");
+  await p.waitForTimeout(1200);
+  T("o Identity é chamado assim mesmo", pedidos.length === 1, pedidos);
 
   console.log("\n— quem tem senha entra por ela, um toque abaixo —");
   const caminhos = await p.evaluate(() => {
