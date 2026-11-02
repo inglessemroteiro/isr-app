@@ -94,9 +94,8 @@ function respostaDaBase(headers, err) {
   return { statusCode: motivo === 'base_fora' ? 503 : 502, headers,
     body: JSON.stringify({ ok: false, motivo: motivo, erro: erro }) };
 }
-async function carregarBase() {
+async function pedirBase(corpo) {
   if (!URL_BASE) throw motivado(new Error("sem base"), "sem_base");
-  const corpo = { action: "sistemaLoad" };
   if (CHAVE_BASE) corpo.chave = CHAVE_BASE;
   // ── E A BASE QUE DEMORA DEMAIS ──────────────────────────────────
   //
@@ -125,18 +124,50 @@ async function carregarBase() {
   // "o seu e-mail não está em ficha nenhuma" com a ficha na frente
   // dela, preenchida. Não poder ler a base e a pessoa não estar nela
   // são coisas diferentes, e agora são tratadas como tais.
-  if (d && d.ok === false) throw motivado(new Error("base recusou"), "base_recusou");
-  const dados = (d && d.data) || {};
-  if (!dados || typeof dados !== "object") throw motivado(new Error("base sem dados"), "base_recusou");
-  return dados;
+  return d;
+}
+
+// ── PERGUNTAR POUCO ───────────────────────────────────────────────
+//
+// Esta função precisa de duas coisas: quem é da Equipe e se um
+// e-mail é de aluna. Para saber isso ela baixava o banco INTEIRO, e
+// o banco cresceu até a espera estourar o limite do Netlify — o
+// convite passou a falhar sem que nada mais falhasse.
+//
+// "acessoConfere" responde só essas duas coisas. Uma base ainda não
+// atualizada não conhece a ação e responde "ok: false"; aí vale o
+// caminho antigo, para a atualização do Apps Script não ser uma
+// condição para convidar.
+async function conferirAcesso(email) {
+  let d = null;
+  try {
+    d = await pedirBase({ action: "acessoConfere", email: email || "" });
+  } catch (e) {
+    if ((e && e.motivo) === "base_fora" || (e && e.motivo) === "sem_base") throw e;
+    d = null;
+  }
+  // a resposta curta tem as DUAS chaves; o banco inteiro não tem
+  // "pessoa", e é assim que uma base antiga se denuncia
+  if (d && d.ok && d.data && Array.isArray(d.data.equipe)
+      && Object.prototype.hasOwnProperty.call(d.data, "pessoa")) {
+    return d.data;
+  }
+  // base antiga, ou recusa: o banco inteiro, como antes
+  const velha = await pedirBase({ action: "sistemaLoad" });
+  if (velha && velha.ok === false) throw motivado(new Error("base recusou"), "base_recusou");
+  const dados = (velha && velha.data) || null;
+  if (!dados || typeof dados !== "object") {
+    throw motivado(new Error("base sem dados"), "base_recusou");
+  }
+  const alvo = String(email || "").trim().toLowerCase();
+  const achada = (dados.pessoas || []).filter((x) =>
+    x && !x.apagado && String(x.email || "").trim().toLowerCase() === alvo)[0] || null;
+  return { equipe: dados.equipe || [], pessoa: achada };
 }
 async function ehAlunaDaEscola(email) {
   if (!URL_BASE) return false;
-  const base = await carregarBase();
-  const pessoas = base.pessoas || [];
-  const achada = pessoas.filter((x) =>
-    x && !x.apagado && String(x.email || "").trim().toLowerCase() === email)[0];
-  return liberadaNaBase(achada);
+  const r = await conferirAcesso(email);
+  return liberadaNaBase(r.pessoa);
 }
 
 // ── QUEM É DA EQUIPE, SEGUNDO A ESCOLA ────────────────────────────
@@ -160,7 +191,7 @@ const PAPEIS_QUE_CONVIDAM = ["gestora", "comercial", "operacao", "professora",
 //   "sem_base"      o site não sabe onde fica a base
 async function situacaoNaEquipe(email) {
   if (!URL_BASE) return "sem_base";
-  const base = await carregarBase();
+  const base = await conferirAcesso(email);
   const equipe = base.equipe || [];
   // Equipe vazia não é uma escola sem equipe: é uma base que não foi
   // lida. Dizer "você não está na Equipe" a partir disso manda a

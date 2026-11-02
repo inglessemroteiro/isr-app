@@ -99,8 +99,8 @@ const P = require("./preparar.js");
   });
   T("ela não pede senha nenhuma", !frente.senha, frente);
   T("e diz o que fazer e o que vai acontecer",
-    /Escreva o e-mail da sua matrícula/i.test(frente.texto)
-      && /é esse link que abre o seu app/i.test(frente.texto), frente);
+    /Informe o e-mail da sua matrícula/i.test(frente.texto)
+      && /O link de acesso é enviado para ele/i.test(frente.texto), frente);
   T("dizendo QUAL e-mail, que é o que mais erra",
     /e-mail da sua matrícula/i.test(frente.texto), frente);
 
@@ -340,6 +340,55 @@ const P = require("./preparar.js");
   T("dizendo que o link foi usado", /já foi usado ou expirou/.test(gasto.erro), gasto);
   T("e o e-mail já vem escrito, para ser um toque só",
     gasto.email === "quem@teste.local", gasto);
+  await ctx.close();
+
+  console.log("\n— aluna nova, aparelho novo, base que não baixa —");
+  // O caso de quem acabou de ser matriculada: ela entra pelo link, o
+  // aparelho dela vai buscar a base da escola pela primeira vez, e a
+  // busca falha. O portão dizia "o seu e-mail não está no sistema da
+  // escola" — para quem está, e foi matriculada ontem. Quem não
+  // conseguiu ler foi o aparelho.
+  ctx = await montar();
+  // a base existe, mas não responde
+  await ctx.route("**/base-que-nao-vem**", r => r.abort());
+  p = await ctx.newPage();
+  p.on("pageerror", e => erros.push(String(e).slice(0, 220)));
+  await p.goto("http://localhost:8899/aluna.html");
+  await p.waitForTimeout(1200);
+  await p.evaluate(() => {
+    localStorage.setItem("isr_backend_url", location.origin + "/base-que-nao-vem");
+  });
+  await p.goto("http://localhost:8899/aluna.html#recovery_token=de-aluna-nova");
+  await p.reload();
+  await p.waitForTimeout(2600);
+  await p.click("#btAbrir");
+  await p.waitForTimeout(3000);
+  const semBase = await p.evaluate(() => ({
+    tela: [...document.querySelectorAll(".tela")]
+      .filter(x => x.style.display === "block").map(x => x.id)[0],
+    texto: (document.getElementById("telaSemBase") || {}).innerText || "",
+    naoEncontrada: (document.getElementById("telaNaoEncontrada") || {}).style.display
+  }));
+  T("a tela não acusa a matrícula de quem acabou de entrar",
+    semBase.tela === "telaSemBase" && semBase.naoEncontrada !== "block", semBase);
+  T("ela diz o estado, sem falar da matrícula dela",
+    /não foi possível carregar os dados da escola/i.test(semBase.texto)
+      && !/matrícula/i.test(semBase.texto),
+    semBase.texto.replace(/\s+/g, " ").slice(0, 200));
+  T("e oferece tentar de novo",
+    /Tentar de novo/.test(semBase.texto), semBase.texto.slice(0, 160));
+  const botaoVolta = await p.evaluate(() => {
+    const bt = document.getElementById("btTentarBase");
+    if (!bt) return null;
+    bt.click();
+    return true;
+  });
+  await p.waitForTimeout(2600);
+  const depoisDeTentar = await p.evaluate(() => [...document.querySelectorAll(".tela")]
+    .filter(x => x.style.display === "block").map(x => x.id)[0]);
+  T("tentar de novo não joga a aluna para fora",
+    botaoVolta === true && depoisDeTentar === "telaSemBase",
+    { depoisDeTentar });
   await ctx.close();
 
   T("nenhum erro de página", erros.length === 0, erros);

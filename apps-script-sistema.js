@@ -58,7 +58,7 @@ var VERSAO_SCRIPT = "2026.10.15-a";
 // ficam de fora desta exigência: quem chama aquelas é máquina, por
 // outro caminho, e trancá-las aqui quebraria as automações.
 var ACOES_DO_SISTEMA = {
-  sistemaLoad: 1, sistemaSave: 1, cadastrosPendentes: 1,
+  sistemaLoad: 1, sistemaSave: 1, acessoConfere: 1, cadastrosPendentes: 1,
   atividadesPendentes: 1, assinaturasPendentes: 1,
   cadastroProcessado: 1, atividadeProcessada: 1, assinaturaProcessada: 1
 };
@@ -101,6 +101,8 @@ function doPost(e) {
     var action = body.action || (e && e.parameter && e.parameter.action) || "";
     if (!podePassar_(action, e, body)) return json_(RECUSA_);
     if (action === "sistemaSave") return json_(sistemaSave_(body.data || {}));
+    if (action === "acessoConfere")
+      return json_(acessoConfere_(body.email || (e.parameter && e.parameter.email)));
     if (action === "novoCadastro") return json_(novoCadastro_(body.data || {}));
     if (action === "cadastroProcessado") return json_(cadastroProcessado_(body.id));
     if (action === "novaAtividade")
@@ -506,6 +508,45 @@ function sistemaLoad_() {
   if (!texto) return { ok: true, data: null };
   try { return { ok: true, data: JSON.parse(texto) }; }
   catch (e) { return { ok: false, error: "banco corrompido: " + e }; }
+}
+
+// ── SÓ O QUE A PORTA PRECISA SABER ───────────────────────────────
+//
+// Para conferir quem pode convidar e se um e-mail é de aluna, o site
+// baixava o banco INTEIRO — megabytes — e a função do Netlify morre
+// aos 10 segundos de espera. Conforme a escola cresceu, o convite
+// passou a falhar sem que nada mais falhasse.
+//
+// Esta ação responde duas coisas e nada mais: a lista de quem é da
+// equipe, com os papéis, e a ficha de UM e-mail, reduzida ao que
+// decide acesso. A leitura da planilha é a mesma; o que encolhe é a
+// resposta, que é onde estava a espera.
+function acessoConfere_(email) {
+  var r = sistemaLoad_();
+  if (!r.ok) return r;
+  var d = r.data || {};
+  var equipe = [];
+  (d.equipe || []).forEach(function (x) {
+    if (!x || x.apagado) return;
+    var mail = String(x.email || "").trim().toLowerCase();
+    if (!mail) return;
+    equipe.push({ email: mail, papeis: x.papeis || [], perfil: x.perfil || "" });
+  });
+  var alvo = String(email || "").trim().toLowerCase();
+  var pessoa = null;
+  if (alvo) {
+    var achada = null;
+    (d.pessoas || []).forEach(function (x) {
+      if (achada || !x || x.apagado) return;
+      if (String(x.email || "").trim().toLowerCase() === alvo) achada = x;
+    });
+    if (achada) {
+      pessoa = { status: achada.status || "", turma: achada.turma || "",
+        particular: !!achada.particular,
+        assinatura: achada.assinatura ? { ativa: !!achada.assinatura.ativa } : null };
+    }
+  }
+  return { ok: true, data: { equipe: equipe, pessoa: pessoa } };
 }
 
 // ── HELPER ───────────────────────────────────────────────────────

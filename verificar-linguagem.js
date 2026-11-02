@@ -29,6 +29,13 @@ var PROIBIDOS = [
   { re: /\bcom carinho\b|\bque alegria\b|\bfinalmente\b|\bdestravar\b/i, por: "linguagem neutra" },
   { re: /\bnum lugar s[óo]\b|\btudo aqui\b|\bcom um clique\b/i, por: "descreva a função, sem promessa" },
   { re: /\bsem medo\b|\bse voc[êe] quiser\b|\bfique tranquil/i, por: "linguagem neutra" },
+  // O sistema não fala de si na primeira pessoa, e não consola.
+  // "Não consegui carregar" é alguém contando o que tentou fazer; a
+  // interface diz o estado: "Não foi possível carregar".
+  { re: /\bn[ãa]o consegui\b|\bconsegui ler\b|\bvou tentar\b|\beu (?:vou|posso|acho)\b/i,
+    por: "o sistema não fala na primeira pessoa (\"Não foi possível…\")" },
+  { re: /\bn[ãa]o tem nada a ver\b|\bn[ãa]o se preocupe\b|\bn[ãa]o [ée] culpa\b|\brelaxa\b/i,
+    por: "sem consolo: diga o estado e o próximo passo" },
   { re: /!(?!important)/, por: "sem exclamação em texto de interface" }
 ];
 
@@ -169,14 +176,21 @@ function achados(nome, conteudo) {
 }
 
 var raiz = __dirname;
+// O PORTÃO ESTAVA DE FORA.
+//
+// aluna.html é a primeira tela do produto — a mais lida de todas — e
+// não passava por aqui: o verificador só olhava as .dc.html. Foi por
+// essa fresta que entrou "a sua matrícula não tem nada a ver com
+// isso", que é conversa, não interface.
 var alvos = fs.readdirSync(raiz).filter(function (f) {
-  return (/\.dc\.html$/.test(f) && !ignorado(f)) || f === "crm-data.js" || f === "isr-nav.js";
+  return (/\.dc\.html$/.test(f) && !ignorado(f)) || f === "crm-data.js"
+    || f === "isr-nav.js" || f === "aluna.html" || f === "gestao.html";
 });
 
 var problemas = [];
 alvos.forEach(function (f) {
   var conteudo = fs.readFileSync(path.join(raiz, f), "utf8");
-  if (/\.dc\.html$/.test(f)) {
+  if (/\.html$/.test(f)) {
     problemas = problemas.concat(achados(f, textoVisivel(conteudo)));
     problemas = problemas.concat(achados(f, stringsDoScript(conteudo)));
   } else {
