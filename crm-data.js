@@ -9974,6 +9974,8 @@
     base_recusou: { erro: "A base da escola respondeu, mas recusou o pedido do site. "
       + "Tentar de novo não resolve: é a ligação entre o site e a base que "
       + "precisa ser revista nas configurações." },
+    conta_em_uso: { erro: "Esta conta já foi usada para entrar, então ela não é refeita. "
+      + "Quem tem acesso pede o link na tela de entrada." },
     sem_email: { erro: "Falta o e-mail na ficha desta pessoa." },
     erro_inesperado: { erro: "O site falhou ao criar o convite. Tente de novo; "
       + "se continuar, o registro do que aconteceu fica nos logs do Netlify, "
@@ -10042,6 +10044,110 @@
           + "Confira a conexão e tente de novo." };
       });
   }
+  // ── O ESTADO DA CONTA, DITO PELO IDENTITY ─────────────────────
+  //
+  // A ficha sabia só o que a escola registrou: "convidada em tal
+  // dia", "nunca abriu o app". Quando uma aluna não entra e todas as
+  // outras entram, a diferença está do outro lado — na conta —, e
+  // não havia como olhar: a escola ficava adivinhando entre spam,
+  // e-mail errado e convite perdido.
+  //
+  // Isto pergunta ao Identity e devolve o estado em uma frase, mais
+  // o que fazer quando há o que fazer.
+  function contaDaAluna(pessoaOuId) {
+    var p = (pessoaOuId && typeof pessoaOuId === "object")
+      ? pessoaOuId : getPessoa(pessoaOuId);
+    if (!p) return Promise.resolve({ ok: false, erro: "Aluna não encontrada." });
+    var email = String(p.email || "").trim().toLowerCase();
+    if (!email || email.indexOf("@") < 1) {
+      return Promise.resolve({ ok: false,
+        erro: "A ficha de " + firstName(p.nome) + " não tem e-mail." });
+    }
+    return chamarFuncao("conta-da-aluna", { body: { email: email, acao: "conferir" } })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; })
+          .then(function (d) { return { d: d, status: r.status }; });
+      })
+      .then(function (res) {
+        var d = res.d;
+        if (!d || !d.ok) {
+          return Object.assign(recadoDoConvite(d, res.status), { email: email });
+        }
+        return Object.assign({ ok: true, email: email }, d, {
+          resumo: resumoDaConta(d), presa: contaPresa(d) });
+      })
+      .catch(function () {
+        return { ok: false, erro: "Não foi possível falar com o servidor. "
+          + "Confira a conexão e tente de novo." };
+      });
+  }
+  // A conta que existe, nunca foi confirmada e nunca foi usada: é a
+  // que não recebe convite (o Identity recusa convidar quem já está
+  // registrado) e não recebe link de entrada (a conta nunca foi
+  // confirmada). Fica presa entre as duas coisas, em silêncio.
+  function contaPresa(d) {
+    return !!(d && d.existe && !d.ultimoAcesso && !d.confirmadaEm);
+  }
+  function resumoDaConta(d) {
+    if (!d || !d.existe) return "Não existe conta com este e-mail.";
+    if (d.ultimoAcesso) {
+      return "A conta existe e já foi usada. Último acesso em " + ddmmaaaa(d.ultimoAcesso) + ".";
+    }
+    if (d.confirmadaEm) return "A conta existe e está confirmada, mas ninguém entrou nela ainda.";
+    if (d.convidadaEm) {
+      return "A conta foi criada pelo convite de " + ddmmaaaa(d.convidadaEm)
+        + " e nunca foi aberta. Neste estado ela não recebe convite nem link de entrada.";
+    }
+    return "A conta existe, mas nunca foi confirmada nem usada.";
+  }
+  function ddmmaaaa(quando) {
+    var s = String(quando || "");
+    if (!s) return "";
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return s.slice(0, 10);
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
+  }
+  // Apaga a conta presa e convida de novo. Conta com qualquer acesso
+  // registrado não é apagada: o servidor recusa, e aqui também.
+  function recomecarConta(pessoaOuId) {
+    var p = (pessoaOuId && typeof pessoaOuId === "object")
+      ? pessoaOuId : getPessoa(pessoaOuId);
+    if (!p) return Promise.resolve({ ok: false, erro: "Aluna não encontrada." });
+    var pessoaId = p.id;
+    var email = String(p.email || "").trim().toLowerCase();
+    if (!email || email.indexOf("@") < 1) {
+      return Promise.resolve({ ok: false,
+        erro: "A ficha de " + firstName(p.nome) + " não tem e-mail." });
+    }
+    return chamarFuncao("conta-da-aluna", { body: { email: email, acao: "recomecar" } })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; })
+          .then(function (d) { return { d: d, status: r.status }; });
+      })
+      .then(function (res) {
+        var d = res.d;
+        if (!d || !d.ok) {
+          if (d && d.motivo === "conta_em_uso") {
+            return { ok: false, email: email,
+              erro: "Esta conta já foi usada para entrar, então ela não é refeita. "
+                + firstName(p.nome) + " pode pedir o link na tela de entrada." };
+          }
+          return Object.assign(recadoDoConvite(d, res.status), { email: email });
+        }
+        mutate(pessoaId, function (pp) {
+          pp.convidadaEm = iso(today());
+          pp.convidadaPara = email;
+        });
+        agendarSync();
+        return { ok: true, email: email, apagou: !!d.apagou };
+      })
+      .catch(function () {
+        return { ok: false, erro: "Não foi possível falar com o servidor. "
+          + "Confira a conexão e tente de novo." };
+      });
+  }
+
   // ── O CONVITE DA EQUIPE ───────────────────────────────────────
   //
   // Até aqui, pôr uma professora no sistema era duas tarefas em dois
@@ -17909,7 +18015,8 @@
     registrarAcessoAluna: registrarAcessoAluna,
     salvarPerfilDaAluna: salvarPerfilDaAluna, perfilDaAluna: perfilDaAluna,
     cadernoDaAluna: cadernoDaAluna, notaDaAula: notaDaAula, salvarNotaDaAula: salvarNotaDaAula,
-    convidarAluna: convidarAluna, conviteDaAluna: conviteDaAluna,
+    convidarAluna: convidarAluna,
+    contaDaAluna: contaDaAluna, recomecarConta: recomecarConta, conviteDaAluna: conviteDaAluna,
     convidarAlunas: convidarAlunas, situacaoDeAcesso: situacaoDeAcesso,
     quemNaoEntrou: quemNaoEntrou,
     materiaisDoCiclo: materiaisDoCiclo, guiaDoNivel: guiaDoNivel,

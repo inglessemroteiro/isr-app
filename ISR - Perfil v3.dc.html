@@ -821,7 +821,22 @@
                 <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500; margin-bottom: 4px;">Convite para o app</div>
                 <p style="margin: 0 0 9px; font-size: 11.5px; color: var(--color-tertiary-500); line-height: 1.55;">{{ conviteTexto }}</p>
                 <sc-if value="{{ convitePode }}">
-                  <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onConvidar }}" style="font-size: 11.5px; padding: 8px 14px">{{ conviteBotao }}</button>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                    <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onConvidar }}" style="font-size: 11.5px; padding: 8px 14px">{{ conviteBotao }}</button>
+                    <!-- A ficha sabia só o que a escola registrou. Quando
+                         uma aluna não entra e as outras entram, a
+                         diferença está na conta, do outro lado. -->
+                    <span onclick="{{ onConferirConta }}" style="font-size: 11.5px; font-weight: 600; color: var(--color-primary-500); cursor: pointer">{{ contaBotao }}</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ temConta }}">
+                  <p style="margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--color-primary-800);">{{ contaResumo }}</p>
+                </sc-if>
+                <sc-if value="{{ contaPresa }}">
+                  <div style="margin-top: 8px; background: var(--color-warning-light); border-radius: 12px; padding: 9px 11px;">
+                    <p style="margin: 0 0 8px; font-size: 11.5px; line-height: 1.55; color: var(--color-warning-dark);">Refazer apaga esta conta, que nunca foi usada, e manda um convite novo.</p>
+                    <button class="isr-botao isr-botao--pilula" onclick="{{ onRecomecar }}" style="background: var(--color-neutral-0); color: var(--color-warning-dark); font-size: 11.5px; padding: 8px 14px">Refazer a conta</button>
+                  </div>
                 </sc-if>
                 <sc-if value="{{ conviteAviso }}">
                   <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: {{ conviteAvisoCor }};">{{ conviteAvisoTexto }}</p>
@@ -981,7 +996,9 @@ class Component extends DCLogic {
     const CRM = window.ISRCRM;
     if (!CRM) return { ok: false, naoEncontrada: true, waDireto: "#",
       convitePode: false, conviteBotao: "", conviteTexto: "", conviteAviso: false,
-      conviteAvisoTexto: "", conviteAvisoCor: "", onConvidar: () => {} };
+      conviteAvisoTexto: "", conviteAvisoCor: "", onConvidar: () => {},
+      contaBotao: "Conferir o acesso", temConta: false, contaResumo: "",
+      contaPresa: false, onConferirConta: () => {}, onRecomecar: () => {} };
     let p = CRM.getPessoa(this.pessoaId());
     if (!p) p = CRM.getPessoas()[0] || null;
     if (!p) return { ok: false, naoEncontrada: true, waDireto: "#" };
@@ -2005,6 +2022,32 @@ class Component extends DCLogic {
       out.conviteAvisoTexto = out.conviteAviso ? res.texto : "";
       out.conviteAvisoCor = out.conviteAviso && res.bom
         ? "var(--color-success-dark)" : "var(--color-error-dark)";
+      // ── o estado da conta, perguntado ao Identity ──
+      const ct = this.state.contaRes;
+      const minha = !!(ct && ct.id === p.id);
+      out.contaBotao = minha && ct.lendo ? "Conferindo…" : "Conferir o acesso";
+      out.temConta = minha && !!ct.texto;
+      out.contaResumo = minha ? (ct.texto || "") : "";
+      out.contaPresa = !!(minha && ct.presa);
+      out.onConferirConta = () => {
+        this.setState({ contaRes: { id: p.id, lendo: true, texto: "" } });
+        CRM.contaDaAluna(p).then((r) => {
+          this.setState({ contaRes: { id: p.id, lendo: false,
+            texto: r.ok ? r.resumo : r.erro, presa: !!r.presa } });
+          this.bump();
+        });
+      };
+      out.onRecomecar = () => {
+        this.setState({ contaRes: { id: p.id, lendo: false,
+          texto: "Refazendo a conta…", presa: false } });
+        CRM.recomecarConta(p).then((r) => {
+          this.setState({ contaRes: { id: p.id, lendo: false, presa: false,
+            texto: r.ok
+              ? "Conta refeita. O convite novo foi enviado para " + r.email + "."
+              : r.erro } });
+          this.bump();
+        });
+      };
       out.onConvidar = () => {
         this.setState({ conviteRes: { id: p.id, bom: true, texto: "Enviando…" } });
         CRM.convidarAluna(p).then((r) => {
