@@ -45,19 +45,18 @@
     <button id="btLink" onclick="pedirLink()">Receber o link por e-mail</button>
     <p class="info" id="linkInfo"></p>
     <p class="erro" id="linkErro"></p>
-    <!-- ── QUANDO O LINK NÃO CHEGA ───────────────────────────────
+    <!-- ── UM PEDIDO, UM E-MAIL ──────────────────────────────────
          O /recover do Identity só manda e-mail para conta que já
-         existe, e responde "ok" de qualquer jeito — é assim de
-         propósito, para não contar quem é cadastrado. A aluna que
-         nunca foi convidada não tem conta: o pedido não gera e-mail
-         nenhum, a tela dizia que o link foi enviado, e ela esperava.
-         Quem cria a conta é a escola, pelo convite, e é para lá que
-         esta saída leva. -->
+         existe. Como a conta nascia de um convite da escola, a aluna
+         nova pedia o link, lia "enviado" e não recebia nada — e a
+         saída era um segundo botão, "criar o meu acesso", ou seja um
+         e-mail da escola para ela pedir outro e-mail.
+         Agora o pedido é um só: a porta cria a conta de quem está na
+         base da escola e manda o link. Quem já tem conta recebe o
+         link direto. Em nenhum dos dois casos ela aperta duas vezes,
+         e em nenhum dos dois a escola precisa agir antes. -->
     <div id="linkSocorro" style="display: none">
-      <p class="nota" style="margin-top: 14px">Não recebeu em alguns minutos? Confira a caixa de spam e confira o endereço acima. Se o endereço estiver correto, o acesso ainda não foi criado.</p>
-      <button class="suave" id="btCriar" onclick="criarAcesso()">Criar o meu acesso</button>
-      <p class="info" id="criarInfo"></p>
-      <p class="erro" id="criarErro"></p>
+      <p class="nota" style="margin-top: 14px">Não recebeu em alguns minutos? Confira a caixa de spam e confira o endereço acima.</p>
       <button class="link" id="btLinkWhats" onclick="falarComEscola()">Falar com a escola</button>
     </div>
     <button class="link" onclick="mostrar('telaLogin')">Tenho uma senha</button>
@@ -581,30 +580,65 @@
     try { var q = localStorage.getItem(PEDIDO); localStorage.removeItem(PEDIDO); return q || ""; }
     catch (e) { return ""; }
   }
+  // ── UM PEDIDO, UM E-MAIL ──────────────────────────────────────
+  //
+  // A conta da aluna nascia de um convite que a escola mandava. Ela
+  // então pedia o link, e o Identity não mandava nada, porque conta
+  // não existia — a tela dizia "enviado" e ela esperava. O remendo
+  // era um segundo botão: um e-mail da escola para ela pedir outro
+  // e-mail.
+  //
+  // Aqui o pedido é um só. A porta pergunta à escola: se este e-mail
+  // é de aluna e ainda não tem conta, a conta é criada e o link sai;
+  // se já tem conta, o link sai pelo /recover. A aluna aperta uma
+  // vez, e a escola não precisa ter feito nada antes.
+  //
+  // A tela responde a mesma coisa nos três casos — criou, já tinha,
+  // ou não é da escola. Quem está de fora não descobre quem estuda
+  // aqui só escrevendo endereços nesta caixa.
+  function linkPedido(email) {
+    guardarPedido("entrar", email);
+    texto("linkInfo", "Se houver uma conta com este e-mail, o link foi enviado para "
+      + email + ". Abra o e-mail e toque no link. O link vale uma vez e expira em uma hora.");
+    var socorro = document.getElementById("linkSocorro");
+    var zap = document.getElementById("btLinkWhats");
+    if (zap) zap.style.display = linkEscola() ? "block" : "none";
+    if (socorro) socorro.style.display = "block";
+  }
+  function pedirPeloIdentity(email) {
+    return fetch(API + "/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email })
+    });
+  }
   function pedirLink() {
     var email = valor("linkEmail");
     texto("linkErro", ""); texto("linkInfo", "");
     if (!email) { texto("linkErro", "Informe o e-mail."); return; }
     document.getElementById("btLink").disabled = true;
-    fetch(API + "/recover", {
+    fetch("/.netlify/functions/convidar-aluna", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email })
+      body: JSON.stringify({ email: email, autoacesso: true })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; });
+    }).then(function (d) {
+      // conta criada agora: o próprio convite é o e-mail com o link
+      if (d && d.ok && d.convidada) return null;
+      // conta que já existia, e também o caso de a base não responder:
+      // quem já tem acesso não pode ficar sem o link por causa disso
+      return pedirPeloIdentity(email);
     }).then(function () {
-      guardarPedido("entrar", email);
-      // O e-mail volta escrito na tela: é assim que ela vê que
-      // digitou errado, ou que usou outro endereço que não o da
-      // matrícula. A frase continua sem dizer se a conta existe —
-      // isso o Identity não conta, de propósito.
-      texto("linkInfo", "Se houver uma conta com este e-mail, o link foi enviado para "
-        + email + ". Abra o e-mail e toque no link. O link vale uma vez e expira em uma hora.");
-      var socorro = document.getElementById("linkSocorro");
-      var zap = document.getElementById("btLinkWhats");
-      if (zap) zap.style.display = linkEscola() ? "block" : "none";
-      if (socorro) socorro.style.display = "block";
+      linkPedido(email);
     }).catch(function () {
-      document.getElementById("btLink").disabled = false;
-      texto("linkErro", "Falha de conexão. Tente novamente.");
+      // a função não respondeu: ainda assim o Identity pode mandar o
+      // link de quem já tem conta
+      pedirPeloIdentity(email).then(function () { linkPedido(email); })
+        .catch(function () {
+          document.getElementById("btLink").disabled = false;
+          texto("linkErro", "Falha de conexão. Tente de novo.");
+        });
     });
   }
 
@@ -616,43 +650,6 @@
   // só convida quem já é aluna com turma ou produto. Criar a conta
   // não abre nada sozinho; o portão continua conferindo o e-mail na
   // base antes de abrir o app.
-  function criarAcesso() {
-    var email = valor("linkEmail");
-    texto("criarErro", ""); texto("criarInfo", "");
-    if (!email) { texto("criarErro", "Informe o e-mail acima."); return; }
-    var bt = document.getElementById("btCriar");
-    bt.disabled = true;
-    bt.textContent = "Criando…";
-    fetch("/.netlify/functions/convidar-aluna", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, autoacesso: true })
-    }).then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (d) {
-        bt.textContent = "Criar o meu acesso";
-        if (d && d.ok && d.convidada) {
-          texto("criarInfo", "Pronto. O link de entrada foi enviado para " + email
-            + ". Abra o e-mail e toque nele.");
-          return;
-        }
-        if (d && d.ok && d.jaTinhaConta) {
-          texto("criarInfo", "Você já tem acesso. Peça o link acima e ele chega.");
-          bt.disabled = false;
-          return;
-        }
-        // e-mail fora dos registros da escola, ou base fora do ar: o
-        // caminho é a escola, e a tela não diz qual dos dois é
-        bt.disabled = false;
-        texto("criarErro", "Não foi possível criar o acesso com este e-mail. "
-          + "Fale com a escola para conferir o e-mail da sua matrícula.");
-      })
-      .catch(function () {
-        bt.disabled = false;
-        bt.textContent = "Criar o meu acesso";
-        texto("criarErro", "Falha de conexão. Tente novamente.");
-      });
-  }
-
   function pedirRedefinicao() {
     var email = valor("esqueciEmail");
     texto("esqueciErro", ""); texto("esqueciInfo", "");
