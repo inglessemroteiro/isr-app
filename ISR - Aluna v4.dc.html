@@ -123,6 +123,14 @@
         <sc-if value="{{ semUltimaGravacao }}">
           <section style="flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none;color:var(--color-tertiary-500)">▷</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.ultimaGravacao }}</div><div style="font-size:14px;color:var(--color-primary-800);line-height:1.5;margin-top:2px">{{ L.semGravacao }}</div></div></section>
         </sc-if>
+        <!-- A PASTA DAS AULAS GRAVADAS.
+             A escola guarda as gravações numa pasta, e o endereço
+             dela está na configuração desde sempre. O app antigo
+             mostrava; o v4 não — a aluna via a gravação da última
+             aula e mais nada, e a pasta inteira ficou invisível. -->
+        <sc-if value="{{ temPastaGravadas }}">
+          <a href="{{ pastaGravadasLink }}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;flex:1 1 280px;min-width:0;background:var(--color-neutral-0);border-radius:24px;padding:22px 24px;display:flex;align-items:center;gap:14px"><span style="width:44px;height:44px;border-radius:14px;background:var(--color-button-secondary);display:grid;place-items:center;font-size:18px;flex:none">▣</span><div style="min-width:0"><div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.pastaGravadas }}</div><div style="font-size:15px;font-weight:800;margin-top:2px">{{ L.pastaGravadasAbrir }}</div><div style="font-size:12px;color:var(--color-primary-800);margin-top:2px">{{ L.pastaGravadasSub }}</div></div></a>
+        </sc-if>
 
       </div>
       <!-- COMO FOI A AULA · fora dos arquivos novos, mantida a pedido
@@ -1448,6 +1456,10 @@ class Component extends DCLogic {
       clubes: T("clubs", "clubes"),
       verClubes: T("See my clubs", "Ver os clubes"),
       ultimaGravacao: T("last class recording", "gravação da última aula"),
+      pastaGravadas: T("recorded classes", "aulas gravadas"),
+      pastaGravadasAbrir: T("Open the folder", "Abrir a pasta"),
+      pastaGravadasSub: T("every recording the school has published",
+        "todas as gravações que a escola publicou"),
       seuNivel: T("your level now", "seu nível agora"),
       presencaCiclo: T("attendance this cycle", "presença no ciclo"),
       projetosFeitos: T("finished projects", "projetos concluídos"),
@@ -1582,6 +1594,7 @@ class Component extends DCLogic {
       clubesCartaoTitulo: "", clubesCartaoLinha: "",
       temUltimaGravacao: false, semUltimaGravacao: true,
       ultimaGravacaoLink: "#", ultimaGravacaoTitulo: "", ultimaGravacaoSub: "",
+      temPastaGravadas: false, pastaGravadasLink: "#",
       cert: { cor: "var(--color-primary-900)", titulo: "", texto: "", numeros: [], pronto: false, href: "#" },
       attendance: [], presencaLinha: "", presencaPct: "—", presencaCor: "var(--color-primary-900)",
       temPassados: false, passados: [],
@@ -1709,6 +1722,20 @@ class Component extends DCLogic {
         entregue ? T("handed in", "entregue") : T("due before class", "antes da próxima aula"),
         entregue ? "feito" : "cobra"));
     }
+    // ── A HORA DO CLUBE, NO RELÓGIO DELA ──
+    //
+    // Esta lista mostrava c.hora cru: a hora do relógio de QUEM
+    // CONDUZ. A professora do Book Club está em São Paulo e a aluna
+    // na Holanda, e as duas liam "20:00" — a página de Clubes já
+    // convertia, esta não, e as duas telas do mesmo app diziam
+    // horas diferentes para o mesmo encontro.
+    const fusoDaAluna = (CRM.fusoDoNavegador && CRM.fusoDoNavegador()) || "";
+    const horaDoClube = (c, e) => {
+      const h = CRM.horaDoEncontro ? CRM.horaDoEncontro(c, e || {}, fusoDaAluna) : null;
+      if (!h || !h.hora) return "";
+      if (h.semFuso || h.mesmoFuso) return h.hora;
+      return h.horaVisor + (h.mudouDeDia > 0 ? " (+1)" : (h.mudouDeDia < 0 ? " (−1)" : ""));
+    };
     // os encontros de clube que caem nesta semana
     cl.meus.forEach(c => {
       (c.encontros || []).forEach((e, i) => {
@@ -1725,7 +1752,8 @@ class Component extends DCLogic {
         const d = this.dia(iso);
         week.push(linha(iso + "3", passou,
           c.nome + " · " + T("meeting ", "encontro ") + (i + 1),
-          [d.label.charAt(0).toUpperCase() + d.label.slice(1), c.hora, e.tema].filter(Boolean).join(" · "),
+          [d.label.charAt(0).toUpperCase() + d.label.slice(1),
+            horaDoClube(c, { data: iso, hora: e.hora }), e.tema].filter(Boolean).join(" · "),
           passou ? T("done", "aconteceu") : d.label,
           passou ? "feito" : d.hoje ? "hoje" : "dia"));
       });
@@ -1782,6 +1810,8 @@ class Component extends DCLogic {
     // ── gravações ──
     const grav = (CRM.gravacoesParaAluna && CRM.gravacoesParaAluna(p.id)) || { turma: [], extras: [] };
     const ultima = (grav.turma || [])[0] || (grav.extras || [])[0] || null;
+    // a pasta onde a escola guarda as gravações, da configuração
+    const pastaGravadas = (CRM.gravadasUrl && CRM.gravadasUrl()) || "";
 
     // ── presença, do jeito que ela já lia ──
     const COR = { presente: "var(--color-secondary-500)", atraso: "var(--color-warning-light)", falta: "var(--color-button-primary)", justificada: "var(--color-neutral-200)" };
@@ -2891,6 +2921,8 @@ class Component extends DCLogic {
             ? cl.abertos.length + (cl.abertos.length === 1 ? T(" club open", " clube aberto") : T(" clubs open", " clubes abertos"))
             : T("Nothing open right now.", "Nada aberto agora.")),
 
+      temPastaGravadas: !!pastaGravadas,
+      pastaGravadasLink: pastaGravadas || "#",
       temUltimaGravacao: !!ultima, semUltimaGravacao: !ultima,
       ultimaGravacaoLink: (ultima && ultima.url) || "#",
       ultimaGravacaoTitulo: (ultima && (ultima.titulo || ultima.turma)) || "",
