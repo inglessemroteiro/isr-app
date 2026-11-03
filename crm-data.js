@@ -5965,13 +5965,53 @@
   }
   // Mapas (chamadas, progresso) mesclam por chave: quem tem valor vence,
   // e havendo os dois, o mais recente.
+  // ── LISTA DENTRO DE MAPA: UNIÃO, NUNCA ESCOLHA ────────────────
+  //
+  // Alguns mapas guardam uma LISTA por chave: as palavras do cofre de
+  // cada aluna, os lançamentos de milhas de cada aluna. Escolher um
+  // dos lados inteiro apaga o que o outro acrescentou — e como essas
+  // listas só crescem, escolher é sempre perder.
+  //
+  // Aqui os dois lados entram. Registro que existe num lado só fica;
+  // registro que existe nos dois fica com o carimbo mais novo. A
+  // remoção não é a ausência do registro — é a lápide (apagado), que
+  // atravessa a mesclagem e é filtrada na leitura. Sem lápide, apagar
+  // de um aparelho seria desfeito pelo outro na sincronização
+  // seguinte.
+  function mesclarListaDoMapa(local, remoto) {
+    var out = [], onde = {};
+    var chave = function (x, i) {
+      if (x && x.id) return "id:" + x.id;
+      try { return "j:" + JSON.stringify(x); } catch (e) { return "i:" + i; }
+    };
+    var junta = function (lista) {
+      (lista || []).forEach(function (x, i) {
+        var k = chave(x, i);
+        if (onde[k] === undefined) { onde[k] = out.length; out.push(x); return; }
+        var atual = out[onde[k]];
+        if (((x && x._v) || 0) > ((atual && atual._v) || 0)) out[onde[k]] = x;
+      });
+    };
+    junta(remoto);
+    junta(local);
+    return out;
+  }
   function mesclarMapa(local, remoto) {
     var out = Object.assign({}, remoto || {});
     Object.keys(local || {}).forEach(function (k) {
       var l = local[k], r = out[k];
-      if (!r) { out[k] = l; return; }
+      if (r === undefined || r === null) { out[k] = l; return; }
+      if (Array.isArray(l) && Array.isArray(r)) { out[k] = mesclarListaDoMapa(l, r); return; }
       var vl = (l && l.salvoEm) || (l && l._v) || 0;
       var vr = (r && r.salvoEm) || (r && r._v) || 0;
+      // Sem carimbo dos dois lados não há como saber quem é mais
+      // novo, e escolher um deles descarta o outro inteiro. A união
+      // campo a campo perde menos: o que só um lado tem sobrevive.
+      if (!vl && !vr && l && r && typeof l === "object" && typeof r === "object"
+          && !Array.isArray(l) && !Array.isArray(r)) {
+        out[k] = Object.assign({}, r, l);
+        return;
+      }
       out[k] = String(vl) >= String(vr) ? l : r;
     });
     return out;
@@ -12731,7 +12771,8 @@
     agendarSync();
   }
   function palavrasDaAluna(pessoaId) {
-    return (palavrasAll()[pessoaId] || []).slice()
+    return (palavrasAll()[pessoaId] || [])
+      .filter(function (x) { return x && !x.apagado; })
       .sort(function (a, b) { return a.em < b.em ? 1 : -1; });
   }
   // Guardar as palavras da aula no Review, de uma vez (arquivo 02).
@@ -12765,7 +12806,7 @@
     // mesma palavra duas vezes é a mesma palavra: edita, não duplica
     if (!reg) {
       var igual = l.filter(function (x) {
-        return x.palavra.toLowerCase() === palavra.toLowerCase();
+        return x && String(x.palavra || "").toLowerCase() === palavra.toLowerCase();
       })[0];
       if (igual) reg = igual;
     }
@@ -12777,6 +12818,13 @@
     };
     if (reg) {
       Object.keys(campos).forEach(function (k) { reg[k] = campos[k]; });
+      // escrever de novo uma palavra apagada é trazê-la de volta
+      if (reg.apagado) {
+        delete reg.apagado;
+        if (!reg.em) reg.em = iso(today());
+        if (reg.nivel === undefined) { reg.nivel = 0; reg.acertos = 0; reg.erros = 0; }
+        if (!reg.proxima) reg.proxima = iso(today());
+      }
       reg._v = Date.now();
     } else {
       reg = Object.assign({
@@ -12804,9 +12852,11 @@
   function sincronizarPalavrasDaAula(pessoaId, nDias) {
     var p = getPessoa(pessoaId);
     if (!p) return { ok: false, novas: 0 };
+    // as lápides contam: palavra que a aluna apagou não volta sozinha
+    // no próximo Review
     var tenho = {};
-    palavrasDaAluna(pessoaId).forEach(function (w) {
-      tenho[String(w.palavra || "").toLowerCase()] = true;
+    (palavrasAll()[pessoaId] || []).forEach(function (w) {
+      tenho[String((w && w.palavra) || "").toLowerCase()] = true;
     });
     var novas = 0;
     cadernoDaAluna(pessoaId, nDias || 180).forEach(function (c) {
@@ -12820,9 +12870,16 @@
     });
     return { ok: true, novas: novas };
   }
+  // Apagar deixa lápide, e não o vazio: a lista de cada aluna é
+  // mesclada por união entre aparelhos, e sumir da lista de um lado
+  // seria desfeito pelo outro na sincronização seguinte — a palavra
+  // apagada voltaria sozinha.
   function removerPalavra(pessoaId, id) {
     var m = palavrasAll();
-    m[pessoaId] = (m[pessoaId] || []).filter(function (x) { return x.id !== id; });
+    m[pessoaId] = (m[pessoaId] || []).map(function (x) {
+      return x && x.id === id
+        ? { id: x.id, palavra: x.palavra, apagado: iso(today()), _v: Date.now() } : x;
+    });
     palavrasSave(m);
     return { ok: true };
   }
@@ -18160,6 +18217,9 @@
     // apagava a outra
     mesclarComRemoto: mesclarComRemoto, definirSenha: definirSenha,
     sincronizarJa: sincronizarJa, temPendente: temPendente,
+    // a mesclagem de mapa é o ponto onde a aluna perdia o cofre:
+    // fica exposta para a suíte poder prová-la diretamente
+    mesclarMapaParaTeste: mesclarMapa,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
