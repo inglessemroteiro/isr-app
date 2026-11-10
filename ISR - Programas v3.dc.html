@@ -194,6 +194,32 @@
         </sc-for>
       </div>
 
+      <!-- SESSÕES SEM PROGRAMA -->
+      <!-- Sessão gravada cujo programa não existe mais não aparece em
+           tela nenhuma, porque toda tela lê as sessões por programa.
+           Era o conteúdo importado ficando preso atrás de um programa
+           que sumiu. Aqui ele volta a ter dono, num clique. -->
+      <sc-if value="{{ temSoltas }}">
+        <section class="isr-cartao" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; background: var(--color-warning-light)">
+          <div>
+            <div style="font-size: 15px; font-weight: 800; color: var(--color-warning-dark)">{{ soltasTitulo }}</div>
+            <div style="font-size: 12.5px; line-height: 1.6; color: var(--color-warning-dark); margin-top: 4px">{{ soltasNota }}</div>
+          </div>
+          <sc-for list="{{ soltas }}" as="sl" hint-placeholder-count="4">
+            <div style="background: var(--color-neutral-0); border-radius: 14px; padding: 13px 15px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+              <div style="flex: 1 1 240px; min-width: 0">
+                <div style="font-size: 13.5px; font-weight: 700; color: var(--color-primary-900)">{{ sl.linha }}</div>
+                <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 3px">{{ sl.amostra }}</div>
+              </div>
+              <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ sl.onResgatar }}" style="font-size: 13px; font-weight: 800; padding: 10px 16px">{{ sl.botao }}</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ temSoltasErro }}">
+            <div style="background: var(--color-error-light); color: var(--color-error-dark); border-radius: 14px; padding: 11px 14px; font-size: 13px">{{ soltasErro }}</div>
+          </sc-if>
+        </section>
+      </sc-if>
+
       <!-- ARQUIVAR OS VAZIOS DE UMA VEZ -->
       <!-- Programa sem sessão nenhuma não serve para turma nenhuma:
            escolhê-lo abre o plano vazio. Arquivar um a um, dezenas de
@@ -271,7 +297,9 @@ class Component extends DCLogic {
             rascunho: {},
             // os ids que o último arquivamento em lote pegou, para o
             // Desfazer devolver exatamente esses
-            loteDesfazer: [] };
+            loteDesfazer: [],
+            // o que deu errado ao pôr sessões soltas num programa
+            soltasErro: "" };
   novoNomeRef = React.createRef();
   textoRef = React.createRef();
 
@@ -294,6 +322,8 @@ class Component extends DCLogic {
       programas: [], vazio: false, vazioTexto: "", filtros: [],
       temLote: false, loteTexto: "", podeArquivarLote: false, loteBotao: "",
       onArquivarLote: () => {}, podeDesfazerLote: false, onDesfazerLote: () => {},
+      temSoltas: false, soltasTitulo: "", soltasNota: "", soltas: [],
+      temSoltasErro: false, soltasErro: "",
       busca: "", onBusca: () => {}, phBusca: "Buscar por nome ou nível…",
       phNome: "Ex.: Our End of Year Dishes", phDescricao: "Uma linha sobre o projeto.",
       phSessaoTitulo: "Título da sessão", phSessaoObjetivo: "O que a aluna sai sabendo",
@@ -608,6 +638,38 @@ class Component extends DCLogic {
           this.bump();
         }
       })),
+      // ── sessões sem programa ──
+      ...(() => {
+        const soltas = CRM.sessoesSoltas ? CRM.sessoesSoltas() : [];
+        const total = soltas.reduce((a, g) => a + g.quantas, 0);
+        return {
+          temSoltas: soltas.length > 0,
+          soltasTitulo: total === 1 ? "1 sessão sem programa"
+            : total + " sessões sem programa",
+          soltasNota: "Estas sessões estão gravadas, mas não pertencem a nenhum "
+            + "programa, então nenhuma turma consegue usá-las. "
+            + "Pôr num programa devolve o conteúdo ao plano das aulas.",
+          soltas: soltas.map(g => ({
+            linha: [g.quantas + (g.quantas === 1 ? " sessão" : " sessões"),
+              g.nivel, g.projeto].filter(Boolean).join(" · "),
+            amostra: g.titulos.length
+              ? g.titulos.slice(0, 3).join(" · ")
+                + (g.titulos.length > 3 ? " · …" : "")
+              : "sem título nas sessões",
+            botao: g.quantas === 1 ? "Criar programa com esta sessão"
+              : "Criar programa com estas " + g.quantas,
+            onResgatar: () => {
+              const r = CRM.resgatarSessoesSoltas(g.chave);
+              if (!r.ok) { this.setState({ soltasErro: r.erro || "" }); return; }
+              this.setState({ soltasErro: "", aberto: r.programa.id, rascunho: {} });
+              this.bump();
+            }
+          })),
+          temSoltasErro: !!this.state.soltasErro,
+          soltasErro: this.state.soltasErro || ""
+        };
+      })(),
+
       // ── o lote dos vazios ──
       temLote: filtro === "vazios" && (vazios.length > 0 || desfazer.length > 0),
       loteTexto: desfazer.length

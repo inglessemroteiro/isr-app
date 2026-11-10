@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.10-e",
+  numero: "2026.11.10-f",
   data: "10/11/2026",
-  nota: "Os vazios saem de uma vez, e dois registros são dois"
+  nota: "As sessões sem programa voltam para o plano"
 };

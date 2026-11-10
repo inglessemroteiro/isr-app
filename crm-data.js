@@ -10994,6 +10994,80 @@
     garantirProgramas();
     return programasEstudoRaw().filter(function (p) { return p && !p.apagado; });
   }
+  // ── SESSÕES QUE NÃO ESTÃO EM NENHUM PROGRAMA ──────────────────
+  //
+  // Toda tela lê as sessões POR programa: syllabusDoPrograma filtra
+  // por programaId. Sessão cujo programaId não é de nenhum programa
+  // existente não aparece em lugar nenhum — está gravada, sincronizada
+  // e invisível, e nenhuma turma consegue usá-la.
+  //
+  // Como isso aconteceu: o id de um programa novo era o prefixo mais o
+  // relógio em milissegundos. Uma importação que criava vários
+  // programas seguidos dava o MESMO id a todos; o último ficava com o
+  // id e os outros sumiam da lista, enquanto as sessões deles
+  // continuavam apontando para um programa que não existe mais. É o
+  // "programas com zero sessões" com o conteúdo preso atrás.
+  //
+  // O gerador de id já foi consertado. Isto aqui é o resgate do que
+  // ficou para trás.
+  //
+  // Sessão com programaId VAZIO não entra aqui: garantirProgramas já
+  // adota essas a cada leitura, criando um programa por nível+ciclo.
+  function sessoesSoltas() {
+    var vivos = {};
+    programasEstudoRaw().forEach(function (p) {
+      if (p && p.id && !p.apagado) vivos[p.id] = 1;
+    });
+    var grupos = {};
+    syllabusAll().forEach(function (s) {
+      if (!s || s.apagado) return;
+      if (!s.programaId || vivos[s.programaId]) return;
+      var k = s.programaId;
+      if (!grupos[k]) grupos[k] = [];
+      grupos[k].push(s);
+    });
+    return Object.keys(grupos).map(function (k) {
+      var ss = grupos[k].sort(function (a, b) { return (a.n || 0) - (b.n || 0); });
+      var prim = ss[0] || {};
+      return { chave: k, quantas: ss.length,
+        nivel: prim.nivel || "", ciclo: prim.ciclo || "",
+        projeto: prim.projeto || "",
+        titulos: ss.map(function (s) { return s.titulo || ""; }).filter(Boolean),
+        sessoes: ss };
+    }).sort(function (a, b) { return b.quantas - a.quantas; });
+  }
+  // Põe um grupo de sessões soltas dentro de um programa. Programa novo
+  // ou um que já existe: o que a tela oferecer.
+  function adotarSessoesSoltas(chave, programaId) {
+    var pg = getProgramaEstudo(programaId);
+    if (!pg) return { ok: false, erro: "Programa não encontrado." };
+    var alvo = String(chave || "");
+    if (!alvo) return { ok: false, erro: "Diga de qual grupo." };
+    var l = syllabusAll(), n = 0;
+    l.forEach(function (s) {
+      if (!s || s.apagado || s.programaId !== alvo) return;
+      s.programaId = programaId;
+      carimbar(s);
+      n++;
+    });
+    if (!n) return { ok: false, erro: "Nenhuma sessão nesse grupo." };
+    syllabusSave(l);
+    return { ok: true, quantas: n, programa: pg };
+  }
+  // O caminho de um clique: cria o programa com o nome do projeto das
+  // sessões e põe as sessões dentro.
+  function resgatarSessoesSoltas(chave) {
+    var g = sessoesSoltas().filter(function (x) { return x.chave === chave; })[0];
+    if (!g) return { ok: false, erro: "Grupo não encontrado." };
+    if (!g.nivel) return { ok: false, erro: "Estas sessões estão sem nível." };
+    var r = salvarProgramaEstudo({
+      nome: String(g.projeto || g.nivel || "Programa").trim(),
+      nivel: g.nivel, descricao: "" });
+    if (!r.ok) return r;
+    var a = adotarSessoesSoltas(chave, r.programa.id);
+    if (!a.ok) return a;
+    return { ok: true, quantas: a.quantas, programa: r.programa };
+  }
   function syllabusDoPrograma(programaId) {
     if (!programaId) return [];
     return syllabusAll()
@@ -18249,6 +18323,8 @@
     guiaParaTexto: guiaParaTexto, conferirImportacao: conferirImportacao,
     importarProgramas: importarProgramas,
     syllabusDoPrograma: syllabusDoPrograma, programaDaTurma: programaDaTurma,
+    sessoesSoltas: sessoesSoltas, adotarSessoesSoltas: adotarSessoesSoltas,
+    resgatarSessoesSoltas: resgatarSessoesSoltas,
     syllabusDaTurma: syllabusDaTurma, definirProgramaDaTurma: definirProgramaDaTurma,
     planoDaTurma: planoDaTurma, planoSessoes: planoSessoes, salvarPlano: salvarPlano,
     addEtapaPlano: addEtapaPlano, removerEtapaPlano: removerEtapaPlano,
