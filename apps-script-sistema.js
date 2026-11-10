@@ -29,7 +29,7 @@ var CHUNK = 45000;                // limite seguro por célula
 // ?action= devolve este número: é assim que se sabe, olhando, se a
 // versão que está no ar é a mesma do arquivo — sem isso, uma publicação
 // esquecida parece funcionar até a hora errada.
-var VERSAO_SCRIPT = "2026.10.15-a";
+var VERSAO_SCRIPT = "2026.11.10-a";
 
 // ── A CHAVE DO SISTEMA ───────────────────────────────────────────
 //
@@ -85,8 +85,8 @@ function doGet(e) {
   if (action === "atividadesPendentes") return json_(atividadesPendentes_());
   if (action === "assinaturasPendentes") return json_(assinaturasPendentes_());
   return json_({ ok: true, servico: "ISR Banco Central", versao: VERSAO_SCRIPT,
-    leituras: ["sistemaLoad", "cadastrosPendentes", "atividadesPendentes",
-      "assinaturasPendentes", "systemeContacts", "jotform"],
+    leituras: ["sistemaLoad", "acessoConfere", "cadastrosPendentes",
+      "atividadesPendentes", "assinaturasPendentes", "systemeContacts", "jotform"],
     escritas: ["sistemaSave", "novoCadastro", "cadastroProcessado",
       "novaAtividade", "atividadeProcessada", "assinaturaEvento", "assinaturaProcessada"],
     eventosDeAssinatura: ["assinou", "cancelou", "falhou", "pagou"] });
