@@ -215,7 +215,7 @@
   function novoModelo(categoria, titulo, corpo) {
     var st = tplStore();
     st.extras = st.extras || [];
-    st.extras.push({ id: "tpl" + Date.now(), categoria: categoria, titulo: titulo, corpo: corpo, tag: "meu" });
+    st.extras.push({ id: novoId("tpl"), categoria: categoria, titulo: titulo, corpo: corpo, tag: "meu" });
     tplSave(st);
   }
   function excluirModelo(id) {
@@ -1241,6 +1241,26 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === id) { fn(list[i]); carimbar(list[i]); break; }
     savePessoas(list);
     return list;
+  }
+  // ── O ID DE UM REGISTRO NOVO ──────────────────────────────────
+  //
+  // Quase todo registro nascia com id = prefixo + Date.now(). Dois
+  // registros criados no MESMO milissegundo ganhavam o mesmo id, e o
+  // segundo escrevia por cima do primeiro — sem erro nenhum na tela.
+  //
+  // Não é caso de laboratório: é o que acontece numa importação, num
+  // laço que cria as sessões de um programa, ou em dois cliques
+  // rápidos. Perder um registro assim é pior do que um erro, porque
+  // ninguém fica sabendo.
+  //
+  // O contador resolve dentro da aba; o pedaço aleatório resolve entre
+  // dois aparelhos que criem no mesmo milissegundo, que é o que a
+  // mesclagem veria como o mesmo registro.
+  var idSeq = 0;
+  function novoId(prefixo) {
+    idSeq = (idSeq + 1) % 100000;
+    return String(prefixo || "id") + Date.now() + "-" + idSeq
+      + Math.random().toString(36).slice(2, 6);
   }
   // Carimbo de versão: é o que permite mesclar edições de duas pessoas
   // sem uma apagar a outra. Todo registro alterado leva a hora da alteração.
@@ -2724,7 +2744,7 @@
 
   function addPrograma(dados) {
     var l = programasLista();
-    var p = { id: "pg" + Date.now(), nome: dados.nome || "Programa Sem Roteiro",
+    var p = { id: novoId("pg"), nome: dados.nome || "Programa Sem Roteiro",
       inicio: dados.inicio || iso(today()),
       semanas: parseInt(dados.semanas, 10) || 8,
       diaFeedback: dados.diaFeedback || 5, // sexta
@@ -3519,7 +3539,7 @@
   }
   function addTarefa(dados) {
     var l = tarefasLista();
-    l.push({ id: "tf" + Date.now(), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
+    l.push({ id: novoId("tf"), titulo: (dados.titulo || "").trim(), dono: dados.dono || "Gabi",
       detalhe: (dados.detalhe || "").trim(),
       // destino: a pendência pode apontar para a pessoa (abre o Perfil)
       // ou para a tela onde ela se resolve
@@ -3561,7 +3581,7 @@
   function feriadosLista() { try { return JSON.parse(localStorage.getItem(FERIADOS_KEY)) || []; } catch (e) { return []; } }
   function addFeriado(dataIso, nome, fimIso) {
     var l = feriadosLista();
-    l.push({ id: "fer" + Date.now(), data: dataIso, fim: fimIso || dataIso, nome: nome || "Feriado" });
+    l.push({ id: novoId("fer"), data: dataIso, fim: fimIso || dataIso, nome: nome || "Feriado" });
     l.sort(function (a, b) { return a.data < b.data ? -1 : 1; });
     try { localStorage.setItem(FERIADOS_KEY, JSON.stringify(l)); } catch (e) {}
     agendarSync(); return l;
@@ -6144,7 +6164,7 @@
   // últimas: mais que isso não cabe no armazenamento do navegador.
   function criarBackup(motivo) {
     var l = backupsLista();
-    l.unshift({ id: "bk" + Date.now(), em: new Date().toISOString(),
+    l.unshift({ id: novoId("bk"), em: new Date().toISOString(),
       motivo: motivo || "manual", dados: snapshotDados() });
     l = l.slice(0, MAX_BACKUPS);
     try { localStorage.setItem(BACKUP_KEY, JSON.stringify(l)); }
@@ -7394,7 +7414,7 @@
   function eventosSave(l) { carimbarLista(l); try { localStorage.setItem(EVENTOS_KEY, JSON.stringify(l)); } catch (e) {} agendarSync(); }
   function addEvento(dados) {
     var l = eventosLista();
-    var ev = { id: "ev" + Date.now(), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
+    var ev = { id: novoId("ev"), titulo: dados.titulo, data: dados.data, hora: dados.hora || "",
       responsavel: dados.responsavel || "", tipo: "aula_extra",
       duracao: parseInt(dados.duracao, 10) || 60,
       local: dados.local || "", link: dados.link || "", descricao: dados.descricao || "",
@@ -7891,7 +7911,7 @@
   }
   function addMetaPeriodo(dados) {
     var l = metasPeriodoAll();
-    l.push({ id: "mp" + Date.now(), titulo: (dados.titulo || "").trim(),
+    l.push({ id: novoId("mp"), titulo: (dados.titulo || "").trim(),
       alvo: parseFloat(dados.alvo) || 0, tipo: dados.tipo || "livre",
       periodo: dados.periodo || mesAtualKey(),
       escopo: dados.escopo || "mes",           // "mes" ou "ciclo"
@@ -9779,7 +9799,7 @@
   }
   function addGravacao(dados) {
     var l = gravacoesLista();
-    var g = { id: "gr" + Date.now(),
+    var g = { id: novoId("gr"),
       tipo: dados.tipo === "extra" ? "extra" : "turma",
       turma: dados.turma || "",         // rótulo da turma, quando tipo=turma
       eventoId: dados.eventoId || "",   // id do evento, quando tipo=extra
@@ -10072,8 +10092,14 @@
     sem_papel: { erro: "A sua ficha na Equipe está sem papel marcado. "
       + "Marque gestora, operação, comercial, professora, aulas extras ou shadow.",
       conta: true },
+    // Esta mesma frase responde ao convite E ao "Conferir o acesso",
+    // então ela não pode falar só de convidar. Quem lê pode ser a
+    // comercial numa ficha, não só quem mexe nas configurações — por
+    // isso ela diz o que está faltando e para quem levar, sem jogar o
+    // nome da configuração na tela de quem não administra o site.
     sem_base: { erro: "O site não está ligado à base da escola, então não há como "
-      + "conferir quem pode convidar." },
+      + "conferir nem quem pode convidar nem a conta da aluna. Quem cuida das "
+      + "configurações do site precisa ligar o endereço do banco central." },
     // o nome antigo, para uma resposta de versão anterior não virar
     // "o convite não saiu" sem explicação
     fora_da_lista: { erro: "A sua conta não tem permissão para convidar. "
@@ -11039,7 +11065,7 @@
     var reg = dados.id ? l.filter(function (p) { return p && p.id === dados.id; })[0] : null;
     if (dados.id && !reg) return { ok: false, erro: "Programa não encontrado." };
     if (!reg) {
-      reg = { id: "pg" + Date.now(), criadoEm: iso(today()) };
+      reg = { id: novoId("pg"), criadoEm: iso(today()) };
       l.push(reg);
     }
     reg.nome = nome;
@@ -12017,7 +12043,7 @@
     if (l.length >= PLANO_LIMITES.etapas) {
       return { ok: false, erro: "O roteiro já tem " + PLANO_LIMITES.etapas + " etapas." };
     }
-    l.push({ id: "et" + Date.now(), fase: dados.fase || FASES[0].id,
+    l.push({ id: novoId("et"), fase: dados.fase || FASES[0].id,
       titulo: dados.titulo, min: dados.min, pergunta: dados.pergunta || "",
       on: true, minha: true });
     return salvarPlano(turmaId, n, { etapas: l });
@@ -14792,7 +14818,7 @@
 
     addMoedas(pessoaId, -r.custo, "Resgate: " + r.nome);
     var reg = resgatesAll();
-    reg.push({ id: "rs" + Date.now(), pessoaId: pessoaId, nome: p.nome,
+    reg.push({ id: novoId("rs"), pessoaId: pessoaId, nome: p.nome,
       resgateId: r.id, premio: r.nome, custo: r.custo, em: iso(today()) });
     resgatesSave(reg);
 
@@ -14861,7 +14887,7 @@
   function addMoedas(pessoaId, valor, motivo) {
     var m = moedasAjustesAll();
     m[pessoaId] = m[pessoaId] || [];
-    m[pessoaId].push({ id: "mo" + Date.now(), valor: parseInt(valor, 10) || 0, motivo: motivo || "", em: iso(today()) });
+    m[pessoaId].push({ id: novoId("mo"), valor: parseInt(valor, 10) || 0, motivo: motivo || "", em: iso(today()) });
     try { localStorage.setItem(MOEDAS_KEY, JSON.stringify(m)); } catch (e) {}
     agendarSync();
     mutate(pessoaId, function (p) {

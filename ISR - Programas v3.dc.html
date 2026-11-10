@@ -194,6 +194,23 @@
         </sc-for>
       </div>
 
+      <!-- ARQUIVAR OS VAZIOS DE UMA VEZ -->
+      <!-- Programa sem sessão nenhuma não serve para turma nenhuma:
+           escolhê-lo abre o plano vazio. Arquivar um a um, dezenas de
+           vezes, é trabalho que o sistema pode fazer — e desfazer, que
+           é o que torna o gesto seguro de dar. -->
+      <sc-if value="{{ temLote }}">
+        <div class="isr-cartao" style="padding: 13px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: var(--color-button-secondary)">
+          <div style="flex: 1 1 260px; min-width: 0; font-size: 13px; line-height: 1.55; color: var(--color-primary-900)">{{ loteTexto }}</div>
+          <sc-if value="{{ podeArquivarLote }}">
+            <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onArquivarLote }}" style="font-size: 13px; font-weight: 800; padding: 10px 17px">{{ loteBotao }}</button>
+          </sc-if>
+          <sc-if value="{{ podeDesfazerLote }}">
+            <button class="isr-botao isr-botao--pilula" onclick="{{ onDesfazerLote }}" style="font-size: 13px; font-weight: 700; padding: 10px 17px">Desfazer</button>
+          </sc-if>
+        </div>
+      </sc-if>
+
       <!-- A LISTA -->
       <div style="display: flex; flex-wrap: wrap; gap: 20px">
         <sc-for list="{{ programas }}" as="pg" hint-placeholder-count="6">
@@ -251,7 +268,10 @@ class Component extends DCLogic {
             // o texto em andamento mora aqui e só é gravado quando ela
             // sai do campo: salvar a cada tecla devolvia o texto
             // aparado, e a barra de espaço não sobrevivia
-            rascunho: {} };
+            rascunho: {},
+            // os ids que o último arquivamento em lote pegou, para o
+            // Desfazer devolver exatamente esses
+            loteDesfazer: [] };
   novoNomeRef = React.createRef();
   textoRef = React.createRef();
 
@@ -272,6 +292,8 @@ class Component extends DCLogic {
     const base = {
       podeMexer: false, semPermissao: false, novoLabel: "+ Novo programa",
       programas: [], vazio: false, vazioTexto: "", filtros: [],
+      temLote: false, loteTexto: "", podeArquivarLote: false, loteBotao: "",
+      onArquivarLote: () => {}, podeDesfazerLote: false, onDesfazerLote: () => {},
       busca: "", onBusca: () => {}, phBusca: "Buscar por nome ou nível…",
       phNome: "Ex.: Our End of Year Dishes", phDescricao: "Uma linha sobre o projeto.",
       phSessaoTitulo: "Título da sessão", phSessaoObjetivo: "O que a aluna sai sabendo",
@@ -330,10 +352,17 @@ class Component extends DCLogic {
     const todos = CRM.programasEstudoLista({ comArquivados: true });
     const busca = (this.state.busca || "").trim().toLowerCase();
     const filtro = this.state.filtro || "todos";
+    // Programa vazio é o que não tem sessão nenhuma: nenhuma turma
+    // consegue usá-lo, porque o plano das aulas é feito das sessões
+    // dele. É por isso que eles merecem um filtro próprio — e não só
+    // um lugar na lista geral, onde se perdem entre os que servem.
+    const vazio0 = (p) => !p.arquivado && !p.sessoes;
+    const vazios = todos.filter(vazio0);
     const visiveis = todos.filter(p => {
       if (filtro === "arquivados") { if (!p.arquivado) return false; }
       else if (p.arquivado) return false;
-      if (filtro !== "todos" && filtro !== "arquivados" && p.nivel !== filtro) return false;
+      if (filtro === "vazios") { if (p.sessoes) return false; }
+      else if (filtro !== "todos" && filtro !== "arquivados" && p.nivel !== filtro) return false;
       if (!busca) return true;
       return (p.nome + " " + p.nivel + " " + p.descricao).toLowerCase().indexOf(busca) >= 0;
     });
@@ -341,7 +370,13 @@ class Component extends DCLogic {
     const FILTROS = [{ id: "todos", label: "Todos · " + todos.filter(p => !p.arquivado).length }]
       .concat(niveis.map(n => ({ id: n,
         label: n + " · " + todos.filter(p => !p.arquivado && p.nivel === n).length })))
+      .concat(vazios.length ? [{ id: "vazios", label: "Sem sessões · " + vazios.length }] : [])
       .concat([{ id: "arquivados", label: "Arquivados · " + todos.filter(p => p.arquivado).length }]);
+
+    // O que o lote acabou de arquivar fica guardado até a pessoa sair
+    // do filtro: é o que o Desfazer devolve, exatamente esses, e não
+    // "os arquivados", que pode incluir o que ela arquivou em outro dia.
+    const desfazer = this.state.loteDesfazer || [];
 
     const abertoPg = this.state.aberto ? CRM.getProgramaEstudo(this.state.aberto) : null;
     const abSessoes = abertoPg ? CRM.syllabusDoPrograma(abertoPg.id) : [];
@@ -573,12 +608,49 @@ class Component extends DCLogic {
           this.bump();
         }
       })),
+      // ── o lote dos vazios ──
+      temLote: filtro === "vazios" && (vazios.length > 0 || desfazer.length > 0),
+      loteTexto: desfazer.length
+        ? (desfazer.length === 1
+          ? "1 programa arquivado. Ele sai da escolha das turmas e fica em Arquivados."
+          : desfazer.length + " programas arquivados. Eles saem da escolha das turmas e ficam em Arquivados.")
+        : ((vazios.length === 1
+          ? "1 programa sem sessões. Nenhuma turma consegue usá-lo."
+          : vazios.length + " programas sem sessões. Nenhuma turma consegue usá-los.")
+          // Arquivar tira da escolha, não desliga a turma. Se alguma
+          // turma aponta para um destes, ela continua apontando — e é a
+          // tela da turma que oferece a troca. Quem vai clicar precisa
+          // saber disso antes, não depois.
+          + (vazios.filter(p => p.turmas.length).length
+            ? " " + vazios.filter(p => p.turmas.length).length
+              + (vazios.filter(p => p.turmas.length).length === 1
+                ? " deles já está apontado por uma turma: arquivar tira da escolha, e a troca é feita na tela da turma."
+                : " deles já estão apontados por turmas: arquivar tira da escolha, e a troca é feita na tela de cada turma.")
+            : "")),
+      podeArquivarLote: vazios.length > 0,
+      loteBotao: vazios.length === 1 ? "Arquivar o programa"
+        : "Arquivar os " + vazios.length,
+      onArquivarLote: () => {
+        const ids = vazios.map(p => p.id);
+        ids.forEach(id => CRM.arquivarProgramaEstudo(id, true));
+        this.setState({ loteDesfazer: ids });
+        this.bump();
+      },
+      podeDesfazerLote: desfazer.length > 0,
+      onDesfazerLote: () => {
+        desfazer.forEach(id => CRM.arquivarProgramaEstudo(id, false));
+        this.setState({ loteDesfazer: [] });
+        this.bump();
+      },
+
       vazio: visiveis.length === 0,
       vazioTexto: busca
         ? "Nenhum programa com esse nome."
         : (filtro === "arquivados"
           ? "Nenhum programa arquivado."
-          : "Nenhum programa ainda. Crie o primeiro em “+ Novo programa”.")
+          : filtro === "vazios"
+            ? "Nenhum programa sem sessões."
+            : "Nenhum programa ainda. Crie o primeiro em “+ Novo programa”.")
     });
   }
 }
