@@ -263,7 +263,9 @@ class Component extends DCLogic {
           CRM.registrarToque(item.pessoaId, TIPO[item.toque] || "checkin",
             "Pela Central · " + (item.motivo || ""));
           if (item.sinal === "checkin_agendado") CRM.registrarCheckinFeito(item.pessoaId);
-          CRM.adiarItem(item.sinal || item.regra, item.pessoaId);
+          // feito é marca durável e sincronizada, presa ao fato que foi
+          // resolvido — não um adiamento de um dia neste aparelho
+          CRM.marcarItemFeito(item.sinal || item.regra, item.pessoaId, item.fato);
           this.bump();
         },
         onAdiar: () => { CRM.adiarItem(item.sinal || item.regra, item.pessoaId); this.bump(); }

@@ -2161,12 +2161,17 @@
     // semanas atrás tinham exatamente a mesma cara, e o antigo é o
     // que custa caro. Só entra data que existe de verdade — sinal sem
     // data não ganha uma inventada.
-    var add = function (id, detalhe, desde) {
+    // FATO é a identidade do que está aceso, e não muda de um dia para
+    // o outro como o detalhe muda ("termina em 12 dias" vira 11
+    // amanhã). É o que o "feito" da fila guarda: enquanto o fato for o
+    // mesmo, o item fica fora; parcela nova, falta nova ou prazo novo
+    // é fato novo, e aí o item volta porque há trabalho novo.
+    var add = function (id, detalhe, desde, fato) {
       var m = sinalMeta(id);
       if (m) out.push({ id: id, label: m.label, cor: m.cor, peso: m.peso, dono: m.dono,
         acao: m.acao, tpl: m.tpl, tipo: m.tipo, urg: m.urg, naCentral: m.naCentral,
         risco: m.risco, toque: m.toque, detalhe: detalhe || m.label,
-        desde: desde || "" });
+        desde: desde || "", fato: String(fato || desde || id) });
     };
     var diaVenc = parseInt((s.contrato || {}).vencDia, 10);
     if (isNaN(diaVenc)) diaVenc = 10;
@@ -2178,12 +2183,13 @@
       add("parcela_atrasada", s.atrasadasN === 1
         ? "Parcela de " + pri.label + " atrasada (" + (pri.valor || "") + ")"
         : s.atrasadasN + " parcelas atrasadas (desde " + pri.label + ")",
-        vencDe(pri));
+        vencDe(pri), vencDe(pri) + "|" + s.atrasadasN);
     } else if (s.diasProxVenc !== null && s.diasProxVenc <= LIMIARES.diasParcelaAVencer) {
       add("parcela_a_vencer", s.diasProxVenc === 0
         ? "Parcela vence hoje (" + (s.mesAtual.valor || "") + ")"
         : "Parcela vence em " + s.diasProxVenc + (s.diasProxVenc === 1 ? " dia" : " dias")
-          + " (" + (s.mesAtual.valor || "") + ")");
+          + " (" + (s.mesAtual.valor || "") + ")",
+        "", "venc|" + (s.mesAtual || {}).key);
     }
     // o aviso de ausências sai da tela quando um contato é registrado
     // depois da última falta — e volta se houver falta nova
@@ -2191,13 +2197,14 @@
       && (!s.ultimoToqueEm || !s.ultimaFaltaEm || s.ultimoToqueEm < s.ultimaFaltaEm);
     if (faltaSemContato)
       add("falta_recente", s.faltas + (s.faltas === 1 ? " ausência no ciclo" : " ausências no ciclo"),
-        s.ultimaFaltaEm || "");
+        s.ultimaFaltaEm || "", (s.ultimaFaltaEm || "") + "|" + s.faltas);
     if (s.pulso && s.pulso.nota <= LIMIARES.avaliacaoBaixa)
       add("avaliacao_baixa", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label,
         s.pulso.data || "");
     if (s.tendencia < 0)
       add("avaliacao_caiu", "Avaliação caiu " + Math.abs(s.tendencia)
-        + (Math.abs(s.tendencia) === 1 ? " ponto" : " pontos"));
+        + (Math.abs(s.tendencia) === 1 ? " ponto" : " pontos"),
+        "", "caiu|" + ((s.pulso || {}).data || "") + "|" + s.tendencia);
     // A integração é o portão: aluna que já teve aula sem ela concluída
     // está estudando sem ninguém ter conferido se ela entrou de verdade.
     if (s.onboardingAtrasado.length) {
@@ -2206,27 +2213,32 @@
       });
       if (travado.length)
         add("onboarding_travado", "Integração parada há " + daysBetween(parseISO(travado[0].data), today())
-          + " dias em: " + travado[0].label, travado[0].data || "");
+          + " dias em: " + travado[0].label, travado[0].data || "",
+          (travado[0].data || "") + "|" + (travado[0].label || ""));
       else
         add("onboarding_pendente", "Integração pendente: " + s.onboardingAtrasado[0].label,
-          s.onboardingAtrasado[0].data || "");
+          s.onboardingAtrasado[0].data || "",
+          (s.onboardingAtrasado[0].data || "") + "|" + (s.onboardingAtrasado[0].label || ""));
     }
     if (s.diasDeCasa <= LIMIARES.diasContratoNovo)
       add("contrato_novo", "Entrou há " + s.diasDeCasa + (s.diasDeCasa === 1 ? " dia" : " dias"));
     if (s.diasPraRenovar !== null && s.diasPraRenovar >= 0 && s.diasPraRenovar <= LIMIARES.diasRenovacao)
       add("renovacao_aberta", "Contrato termina em " + s.diasPraRenovar
-        + (s.diasPraRenovar === 1 ? " dia" : " dias"));
+        + (s.diasPraRenovar === 1 ? " dia" : " dias"),
+        "", "renov|" + ((s.contrato || {}).fim || ""));
     if (!s.pulso) add("sem_avaliacao", "Nenhuma avaliação de progresso registrada");
     // o intervalo vem da cadência do segmento, não de um número fixo:
     // aluna nova cobra em 7 dias, aluna estável em 30
     var intervalo = intervaloCadenciaDe(p, s, out);
     if (s.diasSemToque === null || s.diasSemToque > intervalo)
       add("sem_contato", s.diasSemToque === null ? "Nenhum contato registrado"
-        : "Sem contato há " + s.diasSemToque + " dias · a cadência pede a cada " + intervalo);
+        : "Sem contato há " + s.diasSemToque + " dias · a cadência pede a cada " + intervalo,
+        "", "contato|" + (s.ultimoToqueEm || "nunca"));
     if (s.checkinVencido) add("checkin_agendado", "Check-in agendado para " + ddmm(p.proximoCheckin),
       p.proximoCheckin || "");
     if (!out.length && s.pulso && s.pulso.nota >= LIMIARES.avaliacaoAlta)
-      add("evolucao_positiva", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label);
+      add("evolucao_positiva", "Avaliação " + s.pulso.nota + "/5 · " + pulsoMeta(s.pulso.nota).label,
+        "", "pulso|" + (s.pulso.data || ""));
     return out.sort(function (a, b) { return b.peso - a.peso; });
   }
 
@@ -2629,7 +2641,9 @@
       .map(function (p) {
         var s = situacaoDe(p);
         var todos = sinaisDe(p, s);
-        var visiveis = todos.filter(function (x) { return x.toque && !estaAdiado(x.id, p.id); });
+        var visiveis = todos.filter(function (x) {
+          return x.toque && !estaAdiado(x.id, p.id) && !estaFeito(x.id, p.id, x.fato || "");
+        });
         var motivos = visiveis.map(function (x) { return x.toque; });
         var peso = visiveis.reduce(function (a, x) { return a + x.peso; }, 0);
         // quem já foi contatada esta semana sai da fila — não se cobra duas vezes
@@ -3781,7 +3795,8 @@
               pessoaId: p.id, nome: p.nome,
               motivo: "Follow-up " + (daysBetween(d, today()) === 0 ? "vence hoje" : "venceu há " + daysBetween(d, today()) + "d"),
               acao: "Mensagem do estágio", tpl: "lead_followup",
-              desde: p.proximoFollowup || "" });
+              desde: p.proximoFollowup || "",
+              fato: "fup|" + (p.proximoFollowup || "") + "|" + (p.estagio || "") });
           }
         }
         // Inscrição incompleta não entra na fila: o estágio é um
@@ -3798,7 +3813,7 @@
           itens.push({ regra: mapaRegra[sn.id] || sn.id, sinal: sn.id, dono: sn.dono, urg: sn.urg,
             icon: "", cor: sn.cor, pessoaId: p.id, nome: p.nome,
             motivo: sn.detalhe, acao: sn.acao, tpl: sn.tpl, toque: sn.toque || "",
-            desde: sn.desde || "" });
+            desde: sn.desde || "", fato: sn.fato || "" });
         });
       }
 
@@ -3813,7 +3828,8 @@
             // a espera começa quando ela ficou elegível (6 meses depois
             // da saída), não no dia em que saiu
             acao: "Reativar", tpl: "renov_abrir",
-            desde: p.saidaEm ? somaDias(p.saidaEm, 180) : "" });
+            desde: p.saidaEm ? somaDias(p.saidaEm, 180) : "",
+            fato: "reat|" + (p.saidaEm || "") });
         }
       }
     });
@@ -3838,7 +3854,8 @@
             + " da folha de " + fpMes.mes.slice(5, 7) + "/" + fpMes.mes.slice(0, 4) + " ("
             + fpPend.map(function (x) { return firstName(x.nome); }).slice(0, 4).join(", ") + ")",
           href: "ISR%20-%20Folha%20v3.dc.html",
-          acao: "Abrir a folha", tpl: "" });
+          acao: "Abrir a folha", tpl: "",
+          fato: "folha|" + fpMes.mes + "|" + fpPend.length });
       }
     }
 
@@ -3862,7 +3879,10 @@
         pessoaId: "t:" + tf.id, tarefaId: tf.id, nome: tf.titulo,
         motivo: motivo.slice(0, 160),
         href: tf.pessoaId ? "ISR%20-%20Perfil%20v3.dc.html?id=" + tf.pessoaId : (tf.tela || ""),
-        acao: "Concluir", tpl: "" });
+        acao: "Concluir", tpl: "",
+        // a pendência já tem registro próprio de concluída; o fato é o
+        // prazo dela, para que remarcar o prazo traga o item de volta
+        fato: "pend|" + tf.id + "|" + (tf.prazo || "") });
     });
 
     // filtro por perfil
@@ -3886,8 +3906,12 @@
       itens = itens.filter(function (i) { return i.regra !== "RT" || mesmoNome(i.dono, donoRT); });
     }
 
-    // adiar hoje tira da fila até amanhã — e vale também no Acompanhamento
-    itens = itens.filter(function (i) { return !estaAdiado(i.sinal || i.regra, i.pessoaId); });
+    // adiar hoje tira da fila até amanhã — e vale também no
+    // Acompanhamento; feito tira enquanto o fato for o mesmo
+    itens = itens.filter(function (i) {
+      var k = i.sinal || i.regra;
+      return !estaAdiado(k, i.pessoaId) && !estaFeito(k, i.pessoaId, i.fato || "");
+    });
 
     // Urgência primeiro, idade depois. Ordenar só por idade — como no
     // desenho, onde a fila de exemplo é toda do mesmo tipo — põe uma
@@ -3904,20 +3928,69 @@
     });
     return itens;
   }
-  // Adiar é uma decisão sobre o sinal, não sobre a tela: some da Central
-  // e do Acompanhamento até amanhã. Nas Alunas continua visível, porque
-  // lá é retrato da situação, não fila de trabalho.
-  var ADIADOS_KEY = "isr_fila_adiados";
-  function adiadosMapa() {
-    try { return JSON.parse(localStorage.getItem(ADIADOS_KEY) || "{}"); } catch (e) { return {}; }
+  // ── MARCAS DA FILA: ADIAR E FEITO NÃO SÃO A MESMA COISA ───────
+  //
+  // "adiar" é "não hoje": vale até a meia-noite e volta amanhã.
+  // "feito" é "este trabalho está feito": não vence no relógio, vence
+  // quando o fato muda. Os dois gestos escreviam o MESMO adiamento de
+  // um dia, só no localStorage do aparelho. Duas consequências, as
+  // duas relatadas: o item marcado como feito no computador continuava
+  // na fila do celular, e no dia seguinte voltava para todo mundo,
+  // mesmo tendo sido resolvido.
+  //
+  // A marca agora é registro sincronizado como qualquer outro, e o
+  // "feito" guarda QUAL fato foi resolvido: a parcela daquele
+  // vencimento, a falta daquele dia, o check-in daquela data. Parcela
+  // nova atrasada, falta nova, prazo novo — fato diferente, item
+  // volta, porque aí há trabalho novo. Mesmo fato, item fica fora.
+  var MARCAS_KEY = "isr_fila_marcas";
+  function marcasFilaRaw() {
+    try { var l = JSON.parse(localStorage.getItem(MARCAS_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function marcasFilaSave(l) {
+    try { localStorage.setItem(MARCAS_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  function chaveMarca(tipo, sinalOuRegra, pessoaId) {
+    return tipo + ":" + (sinalOuRegra || "") + ":" + (pessoaId || "");
+  }
+  function marcaDaFila(tipo, sinalOuRegra, pessoaId) {
+    var k = chaveMarca(tipo, sinalOuRegra, pessoaId);
+    return marcasFilaRaw().filter(function (m) { return m && m.id === k; })[0] || null;
+  }
+  // Uma marca por gesto e por item: regravar substitui e carimba de novo,
+  // para que a mesclagem saiba qual aparelho decidiu por último.
+  function gravarMarca(tipo, sinalOuRegra, pessoaId, campos) {
+    var k = chaveMarca(tipo, sinalOuRegra, pessoaId);
+    var hoje = iso(today()), ano = somaDias(hoje, -365);
+    var l = marcasFilaRaw().filter(function (m) {
+      if (!m || m.id === k) return false;
+      // adiamento de outro dia já não vale, e feito de mais de um ano
+      // é de um fato que não existe mais: nenhum dos dois precisa viajar
+      if (m.tipo === "adiado") return m.dia === hoje;
+      return !m.em || m.em.slice(0, 10) >= ano;
+    });
+    var reg = { id: k, tipo: tipo, sinal: sinalOuRegra || "", pessoaId: pessoaId || "",
+      em: new Date().toISOString(), por: (gestaoUser() || {}).nome || "" };
+    Object.keys(campos || {}).forEach(function (c) { reg[c] = campos[c]; });
+    carimbar(reg);
+    l.push(reg); marcasFilaSave(l);
+    return reg;
   }
   function adiarItem(sinalOuRegra, pessoaId) {
-    var adiados = adiadosMapa();
-    adiados[sinalOuRegra + ":" + pessoaId] = iso(today());
-    localStorage.setItem(ADIADOS_KEY, JSON.stringify(adiados));
+    return gravarMarca("adiado", sinalOuRegra, pessoaId, { dia: iso(today()) });
   }
   function estaAdiado(sinalOuRegra, pessoaId) {
-    return adiadosMapa()[sinalOuRegra + ":" + pessoaId] === iso(today());
+    var m = marcaDaFila("adiado", sinalOuRegra, pessoaId);
+    return !!m && m.dia === iso(today());
+  }
+  function marcarItemFeito(sinalOuRegra, pessoaId, fato) {
+    return gravarMarca("feito", sinalOuRegra, pessoaId, { fato: String(fato || "") });
+  }
+  function estaFeito(sinalOuRegra, pessoaId, fato) {
+    var m = marcaDaFila("feito", sinalOuRegra, pessoaId);
+    return !!m && m.fato === String(fato || "");
   }
 
   // ── METAS DO CICLO ────────────────────────────────────────────
@@ -6463,6 +6536,9 @@
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
       // o repositório de programas é da escola inteira
       programasEstudo: programasEstudoRaw(),
+      // "feito" na fila do dia é decisão de quem trabalhou, não do
+      // aparelho: sem viajar, o item voltava no celular da mesma pessoa
+      marcasFila: marcasFilaRaw(),
       atualizadoEm: new Date().toISOString(), por: (gestaoUser() || {}).email || ""
     };
   }
@@ -6490,6 +6566,7 @@
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(PROGRAMAS_EST_KEY, d.programasEstudo);
     grava(MATERIAIS_KEY, d.materiais);
+    grava(MARCAS_KEY, d.marcasFila);
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
@@ -6557,6 +6634,7 @@
       // mapa turma|sessão, e cada aula tem a sua professora
       syllabus: lista("syllabus"),
       programasEstudo: lista("programasEstudo"),
+      marcasFila: lista("marcasFila"),
       planos: mesclarMapa(local.planos, remoto.planos),
       materiais: mesclarMapa(local.materiais, remoto.materiais),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
@@ -15356,7 +15434,7 @@
   // de pagamento, faixas de comissão, modelos de mensagem) custou tempo e
   // não é exemplo. Antes de qualquer coisa, uma cópia de segurança.
   var CHAVES_CONTEUDO = [
-    PESSOAS_KEY, "isr_fila_adiados", "isr_turmas_v1", "isr_eventos_v1",
+    PESSOAS_KEY, "isr_fila_adiados", MARCAS_KEY, "isr_turmas_v1", "isr_eventos_v1",
     "isr_chamadas_v1", "isr_tarefas_v1", "isr_moedas_v1", "isr_lancamentos_v1",
     "isr_toques_v1", "isr_pulsos_v1", "isr_programas_v1", "isr_avisos_v1",
     "isr_custos_v1", "isr_resgates_v1", "isr_folha_paga_v1", "isr_acessos_v1",
@@ -15426,6 +15504,7 @@
     localStorage.removeItem(SEED_FLAG);
     localStorage.removeItem(PESSOAS_KEY);
     localStorage.removeItem("isr_fila_adiados");
+    localStorage.removeItem(MARCAS_KEY);
     localStorage.removeItem(TURMAS_KEY);
     localStorage.removeItem(EVENTOS_KEY);
     localStorage.removeItem(CHAMADAS_KEY);
@@ -17935,7 +18014,8 @@
     renovacoes: renovacoes, setRenovacao: setRenovacao, taxaRenovacao: taxaRenovacao,
     // fila + metas
     filaParaHoje: filaParaHoje, idadeNaFila: idadeNaFila,
-    adiarItem: adiarItem, progressoMetas: progressoMetas,
+    adiarItem: adiarItem, marcarItemFeito: marcarItemFeito,
+    marcasFilaParaTeste: marcasFilaRaw, progressoMetas: progressoMetas,
     matriculasDoCiclo: matriculasDoCiclo, metasAtuais: metasAtuais, cicloDaData: cicloDaData,
     cicloJanela: cicloJanela, temAulaEm: temAulaEm, abrirCiclo: abrirCiclo,
     ciclosLista: ciclosLista, ciclosTodos: ciclosTodos, cicloDeAuditoria: cicloDeAuditoria,
@@ -18256,6 +18336,7 @@
     cadenciaConfig: cadenciaConfig, setCadencia: setCadencia,
     cadenciaDe: cadenciaDe, cargaDeContato: cargaDeContato,
     situacaoDe: situacaoDe, sinaisDe: sinaisDe, estaAdiado: estaAdiado,
+    estaFeito: estaFeito,
     // preços e negociação
     CICLO_MESES: CICLO_MESES, ESCADA_CONCESSOES: ESCADA_CONCESSOES,
     precosLista: precosLista, getPreco: getPreco, updatePreco: updatePreco,
@@ -18271,6 +18352,7 @@
     // fica exposta para a suíte poder prová-la diretamente
     mesclarMapaParaTeste: mesclarMapa,
     mesclarListaParaTeste: mesclarLista,
+    payloadParaTeste: payloadLocal,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
