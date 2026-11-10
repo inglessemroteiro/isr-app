@@ -11706,7 +11706,19 @@
       starters: limpaStarters(meu && meu.starters !== undefined ? meu.starters : base.starters),
       homework: meu && meu.homework !== undefined ? meu.homework : (base.homework || ""),
       estado: (meu && meu.estado) || "rascunho",
-      publicadoEm: (meu && meu.publicadoEm) || ""
+      publicadoEm: (meu && meu.publicadoEm) || "",
+      // ── A DATA QUE A ESCOLA MARCOU PARA ESTA SESSÃO ──────────
+      //
+      // A data de uma sessão era sempre deduzida: a da chamada,
+      // quando a aula já aconteceu, ou a projeção sobre o dia da
+      // semana da turma, quando ainda não. Não havia como dizer "esta
+      // aula vai ser noutro dia" — e aula muda de dia o tempo todo:
+      // feriado, remarcação, reposição, semana de prova.
+      //
+      // Marcada aqui, a data vale sobre a projeção. A da chamada
+      // continua mandando quando a aula já foi dada: o que aconteceu
+      // é mais forte do que o que estava marcado.
+      data: (meu && meu.data) || ""
     };
   }
   // Todas as sessões da turma, para a tira de cima.
@@ -11809,6 +11821,22 @@
     Object.keys(dadas).forEach(function (n) {
       out[n] = { data: dadas[n], dada: true, inferida: inferido };
     });
+    // ── A DATA MARCADA À MÃO ──────────────────────────────────────
+    //
+    // Vale sobre a projeção, porque alguém a escreveu de propósito —
+    // feriado, remarcação, reposição. Não vale sobre a chamada: aula
+    // já dada tem a data em que foi dada, e isso não se remarca.
+    var marcadas = {};
+    var mp = planosAll();
+    Object.keys(mp).forEach(function (k) {
+      var par = k.split("|");
+      if (par[0] !== turmaId) return;
+      var n = parseInt(par[1], 10);
+      var dt = mp[k] && mp[k].data;
+      if (!n || !dt) return;
+      marcadas[n] = dt;
+      if (!dadas[n]) out[n] = { data: dt, dada: false, marcada: true };
+    });
     // as que faltam, na ordem, nos próximos dias de aula da turma
     var mm = (t.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
     if (!mm) return out;
@@ -11821,7 +11849,9 @@
     // sobre a mesma lista é o que mantém as duas de acordo.
     var pendentes = (planoSessoes(turmaId) || [])
       .map(function (x) { return x.n; })
-      .filter(function (n) { return !dadas[n]; })
+      // sessão com data marcada à mão não entra na projeção: a data
+      // dela já é a que a escola escreveu
+      .filter(function (n) { return !dadas[n] && !marcadas[n]; })
       .sort(function (a2, b2) { return a2 - b2; });
     var d = new Date(today());
     var i = 0;
@@ -11869,6 +11899,13 @@
         return { ok: false, erro: "O link dos slides precisa começar com https://" };
       }
       base.slides = sl;
+    }
+    if (patch.data !== undefined) {
+      var dt = String(patch.data || "").trim();
+      if (dt && !/^\d{4}-\d{2}-\d{2}$/.test(dt)) {
+        return { ok: false, erro: "A data da sessão precisa ser um dia do calendário." };
+      }
+      base.data = dt;
     }
     if (patch.estado !== undefined) base.estado = patch.estado;
     if (patch.publicadoEm !== undefined) base.publicadoEm = patch.publicadoEm;

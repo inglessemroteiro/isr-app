@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.03-a",
-  data: "03/11/2026",
-  nota: "O cofre da aluna não se perde mais"
+  numero: "2026.11.10-a",
+  data: "10/11/2026",
+  nota: "A escola marca o dia da aula"
 };

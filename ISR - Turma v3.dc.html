@@ -264,6 +264,18 @@
                 <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-tertiary-500); font-weight: 500;">{{ tProgramaDaTurma }}</div>
                 <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.03em; margin-top: 3px;">{{ pgNome }}</div>
                 <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 2px;">{{ pgMeta }}</div>
+                <!-- Programa vazio escolhido por engano é o que faz o
+                     plano das aulas abrir sem sessão nenhuma. -->
+                <sc-if value="{{ pgSemSessoes }}">
+                  <div style="margin-top: 9px; background: var(--color-warning-light); border-radius: 14px; padding: 10px 12px;">
+                    <div style="font-size: 12px; line-height: 1.55; color: var(--color-warning-dark);">{{ pgSemSessoesTexto }}</div>
+                    <div style="display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px;">
+                      <sc-for list="{{ pgTrocaRapida }}" as="tr" hint-placeholder-count="2">
+                        <span onclick="{{ tr.onClick }}" class="isr-selo" style="background: var(--color-neutral-0); color: var(--color-warning-dark); padding: 6px 12px; font-size: 11.5px; font-weight: 600; cursor: pointer">{{ tr.label }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
               </div>
               <sc-if value="{{ pgPodeTrocar }}">
                 <button class="isr-botao isr-botao--pilula" onclick="{{ onPgTrocar }}" style="flex: none; background: {{ pgBotaoBg }}; color: {{ pgBotaoFg }}; font-size: 12.5px; font-weight: 700; padding: 9px 15px">{{ pgBotao }}</button>
@@ -325,6 +337,22 @@
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: {{ planoEstadoBg }}; color: {{ planoEstadoFg }};">{{ planoEstado }}</span>
                     <span class="isr-selo" style="padding: 4px 11px; font-size: 11.5px; background: var(--color-button-secondary); color: var(--color-primary-800);">{{ planoOrigem }}</span>
                   </div>
+                  <!-- ── A DATA DESTA SESSÃO ──────────────────────
+                       A data era sempre deduzida: a da chamada, quando
+                       a aula já foi dada, ou a projeção sobre o dia da
+                       semana da turma. Aula muda de dia — feriado,
+                       remarcação, reposição — e não havia onde dizer
+                       isso. Aqui a escola marca o dia. -->
+                  <sc-if value="{{ planoTemData }}">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px">
+                      <span style="font-size: 11.5px; font-weight: 600; color: var(--color-tertiary-500);">{{ planoDataRotulo }}</span>
+                      <input type="date" class="isr-campo" value="{{ planoData }}" onchange="{{ onPlanoData }}" style="padding: 7px 10px; font-size: 12.5px; background: var(--color-bg-cell); border: 1px solid var(--color-border); border-radius: 12px; color: var(--color-primary-900); font-family: inherit">
+                      <sc-if value="{{ planoDataMarcada }}">
+                        <span onclick="{{ onPlanoDataLimpar }}" style="font-size: 11.5px; font-weight: 600; color: var(--color-primary-500); cursor: pointer">voltar ao automático</span>
+                      </sc-if>
+                      <span style="font-size: 11.5px; color: var(--color-tertiary-500);">{{ planoDataNota }}</span>
+                    </div>
+                  </sc-if>
                 </div>
                 <sc-if value="{{ planoPodeEditar }}">
                   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
@@ -1214,7 +1242,11 @@ class Component extends DCLogic {
       pgBotaoBg: "var(--color-primary-900)", pgBotaoFg: "var(--color-neutral-0)",
       pgTrocando: false, onPgTrocar: () => {}, pgBusca: "", onPgBusca: () => {},
       pgVazio: false, pgVazioTexto: "", pgLista: [], pgLink: "#",
+      pgSemSessoes: false, pgSemSessoesTexto: "", pgTrocaRapida: [],
       planoEyebrow: "", planoTitulo: "", planoEstado: "", planoEstadoBg: "", planoEstadoFg: "",
+      planoTemData: false, planoData: "", planoDataRotulo: "dia desta aula",
+      planoDataMarcada: false, planoDataNota: "",
+      onPlanoData: () => {}, onPlanoDataLimpar: () => {},
       planoOrigem: "", planoPodeEditar: false, planoOnAjustar: () => {}, planoAjustarLabel: "",
       planoTemAoVivo: false, planoAoVivoLabel: "", planoAoVivoBg: "", planoAoVivoFg: "",
       planoOnAoVivo: () => {}, planoAoVivoNota: false, planoAoVivoNotaTexto: "",
@@ -1523,12 +1555,47 @@ class Component extends DCLogic {
           onPgTrocar: () => this.setState({ pgTrocando: !this.state.pgTrocando, pgBusca: "" }),
           pgBusca: this.state.pgBusca || "",
           onPgBusca: (e) => this.setState({ pgBusca: e.target.value }),
+          // ── O PROGRAMA SEM SESSÕES ──────────────────────────
+          //
+          // A turma pode acabar apontando para um programa vazio — e
+          // aí o plano das aulas abre sem sessão nenhuma, sem que
+          // nada tenha sido apagado. A tela dizia só "0 sessões", em
+          // letra pequena, e a professora ficava procurando o que
+          // tinha sumido. Agora diz o que está acontecendo e oferece,
+          // do mesmo nível, os programas que têm sessões.
+          ...(() => {
+            const nDoAtual = atual ? (CRM.syllabusDoPrograma(atual.id) || []).length : 0;
+            if (!atual || nDoAtual) {
+              return { pgSemSessoes: false, pgSemSessoesTexto: "", pgTrocaRapida: [] };
+            }
+            const comSessoes = lista.filter(x => x.sessoes > 0
+              && (!atual.nivel || x.nivel === atual.nivel));
+            return {
+              pgSemSessoes: true,
+              pgSemSessoesTexto: comSessoes.length
+                ? Tr("This programme has no sessions, so the lesson plan opens empty. These have sessions:",
+                     "Este programa não tem sessões, então o plano das aulas abre vazio. Estes têm sessões:")
+                : Tr("This programme has no sessions, so the lesson plan opens empty. Write them in Programmes.",
+                     "Este programa não tem sessões, então o plano das aulas abre vazio. Escreva-as em Programas."),
+              pgTrocaRapida: comSessoes.slice(0, 4).map(x => ({
+                label: x.nome + " · " + x.sessoes
+                  + (x.sessoes === 1 ? Tr(" session", " sessão") : Tr(" sessions", " sessões")),
+                onClick: () => {
+                  CRM.definirProgramaDaTurma(u.id, x.id);
+                  this.setState({ pgTrocando: false, pgBusca: "" });
+                  this.bump();
+                }
+              }))
+            };
+          })(),
           pgVazio: achados.length === 0,
           pgVazioTexto: lista.length
             ? Tr("No programme with that name.", "Nenhum programa com esse nome.")
             : Tr("The school has no programme yet. They are written in Programmes.",
                  "A escola ainda não tem programa. Eles são escritos em Programas."),
-          pgLista: achados.map(x => ({
+          // com sessões primeiro: programa vazio escolhido por engano
+          // é o que faz o plano abrir sem nada
+          pgLista: achados.slice().sort((x, y) => (y.sessoes > 0) - (x.sessoes > 0)).map(x => ({
             nome: x.nome, meta: meta(x),
             bg: atual && x.id === atual.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
             fg: atual && x.id === atual.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",
@@ -1589,6 +1656,33 @@ class Component extends DCLogic {
               : ("semana de " + this.diaMes(q.data));
             return ["sessão " + pAtual.n, quandoTxt, u.turma].filter(Boolean).join(" · ");
           })() : "",
+      ...(() => {
+        if (!pAtual) return { planoTemData: false, planoData: "", planoDataMarcada: false,
+          planoDataRotulo: "dia desta aula", planoDataNota: "",
+          onPlanoData: () => {}, onPlanoDataLimpar: () => {} };
+        const q = quandoSessoes[pAtual.n] || {};
+        const marcada = !!pAtual.data;
+        return {
+          planoTemData: true,
+          planoData: pAtual.data || (q.dada ? "" : (q.data || "")),
+          planoDataMarcada: marcada,
+          planoDataRotulo: q.dada ? Tr("taught on", "aula dada em")
+            : Tr("day of this class", "dia desta aula"),
+          planoDataNota: q.dada
+            ? Tr("the attendance says when it happened", "a chamada diz quando ela aconteceu")
+            : (marcada ? Tr("set by the school", "marcada pela escola")
+              : Tr("from the class weekday", "pelo dia da semana da turma")),
+          onPlanoData: (e) => {
+            const r = CRM.salvarPlano(u.id, pAtual.n, { data: e.target.value || "" });
+            this.setState({ planoErro: r.ok ? "" : r.erro });
+            this.bump();
+          },
+          onPlanoDataLimpar: () => {
+            CRM.salvarPlano(u.id, pAtual.n, { data: "" });
+            this.bump();
+          }
+        };
+      })(),
       planoTitulo: pAtual ? (pAtual.titulo || Tr("Untitled session", "Sessão sem título")) : "",
       planoEstado: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[0] : "",
       planoEstadoBg: pAtual ? (EST_PLANO[pAtual.estado] || EST_PLANO.rascunho)[1] : "",
