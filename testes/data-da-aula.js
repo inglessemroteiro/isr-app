@@ -121,10 +121,12 @@ const P = require("./preparar.js");
       .map(x => x.textContent.trim())
       .filter(t => /· \d+ sess/.test(t))
   }));
-  T("a tela diz que o programa não tem sessões",
-    /não tem sessões/.test(aviso.texto)
-      && /plano das aulas abre vazio/.test(aviso.texto),
-    (aviso.texto.match(/.{0,20}não tem sessões.{0,90}/) || [""])[0]);
+  T("a tela diz que o programa está sem sessões",
+    /Programa sem sessões/.test(aviso.texto), 
+    (aviso.texto.match(/.{0,20}Programa sem sessões.{0,70}/) || [""])[0]);
+  T("sem explicar o óbvio em volta",
+    !/abre vazio|então o plano/.test(aviso.texto),
+    (aviso.texto.match(/.{0,40}abre vazio.{0,40}/) || [""])[0]);
   T("e oferece, do mesmo nível, os que têm",
     aviso.atalhos.length >= 1, aviso.atalhos);
 
@@ -139,7 +141,7 @@ const P = require("./preparar.js");
   await p.waitForTimeout(1600);
   const depois = await p.evaluate((turmaId) => ({
     sessoes: (window.ISRCRM.planoSessoes(turmaId) || []).length,
-    aindaAvisa: /não tem sessões/.test(document.querySelector("main").innerText)
+    aindaAvisa: /Programa sem sessões/.test(document.querySelector("main").innerText)
   }), vazio.turmaId);
   T("a turma passa a ter sessões", trocou === true && depois.sessoes > 0, depois);
   T("e o aviso sai da tela", depois.aindaAvisa === false, depois);

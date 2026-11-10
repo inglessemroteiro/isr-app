@@ -1528,7 +1528,10 @@ class Component extends DCLogic {
         const atual = CRM.programaDaTurma ? CRM.programaDaTurma(u) : null;
         const lista = CRM.programasEstudoLista ? CRM.programasEstudoLista() : [];
         const busca = (this.state.pgBusca || "").trim().toLowerCase();
-        const achados = lista.filter(x => !busca
+        // Programa sem sessões não serve para turma nenhuma: escolhê-lo
+        // abre o plano vazio. Fora da lista.
+        const comSessoes = lista.filter(x => x.sessoes > 0);
+        const achados = comSessoes.filter(x => !busca
           || (x.nome + " " + x.nivel).toLowerCase().indexOf(busca) >= 0);
         const meta = (x) => [x.nivel, x.sessoes
           + (x.sessoes === 1 ? Tr(" session", " sessão") : Tr(" sessions", " sessões"))]
@@ -1568,16 +1571,15 @@ class Component extends DCLogic {
             if (!atual || nDoAtual) {
               return { pgSemSessoes: false, pgSemSessoesTexto: "", pgTrocaRapida: [] };
             }
-            const comSessoes = lista.filter(x => x.sessoes > 0
-              && (!atual.nivel || x.nivel === atual.nivel));
+            const doNivel = comSessoes.filter(x => !atual.nivel || x.nivel === atual.nivel);
             return {
               pgSemSessoes: true,
-              pgSemSessoesTexto: comSessoes.length
-                ? Tr("This programme has no sessions, so the lesson plan opens empty. These have sessions:",
-                     "Este programa não tem sessões, então o plano das aulas abre vazio. Estes têm sessões:")
-                : Tr("This programme has no sessions, so the lesson plan opens empty. Write them in Programmes.",
-                     "Este programa não tem sessões, então o plano das aulas abre vazio. Escreva-as em Programas."),
-              pgTrocaRapida: comSessoes.slice(0, 4).map(x => ({
+              pgSemSessoesTexto: doNivel.length
+                ? Tr("Programme without sessions. Programmes with sessions:",
+                     "Programa sem sessões. Programas com sessões:")
+                : Tr("Programme without sessions. Write them in Programmes.",
+                     "Programa sem sessões. Escreva-as em Programas."),
+              pgTrocaRapida: doNivel.slice(0, 4).map(x => ({
                 label: x.nome + " · " + x.sessoes
                   + (x.sessoes === 1 ? Tr(" session", " sessão") : Tr(" sessions", " sessões")),
                 onClick: () => {
@@ -1589,13 +1591,11 @@ class Component extends DCLogic {
             };
           })(),
           pgVazio: achados.length === 0,
-          pgVazioTexto: lista.length
+          pgVazioTexto: comSessoes.length
             ? Tr("No programme with that name.", "Nenhum programa com esse nome.")
-            : Tr("The school has no programme yet. They are written in Programmes.",
-                 "A escola ainda não tem programa. Eles são escritos em Programas."),
-          // com sessões primeiro: programa vazio escolhido por engano
-          // é o que faz o plano abrir sem nada
-          pgLista: achados.slice().sort((x, y) => (y.sessoes > 0) - (x.sessoes > 0)).map(x => ({
+            : Tr("No programme has sessions yet. They are written in Programmes.",
+                 "Nenhum programa tem sessões ainda. Elas são escritas em Programas."),
+          pgLista: achados.map(x => ({
             nome: x.nome, meta: meta(x),
             bg: atual && x.id === atual.id ? "var(--color-primary-900)" : "var(--color-neutral-0)",
             fg: atual && x.id === atual.id ? "var(--color-neutral-0)" : "var(--color-primary-900)",

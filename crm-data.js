@@ -10971,6 +10971,14 @@
     // criado à mão ou trazido de um texto nascia sem, e ficava
     // invisível para essa busca — a turma então resolvia num programa
     // antigo, vazio, e o plano das aulas aparecia sem nenhuma sessão.
+    // ── O CARIMBO DE QUEM MUDOU ───────────────────────────────
+    //
+    // carimbarLista só carimba registro SEM carimbo. Programa que já
+    // tinha um ficava com o mesmo para sempre — e na mesclagem entre
+    // aparelhos, o empate fica com a cópia que já estava lá. Arquivar
+    // um programa num aparelho era desfeito pelo outro na
+    // sincronização seguinte: ele voltava para a lista, em silêncio.
+    carimbar(reg);
     if (dados.origem) reg.origem = dados.origem;
     else if (!reg.origem) reg.origem = { nivel: nivel, ciclo: "" };
     if ("descricao" in dados) {
@@ -10988,6 +10996,7 @@
     if (!reg) return { ok: false, erro: "Programa não encontrado." };
     if (arquivar === false) delete reg.arquivado;
     else reg.arquivado = iso(today());
+    carimbar(reg);
     programasEstudoSave(l);
     return { ok: true, arquivado: !!reg.arquivado };
   }
@@ -11652,6 +11661,10 @@
     };
     if (reg) Object.keys(campos).forEach(function (k) { reg[k] = campos[k]; });
     else { reg = Object.assign({ id: "sy" + Date.now() + "-" + l.length }, campos); l.push(reg); }
+    // sem isto, a sessão escrita hoje perde para a cópia de ontem do
+    // outro aparelho, e o programa "não sobe": a escola escreve as
+    // dez sessões e o resto da escola continua vendo zero
+    carimbar(reg);
     syllabusSave(l);
     return { ok: true, sessao: reg };
   }
@@ -18257,6 +18270,7 @@
     // a mesclagem de mapa é o ponto onde a aluna perdia o cofre:
     // fica exposta para a suíte poder prová-la diretamente
     mesclarMapaParaTeste: mesclarMapa,
+    mesclarListaParaTeste: mesclarLista,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
     syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
