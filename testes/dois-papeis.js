@@ -96,6 +96,37 @@ const P = require("./preparar.js");
     naTela.slice(0, 200));
   await ctx.close();
 
+  console.log("\n— o clube é produto: o comercial vê a tela —");
+  // Quem vende precisa do catálogo, das vagas e de quem está em cada
+  // clube. A tela era só da coordenação.
+  const menuDe = async (gestao) => {
+    const c = await P.novoContexto(b, {
+      contexto: { viewport: { width: 1280, height: 1200 } }, gestao: gestao
+    });
+    const pg = await c.newPage();
+    pg.on("pageerror", e => erros.push(String(e).slice(0, 220)));
+    await pg.goto(P.endereco("ISR - Central v3.dc.html"));
+    await pg.waitForTimeout(2600);
+    // o rótulo vem com o ícone grudado na frente
+    const itens = await pg.evaluate(() =>
+      [...document.querySelectorAll("#isr-shell a")]
+        .map(a => a.textContent.trim().replace(/^[^A-Za-zÀ-ÿ]+/, "")));
+    await c.close();
+    return itens;
+  };
+  const menuCarla = await menuDe({ nome: "Carla", perfil: "comercial",
+    papeis: ["comercial", "professora"] });
+  T("o comercial tem Clubes no menu",
+    menuCarla.some(x => /^Clubes/.test(x)), menuCarla.slice(0, 14));
+  const menuSoComercial = await menuDe({ nome: "Carla", perfil: "comercial",
+    papeis: ["comercial"] });
+  T("mesmo sendo só comercial",
+    menuSoComercial.some(x => /^Clubes/.test(x)), menuSoComercial.slice(0, 14));
+  const menuProf = await menuDe({ nome: "Bárbara", perfil: "professora",
+    papeis: ["professora"] });
+  T("e quem é só professora segue sem a tela de coordenação dos clubes",
+    !menuProf.some(x => /^Clubes/.test(x)), menuProf.slice(0, 14));
+
   console.log("\n— a gestora continua vendo tudo —");
   const gestora = await abasDe({ nome: "Gabi", perfil: "gestora", papeis: ["gestora"] });
   T("as sete abas", gestora.length === 7, gestora);

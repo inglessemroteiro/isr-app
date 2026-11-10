@@ -1542,7 +1542,10 @@ class Component extends DCLogic {
       // ── o syllabus do nível ──
       // Quem escreve as sessões é quem cuida da escola, e elas moram
       // em Programas. Aqui a turma só ESCOLHE qual programa segue.
-      podeSyllabus: !!user && (user.perfil === "gestora" || user.perfil === "operacao"),
+      // papel soma aqui também: quem é gestora e mais alguma coisa
+      // continua podendo escrever as sessões da escola
+      podeSyllabus: !!user && ((user.papeis || []).concat(user.perfil ? [user.perfil] : [])
+        .some(pp => pp === "gestora" || pp === "operacao")),
       ...(() => {
         const atual = CRM.programaDaTurma ? CRM.programaDaTurma(u) : null;
         const lista = CRM.programasEstudoLista ? CRM.programasEstudoLista() : [];
