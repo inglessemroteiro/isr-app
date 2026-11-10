@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.10-d",
+  numero: "2026.11.10-e",
   data: "10/11/2026",
-  nota: "Feito na Central fica feito"
+  nota: "Os vazios saem de uma vez, e dois registros são dois"
 };
