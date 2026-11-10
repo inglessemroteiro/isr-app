@@ -150,7 +150,9 @@
     // quais ficaram sem. Sem a lista, descobrir que a aula de três
     // semanas atrás não foi publicada dependia de a aluna reclamar.
     { id: "gravacoes", sec: "pedagógico", icone: "▷", label: "Gravações", href: "ISR - Gravacoes v3.dc.html", perfis: ["gestora", "operacao"] },
-    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "operacao"] },
+    // O clube é produto: quem vende precisa ver o catálogo, as vagas
+    // e quem está em cada um. Por isso o comercial entra aqui.
+    { id: "clubes", sec: "pedagógico", icone: "◉", label: "Clubes", href: "ISR - Clubes v3.dc.html", perfis: ["gestora", "operacao", "comercial"] },
 
     { id: "marketing", sec: "escola", icone: "◈", label: "Marketing", href: "ISR - Marketing v3.dc.html", perfis: ["gestora", "comercial"] },
     { id: "equipe", sec: "escola", icone: "◍", label: "Equipe", href: "ISR - Equipe v3.dc.html", perfis: ["gestora"] },

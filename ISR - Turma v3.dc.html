@@ -1438,10 +1438,29 @@ class Component extends DCLogic {
     const vis = (CRM.gestaoVisao ? CRM.gestaoVisao() : CRM.gestaoUser()) || {};
     const papeisVis = (vis.papeis || []).concat(vis.perfil ? [vis.perfil] : []);
     const tem = (p) => papeisVis.indexOf(p) >= 0;
-    const ordem = tem("gestora") ? ["geral", "alunas", "plano", "chamadas", "projeto", "materiais", "renov"]
-      : tem("operacao") ? ["geral", "alunas", "chamadas", "projeto", "materiais", "renov"]
-      : tem("comercial") ? ["geral", "alunas", "renov"]
-      : ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"];
+    // ── PAPEL SOMA, NÃO SUBSTITUI ─────────────────────────────────
+    //
+    // Isto era uma escada: o primeiro papel que batesse decidia tudo.
+    // A Carla é comercial E professora, "comercial" vinha antes, e
+    // ela perdia plano, chamadas, projeto e materiais — na turma dela,
+    // que ela mesma dá. Quem tem dois papéis faz as duas coisas, e vê
+    // as abas das duas.
+    const ABAS_DO_PAPEL = {
+      gestora: ["geral", "alunas", "plano", "chamadas", "projeto", "materiais", "renov"],
+      operacao: ["geral", "alunas", "chamadas", "projeto", "materiais", "renov"],
+      comercial: ["geral", "alunas", "renov"],
+      professora: ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"],
+      extra: ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"],
+      shadow: ["geral", "alunas", "plano", "chamadas", "projeto", "materiais"]
+    };
+    const TODA_ORDEM = ["geral", "alunas", "plano", "chamadas", "projeto", "materiais", "renov"];
+    const liberadas = {};
+    papeisVis.forEach(pp => (ABAS_DO_PAPEL[pp] || []).forEach(id => { liberadas[id] = true; }));
+    // sem papel conhecido, o recorte continua sendo o da professora
+    if (!Object.keys(liberadas).length) {
+      ABAS_DO_PAPEL.professora.forEach(id => { liberadas[id] = true; });
+    }
+    const ordem = TODA_ORDEM.filter(id => liberadas[id]);
     const ABAS = ordem.map(id => [id, TODAS_ABAS[id]]);
     // Quem é só professora: o recorte dela muda o caminho de volta e
     // tira os botões de coordenação da página.
@@ -1523,7 +1542,10 @@ class Component extends DCLogic {
       // ── o syllabus do nível ──
       // Quem escreve as sessões é quem cuida da escola, e elas moram
       // em Programas. Aqui a turma só ESCOLHE qual programa segue.
-      podeSyllabus: !!user && (user.perfil === "gestora" || user.perfil === "operacao"),
+      // papel soma aqui também: quem é gestora e mais alguma coisa
+      // continua podendo escrever as sessões da escola
+      podeSyllabus: !!user && ((user.papeis || []).concat(user.perfil ? [user.perfil] : [])
+        .some(pp => pp === "gestora" || pp === "operacao")),
       ...(() => {
         const atual = CRM.programaDaTurma ? CRM.programaDaTurma(u) : null;
         const lista = CRM.programasEstudoLista ? CRM.programasEstudoLista() : [];

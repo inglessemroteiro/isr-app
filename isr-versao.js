@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.10-b",
+  numero: "2026.11.10-c",
   data: "10/11/2026",
-  nota: "O que foi arquivado fica arquivado"
+  nota: "Dois papéis, as duas telas"
 };
