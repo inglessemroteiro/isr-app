@@ -133,7 +133,7 @@ exports.handler = async (event) => {
         // configuração que ninguém sabia que precisava abrir.
         return {
           nome: primeiroNome(c.nome || "Carla"),
-          whatsapp: texto(c.whatsapp || "551191014226", 30),
+          whatsapp: texto(c.whatsapp || "5511910142216", 30),
           mensagem: texto(c.mensagem || "Oi, Carla! Estou interessado no clube "
             + "{clube}, podemos fazer meu nivelamento?", 300)
         };

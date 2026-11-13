@@ -141,6 +141,21 @@ function carregarCom(url) {
   T("nenhum motivo solto",
     emitidos.every(m => previstos.indexOf(m) >= 0), emitidos);
 
+  console.log("\n— o número padrão é um celular brasileiro inteiro —");
+  // Número com um dígito a menos abre uma conversa com ninguém, e
+  // ninguém descobre até alguém reclamar. Celular do Brasil tem 13
+  // dígitos com o país: 55 + DDD de 2 + 9 dígitos.
+  const semContato = JSON.parse(JSON.stringify(BASE));
+  delete semContato.contatoPublico;
+  const padrao = await comBase(semContato);
+  const digitos = String(padrao.d.contato.whatsapp).replace(/\D/g, "");
+  T("base sem o contato salvo ainda devolve um número",
+    !!digitos, padrao.d.contato);
+  T("com 13 dígitos", digitos.length === 13, digitos);
+  T("começando em 55", digitos.slice(0, 2) === "55", digitos);
+  T("e o nono dígito do celular no lugar",
+    digitos[4] === "9", digitos);
+
   console.log("\n— e só GET —");
   const post = await fn.handler({ httpMethod: "POST" });
   T("POST é recusado", post.statusCode === 405, post.statusCode);
