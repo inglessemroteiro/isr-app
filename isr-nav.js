@@ -278,8 +278,17 @@
       txt.style.color = m.cor;
       sync.style.background = m.fundo;
       var quando = st && st.em ? new Date(st.em).toLocaleString("pt-BR") : "";
+      // o motivo da falha também aqui: esta barra é a que aparece nas
+      // telas que não usam a casca lateral
+      var diag = null;
+      if (s === "erro") {
+        try { diag = window.ISRCRM && window.ISRCRM.syncDiagnostico
+          ? window.ISRCRM.syncDiagnostico() : null; } catch (e) {}
+      }
       sync.title = s === "erro"
-        ? "A última tentativa de sincronizar falhou. Suas alterações estão salvas neste aparelho e serão reenviadas."
+        ? ((diag ? "Falhou " + diag.etapa + ". " + diag.recado + " " : "")
+           + "As suas alterações estão salvas neste aparelho e serão reenviadas."
+           + (diag && diag.detalhe ? "\n\n" + diag.detalhe : ""))
         : (s === "local" ? "Sem banco central configurado: os dados ficam só neste aparelho."
                          : "Última sincronização: " + quando +
                            (st.conflitos ? " · " + st.conflitos + " registro(s) mesclado(s)" : ""));

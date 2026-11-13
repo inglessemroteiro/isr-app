@@ -61,7 +61,7 @@ function carregarCom(url) {
         nivel: "A partir do A2", descricao: "Um filme por encontro.",
         professora: "Bárbara Teste Silva", formato: "online",
         dia: "quinta", hora: "20:00", fuso: "America/Sao_Paulo", duracao: "60 min",
-        preco: "R$ 120 por ciclo",
+        preco: 30,
         vagas: 8, membros: ["p1", "p2", "p3"], espera: ["p9"],
         link: "https://meet.example.com/sala-secreta",
         local: "Rua de Casa, 100 — apto 42",
@@ -220,12 +220,35 @@ function carregarCom(url) {
     bCheio && decodeURIComponent(bCheio.href));
 
   console.log("\n— o preço, para quem chega pelo site —");
-  T("o clube com preço mostra o preço",
-    /R\$ 120 por ciclo/.test(tela.texto), tela.texto.slice(0, 700));
+  T("o clube com preço mostra o preço em euro",
+    /\u20AC 30/.test(tela.texto), tela.texto.slice(0, 700));
   const precos = await pg.evaluate(() =>
     [...document.querySelectorAll(".fatos .preco")].map(x => x.textContent.trim()));
   T("e o clube sem preço não inventa um",
-    precos.length === 1 && precos[0] === "R$ 120 por ciclo", precos);
+    precos.length === 1 && precos[0] === "\u20AC 30", precos);
+
+  console.log("\n— o preço vai sempre em euro, venha como vier —");
+  // A escola oferta clube em euro para quem chega de fora. O campo é
+  // número; qualquer coisa que não seja número vira "sem preço", em
+  // vez de aparecer cru no cartão de um site público.
+  const moedas = await comBase((() => {
+    const d = JSON.parse(JSON.stringify(BASE));
+    d.clubes = [
+      Object.assign({}, d.clubes[0], { id: "m1", nome: "Inteiro", preco: 30 }),
+      Object.assign({}, d.clubes[0], { id: "m2", nome: "Quebrado", preco: 29.9 }),
+      Object.assign({}, d.clubes[0], { id: "m3", nome: "Virgula", preco: "24,5" }),
+      Object.assign({}, d.clubes[0], { id: "m4", nome: "Zero", preco: 0 }),
+      Object.assign({}, d.clubes[0], { id: "m5", nome: "Texto", preco: "combinar" })
+    ];
+    return d;
+  })());
+  const achaPreco = (nome) =>
+    (moedas.d.clubes.filter(c => c.nome === nome)[0] || {}).preco;
+  T("número inteiro sai sem centavos", achaPreco("Inteiro") === "€ 30", moedas.d.clubes);
+  T("número quebrado sai com vírgula", achaPreco("Quebrado") === "€ 29,90", moedas.d.clubes);
+  T("vírgula digitada é entendida", achaPreco("Virgula") === "€ 24,50", moedas.d.clubes);
+  T("zero quer dizer sem preço", achaPreco("Zero") === "", moedas.d.clubes);
+  T("e texto solto não vaza para o site", achaPreco("Texto") === "", moedas.d.clubes);
 
   console.log("\n— o texto do topo é o que a escola escreveu —");
   const topo = await pg.evaluate(() => {

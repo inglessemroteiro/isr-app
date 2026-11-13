@@ -379,15 +379,61 @@
       txt.textContent = m.label;
       txt.style.color = m.cor;
       sync.style.background = m.fundo;
+      // O POR QUÊ, NO LUGAR ONDE O ERRO APARECE
+      //
+      // "falha ao sincronizar" sozinho não leva a lugar nenhum: quem
+      // lê é quem pode resolver, e as causas pedem coisas diferentes.
+      // O motivo entra no título e, no toque, num painel — porque em
+      // celular não existe passar o mouse por cima.
+      var diag = null;
+      if (s === "erro") {
+        try { diag = window.ISRCRM && window.ISRCRM.syncDiagnostico
+          ? window.ISRCRM.syncDiagnostico() : null; } catch (e) {}
+      }
       sync.title = s === "erro"
-        ? "A última tentativa de sincronizar falhou. Suas alterações estão salvas neste aparelho e serão reenviadas."
+        ? ((diag ? "Falhou " + diag.etapa + ". " + diag.recado + " " : "")
+           + "As suas alterações estão salvas neste aparelho e serão reenviadas."
+           + (diag && diag.detalhe ? "\n\n" + diag.detalhe : "")
+           + "\n\nToque para testar a conexão.")
         : (s === "local" ? "Sem banco central configurado: os dados ficam só neste aparelho."
                          : "Última sincronização: " + (st && st.em ? new Date(st.em).toLocaleString("pt-BR") : ""));
+      sync.style.cursor = s === "erro" ? "pointer" : "default";
+      sync.setAttribute("role", s === "erro" ? "button" : "status");
+      detalhe.style.display = "none";
     }
+
+    // O painel do motivo: fica fechado, abre no toque do selo e traz o
+    // resultado do teste de conexão.
+    var detalhe = document.createElement("div");
+    detalhe.style.cssText = "display:none;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.72);"
+      + "background:rgba(0,0,0,0.22);border-radius:12px;padding:9px 11px;";
+    sync.addEventListener("click", function () {
+      var st = {};
+      try { st = (window.ISRCRM && window.ISRCRM.syncEstado()) || {}; } catch (e) {}
+      if (st.status !== "erro") return;
+      if (detalhe.style.display === "block") { detalhe.style.display = "none"; return; }
+      var d = null;
+      try { d = window.ISRCRM.syncDiagnostico(); } catch (e) {}
+      detalhe.textContent = d
+        ? ("Falhou " + d.etapa + ". " + d.recado + (d.detalhe ? " (" + d.detalhe + ")" : ""))
+        : "A última sincronização falhou.";
+      detalhe.style.display = "block";
+      var antes = detalhe.textContent;
+      detalhe.textContent = antes + " · testando…";
+      try {
+        window.ISRCRM.testarConexao().then(function (r) {
+          detalhe.textContent = antes + "\n\nTeste: " + r.recado
+            + (r.detalhe ? " (" + r.detalhe + ")" : "")
+            + (r.endereco ? "\nEndereço: " + r.endereco : "");
+        }).catch(function () { detalhe.textContent = antes; });
+      } catch (e) { detalhe.textContent = antes; }
+    });
     try { pintarSync(window.ISRCRM && window.ISRCRM.syncEstado ? window.ISRCRM.syncEstado() : null); }
     catch (e) { pintarSync(null); }
     window.addEventListener("isr-sync", function (e) { pintarSync(e.detail); });
     pe.appendChild(sync);
+    detalhe.style.whiteSpace = "pre-wrap";
+    pe.appendChild(detalhe);
 
     var linha = document.createElement("div");
     linha.style.cssText = "display:flex;align-items:center;gap:8px;";

@@ -57,9 +57,15 @@ function recorte(c) {
     emoji: texto(c.emoji, 4),
     nivel: texto(c.nivel, 60),
     descricao: texto(c.descricao, 600),
-    // o preço que a escola escreveu para quem chega pelo site; vazio
-    // quer dizer que esse clube só existe dentro do plano
-    preco: texto(c.preco, 40),
+    // o preço para quem chega pelo site, sempre em euro. Zero quer
+    // dizer que esse clube só existe dentro do plano, e aí o cartão
+    // sai sem preço nenhum.
+    preco: (function () {
+      const n = Math.max(0, parseFloat(String(c.preco || "0").replace(",", ".")) || 0);
+      if (!n) return "";
+      return "\u20AC " + ((Math.round(n * 100) % 100 === 0)
+        ? String(Math.round(n)) : n.toFixed(2).replace(".", ","));
+    })(),
     // primeiro nome: identifica quem conduz sem publicar o nome
     // completo de uma funcionária numa página aberta
     professora: primeiroNome(c.professora),
