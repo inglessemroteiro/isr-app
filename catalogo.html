@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Clubes · Inglês sem Roteiro</title>
+<meta name="description" content="Os clubes de conversa abertos agora, com as vagas de cada um." />
+<!--
+  A PÁGINA PÚBLICA DO CATÁLOGO
+
+  Esta página é feita para morar dentro do site da escola, num iframe,
+  e para ser aberta direto por quem recebe o link. Quem a vê ainda não
+  é aluna: não há login, não há token, e não há nada aqui que dependa
+  do sistema estar aberto noutra aba.
+
+  Ela lê /.netlify/functions/clubes-publicos, que devolve um recorte
+  escolhido à mão do catálogo — nunca o registro cru do clube. Nome de
+  inscrita, link de sala e endereço de local não passam por aqui.
+
+  O número de inscritas é o de agora: a cada visita a página pergunta.
+  Não há nada para manter à mão.
+
+  Dentro de um iframe a página herda a largura que o site der. Por
+  isso o fundo é transparente quando embutida e os cartões se viram
+  sozinhos a partir de 280px.
+-->
+<style>
+  :root {
+    --tinta: #1d3d42;
+    --tinta-fraca: #5b7a7f;
+    --papel: #faf7f2;
+    --cartao: #ffffff;
+    --borda: #e7ded2;
+    --marca: #2a9d8f;
+    --marca-escura: #1d5a63;
+    --alerta: #a3392c;
+    --alerta-fundo: #fdece8;
+    --ok-fundo: #e9f3e4;
+    --ok-tinta: #3d6b22;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --tinta: #f2ece3;
+      --tinta-fraca: #a9bcbe;
+      --papel: #14292c;
+      --cartao: #1b3438;
+      --borda: #2d4a4e;
+      --marca: #4bc0b0;
+      --marca-escura: #8fd9ce;
+      --alerta: #f0a79b;
+      --alerta-fundo: #46231e;
+      --ok-fundo: #23401f;
+      --ok-tinta: #bfe2a8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --tinta: #f2ece3;
+    --tinta-fraca: #a9bcbe;
+    --papel: #14292c;
+    --cartao: #1b3438;
+    --borda: #2d4a4e;
+    --marca: #4bc0b0;
+    --marca-escura: #8fd9ce;
+    --alerta: #f0a79b;
+    --alerta-fundo: #46231e;
+    --ok-fundo: #23401f;
+    --ok-tinta: #bfe2a8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* embutida num site, a página não pinta o fundo por cima do dele */
+  body.embutida { background: transparent; }
+  .envelope { max-width: 1100px; margin: 0 auto; padding: 28px 16px 56px; }
+  .topo { margin-bottom: 22px; }
+  .topo h1 {
+    margin: 0 0 6px; font-size: clamp(22px, 4.4vw, 30px);
+    letter-spacing: -0.02em; font-weight: 800;
+  }
+  .topo p { margin: 0; color: var(--tinta-fraca); font-size: 15px; max-width: 60ch; }
+  .grade {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .cartao {
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .selos { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .emoji { font-size: 26px; line-height: 1; }
+  .selo {
+    border-radius: 999px; padding: 3px 10px;
+    font-size: 11.5px; font-weight: 700;
+    background: var(--papel); color: var(--tinta-fraca);
+    border: 1px solid var(--borda);
+  }
+  .selo.cheio { background: var(--alerta-fundo); color: var(--alerta); border-color: transparent; }
+  .selo.livre { background: var(--ok-fundo); color: var(--ok-tinta); border-color: transparent; }
+  .nome { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+  .descricao { margin: 0; font-size: 14.5px; color: var(--tinta); flex: 1; }
+  .fatos { font-size: 13px; color: var(--tinta-fraca); display: flex; flex-direction: column; gap: 3px; }
+  .barra { height: 7px; border-radius: 99px; background: var(--borda); overflow: hidden; }
+  .barra > i { display: block; height: 7px; background: var(--marca); }
+  .lotacao { font-size: 12.5px; color: var(--tinta-fraca); }
+  .temas { margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--tinta-fraca); }
+  .temas li { padding: 2px 0; }
+  .botao {
+    display: block; text-align: center; text-decoration: none;
+    border-radius: 999px; padding: 13px 18px;
+    font-size: 14.5px; font-weight: 800;
+    background: var(--marca-escura); color: #fff;
+    border: 0; cursor: pointer; font-family: inherit;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .botao { color: #0f2326; }
+  }
+  :root[data-theme="dark"] .botao { color: #0f2326; }
+  .botao:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; }
+  .recado {
+    border: 1px solid var(--borda); border-radius: 18px;
+    padding: 20px; font-size: 15px; color: var(--tinta-fraca);
+    background: var(--cartao);
+  }
+  .rodape { margin-top: 26px; font-size: 12.5px; color: var(--tinta-fraca); }
+</style>
+</head>
+<body>
+<div class="envelope">
+  <header class="topo">
+    <h1>Clubes de conversa</h1>
+    <p id="chamada">Encontros por tema, em grupos pequenos. As vagas abaixo são as de agora.</p>
+  </header>
+  <div id="alvo" class="recado">Carregando os clubes…</div>
+  <p class="rodape" id="rodape"></p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Embutida num site, a página não pinta o próprio fundo.
+  try { if (window.self !== window.top) document.body.className = "embutida"; } catch (e) {
+    document.body.className = "embutida";
+  }
+
+  var alvo = document.getElementById("alvo");
+  var rodape = document.getElementById("rodape");
+
+  function texto(el, t) { el.textContent = t; }
+
+  function escapar(s) {
+    return String(s === undefined || s === null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // O número vai para o wa.me sem nada além de dígitos. Número com
+  // dez ou onze dígitos é brasileiro sem o país na frente — é como a
+  // escola escreve, e sem o 55 o link abre conversa com ninguém.
+  function soDigitos(tel) {
+    var d = String(tel || "").replace(/\D/g, "");
+    if (!d) return "";
+    if (d.length <= 11) d = "55" + d;
+    return d;
+  }
+
+  function linkDoClube(contato, nomeDoClube) {
+    var n = soDigitos(contato && contato.whatsapp);
+    if (!n) return "";
+    var msg = String((contato && contato.mensagem) || "")
+      .replace(/\{clube\}/g, nomeDoClube || "");
+    return "https://wa.me/" + n + "?text=" + encodeURIComponent(msg);
+  }
+
+  function quando(c) {
+    var partes = [];
+    if (c.dia) partes.push(c.dia);
+    if (c.hora) partes.push(c.hora);
+    if (c.duracao) partes.push(c.duracao);
+    return partes.join(" · ");
+  }
+
+  function lotacaoTexto(c) {
+    if (!c.vagas) return c.inscritas + (c.inscritas === 1 ? " inscrita" : " inscritas");
+    if (c.lotado) return "sem vaga agora · " + c.inscritas + " de " + c.vagas;
+    return c.livres + (c.livres === 1 ? " vaga" : " vagas")
+      + " · " + c.inscritas + " de " + c.vagas;
+  }
+
+  function cartao(c, contato) {
+    var href = linkDoClube(contato, c.nome);
+    var pct = c.vagas ? Math.min(100, Math.round((c.inscritas / c.vagas) * 100)) : 0;
+    var partes = [];
+    partes.push('<article class="cartao">');
+    partes.push('<div class="selos">');
+    if (c.emoji) partes.push('<span class="emoji" aria-hidden="true">' + escapar(c.emoji) + "</span>");
+    if (c.nivel) partes.push('<span class="selo">' + escapar(c.nivel) + "</span>");
+    partes.push('<span class="selo">' + (c.formato === "presencial" ? "presencial" : "online") + "</span>");
+    partes.push('<span class="selo ' + (c.lotado ? "cheio" : "livre") + '">'
+      + escapar(lotacaoTexto(c)) + "</span>");
+    partes.push("</div>");
+    partes.push('<h2 class="nome">' + escapar(c.nome) + "</h2>");
+    if (c.descricao) partes.push('<p class="descricao">' + escapar(c.descricao) + "</p>");
+    partes.push('<div class="fatos">');
+    if (c.professora) partes.push("<span>Com " + escapar(c.professora) + "</span>");
+    if (quando(c)) partes.push("<span>" + escapar(quando(c)) + "</span>");
+    partes.push("</div>");
+    // a barra, sem repetir o número: ele já está no selo de cima, e
+    // dizer a mesma coisa duas vezes no mesmo cartão só ocupa espaço
+    if (c.vagas) {
+      partes.push('<div class="barra" role="img" aria-label="'
+        + escapar(lotacaoTexto(c)) + '"><i style="width:' + pct + '%"></i></div>');
+    }
+    if (c.encontros && c.encontros.length) {
+      partes.push('<ul class="temas">');
+      c.encontros.slice(0, 4).forEach(function (e) {
+        partes.push("<li>" + escapar(e.tema || e.quando) + "</li>");
+      });
+      partes.push("</ul>");
+    }
+    if (href) {
+      partes.push('<a class="botao" href="' + escapar(href)
+        + '" target="_blank" rel="noopener noreferrer">'
+        + (c.lotado ? "Entrar na lista de espera" : "Falar sobre o nivelamento")
+        + "</a>");
+    }
+    partes.push("</article>");
+    return partes.join("");
+  }
+
+  function desenhar(d) {
+    if (!d.clubes.length) {
+      texto(alvo, "Nenhum clube aberto agora. Em breve há turma nova.");
+      return;
+    }
+    var html = '<div class="grade">'
+      + d.clubes.map(function (c) { return cartao(c, d.contato); }).join("")
+      + "</div>";
+    alvo.className = "";
+    alvo.innerHTML = html;
+    if (!d.contato || !d.contato.whatsapp) {
+      // Sem número configurado não há botão. Dizer isso aqui, e não
+      // só no console, é o que faz alguém ir configurar.
+      rodape.textContent = "O contato de matrícula ainda não foi configurado no sistema, "
+        + "então os clubes aparecem sem o botão de conversa.";
+    }
+  }
+
+  function falhou(motivo) {
+    alvo.className = "recado";
+    texto(alvo, motivo === "sem_base"
+      ? "O catálogo ainda não está ligado ao sistema da escola."
+      : "Não foi possível carregar os clubes agora. Tente de novo em alguns instantes.");
+  }
+
+  fetch("/.netlify/functions/clubes-publicos", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json().catch(function () { return null; }); })
+    .then(function (d) {
+      if (!d || !d.ok) { falhou(d && d.motivo); return; }
+      desenhar(d);
+    })
+    .catch(function () { falhou(""); });
+})();
+</script>
+</body>
+</html>
