@@ -52,12 +52,16 @@ function carregarCom(url) {
   const BASE = {
     atualizadoEm: "2026-11-13T10:00:00.000Z",
     contatoPublico: { nome: "Carla Teste", whatsapp: "+55 11 90000-0000",
-      mensagem: "Oi! Estou interessado no clube {clube}, podemos fazer meu nivelamento?" },
+      apresentacao: "O texto que a escola escreveu.",
+      mensagem: "Oi! Quero participar do clube {clube}. Podemos fazer o meu nivelamento?",
+      mensagemEspera: "Oi! Quero participar do clube {clube}. "
+        + "Você pode me colocar na lista de espera?" },
     clubes: [
       { id: "cl1", nome: "Movie Lovers", status: "publicado", emoji: "🎬",
         nivel: "A partir do A2", descricao: "Um filme por encontro.",
         professora: "Bárbara Teste Silva", formato: "online",
         dia: "quinta", hora: "20:00", fuso: "America/Sao_Paulo", duracao: "60 min",
+        preco: "R$ 120 por ciclo",
         vagas: 8, membros: ["p1", "p2", "p3"], espera: ["p9"],
         link: "https://meet.example.com/sala-secreta",
         local: "Rua de Casa, 100 — apto 42",
@@ -104,7 +108,10 @@ function carregarCom(url) {
   T("o endereço do local não sai",
     !/Rua de Casa|Casa da professora/.test(cru), cru.slice(0, 300));
   T("quem pagou não sai", !/pagos/.test(cru), cru.slice(0, 300));
-  T("a lista de espera não sai", !/espera/.test(cru), cru.slice(0, 300));
+  // o teste é sobre a LISTA de quem espera, não sobre a palavra: a
+  // mensagem do clube lotado fala em lista de espera, e deve mesmo
+  T("a lista de espera não sai",
+    r.d.clubes.every(c => !("espera" in c)) && !/"p9"/.test(cru), cru.slice(0, 300));
   const movie = r.d.clubes.filter(c => c.nome === "Movie Lovers")[0];
   T("de quem conduz sai só o primeiro nome",
     movie.professora === "Bárbara" , movie.professora);
@@ -186,17 +193,67 @@ function carregarCom(url) {
   T("os dois clubes publicados viram cartão", tela.cartoes === 2, tela.cartoes);
   T("o nome e a lotação aparecem",
     /Movie Lovers/.test(tela.texto) && /5 vagas/.test(tela.texto), tela.texto.slice(0, 400));
-  T("o clube cheio diz que está sem vaga",
-    /sem vaga agora/.test(tela.texto), tela.texto.slice(0, 500));
+  T("o clube cheio é marcado como lotado",
+    /Lotado/.test(tela.texto), tela.texto.slice(0, 500));
   T("cada cartão tem o botão de conversa", tela.botoes.length === 2, tela.botoes);
-  const bMovie = tela.botoes.filter(x => /nivelamento/i.test(decodeURIComponent(x.href || "")))[0];
+  const bMovie = tela.botoes.filter(x => x.texto === "Participar")[0];
+  const bCheio = tela.botoes.filter(x => /lista de espera/i.test(x.texto))[0];
+  T("o clube com vaga convida a participar", !!bMovie, tela.botoes);
   T("o botão abre o WhatsApp no número configurado",
     !!bMovie && /^https:\/\/wa\.me\/5511900000000\?/.test(bMovie.href), tela.botoes);
   T("com o nome do clube dentro da mensagem",
-    !!bMovie && /Movie Lovers|Book Club/.test(decodeURIComponent(bMovie.href)),
+    !!bMovie && /Movie Lovers/.test(decodeURIComponent(bMovie.href)),
     bMovie && decodeURIComponent(bMovie.href));
-  T("e o clube cheio convida para a lista de espera",
-    tela.botoes.some(x => /lista de espera/i.test(x.texto)), tela.botoes);
+  T("e falando em nivelamento",
+    !!bMovie && /nivelamento/i.test(decodeURIComponent(bMovie.href)),
+    bMovie && decodeURIComponent(bMovie.href));
+  T("o clube cheio convida para a lista de espera", !!bCheio, tela.botoes);
+  // A mensagem do lotado é OUTRA: quem clica ali quer a espera, não o
+  // nivelamento. Era a mesma frase nos dois, e quem recebia respondia
+  // a coisa errada.
+  T("e a mensagem dele pede a lista de espera, não o nivelamento",
+    !!bCheio && /lista de espera/i.test(decodeURIComponent(bCheio.href))
+    && !/nivelamento/i.test(decodeURIComponent(bCheio.href)),
+    bCheio && decodeURIComponent(bCheio.href));
+  T("com o nome do clube certo",
+    !!bCheio && /Book Club/.test(decodeURIComponent(bCheio.href)),
+    bCheio && decodeURIComponent(bCheio.href));
+
+  console.log("\n— o preço, para quem chega pelo site —");
+  T("o clube com preço mostra o preço",
+    /R\$ 120 por ciclo/.test(tela.texto), tela.texto.slice(0, 700));
+  const precos = await pg.evaluate(() =>
+    [...document.querySelectorAll(".fatos .preco")].map(x => x.textContent.trim()));
+  T("e o clube sem preço não inventa um",
+    precos.length === 1 && precos[0] === "R$ 120 por ciclo", precos);
+
+  console.log("\n— o texto do topo é o que a escola escreveu —");
+  const topo = await pg.evaluate(() => {
+    const el = document.getElementById("chamada");
+    return { texto: el.textContent.trim(), escondido: el.hidden };
+  });
+  T("a apresentação da escola aparece",
+    topo.escondido === false && /O texto que a escola escreveu\./.test(topo.texto), topo);
+  T("e não há contagem de clubes gerada pela página",
+    !/clubes abertos/.test(topo.texto), topo);
+
+  const semApres = JSON.parse(JSON.stringify(r.d));
+  semApres.contato.apresentacao = "";
+  await servir(semApres);
+  await pg.reload();
+  await pg.waitForTimeout(1400);
+  const topoVazio = await pg.evaluate(() => ({
+    escondido: document.getElementById("chamada").hidden,
+    texto: document.body.innerText.replace(/\s+/g, " ")
+  }));
+  T("sem apresentação, o topo é só o título",
+    topoVazio.escondido === true, topoVazio.texto.slice(0, 150));
+  T("e os clubes continuam lá",
+    (await pg.evaluate(() => document.querySelectorAll("article.cartao").length)) === 2,
+    topoVazio.texto.slice(0, 150));
+  await servir(r.d);
+  await pg.reload();
+  await pg.waitForTimeout(1400);
 
   console.log("\n— os filtros só aparecem quando filtram algo —");
   // Com os dois clubes de níveis diferentes e formatos diferentes, os
@@ -257,11 +314,9 @@ function carregarCom(url) {
   await pg.waitForTimeout(1500);
   const comecaEm = await pg.evaluate(() => {
     const t = document.body.innerText.replace(/\s+/g, " ");
-    return { texto: t, temContagem: /2 clubes abertos\. Vagas de agora\./.test(t) };
+    return { texto: t };
   });
-  T("o topo diz quantos clubes há e que a vaga é de agora",
-    comecaEm.temContagem, comecaEm.texto.slice(0, 200));
-  T("e o cartão com encontro futuro diz quando começa",
+  T("o cartão com encontro futuro diz quando começa",
     /começa \d+ \w{3}/.test(comecaEm.texto), comecaEm.texto.slice(0, 600));
 
   console.log("\n— e a data de CADA encontro, para a pessoa se organizar —");
@@ -314,8 +369,6 @@ function carregarCom(url) {
   }));
   T("com um clube só, a barra de filtros não aparece",
     semFiltro.escondido === true, semFiltro);
-  T("e o topo fala no singular",
-    /1 clube aberto\./.test(semFiltro.texto), semFiltro.texto.slice(0, 200));
 
   console.log("\n— sem número configurado, não há botão —");
   await servir(r.d);

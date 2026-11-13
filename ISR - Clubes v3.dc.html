@@ -90,6 +90,11 @@
             <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">vagas</div>
             <input class="isr-campo" ref="{{ fVagasRef }}" type="number" min="0" placeholder="25" style="width: 100%; padding: 11px 13px; font-size: 14px">
           </label>
+          <label style="flex: 0 1 190px;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">preço no site</div>
+            <input class="isr-campo" ref="{{ fPrecoRef }}" placeholder="R$ 120 por ciclo" style="width: 100%; padding: 11px 13px; font-size: 14px">
+            <div style="font-size: 11px; color: var(--color-tertiary-500); margin-top: 4px; line-height: 1.45;">Só na página pública. Em branco, o clube aparece sem preço.</div>
+          </label>
           <label style="flex: 0 1 200px;">
             <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">fuso de quem conduz</div>
             <select class="isr-campo" ref="{{ fFusoRef }}" style="width: 100%; padding: 11px 12px; font-size: 13px">
@@ -292,13 +297,23 @@
           </div>
         </div>
         <div>
-          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">a mensagem que já vai escrita</div>
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">texto abaixo do título</div>
+          <input class="isr-campo" ref="{{ pubApresRef }}" placeholder="Em branco, a página mostra só os clubes." style="width: 100%; padding: 11px 14px; font-size: 14px;" />
+          <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 4px; line-height: 1.5;">{{ pubApresNota }}</div>
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">clube com vaga · mensagem</div>
           <input class="isr-campo" ref="{{ pubMsgRef }}" style="width: 100%; padding: 11px 14px; font-size: 14px;" />
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">clube lotado · mensagem</div>
+          <input class="isr-campo" ref="{{ pubEsperaRef }}" style="width: 100%; padding: 11px 14px; font-size: 14px;" />
           <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 4px;">{{ pubChaveNota }}</div>
         </div>
         <sc-if value="{{ pubTemPrevia }}">
-          <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">
-            <strong style="color: var(--color-primary-900);">Vai chegar assim:</strong> {{ pubPrevia }}
+          <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55; display: flex; flex-direction: column; gap: 6px;">
+            <div><strong style="color: var(--color-primary-900);">Com vaga:</strong> {{ pubPrevia }}</div>
+            <div><strong style="color: var(--color-primary-900);">Lotado:</strong> {{ pubPreviaEspera }}</div>
           </div>
         </sc-if>
         <sc-if value="{{ pubSemTel }}">
@@ -408,12 +423,14 @@ class Component extends DCLogic {
   fFormatoRef = React.createRef(); fDiaRef = React.createRef();
   fHoraRef = React.createRef(); fDuracaoRef = React.createRef();
   fVagasRef = React.createRef(); fLocalRef = React.createRef();
+  fPrecoRef = React.createRef();
   fDescRef = React.createRef();
   fNivelRef = React.createRef(); fFusoRef = React.createRef();
   fEncontrosRef = React.createRef(); fMateriaisRef = React.createRef();
   // o contato da página pública
   pubTelRef = React.createRef(); pubNomeRef = React.createRef();
-  pubMsgRef = React.createRef();
+  pubMsgRef = React.createRef(); pubEsperaRef = React.createRef();
+  pubApresRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -435,6 +452,8 @@ class Component extends DCLogic {
       if (this.pubTelRef.current) this.pubTelRef.current.value = c.whatsapp || "";
       if (this.pubNomeRef.current) this.pubNomeRef.current.value = c.nome || "";
       if (this.pubMsgRef.current) this.pubMsgRef.current.value = c.mensagem || "";
+      if (this.pubEsperaRef.current) this.pubEsperaRef.current.value = c.mensagemEspera || "";
+      if (this.pubApresRef.current) this.pubApresRef.current.value = c.apresentacao || "";
     }, 60);
   }
   componentWillUnmount() {
@@ -487,6 +506,7 @@ class Component extends DCLogic {
       por(this.fFormatoRef, c.formato); por(this.fDiaRef, c.dia);
       por(this.fHoraRef, c.hora); por(this.fDuracaoRef, c.duracao);
       por(this.fVagasRef, c.vagas ? String(c.vagas) : "");
+      por(this.fPrecoRef, c.preco);
       por(this.fLocalRef, c.formato === "presencial" ? c.local : c.link);
       por(this.fDescRef, c.descricao);
       por(this.fNivelRef, c.nivel); por(this.fFusoRef, c.fuso);
@@ -509,6 +529,7 @@ class Component extends DCLogic {
     return { nome: v(this.fNomeRef), professora: v(this.fProfRef), formato: formato,
       dia: v(this.fDiaRef), hora: v(this.fHoraRef), duracao: v(this.fDuracaoRef),
       vagas: v(this.fVagasRef), descricao: v(this.fDescRef),
+      preco: v(this.fPrecoRef),
       // Nível e fuso são trava de publicação: sem eles o cartão da
       // aluna sai dizendo "todos os níveis" numa hora sem lugar. Esta
       // tela publicava sem pedir nenhum dos dois.
@@ -573,7 +594,9 @@ class Component extends DCLogic {
       pubNota: "", pubChaveNota: "", pubTemPrevia: false, pubPrevia: "",
       pubSemTel: false, pubSalvou: false, pubHref: "catalogo.html",
       pubTelRef: this.pubTelRef, pubNomeRef: this.pubNomeRef,
-      pubMsgRef: this.pubMsgRef, onPubSalvar: () => {},
+      pubMsgRef: this.pubMsgRef, pubEsperaRef: this.pubEsperaRef,
+      pubApresRef: this.pubApresRef, pubApresNota: "", pubPreviaEspera: "",
+      onPubSalvar: () => {},
       formAberto: false, formTitulo: "", formErro: "", novoBotao: "+ novo clube",
       fProfs: [], fOnline: true, fPresencial: false,
       fNiveis: [], fFusos: [], fFusoNota: "", fSalvarLabel: "Salvar rascunho",
@@ -581,6 +604,7 @@ class Component extends DCLogic {
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      fPrecoRef: this.fPrecoRef,
       fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
       fNivelRef: this.fNivelRef, fFusoRef: this.fFusoRef,
       onNovo: () => {}, onFormato: () => {}, onGravarRascunho: () => {}, onPublicar: () => {} };
@@ -688,6 +712,7 @@ class Component extends DCLogic {
       fNomeRef: this.fNomeRef, fProfRef: this.fProfRef, fFormatoRef: this.fFormatoRef,
       fDiaRef: this.fDiaRef, fHoraRef: this.fHoraRef, fDuracaoRef: this.fDuracaoRef,
       fVagasRef: this.fVagasRef, fLocalRef: this.fLocalRef, fDescRef: this.fDescRef,
+      fPrecoRef: this.fPrecoRef,
       fEncontrosRef: this.fEncontrosRef, fMateriaisRef: this.fMateriaisRef,
       fNivelRef: this.fNivelRef, fFusoRef: this.fFusoRef,
       onFormato: (e) => this.setState({ formato: e.target.value }),
@@ -729,17 +754,24 @@ class Component extends DCLogic {
             + "agora. Ela mora em catalogo.html e pode ser embutida no site da escola. "
             + "Cada cartão abre o WhatsApp com a mensagem já escrita.",
           pubChaveNota: "Escreva {clube} onde o nome do clube deve entrar.",
+          pubApresNota: "Esta página mora dentro do site da escola. Em branco ela "
+            + "mostra só o título e os clubes, que combina com qualquer site; "
+            + "preenchido, o texto é seu.",
           pubTemPrevia: !!ct.whatsapp,
           pubPrevia: String(ct.mensagem || "").replace(/\{clube\}/g, exemplo),
+          pubPreviaEspera: String(ct.mensagemEspera || "").replace(/\{clube\}/g, exemplo),
           pubSemTel: !ct.whatsapp,
           pubSalvou: !!this.state.pubSalvou,
           pubHref: "catalogo.html",
           pubTelRef: this.pubTelRef, pubNomeRef: this.pubNomeRef,
-          pubMsgRef: this.pubMsgRef,
+          pubMsgRef: this.pubMsgRef, pubEsperaRef: this.pubEsperaRef,
+          pubApresRef: this.pubApresRef,
           onPubSalvar: () => {
             const v = (r) => (r.current && r.current.value) || "";
             CRM.setContatoPublico({ whatsapp: v(this.pubTelRef),
-              nome: v(this.pubNomeRef), mensagem: v(this.pubMsgRef) });
+              nome: v(this.pubNomeRef), mensagem: v(this.pubMsgRef),
+              mensagemEspera: v(this.pubEsperaRef),
+              apresentacao: v(this.pubApresRef) });
             this.setState({ pubSalvou: true });
             this.bump();
           }

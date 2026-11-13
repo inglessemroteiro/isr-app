@@ -131,6 +131,7 @@
   .nome { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
   .descricao { margin: 0; font-size: 14.5px; color: var(--tinta); flex: 1; }
   .fatos { font-size: 13px; color: var(--tinta-fraca); display: flex; flex-direction: column; gap: 3px; }
+  .fatos .preco { color: var(--tinta); font-weight: 700; font-size: 14px; }
   .barra { height: 7px; border-radius: 99px; background: var(--borda); overflow: hidden; }
   .barra > i { display: block; height: 7px; background: var(--marca); }
   .lotacao { font-size: 12.5px; color: var(--tinta-fraca); }
@@ -165,7 +166,7 @@
 <div class="envelope">
   <header class="topo">
     <h1>Clubes</h1>
-    <p id="chamada">Carregando…</p>
+    <p id="chamada" hidden></p>
   </header>
   <div id="filtros" class="filtros" hidden></div>
   <div id="alvo" class="recado">Carregando os clubes…</div>
@@ -204,11 +205,17 @@
     return d;
   }
 
-  function linkDoClube(contato, nomeDoClube) {
+  // Duas situações, duas mensagens. Clube com vaga: a pessoa quer
+  // entrar e precisa do nivelamento. Clube lotado: ela quer a lista
+  // de espera. A mesma frase nas duas faz quem recebe responder a
+  // coisa errada.
+  function linkDoClube(contato, nomeDoClube, lotado) {
     var n = soDigitos(contato && contato.whatsapp);
     if (!n) return "";
-    var msg = String((contato && contato.mensagem) || "")
-      .replace(/\{clube\}/g, nomeDoClube || "");
+    var base = lotado
+      ? ((contato && contato.mensagemEspera) || "")
+      : ((contato && contato.mensagem) || "");
+    var msg = String(base).replace(/\{clube\}/g, nomeDoClube || "");
     return "https://wa.me/" + n + "?text=" + encodeURIComponent(msg);
   }
 
@@ -247,13 +254,13 @@
 
   function lotacaoTexto(c) {
     if (!c.vagas) return c.inscritas + (c.inscritas === 1 ? " inscrita" : " inscritas");
-    if (c.lotado) return "sem vaga agora · " + c.inscritas + " de " + c.vagas;
+    if (c.lotado) return "Lotado";
     return c.livres + (c.livres === 1 ? " vaga" : " vagas")
       + " · " + c.inscritas + " de " + c.vagas;
   }
 
   function cartao(c, contato) {
-    var href = linkDoClube(contato, c.nome);
+    var href = linkDoClube(contato, c.nome, c.lotado);
     var pct = c.vagas ? Math.min(100, Math.round((c.inscritas / c.vagas) * 100)) : 0;
     var partes = [];
     partes.push('<article class="cartao">');
@@ -271,6 +278,9 @@
     if (quando(c)) partes.push("<span>" + escapar(quando(c)) + "</span>");
     var prox = proximoEncontro(c);
     if (prox.label) partes.push("<span>" + escapar(prox.label) + "</span>");
+    // o preço é a primeira pergunta de quem chega pelo site, e por
+    // isso sai destacado dos outros fatos
+    if (c.preco) partes.push('<span class="preco">' + escapar(c.preco) + "</span>");
     partes.push("</div>");
     // a barra, sem repetir o número: ele já está no selo de cima, e
     // dizer a mesma coisa duas vezes no mesmo cartão só ocupa espaço
@@ -304,7 +314,7 @@
     if (href) {
       partes.push('<a class="botao" href="' + escapar(href)
         + '" target="_blank" rel="noopener noreferrer">'
-        + (c.lotado ? "Entrar na lista de espera" : "Falar sobre o nivelamento")
+        + (c.lotado ? "Entrar na lista de espera" : "Participar")
         + "</a>");
     }
     partes.push("</article>");
@@ -390,9 +400,13 @@
 
   function pintar() {
     var lista = filtrados();
-    var total = (dados.clubes || []).length;
-    chamada.textContent = total === 1 ? "1 clube aberto. Vagas de agora."
-      : total + " clubes abertos. Vagas de agora.";
+    // O texto abaixo do título é o que a escola escreveu, ou nada.
+    // Uma frase gerada aqui — "N clubes abertos" — destoa do site em
+    // que a página mora, e quem lê não precisa do número: cada cartão
+    // já diz a vaga dele.
+    var ap = (dados.contato && dados.contato.apresentacao) || "";
+    chamada.textContent = ap;
+    chamada.hidden = !ap;
     montarFiltros();
     if (!lista.length) {
       alvo.className = "recado";
@@ -408,7 +422,7 @@
   function desenhar(d) {
     dados = d;
     if (!d.clubes.length) {
-      chamada.textContent = "";
+      chamada.hidden = true;
       texto(alvo, "Nenhum clube aberto agora.");
       return;
     }
@@ -422,7 +436,7 @@
   }
 
   function falhou(motivo) {
-    chamada.textContent = "";
+    chamada.hidden = true;
     alvo.className = "recado";
     texto(alvo, motivo === "sem_base"
       ? "O catálogo ainda não está ligado ao sistema da escola."

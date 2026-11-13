@@ -14102,6 +14102,18 @@
       // A bio aparece no cartão que a aluna vê: quem vai estar lá na
       // frente é metade da decisão de entrar num clube.
       bio: c.bio || "",
+      // O PREÇO DO CATÁLOGO PÚBLICO.
+      //
+      // Para a aluna matriculada, clube não tem preço próprio: o plano
+      // inclui alguns e os seguintes têm um valor só. Mas quem chega
+      // pelo site não tem plano nenhum, e "quanto custa" é a primeira
+      // pergunta dela.
+      //
+      // Texto livre, não número, porque a escola cobra em real e em
+      // euro e o período varia — "R$ 120 por ciclo" e "€ 30/mês" são
+      // os dois legítimos. Vazio quer dizer "não mostre preço", que é
+      // o certo para clube que só existe dentro do plano.
+      preco: String(c.preco || "").trim().slice(0, 40),
       // "New" não é um campo que alguém marca e esquece de desmarcar:
       // é a data em que o clube foi publicado.
       publicadoEm: c.publicadoEm || "",
@@ -15089,9 +15101,22 @@
   // um catálogo sem botão não serve para o que ele existe. A escola
   // troca na tela de Clubes quando quiser — este é só o ponto de
   // partida, e é um contato comercial, feito para ser público.
+  // A APRESENTAÇÃO é o texto abaixo do título na página pública, e
+  // nasce vazio de propósito. A página mora dentro do site da escola,
+  // que tem uma voz própria — e um texto escrito aqui por outra
+  // pessoa destoa dela. Vazio, a página mostra só o título e os
+  // clubes, que é melhor do que uma frase que não combina.
+  //
+  // São duas mensagens porque são duas situações. Clube com vaga: a
+  // pessoa quer entrar e precisa do nivelamento. Clube lotado: ela
+  // quer a lista de espera. A mesma frase nas duas faz quem recebe
+  // responder a coisa errada.
   var CONTATO_PUB_PADRAO = {
     nome: "Carla", whatsapp: "5511910142216",
-    mensagem: "Oi, Carla! Estou interessado no clube {clube}, podemos fazer meu nivelamento?"
+    apresentacao: "",
+    mensagem: "Oi, Carla! Quero participar do clube {clube}. Podemos fazer o meu nivelamento?",
+    mensagemEspera: "Oi, Carla! Quero participar do clube {clube}. "
+      + "Você pode me colocar na lista de espera?"
   };
   function contatoPublico() {
     try {
@@ -15104,8 +15129,17 @@
     var m = contatoPublico();
     if (patch && typeof patch.nome === "string") m.nome = patch.nome.trim().slice(0, 80);
     if (patch && typeof patch.whatsapp === "string") m.whatsapp = patch.whatsapp.trim().slice(0, 30);
+    // a apresentação pode ser apagada de propósito: string vazia é uma
+    // escolha, não um campo não preenchido
+    if (patch && typeof patch.apresentacao === "string") {
+      m.apresentacao = patch.apresentacao.trim().slice(0, 300);
+    }
     if (patch && typeof patch.mensagem === "string") {
       m.mensagem = patch.mensagem.trim().slice(0, 300) || CONTATO_PUB_PADRAO.mensagem;
+    }
+    if (patch && typeof patch.mensagemEspera === "string") {
+      m.mensagemEspera = patch.mensagemEspera.trim().slice(0, 300)
+        || CONTATO_PUB_PADRAO.mensagemEspera;
     }
     try { localStorage.setItem(CONTATO_PUB_KEY, JSON.stringify(m)); } catch (e) {}
     agendarSync();
@@ -15114,12 +15148,16 @@
   // O link que a página pública monta para um clube. Fica aqui para a
   // tela da escola conseguir mostrar a prévia exata do que a pessoa
   // vai receber — e não uma aproximação escrita à mão.
-  function linkPublicoDoClube(nomeDoClube, contato) {
+  //
+  // "lotado" escolhe a mensagem: quem clica num clube sem vaga está
+  // pedindo lista de espera, não nivelamento.
+  function linkPublicoDoClube(nomeDoClube, contato, lotado) {
     var c = contato || contatoPublico();
     if (!c.whatsapp) return "";
-    var msg = String(c.mensagem || CONTATO_PUB_PADRAO.mensagem)
-      .replace(/\{clube\}/g, String(nomeDoClube || ""));
-    return waLink(c.whatsapp, msg);
+    var base = lotado
+      ? (c.mensagemEspera || CONTATO_PUB_PADRAO.mensagemEspera)
+      : (c.mensagem || CONTATO_PUB_PADRAO.mensagem);
+    return waLink(c.whatsapp, String(base).replace(/\{clube\}/g, String(nomeDoClube || "")));
   }
 
   var BOOKCLUB_KEY = "isr_bookclub_v1";
