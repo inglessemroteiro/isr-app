@@ -336,6 +336,13 @@
             <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em;">{{ sg.tema }}</span>
             <span class="isr-selo" style="font-size: 11px; background: var(--color-secondary-100); color: var(--color-primary-900); padding: 3px 10px">{{ sg.quantasLabel }}</span>
           </div>
+          <!-- Pedidos escritos de formas diferentes caem no mesmo
+               grupo quando dividem a palavra que os distingue. Mostrar
+               as redações é o que permite conferir se o agrupamento
+               acertou — e perceber quando não acertou. -->
+          <sc-if value="{{ sg.temRedacoes }}">
+            <div style="font-size: 12.5px; color: var(--color-tertiary-500); line-height: 1.5;">Pedido como: {{ sg.redacoes }}</div>
+          </sc-if>
           <div style="display: flex; gap: 18px; flex-wrap: wrap;">
             <div>
               <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500);">dia mais pedido</div>
@@ -752,6 +759,8 @@ class Component extends DCLogic {
         return {
           tema: g.tema,
           quantasLabel: g.quantas === 1 ? "1 aluna" : g.quantas + " alunas",
+          temRedacoes: (g.redacoes || []).length > 1,
+          redacoes: (g.redacoes || []).join(" · "),
           dia: comN(g.diaMaisPedido, "tanto faz"),
           hora: comN(g.horaMaisPedida, "tanto faz"),
           professora: comN(g.professoraMaisPedida, "tanto faz"),

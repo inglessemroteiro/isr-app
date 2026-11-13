@@ -80,10 +80,11 @@ const P = require("./preparar.js");
   console.log("\n— há um teto de sugestões abertas por aluna —");
   const teto = await p.evaluate((alunaId) => {
     const C = window.ISRCRM;
-    const r = [];
-    for (let i = 0; i < 6; i++) {
-      r.push(C.sugerirClube(alunaId, { tema: "Tema " + i + " Teste" }));
-    }
+    // seis assuntos sem palavra em comum: com temas parecidos o
+    // sistema atualizaria o mesmo pedido em vez de abrir seis, e o
+    // teto nunca seria alcançado
+    const r = ["Culinária", "Jardinagem", "Astronomia", "Xadrez",
+      "Fotografia", "Marcenaria"].map(t => C.sugerirClube(alunaId, { tema: t }));
     const ultima = r[r.length - 1];
     return { aceitas: r.filter(x => x.ok).length,
       recusou: !ultima.ok, erro: ultima.erro || "" };
@@ -121,6 +122,64 @@ const P = require("./preparar.js");
   T("e quem não disse o dia é contado como sem preferência",
     grupos.semPrefDia === 0, grupos);
 
+  console.log("\n— e junta o mesmo assunto escrito com outras palavras —");
+  // Este é o caso real: ninguém escreve a mesma frase. O que
+  // distingue um pedido do outro é a palavra rara — "entrevista" —,
+  // não "inglês" nem "para", que aparecem em quase todos.
+  const parecidos = await p.evaluate(() => {
+    const C = window.ISRCRM;
+    const alunas = C.getPessoas().filter(x => x.status === "aluna").slice(6, 10);
+    C.sugerirClube(alunas[0].id, { tema: "inglês para entrevista", dia: "segunda" });
+    C.sugerirClube(alunas[1].id, { tema: "Inglês para entrevistas de emprego", dia: "segunda" });
+    C.sugerirClube(alunas[2].id, { tema: "Entrevista em inglês" });
+    // e um que NÃO é o mesmo assunto, só porque também diz "inglês"
+    C.sugerirClube(alunas[3].id, { tema: "inglês para viagem" });
+    const gs = C.sugestoesAgrupadas();
+    const entrevista = gs.filter(g => /entrevista/i.test(g.tema))[0] || null;
+    const viagem = gs.filter(g => /viagem/i.test(g.tema))[0] || null;
+    const tres = ["inglês para entrevista", "Inglês para entrevistas de emprego",
+      "Entrevista em inglês"];
+    return {
+      gruposComEntrevista: gs.filter(g => /entrevista/i.test(g.tema)).length,
+      entrevistaN: entrevista ? entrevista.quantas : 0,
+      temAsTres: !!entrevista
+        && tres.every(t => entrevista.redacoes.indexOf(t) >= 0),
+      viagemN: viagem ? viagem.quantas : 0,
+      viagemSeparado: !!viagem && !/entrevista/i.test(viagem.tema)
+    };
+  });
+  T("as redações de entrevista viram um grupo só",
+    parecidos.gruposComEntrevista === 1 && parecidos.entrevistaN >= 3, parecidos);
+  T("e o grupo guarda cada redação original, para conferir",
+    parecidos.temAsTres, parecidos);
+  T("\"inglês para viagem\" NÃO entra nesse grupo",
+    parecidos.viagemN === 1 && parecidos.viagemSeparado, parecidos);
+
+  console.log("\n— e não junta o que só divide palavra comum —");
+  const soComuns = await p.evaluate(() => {
+    const C = window.ISRCRM;
+    const junta = (a, b) => {
+      // a regra crua, sem passar pelos dados
+      const g = C.sugestoesAgrupadas;
+      return { a: a, b: b };
+    };
+    // conferido pelo agrupamento de verdade, com duas alunas novas
+    const alunas = C.getPessoas().filter(x => x.status === "aluna").slice(10, 12);
+    if (alunas.length < 2) return { pulou: true };
+    C.sugerirClube(alunas[0].id, { tema: "conversa de inglês para o trabalho" });
+    C.sugerirClube(alunas[1].id, { tema: "aula de inglês sobre arquitetura" });
+    const gs = C.sugestoesAgrupadas();
+    return {
+      pulou: false,
+      trabalho: (gs.filter(g => /trabalho/i.test(g.tema))[0] || {}).quantas || 0,
+      arquitetura: (gs.filter(g => /arquitetura/i.test(g.tema))[0] || {}).quantas || 0
+    };
+  });
+  if (!soComuns.pulou) {
+    T("\"inglês\", \"para\" e \"aula\" não bastam para juntar",
+      soComuns.trabalho === 1 && soComuns.arquitetura === 1, soComuns);
+  }
+
   console.log("\n— a tela da escola mostra o grupo, não o pedido solto —");
   await p.reload();
   await p.waitForTimeout(2800);
@@ -144,10 +203,15 @@ const P = require("./preparar.js");
   const fechou = await p.evaluate(() => {
     const C = window.ISRCRM;
     const antes = C.sugestoesAgrupadas().filter(g => /business/i.test(g.tema)).length;
-    const bt = [...document.querySelectorAll("main button")]
+    // o botão DO grupo de Business: a ordem da lista muda conforme os
+    // grupos crescem, então clicar no primeiro da tela pegaria outro
+    const sec = [...document.querySelectorAll("main section")]
+      .filter(s => /Business/i.test(s.innerText)
+        && /Abri este clube/.test(s.innerText))[0];
+    const bt = sec && [...sec.querySelectorAll("button")]
       .filter(x => x.textContent.trim() === "Abri este clube")[0];
     if (bt) bt.click();
-    return { antes: antes };
+    return { antes: antes, achou: !!bt };
   });
   await p.waitForTimeout(900);
   const depoisDeAbrir = await p.evaluate((trio) => {

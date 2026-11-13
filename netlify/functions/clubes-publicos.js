@@ -125,11 +125,19 @@ exports.handler = async (event) => {
       // código, para a escola trocar o número sem publicar o site de
       // novo. Vazio significa "não mostre o botão": melhor um cartão
       // sem botão do que um botão que abre uma conversa com ninguém.
-      contato: {
-        nome: primeiroNome((dados.contatoPublico || {}).nome),
-        whatsapp: texto((dados.contatoPublico || {}).whatsapp, 30),
-        mensagem: texto((dados.contatoPublico || {}).mensagem, 300)
-      },
+      contato: (function () {
+        const c = dados.contatoPublico || {};
+        // A base pode não ter o contato ainda — ela só ganha o campo
+        // quando alguém salva a configuração pela primeira vez. Até
+        // lá vale o padrão, senão a página fica sem botão por uma
+        // configuração que ninguém sabia que precisava abrir.
+        return {
+          nome: primeiroNome(c.nome || "Carla"),
+          whatsapp: texto(c.whatsapp || "551191014226", 30),
+          mensagem: texto(c.mensagem || "Oi, Carla! Estou interessado no clube "
+            + "{clube}, podemos fazer meu nivelamento?", 300)
+        };
+      })(),
       clubes: publicados
     });
   } catch (err) {

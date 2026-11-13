@@ -67,6 +67,7 @@ function carregarCom(url) {
       { id: "cl2", nome: "Chef Traditions", status: "rascunho",
         descricao: "Ainda não foi publicado.", vagas: 6, membros: [] },
       { id: "cl3", nome: "Book Club", status: "publicado",
+        nivel: "A partir do B1",
         descricao: "Um livro por ciclo.", professora: "Gabi",
         formato: "presencial", dia: "sábado", hora: "10:00",
         vagas: 4, membros: ["p4", "p5", "p6", "p7"],
@@ -182,7 +183,129 @@ function carregarCom(url) {
   T("e o clube cheio convida para a lista de espera",
     tela.botoes.some(x => /lista de espera/i.test(x.texto)), tela.botoes);
 
+  console.log("\n— os filtros só aparecem quando filtram algo —");
+  // Com os dois clubes de níveis diferentes e formatos diferentes, os
+  // dois filtros valem. O filtro de uma opção só não filtra nada.
+  const comFiltros = await pg.evaluate(() => {
+    const grupos = [...document.querySelectorAll(".filtro")].map(f => ({
+      rotulo: f.querySelector("span").textContent.trim(),
+      opcoes: [...f.querySelectorAll("button")].map(b => b.textContent.trim())
+    }));
+    return { escondido: document.getElementById("filtros").hidden, grupos: grupos };
+  });
+  T("os dois filtros aparecem", comFiltros.escondido === false
+    && comFiltros.grupos.length === 2, comFiltros);
+  T("nível traz as opções que existem, mais \"todos\"",
+    (comFiltros.grupos.filter(g => g.rotulo === "nível")[0] || {}).opcoes
+      .indexOf("todos") === 0, comFiltros.grupos);
+  T("e onde separa online de presencial",
+    (comFiltros.grupos.filter(g => g.rotulo === "onde")[0] || {}).opcoes
+      .join(",") === "todos,online,presencial", comFiltros.grupos);
+
+  const filtrou = await pg.evaluate(() => {
+    const onde = [...document.querySelectorAll(".filtro")]
+      .filter(f => f.querySelector("span").textContent.trim() === "onde")[0];
+    const bt = [...onde.querySelectorAll("button")]
+      .filter(b => b.textContent.trim() === "presencial")[0];
+    bt.click();
+    // a barra é redesenhada no clique, então a pílula é procurada de
+    // novo: o nó de antes já saiu da tela
+    const agora = [...document.querySelectorAll(".filtro button")]
+      .filter(b => b.textContent.trim() === "presencial")[0];
+    return {
+      cartoes: document.querySelectorAll("article.cartao").length,
+      texto: document.body.innerText.replace(/\s+/g, " "),
+      marcado: agora && agora.getAttribute("aria-pressed")
+    };
+  });
+  T("filtrar por presencial deixa só o presencial",
+    filtrou.cartoes === 1 && /Book Club/.test(filtrou.texto)
+    && !/Movie Lovers/.test(filtrou.texto), filtrou);
+  T("e a pílula escolhida fica marcada", filtrou.marcado === "true", filtrou);
+
+  const semResultado = await pg.evaluate(() => {
+    // presencial continua marcado; somar um nível que só o online tem
+    const nivel = [...document.querySelectorAll(".filtro")]
+      .filter(f => f.querySelector("span").textContent.trim() === "nível")[0];
+    const bt = [...nivel.querySelectorAll("button")]
+      .filter(b => /A2/.test(b.textContent))[0];
+    if (bt) bt.click();
+    return { cartoes: document.querySelectorAll("article.cartao").length,
+      texto: document.body.innerText.replace(/\s+/g, " ") };
+  });
+  T("cruzamento sem resultado diz isso, em vez de ficar vazio",
+    semResultado.cartoes === 0 && /Nenhum clube com esses filtros/.test(semResultado.texto),
+    semResultado.texto.slice(0, 300));
+
+  console.log("\n— o cartão diz quando o clube começa —");
+  await pg.reload();
+  await pg.waitForTimeout(1500);
+  const comecaEm = await pg.evaluate(() => {
+    const t = document.body.innerText.replace(/\s+/g, " ");
+    return { texto: t, temContagem: /2 clubes abertos\. Vagas de agora\./.test(t) };
+  });
+  T("o topo diz quantos clubes há e que a vaga é de agora",
+    comecaEm.temContagem, comecaEm.texto.slice(0, 200));
+  T("e o cartão com encontro futuro diz quando começa",
+    /começa \d+ \w{3}/.test(comecaEm.texto), comecaEm.texto.slice(0, 600));
+
+  console.log("\n— e a data de CADA encontro, para a pessoa se organizar —");
+  const agenda = await pg.evaluate(() => {
+    const li = [...document.querySelectorAll(".temas li")].map(x => ({
+      texto: x.textContent.trim(), passou: x.className === "passou",
+      temData: !!x.querySelector("b")
+    }));
+    return li;
+  });
+  T("cada encontro vira uma linha com data e tema",
+    agenda.length >= 2 && agenda.every(x => x.temData), agenda);
+  T("as duas datas do clube aparecem",
+    agenda.some(x => /Cinema Paradiso/.test(x.texto))
+    && agenda.some(x => /Central do Brasil/.test(x.texto)), agenda);
+  T("escritas por extenso, não em formato de banco",
+    agenda.every(x => !/\d{4}-\d{2}-\d{2}/.test(x.texto)), agenda);
+
+  console.log("\n— encontro que já passou fica, apagado —");
+  const comPassado = JSON.parse(JSON.stringify(r.d));
+  comPassado.clubes.filter(c => c.nome === "Movie Lovers")[0].encontros = [
+    { n: 1, tema: "Já aconteceu", quando: "2020-03-10" },
+    { n: 2, tema: "Ainda vem", quando: "2099-03-10" }
+  ];
+  await servir(comPassado);
+  await pg.reload();
+  await pg.waitForTimeout(1500);
+  const passados = await pg.evaluate(() =>
+    [...document.querySelectorAll(".temas li")].map(x => ({
+      texto: x.textContent.trim(), passou: x.className === "passou" })));
+  T("o encontro antigo continua na lista",
+    passados.some(x => /Já aconteceu/.test(x.texto)), passados);
+  T("marcado como passado",
+    passados.filter(x => /Já aconteceu/.test(x.texto))[0].passou === true, passados);
+  T("e o que ainda vem não é marcado",
+    passados.filter(x => /Ainda vem/.test(x.texto))[0].passou === false, passados);
+  await servir(r.d);
+  await pg.reload();
+  await pg.waitForTimeout(1200);
+
+  console.log("\n— só um nível e um formato: nenhum filtro —");
+  const umSo = JSON.parse(JSON.stringify(r.d));
+  umSo.clubes = umSo.clubes.slice(0, 1);
+  await servir(umSo);
+  await pg.reload();
+  await pg.waitForTimeout(1500);
+  const semFiltro = await pg.evaluate(() => ({
+    escondido: document.getElementById("filtros").hidden,
+    texto: document.body.innerText.replace(/\s+/g, " ")
+  }));
+  T("com um clube só, a barra de filtros não aparece",
+    semFiltro.escondido === true, semFiltro);
+  T("e o topo fala no singular",
+    /1 clube aberto\./.test(semFiltro.texto), semFiltro.texto.slice(0, 200));
+
   console.log("\n— sem número configurado, não há botão —");
+  await servir(r.d);
+  await pg.reload();
+  await pg.waitForTimeout(1200);
   const semTel = JSON.parse(JSON.stringify(r.d));
   semTel.contato.whatsapp = "";
   await servir(semTel);

@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-b",
+  numero: "2026.11.13-c",
   data: "13/11/2026",
-  nota: "O catálogo dos clubes numa página aberta"
+  nota: "As datas dos encontros, os filtros e o agrupamento por assunto"
 };
