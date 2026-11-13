@@ -266,6 +266,54 @@
       </div>
     </sc-if>
 
+    <!-- A PÁGINA PÚBLICA DO CATÁLOGO -->
+    <!-- O catálogo também tem uma versão aberta, para o site da
+         escola. Ela mostra os clubes publicados com a lotação de
+         agora, e cada cartão tem um botão que abre o WhatsApp com a
+         mensagem já escrita. O número e a frase moram aqui, e não no
+         código da página: trocar não pode depender de publicar o
+         site de novo. Sem número, a página mostra os clubes sem
+         botão — melhor do que um botão que abre conversa com
+         ninguém. -->
+    <sc-if value="{{ porCatalogo }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <div style="font-size: 15px; font-weight: 600;">A página pública</div>
+          <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55; margin-top: 3px;">{{ pubNota }}</div>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1 1 190px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">whatsapp de quem atende</div>
+            <input class="isr-campo" ref="{{ pubTelRef }}" placeholder="+55 11 90000-0000" style="width: 100%; padding: 11px 14px; font-size: 14px;" />
+          </div>
+          <div style="flex: 1 1 150px; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">quem atende</div>
+            <input class="isr-campo" ref="{{ pubNomeRef }}" placeholder="Carla" style="width: 100%; padding: 11px 14px; font-size: 14px;" />
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500); margin-bottom: 5px;">a mensagem que já vai escrita</div>
+          <input class="isr-campo" ref="{{ pubMsgRef }}" style="width: 100%; padding: 11px 14px; font-size: 14px;" />
+          <div style="font-size: 12px; color: var(--color-tertiary-500); margin-top: 4px;">{{ pubChaveNota }}</div>
+        </div>
+        <sc-if value="{{ pubTemPrevia }}">
+          <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 12px 14px; font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">
+            <strong style="color: var(--color-primary-900);">Vai chegar assim:</strong> {{ pubPrevia }}
+          </div>
+        </sc-if>
+        <sc-if value="{{ pubSemTel }}">
+          <div style="background: var(--color-warning-light); border-radius: 14px; padding: 12px 14px; font-size: 13px; color: var(--color-warning-dark); line-height: 1.55;">Sem o WhatsApp preenchido, a página mostra os clubes sem o botão de conversa.</div>
+        </sc-if>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ onPubSalvar }}" style="font-size: 13px; font-weight: 700; padding: 10px 17px">Salvar o contato</button>
+          <a class="lk" href="{{ pubHref }}" target="_blank" rel="noopener" style="font-size: 13px; font-weight: 600; color: var(--color-primary-500);">abrir a página pública →</a>
+        </div>
+        <sc-if value="{{ pubSalvou }}">
+          <div style="font-size: 13px; color: var(--color-success-dark); font-weight: 600;">Contato salvo.</div>
+        </sc-if>
+      </section>
+    </sc-if>
+
     <!-- SUGESTÕES DAS ALUNAS -->
     <!-- A lista de espera diz quem quer um clube que já existe. Esta
          tela diz o que ainda não foi aberto e tem gente esperando.
@@ -346,7 +394,9 @@ class Component extends DCLogic {
   // plano, do terceiro em diante ela paga. Quem decide quais dois é a
   // ordem de entrada, que o crm-data carimba.
   state = { tick: 0, visao: "clube", aberto: "", form: null, formErro: "",
-    formato: "online", aviso: {} };
+    formato: "online", aviso: {},
+    // o contato da página pública acabou de ser salvo
+    pubSalvou: false };
   fNomeRef = React.createRef(); fProfRef = React.createRef();
   fFormatoRef = React.createRef(); fDiaRef = React.createRef();
   fHoraRef = React.createRef(); fDuracaoRef = React.createRef();
@@ -354,6 +404,9 @@ class Component extends DCLogic {
   fDescRef = React.createRef();
   fNivelRef = React.createRef(); fFusoRef = React.createRef();
   fEncontrosRef = React.createRef(); fMateriaisRef = React.createRef();
+  // o contato da página pública
+  pubTelRef = React.createRef(); pubNomeRef = React.createRef();
+  pubMsgRef = React.createRef();
 
   bump() { this.setState(s => ({ tick: s.tick + 1 })); }
 
@@ -361,6 +414,21 @@ class Component extends DCLogic {
     this.onDados = () => this.bump();
     window.addEventListener("isr-dados", this.onDados);
     window.addEventListener("isr-dados-novos", this.onDados);
+    this.preencherContato();
+  }
+  // Os três campos do contato público vivem em refs, como o resto do
+  // formulário desta tela. Eles são escritos uma vez, depois que a
+  // tela desenha — reescrever a cada render apagaria o que a pessoa
+  // está digitando.
+  preencherContato() {
+    setTimeout(() => {
+      const CRM = window.ISRCRM;
+      if (!CRM || !CRM.contatoPublico) return;
+      const c = CRM.contatoPublico();
+      if (this.pubTelRef.current) this.pubTelRef.current.value = c.whatsapp || "";
+      if (this.pubNomeRef.current) this.pubNomeRef.current.value = c.nome || "";
+      if (this.pubMsgRef.current) this.pubMsgRef.current.value = c.mensagem || "";
+    }, 60);
   }
   componentWillUnmount() {
     window.removeEventListener("isr-dados", this.onDados);
@@ -495,6 +563,10 @@ class Component extends DCLogic {
       porClube: true, porAluna: false, semClube: true, semAluna: true,
       porCatalogo: false, semCatalogo: true, catalogo: [], catalogoNota: "",
       porSugestoes: false, semSugestoes: true, sugestoes: [], sugNota: "",
+      pubNota: "", pubChaveNota: "", pubTemPrevia: false, pubPrevia: "",
+      pubSemTel: false, pubSalvou: false, pubHref: "catalogo.html",
+      pubTelRef: this.pubTelRef, pubNomeRef: this.pubNomeRef,
+      pubMsgRef: this.pubMsgRef, onPubSalvar: () => {},
       formAberto: false, formTitulo: "", formErro: "", novoBotao: "+ novo clube",
       fProfs: [], fOnline: true, fPresencial: false,
       fNiveis: [], fFusos: [], fFusoNota: "", fSalvarLabel: "Salvar rascunho",
@@ -637,6 +709,35 @@ class Component extends DCLogic {
       porClube: this.state.visao === "clube",
       porAluna: this.state.visao === "aluna",
       semClube: cs.length === 0,
+
+      // ── A PÁGINA PÚBLICA ──
+      ...(() => {
+        const ct = CRM.contatoPublico ? CRM.contatoPublico() : { whatsapp: "", mensagem: "" };
+        // a prévia usa um clube de verdade, porque é o {clube} trocado
+        // que a pessoa precisa conferir, não a frase com a chave crua
+        const exemplo = (cs.filter(c => c.status === "publicado")[0] || {}).nome
+          || "Book Club";
+        return {
+          pubNota: "Os clubes publicados aparecem numa página aberta, com a lotação de "
+            + "agora. Ela mora em catalogo.html e pode ser embutida no site da escola. "
+            + "Cada cartão abre o WhatsApp com a mensagem já escrita.",
+          pubChaveNota: "Escreva {clube} onde o nome do clube deve entrar.",
+          pubTemPrevia: !!ct.whatsapp,
+          pubPrevia: String(ct.mensagem || "").replace(/\{clube\}/g, exemplo),
+          pubSemTel: !ct.whatsapp,
+          pubSalvou: !!this.state.pubSalvou,
+          pubHref: "catalogo.html",
+          pubTelRef: this.pubTelRef, pubNomeRef: this.pubNomeRef,
+          pubMsgRef: this.pubMsgRef,
+          onPubSalvar: () => {
+            const v = (r) => (r.current && r.current.value) || "";
+            CRM.setContatoPublico({ whatsapp: v(this.pubTelRef),
+              nome: v(this.pubNomeRef), mensagem: v(this.pubMsgRef) });
+            this.setState({ pubSalvou: true });
+            this.bump();
+          }
+        };
+      })(),
 
       // ── AS SUGESTÕES ──
       porSugestoes: this.state.visao === "sugestoes",

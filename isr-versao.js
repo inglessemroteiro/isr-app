@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-a",
+  numero: "2026.11.13-b",
   data: "13/11/2026",
-  nota: "A aluna diz qual clube ela quer que exista"
+  nota: "O catálogo dos clubes numa página aberta"
 };

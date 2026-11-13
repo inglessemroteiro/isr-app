@@ -6533,6 +6533,8 @@
       // configurações que o app da aluna lê: sem elas no payload, o grupo
       // da assinatura e o Book Club nunca chegavam ao aparelho da aluna
       assinaturaCfg: assinaturaCfg(), bookclub: bookclubUrl(), bookclubAula: bookclubAula(),
+      // o contato que a página pública do catálogo usa no botão
+      contatoPublico: contatoPublico(),
       // o que a aluna escreve no aparelho dela: sem isto no payload, a
       // nota da aula e o cofre de palavras morriam ao trocar de celular
       caderno: cadernoAll(), palavras: palavrasAll(),
@@ -6594,6 +6596,7 @@
     if (d.ciclos) { try { localStorage.setItem(CICLOS_KEY, JSON.stringify(d.ciclos)); } catch (e) {} janelasCache = null; }
     if (d.assinaturaCfg) { try { localStorage.setItem(ASSIN_CFG_KEY, JSON.stringify(d.assinaturaCfg)); } catch (e) {} }
     if (d.bookclub) { try { localStorage.setItem(BOOKCLUB_KEY, String(d.bookclub)); } catch (e) {} }
+    if (d.contatoPublico) { try { localStorage.setItem(CONTATO_PUB_KEY, JSON.stringify(d.contatoPublico)); } catch (e) {} }
     if (d.bookclubAula) { try { localStorage.setItem("isr_bookclub_aula_v1", JSON.stringify(d.bookclubAula)); } catch (e) {} }
     if (d.cambio) { try { localStorage.setItem(CAMBIO_KEY, String(d.cambio)); } catch (e) {} }
   }
@@ -6665,6 +6668,8 @@
       planos: mesclarMapa(local.planos, remoto.planos),
       materiais: mesclarMapa(local.materiais, remoto.materiais),
       assinaturaCfg: local.assinaturaCfg, bookclub: local.bookclub, bookclubAula: local.bookclubAula,
+      // configuração curta, sem carimbo por campo: vale a última edição
+      contatoPublico: local.contatoPublico,
       cambio: local.cambio,
       atualizadoEm: new Date().toISOString(),
       por: (gestaoUser() || {}).email || ""
@@ -14967,6 +14972,53 @@
     return { ok: true };
   }
 
+  // ── O CONTATO DA PÁGINA PÚBLICA ───────────────────────────────
+  //
+  // A página do catálogo no site da escola é aberta: quem a vê ainda
+  // não é aluna. O botão de cada clube abre uma conversa no WhatsApp
+  // com quem cuida de matrícula, com a mensagem já escrita.
+  //
+  // Mora aqui, e não no código da página, porque trocar o número ou a
+  // frase é decisão da escola e não pode depender de publicar o site
+  // de novo. Vazio significa "não mostre o botão": melhor um cartão
+  // sem botão do que um botão que abre conversa com ninguém.
+  //
+  // {clube} na mensagem é trocado pelo nome do clube que a pessoa
+  // clicou. Sem isso, quem recebe não sabe de qual clube se trata.
+  var CONTATO_PUB_KEY = "isr_contato_publico_v1";
+  var CONTATO_PUB_PADRAO = {
+    nome: "", whatsapp: "",
+    mensagem: "Oi! Estou interessado no clube {clube}, podemos fazer meu nivelamento?"
+  };
+  function contatoPublico() {
+    try {
+      var m = JSON.parse(localStorage.getItem(CONTATO_PUB_KEY));
+      if (m && typeof m === "object") return Object.assign({}, CONTATO_PUB_PADRAO, m);
+    } catch (e) {}
+    return Object.assign({}, CONTATO_PUB_PADRAO);
+  }
+  function setContatoPublico(patch) {
+    var m = contatoPublico();
+    if (patch && typeof patch.nome === "string") m.nome = patch.nome.trim().slice(0, 80);
+    if (patch && typeof patch.whatsapp === "string") m.whatsapp = patch.whatsapp.trim().slice(0, 30);
+    if (patch && typeof patch.mensagem === "string") {
+      m.mensagem = patch.mensagem.trim().slice(0, 300) || CONTATO_PUB_PADRAO.mensagem;
+    }
+    try { localStorage.setItem(CONTATO_PUB_KEY, JSON.stringify(m)); } catch (e) {}
+    agendarSync();
+    return contatoPublico();
+  }
+  // O link que a página pública monta para um clube. Fica aqui para a
+  // tela da escola conseguir mostrar a prévia exata do que a pessoa
+  // vai receber — e não uma aproximação escrita à mão.
+  function linkPublicoDoClube(nomeDoClube, contato) {
+    var c = contato || contatoPublico();
+    if (!c.whatsapp) return "";
+    var msg = String(c.mensagem || CONTATO_PUB_PADRAO.mensagem)
+      .replace(/\{clube\}/g, String(nomeDoClube || ""));
+    return waLink(c.whatsapp, msg);
+  }
+
   var BOOKCLUB_KEY = "isr_bookclub_v1";
   function bookclubUrl() {
     try { return localStorage.getItem(BOOKCLUB_KEY) || "https://app.inglessemroteiro.com.br"; }
@@ -18364,6 +18416,9 @@
     apagarSugestaoDeClube: apagarSugestaoDeClube,
     marcarSugestaoDeClube: marcarSugestaoDeClube,
     sugestoesAgrupadas: sugestoesAgrupadas, DIAS_DA_SEMANA: DIAS_DA_SEMANA,
+    // a página pública do catálogo
+    contatoPublico: contatoPublico, setContatoPublico: setContatoPublico,
+    linkPublicoDoClube: linkPublicoDoClube,
     CLUBES_INCLUIDOS: CLUBES_INCLUIDOS,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,
