@@ -420,6 +420,82 @@
               </section>
             </sc-for>
           </div>
+
+          <!-- ══ SUGERIR UM CLUBE ══════════════════════════════
+               A lista de espera diz que a aluna quer um clube que já
+               existe. Não diz nada sobre o que ainda não foi aberto —
+               e é essa a informação que falta para decidir a grade.
+               Tema, quem conduz, dia e horário: o tema é obrigatório,
+               o resto é preferência, e preferência em branco também
+               é resposta. -->
+          <section style="background:var(--color-neutral-0);border-radius:28px;padding:24px 26px;display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="font-size:19px;font-weight:800;letter-spacing:-0.03em;color:var(--color-primary-900)">{{ L.sgTitulo }}</div>
+              <div style="font-size:14px;color:var(--color-primary-800);line-height:1.55;margin-top:4px">{{ L.sgNota }}</div>
+            </div>
+
+            <sc-if value="{{ sgTemMinhas }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700)">{{ L.sgMinhas }}</div>
+                <sc-for list="{{ sgMinhas }}" as="sg" hint-placeholder-count="3">
+                  <div style="background:var(--color-bg-default);border-radius:16px;padding:12px 15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                    <div style="flex:1 1 180px;min-width:0">
+                      <div style="font-size:14.5px;font-weight:700;color:var(--color-primary-900)">{{ sg.tema }}</div>
+                      <div style="font-size:12.5px;color:var(--color-tertiary-700);margin-top:2px">{{ sg.detalhe }}</div>
+                    </div>
+                    <span style="flex:none;border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:800;background:{{ sg.selBg }};color:{{ sg.selFg }}">{{ sg.selo }}</span>
+                    <span onclick="{{ sg.onApagar }}" style="flex:none;font-size:12.5px;font-weight:700;color:var(--color-text-light);cursor:pointer">{{ L.sgApagar }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ sgFechado }}">
+              <div onclick="{{ onSgAbrir }}" style="background:var(--color-bg-default);border-radius:999px;padding:13px 18px;font-size:14px;color:var(--color-tertiary-700);cursor:pointer">{{ L.sgComecar }}</div>
+            </sc-if>
+
+            <sc-if value="{{ sgAberto }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-bottom:5px">{{ L.sgTema }}</div>
+                  <input ref="{{ sgTemaRef }}" placeholder="{{ L.sgTemaPh }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:16px;padding:13px 16px;font-size:15px;font-family:inherit;background:var(--color-bg-default);color:var(--color-primary-900)" />
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                  <div style="flex:1 1 150px;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-bottom:5px">{{ L.sgDia }}</div>
+                    <select ref="{{ sgDiaRef }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:16px;padding:13px 14px;font-size:15px;font-family:inherit;background:var(--color-bg-default);color:var(--color-primary-900)">
+                      <sc-for list="{{ sgDias }}" as="d" hint-placeholder-count="8">
+                        <option value="{{ d.v }}">{{ d.label }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                  <div style="flex:1 1 130px;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-bottom:5px">{{ L.sgHora }}</div>
+                    <input ref="{{ sgHoraRef }}" type="time" style="width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:16px;padding:12px 14px;font-size:15px;font-family:inherit;background:var(--color-bg-default);color:var(--color-primary-900)" />
+                  </div>
+                  <div style="flex:1 1 170px;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-bottom:5px">{{ L.sgProf }}</div>
+                    <select ref="{{ sgProfRef }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:16px;padding:13px 14px;font-size:15px;font-family:inherit;background:var(--color-bg-default);color:var(--color-primary-900)">
+                      <sc-for list="{{ sgProfs }}" as="pf" hint-placeholder-count="6">
+                        <option value="{{ pf.v }}">{{ pf.label }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:var(--color-tertiary-700);margin-bottom:5px">{{ L.sgObs }}</div>
+                  <textarea ref="{{ sgObsRef }}" rows="2" placeholder="{{ L.sgObsPh }}" style="width:100%;box-sizing:border-box;border:1px solid var(--color-border);border-radius:16px;padding:13px 16px;font-size:15px;font-family:inherit;background:var(--color-bg-default);color:var(--color-primary-900);resize:vertical"></textarea>
+                </div>
+                <sc-if value="{{ sgTemErro }}">
+                  <div style="background:var(--color-error-light);color:var(--color-error-dark);border-radius:16px;padding:12px 16px;font-size:14px">{{ sgErro }}</div>
+                </sc-if>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                  <button onclick="{{ onSgEnviar }}" style="border:0;border-radius:999px;padding:13px 22px;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;background:var(--color-primary-900);color:var(--color-neutral-0)">{{ L.sgEnviar }}</button>
+                  <span onclick="{{ onSgFechar }}" style="font-size:13.5px;font-weight:700;color:var(--color-text-light);cursor:pointer">{{ L.sgCancelar }}</span>
+                </div>
+              </div>
+            </sc-if>
+          </section>
         </sc-if>
 
         <!-- ══ A PÁGINA DO CLUBE ═══════════════════════════════ -->
@@ -1223,6 +1299,9 @@ class Component extends DCLogic {
             revCorrendo: false, revTotal: 0,
             // qual clube dela está aberto, e qual do catálogo está sendo visto
             clubeSel: "", clubeVendo: "",
+            // o formulário de sugerir um clube: aberto ou não, e o
+            // que a gravação recusou
+            sgAberto: false, sgErro: "",
             // o fórum do clube: a conversa que está sendo escrita, a
             // que está aberta para ler, e o rascunho de resposta de
             // cada uma — um por tópico, senão escrever numa apagava a
@@ -1242,6 +1321,10 @@ class Component extends DCLogic {
   bioRef = React.createRef(); fotoRef = React.createRef(); aniRef = React.createRef();
   linkRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
   linkLabelRefs = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
+  // a sugestão de clube: tema, dia, hora, quem conduz e a observação
+  sgTemaRef = React.createRef(); sgDiaRef = React.createRef();
+  sgHoraRef = React.createRef(); sgProfRef = React.createRef();
+  sgObsRef = React.createRef();
 
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth });
@@ -1486,6 +1569,29 @@ class Component extends DCLogic {
       semClube: T("You are not in a club yet. In \"All clubs\" you can see what the school offers.",
         "Você ainda não está em nenhum clube. Em \"Todos os clubes\" estão os que a escola oferece."),
       semAberto: T("No other club is open right now.", "Não há outro clube aberto agora."),
+
+      // ── sugerir um clube ──
+      sgTitulo: T("Suggest a club", "Sugerir um clube"),
+      sgNota: T("Tell us the theme you would join. The day, the time and who leads it help us fit it into the timetable.",
+        "Diga o tema que você entraria. O dia, o horário e quem conduz ajudam a encaixar na grade."),
+      sgComecar: T("Suggest a club", "Sugerir um clube"),
+      sgTema: T("Theme", "Tema"),
+      sgTemaPh: T("Ex.: English for job interviews", "Ex.: Inglês para entrevista de emprego"),
+      sgDia: T("Day of the week", "Dia da semana"),
+      sgHora: T("Time", "Horário"),
+      sgProf: T("Who leads it", "Quem conduz"),
+      sgObs: T("Anything else", "Mais alguma coisa"),
+      sgObsPh: T("Optional", "Opcional"),
+      sgEnviar: T("Send the suggestion", "Enviar a sugestão"),
+      sgCancelar: T("cancel", "cancelar"),
+      sgMinhas: T("What you suggested", "O que você sugeriu"),
+      sgApagar: T("remove", "apagar"),
+      sgSemPref: T("no preference", "tanto faz"),
+      sgEnviada: T("Your suggestion reached the school.", "Sua sugestão chegou na escola."),
+      sgNova: T("with the school", "na escola"),
+      sgLida: T("read", "lida"),
+      sgVirouClube: T("became a club", "virou clube"),
+      sgArquivada: T("not now", "não agora"),
       presenca: T("Attendance", "Presença"),
       financeiro: T("Financial", "Financeiro"),
       semContrato: T("No open contract.", "Nenhum contrato em aberto."),
@@ -1613,6 +1719,11 @@ class Component extends DCLogic {
       cbPlanoLabel: "", cbPlanoBg: "", cbPlanoFg: "", cbTemEncontros: false, cbEncontros: [],
       cbTemSala: false, cbLink: "#", cbTemMateriais: false, cbMats: [], cbSair: () => {},
       cbAviso: "", cbSemDetalhe: true, cbDetalhe: false,
+      sgTemMinhas: false, sgMinhas: [], sgFechado: true, sgAberto: false,
+      sgTemErro: false, sgErro: "", sgDias: [], sgProfs: [],
+      sgTemaRef: this.sgTemaRef, sgDiaRef: this.sgDiaRef, sgHoraRef: this.sgHoraRef,
+      sgProfRef: this.sgProfRef, sgObsRef: this.sgObsRef,
+      onSgAbrir: () => {}, onSgFechar: () => {}, onSgEnviar: () => {},
       cbTemEmoji: false, cbEmoji: "", cbSemEncontros: false, cbRodape: "",
       cbMaterialTitulo: "",
       fmResumo: "", fmFechado: true, fmAberto: false, fmVazio: true,
@@ -2955,6 +3066,67 @@ class Component extends DCLogic {
       cbRecado: this.state.recado || "",
       showMine: (this.state.clubTab || "mine") === "mine",
       showCatalog: (this.state.clubTab || "mine") === "catalog",
+
+      // ── sugerir um clube ──
+      ...(() => {
+        const minhas = CRM.minhasSugestoesDeClube ? CRM.minhasSugestoesDeClube(p.id) : [];
+        const selo = { nova: L.sgNova, lida: L.sgLida,
+          virou_clube: L.sgVirouClube, arquivada: L.sgArquivada };
+        const seloBg = { nova: "var(--color-secondary-100)", lida: "var(--color-secondary-100)",
+          virou_clube: "var(--color-button-primary)", arquivada: "var(--color-bg-default)" };
+        const seloFg = { nova: "var(--color-primary-900)", lida: "var(--color-primary-900)",
+          virou_clube: "var(--color-primary-900)", arquivada: "var(--color-tertiary-700)" };
+        // quem conduz: as professoras que a escola tem, e "tanto faz"
+        const profs = (CRM.equipeLista ? CRM.equipeLista() : [])
+          .filter(m => (m.papeis || []).some(x => /professora/.test(x)))
+          .map(m => m.nome).filter(Boolean);
+        return {
+          sgTemMinhas: minhas.length > 0,
+          sgMinhas: minhas.map(s => ({
+            tema: s.tema,
+            detalhe: [s.dia, s.hora, s.professora].filter(Boolean).join(" · ")
+              || L.sgSemPref,
+            selo: selo[s.status] || selo.nova,
+            selBg: seloBg[s.status] || seloBg.nova,
+            selFg: seloFg[s.status] || seloFg.nova,
+            onApagar: () => {
+              CRM.apagarSugestaoDeClube(s.id, p.id);
+              this.setState({ sgErro: "" });
+            }
+          })),
+          sgFechado: !this.state.sgAberto,
+          sgAberto: !!this.state.sgAberto,
+          sgTemErro: !!this.state.sgErro,
+          sgErro: this.state.sgErro || "",
+          sgDias: [{ v: "", label: L.sgSemPref }].concat(
+            (CRM.DIAS_DA_SEMANA || []).map(d => ({ v: d, label: d }))),
+          sgProfs: [{ v: "", label: L.sgSemPref }].concat(
+            profs.map(n => ({ v: n, label: n }))),
+          sgTemaRef: this.sgTemaRef, sgDiaRef: this.sgDiaRef,
+          sgHoraRef: this.sgHoraRef, sgProfRef: this.sgProfRef,
+          sgObsRef: this.sgObsRef,
+          onSgAbrir: () => this.setState({ sgAberto: true, sgErro: "" }),
+          onSgFechar: () => this.setState({ sgAberto: false, sgErro: "" }),
+          onSgEnviar: () => {
+            const v = (r) => (r.current && r.current.value) || "";
+            const r = CRM.sugerirClube(p.id, {
+              tema: v(this.sgTemaRef), dia: v(this.sgDiaRef),
+              hora: v(this.sgHoraRef), professora: v(this.sgProfRef),
+              observacao: v(this.sgObsRef)
+            });
+            if (!r.ok) { this.setState({ sgErro: r.erro || "" }); return; }
+            // os campos são limpos na mão: o formulário vive em refs,
+            // e o render seguinte não os reescreve
+            [this.sgTemaRef, this.sgHoraRef, this.sgObsRef].forEach(x => {
+              if (x.current) x.current.value = "";
+            });
+            [this.sgDiaRef, this.sgProfRef].forEach(x => {
+              if (x.current) x.current.value = "";
+            });
+            this.setState({ sgAberto: false, sgErro: "", recado: L.sgEnviada });
+          }
+        };
+      })(),
       semMeus: myClubs.length === 0, semAbertos: catalog.length === 0,
       myClubs, catalog,
       // ══ SWAP & SELL · arquivo 07 ══════════════════════════════

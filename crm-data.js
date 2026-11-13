@@ -6551,6 +6551,9 @@
       resgates: resgatesAll(), recompensasFora: recompensasForaAll(),
       // a chamada do clube vale a mesma coisa: é ela que diz quem faltou
       clubeChamadas: clubeChamadasAll(), clubeForum: forumAll(),
+      // o que a aluna pede de clube novo é decisão de grade: tem de
+      // chegar na escola, não ficar no aparelho dela
+      clubeSugestoes: sugestoesRaw(),
       // o syllabus é da escola e o plano é da turma: os dois precisam
       // chegar ao aparelho da professora que vai dar a aula
       syllabus: syllabusAll(), planos: planosAll(), materiais: materiaisAll(),
@@ -6583,6 +6586,7 @@
     grava(REVISAO_KEY, d.revisaoDias); grava(ANUNCIOS_KEY, d.anuncios);
     grava(RESGATES_KEY, d.resgates); grava(RECOMPENSAS_OFF_KEY, d.recompensasFora);
     grava(CLUBE_CHAMADAS_KEY, d.clubeChamadas); grava(FORUM_KEY, d.clubeForum);
+    grava(SUGESTOES_KEY, d.clubeSugestoes);
     grava(SYLLABUS_KEY, d.syllabus); grava(PLANOS_KEY, d.planos);
     grava(PROGRAMAS_EST_KEY, d.programasEstudo);
     grava(MATERIAIS_KEY, d.materiais);
@@ -6649,6 +6653,9 @@
       // a aluna escreveu no celular e a que a professora escreveu no
       // computador são o mesmo tópico, e vale a mais recente
       clubeForum: mesclarMapa(local.clubeForum, remoto.clubeForum),
+      // cada sugestão tem id e carimbo: mescla como lista, e a lápide
+      // de uma apagada atravessa como nas outras
+      clubeSugestoes: lista("clubeSugestoes"),
       palavras: mesclarMapa(local.palavras, remoto.palavras),
       // o syllabus tem id por sessão e mescla como lista; o plano é um
       // mapa turma|sessão, e cada aula tem a sua professora
@@ -14250,6 +14257,174 @@
   function clubeVagasLivres(c) {
     return c.vagas ? Math.max(0, c.vagas - c.membros.length) : null;
   }
+
+  // ── SUGESTÃO DE CLUBE ─────────────────────────────────────────
+  //
+  // A lista de espera diz que uma aluna quer um clube que JÁ EXISTE.
+  // Ela não diz nada sobre o clube que ainda não foi aberto — e é
+  // essa a informação que falta para decidir qual abrir.
+  //
+  // A sugestão pede quatro coisas: tema, quem ela gostaria que
+  // conduzisse, dia da semana e horário. O tema é o único
+  // obrigatório; o resto é preferência, e preferência em branco é
+  // informação legítima ("tanto faz o dia").
+  //
+  // O valor não está em cada sugestão isolada: está em quantas
+  // pedem a mesma coisa. Por isso elas são agrupadas por tema na
+  // tela da escola, com o dia e o horário mais pedidos de cada
+  // grupo — que é o que transforma pedido em grade.
+  var SUGESTOES_KEY = "isr_clube_sugestoes_v1";
+  var DIAS_DA_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta",
+    "sábado", "domingo"];
+  var SUGESTAO_LIMITES = { tema: 80, professora: 60, observacao: 300 };
+  // Quantas sugestões abertas uma aluna pode ter de pé ao mesmo tempo.
+  // Não é desconfiança: é que a décima sugestão da mesma pessoa não
+  // acrescenta nada à decisão, e enche a tela de quem lê.
+  var SUGESTOES_POR_ALUNA = 5;
+  var SUGESTAO_ESTADOS = ["nova", "lida", "virou_clube", "arquivada"];
+
+  function sugestoesRaw() {
+    try { var l = JSON.parse(localStorage.getItem(SUGESTOES_KEY)); if (l && l.length) return l; } catch (e) {}
+    return [];
+  }
+  function sugestoesSave(l) {
+    try { localStorage.setItem(SUGESTOES_KEY, JSON.stringify(l)); } catch (e) {}
+    agendarSync();
+  }
+  // O tema escrito por duas alunas quase nunca vem igual: "Business",
+  // "business english", "Business  English". Agrupar pelo texto cru
+  // daria três grupos de uma pessoa cada, que é o contrário do que a
+  // tela precisa mostrar.
+  function temaChave(t) {
+    return semAcento(String(t || ""))
+      .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  function sugerirClube(pessoaId, dados) {
+    dados = dados || {};
+    var pid = String(pessoaId || "");
+    if (!pid) return { ok: false, erro: "Sugestão sem aluna." };
+    var tema = String(dados.tema || "").trim().slice(0, SUGESTAO_LIMITES.tema);
+    if (!tema) return { ok: false, erro: "Escreva o tema do clube." };
+    var dia = String(dados.dia || "").trim().toLowerCase();
+    if (dia && DIAS_DA_SEMANA.indexOf(dia) < 0) {
+      return { ok: false, erro: "Dia da semana não reconhecido." };
+    }
+    var hora = String(dados.hora || "").trim();
+    if (hora && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(hora)) {
+      return { ok: false, erro: "O horário vai como 19:30." };
+    }
+    var l = sugestoesRaw();
+    var abertas = l.filter(function (s) {
+      return s && !s.apagado && s.pessoaId === pid
+        && (s.status === "nova" || s.status === "lida");
+    });
+    if (abertas.length >= SUGESTOES_POR_ALUNA) {
+      return { ok: false, erro: "Você já tem " + SUGESTOES_POR_ALUNA
+        + " sugestões aguardando resposta da escola." };
+    }
+    // a mesma pessoa pedindo o mesmo tema de novo não vira duas linhas:
+    // atualiza a preferência dela, que é o que mudou
+    var ch = temaChave(tema);
+    var reg = abertas.filter(function (s) { return temaChave(s.tema) === ch; })[0];
+    if (!reg) {
+      reg = { id: novoId("sg"), pessoaId: pid, em: iso(today()), status: "nova" };
+      l.push(reg);
+    }
+    reg.tema = tema;
+    reg.professora = String(dados.professora || "").trim().slice(0, SUGESTAO_LIMITES.professora);
+    reg.dia = dia;
+    reg.hora = hora;
+    reg.observacao = String(dados.observacao || "").trim().slice(0, SUGESTAO_LIMITES.observacao);
+    carimbar(reg);
+    sugestoesSave(l);
+    return { ok: true, sugestao: reg };
+  }
+  function sugestoesDeClube(opcoes) {
+    opcoes = opcoes || {};
+    return sugestoesRaw()
+      .filter(function (s) {
+        if (!s || s.apagado) return false;
+        if (opcoes.todas) return true;
+        return s.status !== "arquivada" && s.status !== "virou_clube";
+      })
+      .map(function (s) {
+        var p = getPessoa(s.pessoaId);
+        return { id: s.id, pessoaId: s.pessoaId,
+          nome: p ? p.nome : "", turma: (p && p.turma) || "",
+          tema: s.tema || "", professora: s.professora || "",
+          dia: s.dia || "", hora: s.hora || "",
+          observacao: s.observacao || "",
+          em: s.em || "", status: s.status || "nova" };
+      })
+      .sort(function (a, b) { return (a.em < b.em) ? 1 : -1; });
+  }
+  function minhasSugestoesDeClube(pessoaId) {
+    return sugestoesDeClube({ todas: true })
+      .filter(function (s) { return s.pessoaId === pessoaId; });
+  }
+  function apagarSugestaoDeClube(id, pessoaId) {
+    var l = sugestoesRaw(), achou = false;
+    l.forEach(function (s) {
+      if (!s || s.id !== id) return;
+      // a aluna só apaga a dela; a escola (sem pessoaId) apaga qualquer uma
+      if (pessoaId && s.pessoaId !== pessoaId) return;
+      s.apagado = iso(today()); carimbar(s); achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Sugestão não encontrada." };
+    sugestoesSave(l);
+    return { ok: true };
+  }
+  function marcarSugestaoDeClube(id, status) {
+    if (SUGESTAO_ESTADOS.indexOf(status) < 0) {
+      return { ok: false, erro: "Estado não reconhecido." };
+    }
+    var l = sugestoesRaw(), achou = false;
+    l.forEach(function (s) {
+      if (!s || s.id !== id || s.apagado) return;
+      s.status = status; carimbar(s); achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Sugestão não encontrada." };
+    sugestoesSave(l);
+    return { ok: true, status: status };
+  }
+  // O que a escola precisa ver: não a lista de pedidos, mas quantas
+  // pessoas pedem a mesma coisa, e em que dia e horário elas cabem.
+  function sugestoesAgrupadas() {
+    var grupos = {};
+    sugestoesDeClube().forEach(function (s) {
+      var k = temaChave(s.tema);
+      if (!k) return;
+      if (!grupos[k]) {
+        grupos[k] = { chave: k, tema: s.tema, quantas: 0, pessoas: [],
+          dias: {}, horas: {}, professoras: {}, ids: [], observacoes: [] };
+      }
+      var g = grupos[k];
+      g.quantas++;
+      g.ids.push(s.id);
+      if (s.nome && g.pessoas.indexOf(s.nome) < 0) g.pessoas.push(s.nome);
+      if (s.dia) g.dias[s.dia] = (g.dias[s.dia] || 0) + 1;
+      if (s.hora) g.horas[s.hora] = (g.horas[s.hora] || 0) + 1;
+      if (s.professora) g.professoras[s.professora] = (g.professoras[s.professora] || 0) + 1;
+      if (s.observacao) g.observacoes.push(s.observacao);
+    });
+    var maisPedido = function (m) {
+      var ks = Object.keys(m);
+      if (!ks.length) return { valor: "", quantas: 0 };
+      ks.sort(function (a, b) { return m[b] - m[a]; });
+      return { valor: ks[0], quantas: m[ks[0]] };
+    };
+    return Object.keys(grupos).map(function (k) {
+      var g = grupos[k];
+      g.diaMaisPedido = maisPedido(g.dias);
+      g.horaMaisPedida = maisPedido(g.horas);
+      g.professoraMaisPedida = maisPedido(g.professoras);
+      // "sem preferência" é informação: diz que a escola pode marcar
+      // no dia que for melhor para a grade
+      g.semPreferenciaDeDia = g.quantas - Object.keys(g.dias)
+        .reduce(function (a, d) { return a + g.dias[d]; }, 0);
+      return g;
+    }).sort(function (a, b) { return b.quantas - a.quantas; });
+  }
   // Entrar: vira membro se há vaga, senão entra na espera. Do
   // terceiro clube em diante a entrada nasce pendente de pagamento —
   // a aluna participa, e a cobrança aparece para a gestão.
@@ -18183,6 +18358,12 @@
     clubeSair: clubeSair, clubePagamentoFeito: clubePagamentoFeito,
     clubesResumo: clubesResumo, clubeVagasLivres: clubeVagasLivres,
     clubesParaAluna: clubesParaAluna, catalogoDeClubes: catalogoDeClubes,
+    // sugestão de clube: a aluna pede, a escola lê agrupado
+    sugerirClube: sugerirClube, sugestoesDeClube: sugestoesDeClube,
+    minhasSugestoesDeClube: minhasSugestoesDeClube,
+    apagarSugestaoDeClube: apagarSugestaoDeClube,
+    marcarSugestaoDeClube: marcarSugestaoDeClube,
+    sugestoesAgrupadas: sugestoesAgrupadas, DIAS_DA_SEMANA: DIAS_DA_SEMANA,
     CLUBES_INCLUIDOS: CLUBES_INCLUIDOS,
     bookclubUrl: bookclubUrl, setBookclubUrl: setBookclubUrl,
     bookclubAula: bookclubAula, setBookclubAula: setBookclubAula,
