@@ -41,7 +41,20 @@ const P = require("./preparar.js");
     const clube = C.clubesLista().filter(c => c.fuso && c.status === "publicado"
       && (c.membros || []).length)[0];
     const alunaId = clube.membros[0];
-    const enc = (clube.encontros || []).filter(e => e && e.data)[0];
+    // O encontro é posto em HOJE. A suíte é sobre a conversão de fuso,
+    // não sobre o calendário: com a data do exemplo, o encontro caía
+    // fora da janela de "Esta semana" conforme o dia em que a suíte
+    // rodasse, e ela falhava sem nada ter mudado no app.
+    const hoje = new Date();
+    const p2 = (n) => (n < 10 ? "0" : "") + n;
+    const hojeIso = hoje.getFullYear() + "-" + p2(hoje.getMonth() + 1)
+      + "-" + p2(hoje.getDate());
+    const encontros = (clube.encontros || []).slice();
+    const iEnc = encontros.findIndex(e => e && e.data);
+    encontros[iEnc] = Object.assign({}, encontros[iEnc], { data: hojeIso });
+    C.clubeSalvar(Object.assign({}, clube, { encontros: encontros }));
+    const recarregado = C.getClube(clube.id);
+    const enc = (recarregado.encontros || []).filter(e => e && e.data === hojeIso)[0];
     const h = C.horaDoEncontro(clube, enc, "Europe/Amsterdam");
     return { alunaId: alunaId, clube: clube.nome, fuso: clube.fuso,
       horaDeQuemConduz: h.hora, horaDela: h.horaVisor,

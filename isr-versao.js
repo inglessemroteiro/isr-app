@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.10-f",
-  data: "10/11/2026",
-  nota: "As sessões sem programa voltam para o plano"
+  numero: "2026.11.13-a",
+  data: "13/11/2026",
+  nota: "A aluna diz qual clube ela quer que exista"
 };

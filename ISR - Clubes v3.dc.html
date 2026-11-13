@@ -266,6 +266,54 @@
       </div>
     </sc-if>
 
+    <!-- SUGESTÕES DAS ALUNAS -->
+    <!-- A lista de espera diz quem quer um clube que já existe. Esta
+         tela diz o que ainda não foi aberto e tem gente esperando.
+         O valor não está em cada pedido isolado: está em quantas
+         pedem o mesmo tema, e em que dia e horário elas cabem. Por
+         isso a tela agrupa por tema e mostra o dia e o horário mais
+         pedidos — é o que transforma pedido em grade. -->
+    <sc-if value="{{ porSugestoes }}">
+      <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 16px 22px;">
+        <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;">{{ sugNota }}</div>
+      </section>
+      <sc-if value="{{ semSugestoes }}">
+        <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 24px 22px;">
+          <div style="font-size: 15px; color: var(--color-primary-800); line-height: 1.6;">Nenhuma sugestão ainda. As alunas sugerem em Todos os clubes, no app delas.</div>
+        </section>
+      </sc-if>
+      <sc-for list="{{ sugestoes }}" as="sg" hint-placeholder-count="4">
+        <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;">
+            <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em;">{{ sg.tema }}</span>
+            <span class="isr-selo" style="font-size: 11px; background: var(--color-secondary-100); color: var(--color-primary-900); padding: 3px 10px">{{ sg.quantasLabel }}</span>
+          </div>
+          <div style="display: flex; gap: 18px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500);">dia mais pedido</div>
+              <div style="font-size: 14.5px; font-weight: 600; color: var(--color-primary-900);">{{ sg.dia }}</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500);">horário mais pedido</div>
+              <div style="font-size: 14.5px; font-weight: 600; color: var(--color-primary-900);">{{ sg.hora }}</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-tertiary-500);">quem conduz</div>
+              <div style="font-size: 14.5px; font-weight: 600; color: var(--color-primary-900);">{{ sg.professora }}</div>
+            </div>
+          </div>
+          <div style="font-size: 13px; color: var(--color-primary-800); line-height: 1.55;"><strong style="color: var(--color-primary-900);">Pediram:</strong> {{ sg.quemPediu }}</div>
+          <sc-if value="{{ sg.temObs }}">
+            <div style="background: var(--color-bg-cell); border-radius: 14px; padding: 11px 13px; font-size: 12.5px; color: var(--color-primary-800); line-height: 1.55;">{{ sg.observacoes }}</div>
+          </sc-if>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ sg.onVirouClube }}" style="font-size: 12.5px; font-weight: 700; padding: 9px 15px">Abri este clube</button>
+            <button class="isr-botao isr-botao--pilula" onclick="{{ sg.onArquivar }}" style="font-size: 12.5px; padding: 9px 15px">Agora não</button>
+          </div>
+        </section>
+      </sc-for>
+    </sc-if>
+
     <!-- POR ALUNA -->
     <sc-if value="{{ porAluna }}">
       <section style="background: var(--color-neutral-0); border-radius: 24px; padding: 8px 22px;">
@@ -446,6 +494,7 @@ class Component extends DCLogic {
       temPendentes: false, pendentesN: "0", pendentesTexto: "",
       porClube: true, porAluna: false, semClube: true, semAluna: true,
       porCatalogo: false, semCatalogo: true, catalogo: [], catalogoNota: "",
+      porSugestoes: false, semSugestoes: true, sugestoes: [], sugNota: "",
       formAberto: false, formTitulo: "", formErro: "", novoBotao: "+ novo clube",
       fProfs: [], fOnline: true, fPresencial: false,
       fNiveis: [], fFusos: [], fFusoNota: "", fSalvarLabel: "Salvar rascunho",
@@ -466,6 +515,10 @@ class Component extends DCLogic {
     const pessoas = CRM.getPessoas() || [];
     const nomeDe = (id) => { const p = pessoas.filter(x => x.id === id)[0]; return (p && p.nome) || id; };
     const perfilHref = (id) => "ISR%20-%20Perfil%20v3.dc.html?id=" + id;
+
+    // o que as alunas pediram de clube novo, já agrupado por tema
+    const gruposSug = CRM.sugestoesAgrupadas ? CRM.sugestoesAgrupadas() : [];
+    const nSugestoes = gruposSug.reduce((a, g) => a + g.quantas, 0);
 
     const PLANO = {
       incluido: ["no plano", "var(--color-primary-50)", "var(--color-primary-900)"],
@@ -574,7 +627,8 @@ class Component extends DCLogic {
       visoes: [
         { id: "clube", label: "Por clube" },
         { id: "aluna", label: "Por aluna" },
-        { id: "catalogo", label: "Catálogo" }
+        { id: "catalogo", label: "Catálogo" },
+        { id: "sugestoes", label: "Sugestões" + (nSugestoes ? " · " + nSugestoes : "") }
       ].map(v => {
         const on = this.state.visao === v.id;
         return { label: v.label, bg: on ? "var(--color-primary-900)" : "var(--color-neutral-0)", fg: on ? "var(--color-neutral-0)" : "var(--color-primary-800)",
@@ -583,6 +637,38 @@ class Component extends DCLogic {
       porClube: this.state.visao === "clube",
       porAluna: this.state.visao === "aluna",
       semClube: cs.length === 0,
+
+      // ── AS SUGESTÕES ──
+      porSugestoes: this.state.visao === "sugestoes",
+      semSugestoes: gruposSug.length === 0,
+      sugNota: "O que as alunas pediram e ainda não existe. Agrupado por tema: "
+        + "o número diz quantas pediram a mesma coisa, e o dia e o horário são "
+        + "os mais pedidos dentro do grupo.",
+      sugestoes: gruposSug.map(g => {
+        const comN = (x, semTexto) => x.valor
+          ? x.valor + (g.quantas > 1 ? " · " + x.quantas + " de " + g.quantas : "")
+          : semTexto;
+        return {
+          tema: g.tema,
+          quantasLabel: g.quantas === 1 ? "1 aluna" : g.quantas + " alunas",
+          dia: comN(g.diaMaisPedido, "tanto faz"),
+          hora: comN(g.horaMaisPedida, "tanto faz"),
+          professora: comN(g.professoraMaisPedida, "tanto faz"),
+          quemPediu: g.pessoas.join(", "),
+          temObs: g.observacoes.length > 0,
+          observacoes: g.observacoes.join(" · "),
+          // "abri este clube" fecha o grupo inteiro: quem pediu já foi
+          // atendido, e o pedido não precisa voltar na tela amanhã
+          onVirouClube: () => {
+            g.ids.forEach(id => CRM.marcarSugestaoDeClube(id, "virou_clube"));
+            this.bump();
+          },
+          onArquivar: () => {
+            g.ids.forEach(id => CRM.marcarSugestaoDeClube(id, "arquivada"));
+            this.bump();
+          }
+        };
+      }),
 
       // ── O CATÁLOGO ──
       ...(() => {
