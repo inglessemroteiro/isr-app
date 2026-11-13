@@ -310,6 +310,51 @@
   function turmasLista() {
     return turmasRaw().filter(function (t) { return !(t && t.apagado); });
   }
+  // ── ARQUIVAR UMA TURMA ────────────────────────────────────────
+  //
+  // Turma que acabou não é turma apagada. Apagar desliga as alunas e
+  // leva junto o histórico; arquivar só diz "esta não pede mais
+  // trabalho". A chamada de agosto, a folha de agosto e a ficha da
+  // aluna continuam apontando para ela.
+  //
+  // Por isso turmasLista() continua devolvendo TUDO: é ela que a
+  // folha, as chamadas antigas e o perfil leem, e sumir dali
+  // reescreveria o passado. Quem esconde a arquivada é quem monta
+  // lista de trabalho — a tela de Turmas, a pilha de chamadas
+  // pendentes, o painel da professora e os seletores de turma.
+  function turmasAtivas() {
+    return turmasLista().filter(function (t) { return !(t && t.arquivada); });
+  }
+  function arquivarTurma(id, arquivar) {
+    var list = turmasLista(), achou = false;
+    list.forEach(function (t) {
+      if (t.id !== id) return;
+      if (arquivar === false) delete t.arquivada;
+      else t.arquivada = iso(today());
+      carimbar(t); achou = true;
+    });
+    if (!achou) return { ok: false, erro: "Turma não encontrada." };
+    turmasSave(list);
+    return { ok: true, arquivada: !!(list.filter(function (t) { return t.id === id; })[0] || {}).arquivada };
+  }
+  // ── ONDE A AULA ACONTECE ──────────────────────────────────────
+  //
+  // A escola tem turma online e turma presencial, e isso não estava
+  // em lugar nenhum da turma: só o clube tinha. Sem o campo, a tela
+  // da aluna não sabe dizer se ela entra num link ou vai a um
+  // endereço.
+  //
+  // Vazio conta como online, que é o caso da maioria — e não é
+  // palpite escrito no registro: o campo fica em branco até alguém
+  // decidir, e a leitura é que assume o comum.
+  //
+  // Repare no NOME: "formato" já existe na turma e quer dizer se o
+  // caderno da aula é digital ou em papel. São duas perguntas
+  // diferentes — há turma online com aluna que escreve à mão —, e
+  // usar a mesma palavra para as duas quebraria a que já existe.
+  function modalidadeDaTurma(t) {
+    return (t && t.modalidade === "presencial") ? "presencial" : "online";
+  }
   function turmasSave(list) {
     carimbarLista(list);
     // devolve as lápides ao gravar: um save comum não ressuscita turma
@@ -336,6 +381,11 @@
       teacherDesde: dados.teacher ? (dados.teacherDesde || iso(today())) : "",
       cycle: dados.cycle || metasAtuais().cicloLabel,
       projeto: dados.projeto || "", notebook: dados.notebook || "",
+      // online ou presencial, e o endereço quando é presencial.
+      // NÃO é "formato": esse campo já existe na turma e quer dizer
+      // outra coisa — se o caderno da aula é digital ou em papel.
+      modalidade: dados.modalidade === "presencial" ? "presencial" : "online",
+      local: String(dados.local || "").trim(),
       capacidade: parseInt(dados.capacidade, 10) || CAPACIDADE_PADRAO });
     turmasSave(list); return list;
   }
@@ -2622,7 +2672,7 @@
 
     // turma com aula dada e chamada em branco: sete dias sem registro
     var atrasadas = [];
-    turmasLista().forEach(function (u) {
+    turmasAtivas().forEach(function (u) {
       var label = u.nivel + " · " + u.turma;
       var ultima = chamadasDaTurma(label)[0];
       var dias = ultima && ultima.data ? daysBetween(parseISO(ultima.data), today()) : null;
@@ -3512,6 +3562,10 @@
         // presencial em que todas levam o celular. É por este campo
         // que a professora sabe se precisa imprimir.
         formato: u.formato === "papel" ? "papel" : "digital",
+        // onde a aula acontece, e o endereço quando é presencial
+        modalidade: modalidadeDaTurma(u), local: u.local || "",
+        // turma encerrada: sai das listas de trabalho, fica no histórico
+        arquivada: u.arquivada || "",
         // a hora da aula e o fuso em que ela é lida viajam junto: é com
         // eles que cada tela mostra a hora no relógio de quem olha
         hora: u.hora || "", fuso: u.fuso || "",
@@ -10029,7 +10083,8 @@
   var MINIMO_TURMA = 3;
 
   function turmasAbaixoDoMinimo() {
-    return turmasLista().map(function (u) {
+    // turma encerrada não está "abaixo do mínimo": ela acabou
+    return turmasAtivas().map(function (u) {
       var label = u.nivel + " · " + u.turma;
       var n = alunasDaTurma(label).length;
       return { id: u.id, label: label, nivel: u.nivel, horario: u.turma,
@@ -15921,7 +15976,10 @@
       var dif = daysBetween(t0, d);
       return dif >= 0 && dif < nDias;
     }
-    turmasLista().forEach(function (u) {
+    // Turma arquivada não gera mais aula. É o corte que importa: a
+    // agenda alimenta a pilha de chamadas pendentes, e sem isto a
+    // turma encerrada continuaria cobrando chamada para sempre.
+    turmasAtivas().forEach(function (u) {
       var m = (u.turma || "").toUpperCase().match(/\b(MON|TUE|WED|THU|FRI|SAT|SUN|SEG|TER|QUA|QUI|SEX)\b/);
       if (!m) return;
       var alvo = DIAS_SEMANA[m[1]];
@@ -18616,6 +18674,10 @@
     // pedagógico / marketing
     ocupacaoTurmas: ocupacaoTurmas, leadStatsByCanal: leadStatsByCanal, statsMotivosPerda: statsMotivosPerda,
     turmasLista: turmasLista, addTurma: addTurma, updateTurma: updateTurma, removeTurma: removeTurma,
+    // arquivar é o contrário de apagar: a turma sai das listas de
+    // trabalho e o histórico dela continua de pé
+    turmasAtivas: turmasAtivas, arquivarTurma: arquivarTurma,
+    modalidadeDaTurma: modalidadeDaTurma,
     setOnboardingFeito: setOnboardingFeito, setProximoCheckin: setProximoCheckin, registrarCheckinFeito: registrarCheckinFeito,
     eventosLista: eventosLista, addEvento: addEvento, removeEvento: removeEvento,
     getEvento: getEvento, updateEvento: updateEvento,

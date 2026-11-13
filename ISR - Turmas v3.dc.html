@@ -206,12 +206,29 @@
                     <option value="{{ fz.id }}" selected="{{ fz.sel }}">{{ fz.label }}</option>
                   </sc-for>
                 </select>
+                <!-- ONDE A AULA ACONTECE. Sem isto, a tela da aluna não
+                     tem como dizer se ela entra num link ou vai a um
+                     endereço. Presencial pede o endereço; online não. -->
+                <select class="isr-campo" ref="{{ edModalidadeRef }}" onchange="{{ u.onModalidade }}" style="padding: 9px 11px; font-size: 12px">
+                  <sc-for list="{{ u.modalidadeOpts }}" as="fo" hint-placeholder-count="2">
+                    <option value="{{ fo.id }}" selected="{{ fo.sel }}">{{ fo.label }}</option>
+                  </sc-for>
+                </select>
+                <sc-if value="{{ u.ehPresencial }}">
+                  <input class="isr-campo" ref="{{ edLocalRef }}" placeholder="Endereço: {{ u.localCurto }}" style="padding: 9px 11px; font-size: 12px" />
+                </sc-if>
               </div>
               <div style="font-size: 11px; color: var(--color-tertiary-500); margin-bottom: 10px;">{{ u.fusoNota }}</div>
-              <div style="display: flex; gap: 8px;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <button class="isr-botao isr-botao--pilula isr-botao--escuro" onclick="{{ u.onSalvarEdicao }}" style="font-size: 12px; padding: 9px 18px">Salvar</button>
                 <button class="isr-botao isr-botao--texto" onclick="{{ u.onCancelarEdicao }}" style="color: var(--color-tertiary-500); font-size: 12px; padding: 9px 8px">cancelar</button>
+                <!-- Arquivar não é excluir. Excluir desliga as alunas e
+                     leva o histórico; arquivar só tira a turma das
+                     listas de trabalho — a chamada de agosto e a folha
+                     de agosto continuam. -->
+                <button class="isr-botao isr-botao--pilula" onclick="{{ u.onArquivar }}" style="font-size: 12px; padding: 9px 16px; margin-left: auto">{{ u.arquivarLabel }}</button>
               </div>
+              <div style="font-size: 11px; color: var(--color-tertiary-500); margin-top: 8px; line-height: 1.5;">{{ u.arquivarNota }}</div>
             </div>
           </sc-if>
         </div>
@@ -254,7 +271,10 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: &quot;1180px&quot;, &quot;height&quot;: &quot;100vh&quot;}}">
 class Component extends DCLogic {
   state = { teacher: "Todas", aba: "todas", novaAberta: false, editId: null,
-            selTurmas: {}, confirmaExcluirSel: false };
+            selTurmas: {}, confirmaExcluirSel: false,
+            // online ou presencial enquanto a linha está sendo editada:
+            // é o que revela o campo do endereço antes de salvar
+            modalidadeEdit: "" };
   ntNivelRef = React.createRef(); ntTurmaRef = React.createRef(); ntTeacherRef = React.createRef();
   ntProjetoRef = React.createRef(); ntMaterialRef = React.createRef(); ntCapRef = React.createRef();
   edTeacherRef = React.createRef(); edDesdeRef = React.createRef();
@@ -262,6 +282,7 @@ class Component extends DCLogic {
   ntHoraRef = React.createRef(); ntFusoRef = React.createRef();
   edHoraRef = React.createRef(); edFusoRef = React.createRef();
   edMaterialRef = React.createRef(); edCapRef = React.createRef();
+  edModalidadeRef = React.createRef(); edLocalRef = React.createRef();
 
   // Esta tela só se redesenhava ao mexer nela própria. Com o sync
   // puxando dados em segundo plano, e com a janela do ciclo podendo
@@ -289,7 +310,7 @@ class Component extends DCLogic {
   renderVals() {
     const CRM = window.ISRCRM;
     if (!CRM) return { teachers: [], abas: [], turmas: [], vazio: true,
-      capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edDesdeRef: this.edDesdeRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      capacidade: [], temCapacidade: false, particulares: [], partVazio: true, partCount: "", novaAberta: false, novaLabel: "+ Nova turma", novaBg: "var(--color-primary-900)", novaFg: "var(--color-neutral-0)", ntNivelRef: this.ntNivelRef, ntTurmaRef: this.ntTurmaRef, ntTeacherRef: this.ntTeacherRef, ntProjetoRef: this.ntProjetoRef, ntMaterialRef: this.ntMaterialRef, ntCapRef: this.ntCapRef, edTeacherRef: this.edTeacherRef, edDesdeRef: this.edDesdeRef, edProjetoRef: this.edProjetoRef, edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef, edModalidadeRef: this.edModalidadeRef, edLocalRef: this.edLocalRef,
       ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,
       edHoraRef: this.edHoraRef, edFusoRef: this.edFusoRef, fusoOpts: [],
       cicloBg: "var(--color-neutral-0)", cicloCor: "var(--color-primary-800)", cicloTexto: "", cicloAcao: "" };
@@ -322,10 +343,13 @@ class Component extends DCLogic {
     ocup.forEach(u => { if (names.indexOf(u.teacher) < 0) names.push(u.teacher); });
     const teacherSel = this.state.teacher;
 
+    // A turma arquivada sai das abas de trabalho e ganha uma aba só
+    // dela: some da frente sem sumir do sistema.
     const ABAS = [
-      { id: "todas", label: "Todas", test: () => true },
-      { id: "vagas", label: "Com vagas", test: u => u.vagas > 0 },
-      { id: "lotadas", label: "Lotadas", test: u => u.vagas <= 0 }
+      { id: "todas", label: "Todas", test: u => !u.arquivada },
+      { id: "vagas", label: "Com vagas", test: u => !u.arquivada && u.vagas > 0 },
+      { id: "lotadas", label: "Lotadas", test: u => !u.arquivada && u.vagas <= 0 },
+      { id: "arquivadas", label: "Arquivadas", test: u => !!u.arquivada }
     ];
     const abaAtiva = this.state.aba;
 
@@ -436,11 +460,36 @@ class Component extends DCLogic {
           return "A aula é às " + (h || "—") + " em " + CRM.fusoLabel(u.fuso)
             + ". Cada tela mostra no relógio de quem está olhando.";
         })(),
+        // ── onde a aula acontece ──
+        modalidadeOpts: [["online", "Online"], ["presencial", "Presencial"]]
+          .map(([id, label]) => ({ id, label, sel: id === (u.modalidade || "online") })),
+        ehPresencial: (this.state.modalidadeEdit || u.modalidade || "online") === "presencial",
+        localCurto: (u.local || "—").slice(0, 30),
+        // trocar no seletor já revela (ou esconde) o campo do endereço,
+        // antes de salvar: perguntar o endereço depois de gravar é
+        // pedir duas vezes a mesma coisa
+        onModalidade: (e) => this.setState({ modalidadeEdit: e.target.value }),
+
+        // ── arquivar ──
+        arquivarLabel: u.arquivada ? "Desarquivar" : "Arquivar turma",
+        arquivarNota: u.arquivada
+          ? ("Arquivada em " + CRM.ddmm(u.arquivada) + ". Ela não pede chamada nem "
+             + "aparece nas listas de trabalho; o histórico e a folha continuam.")
+          : "Arquivar tira a turma das listas de trabalho e para de pedir chamada. "
+            + "As alunas continuam ligadas a ela, e o histórico e a folha não mudam. "
+            + "Diferente de excluir.",
+        onArquivar: () => {
+          const r = CRM.arquivarTurma(u.id, !u.arquivada);
+          if (r && r.ok) this.setState({ editId: null });
+          this.bump();
+        },
+
         editLabel: editando ? "editando…" : "editar",
         editBg: editando ? "var(--color-primary-900)" : "var(--color-neutral-0)",
         editFg: editando ? "var(--color-neutral-0)" : "var(--color-primary-900)",
-        onEditar: () => this.setState({ editId: editando ? null : u.id, novaAberta: false }),
-        onCancelarEdicao: () => this.setState({ editId: null }),
+        onEditar: () => this.setState({ editId: editando ? null : u.id, novaAberta: false,
+          modalidadeEdit: u.modalidade || "online" }),
+        onCancelarEdicao: () => this.setState({ editId: null, modalidadeEdit: "" }),
         onSalvarEdicao: () => {
           const patch = {};
           const t = this.val(this.edTeacherRef); if (t) patch.teacher = t;
@@ -462,8 +511,13 @@ class Component extends DCLogic {
               CRM.updateLead(pp.id, { turma: depois });
             });
           }
+          const md = this.val(this.edModalidadeRef);
+          if (md) patch.modalidade = md === "presencial" ? "presencial" : "online";
+          // o endereço só existe no presencial, e trocar para online
+          // não apaga o que já estava: a turma pode voltar
+          const lc = this.val(this.edLocalRef); if (lc) patch.local = lc;
           if (Object.keys(patch).length) CRM.updateTurma(u.id, patch);
-          this.setState({ editId: null });
+          this.setState({ editId: null, modalidadeEdit: "" });
         },
         onExcluir: () => {
           const ocupadas = u.ocupadas > 0 ? "\nAtenção: " + u.ocupadas + " aluna(s) matriculada(s) nela." : "";
@@ -544,6 +598,7 @@ class Component extends DCLogic {
       edTeacherRef: this.edTeacherRef, edDesdeRef: this.edDesdeRef,
       edProjetoRef: this.edProjetoRef,
       edMaterialRef: this.edMaterialRef, edCapRef: this.edCapRef,
+      edModalidadeRef: this.edModalidadeRef, edLocalRef: this.edLocalRef,
       edNivelRef: this.edNivelRef, edHorarioRef: this.edHorarioRef,
       ntHoraRef: this.ntHoraRef, ntFusoRef: this.ntFusoRef,
       edHoraRef: this.edHoraRef, edFusoRef: this.edFusoRef,

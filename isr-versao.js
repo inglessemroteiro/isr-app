@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-f",
+  numero: "2026.11.13-g",
   data: "13/11/2026",
-  nota: "A falha diz por quê, o preço é em euro, as datas no Painel"
+  nota: "Arquivar a turma, e dizer se ela é online ou presencial"
 };
