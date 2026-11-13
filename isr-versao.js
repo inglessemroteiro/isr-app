@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-d",
+  numero: "2026.11.13-e",
   data: "13/11/2026",
-  nota: "O número da Carla, com o dígito que faltava"
+  nota: "Participar, lotado, preço, e o texto do topo é seu"
 };

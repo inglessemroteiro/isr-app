@@ -57,6 +57,9 @@ function recorte(c) {
     emoji: texto(c.emoji, 4),
     nivel: texto(c.nivel, 60),
     descricao: texto(c.descricao, 600),
+    // o preço que a escola escreveu para quem chega pelo site; vazio
+    // quer dizer que esse clube só existe dentro do plano
+    preco: texto(c.preco, 40),
     // primeiro nome: identifica quem conduz sem publicar o nome
     // completo de uma funcionária numa página aberta
     professora: primeiroNome(c.professora),
@@ -134,8 +137,15 @@ exports.handler = async (event) => {
         return {
           nome: primeiroNome(c.nome || "Carla"),
           whatsapp: texto(c.whatsapp || "5511910142216", 30),
-          mensagem: texto(c.mensagem || "Oi, Carla! Estou interessado no clube "
-            + "{clube}, podemos fazer meu nivelamento?", 300)
+          // o texto abaixo do título: vazio quer dizer "não mostre
+          // nada", e é o padrão — a página mora no site da escola, que
+          // tem voz própria
+          apresentacao: texto(c.apresentacao, 300),
+          mensagem: texto(c.mensagem || "Oi, Carla! Quero participar do clube "
+            + "{clube}. Podemos fazer o meu nivelamento?", 300),
+          // clube lotado pede lista de espera, não nivelamento
+          mensagemEspera: texto(c.mensagemEspera || "Oi, Carla! Quero participar do "
+            + "clube {clube}. Você pode me colocar na lista de espera?", 300)
         };
       })(),
       clubes: publicados
