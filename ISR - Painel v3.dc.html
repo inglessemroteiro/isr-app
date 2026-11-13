@@ -724,6 +724,17 @@
             <sc-if value="{{ clSemEncontros }}">
               <p style="margin: 0; font-size: 13.5px; color: var(--color-tertiary-500);">{{ C25 }}</p>
             </sc-if>
+            <!-- A data do encontro é editada no modo de edição da aba
+                 "página". Esta aba só mostrava "sem data ainda" e o
+                 botão de chamada — e quem viesse publicar esbarrava em
+                 "faltam as 4 datas" sem ter, aqui, onde pô-las. O
+                 caminho para o lugar certo é o que faltava. -->
+            <sc-if value="{{ clFaltamDatas }}">
+              <div style="background: var(--color-warning-light); border-radius: 16px; padding: 13px 15px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                <div style="flex: 1 1 220px; min-width: 0; font-size: 13px; line-height: 1.55; color: var(--color-warning-dark);">{{ clFaltamDatasTexto }}</div>
+                <button onclick="{{ onClMarcarDatas }}" style="flex: none; border: 0; background: var(--color-primary-900); color: var(--color-neutral-0); border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer;">{{ clMarcarDatasBotao }}</button>
+              </div>
+            </sc-if>
             <sc-for list="{{ clEncontros }}" as="en" hint-placeholder-count="4">
               <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 11px 0; border-bottom: 1px solid var(--color-divider);">
                 <div style="min-width: 0;">
@@ -3015,6 +3026,10 @@ class Component extends DCLogic {
          clSel.formato === "presencial" ? clSel.local : clSel.link],
         [Tr("spots", "vagas"), clSel.vagas
           ? ((clSel.membros || []).length + "/" + clSel.vagas) : ""],
+        // o preço do site aparece aqui para a professora ver o mesmo
+        // que a página pública mostra; quem o escreve é a coordenação
+        [Tr("price on the site", "preço no site"),
+         CRM.precoDoClube ? CRM.precoDoClube(clSel) : ""],
         [Tr("about you", "sobre você"), clSel.bio]
       ].map(([rotulo, valor]) => ({
         rotulo,
@@ -3193,6 +3208,27 @@ class Component extends DCLogic {
       // ── aba Encontros ──
       clAbaEncontros: !!clSel && this.state.clAba === "encontros",
       clSemEncontros: !clSel || !(clSel.encontros || []).length,
+      ...(() => {
+        const comData = clSel
+          ? (clSel.encontros || []).filter(e => e && e.data).length : 0;
+        const faltam = 4 - comData;
+        return {
+          clFaltamDatas: !!clSel && faltam > 0,
+          clFaltamDatasTexto: faltam === 4
+            ? Tr("No meeting has a date yet. Publishing asks for the 4.",
+                 "Nenhum encontro tem data ainda. Publicar pede as 4.")
+            : Tr("Still missing the date of ", "Ainda falta a data de ") + faltam
+              + (faltam === 1 ? Tr(" meeting.", " encontro.") : Tr(" meetings.", " encontros.")),
+          clMarcarDatasBotao: Tr("Set the dates", "Marcar as datas"),
+          // leva para o mesmo formulário onde as datas moram, já
+          // aberto: é lá que clubeSalvar grava os encontros
+          onClMarcarDatas: () => this.setState({
+            clAba: "pagina",
+            clForm: Object.assign({}, clSel, {
+              encontros: [0, 1, 2, 3].map(i => Object.assign({}, (clSel.encontros || [])[i] || {}))
+            }), clErro: "", clAviso: "" })
+        };
+      })(),
       clEncontros: !clSel ? [] : (clSel.encontros || []).map((e, i) => {
         const ch = CRM.chamadaDoEncontro ? CRM.chamadaDoEncontro(clSel.id, i + 1) : null;
         const presentes = ch

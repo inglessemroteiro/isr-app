@@ -5934,13 +5934,39 @@
         body: JSON.stringify(b) }).then(function (r) { return r.json(); });
     };
     // dado de exemplo nunca sai do aparelho
-    if (exemploLigado()) return Promise.reject(new Error("exemplo"));
+    if (exemploLigado()) return Promise.reject(erroDaBase("exemplo",
+      "Os dados de exemplo estão ligados, e exemplo nunca sai do aparelho."));
+    if (!url) return Promise.reject(erroDaBase("sem_endereco",
+      "Este aparelho não tem o endereço do banco central."));
+    // POR QUE OS DOIS CAMINHOS SÃO REGISTRADOS
+    //
+    // O pedido tenta a função do Netlify e, se ela não responder, cai
+    // no caminho direto. Quando os DOIS falham, o que sobrava era
+    // "falha ao sincronizar" — sem dizer qual deles falhou nem por
+    // quê. Com a função devolvendo 401 e o Apps Script devolvendo
+    // outra coisa, são dois problemas diferentes e um aviso só.
+    var daFuncao = "";
     return chamarFuncao("base", { body: Object.assign({ action: action }, corpo || {}) })
       .then(function (r) {
-        if (!r.ok) throw new Error("funcao " + r.status);
+        if (!r.ok) { daFuncao = "a função do site respondeu " + r.status; throw new Error(daFuncao); }
         return r.json();
       })
-      .catch(function () { return direto(); });
+      .catch(function (e) {
+        if (!daFuncao) daFuncao = "a função do site não respondeu";
+        return direto().catch(function (e2) {
+          throw erroDaBase("base_fora",
+            "O Apps Script não respondeu (" + (e2 && e2.message ? e2.message : "sem detalhe")
+            + "); antes disso, " + daFuncao + ".");
+        });
+      });
+  }
+  // Um erro que carrega o porquê. Error puro só tem a mensagem, e a
+  // tela precisa separar "não está configurado" de "respondeu errado"
+  // para dizer o que fazer.
+  function erroDaBase(motivo, mensagem) {
+    var e = new Error(mensagem || motivo);
+    e.motivo = motivo;
+    return e;
   }
 
   var syncTimer = null;
@@ -6004,6 +6030,68 @@
     try { localStorage.setItem(SYNC_ESTADO_KEY, JSON.stringify(st)); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("isr-sync", { detail: st })); } catch (e) {}
     return st;
+  }
+  // ── POR QUE A SINCRONIZAÇÃO FALHOU ────────────────────────────
+  //
+  // "falha ao sincronizar" não diz nada a quem pode resolver. Quem lê
+  // isso é quem administra a escola, e as causas pedem coisas
+  // diferentes: endereço errado, implantação velha, chave do sistema
+  // ligada de um lado só. Esta frase é o que separa uma da outra.
+  var SYNC_RECADOS = {
+    sem_endereco: "Este aparelho não tem o endereço do banco central. "
+      + "Ele se configura na tela de entrada, em Configurar banco central.",
+    exemplo: "Os dados de exemplo estão ligados. Enquanto estiverem, nada sai deste aparelho.",
+    base_fora: "O banco central não respondeu. Pode ser o endereço do Apps Script "
+      + "(tem de terminar em /exec e ser o da implantação em uso) ou a implantação "
+      + "publicada para quem não tem conta Google.",
+    base_recusou: "O banco central respondeu e recusou. Normalmente é a chave do "
+      + "sistema ligada no Apps Script e não no site, ou o contrário.",
+    resposta_vazia: "O banco central respondeu sem os dados da escola."
+  };
+  function syncDiagnostico() {
+    var st = syncEstado();
+    if (st.status !== "erro") return { erro: false, status: st.status };
+    var base = SYNC_RECADOS[st.motivo] || "A última tentativa de falar com o banco "
+      + "central falhou.";
+    return {
+      erro: true,
+      etapa: st.etapa === "gravar" ? "ao gravar" : "ao ler",
+      recado: base,
+      detalhe: st.detalhe || "",
+      em: st.em || ""
+    };
+  }
+  // Roda as duas metades separadas e diz qual passou. É o que permite
+  // responder "lê mas não grava" sem abrir o console do navegador.
+  function testarConexao() {
+    var url = backendUrl();
+    if (!url) {
+      return Promise.resolve({ ok: false, endereco: "", etapa: "endereço",
+        recado: SYNC_RECADOS.sem_endereco });
+    }
+    var curto = url.length > 60 ? url.slice(0, 40) + "…" + url.slice(-12) : url;
+    return chamarBase("sistemaLoad").then(function (d) {
+      if (!d || !d.ok) {
+        throw erroDaBase("resposta_vazia",
+          "A leitura respondeu sem dados" + (d && d.error ? ": " + d.error : "."));
+      }
+      // a gravação é testada com o que acabou de ser lido, mesclado —
+      // é exatamente o que o sync faz, e não um dado inventado
+      var m = mesclarComRemoto(d.data);
+      return chamarBase("sistemaSave", { data: m.data }).then(function (r) {
+        if (r && r.ok === false) {
+          throw erroDaBase("base_recusou", "A gravação foi recusada"
+            + (r.error ? ": " + String(r.error).slice(0, 120) : "."));
+        }
+        return { ok: true, endereco: curto, etapa: "",
+          recado: "O banco central lê e grava." };
+      });
+    }).catch(function (e) {
+      return { ok: false, endereco: curto,
+        etapa: (e && e.motivo === "base_recusou") ? "gravar" : "ler",
+        recado: SYNC_RECADOS[(e && e.motivo) || ""] || "Não foi possível falar com o banco central.",
+        detalhe: (e && e.message) ? String(e.message).slice(0, 220) : "" };
+    });
   }
 
   // Mescla duas listas de registros por id. Vence o _v mais alto.
@@ -6684,18 +6772,34 @@
     if (syncEmCurso) { agendarSync(); return; }
     syncEmCurso = true;
     setSyncEstado({ status: "sincronizando" });
+    // "etapa" guarda em qual das duas metades estávamos quando falhou.
+    // Ler falhando e gravar falhando são problemas diferentes — e a
+    // tela só dizia "falha ao sincronizar" para os dois.
+    var etapa = "ler";
     chamarBase("sistemaLoad")
       .then(function (d) {
         var m = mesclarComRemoto(d && d.ok ? d.data : null);
         aplicarRemoto(m.data);            // o local já fica com o resultado da mesclagem
+        etapa = "gravar";
         return chamarBase("sistemaSave", { data: m.data })
-          .then(function () {
+          .then(function (r) {
+            // O Apps Script responde 200 com { ok: false } quando
+            // recusa — a chave do sistema, por exemplo. Tratar isso
+            // como sucesso marcava "sincronizado" sem nada ter sido
+            // gravado, que é a pior das falhas: silenciosa.
+            if (r && r.ok === false) {
+              throw erroDaBase("base_recusou",
+                "O banco central recusou a gravação"
+                + (r.error ? ": " + String(r.error).slice(0, 120) : "."));
+            }
             marcarPendente(false);
             setSyncEstado({ status: "ok", em: m.data.atualizadoEm, conflitos: m.conflitos });
           });
       })
-      .catch(function () {
-        setSyncEstado({ status: "erro", em: new Date().toISOString() });
+      .catch(function (e) {
+        setSyncEstado({ status: "erro", em: new Date().toISOString(),
+          etapa: etapa, motivo: (e && e.motivo) || "erro",
+          detalhe: (e && e.message) ? String(e.message).slice(0, 220) : "" });
       })
       .then(function () { syncEmCurso = false; });
   }
@@ -6705,9 +6809,11 @@
     // puxar também é sincronizar: sem carimbar o estado, a espera e a
     // falha aconteciam sem aparecer em lugar nenhum
     setSyncEstado({ status: "sincronizando" });
-    var carimbar = function (ok, em) {
+    var carimbar = function (ok, em, e) {
       setSyncEstado(ok ? { status: "ok", em: em || new Date().toISOString() }
-                       : { status: "erro", em: new Date().toISOString() });
+                       : { status: "erro", em: new Date().toISOString(), etapa: "ler",
+                           motivo: (e && e.motivo) || "erro",
+                           detalhe: (e && e.message) ? String(e.message).slice(0, 220) : "" });
       if (cb) cb(ok);
     };
     try {
@@ -6749,9 +6855,13 @@
               try { window.dispatchEvent(new CustomEvent("isr-dados")); } catch (e) {}
             }
             carimbar(true, d.data.atualizadoEm);
-          } else carimbar(false);
-        }).catch(function () { carimbar(false); });
-    } catch (e) { carimbar(false); }
+          } else {
+            carimbar(false, null, erroDaBase("resposta_vazia",
+              "O banco central respondeu sem dados"
+              + (d && d.error ? ": " + String(d.error).slice(0, 120) : ".")));
+          }
+        }).catch(function (e) { carimbar(false, null, e); });
+    } catch (e) { carimbar(false, null, e); }
   }
   function processarCadastrosPendentes(cb) {
     var url = backendUrl();
@@ -14109,11 +14219,12 @@
       // pelo site não tem plano nenhum, e "quanto custa" é a primeira
       // pergunta dela.
       //
-      // Texto livre, não número, porque a escola cobra em real e em
-      // euro e o período varia — "R$ 120 por ciclo" e "€ 30/mês" são
-      // os dois legítimos. Vazio quer dizer "não mostre preço", que é
-      // o certo para clube que só existe dentro do plano.
-      preco: String(c.preco || "").trim().slice(0, 40),
+      // Número, e sempre em euro: é como a escola oferta clube para
+      // quem vem de fora. Guardar o número e não o texto é o que
+      // garante que as três telas escrevam "€ 30" do mesmo jeito.
+      // Zero quer dizer "não mostre preço", que é o certo para clube
+      // que só existe dentro do plano.
+      preco: Math.max(0, parseFloat(String(c.preco || "0").replace(",", ".")) || 0),
       // "New" não é um campo que alguém marca e esquece de desmarcar:
       // é a data em que o clube foi publicado.
       publicadoEm: c.publicadoEm || "",
@@ -14273,6 +14384,18 @@
   }
   function clubeVagasLivres(c) {
     return c.vagas ? Math.max(0, c.vagas - c.membros.length) : null;
+  }
+  // O preço escrito do mesmo jeito em toda tela que o mostra: a do
+  // site, a da coordenação e a da professora. Sem um lugar só, cada
+  // uma inventa a sua pontuação e o mesmo clube aparece com dois
+  // preços diferentes.
+  function precoDoClube(c) {
+    var n = (c && c.preco) || 0;
+    if (!n) return "";
+    var txt = (Math.round(n * 100) % 100 === 0)
+      ? String(Math.round(n))
+      : n.toFixed(2).replace(".", ",");
+    return "€ " + txt;
   }
 
   // ── SUGESTÃO DE CLUBE ─────────────────────────────────────────
@@ -14679,6 +14802,7 @@
           professora: c.professora || "", bio: c.bio || "",
           nivel: c.nivel || "", descricao: c.descricao || "",
           dia: c.dia || "", hora: c.hora || "", duracao: c.duracao || "",
+          preco: c.preco || 0, precoLabel: precoDoClube(c),
           fuso: c.fuso || "", fusoNome: c.fuso ? fusoLabel(c.fuso) : "",
           formato: c.formato, local: c.local || "", link: c.link || "",
           vagas: c.vagas, inscritas: c.membros.length,
@@ -18551,6 +18675,7 @@
     clubeSair: clubeSair, clubePagamentoFeito: clubePagamentoFeito,
     clubesResumo: clubesResumo, clubeVagasLivres: clubeVagasLivres,
     clubesParaAluna: clubesParaAluna, catalogoDeClubes: catalogoDeClubes,
+    precoDoClube: precoDoClube,
     // sugestão de clube: a aluna pede, a escola lê agrupado
     sugerirClube: sugerirClube, sugestoesDeClube: sugestoesDeClube,
     minhasSugestoesDeClube: minhasSugestoesDeClube,
@@ -18833,7 +18958,8 @@
     mesclarListaParaTeste: mesclarLista,
     payloadParaTeste: payloadLocal,
     conexaoPadrao: conexaoPadrao, conectarPadrao: conectarPadrao, baseVazia: baseVazia,
-    syncEstado: syncEstado, mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
+    syncEstado: syncEstado, syncDiagnostico: syncDiagnostico, testarConexao: testarConexao,
+    mesclarLista: mesclarLista, mesclarMapa: mesclarMapa, carimbar: carimbar,
     recorrentesDoMes: recorrentesDoMes,
     registrarPagamentoDePessoa: registrarPagamentoDePessoa,
     parcelasPagasSemExtrato: parcelasPagasSemExtrato,

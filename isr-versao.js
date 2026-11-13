@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-e",
+  numero: "2026.11.13-f",
   data: "13/11/2026",
-  nota: "Participar, lotado, preço, e o texto do topo é seu"
+  nota: "A falha diz por quê, o preço é em euro, as datas no Painel"
 };
