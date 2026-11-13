@@ -14304,6 +14304,62 @@
     return semAcento(String(t || ""))
       .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   }
+  // ── O QUE FAZ DOIS PEDIDOS SEREM O MESMO PEDIDO ────────────────
+  //
+  // Comparar o texto cru junta "Business English" com "business
+  // english" e para por aí. Mas quem escreve não escreve igual:
+  // "inglês para entrevista", "inglês para entrevistas de emprego" e
+  // "entrevista em inglês" são o mesmo clube, e sairiam como três
+  // grupos de uma pessoa — que é o contrário do que a tela serve
+  // para mostrar.
+  //
+  // O que distingue um pedido do outro é a palavra RARA dele.
+  // "inglês", "para", "de" aparecem em quase todos; "entrevista" não.
+  // Então as palavras comuns saem, e o que sobra é a identidade.
+  //
+  // Juntar demais é pior do que juntar de menos: pôr "inglês para
+  // viagem" no mesmo grupo de "inglês para trabalho" faz a escola
+  // abrir o clube errado. Por isso a regra é estreita — dois pedidos
+  // só se juntam se dividirem uma palavra que sobrou —, e a tela
+  // mostra as redações originais do grupo, para quem lê conferir.
+  // "pra" está aqui porque é como a aluna escreve, não como a escola
+  // escreve: esta lista é de palavras a IGNORAR no texto dela.
+  var TEMA_VAZIAS = ("ingles english de da do das dos para p" + "ra por a o as os e em "
+    + "no na nos nas um uma uns umas com sem que se ao aos clube clube de club "
+    + "aula aulas grupo turma sobre meu minha nosso nossa falar conversar "
+    + "conversacao conversa pratica praticar nivel niveis").split(" ");
+  function temaPalavras(t) {
+    var vistas = {};
+    return temaChave(t).split(" ")
+      // As palavras comuns saem ANTES do corte de plural. Ao
+      // contrário, "ingles" vira "ingl" e deixa de bater na lista —
+      // e aí todo pedido que diz "inglês" divide uma palavra com
+      // todos os outros, e o agrupamento junta a escola inteira num
+      // grupo só.
+      .filter(function (w) { return w.length >= 3 && TEMA_VAZIAS.indexOf(w) < 0; })
+      .map(function (w) {
+        // plural simples: "entrevistas" e "entrevista" são a mesma
+        // palavra, e quem escreve alterna sem pensar
+        if (w.length > 4 && w.slice(-2) === "es") return w.slice(0, -2);
+        if (w.length > 3 && w.slice(-1) === "s") return w.slice(0, -1);
+        return w;
+      })
+      .filter(function (w) {
+        if (w.length < 3) return false;
+        if (TEMA_VAZIAS.indexOf(w) >= 0) return false;
+        if (vistas[w]) return false;
+        vistas[w] = 1;
+        return true;
+      });
+  }
+  // Dois temas são o mesmo quando dividem ao menos uma palavra rara.
+  // Tema que ficou SEM palavra rara (alguém escreveu só "inglês") não
+  // se junta a ninguém pelo vazio: ele responde por si.
+  function temasSeJuntam(a, b) {
+    var pa = temaPalavras(a), pb = temaPalavras(b);
+    if (!pa.length || !pb.length) return temaChave(a) === temaChave(b);
+    return pa.some(function (w) { return pb.indexOf(w) >= 0; });
+  }
   function sugerirClube(pessoaId, dados) {
     dados = dados || {};
     var pid = String(pessoaId || "");
@@ -14329,8 +14385,10 @@
     }
     // a mesma pessoa pedindo o mesmo tema de novo não vira duas linhas:
     // atualiza a preferência dela, que é o que mudou
-    var ch = temaChave(tema);
-    var reg = abertas.filter(function (s) { return temaChave(s.tema) === ch; })[0];
+    // a mesma regra que agrupa na tela da escola vale aqui: quem já
+    // pediu "inglês para entrevista" e volta com "inglês para
+    // entrevistas de emprego" está refinando o mesmo pedido
+    var reg = abertas.filter(function (s) { return temasSeJuntam(s.tema, tema); })[0];
     if (!reg) {
       reg = { id: novoId("sg"), pessoaId: pid, em: iso(today()), status: "nova" };
       l.push(reg);
@@ -14395,22 +14453,63 @@
   // O que a escola precisa ver: não a lista de pedidos, mas quantas
   // pessoas pedem a mesma coisa, e em que dia e horário elas cabem.
   function sugestoesAgrupadas() {
-    var grupos = {};
-    sugestoesDeClube().forEach(function (s) {
-      var k = temaChave(s.tema);
-      if (!k) return;
-      if (!grupos[k]) {
-        grupos[k] = { chave: k, tema: s.tema, quantas: 0, pessoas: [],
-          dias: {}, horas: {}, professoras: {}, ids: [], observacoes: [] };
+    var todas = sugestoesDeClube().filter(function (s) { return temaChave(s.tema); });
+    // Cada pedido começa no grupo dele e vai sendo puxado para o
+    // primeiro grupo com que divida uma palavra rara. A cadeia vale:
+    // se A se junta a B e B a C, os três ficam juntos, mesmo que A e C
+    // não dividam palavra nenhuma entre si — foi B quem mostrou que
+    // são o mesmo assunto.
+    var caixas = [];
+    todas.forEach(function (s) {
+      var destino = null;
+      caixas.forEach(function (cx) {
+        if (destino) return;
+        if (cx.itens.some(function (x) { return temasSeJuntam(x.tema, s.tema); })) {
+          destino = cx;
+        }
+      });
+      if (!destino) { caixas.push({ itens: [s] }); return; }
+      destino.itens.push(s);
+      // o pedido novo pode ser a ponte entre dois grupos que já
+      // existiam: aí os dois viram um
+      for (var i = caixas.length - 1; i >= 0; i--) {
+        var outra = caixas[i];
+        if (outra === destino) continue;
+        if (outra.itens.some(function (x) { return temasSeJuntam(x.tema, s.tema); })) {
+          destino.itens = destino.itens.concat(outra.itens);
+          caixas.splice(i, 1);
+        }
       }
-      var g = grupos[k];
-      g.quantas++;
-      g.ids.push(s.id);
-      if (s.nome && g.pessoas.indexOf(s.nome) < 0) g.pessoas.push(s.nome);
-      if (s.dia) g.dias[s.dia] = (g.dias[s.dia] || 0) + 1;
-      if (s.hora) g.horas[s.hora] = (g.horas[s.hora] || 0) + 1;
-      if (s.professora) g.professoras[s.professora] = (g.professoras[s.professora] || 0) + 1;
-      if (s.observacao) g.observacoes.push(s.observacao);
+    });
+
+    var grupos = {};
+    caixas.forEach(function (cx, i) {
+      // o nome do grupo é a redação mais repetida; havendo empate, a
+      // mais curta, que costuma ser a que a escola escreveria
+      var contagem = {};
+      cx.itens.forEach(function (s) {
+        contagem[s.tema] = (contagem[s.tema] || 0) + 1;
+      });
+      var redacoes = Object.keys(contagem).sort(function (a, b) {
+        return contagem[b] - contagem[a] || a.length - b.length;
+      });
+      var k = "g" + i;
+      grupos[k] = { chave: temaChave(redacoes[0]), tema: redacoes[0],
+        // as redações originais ficam à vista: é como quem lê confere
+        // se o agrupamento acertou, e separa quando não acertou
+        redacoes: redacoes,
+        quantas: 0, pessoas: [],
+        dias: {}, horas: {}, professoras: {}, ids: [], observacoes: [] };
+      cx.itens.forEach(function (s) {
+        var g = grupos[k];
+        g.quantas++;
+        g.ids.push(s.id);
+        if (s.nome && g.pessoas.indexOf(s.nome) < 0) g.pessoas.push(s.nome);
+        if (s.dia) g.dias[s.dia] = (g.dias[s.dia] || 0) + 1;
+        if (s.hora) g.horas[s.hora] = (g.horas[s.hora] || 0) + 1;
+        if (s.professora) g.professoras[s.professora] = (g.professoras[s.professora] || 0) + 1;
+        if (s.observacao) g.observacoes.push(s.observacao);
+      });
     });
     var maisPedido = function (m) {
       var ks = Object.keys(m);
@@ -14986,9 +15085,13 @@
   // {clube} na mensagem é trocado pelo nome do clube que a pessoa
   // clicou. Sem isso, quem recebe não sabe de qual clube se trata.
   var CONTATO_PUB_KEY = "isr_contato_publico_v1";
+  // O número vem preenchido porque a página sem ele não tem botão, e
+  // um catálogo sem botão não serve para o que ele existe. A escola
+  // troca na tela de Clubes quando quiser — este é só o ponto de
+  // partida, e é um contato comercial, feito para ser público.
   var CONTATO_PUB_PADRAO = {
-    nome: "", whatsapp: "",
-    mensagem: "Oi! Estou interessado no clube {clube}, podemos fazer meu nivelamento?"
+    nome: "Carla", whatsapp: "551191014226",
+    mensagem: "Oi, Carla! Estou interessado no clube {clube}, podemos fazer meu nivelamento?"
   };
   function contatoPublico() {
     try {
