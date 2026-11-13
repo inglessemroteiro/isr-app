@@ -15090,7 +15090,7 @@
   // troca na tela de Clubes quando quiser — este é só o ponto de
   // partida, e é um contato comercial, feito para ser público.
   var CONTATO_PUB_PADRAO = {
-    nome: "Carla", whatsapp: "551191014226",
+    nome: "Carla", whatsapp: "5511910142216",
     mensagem: "Oi, Carla! Estou interessado no clube {clube}, podemos fazer meu nivelamento?"
   };
   function contatoPublico() {

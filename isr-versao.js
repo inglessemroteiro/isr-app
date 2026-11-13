@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-c",
+  numero: "2026.11.13-d",
   data: "13/11/2026",
-  nota: "As datas dos encontros, os filtros e o agrupamento por assunto"
+  nota: "O número da Carla, com o dígito que faltava"
 };
