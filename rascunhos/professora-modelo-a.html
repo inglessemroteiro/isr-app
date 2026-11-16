@@ -17,7 +17,8 @@
   O que custa: a tela da aula é longa, e o que não é aula (clube,
   particular, horas) fica um nível abaixo.
 
-  Contém os 13 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9.
+  Contém os 16 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9 — os mesmos
+  nos três.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="professora-modelo.css" />
@@ -71,6 +72,7 @@
         ] },
         { titulo: "turmas e grupos", itens: [
           { label: "Turmas", on: est.tela === "turmas" || est.tela === "turma", vai: { tela: "turmas" } },
+          { label: "Alunas", on: est.tela === "alunas" || est.tela === "pulso", vai: { tela: "alunas" } },
           { label: "Clubes", on: est.tela === "clubes" || est.tela === "clube", vai: { tela: "clubes" } },
           { label: "Particulares", on: est.tela === "particulares" || est.tela === "particular", vai: { tela: "particulares" } }
         ] },
@@ -101,13 +103,25 @@
         });
         h.push("</div>");
 
-        h.push('<div class="rotulo" style="margin-top:4px">1 · antes da aula</div>');
-        h.push(B.plano(est));
-        h.push(B.conteudo(est));
-        h.push('<div class="rotulo" style="margin-top:18px">2 · durante a aula</div>');
-        h.push(B.aulaViva(est));
-        h.push(B.chamada(est));
-        h.push('<div class="rotulo" style="margin-top:18px">3 · depois da aula</div>');
+        // Com a aula ABERTA, "durante" vem primeiro: a ordem do dia é
+        // a do momento, e deixar o material de preparo entre ela e o
+        // caderno ao vivo punha a grade a 2.200 px do topo.
+        if (D.VIVO.aberta) {
+          h.push('<div class="rotulo" style="margin-top:4px">agora · durante a aula</div>');
+          h.push(B.aulaViva(est));
+          h.push(B.chamada(est));
+          h.push('<div class="rotulo" style="margin-top:18px">o plano desta sessão</div>');
+          h.push(B.plano(est));
+          h.push(B.conteudo(est));
+        } else {
+          h.push('<div class="rotulo" style="margin-top:4px">1 · antes da aula</div>');
+          h.push(B.plano(est));
+          h.push(B.conteudo(est));
+          h.push('<div class="rotulo" style="margin-top:18px">2 · durante a aula</div>');
+          h.push(B.aulaViva(est));
+          h.push(B.chamada(est));
+        }
+        h.push('<div class="rotulo" style="margin-top:18px">depois da aula</div>');
         h.push('<section class="cartao">' + B.cab("As tarefas desta turma", "",
           '<button class="btn claro pq" ' + B.ir({ tela: "cadernos", cadFiltro: "todas" }) + ">Abrir os cadernos</button>"));
         var meus = D.CADERNO.filter(function (c) { return c.turma === t.id; });
@@ -148,6 +162,8 @@
         titulo: "Aulas do mês", sub: "", html: B.horas(est) };
       if (est.tela === "substituir") return { olho: "eu",
         titulo: "Substituição", sub: "", html: B.substituir(est) };
+      if (est.tela === "alunas") return { olho: "turmas e grupos",
+        titulo: "Alunas", sub: "Faltas, entregas e o caderno de cada uma.", html: B.alunas(est) };
       if (est.tela === "pulso") return { olho: "a ficha da aluna",
         titulo: est.aluna, sub: "", html: B.pulso(est) };
       return { titulo: "—", html: "" };

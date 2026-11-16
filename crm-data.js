@@ -12394,13 +12394,33 @@
     var r = cadernoAll()[cadernoChave(pessoaId, turmaLabel, dataIso)];
     return r ? (r.texto || "") : "";
   }
+  // A anotação da aluna sobre a aula.
+  //
+  // Mora na MESMA chave do caderno que as respostas dela e os
+  // comentários da professora — pessoaId|turma|data. Esta função
+  // gravava `{ texto }` por cima do registro inteiro, e apagava com
+  // ele as respostas da aula e as correções da professora; com o
+  // texto vazio, apagava a chave toda. Uma aluna escrever (ou apagar)
+  // a anotação dela destruía o trabalho da aula.
+  //
+  // Agora mexe só no campo que é dela, e a chave só desaparece quando
+  // não sobra nada dentro.
   function salvarNotaDaAula(pessoaId, turmaLabel, dataIso, texto) {
     if (!pessoaId || !turmaLabel || !dataIso) return { ok: false, erro: "Aula não identificada." };
     var m = cadernoAll();
     var k = cadernoChave(pessoaId, turmaLabel, dataIso);
     var t = String(texto || "").trim().slice(0, NOTA_LIMITE);
-    if (t) m[k] = { texto: t, em: new Date().toISOString(), _v: Date.now() };
-    else delete m[k];
+    var reg = m[k] || {};
+    if (t) reg.texto = t; else delete reg.texto;
+    var temResposta = !!Object.keys(reg.respostas || {}).length;
+    var temComentario = !!Object.keys(reg.comentarios || {}).length;
+    if (!t && !temResposta && !temComentario) {
+      delete m[k];
+    } else {
+      reg.em = new Date().toISOString();
+      reg._v = Date.now();
+      m[k] = reg;
+    }
     try { localStorage.setItem(CADERNO_KEY, JSON.stringify(m)); } catch (e) {}
     agendarSync();
     return { ok: true, texto: t };

@@ -4,7 +4,7 @@
 // honesta: o que muda de um modelo para o outro é a arrumação, não o
 // conteúdo. Nenhum nome aqui é de aluna de verdade.
 //
-// O conteúdo cobre os 13 blocos da lista fechada em
+// O conteúdo cobre os 16 blocos da lista fechada em
 // O-QUE-A-PROFESSORA-PRECISA.md, seção 9, inclusive o que já existe no
 // sistema hoje: o caderno ao vivo, as correções e o abrir/encerrar da
 // aula.
@@ -22,25 +22,46 @@ window.ISR_MODELO = (function () {
   };
 
   // ── O ROTEIRO DA SESSÃO ──────────────────────────────────────
-  // Seis fases, minutos por etapa, e a pergunta que faz a etapa virar
-  // tarefa no caderno da aluna. É o desenho do plano da turma.
+  // As seis fases da ISR, as mesmas de crm-data.js:10643 — Warm-up,
+  // Minds On, Language Focus, Hands On, Share Out e Wrap-up —, os
+  // minutos de cada uma e a pergunta que faz a etapa virar tarefa no
+  // caderno da aluna.
+  //
+  // UMA pergunta, no Wrap-up. A reflexão roda sempre ali, e numa aula
+  // de conversação pergunta de caderno no meio da prática em pares é
+  // o sistema puxando a aula para a escrita: enquanto a aluna digita,
+  // ela não ouve a colega. O resto do que se escreve é tarefa de
+  // casa, que é onde escrever é o exercício certo.
   var ROTEIRO_HOJE = [
-    { fase: "abrir", min: 5, titulo: "Warm-up: o que você comeu no último Natal?", pergunta: "" },
-    { fase: "ouvir", min: 10, titulo: "Áudio: a receita da avó da Marcela", pergunta: "" },
-    { fase: "praticar", min: 15, titulo: "Pares: descrever os passos em ordem",
-      pergunta: "Write the three first steps of your family recipe, in order." },
-    { fase: "produzir", min: 15, titulo: "Cada uma conta a receita da família",
-      pergunta: "Tell us your family recipe. Use at least three words from today." },
-    { fase: "corrigir", min: 10, titulo: "Erros que apareceram, no quadro", pergunta: "" },
-    { fase: "fechar", min: 5, titulo: "O que levo desta aula",
+    { fase: "warmup", min: 10, titulo: "O que você comeu no último fim de ano?", pergunta: "" },
+    { fase: "mindson", min: 10, titulo: "Áudio: a receita da avó da Marcela", pergunta: "" },
+    { fase: "language", min: 12, titulo: "Passos em ordem: first, then, after that", pergunta: "" },
+    { fase: "handson", min: 15, titulo: "Em pares: contar a receita da família", pergunta: "" },
+    { fase: "shareout", min: 8, titulo: "Cada uma conta a receita de uma colega", pergunta: "" },
+    { fase: "wrapup", min: 5, titulo: "O que levo desta aula",
       pergunta: "One sentence: what will you cook, and when?" }
   ];
+
+  // Um roteiro com as seis fases da ISR. A sessão que o programa não
+  // descreve inteira vem com a etapa em branco — é o caso comum no
+  // sílabo da escola (Share Out e Wrap-up chegam vazios na maioria
+  // das sessões) e a tela precisa saber desenhar isso.
+  function roteiro(a, b, c, d, e, f) {
+    return [
+      { fase: "warmup", min: 10, titulo: a || "", pergunta: "" },
+      { fase: "mindson", min: 10, titulo: b || "", pergunta: "" },
+      { fase: "language", min: 12, titulo: c || "", pergunta: "" },
+      { fase: "handson", min: 15, titulo: d || "", pergunta: "" },
+      { fase: "shareout", min: 8, titulo: e || "", pergunta: "" },
+      { fase: "wrapup", min: 5, titulo: f || "", pergunta: "" }
+    ];
+  }
 
   var TURMAS = [
     {
       id: "basics", nivel: "Basics (A1)", quando: "seg 7h", dia: "segunda",
       projeto: "Our End of Year Dishes", sessao: 4, sessoes: 10,
-      modalidade: "online", alunas: ALUNAS.basics,
+      modalidade: "online", duracao: 60, fuso: "America/Sao_Paulo", alunas: ALUNAS.basics,
       programa: "Basics · ciclo 2026.2",
       material: "drive.google.com/…/caderno-basics",
       links: [
@@ -52,7 +73,12 @@ window.ISR_MODELO = (function () {
       renovacao: { sim: 3, nao: 1, semResposta: 1 },
       aulas: [
         { data: "2026-11-23", curto: "23 nov", s: 5, titulo: "Talking about plans",
-          estado: "agendada", hora: "7h", roteiro: [], palavras: [], starters: [],
+          estado: "agendada", hora: "7h",
+          objetivo: "A aluna conta o que pretende fazer nas férias, com going to.",
+          roteiro: roteiro("O que você vai fazer em dezembro?",
+            "Áudio: três planos de fim de ano", "Going to: afirmativa e pergunta",
+            "Em pares: combinar um programa", "", ""),
+          palavras: ["to plan", "I am going to", "maybe"], starters: ["I am going to…", "Maybe we can…"],
           topico: "", tarefa: "", entregues: [], presencas: {}, gravacao: "", slides: "" },
         { data: "2026-11-16", curto: "hoje", s: 4, titulo: "Our End of Year Dishes",
           estado: "hoje", hora: "7h",
@@ -70,14 +96,21 @@ window.ISR_MODELO = (function () {
           gravacao: "", slides: "docs.google.com/presentation/d/…/basics-s4" },
         { data: "2026-11-09", curto: "9 nov", s: 3, titulo: "Weekend stories",
           estado: "dada", topico: "Passado simples: o fim de semana",
-          roteiro: [], palavras: ["last weekend", "I went", "we stayed"], starters: [],
+          roteiro: roteiro("Uma palavra para o seu fim de semana",
+            "Áudio: o fim de semana da Bia", "Passado simples: verbos do dia a dia",
+            "Em pares: contar o fim de semana", "Cada uma conta o da colega", "O que levo desta aula"),
+          palavras: ["last weekend", "I went", "we stayed"],
+          starters: ["Last weekend I…", "After that, we…"],
           tarefa: "Escrever cinco frases no passado sobre o seu fim de semana.",
           entregues: ALUNAS.basics.slice(), presencas: {},
           cadernoHw: { aberto: true, ate: "2026-11-16" },
           gravacao: "", slides: "" },
         { data: "2026-11-02", curto: "2 nov", s: 2, titulo: "Where I live",
           estado: "dada", topico: "Descrever a casa e o bairro",
-          roteiro: [], palavras: [], starters: [],
+          roteiro: roteiro("Mostre a vista da sua janela",
+            "Áudio: o bairro da Marcela", "There is / there are",
+            "Em pares: descrever a rua", "", ""),
+          palavras: ["neighbourhood", "upstairs", "nearby"], starters: ["There is…", "Next to my house…"],
           tarefa: "Mandar uma foto da sua rua e descrevê-la em três frases.",
           entregues: ALUNAS.basics.slice(0, 4), presencas: { "Rafael Teste": "F" },
           gravacao: "drive.google.com/…/basics-2-nov", slides: "" }
@@ -86,7 +119,7 @@ window.ISR_MODELO = (function () {
     {
       id: "essentials", nivel: "Essentials (A2)", quando: "ter 13h", dia: "terça",
       projeto: "Traditions", sessao: 4, sessoes: 10,
-      modalidade: "online", alunas: ALUNAS.essentials,
+      modalidade: "online", duracao: 60, fuso: "America/Sao_Paulo", alunas: ALUNAS.essentials,
       programa: "Essentials · ciclo 2026.2",
       material: "drive.google.com/…/caderno-essentials",
       links: [
@@ -104,9 +137,19 @@ window.ISR_MODELO = (function () {
           palavras: ["to gather", "every year", "it is a tradition"],
           starters: ["In my family, we…", "Unlike us, they…"],
           topico: "", tarefa: "", entregues: [], presencas: {}, gravacao: "", slides: "" },
+        { data: "2026-11-03", curto: "3 nov", s: 2, titulo: "Where we come from",
+          estado: "dada", topico: "",
+          roteiro: roteiro("De onde vem a sua família?",
+            "Áudio: duas histórias de migração", "Used to / would",
+            "Em pares: a cidade da avó", "", ""),
+          palavras: ["to move", "used to"], starters: ["My family comes from…"],
+          tarefa: "", entregues: [], presencas: {}, gravacao: "", slides: "" },
         { data: "2026-11-10", curto: "10 nov", s: 3, titulo: "Holidays around the world",
           estado: "dada", topico: "Feriados e datas",
-          roteiro: [], palavras: [], starters: [],
+          roteiro: roteiro("Qual feriado você espera o ano todo?",
+            "Vídeo: três feriados", "Datas e preposições de tempo",
+            "Em pares: comparar feriados", "Cada uma conta o da colega", ""),
+          palavras: ["bank holiday", "to celebrate"], starters: ["On that day we…"],
           tarefa: "Trazer uma foto de um feriado e contar o que acontece nele.",
           entregues: ALUNAS.essentials.slice(0, 6), presencas: { "Pedro Teste": "F" },
           gravacao: "drive.google.com/…/essentials-10-nov", slides: "" }
@@ -115,8 +158,8 @@ window.ISR_MODELO = (function () {
     {
       id: "speaking", nivel: "Speaking (B1)", quando: "qua 8h", dia: "quarta",
       projeto: "Current Affairs", sessao: 3, sessoes: 10,
-      modalidade: "presencial", local: "Rua das Laranjeiras, 120",
-      alunas: ALUNAS.speaking,
+      modalidade: "presencial", duracao: 90, fuso: "America/Sao_Paulo",
+      local: "Rua das Laranjeiras, 120", alunas: ALUNAS.speaking,
       programa: "Speaking · ciclo 2026.2",
       material: "drive.google.com/…/caderno-speaking",
       links: [
@@ -128,11 +171,26 @@ window.ISR_MODELO = (function () {
       renovacao: { sim: 4, nao: 1, semResposta: 1 },
       aulas: [
         { data: "2026-11-18", curto: "qua 18", s: 4, titulo: "Reading the news",
-          estado: "agendada", hora: "8h", roteiro: [], palavras: [], starters: [],
+          estado: "agendada", hora: "8h",
+          objetivo: "A aluna resume uma notícia e diz o que pensa dela.",
+          roteiro: roteiro("A manchete que te irritou esta semana",
+            "Ler: duas versões da mesma notícia", "Reported speech",
+            "Em grupos: resumir em cinco frases", "Debate curto", "O que levo desta aula"),
+          palavras: ["according to", "to claim", "coverage"],
+          starters: ["According to the article…", "What struck me was…"],
           topico: "", tarefa: "", entregues: [], presencas: {}, gravacao: "", slides: "" },
+        { data: "2026-11-04", curto: "4 nov", s: 2, titulo: "Headlines",
+          estado: "dada", topico: "Manchetes", reaberta: true,
+          roteiro: roteiro("Leia esta manchete em voz alta",
+            "Ler: cinco manchetes", "Substantivos compostos", "Em pares: escrever uma manchete", "", ""),
+          palavras: ["headline", "breaking"], starters: ["The headline says…"],
+          tarefa: "", entregues: [], presencas: {}, gravacao: "", slides: "" },
         { data: "2026-11-11", curto: "11 nov", s: 3, titulo: "What is happening",
           estado: "dada", topico: "Notícia da semana",
-          roteiro: [], palavras: [], starters: [],
+          roteiro: roteiro("Uma notícia que você leu hoje",
+            "Ler: a notícia da semana", "Presente contínuo para fatos em curso",
+            "Em pares: resumir", "Cada uma apresenta a da colega", ""),
+          palavras: ["ongoing", "to announce"], starters: ["It is happening because…"],
           tarefa: "Trazer uma notícia da semana e resumi-la em 5 frases.",
           entregues: ALUNAS.speaking.slice(), presencas: {},
           gravacao: "drive.google.com/…/speaking-11-nov", slides: "" }
@@ -141,74 +199,75 @@ window.ISR_MODELO = (function () {
   ];
 
   // ── A AULA AO VIVO ───────────────────────────────────────────
-  // O estado por aluna é o que o sistema já calcula hoje:
-  // escrevendo (escreveu nos últimos 90 s), terminou, sem escrever,
-  // não começou. As respostas são por tarefa — as três etapas da
-  // sessão de hoje que têm pergunta.
+  // O estado por aluna é o que o sistema já calcula hoje
+  // (crm-data.js:12643): escrevendo (mexeu nos últimos 90 s),
+  // terminou, aguardando, não começou.
+  //
+  // Os rótulos descrevem o CADERNO, não a aluna: numa aula de
+  // conversação, a aluna que está falando bem aparece como "não
+  // começou" se o estado for lido como julgamento dela.
+  //
+  // Uma tarefa só, a do Wrap-up — é o que o roteiro desta sessão tem.
   var VIVO = {
     aberta: false,         // "Começar aula" liga isto
     minutos: 0,
     alunas: [
       { nome: "Marina Teste", estado: "escrevendo",
-        respostas: ["First, you boil the milk on low heat.",
-          "My grandmother makes rice pudding every December. It takes about two hours.", ""],
-        comentarios: [[], [{ texto: "\"every December\" está certo. Tente \"she makes\" no lugar de \"makes\".", quem: "Bárbara" }], []] },
+        respostas: ["I will cook rice pudding on Sunday, with my"],
+        comentarios: [[]] },
       { nome: "Camila Teste", estado: "terminou",
-        respostas: ["First, I cut the onions. After that, I fry them.",
-          "We cook feijoada. My father stirs it for one hour.",
-          "I will cook it on Sunday with my sister."],
-        comentarios: [[], [], []] },
+        respostas: ["I will cook feijoada next Saturday for my family."],
+        comentarios: [[{ texto: "Perfeito. Repare que você usou \"next\" sem artigo — está certo.", quem: "Bárbara" }]] },
       { nome: "Beatriz Teste", estado: "nao_comecou",
-        respostas: ["", "", ""], comentarios: [[], [], []] },
-      { nome: "Rafael Teste", estado: "sem_escrever",
-        respostas: ["First, you need a pinch of salt.", "", ""],
-        comentarios: [[{ texto: "Boa. Agora escreva o segundo passo.", quem: "Bárbara" }], [], []] },
+        respostas: [""], comentarios: [[]] },
+      { nome: "Rafael Teste", estado: "aguardando",
+        respostas: [""], comentarios: [[]] },
       { nome: "Juliana Teste", estado: "escrevendo",
-        respostas: ["First, we buy the fish.", "Every year we eat fish on the 24th. My mother", ""],
-        comentarios: [[], [], []] }
+        respostas: ["On the 24th I will cook the fish my mother"],
+        comentarios: [[]] }
     ]
   };
 
   var ESTADO_VIVO = {
     escrevendo: { label: "escrevendo", cor: "#348a8e" },
     terminou: { label: "terminou", cor: "#3d6b22" },
-    sem_escrever: { label: "sem escrever", cor: "#7a5c00" },
-    nao_comecou: { label: "não começou", cor: "#b8ada0" }
+    aguardando: { label: "caderno em branco", cor: "#7a5c00" },
+    nao_comecou: { label: "não abriu o caderno", cor: "#b8ada0" }
   };
 
   // ── O CADERNO FORA DA AULA ───────────────────────────────────
   // O que falta hoje: a professora lendo o que foi entregue depois de
   // a aula fechar. Uma entrada por aluna e por aula.
   var CADERNO = [
-    { aluna: "Marina Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
+    { id: "cad1", aluna: "Marina Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
       titulo: "Weekend stories", quando: "entregue 10 nov, 21h04", corrigido: true,
       respostas: [
         { pergunta: "Write five sentences about last weekend.",
           texto: "Last weekend I went to my mother house. We stayed there all day. I cooked rice. My sister came with her dog. On Sunday I studied English.",
           comentario: "Falta o apóstrofo: \"my mother's house\". O resto está ótimo." }
       ] },
-    { aluna: "Camila Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
+    { id: "cad2", aluna: "Camila Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
       titulo: "Weekend stories", quando: "entregue 10 nov, 08h12", corrigido: false,
       respostas: [
         { pergunta: "Write five sentences about last weekend.",
           texto: "I worked on saturday. On sunday I go to the beach with my friends. The water was cold. We eat pastel. I arrive home at night.",
           comentario: "" }
       ] },
-    { aluna: "Juliana Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
+    { id: "cad3", aluna: "Juliana Teste", turma: "basics", aulaCurto: "9 nov", sessao: 3,
       titulo: "Weekend stories", quando: "entregue 11 nov, 23h40", corrigido: false,
       respostas: [
         { pergunta: "Write five sentences about last weekend.",
           texto: "My weekend was calm. I watched two movies. I didn't go out. I talked with my grandmother by phone. She is 90 years old.",
           comentario: "" }
       ] },
-    { aluna: "Amanda Teste", turma: "essentials", aulaCurto: "10 nov", sessao: 3,
+    { id: "cad4", aluna: "Amanda Teste", turma: "essentials", aulaCurto: "10 nov", sessao: 3,
       titulo: "Holidays around the world", quando: "entregue 11 nov, 19h55", corrigido: false,
       respostas: [
         { pergunta: "Tell us about a holiday in your family.",
           texto: "In Brazil we celebrate Festa Junina in June. We dance and eat canjica. My aunt makes the best one. Last year it rained and we danced anyway.",
           comentario: "" }
       ] },
-    { aluna: "Ana Teste", turma: "speaking", aulaCurto: "11 nov", sessao: 3,
+    { id: "cad5", aluna: "Ana Teste", turma: "speaking", aulaCurto: "11 nov", sessao: 3,
       titulo: "What is happening", quando: "entregue 12 nov, 07h30", corrigido: true,
       respostas: [
         { pergunta: "Summarise one news story in five sentences.",
@@ -295,17 +354,6 @@ window.ISR_MODELO = (function () {
     { nome: "Pedro Teste", motivo: "Faltou e não entregou a tarefa na mesma semana.", acao: "Abrir a ficha" }
   ];
 
-  // ── GRAVAÇÕES ────────────────────────────────────────────────
-  var GRAVACOES = [
-    { turma: "Speaking (B1)", curto: "11 nov", sessao: 3, titulo: "What is happening",
-      link: "drive.google.com/…/speaking-11-nov" },
-    { turma: "Essentials (A2)", curto: "10 nov", sessao: 3, titulo: "Holidays around the world",
-      link: "drive.google.com/…/essentials-10-nov" },
-    { turma: "Basics (A1)", curto: "9 nov", sessao: 3, titulo: "Weekend stories", link: "" },
-    { turma: "Basics (A1)", curto: "2 nov", sessao: 2, titulo: "Where I live",
-      link: "drive.google.com/…/basics-2-nov" }
-  ];
-
   // ── AS AULAS DO MÊS ──────────────────────────────────────────
   // Quais aulas contaram, quais não, e por quê.
   //
@@ -314,25 +362,19 @@ window.ISR_MODELO = (function () {
   // precisa para agir. Quanto ela recebe é assunto do contrato dela
   // com a escola, não desta tela.
   //
-  // As somas saem das linhas, e não de um campo à parte: número
-  // escrito à mão ao lado da lista é número que desencontra.
+  // A LISTA SAI DAS AULAS DAS TURMAS, não de um array paralelo. Havia
+  // dois: o do mês citava aulas que não existiam em turma nenhuma, e
+  // nenhuma linha levava à chamada que a professora precisava
+  // corrigir. Aqui só moram as EXCEÇÕES — a razão de uma aula não ter
+  // contado —, e a lista se monta do calendário.
   var HORAS = {
     mes: "novembro de 2026",
     fechamento: "O mês fecha no dia 30. Até lá, chamada corrigida volta a contar.",
-    linhas: [
-      { curto: "2 nov", turma: "Basics (A1)", estado: "contou", porque: "" },
-      { curto: "9 nov", turma: "Basics (A1)", estado: "contou", porque: "" },
-      { curto: "10 nov", turma: "Essentials (A2)", estado: "contou", porque: "" },
-      { curto: "11 nov", turma: "Speaking (B1)", estado: "contou", porque: "" },
-      { curto: "12 nov", turma: "Movie Lovers", estado: "contou", porque: "" },
-      { curto: "3 nov", turma: "Essentials (A2)", estado: "não contou",
-        porque: "Chamada salva sem tópico da aula. Escreva o tópico para a aula entrar." },
-      { curto: "4 nov", turma: "Speaking (B1)", estado: "não contou",
-        porque: "Chamada reaberta e não salva de novo. Salve para a aula voltar a contar." },
-      { curto: "5 nov", turma: "Movie Lovers", estado: "contou", porque: "" },
-      { curto: "16 nov", turma: "Basics (A1)", estado: "hoje",
-        porque: "Entra quando a chamada for salva com tópico." }
-    ]
+    // turma|data → por que não contou
+    excecoes: {
+      "essentials|2026-11-03": "Chamada salva sem tópico da aula. Escreva o tópico para a aula entrar.",
+      "speaking|2026-11-04": "Chamada reaberta e não salva de novo. Salve para a aula voltar a contar."
+    }
   };
 
   // ── SUBSTITUIÇÕES ────────────────────────────────────────────
@@ -405,6 +447,30 @@ window.ISR_MODELO = (function () {
     });
     return out;
   }
+  // Todas as aulas de um mês, de todas as turmas, com a razão de não
+  // ter contado quando houver. Uma fonte só: o calendário das turmas.
+  function aulasDoMes(mes) {
+    var out = [];
+    TURMAS.forEach(function (t) {
+      (t.aulas || []).forEach(function (a) {
+        if (String(a.data).slice(0, 7) !== mes) return;
+        var porque = HORAS.excecoes[t.id + "|" + a.data] || "";
+        out.push({ turma: t, aula: a, porque: porque,
+          estado: a.estado === "dada" ? (porque ? "não contou" : "contou")
+            : a.estado === "hoje" ? "hoje" : "agendada" });
+      });
+    });
+    return out.sort(function (x, y) { return x.aula.data < y.aula.data ? -1 : 1; });
+  }
+
+  // As gravações são as aulas já dadas. Não existe lista à parte: duas
+  // listas do mesmo fato é o caminho para dois números discordarem.
+  function gravacoes() {
+    return aulasDadas().map(function (x) {
+      return { turma: x.turma, aula: x.aula, link: x.aula.gravacao || "" };
+    });
+  }
+
   function porCorrigir() {
     return CADERNO.filter(function (c) { return !c.corrigido; });
   }
@@ -420,7 +486,8 @@ window.ISR_MODELO = (function () {
   return {
     TURMAS: TURMAS, CLUBES: CLUBES, SEMANA: SEMANA, VIVO: VIVO,
     ESTADO_VIVO: ESTADO_VIVO, CADERNO: CADERNO, PARTICULARES: PARTICULARES,
-    AGENDA_HOJE: AGENDA_HOJE, FILA: FILA, GRAVACOES: GRAVACOES, HORAS: HORAS,
+    AGENDA_HOJE: AGENDA_HOJE, FILA: FILA, HORAS: HORAS,
+    aulasDoMes: aulasDoMes, gravacoes: gravacoes,
     SUBSTITUICOES: SUBSTITUICOES, SUB_MOTIVOS: SUB_MOTIVOS, PULSOS: PULSOS,
     PROJETO: PROJETO, APOIO: APOIO,
     turma: turma, aula: aula, clube: clube, particular: particular,

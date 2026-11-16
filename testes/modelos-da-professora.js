@@ -1,5 +1,5 @@
 // Os três protótipos da tela da professora abrem, navegam e contêm
-// os 13 blocos do trabalho dela.
+// os blocos do trabalho dela.
 //
 // Não testa o sistema: testa os rascunhos de rascunhos/, que servem
 // para a escolha do arranjo. O que ele garante é o que a Gabi vai
@@ -23,13 +23,16 @@ const BLOCOS = [
   ["4 · chamada", "tópico da aula"],
   ["5 · plano da sessão", "o roteiro"],
   ["6 · cadernos fora da aula", "por corrigir"],
-  ["7 · a turma", "renovação"],
+  ["7 · a turma", "apoio pedagógico"],
   ["8 · clubes", "lista de espera"],
   ["9 · particulares", "aula particular"],
   ["10 · gravações", "sem link"],
   ["11 · aulas do mês", "aula por aula"],
   ["12 · substituição", "enviar o pedido"],
-  ["13 · ficha da aluna", "observação sobre ela"],
+  ["13 · ficha da aluna", "nota da equipe"],
+  ["13a · as alunas dela", "abrir a turma"],
+  ["2b · onde estamos no roteiro", "min de aula"],
+  ["6b · visto sem escrever", "dar visto"],
   ["5b · caderno para a tarefa de casa", "caderno aberto para a tarefa de casa"],
   ["5c · calendário do ciclo", "acrescentar uma aula"]
 ];
@@ -95,7 +98,14 @@ const BLOCOS = [
     const varrer = async () => {
       const itens = await page.locator("#menu .item").count();
       for (let i = 0; i < itens; i++) {
-        const noItem = async () => { await page.locator("#menu .item").nth(i).click(); };
+        // O menu muda de tamanho durante a varredura: no modelo C,
+        // encerrar a aula devolve o menu de dois itens. Então o item
+        // é reconferido a cada volta.
+        const noItem = async () => {
+          const alvo = page.locator("#menu .item").nth(i);
+          if (await alvo.count()) await alvo.click();
+        };
+        if (!(await page.locator("#menu .item").nth(i).count())) continue;
         await noItem();
         await colher();
         await cartoes(noItem);
@@ -106,6 +116,7 @@ const BLOCOS = [
             const a = page.locator("#corpo .aba").nth(j);
             if (await a.count()) await a.click();
           };
+          if (!(await page.locator("#menu .item").nth(i).count())) break;
           await naAba();
           await colher();
           await cartoes(naAba);
@@ -115,8 +126,25 @@ const BLOCOS = [
 
     // a primeira varredura com a aula fechada, a segunda com ela aberta
     await varrer();
-    const abrir = page.locator('[data-aula="abrir"]').first();
-    if (await abrir.count()) await abrir.click();
+
+    // o botão de abrir a aula não está em toda tela: a varredura
+    // termina onde terminar, então é preciso procurá-lo.
+    let abriuAula = false;
+    const itensA = await page.locator("#menu .item").count();
+    for (let i = 0; i < itensA && !abriuAula; i++) {
+      await page.locator("#menu .item").nth(i).click();
+      const nAb2 = await page.locator("#corpo .aba").count();
+      for (let j = -1; j < nAb2 && !abriuAula; j++) {
+        if (j >= 0) {
+          await page.locator("#menu .item").nth(i).click();
+          const ab = page.locator("#corpo .aba").nth(j);
+          if (await ab.count()) await ab.click();
+        }
+        const btn = page.locator('[data-aula="abrir"]').first();
+        if (await btn.count()) { await btn.click(); abriuAula = true; }
+      }
+    }
+    ok(`modelo ${m} · dá para abrir a aula`, abriuAula, "nenhum botão abre a aula");
     await varrer();
 
     // e a ficha da aluna. Ela não está no menu de nenhum modelo: abre
