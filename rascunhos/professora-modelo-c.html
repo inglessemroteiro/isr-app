@@ -6,175 +6,242 @@
 <title>Modelo C · A turma é a unidade</title>
 <!--
   MODELO C — A TURMA É A UNIDADE
-
-  Um modelo para escolher, não uma tela pronta. Dados inventados.
+  Protótipo clicável. Dados inventados. Não entra no sistema.
 
   A IDEIA: a professora não pensa em "chamadas", "gravações" e
   "tarefas" como assuntos separados. Ela pensa em TURMAS. Então ela
-  escolhe uma turma e recebe tudo sobre ela: as aulas com chamada e
-  gravação, o plano com as tarefas, as alunas.
+  escolhe uma turma e recebe tudo sobre ela: as aulas numa lista, uma
+  linha por data, cada linha carregando a chamada, a tarefa e a
+  gravação daquela aula. Abrir a linha é abrir a aula.
 
-  As aulas da turma ficam numa lista única, uma linha por data, e
-  cada linha carrega o que aquela aula precisa — chamada, tarefa,
-  gravação. Abrir a linha é abrir a aula.
+  Por cima disso há uma tela "Hoje", porque o dia dela pode ter três
+  turmas em três dias diferentes.
 
-  O QUE ISSO RESOLVE: nada fica escondido, porque tudo pertence a
-  alguma turma. E a tarefa e a gravação sentam ao lado da aula a que
-  pertencem, que é onde a professora procura.
-
-  O QUE CUSTA: ver o dia inteiro de uma vez — três turmas em três
-  dias diferentes — exige uma tela "Hoje" por cima desta. São duas
-  telas, não uma.
+  Telas: Hoje, a turma em quatro abas (Aulas, Plano do ciclo, Alunas,
+  Materiais) e o clube.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --tinta: #164951; --tinta-fraca: #8a7465; --papel: #f2ebe3; --cartao: #ffffff;
-    --borda: #e7ded2; --marca: #348a8e; --escuro: #1d3d42;
-    --ok-bg: #e9f3e4; --ok: #3d6b22; --alerta-bg: #fdf3d6; --alerta: #7a5c00;
-    --erro-bg: #fde4df; --erro: #a3392c;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--papel); color: var(--tinta);
-    font-family: Inter, system-ui, sans-serif; }
-  .tela { display: flex; min-height: 100vh; }
-  .lado { width: 240px; flex: none; background: var(--escuro); color: #fff;
-    padding: 20px 14px; display: flex; flex-direction: column; gap: 16px; }
-  .marca { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
-  .quem { display: flex; gap: 10px; align-items: center; }
-  .bolha { width: 36px; height: 36px; border-radius: 999px; background: #c9e265;
-    color: var(--escuro); display: grid; place-items: center; font-weight: 800; }
-  .grupo { font-size: 10.5px; font-weight: 800; color: #c9e265; padding: 10px 11px 4px;
-    letter-spacing: .08em; text-transform: uppercase; }
-  .tcard { border-radius: 12px; padding: 10px 11px; margin-bottom: 4px; opacity: .78; }
-  .tcard.on { background: rgba(255,255,255,.14); opacity: 1; }
-  .tcard b { display: block; font-size: 13.5px; font-weight: 700; }
-  .tcard span { font-size: 11.5px; opacity: .8; }
-  .item { padding: 9px 11px; border-radius: 10px; font-size: 13.5px; font-weight: 600; opacity: .8; }
-  .corpo { flex: 1; padding: 22px 26px 60px; max-width: 1000px; }
-  h1 { margin: 2px 0 2px; font-size: 27px; font-weight: 800; letter-spacing: -0.03em; }
-  .olho { font-size: 12px; font-weight: 700; color: var(--tinta-fraca); }
-  .sub1 { font-size: 13px; color: var(--tinta-fraca); margin-bottom: 14px; }
-  .abas { display: flex; gap: 20px; border-bottom: 1px solid var(--borda); margin-bottom: 16px; }
-  .aba { padding: 0 0 9px; font-size: 14px; font-weight: 700; color: var(--tinta-fraca);
-    border-bottom: 3px solid transparent; margin-bottom: -1px; }
-  .aba.on { color: var(--tinta); border-bottom-color: #c9e265; }
-  .cartao { background: var(--cartao); border-radius: 18px; border: 1px solid var(--borda);
-    margin-bottom: 12px; overflow: hidden; }
-  .aula { padding: 15px 18px; border-bottom: 1px solid var(--papel); }
-  .aula:last-child { border-bottom: 0; }
-  .aula.aberta { background: #fbfaf7; }
-  .topo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .data { font-size: 13.5px; font-weight: 800; min-width: 62px; }
-  .tit { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
-  .tit span { display: block; font-size: 12px; color: var(--tinta-fraca); font-weight: 500; margin-top: 2px; }
-  .selo { border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-  .selo.ok { background: var(--ok-bg); color: var(--ok); }
-  .selo.alerta { background: var(--alerta-bg); color: var(--alerta); }
-  .selo.neutro { background: var(--papel); color: var(--tinta-fraca); }
-  .dentro { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .bloco { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 13px 15px; }
-  .bloco h3 { margin: 0 0 8px; font-size: 12px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .07em; color: var(--marca); }
-  .linha { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
-  .linha b { flex: 1; font-weight: 600; }
-  .p { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
-    font-size: 11px; font-weight: 800; background: var(--ok-bg); color: var(--ok); }
-  .p.f { background: var(--erro-bg); color: var(--erro); }
-  .campo { width: 100%; border: 1px solid var(--borda); border-radius: 10px; padding: 9px 12px;
-    font-size: 13px; font-family: inherit; background: var(--papel); color: var(--tinta); }
-  textarea.campo { resize: vertical; min-height: 56px; line-height: 1.5; }
-  .nota { font-size: 11.5px; color: var(--tinta-fraca); margin-top: 6px; line-height: 1.45; }
-  .btn { border: 0; border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 700;
-    font-family: inherit; background: var(--escuro); color: #fff; margin-top: 10px; }
-  @media (max-width: 860px) { .dentro { grid-template-columns: 1fr; } }
-  @media (max-width: 760px) { .lado { display: none; } .corpo { padding: 18px 16px 60px; } }
-</style>
+<link rel="stylesheet" href="professora-modelo.css" />
 </head>
 <body>
+<div class="faixa">
+  <b>Modelo C</b> · a turma é a unidade — protótipo para escolher, com dados inventados
+  <a href="professora-modelo-a.html">ver o modelo A →</a>
+  <a href="professora-modelo-b.html">ver o modelo B →</a>
+</div>
 <div class="tela">
   <aside class="lado">
     <div class="marca">Inglês sem Roteiro</div>
     <div class="quem"><div class="bolha">B</div>
       <div><div style="font-weight:700;font-size:14px">Bárbara</div>
         <div style="font-size:11.5px;opacity:.75">professora</div></div></div>
-    <div class="item">Hoje</div>
-    <div class="grupo">as minhas turmas</div>
-    <div class="tcard on"><b>Basics (A1)</b><span>seg 7h · 5 alunas</span></div>
-    <div class="tcard"><b>Essentials (A2)</b><span>ter 13h · 7 alunas</span></div>
-    <div class="tcard"><b>Speaking (B1)</b><span>qua 8h · 6 alunas</span></div>
-    <div class="grupo">comunidade</div>
-    <div class="item">Movie Lovers</div>
+    <nav id="menu"></nav>
   </aside>
-
-  <main class="corpo">
-    <div class="olho">minha turma</div>
-    <h1>Basics (A1) · seg 7h</h1>
-    <div class="sub1">Our End of Year Dishes · sessão 4 de 10 · 5 alunas · online</div>
-
-    <div class="abas">
-      <div class="aba on">Aulas</div>
-      <div class="aba">Plano do ciclo</div>
-      <div class="aba">Alunas</div>
-      <div class="aba">Materiais</div>
-    </div>
-
-    <section class="cartao">
-      <div class="aula aberta">
-        <div class="topo">
-          <span class="data">hoje<br><span style="font-weight:600;font-size:11.5px">16 nov</span></span>
-          <span class="tit">Sessão 4 · Our End of Year Dishes<span>a aula é às 7h</span></span>
-          <span class="selo alerta">chamada aberta</span>
-        </div>
-        <div class="dentro">
-          <div class="bloco">
-            <h3>Chamada</h3>
-            <div class="linha"><b>Marina Teste</b><span class="p">P</span></div>
-            <div class="linha"><b>Camila Teste</b><span class="p">P</span></div>
-            <div class="linha"><b>Beatriz Teste</b><span class="p f">F</span></div>
-            <div class="linha"><b>Rafael Teste</b><span class="p">P</span></div>
-            <div class="linha"><b>Juliana Teste</b><span class="p">P</span></div>
-            <input class="campo" style="margin-top:9px" value="Receitas de família: passos em ordem" />
-            <div class="nota">O tópico é o que faz a aula contar na folha.</div>
-            <button class="btn">Salvar a chamada</button>
-          </div>
-          <div class="bloco">
-            <h3>Tarefa de casa</h3>
-            <textarea class="campo">Gravar um áudio de 1 minuto descrevendo a receita da sua família, usando pelo menos três palavras da aula.</textarea>
-            <div class="nota">3 de 5 entregaram · faltam Beatriz e Rafael</div>
-            <h3 style="margin-top:14px">Gravação</h3>
-            <input class="campo" placeholder="Colar o link do Drive…" />
-            <div class="nota">Só as alunas desta turma veem.</div>
-            <button class="btn">Salvar os dois</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="aula">
-        <div class="topo">
-          <span class="data">9 nov</span>
-          <span class="tit">Sessão 3 · Weekend stories<span>tarefa entregue por 5 de 5</span></span>
-          <span class="selo alerta">sem gravação</span>
-          <span class="selo ok">chamada feita</span>
-        </div>
-      </div>
-      <div class="aula">
-        <div class="topo">
-          <span class="data">2 nov</span>
-          <span class="tit">Sessão 2 · Where I live<span>tarefa entregue por 4 de 5</span></span>
-          <span class="selo ok">gravação publicada</span>
-          <span class="selo ok">chamada feita</span>
-        </div>
-      </div>
-      <div class="aula">
-        <div class="topo">
-          <span class="data">23 nov</span>
-          <span class="tit">Sessão 5 · Talking about plans<span>ainda não aconteceu</span></span>
-          <span class="selo neutro">agendada</span>
-        </div>
-      </div>
-    </section>
-  </main>
+  <main class="corpo" id="corpo"></main>
 </div>
+
+<script src="professora-modelo-dados.js"></script>
+<script>
+(function () {
+  "use strict";
+  var D = window.ISR_MODELO;
+  var corpo = document.getElementById("corpo");
+  var menu = document.getElementById("menu");
+  var est = { tela: "hoje", turma: "basics", aba: "aulas", aberta: "2026-11-16" };
+
+  function esc(s) {
+    return String(s === undefined || s === null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function ir(patch) { Object.assign(est, patch); pintar(); window.scrollTo(0, 0); }
+
+  function pintarMenu() {
+    menu.innerHTML = "";
+    var hoje = document.createElement("button");
+    hoje.className = "item" + (est.tela === "hoje" ? " on" : "");
+    hoje.innerHTML = "<span>Hoje</span><span class='pino'>1</span>";
+    hoje.onclick = function () { ir({ tela: "hoje" }); };
+    menu.appendChild(hoje);
+
+    var g = document.createElement("div");
+    g.className = "grupo"; g.textContent = "as minhas turmas"; menu.appendChild(g);
+    D.TURMAS.forEach(function (t) {
+      var sem = (t.aulas || []).filter(function (a) { return a.estado !== "agendada" && !a.gravacao; }).length;
+      var b = document.createElement("button");
+      b.className = "tcard" + (est.tela === "turma" && est.turma === t.id ? " on" : "");
+      b.innerHTML = "<b>" + esc(t.nivel) + "</b><span>" + esc(t.quando) + " · "
+        + t.alunas.length + " alunas" + (sem ? " · " + sem + " pendente" : "") + "</span>";
+      b.onclick = function () { ir({ tela: "turma", turma: t.id, aba: "aulas" }); };
+      menu.appendChild(b);
+    });
+
+    var g2 = document.createElement("div");
+    g2.className = "grupo"; g2.textContent = "comunidade"; menu.appendChild(g2);
+    D.CLUBES.forEach(function (c) {
+      var b = document.createElement("button");
+      b.className = "item" + (est.tela === "clube" ? " on" : "");
+      b.innerHTML = "<span>" + esc(c.nome) + "</span>";
+      b.onclick = function () { ir({ tela: "clube" }); };
+      menu.appendChild(b);
+    });
+  }
+
+  // ── HOJE ──────────────────────────────────────────────────────
+  function telaHoje() {
+    var t = D.turma("basics"), a = D.aula("basics", "2026-11-16");
+    var h = ['<div class="olho">segunda-feira, 16 de novembro</div><h1>Hoje</h1>',
+      '<div class="intro">A aula de hoje, e o que está esperando nas outras turmas. Cada turma tem a tela dela, no menu ao lado.</div>'];
+    h.push('<section class="cartao"><div class="cab">'
+      + "<div><h2>" + esc(t.nivel) + " · " + esc(t.quando) + "</h2>"
+      + '<div class="sub">Sessão ' + a.s + " · " + esc(a.titulo) + " · " + t.alunas.length + " alunas</div></div>"
+      + '<span class="selo alerta">chamada aberta</span></div>'
+      + '<button class="btn pq" data-t="basics">Abrir a turma</button></section>');
+
+    h.push('<section class="cartao"><div class="cab"><h2>Esperando em cada turma</h2></div>');
+    D.TURMAS.forEach(function (x) {
+      var sg = (x.aulas || []).filter(function (y) { return y.estado !== "agendada" && !y.gravacao; }).length;
+      var st = (x.aulas || []).filter(function (y) { return !y.tarefa && y.estado !== "dada"; }).length;
+      var txt = [];
+      if (sg) txt.push(sg + (sg === 1 ? " aula sem gravação" : " aulas sem gravação"));
+      if (st) txt.push(st + (st === 1 ? " aula sem tarefa" : " aulas sem tarefa"));
+      h.push('<div class="linha"><span class="nome">' + esc(x.nivel)
+        + '<div class="sub">' + (txt.length ? esc(txt.join(" · ")) : "nada pendente") + "</div></span>"
+        + '<span class="selo ' + (txt.length ? "alerta" : "ok") + '">'
+        + (txt.length ? "pendente" : "em dia") + "</span>"
+        + '<button class="tar" data-t="' + x.id + '">abrir</button></div>');
+    });
+    h.push("</section>");
+    corpo.innerHTML = h.join("");
+    [].forEach.call(corpo.querySelectorAll("[data-t]"), function (el) {
+      el.onclick = function () { ir({ tela: "turma", turma: el.getAttribute("data-t"), aba: "aulas" }); };
+    });
+  }
+
+  // ── A TURMA ───────────────────────────────────────────────────
+  function telaTurma() {
+    var t = D.turma(est.turma);
+    var h = ['<div class="olho">minha turma</div><h1>' + esc(t.nivel) + " · " + esc(t.quando) + "</h1>",
+      '<div class="sub1">' + esc(t.projeto) + " · sessão " + t.sessao + " de " + t.sessoes
+      + " · " + t.alunas.length + " alunas · " + esc(t.modalidade)
+      + (t.local ? " · " + esc(t.local) : "") + "</div>"];
+    var abas = [["aulas", "Aulas"], ["plano", "Plano do ciclo"], ["alunas", "Alunas"], ["materiais", "Materiais"]];
+    h.push('<div class="abas">' + abas.map(function (x) {
+      return '<button class="aba' + (est.aba === x[0] ? " on" : "") + '" data-aba="' + x[0] + '">' + x[1] + "</button>";
+    }).join("") + "</div>");
+
+    if (est.aba === "aulas") {
+      h.push('<section class="cartao liso">');
+      t.aulas.forEach(function (a) {
+        var aberta = est.aberta === a.data;
+        h.push('<div class="aulaLinha' + (aberta ? " aberta" : "") + '" data-data="' + a.data + '">');
+        h.push('<div class="topo"><span class="data">' + esc(a.curto) + "</span>"
+          + '<span class="tit">Sessão ' + a.s + " · " + esc(a.titulo)
+          + "<span>" + (a.estado === "agendada" ? "ainda não aconteceu"
+            : ((a.entregues || []).length + " de " + t.alunas.length + " entregaram a tarefa")) + "</span></span>"
+          + (a.estado === "agendada" ? '<span class="selo neutro">agendada</span>'
+            : '<span class="selo ' + (a.gravacao ? "ok" : "alerta") + '">'
+              + (a.gravacao ? "gravação publicada" : "sem gravação") + "</span>")
+          + (a.estado === "hoje" ? '<span class="selo alerta">chamada aberta</span>'
+            : (a.estado === "dada" ? '<span class="selo ok">chamada feita</span>' : "")) + "</div>");
+
+        if (aberta) {
+          h.push('<div class="grade2" style="margin-top:13px">');
+          h.push('<div class="bloco"><h3>Chamada</h3>');
+          t.alunas.forEach(function (n) {
+            var f = (a.presencas || {})[n] === "F";
+            h.push('<div class="linha" style="padding:6px 0"><span class="nome" style="font-size:13px">'
+              + esc(n) + "</span>"
+              + '<span class="b' + (f ? " f" : " p") + '" style="width:24px;height:24px;font-size:11px">'
+              + (f ? "F" : "P") + "</span></div>");
+          });
+          h.push('<input class="campo" style="margin-top:9px" value="' + esc(a.topico || "")
+            + '" placeholder="Tópico da aula" />'
+            + '<div class="nota">O tópico é o que faz a aula contar na folha.</div>'
+            + '<button class="btn pq" style="margin-top:10px">Salvar a chamada</button></div>');
+
+          h.push('<div class="bloco"><h3>Tarefa de casa</h3>'
+            + '<textarea class="campo">' + esc(a.tarefa || "") + "</textarea>"
+            + '<div class="nota">' + (a.entregues || []).length + " de " + t.alunas.length
+            + " entregaram" + (() => {
+              var falta = t.alunas.filter(function (n) { return (a.entregues || []).indexOf(n) < 0; });
+              return falta.length ? " · faltam " + esc(falta.map(function (n) { return n.split(" ")[0]; }).join(", ")) : "";
+            })() + "</div>"
+            + '<h3 style="margin-top:14px">Gravação</h3>'
+            + '<input class="campo" value="' + esc(a.gravacao || "") + '" placeholder="Colar o link do Drive…" />'
+            + '<div class="nota">Só as alunas desta turma veem.</div>'
+            + '<button class="btn pq" style="margin-top:10px">Salvar os dois</button></div>');
+          h.push("</div>");
+        }
+        h.push("</div>");
+      });
+      h.push("</section>");
+    } else if (est.aba === "plano") {
+      h.push('<div class="intro">As sessões do programa que esta turma segue. A tarefa de casa de cada aula é escrita na aba Aulas, dentro da aula.</div>');
+      h.push('<section class="cartao"><table><tbody>');
+      for (var i = 1; i <= t.sessoes; i++) {
+        var a2 = (t.aulas || []).filter(function (x) { return x.s === i; })[0];
+        h.push("<tr><td style='width:60px'><b>S" + i + "</b></td><td>"
+          + esc(a2 ? a2.titulo : "—") + "<div class='sub'>" + (a2 ? esc(a2.curto) : "sem data") + "</div></td>"
+          + "<td style='width:140px'>" + (a2 && a2.tarefa ? '<span class="selo ok">tarefa escrita</span>'
+            : '<span class="selo neutro">sem tarefa</span>') + "</td></tr>");
+      }
+      h.push("</tbody></table></section>");
+    } else if (est.aba === "alunas") {
+      h.push('<section class="cartao">');
+      t.alunas.forEach(function (n) {
+        h.push('<div class="linha"><span class="nome">' + esc(n) + "</span>"
+          + '<span class="selo neutro">frequência 92%</span>'
+          + '<span class="selo ok">tarefas em dia</span></div>');
+      });
+      h.push("</section>");
+    } else {
+      h.push('<section class="cartao"><div class="rotulo">caderno da turma</div>'
+        + '<div style="font-size:13.5px">' + esc(t.material) + "</div>"
+        + '<div class="nota">O caderno é o mesmo para todas as alunas desta turma.</div></section>');
+    }
+    corpo.innerHTML = h.join("");
+    [].forEach.call(corpo.querySelectorAll("[data-aba]"), function (el) {
+      el.onclick = function () { ir({ aba: el.getAttribute("data-aba") }); };
+    });
+    [].forEach.call(corpo.querySelectorAll("[data-data]"), function (el) {
+      el.onclick = function (ev) {
+        if (ev.target.closest(".grade2")) return;
+        var d = el.getAttribute("data-data");
+        ir({ aberta: est.aberta === d ? "" : d });
+      };
+    });
+  }
+
+  // ── CLUBE ─────────────────────────────────────────────────────
+  function telaClube() {
+    var c = D.CLUBES[0];
+    var h = ['<div class="olho">meu clube</div><h1>' + esc(c.emoji + " " + c.nome) + "</h1>",
+      '<div class="sub1">' + esc(c.quando) + " · " + esc(c.nivel) + " · " + c.inscritas + " de " + c.vagas + " inscritas</div>",
+      '<div class="abas"><button class="aba on">Encontros</button>'
+      + '<button class="aba">Inscritas</button><button class="aba">Fórum</button></div>',
+      '<section class="cartao liso">'];
+    c.encontros.forEach(function (e) {
+      h.push('<div class="aulaLinha"><div class="topo"><span class="data">' + esc(e.curto) + "</span>"
+        + '<span class="tit">' + esc(e.tema) + "</span>"
+        + '<span class="selo ' + (/presentes/.test(e.estado) ? "ok" : "alerta") + '">' + esc(e.estado) + "</span></div></div>");
+    });
+    h.push("</section>");
+    h.push('<section class="cartao"><div class="cab"><h2>Fórum do clube</h2></div>');
+    c.forum.forEach(function (f) {
+      h.push('<div class="linha" style="align-items:flex-start"><span class="nome">' + esc(f.quem)
+        + '<div class="sub">' + esc(f.texto) + "</div></span>"
+        + '<span class="sub" style="flex:none">' + esc(f.quando) + "</span></div>");
+    });
+    h.push("</section>");
+    corpo.innerHTML = h.join("");
+  }
+
+  function pintar() {
+    pintarMenu();
+    ({ hoje: telaHoje, turma: telaTurma, clube: telaClube }[est.tela] || telaHoje)();
+  }
+  pintar();
+})();
+</script>
 </body>
 </html>
