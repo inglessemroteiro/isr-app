@@ -54,13 +54,13 @@ window.ISR_BLOCOS = (function () {
     // os avisos, contados do que existe
     var semGrav = D.semGravacao(), corrigir = D.porCorrigir(), semData = D.clubesSemData();
     if (semGrav.length || corrigir.length || semData.length) {
-      h.push('<div class="aviso"><b>Pendências suas.</b><ul style="margin:6px 0 0;padding-left:18px">');
+      h.push('<div class="aviso"><b>Pendências</b><ul style="margin:6px 0 0;padding-left:18px">');
       if (corrigir.length) h.push("<li>" + corrigir.length + " tarefa"
         + (corrigir.length === 1 ? "" : "s") + ' de casa entregue'
         + (corrigir.length === 1 ? "" : "s") + ' e sem correção. <a href="#" '
         + ir({ tela: "cadernos" }) + ">abrir os cadernos</a></li>");
       if (semGrav.length) h.push("<li>" + semGrav.length + " aula"
-        + (semGrav.length === 1 ? "" : "s") + ' sem link de gravação. <a href="#" '
+        + (semGrav.length === 1 ? "" : "s") + ' sem gravação publicada. <a href="#" '
         + ir({ tela: "gravacoes" }) + ">ver as gravações</a></li>");
       if (semData.length) h.push("<li>" + semData.length + " clube"
         + (semData.length === 1 ? "" : "s") + ' com encontro sem tema. <a href="#" '
@@ -88,7 +88,7 @@ window.ISR_BLOCOS = (function () {
         + '<div style="font-size:13.5px;font-weight:700">' + esc(f.nome) + "</div>"
         + '<div class="nota" style="margin-top:2px">' + esc(f.motivo) + "</div>"
         + '<button class="btn claro pq" style="margin-top:6px" ' + ir({ tela: "pulso", aluna: f.nome })
-        + ">Registrar como ela está</button></div>");
+        + ">Registrar o pulso</button></div>");
     });
     h.push("</div></div>");
 
@@ -97,9 +97,9 @@ window.ISR_BLOCOS = (function () {
     h.push('<div class="bloco"><h3>entregas do mês</h3>'
       + '<div style="display:flex;gap:16px;flex-wrap:wrap">'
       + B.numero("9", "aulas com chamada") + B.numero("2", "sem chamada no mês", "erro")
-      + B.numero("18", "alunas suas") + B.numero("2", "clubes seus") + "</div>"
+      + B.numero("18", "alunas") + B.numero("2", "clubes") + "</div>"
       + '<button class="btn claro pq" style="margin-top:10px" ' + ir({ tela: "horas" })
-      + ">Ver as minhas horas</button></div>");
+      + ">Ver as aulas do mês</button></div>");
     h.push('<div class="bloco"><h3>substituições</h3>');
     D.SUBSTITUICOES.forEach(function (s) {
       h.push('<div style="display:flex;gap:10px;justify-content:space-between;padding:7px 0">'
@@ -110,6 +110,14 @@ window.ISR_BLOCOS = (function () {
       + ">Pedir substituição</button></div>");
     h.push("</div>");
     return h.join("");
+  };
+
+  // A anotação que diz em que pé o bloco está no sistema de hoje.
+  // Fica marcada como anotação, e não como texto da tela, para que
+  // quem navega o protótipo não a confunda com a interface.
+  B.marca = function (estado, texto) {
+    return '<div class="intro"><span class="marcador">' + esc(estado) + "</span>"
+      + esc(texto) + "</div>";
   };
 
   B.numero = function (v, k, tipo) {
@@ -230,7 +238,7 @@ window.ISR_BLOCOS = (function () {
 
     h.push('<section class="cartao">' + cab("O caderno da aula", "antes da aula",
       '<span class="selo neutro">editor de blocos</span>'));
-    h.push('<div class="nota">É a tela que a aluna abre na aula. Os blocos saem de uma lista: parágrafo, título, lista, tabela, imagem, vídeo, duas ou três colunas, separador e tarefa.</div>');
+    h.push('<div class="nota">É a tela que a aluna abre na aula. Os blocos vêm de um menu: parágrafo, título, lista, tabela, imagem, vídeo, duas ou três colunas, separador e tarefa.</div>');
     h.push('<div class="telaFalsa"><div class="tfAbas"><span class="on">Aula</span><span>Tarefas</span><span>Guia do Prof</span></div>'
       + '<div class="tfFolha"><h3 style="margin:0 0 8px;font-size:20px">' + esc(a.titulo) + "</h3>"
       + "<p style=\"margin:0 0 8px;font-size:13px;line-height:1.55\">" + esc(a.objetivo || "") + "</p>"
@@ -361,8 +369,8 @@ window.ISR_BLOCOS = (function () {
     if (a.objetivo) h.push('<div style="font-size:13.5px;line-height:1.6;margin-top:9px">' + esc(a.objetivo) + "</div>");
 
     if (!(a.roteiro || []).length) {
-      h.push('<div class="aviso" style="margin-top:11px">Esta sessão ainda não tem roteiro escrito. '
-        + "O roteiro vem do programa da escola; enquanto você não mexe, uma correção da escola alcança a turma.</div>");
+      h.push('<div class="aviso" style="margin-top:11px">Esta sessão ainda não tem roteiro. '
+        + "O roteiro vem do programa da escola: enquanto você não o edita, correções do programa chegam à turma.</div>");
     } else {
       h.push('<div class="rotulo" style="margin-top:14px">o roteiro</div>');
       (a.roteiro || []).forEach(function (e, i) {
@@ -425,9 +433,9 @@ window.ISR_BLOCOS = (function () {
       ? todas.filter(function (c) { return !c.corrigido; })
       : filtro === "corrigidas" ? todas.filter(function (c) { return c.corrigido; }) : todas;
 
-    h.push('<div class="intro"><b>O que falta hoje.</b> O texto que a aluna escreve fica guardado, '
-      + "mas a professora só consegue lê-lo enquanto a aula está aberta — depois disso, "
-      + "ela marca \"entregou\" na chamada sem poder ler o que foi entregue.</div>");
+    h.push(B.marca("não existe hoje",
+      "As respostas ficam guardadas, mas só são legíveis enquanto a aula está aberta. "
+      + "Fechada a aula, a chamada registra \"entregou\" e o texto fica sem leitora."));
 
     h.push('<div class="tira">');
     [["por_corrigir", "por corrigir · " + todas.filter(function (c) { return !c.corrigido; }).length],
@@ -547,7 +555,7 @@ window.ISR_BLOCOS = (function () {
       h.push('<section class="cartao">' + cab(esc(pj.nome), "projeto do ciclo",
         '<span style="font-size:16px;font-weight:800">' + pj.entregues.length + "/" + t.alunas.length + "</span>"));
       h.push('<div class="barra"><span style="width:' + pct + '%"></span></div>');
-      h.push('<div class="nota">Marcar a entrega é da professora: é ela que recebe.</div>');
+      h.push('<div class="nota">Você marca a entrega ao receber o trabalho.</div>');
       t.alunas.forEach(function (n) {
         var ok = pj.entregues.indexOf(n) >= 0;
         h.push('<div class="linha"><span class="nome">' + esc(n) + "</span>"
@@ -663,7 +671,7 @@ window.ISR_BLOCOS = (function () {
           + '<button class="btn claro pq">Chamada</button></div>');
       });
       h.push('<div class="nota" style="margin-top:9px">A data e o tema de cada encontro se escrevem aqui. '
-        + "Sem as datas, a página pública não publica.</div>");
+        + "Sem todas as datas, a página pública não publica.</div>");
       h.push("</section>");
     }
 
@@ -672,7 +680,7 @@ window.ISR_BLOCOS = (function () {
       h.push('<div class="formLinha"><input class="campo" style="flex:2" placeholder="Título da pergunta" />'
         + '<input class="campo" style="flex:3" placeholder="O que você quer perguntar ao grupo" />'
         + '<button class="btn pq">Publicar</button></div>');
-      h.push('<div class="nota">O fórum é da aluna, mas quem o mantém vivo é quem conduz.</div>');
+      h.push('<div class="nota">O fórum é das alunas. A pergunta entre um encontro e outro parte de você.</div>');
       if (!c.forum.length) h.push('<div class="nota" style="margin-top:10px">Nada escrito ainda.</div>');
       c.forum.forEach(function (f) {
         h.push('<div class="topico"><div class="nota" style="margin:0"><b>' + esc(f.quem) + "</b> · " + esc(f.quando) + "</div>"
@@ -744,11 +752,11 @@ window.ISR_BLOCOS = (function () {
   // ══ 10 · GRAVAÇÕES ════════════════════════════════════════════
   B.gravacoes = function (est) {
     var h = [], semLink = D.GRAVACOES.filter(function (g) { return !g.link; });
-    h.push('<div class="intro"><b>Hoje fora do alcance dela.</b> A tela de gravações existe no sistema, '
-      + "mas é de gestão: quem só dá aula é devolvida ao painel. Ela consegue salvar o link na chamada "
-      + "e nunca ver a lista.</div>");
+    h.push(B.marca("existe, fora do alcance",
+      "A tela de gravações é de gestão: quem só dá aula volta ao painel. "
+      + "Hoje a professora salva o link na chamada e nunca vê a lista."));
     if (semLink.length) h.push('<div class="aviso"><b>' + semLink.length + " aula"
-      + (semLink.length === 1 ? " sua está" : "s suas estão") + " sem gravação publicada.</b> "
+      + (semLink.length === 1 ? "" : "s") + " sem gravação publicada.</b> "
       + semLink.map(function (g) { return esc(g.turma + " · " + g.curto); }).join(" · ") + "</div>");
     h.push('<section class="cartao liso">');
     D.GRAVACOES.forEach(function (g) {
@@ -768,16 +776,26 @@ window.ISR_BLOCOS = (function () {
     return h.join("");
   };
 
-  // ══ 11 · MINHAS HORAS ═════════════════════════════════════════
+  // ══ 11 · AS AULAS DO MÊS ══════════════════════════════════════
+  // A contagem e a razão de cada aula ter entrado ou não. Sem valor
+  // por aula e sem total: o que a professora precisa daqui é saber o
+  // que corrigir antes de o mês fechar.
   B.horas = function (est) {
     var H = D.HORAS, h = [];
-    h.push('<div class="intro"><b>Hoje fora do alcance dela.</b> O sistema já calcula isto na Folha, '
-      + "que é só da gestão. A professora cumpre a regra que decide se a aula conta, e não vê o resultado.</div>");
-    h.push('<section class="cartao">' + cab("Minhas horas · " + esc(H.mes), "",
-      '<span style="font-size:20px;font-weight:800">' + esc(H.total) + "</span>"));
-    h.push('<div class="grade3">' + B.numero(String(H.contadas), "aulas que contaram")
-      + B.numero(String(H.naoContadas), "não contaram", "erro")
-      + B.numero(esc(H.valorAula), "por aula") + "</div>");
+    var conta = function (e) {
+      return H.linhas.filter(function (l) { return l.estado === e; }).length;
+    };
+    var contou = conta("contou"), fora = conta("não contou"), abertas = conta("hoje");
+
+    h.push(B.marca("existe, fora do alcance",
+      "A contagem é feita na Folha, que é de gestão. A professora cumpre a regra que decide "
+      + "se a aula conta e não vê o resultado."));
+    h.push('<section class="cartao">' + cab("Aulas do mês · " + esc(H.mes), "",
+      '<span class="selo ' + (fora ? "alerta" : "ok") + '">' + contou + " de "
+      + (contou + fora) + " contaram</span>"));
+    h.push('<div class="grade3">' + B.numero(String(contou), "contaram")
+      + B.numero(String(fora), "não contaram", fora ? "erro" : "")
+      + B.numero(String(abertas), "ainda em aberto") + "</div>");
     h.push('<div class="nota" style="margin-top:9px">' + esc(H.fechamento) + "</div>");
     h.push('<div class="rotulo" style="margin-top:15px">aula por aula</div>');
     H.linhas.forEach(function (l) {
@@ -831,9 +849,9 @@ window.ISR_BLOCOS = (function () {
     var daTurma = D.TURMAS.filter(function (t) { return t.alunas.indexOf(nome) >= 0; })[0];
     var cad = D.CADERNO.filter(function (c) { return c.aluna === nome; });
 
-    h.push('<div class="intro"><b>Hoje fora do alcance dela.</b> O registro existe no sistema '
-      + "(nota de 1 a 5 e um comentário) e mora na tela de Acompanhamento, que é de gestão. "
-      + "A professora é quem vê a aluna toda semana.</div>");
+    h.push(B.marca("existe, fora do alcance",
+      "O registro — nota de 1 a 5 e um comentário — mora em Acompanhamento, que é de gestão. "
+      + "Quem vê a aluna toda semana é a professora."));
 
     h.push('<section class="cartao">' + cab(esc(nome), daTurma ? esc(daTurma.nivel + " · " + daTurma.quando) : "",
       p ? '<span class="selo ' + (p.nota >= 4 ? "ok" : p.nota >= 3 ? "alerta" : "erro") + '">pulso ' + p.nota + "/5 · " + esc(p.quando) + "</span>"
