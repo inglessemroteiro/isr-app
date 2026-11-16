@@ -65,12 +65,11 @@
 
     menu: function (est) {
       var corrigir = D.porCorrigir().length, semGrav = D.semGravacao().length;
-      var semPulso = Object.keys(D.PULSOS).length;
       return [
         { itens: [{ label: "Hoje", on: est.tela === "hoje", vai: { tela: "hoje" } }] },
         { titulo: "ensinar", itens: [
-          { label: "Plano das aulas", on: est.tela === "plano", vai: { tela: "plano" } },
-          { label: "Slides e caderno", on: est.tela === "conteudo", vai: { tela: "conteudo" } },
+          { label: "Plano das aulas", on: est.tela === "plano" || est.tela === "conteudo",
+            vai: { tela: "plano" } },
           { label: "Caderno ao vivo", on: est.tela === "vivo", pino: D.VIVO.aberta ? "ao vivo" : "",
             vai: { tela: "vivo" } },
           { label: "Chamada", on: est.tela === "chamada", vai: { tela: "chamada" } }
@@ -80,7 +79,9 @@
             pino: corrigir ? String(corrigir) : "", vai: { tela: "cadernos" } },
           { label: "Gravações", on: est.tela === "gravacoes",
             pino: semGrav ? String(semGrav) : "", vai: { tela: "gravacoes" } },
-          { label: "Pulso das alunas", on: est.tela === "pulsos" || est.tela === "pulso",
+        ] },
+        { titulo: "as alunas", itens: [
+          { label: "Alunas", on: est.tela === "pulsos" || est.tela === "pulso",
             vai: { tela: "pulsos" } }
         ] },
         { titulo: "turmas e grupos", itens: [
@@ -103,13 +104,14 @@
       if (est.tela === "hoje") return { olho: "segunda, 16 de novembro",
         titulo: "Hoje", sub: "A próxima aula, a agenda e a fila.", html: B.hoje(est) };
 
-      if (est.tela === "plano") return { olho: "ensinar · " + ondeEstou,
-        titulo: "Plano das aulas", sub: "O roteiro, as palavras, os começos de frase e a tarefa de casa.",
-        html: seletor(est) + B.plano(est) };
-
-      if (est.tela === "conteudo") return { olho: "ensinar · " + ondeEstou,
-        titulo: "Slides e caderno", sub: "O deck da sessão e a tela que a aluna abre na aula.",
-        html: seletor(est) + B.conteudo(est) };
+      // O caderno da aluna mora AQUI, e não numa tela à parte: o que
+      // ela abre na aula é o plano desta sessão visto do lado dela.
+      // A tela de slides deixou de existir neste modelo; o link ficou
+      // como um campo no fim do plano.
+      if (est.tela === "plano" || est.tela === "conteudo") return { olho: "ensinar · " + ondeEstou,
+        titulo: "Plano das aulas",
+        sub: "O roteiro, a tarefa de casa e o caderno que a aluna abre.",
+        html: seletor(est) + B.plano(est, { comCaderno: true }) };
 
       if (est.tela === "vivo") return { olho: "ensinar · " + ondeEstou,
         titulo: "Caderno ao vivo", sub: "O que cada aluna está escrevendo agora, e a sua correção.",
@@ -125,26 +127,34 @@
       if (est.tela === "gravacoes") return { olho: "corrigir",
         titulo: "Gravações", sub: "Uma por aula dada, visível só para as alunas da turma.", html: B.gravacoes(est) };
 
+      // Era "pulso das alunas", com uma nota de 1 a 5 a produzir toda
+      // semana. Virou a lista das alunas dela, com o que o sistema já
+      // conta de cada uma. Nada a preencher.
       if (est.tela === "pulsos") {
-        var h = [B.marca("existe, fora do alcance",
-          "O pulso mora em Acompanhamento, que é de gestão.")];
+        var h = [];
         D.TURMAS.forEach(function (tt) {
-          h.push('<section class="cartao">' + B.cab(tt.nivel + " · " + tt.quando, "", ""));
+          var dadas = (tt.aulas || []).filter(function (x) { return x.estado !== "agendada"; }).length;
+          h.push('<section class="cartao">' + B.cab(tt.nivel + " · " + tt.quando, "",
+            '<button class="btn claro pq" ' + B.ir({ tela: "turma", turma: tt.id, abaTurma: "geral" })
+            + ">Abrir a turma</button>"));
           tt.alunas.forEach(function (n) {
-            var p = D.PULSOS[n];
+            var faltas = (tt.aulas || []).filter(function (x) { return x.presencas[n] === "F"; }).length;
+            var ent = (tt.aulas || []).filter(function (x) {
+              return (x.entregues || []).indexOf(n) >= 0; }).length;
+            var obs = D.PULSOS[n];
             h.push('<div class="linha"><span class="nome">' + B.esc(n) + "</span>"
-              + (p ? '<span class="nota" style="margin:0;flex:1">' + B.esc(p.comentario || "—")
-                  + " · " + B.esc(p.quando) + "</span>"
-                  + '<span class="selo ' + (p.nota >= 4 ? "ok" : p.nota >= 3 ? "alerta" : "erro") + '">'
-                  + p.nota + "/5</span>"
-                : '<span class="nota" style="margin:0;flex:1">nunca registrado</span>'
-                  + '<span class="selo neutro">sem pulso</span>')
-              + '<button class="btn claro pq" ' + B.ir({ tela: "pulso", aluna: n }) + ">Registrar</button></div>");
+              + '<span class="nota" style="margin:0;flex:1">'
+              + (obs && obs.comentario ? B.esc(obs.comentario)
+                : ent + " de " + dadas + " tarefas") + "</span>"
+              + (faltas ? '<span class="selo ' + (faltas >= 2 ? "erro" : "alerta") + '">' + faltas
+                  + " falta" + (faltas === 1 ? "" : "s") + "</span>"
+                : '<span class="selo ok">sem falta</span>')
+              + '<button class="btn claro pq" ' + B.ir({ tela: "pulso", aluna: n }) + ">Abrir</button></div>");
           });
           h.push("</section>");
         });
-        return { olho: "corrigir", titulo: "Pulso das alunas",
-          sub: "Nota de 1 a 5 e um comentário, por aluna.", html: h.join("") };
+        return { olho: "as alunas", titulo: "Alunas",
+          sub: "Faltas, entregas e o caderno de cada uma.", html: h.join("") };
       }
 
       if (est.tela === "turmas") return { olho: "turmas e grupos",
@@ -163,7 +173,7 @@
         titulo: "Aulas do mês", sub: "", html: B.horas(est) };
       if (est.tela === "substituir") return { olho: "eu",
         titulo: "Substituição", sub: "", html: B.substituir(est) };
-      if (est.tela === "pulso") return { olho: "pulso das alunas",
+      if (est.tela === "pulso") return { olho: "alunas",
         titulo: est.aluna, sub: "", html: B.pulso(est) };
       return { titulo: "—", html: "" };
     }

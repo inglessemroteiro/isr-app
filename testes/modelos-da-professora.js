@@ -29,7 +29,9 @@ const BLOCOS = [
   ["10 · gravações", "sem link"],
   ["11 · aulas do mês", "aula por aula"],
   ["12 · substituição", "enviar o pedido"],
-  ["13 · pulso da aluna", "como ela está indo"]
+  ["13 · ficha da aluna", "observação sobre ela"],
+  ["5b · caderno para a tarefa de casa", "caderno aberto para a tarefa de casa"],
+  ["5c · calendário do ciclo", "acrescentar uma aula"]
 ];
 
 (async () => {
@@ -143,7 +145,34 @@ const BLOCOS = [
         }
       }
     }
-    ok(`modelo ${m} · a ficha da aluna tem porta`, abriuPulso, "nenhum link para o pulso");
+    ok(`modelo ${m} · a ficha da aluna tem porta`, abriuPulso, "nenhum link para a ficha");
+
+    // o calendário do ciclo abre por um botão da faixa de sessões do
+    // plano, que a varredura de menus e abas não alcança
+    let abriuCalendario = false;
+    const itensC = await page.locator("#menu .item").count();
+    for (let i = 0; i < itensC && !abriuCalendario; i++) {
+      await page.locator("#menu .item").nth(i).click();
+      const telasDoItem = [null];
+      const nAb = await page.locator("#corpo .aba").count();
+      for (let j = 0; j < nAb; j++) telasDoItem.push(j);
+      for (const j of telasDoItem) {
+        if (abriuCalendario) break;
+        await page.locator("#menu .item").nth(i).click();
+        if (j !== null) {
+          const a = page.locator("#corpo .aba").nth(j);
+          if (await a.count()) await a.click();
+        }
+        const porta = page.locator('#corpo [data-ir*="editarAulas"]').first();
+        if (await porta.count()) {
+          await porta.click();
+          await colher();
+          abriuCalendario = true;
+        }
+      }
+    }
+    ok(`modelo ${m} · dá para editar as aulas do ciclo`, abriuCalendario,
+      "nenhum botão abre o calendário");
 
     ok(`modelo ${m} · nenhuma tela em branco`, vazias === 0,
       telas + " telas vistas, " + vazias + " em branco");

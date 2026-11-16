@@ -64,12 +64,17 @@ window.ISR_MODELO = (function () {
           tarefa: "Gravar um áudio de 1 minuto descrevendo a receita da sua família, usando pelo menos três palavras da aula.",
           entregues: ["Marina Teste", "Camila Teste", "Juliana Teste"],
           presencas: { "Beatriz Teste": "F" },
+          // o caderno da aluna para a TAREFA DE CASA: fechado, ela não
+          // consegue escrever depois que a aula encerra
+          cadernoHw: { aberto: false, ate: "" },
           gravacao: "", slides: "docs.google.com/presentation/d/…/basics-s4" },
         { data: "2026-11-09", curto: "9 nov", s: 3, titulo: "Weekend stories",
           estado: "dada", topico: "Passado simples: o fim de semana",
           roteiro: [], palavras: ["last weekend", "I went", "we stayed"], starters: [],
           tarefa: "Escrever cinco frases no passado sobre o seu fim de semana.",
-          entregues: ALUNAS.basics.slice(), presencas: {}, gravacao: "", slides: "" },
+          entregues: ALUNAS.basics.slice(), presencas: {},
+          cadernoHw: { aberto: true, ate: "2026-11-16" },
+          gravacao: "", slides: "" },
         { data: "2026-11-02", curto: "2 nov", s: 2, titulo: "Where I live",
           estado: "dada", topico: "Descrever a casa e o bairro",
           roteiro: [], palavras: [], starters: [],
@@ -287,7 +292,7 @@ window.ISR_MODELO = (function () {
   var FILA = [
     { nome: "Beatriz Teste", motivo: "Faltou nas duas últimas aulas de Basics.", acao: "Abrir a ficha" },
     { nome: "Rafael Teste", motivo: "Parou de entregar a tarefa há três sessões.", acao: "Abrir a ficha" },
-    { nome: "Pedro Teste", motivo: "Avaliação caiu de 4 para 2 no último pulso.", acao: "Abrir a ficha" }
+    { nome: "Pedro Teste", motivo: "Faltou e não entregou a tarefa na mesma semana.", acao: "Abrir a ficha" }
   ];
 
   // ── GRAVAÇÕES ────────────────────────────────────────────────
