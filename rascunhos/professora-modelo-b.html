@@ -16,7 +16,8 @@
   tela precisa perguntar de novo "qual turma, qual dia" — o seletor
   no alto de Plano, Caderno ao vivo, Chamada e Slides é esse preço.
 
-  Contém os 13 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9.
+  Contém os 16 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9 — os mesmos
+  nos três.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="professora-modelo.css" />
@@ -68,7 +69,7 @@
       return [
         { itens: [{ label: "Hoje", on: est.tela === "hoje", vai: { tela: "hoje" } }] },
         { titulo: "ensinar", itens: [
-          { label: "Plano das aulas", on: est.tela === "plano" || est.tela === "conteudo",
+          { label: "Plano e caderno", on: est.tela === "plano" || est.tela === "conteudo",
             vai: { tela: "plano" } },
           { label: "Caderno ao vivo", on: est.tela === "vivo", pino: D.VIVO.aberta ? "ao vivo" : "",
             vai: { tela: "vivo" } },
@@ -127,35 +128,8 @@
       if (est.tela === "gravacoes") return { olho: "corrigir",
         titulo: "Gravações", sub: "Uma por aula dada, visível só para as alunas da turma.", html: B.gravacoes(est) };
 
-      // Era "pulso das alunas", com uma nota de 1 a 5 a produzir toda
-      // semana. Virou a lista das alunas dela, com o que o sistema já
-      // conta de cada uma. Nada a preencher.
-      if (est.tela === "pulsos") {
-        var h = [];
-        D.TURMAS.forEach(function (tt) {
-          var dadas = (tt.aulas || []).filter(function (x) { return x.estado !== "agendada"; }).length;
-          h.push('<section class="cartao">' + B.cab(tt.nivel + " · " + tt.quando, "",
-            '<button class="btn claro pq" ' + B.ir({ tela: "turma", turma: tt.id, abaTurma: "geral" })
-            + ">Abrir a turma</button>"));
-          tt.alunas.forEach(function (n) {
-            var faltas = (tt.aulas || []).filter(function (x) { return x.presencas[n] === "F"; }).length;
-            var ent = (tt.aulas || []).filter(function (x) {
-              return (x.entregues || []).indexOf(n) >= 0; }).length;
-            var obs = D.PULSOS[n];
-            h.push('<div class="linha"><span class="nome">' + B.esc(n) + "</span>"
-              + '<span class="nota" style="margin:0;flex:1">'
-              + (obs && obs.comentario ? B.esc(obs.comentario)
-                : ent + " de " + dadas + " tarefas") + "</span>"
-              + (faltas ? '<span class="selo ' + (faltas >= 2 ? "erro" : "alerta") + '">' + faltas
-                  + " falta" + (faltas === 1 ? "" : "s") + "</span>"
-                : '<span class="selo ok">sem falta</span>')
-              + '<button class="btn claro pq" ' + B.ir({ tela: "pulso", aluna: n }) + ">Abrir</button></div>");
-          });
-          h.push("</section>");
-        });
-        return { olho: "as alunas", titulo: "Alunas",
-          sub: "Faltas, entregas e o caderno de cada uma.", html: h.join("") };
-      }
+      if (est.tela === "pulsos") return { olho: "as alunas", titulo: "Alunas",
+        sub: "Faltas, entregas e o caderno de cada uma.", html: B.alunas(est) };
 
       if (est.tela === "turmas") return { olho: "turmas e grupos",
         titulo: "Turmas", sub: "", html: B.turmas(est) };

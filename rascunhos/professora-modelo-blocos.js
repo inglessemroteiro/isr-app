@@ -1,4 +1,4 @@
-// Os 13 blocos do trabalho da professora, desenhados uma vez e usados
+// Os blocos do trabalho da professora, desenhados uma vez e usados
 // pelos três modelos.
 //
 // Por que compartilhados: a escolha entre A, B e C é sobre ARRUMAÇÃO —
@@ -6,7 +6,7 @@
 // modelo desenhasse os blocos de novo, a comparação viraria uma
 // comparação de desenho, e não de arquitetura.
 //
-// A lista dos 13 está em O-QUE-A-PROFESSORA-PRECISA.md, seção 9.
+// A lista dos 16 está em O-QUE-A-PROFESSORA-PRECISA.md, seção 9.
 //
 // Cada bloco é uma função que recebe o estado e devolve HTML. A
 // interação é declarada em atributos (data-ir, data-pres, data-vivo…)
@@ -28,8 +28,39 @@ window.ISR_BLOCOS = (function () {
       + "<h2>" + esc(titulo) + "</h2></div>"
       + (direita || "") + "</div>";
   }
-  var FASE_COR = { abrir: "#e5f2f6", ouvir: "#fdf3d6", praticar: "#e9f3e4",
-    produzir: "#c9e265", corrigir: "#fde4df", fechar: "#f2ebe3" };
+  // As fases são as da ISR, as mesmas de crm-data.js:10643, tiradas
+  // dos guias da escola. O protótipo tinha inventado outras seis
+  // (abrir/ouvir/praticar/produzir/corrigir/fechar): a professora
+  // leria um vocabulário na tela e outro no sílabo do Drive, e o
+  // importador de sílabo, que só conhece estas, não casaria com nada.
+  // As cores acompanham as de FASE_CORES.
+  var FASES = [
+    { id: "warmup", label: "Warm-up", cor: "#f2ebe3" },
+    { id: "mindson", label: "Minds On", cor: "#e5f2f6" },
+    { id: "language", label: "Language Focus", cor: "#fdf3d6" },
+    { id: "handson", label: "Hands On", cor: "#e9f3e4" },
+    { id: "shareout", label: "Share Out", cor: "#e9f3e4" },
+    { id: "wrapup", label: "Wrap-up", cor: "#fde4df" }
+  ];
+  // A HORA, COM FUSO.
+  // As professoras estão no Brasil, na Holanda, na Indonésia e no
+  // Paquistão, e o sistema de hoje já mostra a hora no relógio de
+  // quem olha, com a da turma ao lado (ISR - Painel v3.dc.html:1763).
+  // Os protótipos escreviam "7h" e pronto — regressão, e das caras
+  // nesta escola.
+  var FUSO_DELA = "Europa/Amsterdã";
+  function hora(h, fusoDaTurma) {
+    if (!h) return "";
+    var n = parseInt(String(h), 10);
+    if (isNaN(n)) return String(h);
+    var dela = (n + 4) % 24;   // São Paulo → Amsterdã, no protótipo
+    return dela + "h <span class=\"fusoOutro\">· " + n + "h "
+      + esc(String(fusoDaTurma || "").split("/").pop().replace("_", " ")) + "</span>";
+  }
+
+  var FASE_COR = {};
+  var FASE_LABEL = {};
+  FASES.forEach(function (f) { FASE_COR[f.id] = f.cor; FASE_LABEL[f.id] = f.label; });
 
   var B = {};
 
@@ -41,12 +72,13 @@ window.ISR_BLOCOS = (function () {
     var viva = D.VIVO.aberta;
 
     h.push('<section class="hero">');
-    h.push('<div class="heroQuando">segunda, 16 de novembro · 07h</div>');
+    h.push('<div class="heroQuando">segunda, 16 de novembro · ' + hora("7h", t.fuso)
+      + " <span style=\"opacity:.7\">(seu relógio: " + esc(FUSO_DELA) + ")</span></div>");
     h.push("<h2>" + esc(t.nivel) + " · sessão " + a.s + "</h2>");
     h.push('<div class="heroSub">' + esc(a.titulo) + " · " + t.alunas.length + " alunas · online</div>");
     h.push('<div class="heroBtns">');
     h.push('<button class="btn lima" data-aula="' + (viva ? "encerrar" : "abrir") + '">'
-      + (viva ? "Encerrar a aula" : "Começar a aula") + "</button>");
+      + (viva ? "Encerrar a aula" : "Abrir a aula") + "</button>");
     h.push('<button class="btn fosca" ' + ir({ tela: "chamada", turma: "basics", data: "2026-11-16" }) + ">Chamada</button>");
     h.push('<button class="btn fosca" ' + ir({ tela: "plano", turma: "basics", data: "2026-11-16" }) + ">O plano da sessão</button>");
     h.push("</div></section>");
@@ -76,7 +108,7 @@ window.ISR_BLOCOS = (function () {
         : g.clube ? { tela: "clube", clube: g.clube, abaClube: "encontros" }
         : { tela: "particular", particular: g.particular };
       h.push('<button class="linhaBtn" ' + ir(destino) + ">"
-        + '<span class="data">' + esc(g.hora) + "</span>"
+        + '<span class="data">' + hora(g.hora, "America/Sao_Paulo") + "</span>"
         + '<span class="tit">' + esc(g.texto) + "</span>"
         + '<span class="selo ' + (g.estado === "agora" ? "ok" : "neutro") + '">' + esc(g.estado) + "</span></button>");
     });
@@ -94,10 +126,15 @@ window.ISR_BLOCOS = (function () {
 
     // o mês
     h.push('<div class="grade2" style="margin-top:13px">');
-    h.push('<div class="bloco"><h3>entregas do mês</h3>'
+    var mes = D.aulasDoMes("2026-11");
+    var mContou = mes.filter(function (l) { return l.estado === "contou"; }).length;
+    var mFora = mes.filter(function (l) { return l.estado === "não contou"; }).length;
+    var mAlunas = D.TURMAS.reduce(function (x, t) { return x + t.alunas.length; }, 0);
+    h.push('<div class="bloco"><h3>o mês</h3>'
       + '<div style="display:flex;gap:16px;flex-wrap:wrap">'
-      + B.numero("9", "aulas com chamada") + B.numero("2", "sem chamada no mês", "erro")
-      + B.numero("18", "alunas") + B.numero("2", "clubes") + "</div>"
+      + B.numero(String(mContou), "aulas contaram")
+      + B.numero(String(mFora), "não contaram", mFora ? "erro" : "")
+      + B.numero(String(mAlunas), "alunas") + B.numero(String(D.CLUBES.length), "clubes") + "</div>"
       + '<button class="btn claro pq" style="margin-top:10px" ' + ir({ tela: "horas" })
       + ">Ver as aulas do mês</button></div>");
     h.push('<div class="bloco"><h3>substituições</h3>');
@@ -137,12 +174,46 @@ window.ISR_BLOCOS = (function () {
 
     h.push('<section class="barraViva ' + (V.aberta ? "on" : "") + '">');
     h.push('<button class="btn lima" data-aula="' + (V.aberta ? "encerrar" : "abrir") + '">'
-      + (V.aberta ? "Encerrar a aula" : "Abrir o caderno") + "</button>");
+      + (V.aberta ? "Encerrar a aula" : "Abrir a aula") + "</button>");
+    var escrevendo = V.alunas.filter(function (x) { return x.estado === "escrevendo"; }).length;
     h.push("<span>" + (V.aberta
       ? "Aula aberta há " + V.minutos + " min. O que elas escrevem aparece aqui."
+        + (escrevendo ? " Encerrar tira o caderno de " + escrevendo
+            + " aluna" + (escrevendo === 1 ? "" : "s") + " que ainda está escrevendo." : "")
       : "O caderno está fechado. Abra para elas responderem as tarefas.") + "</span>");
     if (a.slides) h.push('<a class="btn fosca" href="#" onclick="return false">Slides</a>');
     h.push("</section>");
+
+    // ONDE ESTAMOS NO ROTEIRO.
+    // Era o único dos três buracos do levantamento que não é problema
+    // de arranjo: com a aula aberta, o único sinal de tempo era "aula
+    // aberta há 12 min", sem relação nenhuma com a etapa.
+    if (V.aberta && (a.roteiro || []).length) {
+      var corrido = V.minutos, acc = 0, iAtual = 0;
+      (a.roteiro || []).forEach(function (e, i) {
+        if (corrido >= acc) iAtual = i;
+        acc += e.min;
+      });
+      var inicioDaAtual = (a.roteiro || []).slice(0, iAtual)
+        .reduce(function (x, e) { return x + e.min; }, 0);
+      var naEtapa = corrido - inicioDaAtual;
+      var prev = (a.roteiro || [])[iAtual].min;
+      h.push('<section class="roteiroVivo">');
+      h.push('<div class="rvTira">');
+      (a.roteiro || []).forEach(function (e, i) {
+        h.push('<span class="rvEtapa' + (i === iAtual ? " on" : i < iAtual ? " feita" : "")
+          + '" style="flex:' + e.min + '" title="' + esc(FASE_LABEL[e.fase] || e.fase) + '"></span>');
+      });
+      h.push("</div>");
+      h.push('<div class="rvAgora"><span class="selo neutro" style="background:'
+        + (FASE_COR[(a.roteiro || [])[iAtual].fase] || "#f2ebe3") + '">'
+        + esc(FASE_LABEL[(a.roteiro || [])[iAtual].fase] || "") + "</span>"
+        + "<b>" + esc((a.roteiro || [])[iAtual].titulo || "sem descrição") + "</b>"
+        + '<span class="nota" style="margin:0;color:' + (naEtapa > prev ? "var(--erro)" : "inherit")
+        + '">' + naEtapa + " de " + prev + " min · " + corrido + " min de aula</span>"
+        + '<button class="btn claro pq">Próxima etapa</button></div>');
+      h.push("</section>");
+    }
 
     if (!tarefas.length) {
       h.push('<div class="aviso">Não há tarefa com pergunta no plano publicado desta aula — elas ainda não têm o que responder. '
@@ -200,7 +271,7 @@ window.ISR_BLOCOS = (function () {
       + "<h2>" + esc(sel.nome) + "</h2>"
       + '<span class="cvEstado"><span class="ponto" style="background:' + e2.cor + '"></span>'
       + esc(e2.label) + "</span></div>"
-      + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: sel.nome }) + ">Pulso dela</button></div>");
+      + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: sel.nome }) + ">A ficha dela</button></div>");
     tarefas.forEach(function (tf, i) {
       var r = sel.respostas[i] || "";
       h.push('<div style="margin-top:13px">'
@@ -272,10 +343,17 @@ window.ISR_BLOCOS = (function () {
     var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
     var h = [], salva = a.estado === "dada";
     var presentes = t.alunas.filter(function (n) {
-      return (a.presencas[n] || "P") === "P" || a.presencas[n] === "A"; }).length;
+      return a.presencas[n] === "P" || a.presencas[n] === "A"; }).length;
+    var semMarca = t.alunas.filter(function (n) { return !a.presencas[n]; }).length;
+    var futura = a.estado === "agendada";
 
     h.push('<section class="cartao">' + cab(esc(t.nivel) + " · " + esc(a.curto), "durante a aula",
-      '<span style="font-size:12.5px;color:var(--tinta-fraca)">' + presentes + " de " + t.alunas.length + " presentes</span>"));
+      '<span style="font-size:12.5px;color:var(--tinta-fraca)">'
+      + (semMarca === t.alunas.length ? "nenhuma marcada ainda"
+        : presentes + " de " + t.alunas.length + " presentes"
+          + (semMarca ? " · " + semMarca + " sem marca" : "")) + "</span>"));
+    if (futura) h.push('<div class="aviso">Esta aula ainda não aconteceu. '
+      + "A chamada abre em leitura; marcar presença aqui só depois da aula.</div>");
 
     if (salva) {
       h.push('<div class="caixaFolha"><b>Salva e contando na folha.</b>'
@@ -286,21 +364,38 @@ window.ISR_BLOCOS = (function () {
         + "<span>Sem tópico, a aula não entra na folha.</span></div>");
     }
 
+    // A faixa de contexto é a semana. Corrigir a chamada de uma aula
+    // antiga — que o sistema trata com trava de dois passos e
+    // histórico de quem mexeu — não tinha porta nenhuma na tela.
+    h.push('<div class="formLinha" style="margin-top:0">'
+      + '<span class="nota" style="margin:0">chamada de outra data</span>'
+      + '<input class="campo" type="date" value="' + esc(a.data) + '" style="flex:0 1 160px" />'
+      + '<button class="btn claro pq">Abrir</button></div>');
     h.push('<div class="formLinha" style="justify-content:flex-end">'
       + '<span class="nota" style="flex:1;margin:0">Toque na letra de cada aluna. P presente · A atraso · F falta · J justificada.</span>'
       + '<button class="btn claro pq">Todas presentes</button>'
       + '<button class="btn claro pq">Todas faltas</button></div>');
 
     t.alunas.forEach(function (n) {
-      var atual = a.presencas[n] || "P";
+      // Em branco NÃO é presente. O default "P" desenhava a chamada de
+      // uma aula que ainda não houve com a turma inteira presente e
+      // verde, e salvar sem tocar em nada registrava isso na folha.
+      var atual = a.presencas[n] || "";
       var ent = (a.entregues || []).indexOf(n) >= 0;
       h.push('<div class="linha"><a class="nome" href="#" ' + ir({ tela: "pulso", aluna: n }) + ">" + esc(n) + "</a>");
-      h.push('<button class="tar' + (ent ? " ok" : "") + '" data-tar="' + esc(n) + '">'
-        + (ent ? "entregou" : "sem entrega") + "</button>");
+      // O caderno já sabe quem entregou, com data e hora. A marca à
+      // mão fica para o que chega fora do sistema — áudio no
+      // WhatsApp, foto, papel — e é isso que o rótulo diz.
+      var noCaderno = D.CADERNO.some(function (c) {
+        return c.aluna === n && c.turma === t.id; });
+      h.push('<button class="tar' + (ent || noCaderno ? " ok" : "") + '" data-tar="'
+        + esc(n) + "|" + esc(a.data) + '" title="'
+        + (noCaderno ? "Entregou no caderno. Contado sozinho." : "Marcar entrega que chegou fora do sistema.") + '">'
+        + (noCaderno ? "no caderno" : ent ? "entregou" : "sem entrega") + "</button>");
       h.push('<span class="pres">');
       ["P", "A", "F", "J"].forEach(function (l) {
         var on = atual === l ? (l === "P" || l === "A" ? " p" : " f") : "";
-        h.push('<button class="b' + on + '" data-pres="' + esc(n) + "|" + l + '">' + l + "</button>");
+        h.push('<button class="b' + on + '" data-pres="' + esc(n) + "|" + esc(a.data) + "|" + l + '">' + l + "</button>");
       });
       h.push("</span></div>");
     });
@@ -314,12 +409,20 @@ window.ISR_BLOCOS = (function () {
     h.push("</div>");
     h.push('<div class="nota">Escolher a sessão preenche o tópico com o título dela. O tópico é o que valida a aula para a folha.</div>');
 
+    // Dois "salvar" lado a lado na mesma linha é erro de clique certo,
+    // e metade do tempo a gravação ainda nem existe quando a aula
+    // acaba. Primeiro a chamada; a gravação é um cartão à parte.
     h.push('<div class="formLinha" style="margin-top:13px">'
-      + '<button class="btn">Salvar a chamada</button>'
-      + '<input class="campo" style="flex:1" value="' + esc(a.gravacao)
-      + '" placeholder="Link da gravação desta aula" />'
-      + '<button class="btn claro pq" data-grav="1">Salvar a gravação</button></div>');
-    h.push('<div class="nota">A gravação fica visível só para as alunas desta turma.</div>');
+      + '<button class="btn"' + (semMarca ? ' disabled title="Faltam ' + semMarca + ' alunas sem marca."' : "")
+      + ">Salvar a chamada</button>"
+      + (semMarca ? '<span class="nota" style="margin:0">Faltam ' + semMarca
+          + " aluna" + (semMarca === 1 ? "" : "s") + " sem marca.</span>" : "")
+      + "</div>");
+    h.push('<div class="bloco" style="margin-top:12px"><h3>gravação desta aula</h3>'
+      + '<div class="formLinha" style="margin-top:0"><input class="campo" value="' + esc(a.gravacao)
+      + '" placeholder="Link da gravação" />'
+      + '<button class="btn claro pq" data-grav="1">Publicar a gravação</button></div>'
+      + '<div class="nota">Fica visível só para as alunas desta turma. Pode ser publicada depois.</div></div>');
 
     if (salva) {
       h.push('<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--papel)">'
@@ -363,6 +466,11 @@ window.ISR_BLOCOS = (function () {
     opts = opts || {};
     var t = D.turma(est.turma || "basics");
     var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
+    // Lê por padrão, edita sob pedido. O plano estava sempre em modo
+    // de edição: as palavras, os começos de frase e a tarefa de casa
+    // apareciam duas vezes na mesma tela — as pílulas e, logo abaixo,
+    // o campo com o mesmo conteúdo — e nada dizia qual valia.
+    var editando = !!est.planoEditando;
     var h = [], total = (a.roteiro || []).reduce(function (s, e) { return s + e.min; }, 0);
     var comPergunta = (a.roteiro || []).filter(function (e) { return e.pergunta; }).length;
     var ordenadas = (t.aulas || []).slice().sort(function (x, y) {
@@ -409,9 +517,15 @@ window.ISR_BLOCOS = (function () {
       h.push("</section>");
     }
 
+    var dura = t.duracao || 60;
+    var corTotal = total > dura ? "var(--erro)" : "var(--tinta-fraca)";
     h.push('<section class="cartao">' + cab("Sessão " + a.s + " · " + esc(a.titulo), "antes da aula",
-      '<span style="font-size:12.5px;color:var(--tinta-fraca)">' + total + " min · "
-      + comPergunta + " tarefa" + (comPergunta === 1 ? "" : "s") + "</span>"));
+      '<span style="font-size:12.5px;color:' + corTotal + '">' + total + " de " + dura + " min · "
+      + comPergunta + " tarefa" + (comPergunta === 1 ? "" : "s") + "</span>"
+      + ' <button class="btn claro pq" ' + ir({ planoEditando: !editando })
+      + ">" + (editando ? "Concluir o ajuste" : "Ajustar o plano") + "</button>"));
+    if (total > dura) h.push('<div class="aviso">O roteiro soma ' + (total - dura)
+      + " min a mais do que a aula desta turma. Alguma etapa vai ficar pelo caminho.</div>");
     h.push('<div class="nota" style="font-size:12.5px"><b>programa:</b> ' + esc(t.programa)
       + " · sessão " + a.s + " de " + t.sessoes + "</div>");
     if (a.objetivo) h.push('<div style="font-size:13.5px;line-height:1.6;margin-top:9px">' + esc(a.objetivo) + "</div>");
@@ -422,20 +536,31 @@ window.ISR_BLOCOS = (function () {
     } else {
       h.push('<div class="rotulo" style="margin-top:14px">o roteiro</div>');
       (a.roteiro || []).forEach(function (e, i) {
+        // Etapa que o programa não descreve: o sílabo da escola
+        // descreve Warm-up, Minds On, Language Focus e Hands On em
+        // quase toda sessão, e Share Out e Wrap-up em poucas. Linha
+        // vazia reservando 10 min do relógio é pior do que dizer que
+        // está vazia.
+        var vazia = !String(e.titulo || "").trim();
         h.push('<div class="etapa">'
           + '<span class="min">' + e.min + " min</span>"
           + '<span class="corpoEtapa">'
-          + '<span class="selo neutro" style="background:' + (FASE_COR[e.fase] || "#f2ebe3") + '">' + esc(e.fase) + "</span> "
-          + '<span style="font-size:14px;font-weight:600">' + esc(e.titulo) + "</span>"
+          + '<span class="selo neutro" style="background:' + (FASE_COR[e.fase] || "#f2ebe3") + '">'
+          + esc(FASE_LABEL[e.fase] || e.fase) + "</span> "
+          + (vazia
+            ? '<span style="font-size:13.5px;color:var(--alerta)">O programa não descreve esta etapa — escreva o que vai fazer, ou tire os ' + e.min + " min.</span>"
+            : '<span style="font-size:14px;font-weight:600">' + esc(e.titulo) + "</span>")
           + (e.pergunta ? '<span class="pergunta"><b>elas respondem no caderno:</b> ' + esc(e.pergunta) + "</span>" : "")
           + "</span>"
-          + '<span class="setas"><button class="b">↑</button><button class="b">↓</button><button class="b">×</button></span>'
+          + (editando
+            ? '<span class="setas"><button class="b">↑</button><button class="b">↓</button><button class="b">×</button></span>'
+            : "")
           + "</div>");
       });
-      h.push('<div class="addEtapa"><div class="rotulo">acrescentar uma atividade sua</div>'
+      if (editando) h.push('<div class="addEtapa"><div class="rotulo">acrescentar uma atividade sua</div>'
         + '<div class="tira" style="margin:7px 0">'
-        + Object.keys(FASE_COR).map(function (f) {
-          return '<button class="chip" style="background:' + FASE_COR[f] + '">' + f + "</button>"; }).join("")
+        + FASES.map(function (f) {
+          return '<button class="chip" style="background:' + f.cor + '">' + esc(f.label) + "</button>"; }).join("")
         + "</div>"
         + '<div class="formLinha"><input class="campo" style="flex:2" placeholder="Ex.: pares trocam a receita e anotam uma palavra nova" />'
         + '<input class="campo" style="width:60px;text-align:center" value="10" /><span class="nota" style="margin:0">min</span></div>'
@@ -445,17 +570,22 @@ window.ISR_BLOCOS = (function () {
 
     h.push('<div class="grade3" style="margin-top:14px">');
     h.push('<div class="bloco"><h3>palavras da sessão</h3>'
-      + ((a.palavras || []).length ? (a.palavras || []).map(function (p) {
-        return '<span class="pal">' + esc(p) + "</span>"; }).join("")
-        : '<div class="nota">Nenhuma ainda.</div>')
-      + '<textarea class="campo" style="margin-top:8px" rows="2" placeholder="Separe por vírgula">'
-      + esc((a.palavras || []).join(", ")) + "</textarea></div>");
+      + (editando
+        ? '<textarea class="campo" rows="3" placeholder="Separe por vírgula">'
+          + esc((a.palavras || []).join(", ")) + "</textarea>"
+        : ((a.palavras || []).length ? (a.palavras || []).map(function (p) {
+            return '<span class="pal">' + esc(p) + "</span>"; }).join("")
+          : '<div class="nota">O programa não trouxe palavras para esta sessão.</div>'))
+      + '<div class="nota">Estas palavras entram no Review espaçado dela — '
+      + "1, 3, 7, 14, 30 e 60 dias. Campo vazio aqui é revisão que não acontece lá.</div></div>");
     h.push('<div class="bloco"><h3>começos de frase</h3>'
-      + ((a.starters || []).length ? (a.starters || []).map(function (p) {
-        return '<span class="pal">' + esc(p) + "</span>"; }).join("")
-        : '<div class="nota">Nenhum ainda.</div>')
-      + '<textarea class="campo" style="margin-top:8px" rows="2" placeholder="Um por linha">'
-      + esc((a.starters || []).join("\n")) + "</textarea></div>");
+      + (editando
+        ? '<textarea class="campo" rows="3" placeholder="Um por linha">'
+          + esc((a.starters || []).join("\n")) + "</textarea>"
+        : ((a.starters || []).length ? (a.starters || []).map(function (p) {
+            return '<span class="pal">' + esc(p) + "</span>"; }).join("")
+          : '<div class="nota">O programa não trouxe começos de frase para esta sessão.</div>'))
+      + '<div class="nota">Ela vê como pílulas no caderno, na hora de falar.</div></div>');
     // ── A TAREFA DE CASA, E A CHAVE QUE A TORNA POSSÍVEL ────────
     // Hoje o caderno só aceita escrita com a aula aberta: fechada a
     // aula, a aluna não consegue responder nada. Por isso a tarefa de
@@ -465,7 +595,7 @@ window.ISR_BLOCOS = (function () {
     h.push('<div class="bloco"><h3>tarefa de casa</h3>'
       + (a.tarefa ? '<div style="font-size:13px;line-height:1.55">' + esc(a.tarefa) + "</div>"
         : '<div class="aviso" style="margin:0">Esta sessão está sem tarefa de casa.</div>')
-      + '<textarea class="campo" style="margin-top:8px" rows="3">' + esc(a.tarefa) + "</textarea>"
+      + (editando ? '<textarea class="campo" style="margin-top:8px" rows="3">' + esc(a.tarefa) + "</textarea>" : "")
       + '<div class="chave' + (hw.aberto ? " on" : "") + '" data-hw="' + esc(a.data) + '">'
       + '<span class="pino2"></span>'
       + "<span><b>Caderno aberto para a tarefa de casa</b>"
@@ -479,7 +609,7 @@ window.ISR_BLOCOS = (function () {
     h.push("</div>");
 
     h.push('<div class="formLinha" style="margin-top:13px">'
-      + '<button class="btn">Salvar o plano</button>'
+      + (editando ? '<button class="btn" ' + ir({ planoEditando: false }) + ">Salvar o plano</button>" : "")
       + '<button class="btn claro pq">Ver como a aluna vê</button>'
       + (opts.comCaderno ? ""
         : '<button class="btn claro pq" ' + ir({ tela: "conteudo", turma: t.id, data: a.data })
@@ -536,13 +666,19 @@ window.ISR_BLOCOS = (function () {
         if (r.comentario) {
           h.push('<div class="correcao">' + esc(r.comentario) + ' <span class="nota">· Bárbara</span></div>');
         } else {
+          // A correção leva a IDENTIDADE da entrada, não a posição
+          // dela na lista filtrada: a lista muda de ordem e de
+          // tamanho conforme o filtro, e gravar por posição escrevia
+          // na aluna errada, por cima de uma correção que já existia.
           h.push('<div class="formLinha"><input class="campo" placeholder="Correção. Aparece no caderno dela, presa à tarefa." />'
-            + '<button class="btn pq" data-corrigir="' + idx + "|" + i + '">Corrigir</button></div>');
+            + '<button class="btn pq" data-corrigir="' + esc(c.id) + "|" + i + '">Corrigir</button></div>');
         }
         h.push("</div>");
       });
       h.push('<div class="formLinha" style="margin-top:11px">'
-        + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: c.aluna }) + ">Pulso dela</button>"
+        + (c.corrigido ? "" : '<button class="btn pq" data-visto="' + esc(c.id)
+            + '" title="Li e está certo. Tira da fila sem escrever nada.">Dar visto</button>')
+        + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: c.aluna }) + ">A ficha dela</button>"
         + '<button class="btn claro pq" ' + ir({ tela: "chamada", turma: c.turma, data: D.turma(c.turma).aulas.filter(function (x) { return x.curto === c.aulaCurto; }).map(function (x) { return x.data; })[0] || "2026-11-16" })
         + ">Abrir a chamada desta aula</button></div>");
       h.push("</section>");
@@ -571,9 +707,11 @@ window.ISR_BLOCOS = (function () {
   B.turma = function (est) {
     var t = D.turma(est.turma || "basics");
     var aba = est.abaTurma || "geral";
+    // Sem "Renovação": é painel de retenção, não tem ação nenhuma
+    // para a professora, e ISR - Turma v3.dc.html:1448 já a esconde
+    // dela. Tê-la aqui era regressão em relação ao sistema de hoje.
     var ABAS = [["geral", "Visão geral"], ["alunas", "Alunas"], ["plano", "Plano das aulas"],
-      ["chamadas", "Chamadas"], ["projeto", "Projeto"], ["materiais", "Materiais"],
-      ["renovacao", "Renovação"]];
+      ["chamadas", "Chamadas"], ["projeto", "Projeto"], ["materiais", "Materiais"]];
     var h = [];
 
     h.push('<div class="abas">');
@@ -592,9 +730,19 @@ window.ISR_BLOCOS = (function () {
         + "</div>");
       h.push('<div class="nota" style="margin-top:10px"><b>projeto do ciclo:</b> ' + esc(t.projeto)
         + " · " + (D.PROJETO[t.id].entregues.length) + " de " + t.alunas.length + " entregaram</div>");
+      // "Chamada de hoje" abria a aula de outro dia em silêncio
+      // sempre que a turma não tinha aula hoje: D.aula devolve a
+      // primeira da lista quando a data não bate.
+      var hoje = (t.aulas || []).filter(function (x) { return x.data === "2026-11-16"; })[0];
+      var prox = (t.aulas || []).filter(function (x) { return x.estado !== "dada"; })
+        .sort(function (x, y) { return x.data < y.data ? -1 : 1; })[0];
+      var alvo = hoje || prox || t.aulas[0];
       h.push('<div class="formLinha" style="margin-top:11px">'
-        + '<button class="btn pq" ' + ir({ tela: "chamada", turma: t.id, data: "2026-11-16" }) + ">Chamada de hoje</button>"
-        + '<button class="btn claro pq" ' + ir({ tela: "plano", turma: t.id, data: "2026-11-16" }) + ">O plano da sessão</button>"
+        + '<button class="btn pq" ' + ir({ tela: "chamada", turma: t.id, data: alvo.data }) + ">"
+        + (hoje ? "Chamada de hoje" : "Chamada · " + esc(alvo.curto)) + "</button>"
+        + '<button class="btn claro pq" ' + ir({ tela: "plano", turma: t.id, data: alvo.data })
+        + ">O plano da sessão</button>"
+        + (hoje ? "" : '<span class="nota" style="margin:0">Esta turma não tem aula hoje.</span>')
         + "</div></section>");
     }
 
@@ -666,15 +814,6 @@ window.ISR_BLOCOS = (function () {
       h.push("</section>");
     }
 
-    if (aba === "renovacao") {
-      var r = t.renovacao;
-      h.push('<section class="cartao">' + cab("Renovação do ciclo", "", ""));
-      h.push('<div class="grade3">' + B.numero(String(r.sim), "continuam")
-        + B.numero(String(r.nao), "não continuam", "erro")
-        + B.numero(String(r.semResposta), "ainda não responderam") + "</div>");
-      h.push('<div class="nota" style="margin-top:9px">É desta conta que sai a vaga do ciclo seguinte.</div>');
-      h.push("</section>");
-    }
     return h.join("");
   };
 
@@ -715,7 +854,8 @@ window.ISR_BLOCOS = (function () {
       h.push('<div><div class="rotulo">nível</div><input class="campo" value="' + esc(c.nivel) + '" />'
         + '<div class="rotulo" style="margin-top:10px">dia e hora</div><input class="campo" value="' + esc(c.quando) + '" />'
         + '<div class="rotulo" style="margin-top:10px">fuso de quem conduz</div><input class="campo" value="' + esc(c.fuso) + '" />'
-        + '<div class="rotulo" style="margin-top:10px">preço no site</div><input class="campo" value="' + esc(c.preco) + '" />'
+        + '<div class="rotulo" style="margin-top:10px">preço no site</div>'
+        + '<div class="campo soLeitura">' + esc(c.preco) + ' · quem escreve é a coordenação</div>'
         + '<div class="rotulo" style="margin-top:10px">como você apresenta o clube</div>'
         + '<textarea class="campo" rows="3">' + esc(c.bio) + "</textarea></div>");
       h.push('<div><div class="rotulo">o cartão que a aluna vê</div>'
@@ -830,26 +970,32 @@ window.ISR_BLOCOS = (function () {
   };
 
   // ══ 10 · GRAVAÇÕES ════════════════════════════════════════════
+  // A lista é a das aulas já dadas. Não há array à parte: o selo do
+  // menu e o texto da tela contavam de fontes diferentes e diziam
+  // números diferentes do mesmo fato.
   B.gravacoes = function (est) {
-    var h = [], semLink = D.GRAVACOES.filter(function (g) { return !g.link; });
+    var h = [], todas = D.gravacoes();
+    var semLink = todas.filter(function (g) { return !g.link; });
     h.push(B.marca("existe, fora do alcance",
       "A tela de gravações é de gestão: quem só dá aula volta ao painel. "
       + "Hoje a professora salva o link na chamada e nunca vê a lista."));
     if (semLink.length) h.push('<div class="aviso"><b>' + semLink.length + " aula"
       + (semLink.length === 1 ? "" : "s") + " sem gravação publicada.</b> "
-      + semLink.map(function (g) { return esc(g.turma + " · " + g.curto); }).join(" · ") + "</div>");
+      + semLink.map(function (g) { return esc(g.turma.nivel + " · " + g.aula.curto); }).join(" · ") + "</div>");
     h.push('<section class="cartao liso">');
-    D.GRAVACOES.forEach(function (g) {
+    todas.forEach(function (g) {
       h.push('<div class="aulaLinha"><div class="topo">'
-        + '<span class="data">' + esc(g.curto) + "</span>"
-        + '<span class="tit">' + esc(g.turma) + " · sessão " + g.sessao
-        + "<span>" + esc(g.titulo) + "</span></span>"
+        + '<span class="data">' + esc(g.aula.curto) + "</span>"
+        + '<span class="tit">' + esc(g.turma.nivel) + " · sessão " + g.aula.s
+        + "<span>" + esc(g.aula.titulo) + "</span></span>"
         + (g.link ? '<span class="selo ok">publicada</span><a class="btn claro pq" href="#" onclick="return false">Abrir</a>'
-          : '<span class="selo alerta">sem link</span>')
+          : '<span class="selo alerta">sem link</span>'
+            + '<button class="btn claro pq" ' + ir({ tela: "chamada", turma: g.turma.id, data: g.aula.data })
+            + ">Abrir a aula</button>")
         + "</div>"
         + (g.link ? "" : '<div class="formLinha" style="margin-top:9px">'
           + '<input class="campo" placeholder="Colar o link da gravação" />'
-          + '<button class="btn pq">Publicar para a turma</button></div>')
+          + '<button class="btn pq">Publicar a gravação</button></div>')
         + "</div>");
     });
     h.push("</section>");
@@ -859,11 +1005,11 @@ window.ISR_BLOCOS = (function () {
   // ══ 11 · AS AULAS DO MÊS ══════════════════════════════════════
   // A contagem e a razão de cada aula ter entrado ou não. Sem valor
   // por aula e sem total: o que a professora precisa daqui é saber o
-  // que corrigir antes de o mês fechar.
+  // que corrigir antes de o mês fechar — e chegar lá.
   B.horas = function (est) {
-    var H = D.HORAS, h = [];
+    var H = D.HORAS, h = [], linhas = D.aulasDoMes("2026-11");
     var conta = function (e) {
-      return H.linhas.filter(function (l) { return l.estado === e; }).length;
+      return linhas.filter(function (l) { return l.estado === e; }).length;
     };
     var contou = conta("contou"), fora = conta("não contou"), abertas = conta("hoje");
 
@@ -878,13 +1024,18 @@ window.ISR_BLOCOS = (function () {
       + B.numero(String(abertas), "ainda em aberto") + "</div>");
     h.push('<div class="nota" style="margin-top:9px">' + esc(H.fechamento) + "</div>");
     h.push('<div class="rotulo" style="margin-top:15px">aula por aula</div>');
-    H.linhas.forEach(function (l) {
-      var cls = l.estado === "contou" ? "ok" : l.estado === "hoje" ? "neutro" : "erro";
+    linhas.forEach(function (l) {
+      var cls = l.estado === "contou" ? "ok" : l.estado === "hoje" ? "neutro"
+        : l.estado === "agendada" ? "neutro" : "erro";
       h.push('<div style="padding:10px 0;border-bottom:1px solid var(--papel)">'
         + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-        + '<span class="data">' + esc(l.curto) + "</span>"
-        + '<span class="tit">' + esc(l.turma) + "</span>"
-        + '<span class="selo ' + cls + '">' + esc(l.estado) + "</span></div>"
+        + '<span class="data">' + esc(l.aula.curto) + "</span>"
+        + '<span class="tit">' + esc(l.turma.nivel) + "</span>"
+        + '<span class="selo ' + cls + '">' + esc(l.estado) + "</span>"
+        + (l.porque ? '<button class="btn claro pq" '
+            + ir({ tela: "chamada", turma: l.turma.id, data: l.aula.data })
+            + ">Corrigir esta aula</button>" : "")
+        + "</div>"
         + (l.porque ? '<div class="nota" style="margin-top:4px">' + esc(l.porque) + "</div>" : "")
         + "</div>");
     });
@@ -896,9 +1047,11 @@ window.ISR_BLOCOS = (function () {
   B.substituir = function (est) {
     var h = [], sel = est.subMotivo || "";
     h.push('<section class="cartao">' + cab("Pedir substituição", "", ""));
+    var aulaSel = est.subAula || "";
     h.push('<div class="rotulo">qual aula</div><div class="tira">');
-    D.SEMANA.filter(function (s) { return !s.passada; }).forEach(function (s) {
-      h.push('<button class="chip">' + esc(s.curto + " · " + s.rotulo) + "</button>");
+    D.SEMANA.filter(function (x) { return !x.passada; }).forEach(function (x) {
+      h.push('<button class="chip' + (aulaSel === x.curto ? " on" : "") + '" '
+        + ir({ subAula: x.curto }) + ">" + esc(x.curto + " · " + x.rotulo) + "</button>");
     });
     h.push("</div>");
     h.push('<div class="rotulo" style="margin-top:12px">motivo</div><div class="tira">');
@@ -907,9 +1060,15 @@ window.ISR_BLOCOS = (function () {
     });
     h.push("</div>");
     h.push('<input class="campo" style="margin-top:12px" placeholder="Observação, se precisar" />');
-    if (sel) h.push('<div class="aviso" style="margin-top:11px">Faltam menos de 48 h para a próxima aula. '
-      + "O pedido vai para a escola marcado como urgente.</div>");
-    h.push('<button class="btn" style="margin-top:12px">Enviar o pedido</button>');
+    // O aviso das 48 h aparecia ao escolher um MOTIVO, sempre, para
+    // qualquer aula. Aviso que aparece sempre ensina a ignorar aviso.
+    if (aulaSel === "hoje" || aulaSel === "ter 17") {
+      h.push('<div class="aviso" style="margin-top:11px">Faltam menos de 48 h para esta aula. '
+        + "O pedido vai para a escola marcado como urgente.</div>");
+    }
+    h.push('<button class="btn" style="margin-top:12px"'
+      + (aulaSel && sel ? "" : ' disabled title="Escolha a aula e o motivo."')
+      + ">Enviar o pedido</button>");
     h.push("</section>");
     h.push('<section class="cartao">' + cab("Pedidos seus", "", ""));
     if (!D.SUBSTITUICOES.length) h.push('<div class="nota">Nenhum pedido.</div>');
@@ -919,6 +1078,35 @@ window.ISR_BLOCOS = (function () {
         + '<span class="selo ok">' + esc(s.estado) + "</span></div>");
     });
     h.push("</section>");
+    return h.join("");
+  };
+
+  // ══ 13a · AS ALUNAS DELA ══════════════════════════════════════
+  // A lista das alunas de todas as turmas dela, com o que o sistema
+  // já conta de cada uma. Mora nos três: era o único bloco que um
+  // modelo tinha e os outros dois não.
+  B.alunas = function (est) {
+    var h = [];
+    D.TURMAS.forEach(function (tt) {
+      var dadas = (tt.aulas || []).filter(function (x) { return x.estado !== "agendada"; }).length;
+      h.push('<section class="cartao">' + cab(tt.nivel + " · " + tt.quando, "",
+        '<button class="btn claro pq" ' + ir({ tela: "turma", turma: tt.id, abaTurma: "geral" })
+        + ">Abrir a turma</button>"));
+      tt.alunas.forEach(function (n) {
+        var faltas = (tt.aulas || []).filter(function (x) { return x.presencas[n] === "F"; }).length;
+        var ent = (tt.aulas || []).filter(function (x) {
+          return (x.entregues || []).indexOf(n) >= 0; }).length;
+        var obs = D.PULSOS[n];
+        h.push('<div class="linha"><span class="nome">' + esc(n) + "</span>"
+          + '<span class="nota" style="margin:0;flex:1">'
+          + (obs && obs.comentario ? esc(obs.comentario) : ent + " de " + dadas + " tarefas") + "</span>"
+          + (faltas ? '<span class="selo ' + (faltas >= 2 ? "erro" : "alerta") + '">' + faltas
+              + " falta" + (faltas === 1 ? "" : "s") + "</span>"
+            : '<span class="selo ok">sem falta</span>')
+          + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: n }) + ">Abrir</button></div>");
+      });
+      h.push("</section>");
+    });
     return h.join("");
   };
 
@@ -950,16 +1138,25 @@ window.ISR_BLOCOS = (function () {
         + B.numero(String(cad.length), "textos no caderno") + "</div>");
       h.push('<div class="nota" style="margin-top:9px">Tudo nesta linha é contado do que você já lançou. '
         + "Nada aqui é para preencher.</div>");
-      if (cad.length) h.push('<button class="btn claro pq" style="margin-top:11px" '
-        + ir({ tela: "cadernos", cadFiltro: "todas" }) + ">Ler o caderno dela</button>");
+      h.push('<div class="formLinha" style="margin-top:11px">'
+        + (cad.length ? '<button class="btn claro pq" '
+            + ir({ tela: "cadernos", cadFiltro: "todas" }) + ">Ler o caderno dela</button>" : "")
+        + '<a class="btn claro pq" href="#" onclick="return false">Falar no WhatsApp</a>'
+        + '<a class="btn claro pq" href="#" onclick="return false">Abrir o perfil completo</a>'
+        + "</div>");
+      h.push('<div class="nota">O perfil tem o histórico, o contato e o contrato dela. '
+        + "Esta ficha é a porta, não o substituto.</div>");
       h.push("</section>");
     }
 
-    h.push('<section class="cartao">' + cab("Observação sobre ela", "opcional",
+    h.push('<section class="cartao">' + cab("Nota da equipe", "opcional",
       p && p.comentario ? '<span class="selo neutro">última: ' + esc(p.quando) + "</span>" : ""));
-    h.push('<div class="nota" style="margin-top:-6px">Só quando houver o que dizer — '
-      + "uma dificuldade que se repete, uma virada, algo que a próxima professora precisa saber. "
-      + "Fica no histórico dela e a escola lê.</div>");
+    h.push(B.marca("existe, só para particular",
+      "salvarNotaDaEquipe já existe e já tem tela — mas só na aba de aulas particulares do "
+      + "Painel. Para aluna de turma, a professora não tem onde escrever isto."));
+    h.push('<div class="nota">O que você entende da aluna e precisa lembrar na próxima aula: '
+      + "o que funciona, o que trava, o que tentar. Só a equipe vê — não aparece em lugar nenhum "
+      + "do app dela. É o que uma substituta precisa ler antes de assumir a aula.</div>");
     if (p && p.comentario) h.push('<div class="correcao">' + esc(p.comentario) + "</div>");
     h.push('<textarea class="campo" style="margin-top:10px" rows="3" placeholder="Ex.: solta no grupo, trava no passado."></textarea>');
     h.push('<button class="btn pq" style="margin-top:10px">Salvar a observação</button>');

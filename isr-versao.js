@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.13-g",
-  data: "13/11/2026",
-  nota: "Arquivar a turma, e dizer se ela é online ou presencial"
+  numero: "2026.11.16-a",
+  data: "16/11/2026",
+  nota: "A anotação da aluna não apaga mais as respostas e as correções da aula"
 };

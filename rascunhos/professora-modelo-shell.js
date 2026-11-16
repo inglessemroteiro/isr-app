@@ -19,9 +19,15 @@ window.ISR_SHELL = (function () {
     var elCorpo = document.getElementById("corpo");
 
     function ir(patch) {
+      // Rolar ao topo só quando a TELA muda. A cada navegação, mesmo
+      // trocar o filtro do caderno ao vivo ou abrir uma aluna, a
+      // página ia ao topo — no modelo A isso jogava a professora
+      // 4.000 px para longe do que ela acabou de tocar, no meio da
+      // aula.
+      var antes = est.tela;
       Object.assign(est, patch);
       pintar();
-      window.scrollTo(0, 0);
+      if (est.tela !== antes) window.scrollTo(0, 0);
     }
 
     function pintar() {
@@ -31,7 +37,10 @@ window.ISR_SHELL = (function () {
       grupos.forEach(function (g) {
         if (g.titulo) h.push('<div class="grupo">' + esc(g.titulo) + "</div>");
         (g.itens || []).forEach(function (it) {
+          // Um item pode ENCERRAR a aula além de navegar: aí carrega
+          // as duas marcas, e o tratador de data-aula roda primeiro.
           h.push('<button class="item' + (it.on ? " on" : "") + '" '
+            + (it.encerra ? 'data-aula="encerrar" ' : "")
             + B.ir(it.vai) + "><span>" + esc(it.label) + "</span>"
             + (it.pino ? '<span class="pino">' + esc(it.pino) + "</span>" : "") + "</button>");
         });
@@ -51,6 +60,23 @@ window.ISR_SHELL = (function () {
     document.addEventListener("click", function (ev) {
       var el;
 
+      // A AULA ANTES DA NAVEGAÇÃO.
+      // Um item pode fazer as duas coisas — encerrar e levar para a
+      // chamada. Com data-ir primeiro, o "encerrar e sair" do modelo
+      // C navegava e NÃO encerrava: a aula ficava aberta a noite
+      // toda, e o protótipo prometia à dona um encerramento que não
+      // acontecia.
+      el = ev.target.closest("[data-aula]");
+      if (el) {
+        var q = el.getAttribute("data-aula");
+        D.VIVO.aberta = q === "abrir";
+        D.VIVO.minutos = q === "abrir" ? 12 : 0;
+        var destino = null;
+        try { destino = JSON.parse(el.getAttribute("data-ir") || "null"); } catch (e) {}
+        ir(destino || (q === "abrir" ? { tela: cfg.telaDaAula || "aulaViva" } : {}));
+        return;
+      }
+
       el = ev.target.closest("[data-ir]");
       if (el) {
         ev.preventDefault();
@@ -58,39 +84,37 @@ window.ISR_SHELL = (function () {
         return;
       }
 
-      // abrir / encerrar a aula
-      el = ev.target.closest("[data-aula]");
-      if (el) {
-        var q = el.getAttribute("data-aula");
-        D.VIVO.aberta = q === "abrir";
-        D.VIVO.minutos = q === "abrir" ? 12 : 0;
-        ir(q === "abrir" ? { tela: cfg.telaDaAula || "aulaViva" } : {});
-        return;
-      }
+      // ── as escritas identificam O QUE mudam ─────────────────
+      // Todas carregavam só o nome da aluna e o tratador ia buscar a
+      // aula em est.turma/est.data — que num modelo com abas podia
+      // apontar para outra aula. A correção fazia pior: achava a
+      // entrada pela POSIÇÃO numa lista filtrada, e gravava na aluna
+      // errada por cima de uma correção que já existia.
 
-      // presença
+      // presença: nome, data e letra. Clicar na letra acesa desmarca.
       el = ev.target.closest("[data-pres]");
       if (el) {
         var p = el.getAttribute("data-pres").split("|");
-        var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
-        if (p[1] === "P") delete a.presencas[p[0]]; else a.presencas[p[0]] = p[1];
+        var a = D.aula(est.turma || "basics", p[1]);
+        if (a.presencas[p[0]] === p[2]) delete a.presencas[p[0]];
+        else a.presencas[p[0]] = p[2];
         pintar();
         return;
       }
 
-      // entrega da tarefa
+      // entrega da tarefa: nome e data
       el = ev.target.closest("[data-tar]");
       if (el) {
-        var n = el.getAttribute("data-tar");
-        var a2 = D.aula(est.turma || "basics", est.data || "2026-11-16");
+        var tr = el.getAttribute("data-tar").split("|");
+        var a2 = D.aula(est.turma || "basics", tr[1]);
         a2.entregues = a2.entregues || [];
-        var i = a2.entregues.indexOf(n);
-        if (i >= 0) a2.entregues.splice(i, 1); else a2.entregues.push(n);
+        var i = a2.entregues.indexOf(tr[0]);
+        if (i >= 0) a2.entregues.splice(i, 1); else a2.entregues.push(tr[0]);
         pintar();
         return;
       }
 
-      // entrega do projeto
+      // entrega do projeto: turma e nome
       el = ev.target.closest("[data-proj]");
       if (el) {
         var pr = el.getAttribute("data-proj").split("|");
@@ -123,24 +147,31 @@ window.ISR_SHELL = (function () {
         return;
       }
 
-      // corrigir uma tarefa de casa entregue
+      // corrigir uma tarefa de casa entregue: a entrada pelo id dela
       el = ev.target.closest("[data-corrigir]");
       if (el) {
         var co = el.getAttribute("data-corrigir").split("|");
         var caixa = el.parentNode.querySelector("input");
         var t2 = caixa && caixa.value.trim();
         if (t2) {
-          var lista = est.cadFiltro === "corrigidas"
-            ? D.CADERNO.filter(function (c) { return c.corrigido; })
-            : est.cadFiltro === "todas" ? D.CADERNO
-            : D.CADERNO.filter(function (c) { return !c.corrigido; });
-          var entrada = lista[+co[0]];
+          var entrada = D.CADERNO.filter(function (c) { return c.id === co[0]; })[0];
           if (entrada) {
             entrada.respostas[+co[1]].comentario = t2;
             entrada.corrigido = entrada.respostas.every(function (r) { return r.comentario; });
           }
           pintar();
         }
+        return;
+      }
+
+      // dar visto sem escrever: ler e marcar como vista, que é o caso
+      // comum. Sem isto, zerar a fila custa uma redação por entrega.
+      el = ev.target.closest("[data-visto]");
+      if (el) {
+        var vi = el.getAttribute("data-visto");
+        var ent2 = D.CADERNO.filter(function (c) { return c.id === vi; })[0];
+        if (ent2) { ent2.corrigido = true; ent2.visto = true; }
+        pintar();
         return;
       }
 

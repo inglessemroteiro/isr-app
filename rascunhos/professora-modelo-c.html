@@ -19,7 +19,8 @@
   O que custa: abas dentro de abas, e o resto do trabalho fica atrás de
   um item genérico.
 
-  Contém os 13 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9.
+  Contém os 16 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9 — os mesmos
+  nos três.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="professora-modelo.css" />
@@ -48,9 +49,9 @@
 
   var ABAS_AULA = [["plano", "Plano"], ["vivo", "Ao vivo"], ["chamada", "Chamada"],
     ["conteudo", "Slides e caderno"], ["tarefas", "Tarefas entregues"]];
-  var ABAS_ESCOLA = [["turmas", "Turmas"], ["clubes", "Clubes"], ["particulares", "Particulares"],
-    ["cadernos", "Cadernos"], ["gravacoes", "Gravações"], ["horas", "Aulas do mês"],
-    ["substituir", "Substituição"]];
+  var ABAS_ESCOLA = [["turmas", "Turmas"], ["alunas", "Alunas"], ["clubes", "Clubes"],
+    ["particulares", "Particulares"], ["cadernos", "Cadernos"], ["gravacoes", "Gravações"],
+    ["horas", "Aulas do mês"], ["substituir", "Substituição"]];
 
   function abas(lista, atual, chave) {
     var h = ['<div class="abas">'];
@@ -93,7 +94,14 @@
           { titulo: "em aula", itens: ABAS_AULA.map(function (x) {
             return { label: x[1], on: est.abaAula === x[0],
               vai: { tela: "aula", abaAula: x[0] } }; }) },
-          { itens: [{ label: "← encerrar e sair", on: false, vai: { tela: "aula", abaAula: "chamada" } }] }
+          // Duas ações diferentes, dois itens: sair não encerra, e
+          // encerrar tira o caderno das alunas. O item único dizia
+          // "encerrar e sair" e só saía.
+          { itens: [
+            { label: "Sair da aula", on: false, vai: { tela: "escola", abaEscola: "turmas" } },
+            { label: "Encerrar a aula", on: false, vai: { tela: "aula", abaAula: "chamada" },
+              encerra: true }
+          ] }
         ];
       }
       var corrigir = D.porCorrigir().length;
@@ -132,7 +140,7 @@
               + (c.corrigido ? "corrigida" : "por corrigir") + "</span></div>");
           });
           h.push("</section>");
-          h.push(B.cadernos(Object.assign({}, est, { cadFiltro: "por_corrigir" })));
+          h.push(B.cadernos(est));
         }
         return { olho: D.VIVO.aberta ? "em aula · " + D.VIVO.minutos + " min" : "dar aula",
           titulo: t.nivel + " · sessão " + a.s,
@@ -146,6 +154,7 @@
         var ab = est.abaEscola || "turmas", h2 = [];
         h2.push(abas(ABAS_ESCOLA, ab, "abaEscola"));
         if (ab === "turmas") { h2.push(B.hoje(est)); h2.push('<div class="rotulo" style="margin-top:16px">as minhas turmas</div>'); h2.push(B.turmas(est)); }
+        if (ab === "alunas") h2.push(B.alunas(est));
         if (ab === "clubes") h2.push(B.clubes(est));
         if (ab === "particulares") h2.push(B.particulares(est));
         if (ab === "cadernos") h2.push(B.cadernos(est));

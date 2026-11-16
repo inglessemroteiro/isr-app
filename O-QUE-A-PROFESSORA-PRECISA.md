@@ -89,11 +89,21 @@ do documento.
 | 9 | Guardar e abrir o link dos slides daquela sessão | **Existe, mas só dentro da aula** · `ISR - Painel v3.dc.html:167` — a aba Slides aparece depois de "Começar aula". Preparar slides é trabalho de antes. |
 | 10 | Escrever o conteúdo da aula em blocos (texto, lista, tabela, imagem, vídeo, colunas, tarefa), ler o Guia do Professor, baixar PDF, apresentar em tela cheia | **Existe, solto** · `ISR - Tela de Aula (Editor Colaborativo).dc.html` — tela completa, com editor de blocos (linha 405), guia do prof (linha 329) e modo apresentação (linha 397). **Nenhum link do Painel ou da Turma leva a ela.** |
 
-**Problema de desenho em 1–8:** todas essas tarefas moram na página da Turma, que
-não está no menu dela. O único caminho é um link de texto no cabeçalho da turma
-dentro do Painel (`ISR - Painel v3.dc.html:231`). Uma professora que não clique
-nesse link nunca chega ao plano, às palavras, à tarefa de casa, ao projeto nem
-aos materiais.
+**As oito não são "existe" — são "existe e mal alcançada".** Todas moram na
+página da Turma, que não está no menu dela. O único caminho é um link de texto no
+cabeçalho da turma dentro do Painel (`ISR - Painel v3.dc.html:231`). Uma
+professora que não clique nesse link nunca chega ao plano, às palavras, à tarefa
+de casa, ao projeto nem aos materiais.
+
+A régua da §2 é clara — "uma tarefa que o sistema cobre, mas que mora numa tela
+que a professora não alcança, conta como não coberta" — e a primeira versão
+desta tabela não a aplicou a si mesma. Corrigido aqui e na conta da §8.
+
+**As fases do roteiro são as da escola, e estão no código.** `crm-data.js:10643`:
+Warm-up, Minds On, Language Focus, Hands On, Share Out e Wrap-up, com o
+comentário "as fases são as da ISR, tiradas dos guias, não as de um protótipo".
+O importador de sílabo só lê essas seis. Qualquer tela que use outro vocabulário
+faz a professora ler uma coisa no sistema e outra no sílabo do Drive.
 
 ---
 
@@ -128,8 +138,31 @@ aos materiais.
 | 28 | **Ler a tarefa de casa depois da aula** | **FALTA — é o buraco que você viu.** Ver abaixo. |
 | 29 | **Ver a lista das gravações, e quais aulas estão sem** | **FALTA para ela.** A tela existe (`ISR - Gravacoes v3.dc.html`) e é `gestora`/`operacao`; a trava de `crm-data.js:7549` a devolve ao Painel. |
 | 30 | Ver quem entregou o projeto do ciclo, e marcar a entrega | **Existe** · `ISR - Turma v3.dc.html:596` (aba projeto) |
-| 31 | Registrar como a aluna está indo — nota e comentário | **FALTA para ela.** `registrarPulso` (`crm-data.js:2052`) só aparece em `ISR - Acompanhamento v3.dc.html`, que ela não alcança. É o registro que ela, de todas as pessoas da escola, é a mais indicada para fazer. |
+| 31 | Registrar o que entende da aluna, para lembrar na próxima aula | **Existe e quase não alcança.** Ver a correção abaixo. |
 | 32 | Pedir substituição de uma aula, com motivo | **Existe** · `ISR - Painel v3.dc.html:970-1010`; `crm-data.js:12759` |
+
+### 31 · o pulso não é o instrumento dela — correção desta versão
+
+A primeira versão deste documento disse que o pulso (nota de 1 a 5) era "o
+registro que ela, de todas as pessoas da escola, é a mais indicada para fazer".
+**Está errado, e o código diz o contrário** (`crm-data.js:2039`):
+
+> Pulso: 1 a 5, respondido pela aluna (você transcreve o que ela disse).
+
+O pulso é a autoavaliação da aluna. O campo em `ISR - Acompanhamento v3.dc.html:222`
+chama-se "Observação da aluna". Pedir que a professora produza essa nota toda
+semana não é dar acesso ao que já existe: é trocar o instrumento e passar para
+ela o trabalho de outra pessoa.
+
+O registro certo para quem dá a aula também já existe: `salvarNotaDaEquipe`
+(`crm-data.js:12552`) — texto livre, só a equipe vê, descrito no próprio código
+como "o que a professora entende da aluna e precisa lembrar na próxima aula: o
+que funciona, o que trava, o que tentar". Sem número e sem periodicidade.
+
+**Mas ele só tem tela na aba de aulas particulares do Painel**
+(`ISR - Painel v3.dc.html:4194`). Para aluna de turma, a professora não tem onde
+escrever isso — e é exatamente o que uma substituta precisa ler antes de assumir
+a aula.
 
 ### 28 · "as profs não conseguem acessar as tarefas de casa"
 
@@ -148,6 +181,24 @@ entregue, e o comentário dela em uma resposta só é possível enquanto a aula
 corre. Fechada a aula, o texto da aluna fica guardado e sem leitora.
 
 O dado existe. A tela não.
+
+**E há menos dado do que parecia.** No app da aluna, o bloco da tarefa de casa
+(`ISR - Aluna v4.dc.html:785`) é texto só de leitura: título, estado, enunciado.
+Não há campo, botão nem anexo. A chamada guarda um booleano por aluna. Logo,
+"entregue 10 nov, 21h04" é coisa que o sistema não sabe produzir: **ler a tarefa
+depois exige construir a entrega antes**, e é essa a ordem.
+
+Some-se a isso que `salvarResposta` (`crm-data.js:12598`) recusa qualquer escrita
+fora da aula ao vivo. Tarefa de casa escrita no caderno hoje não é difícil de
+ler: é impossível de escrever.
+
+### Um bug de perda de dados, achado no caminho
+
+`salvarNotaDaAula` gravava `{ texto }` por cima do registro do caderno — a mesma
+chave `pessoaId|turma|data` onde moram as respostas da aula e os comentários da
+professora. **A aluna escrever a anotação dela sobre a aula apagava as respostas
+dela e as correções da professora**; com o texto vazio, apagava a chave inteira.
+Corrigido, com suíte em `testes/caderno-nao-se-apaga.js`.
 
 ---
 
@@ -178,35 +229,48 @@ aulas contaram nem quanto vai receber, e é ela que cumpre a regra que decide is
 | 43 | Particular: ver a aluna, o programa que ela segue, a sequência e a sessão desta aula | **Existe** · `ISR - Painel v3.dc.html:318-460` |
 | 44 | Ver a ficha de uma aluna pelo nome | **Existe** · `ISR - Perfil v3.dc.html`, aberto pelo nome na chamada |
 | 45 | Ver a fila do dia: quem faltou, quem parou de entregar, quem precisa de contato | **Existe** · `ISR - Painel v3.dc.html:902` |
+| 47 | **Falar com a aluna** — mensagem, e-mail, WhatsApp | **FALTA no levantamento e na tela.** A §1 lista "falar com aluna ou responsável" como uma das quatro tarefas centrais fora da aula, e a primeira versão desta lista não a incluiu em linha nenhuma. O sistema tem `waLink` no Perfil; a fila diz "faltou nas duas últimas aulas" e não oferece caminho nenhum para falar com ela. |
 | 46 | Renovação: quem continua no ciclo seguinte | **Existe** · `ISR - Turma v3.dc.html:696` |
 
 ---
 
 ## 8. Resumo: a conta
 
-**Existe e ela alcança — 34 tarefas.** O sistema cobre quase todo o trabalho.
+Revista depois de duas leituras independentes — uma de UX de sistemas escolares,
+outra de coordenação pedagógica. A primeira versão desta seção era otimista
+demais, por três motivos que estão corrigidos acima.
 
-**Existe e ela não alcança — 4 tarefas**, por causa de `TELAS_DA_PROFESSORA`:
-gravações (29), pulso da aluna (31), horas e pagamento (35, 36).
+**Existe e ela alcança bem — 26 tarefas.**
+
+**Existe e ela mal alcança — 8:** tudo o que mora na página da Turma (plano,
+roteiro, palavras, começos de frase, tarefa de casa, programa, materiais, apoio),
+atrás de um link de texto no cabeçalho.
+
+**Existe e ela não alcança — 4:** gravações (29), a nota da equipe sobre aluna de
+turma (31), as próprias horas e a razão de uma aula não ter contado (35, 36).
 
 **Existe e está solto — 2:** o editor da aula (10), a que nenhum link leva, e os
 slides (9), que só abrem depois de a aula começar.
 
-**Não existe — 3:** ler a tarefa de casa fora da aula (28), a etapa corrente do
-roteiro durante a aula (24), e uma interface única da aula (25).
+**Não existe — 4:** ler a tarefa de casa fora da aula (28) — e, antes disso, a
+própria entrega —, a etapa corrente do roteiro durante a aula (24), uma interface
+única da aula (25), e falar com a aluna (47).
 
-O diagnóstico não é falta de funcionalidade. É **arranjo**: o trabalho dela está
-repartido entre três arquivos, e três coisas que ela precisa estão atrás de uma
-trava de perfil feita para proteger o financeiro da escola.
+**Existe, mas é trabalho que o sistema poderia derivar — 3:** marcar "entregou"
+quando o caderno já tem o texto com hora (20), escrever o tópico quando o título
+da sessão já existe (21), e marcar a entrega do projeto (30).
 
-É sobre esse arranjo que os três modelos decidem.
+O diagnóstico não é falta de funcionalidade, e também não é só arranjo. São três
+coisas: o trabalho dela está repartido entre três arquivos; quatro coisas que ela
+precisa estão atrás de uma trava de perfil feita para proteger o financeiro; e o
+sistema pede à professora dados que ele mesmo tem.
 
 ---
 
 ## 9. O que os três modelos têm de conter
 
 Lista fechada, usada como contrato dos protótipos em `rascunhos/`. Todos os três
-contêm **os mesmos 13 blocos**; o que muda entre eles é onde cada bloco mora e
+contêm **os mesmos 16 blocos**; o que muda entre eles é onde cada bloco mora e
 quantos passos custa chegar nele.
 
 1. Hoje: a próxima ação, a agenda do dia, a fila
@@ -221,4 +285,11 @@ quantos passos custa chegar nele.
 10. **Gravações: a lista, e quais aulas estão sem** (hoje fora do alcance dela)
 11. **Aulas do mês: o que contou e por quê** (hoje fora do alcance dela)
 12. Substituição: pedir, com motivo
-13. **Pulso da aluna: nota e comentário** (hoje fora do alcance dela)
+13. **A ficha da aluna**: o que o sistema já conta dela, a nota da equipe e a
+    porta para o perfil (hoje a nota só existe para aluna particular)
+14. **As alunas dela**: a lista das três turmas, com faltas e entregas
+15. **Onde estamos no roteiro**, durante a aula: a etapa corrente e o minuto
+    decorrido contra o planejado — o único dos buracos da §4 que não é problema
+    de arranjo
+16. **O caderno aberto para a tarefa de casa**: a chave que torna a entrega
+    possível
