@@ -88,7 +88,7 @@ window.ISR_BLOCOS = (function () {
         + '<div style="font-size:13.5px;font-weight:700">' + esc(f.nome) + "</div>"
         + '<div class="nota" style="margin-top:2px">' + esc(f.motivo) + "</div>"
         + '<button class="btn claro pq" style="margin-top:6px" ' + ir({ tela: "pulso", aluna: f.nome })
-        + ">Registrar o pulso</button></div>");
+        + ">Abrir a ficha</button></div>");
     });
     h.push("</div></div>");
 
@@ -220,10 +220,13 @@ window.ISR_BLOCOS = (function () {
     return h.join("");
   };
 
-  // ══ 3 · SLIDES E O CONTEÚDO DA AULA ═══════════════════════════
-  // O editor de blocos e o guia do professor existem no sistema
+  // ══ 3 · SLIDES E O CADERNO DA AULA ════════════════════════════
+  // Duas coisas diferentes, e por isso duas funções: os slides são o
+  // que a professora PROJETA, o caderno é o que a aluna ABRE. O
+  // editor de blocos e o guia do professor existem no sistema
   // (ISR - Tela de Aula) e hoje nenhum link leva a eles.
-  B.conteudo = function (est) {
+
+  B.slides = function (est) {
     var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
     var h = [];
     h.push('<section class="cartao">' + cab("Slides desta sessão", "antes da aula",
@@ -235,8 +238,13 @@ window.ISR_BLOCOS = (function () {
     if (a.slides) h.push('<div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">'
       + '<button class="btn pq">▶ Apresentar</button><button class="btn claro pq">Abrir para editar</button></div>');
     h.push("</section>");
+    return h.join("");
+  };
 
-    h.push('<section class="cartao">' + cab("O caderno da aula", "antes da aula",
+  B.cadernoDaAula = function (est) {
+    var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
+    var h = [];
+    h.push('<section class="cartao">' + cab("O caderno da aluna", "antes da aula",
       '<span class="selo neutro">editor de blocos</span>'));
     h.push('<div class="nota">É a tela que a aluna abre na aula. Os blocos vêm de um menu: parágrafo, título, lista, tabela, imagem, vídeo, duas ou três colunas, separador e tarefa.</div>');
     h.push('<div class="telaFalsa"><div class="tfAbas"><span class="on">Aula</span><span>Tarefas</span><span>Guia do Prof</span></div>'
@@ -254,6 +262,9 @@ window.ISR_BLOCOS = (function () {
     h.push("</section>");
     return h.join("");
   };
+
+  // os dois juntos, para os modelos que dão uma tela aos slides
+  B.conteudo = function (est) { return B.slides(est) + B.cadernoDaAula(est); };
 
   // ══ 4 · CHAMADA ═══════════════════════════════════════════════
   B.chamada = function (est) {
@@ -346,20 +357,57 @@ window.ISR_BLOCOS = (function () {
   };
 
   // ══ 5 · O PLANO DA SESSÃO ═════════════════════════════════════
-  B.plano = function (est) {
+  // opts.comCaderno = true acrescenta o caderno da aluna e o link dos
+  // slides aqui dentro, para o modelo que não dá tela própria a eles.
+  B.plano = function (est, opts) {
+    opts = opts || {};
     var t = D.turma(est.turma || "basics");
     var a = D.aula(est.turma || "basics", est.data || "2026-11-16");
     var h = [], total = (a.roteiro || []).reduce(function (s, e) { return s + e.min; }, 0);
     var comPergunta = (a.roteiro || []).filter(function (e) { return e.pergunta; }).length;
+    var ordenadas = (t.aulas || []).slice().sort(function (x, y) {
+      return x.data < y.data ? -1 : 1; });
 
     // a faixa de sessões
     h.push('<div class="tira">');
-    (t.aulas || []).slice().reverse().forEach(function (x) {
+    ordenadas.forEach(function (x) {
       var on = x.data === a.data;
       h.push('<button class="dia' + (on ? " on" : "") + '" ' + ir({ tela: est.tela, turma: t.id, data: x.data })
         + "><b>s" + x.s + "</b><span>" + esc(x.curto) + "</span></button>");
     });
+    h.push('<button class="dia tracejado" ' + ir({ editarAulas: true, turma: t.id })
+      + "><b>+</b><span>aula</span></button>");
     h.push("</div>");
+
+    // ── AS AULAS DA TURMA ───────────────────────────────────────
+    // Acrescentar, apagar e marcar a data de cada aula. O calendário
+    // da turma muda — feriado, remarcação, uma sessão que rendeu duas
+    // — e sem isto o plano fica preso ao que o programa previu.
+    if (est.editarAulas) {
+      h.push('<section class="cartao">' + cab("As aulas desta turma", "o calendário do ciclo",
+        '<button class="btn claro pq" ' + ir({ editarAulas: false }) + ">Fechar</button>"));
+      h.push('<div class="nota">A data de cada aula manda na chamada, na folha e no que a aluna vê. '
+        + "Apagar uma aula não apaga a chamada já salva dela.</div>");
+      ordenadas.forEach(function (x) {
+        var dada = x.estado === "dada";
+        h.push('<div class="linhaAula">'
+          + '<span class="min">s' + x.s + "</span>"
+          + '<input class="campo" type="date" value="' + esc(x.data) + '" style="flex:0 1 160px" />'
+          + '<input class="campo" value="' + esc(x.titulo) + '" style="flex:1;min-width:160px" placeholder="Título da aula" />'
+          + '<span class="selo ' + (dada ? "ok" : x.estado === "hoje" ? "alerta" : "neutro") + '">'
+          + esc(dada ? "dada" : x.estado) + "</span>"
+          + '<button class="b" title="' + (dada ? "Aula já dada: apagar pede confirmação" : "Apagar esta aula") + '">×</button>'
+          + "</div>");
+      });
+      h.push('<div class="addEtapa"><div class="rotulo">acrescentar uma aula</div>'
+        + '<div class="formLinha"><input class="campo" type="date" style="flex:0 1 160px" />'
+        + '<input class="campo" style="flex:1;min-width:160px" placeholder="Título da aula" />'
+        + '<button class="btn pq">Acrescentar</button></div>'
+        + '<div class="nota">A aula nova entra no fim e recebe o próximo número de sessão. '
+        + "Para intercalar, basta mudar a data: a ordem é a do calendário.</div></div>");
+      h.push('<button class="btn" style="margin-top:12px">Salvar o calendário</button>');
+      h.push("</section>");
+    }
 
     h.push('<section class="cartao">' + cab("Sessão " + a.s + " · " + esc(a.titulo), "antes da aula",
       '<span style="font-size:12.5px;color:var(--tinta-fraca)">' + total + " min · "
@@ -408,18 +456,47 @@ window.ISR_BLOCOS = (function () {
         : '<div class="nota">Nenhum ainda.</div>')
       + '<textarea class="campo" style="margin-top:8px" rows="2" placeholder="Um por linha">'
       + esc((a.starters || []).join("\n")) + "</textarea></div>");
+    // ── A TAREFA DE CASA, E A CHAVE QUE A TORNA POSSÍVEL ────────
+    // Hoje o caderno só aceita escrita com a aula aberta: fechada a
+    // aula, a aluna não consegue responder nada. Por isso a tarefa de
+    // casa e o estado do caderno moram no mesmo cartão — um não
+    // funciona sem o outro.
+    var hw = a.cadernoHw || { aberto: false, ate: "" };
     h.push('<div class="bloco"><h3>tarefa de casa</h3>'
       + (a.tarefa ? '<div style="font-size:13px;line-height:1.55">' + esc(a.tarefa) + "</div>"
         : '<div class="aviso" style="margin:0">Esta sessão está sem tarefa de casa.</div>')
-      + '<textarea class="campo" style="margin-top:8px" rows="3">' + esc(a.tarefa) + "</textarea></div>");
+      + '<textarea class="campo" style="margin-top:8px" rows="3">' + esc(a.tarefa) + "</textarea>"
+      + '<div class="chave' + (hw.aberto ? " on" : "") + '" data-hw="' + esc(a.data) + '">'
+      + '<span class="pino2"></span>'
+      + "<span><b>Caderno aberto para a tarefa de casa</b>"
+      + '<span class="nota" style="margin:0">'
+      + (hw.aberto ? "Aberto: ela escreve a tarefa até " + esc(hw.ate || "a próxima aula") + "."
+        : "Fechado: ela não consegue responder depois que a aula encerra.") + "</span></span></div>"
+      + (hw.aberto ? '<div class="formLinha" style="margin-top:7px">'
+        + '<span class="nota" style="margin:0">aberto até</span>'
+        + '<input class="campo" type="date" value="' + esc(hw.ate) + '" style="flex:0 1 150px" /></div>' : "")
+      + "</div>");
     h.push("</div>");
 
     h.push('<div class="formLinha" style="margin-top:13px">'
       + '<button class="btn">Salvar o plano</button>'
       + '<button class="btn claro pq">Ver como a aluna vê</button>'
-      + '<button class="btn claro pq" ' + ir({ tela: "conteudo", turma: t.id, data: a.data })
-      + ">Slides e caderno da aula</button></div>");
+      + (opts.comCaderno ? ""
+        : '<button class="btn claro pq" ' + ir({ tela: "conteudo", turma: t.id, data: a.data })
+          + ">Slides e caderno da aula</button>")
+      + "</div>");
     h.push("</section>");
+
+    if (opts.comCaderno) {
+      h.push(B.cadernoDaAula(est));
+      h.push('<section class="cartao">' + cab("Slides desta sessão", "",
+        a.slides ? '<span class="selo ok">link salvo</span>' : '<span class="selo neutro">opcional</span>'));
+      h.push('<div class="formLinha" style="margin-top:0"><input class="campo" value="' + esc(a.slides)
+        + '" placeholder="https://docs.google.com/presentation/d/…" />'
+        + '<button class="btn claro pq">Salvar</button></div>');
+      h.push('<div class="nota">Com link, o botão de apresentar aparece na aula.</div>');
+      h.push("</section>");
+    }
     return h.join("");
   };
 
@@ -524,11 +601,14 @@ window.ISR_BLOCOS = (function () {
     if (aba === "alunas") {
       h.push('<section class="cartao">' + cab("Alunas da turma", "", ""));
       t.alunas.forEach(function (n) {
-        var p = D.PULSOS[n];
         var faltas = (t.aulas || []).filter(function (x) { return x.presencas[n] === "F"; }).length;
+        var dadas = (t.aulas || []).filter(function (x) { return x.estado !== "agendada"; }).length;
+        var ent = (t.aulas || []).filter(function (x) { return (x.entregues || []).indexOf(n) >= 0; }).length;
         h.push('<div class="linha"><span class="nome">' + esc(n) + "</span>"
-          + '<span class="nota" style="margin:0;flex:none">' + (faltas ? faltas + " falta" + (faltas === 1 ? "" : "s") : "sem falta") + "</span>"
-          + (p ? '<span class="selo ' + (p.nota >= 4 ? "ok" : p.nota >= 3 ? "alerta" : "erro") + '">pulso ' + p.nota + "/5</span>" : '<span class="selo neutro">sem pulso</span>')
+          + '<span class="nota" style="margin:0;flex:1">' + ent + " de " + dadas + " tarefas</span>"
+          + (faltas ? '<span class="selo ' + (faltas >= 2 ? "erro" : "alerta") + '">' + faltas
+              + " falta" + (faltas === 1 ? "" : "s") + "</span>"
+            : '<span class="selo ok">sem falta</span>')
           + '<button class="btn claro pq" ' + ir({ tela: "pulso", aluna: n }) + ">Abrir</button></div>");
       });
       h.push("</section>");
@@ -842,45 +922,48 @@ window.ISR_BLOCOS = (function () {
     return h.join("");
   };
 
-  // ══ 13 · PULSO DA ALUNA ═══════════════════════════════════════
+  // ══ 13 · A FICHA DA ALUNA ═════════════════════════════════════
+  // Era "pulso da aluna": uma nota de 1 a 5 que a professora tinha de
+  // produzir toda semana. A nota serve à retenção, que é conta da
+  // escola, e pedir que a professora a fabrique é passar para ela o
+  // trabalho de outra pessoa.
+  //
+  // Aqui a ficha mostra o que o sistema JÁ SABE — faltas, entregas,
+  // textos no caderno — e deixa um campo de observação opcional, que
+  // ela escreve quando tem o que dizer. Nada a preencher por rotina.
   B.pulso = function (est) {
     var nome = est.aluna || "Marina Teste";
     var p = D.PULSOS[nome] || null, h = [];
     var daTurma = D.TURMAS.filter(function (t) { return t.alunas.indexOf(nome) >= 0; })[0];
     var cad = D.CADERNO.filter(function (c) { return c.aluna === nome; });
 
-    h.push(B.marca("existe, fora do alcance",
-      "O registro — nota de 1 a 5 e um comentário — mora em Acompanhamento, que é de gestão. "
-      + "Quem vê a aluna toda semana é a professora."));
-
-    h.push('<section class="cartao">' + cab(esc(nome), daTurma ? esc(daTurma.nivel + " · " + daTurma.quando) : "",
-      p ? '<span class="selo ' + (p.nota >= 4 ? "ok" : p.nota >= 3 ? "alerta" : "erro") + '">pulso ' + p.nota + "/5 · " + esc(p.quando) + "</span>"
-        : '<span class="selo neutro">sem pulso</span>'));
-    if (p && p.comentario) h.push('<div class="correcao">' + esc(p.comentario) + "</div>");
-    h.push('<div class="rotulo" style="margin-top:13px">como ela está indo</div>');
-    h.push('<div class="tira">');
-    [1, 2, 3, 4, 5].forEach(function (n) {
-      h.push('<button class="chip' + (p && p.nota === n ? " on" : "") + '" data-pulso="'
-        + esc(nome) + "|" + n + '">' + n + "</button>");
-    });
-    h.push("</div>");
-    h.push('<textarea class="campo" style="margin-top:10px" rows="3" placeholder="O que você observou. Fica no histórico dela e a escola lê."></textarea>');
-    h.push('<button class="btn pq" style="margin-top:10px">Registrar</button>');
-    h.push("</section>");
-
     if (daTurma) {
       var faltas = (daTurma.aulas || []).filter(function (x) { return x.presencas[nome] === "F"; });
       var ent = (daTurma.aulas || []).filter(function (x) { return (x.entregues || []).indexOf(nome) >= 0; }).length;
       var dadas = (daTurma.aulas || []).filter(function (x) { return x.estado !== "agendada"; }).length;
-      h.push('<section class="cartao">' + cab("O que o sistema já sabe dela", "", ""));
+      h.push('<section class="cartao">' + cab(esc(nome),
+        esc(daTurma.nivel + " · " + daTurma.quando),
+        faltas.length >= 2 ? '<span class="selo erro">' + faltas.length + " faltas</span>" : ""));
       h.push('<div class="grade3">'
         + B.numero(String(faltas.length), "faltas no ciclo", faltas.length ? "erro" : "")
         + B.numero(ent + "/" + dadas, "tarefas entregues")
         + B.numero(String(cad.length), "textos no caderno") + "</div>");
+      h.push('<div class="nota" style="margin-top:9px">Tudo nesta linha é contado do que você já lançou. '
+        + "Nada aqui é para preencher.</div>");
       if (cad.length) h.push('<button class="btn claro pq" style="margin-top:11px" '
         + ir({ tela: "cadernos", cadFiltro: "todas" }) + ">Ler o caderno dela</button>");
       h.push("</section>");
     }
+
+    h.push('<section class="cartao">' + cab("Observação sobre ela", "opcional",
+      p && p.comentario ? '<span class="selo neutro">última: ' + esc(p.quando) + "</span>" : ""));
+    h.push('<div class="nota" style="margin-top:-6px">Só quando houver o que dizer — '
+      + "uma dificuldade que se repete, uma virada, algo que a próxima professora precisa saber. "
+      + "Fica no histórico dela e a escola lê.</div>");
+    if (p && p.comentario) h.push('<div class="correcao">' + esc(p.comentario) + "</div>");
+    h.push('<textarea class="campo" style="margin-top:10px" rows="3" placeholder="Ex.: solta no grupo, trava no passado."></textarea>');
+    h.push('<button class="btn pq" style="margin-top:10px">Salvar a observação</button>');
+    h.push("</section>");
     return h.join("");
   };
 

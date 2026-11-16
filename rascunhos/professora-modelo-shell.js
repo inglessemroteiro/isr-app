@@ -144,12 +144,16 @@ window.ISR_SHELL = (function () {
         return;
       }
 
-      // pulso
-      el = ev.target.closest("[data-pulso]");
+      // o caderno da aluna aberto ou fechado para a tarefa de casa.
+      // É esta chave que torna a tarefa de casa possível: hoje o
+      // caderno só aceita escrita com a aula aberta.
+      el = ev.target.closest("[data-hw]");
       if (el) {
-        var pu = el.getAttribute("data-pulso").split("|");
-        D.PULSOS[pu[0]] = { nota: +pu[1], quando: "agora",
-          comentario: (D.PULSOS[pu[0]] || {}).comentario || "" };
+        var dt = el.getAttribute("data-hw");
+        var au = D.aula(est.turma || "basics", dt);
+        au.cadernoHw = au.cadernoHw || { aberto: false, ate: "" };
+        au.cadernoHw.aberto = !au.cadernoHw.aberto;
+        if (au.cadernoHw.aberto && !au.cadernoHw.ate) au.cadernoHw.ate = "2026-11-23";
         pintar();
         return;
       }
