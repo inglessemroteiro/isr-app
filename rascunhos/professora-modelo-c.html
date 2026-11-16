@@ -3,244 +3,185 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Modelo C · A turma é a unidade</title>
+<title>Modelo C · Duas superfícies</title>
 <!--
-  MODELO C — A TURMA É A UNIDADE
+  MODELO C — DUAS SUPERFÍCIES
   Protótipo clicável. Dados inventados. Não entra no sistema.
 
-  A IDEIA: a professora não pensa em "chamadas", "gravações" e
-  "tarefas" como assuntos separados. Ela pensa em TURMAS. Então ela
-  escolhe uma turma e recebe tudo sobre ela: as aulas numa lista, uma
-  linha por data, cada linha carregando a chamada, a tarefa e a
-  gravação daquela aula. Abrir a linha é abrir a aula.
+  A IDEIA: o sistema tem dois lugares, e só dois. "Dar aula" é um modo
+  — escolhe-se a turma e o dia no alto, e dentro dele há abas: plano,
+  ao vivo, chamada, slides, tarefas. "A escola" é todo o resto, também
+  em abas. Quando a aula está aberta, o modo aula toma a tela e o resto
+  sai do caminho até ela encerrar.
 
-  Por cima disso há uma tela "Hoje", porque o dia dela pode ter três
-  turmas em três dias diferentes.
+  O que ganha: menu de dois itens, nenhuma dúvida sobre onde algo mora,
+  e a aula protegida de distração.
+  O que custa: abas dentro de abas, e o resto do trabalho fica atrás de
+  um item genérico.
 
-  Telas: Hoje, a turma em quatro abas (Aulas, Plano do ciclo, Alunas,
-  Materiais) e o clube.
+  Contém os 13 blocos de O-QUE-A-PROFESSORA-PRECISA.md § 9.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="professora-modelo.css" />
 </head>
 <body>
-<div class="faixa">
-  <b>Modelo C</b> · a turma é a unidade — protótipo para escolher, com dados inventados
-  <a href="professora-modelo-a.html">ver o modelo A →</a>
-  <a href="professora-modelo-b.html">ver o modelo B →</a>
-</div>
+<div id="faixa"></div>
 <div class="tela">
   <aside class="lado">
     <div class="marca">Inglês sem Roteiro</div>
     <div class="quem"><div class="bolha">B</div>
       <div><div style="font-weight:700;font-size:14px">Bárbara</div>
         <div style="font-size:11.5px;opacity:.75">professora</div></div></div>
-    <nav id="menu"></nav>
+    <nav id="menu" style="display:flex;flex-direction:column;gap:3px"></nav>
   </aside>
   <main class="corpo" id="corpo"></main>
 </div>
 
 <script src="professora-modelo-dados.js"></script>
+<script src="professora-modelo-blocos.js"></script>
+<script src="professora-modelo-shell.js"></script>
 <script>
 (function () {
   "use strict";
-  var D = window.ISR_MODELO;
-  var corpo = document.getElementById("corpo");
-  var menu = document.getElementById("menu");
-  var est = { tela: "hoje", turma: "basics", aba: "aulas", aberta: "2026-11-16" };
+  var D = window.ISR_MODELO, B = window.ISR_BLOCOS, S = window.ISR_SHELL;
+  document.getElementById("faixa").innerHTML = S.faixa("C", "duas superfícies");
 
-  function esc(s) {
-    return String(s === undefined || s === null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
-  function ir(patch) { Object.assign(est, patch); pintar(); window.scrollTo(0, 0); }
+  var ABAS_AULA = [["plano", "Plano"], ["vivo", "Ao vivo"], ["chamada", "Chamada"],
+    ["conteudo", "Slides e caderno"], ["tarefas", "Tarefas entregues"]];
+  var ABAS_ESCOLA = [["turmas", "Turmas"], ["clubes", "Clubes"], ["particulares", "Particulares"],
+    ["cadernos", "Cadernos"], ["gravacoes", "Gravações"], ["horas", "Minhas horas"],
+    ["substituir", "Substituição"]];
 
-  function pintarMenu() {
-    menu.innerHTML = "";
-    var hoje = document.createElement("button");
-    hoje.className = "item" + (est.tela === "hoje" ? " on" : "");
-    hoje.innerHTML = "<span>Hoje</span><span class='pino'>1</span>";
-    hoje.onclick = function () { ir({ tela: "hoje" }); };
-    menu.appendChild(hoje);
-
-    var g = document.createElement("div");
-    g.className = "grupo"; g.textContent = "as minhas turmas"; menu.appendChild(g);
-    D.TURMAS.forEach(function (t) {
-      var sem = (t.aulas || []).filter(function (a) { return a.estado !== "agendada" && !a.gravacao; }).length;
-      var b = document.createElement("button");
-      b.className = "tcard" + (est.tela === "turma" && est.turma === t.id ? " on" : "");
-      b.innerHTML = "<b>" + esc(t.nivel) + "</b><span>" + esc(t.quando) + " · "
-        + t.alunas.length + " alunas" + (sem ? " · " + sem + " pendente" : "") + "</span>";
-      b.onclick = function () { ir({ tela: "turma", turma: t.id, aba: "aulas" }); };
-      menu.appendChild(b);
+  function abas(lista, atual, chave) {
+    var h = ['<div class="abas">'];
+    lista.forEach(function (x) {
+      var p = {}; p[chave] = x[0];
+      h.push('<button class="aba' + (atual === x[0] ? " on" : "") + '" ' + B.ir(p) + ">"
+        + B.esc(x[1]) + "</button>");
     });
-
-    var g2 = document.createElement("div");
-    g2.className = "grupo"; g2.textContent = "comunidade"; menu.appendChild(g2);
-    D.CLUBES.forEach(function (c) {
-      var b = document.createElement("button");
-      b.className = "item" + (est.tela === "clube" ? " on" : "");
-      b.innerHTML = "<span>" + esc(c.nome) + "</span>";
-      b.onclick = function () { ir({ tela: "clube" }); };
-      menu.appendChild(b);
-    });
+    return h.join("") + "</div>";
   }
 
-  // ── HOJE ──────────────────────────────────────────────────────
-  function telaHoje() {
-    var t = D.turma("basics"), a = D.aula("basics", "2026-11-16");
-    var h = ['<div class="olho">segunda-feira, 16 de novembro</div><h1>Hoje</h1>',
-      '<div class="intro">A aula de hoje, e o que está esperando nas outras turmas. Cada turma tem a tela dela, no menu ao lado.</div>'];
-    h.push('<section class="cartao"><div class="cab">'
-      + "<div><h2>" + esc(t.nivel) + " · " + esc(t.quando) + "</h2>"
-      + '<div class="sub">Sessão ' + a.s + " · " + esc(a.titulo) + " · " + t.alunas.length + " alunas</div></div>"
-      + '<span class="selo alerta">chamada aberta</span></div>'
-      + '<button class="btn pq" data-t="basics">Abrir a turma</button></section>');
-
-    h.push('<section class="cartao"><div class="cab"><h2>Esperando em cada turma</h2></div>');
-    D.TURMAS.forEach(function (x) {
-      var sg = (x.aulas || []).filter(function (y) { return y.estado !== "agendada" && !y.gravacao; }).length;
-      var st = (x.aulas || []).filter(function (y) { return !y.tarefa && y.estado !== "dada"; }).length;
-      var txt = [];
-      if (sg) txt.push(sg + (sg === 1 ? " aula sem gravação" : " aulas sem gravação"));
-      if (st) txt.push(st + (st === 1 ? " aula sem tarefa" : " aulas sem tarefa"));
-      h.push('<div class="linha"><span class="nome">' + esc(x.nivel)
-        + '<div class="sub">' + (txt.length ? esc(txt.join(" · ")) : "nada pendente") + "</div></span>"
-        + '<span class="selo ' + (txt.length ? "alerta" : "ok") + '">'
-        + (txt.length ? "pendente" : "em dia") + "</span>"
-        + '<button class="tar" data-t="' + x.id + '">abrir</button></div>');
-    });
-    h.push("</section>");
-    corpo.innerHTML = h.join("");
-    [].forEach.call(corpo.querySelectorAll("[data-t]"), function (el) {
-      el.onclick = function () { ir({ tela: "turma", turma: el.getAttribute("data-t"), aba: "aulas" }); };
-    });
-  }
-
-  // ── A TURMA ───────────────────────────────────────────────────
-  function telaTurma() {
-    var t = D.turma(est.turma);
-    var h = ['<div class="olho">minha turma</div><h1>' + esc(t.nivel) + " · " + esc(t.quando) + "</h1>",
-      '<div class="sub1">' + esc(t.projeto) + " · sessão " + t.sessao + " de " + t.sessoes
-      + " · " + t.alunas.length + " alunas · " + esc(t.modalidade)
-      + (t.local ? " · " + esc(t.local) : "") + "</div>"];
-    var abas = [["aulas", "Aulas"], ["plano", "Plano do ciclo"], ["alunas", "Alunas"], ["materiais", "Materiais"]];
-    h.push('<div class="abas">' + abas.map(function (x) {
-      return '<button class="aba' + (est.aba === x[0] ? " on" : "") + '" data-aba="' + x[0] + '">' + x[1] + "</button>";
-    }).join("") + "</div>");
-
-    if (est.aba === "aulas") {
-      h.push('<section class="cartao liso">');
-      t.aulas.forEach(function (a) {
-        var aberta = est.aberta === a.data;
-        h.push('<div class="aulaLinha' + (aberta ? " aberta" : "") + '" data-data="' + a.data + '">');
-        h.push('<div class="topo"><span class="data">' + esc(a.curto) + "</span>"
-          + '<span class="tit">Sessão ' + a.s + " · " + esc(a.titulo)
-          + "<span>" + (a.estado === "agendada" ? "ainda não aconteceu"
-            : ((a.entregues || []).length + " de " + t.alunas.length + " entregaram a tarefa")) + "</span></span>"
-          + (a.estado === "agendada" ? '<span class="selo neutro">agendada</span>'
-            : '<span class="selo ' + (a.gravacao ? "ok" : "alerta") + '">'
-              + (a.gravacao ? "gravação publicada" : "sem gravação") + "</span>")
-          + (a.estado === "hoje" ? '<span class="selo alerta">chamada aberta</span>'
-            : (a.estado === "dada" ? '<span class="selo ok">chamada feita</span>' : "")) + "</div>");
-
-        if (aberta) {
-          h.push('<div class="grade2" style="margin-top:13px">');
-          h.push('<div class="bloco"><h3>Chamada</h3>');
-          t.alunas.forEach(function (n) {
-            var f = (a.presencas || {})[n] === "F";
-            h.push('<div class="linha" style="padding:6px 0"><span class="nome" style="font-size:13px">'
-              + esc(n) + "</span>"
-              + '<span class="b' + (f ? " f" : " p") + '" style="width:24px;height:24px;font-size:11px">'
-              + (f ? "F" : "P") + "</span></div>");
-          });
-          h.push('<input class="campo" style="margin-top:9px" value="' + esc(a.topico || "")
-            + '" placeholder="Tópico da aula" />'
-            + '<div class="nota">O tópico é o que faz a aula contar na folha.</div>'
-            + '<button class="btn pq" style="margin-top:10px">Salvar a chamada</button></div>');
-
-          h.push('<div class="bloco"><h3>Tarefa de casa</h3>'
-            + '<textarea class="campo">' + esc(a.tarefa || "") + "</textarea>"
-            + '<div class="nota">' + (a.entregues || []).length + " de " + t.alunas.length
-            + " entregaram" + (() => {
-              var falta = t.alunas.filter(function (n) { return (a.entregues || []).indexOf(n) < 0; });
-              return falta.length ? " · faltam " + esc(falta.map(function (n) { return n.split(" ")[0]; }).join(", ")) : "";
-            })() + "</div>"
-            + '<h3 style="margin-top:14px">Gravação</h3>'
-            + '<input class="campo" value="' + esc(a.gravacao || "") + '" placeholder="Colar o link do Drive…" />'
-            + '<div class="nota">Só as alunas desta turma veem.</div>'
-            + '<button class="btn pq" style="margin-top:10px">Salvar os dois</button></div>');
-          h.push("</div>");
-        }
-        h.push("</div>");
-      });
-      h.push("</section>");
-    } else if (est.aba === "plano") {
-      h.push('<div class="intro">As sessões do programa que esta turma segue. A tarefa de casa de cada aula é escrita na aba Aulas, dentro da aula.</div>');
-      h.push('<section class="cartao"><table><tbody>');
-      for (var i = 1; i <= t.sessoes; i++) {
-        var a2 = (t.aulas || []).filter(function (x) { return x.s === i; })[0];
-        h.push("<tr><td style='width:60px'><b>S" + i + "</b></td><td>"
-          + esc(a2 ? a2.titulo : "—") + "<div class='sub'>" + (a2 ? esc(a2.curto) : "sem data") + "</div></td>"
-          + "<td style='width:140px'>" + (a2 && a2.tarefa ? '<span class="selo ok">tarefa escrita</span>'
-            : '<span class="selo neutro">sem tarefa</span>') + "</td></tr>");
+  // a faixa de turma e dia: no modelo C é a única troca de contexto
+  function contexto(est) {
+    var h = ['<div class="tira">'];
+    D.SEMANA.forEach(function (s) {
+      if (s.clube) {
+        h.push('<button class="dia" ' + B.ir({ tela: "escola", abaEscola: "clubes" })
+          + "><b>" + B.esc(s.curto) + "</b><span>" + B.esc(s.rotulo) + "</span></button>");
+        return;
       }
-      h.push("</tbody></table></section>");
-    } else if (est.aba === "alunas") {
-      h.push('<section class="cartao">');
-      t.alunas.forEach(function (n) {
-        h.push('<div class="linha"><span class="nome">' + esc(n) + "</span>"
-          + '<span class="selo neutro">frequência 92%</span>'
-          + '<span class="selo ok">tarefas em dia</span></div>');
-      });
-      h.push("</section>");
-    } else {
-      h.push('<section class="cartao"><div class="rotulo">caderno da turma</div>'
-        + '<div style="font-size:13.5px">' + esc(t.material) + "</div>"
-        + '<div class="nota">O caderno é o mesmo para todas as alunas desta turma.</div></section>');
+      var on = s.turma === est.turma && s.data === est.data;
+      h.push('<button class="dia' + (on ? " on" : "") + '" '
+        + B.ir({ turma: s.turma, data: s.data, vivoAluna: "" })
+        + "><b>" + B.esc(s.curto) + "</b><span>" + B.esc(s.rotulo) + "</span></button>");
+    });
+    return h.join("") + "</div>";
+  }
+
+  S.iniciar({
+    telaDaAula: "aula",
+    inicial: { tela: "aula", abaAula: "plano", abaEscola: "turmas",
+      turma: "basics", data: "2026-11-16",
+      abaTurma: "geral", abaClube: "pagina", clube: "movie",
+      cadFiltro: "por_corrigir", vivoFiltro: "todas", vivoAluna: "" },
+
+    menu: function (est) {
+      // com a aula aberta, o resto sai do caminho
+      if (D.VIVO.aberta) {
+        return [
+          { titulo: "em aula", itens: ABAS_AULA.map(function (x) {
+            return { label: x[1], on: est.abaAula === x[0],
+              vai: { tela: "aula", abaAula: x[0] } }; }) },
+          { itens: [{ label: "← encerrar e sair", on: false, vai: { tela: "aula", abaAula: "chamada" } }] }
+        ];
+      }
+      var corrigir = D.porCorrigir().length;
+      return [
+        { itens: [
+          { label: "Dar aula", on: est.tela === "aula", vai: { tela: "aula" } },
+          { label: "A escola", on: est.tela === "escola" || est.tela === "turma"
+              || est.tela === "clube" || est.tela === "particular" || est.tela === "pulso",
+            pino: corrigir ? String(corrigir) : "", vai: { tela: "escola" } }
+        ] }
+      ];
+    },
+
+    render: function (est) {
+      var t = D.turma(est.turma), a = D.aula(est.turma, est.data);
+
+      // ── SUPERFÍCIE 1 · DAR AULA ───────────────────────────────
+      if (est.tela === "aula") {
+        var aba = est.abaAula || "plano", h = [];
+        h.push(contexto(est));
+        h.push(abas(ABAS_AULA, aba, "abaAula"));
+        if (aba === "plano") h.push(B.plano(est));
+        if (aba === "vivo") h.push(B.aulaViva(est));
+        if (aba === "chamada") h.push(B.chamada(est));
+        if (aba === "conteudo") h.push(B.conteudo(est));
+        if (aba === "tarefas") {
+          var meus = D.CADERNO.filter(function (c) { return c.turma === t.id; });
+          h.push('<section class="cartao">' + B.cab("Entregue nesta turma", "",
+            '<button class="btn claro pq" ' + B.ir({ tela: "escola", abaEscola: "cadernos", cadFiltro: "todas" })
+            + ">Todas as turmas</button>"));
+          if (!meus.length) h.push('<div class="nota">Nada entregue nesta turma ainda.</div>');
+          meus.forEach(function (c) {
+            h.push('<div class="linha"><span class="nome">' + B.esc(c.aluna) + "</span>"
+              + '<span class="nota" style="margin:0;flex:1">sessão ' + c.sessao + " · " + B.esc(c.titulo) + "</span>"
+              + '<span class="selo ' + (c.corrigido ? "ok" : "alerta") + '">'
+              + (c.corrigido ? "corrigida" : "por corrigir") + "</span></div>");
+          });
+          h.push("</section>");
+          h.push(B.cadernos(Object.assign({}, est, { cadFiltro: "por_corrigir" })));
+        }
+        return { olho: D.VIVO.aberta ? "em aula · " + D.VIVO.minutos + " min" : "dar aula",
+          titulo: t.nivel + " · sessão " + a.s,
+          sub: a.titulo + " · " + (a.curto === "hoje" ? "hoje, " + (a.hora || "") : a.curto)
+            + " · " + t.alunas.length + " alunas",
+          html: h.join("") };
+      }
+
+      // ── SUPERFÍCIE 2 · A ESCOLA ───────────────────────────────
+      if (est.tela === "escola") {
+        var ab = est.abaEscola || "turmas", h2 = [];
+        h2.push(abas(ABAS_ESCOLA, ab, "abaEscola"));
+        if (ab === "turmas") { h2.push(B.hoje(est)); h2.push('<div class="rotulo" style="margin-top:16px">as minhas turmas</div>'); h2.push(B.turmas(est)); }
+        if (ab === "clubes") h2.push(B.clubes(est));
+        if (ab === "particulares") h2.push(B.particulares(est));
+        if (ab === "cadernos") h2.push(B.cadernos(est));
+        if (ab === "gravacoes") h2.push(B.gravacoes(est));
+        if (ab === "horas") h2.push(B.horas(est));
+        if (ab === "substituir") h2.push(B.substituir(est));
+        return { olho: "a escola", titulo: "A escola",
+          sub: "Tudo o que não é a aula de agora.", html: h2.join("") };
+      }
+
+      if (est.tela === "turma") return { olho: "a escola · turmas",
+        titulo: t.nivel + " · " + t.quando, sub: t.projeto, html: B.turma(est) };
+      if (est.tela === "clube") return { olho: "a escola · clubes",
+        titulo: D.clube(est.clube).nome, sub: D.clube(est.clube).quando, html: B.clube(est) };
+      if (est.tela === "particular") return { olho: "a escola · particulares",
+        titulo: est.particular, sub: "", html: B.particular(est) };
+      if (est.tela === "pulso") return { olho: "a escola · aluna",
+        titulo: est.aluna, sub: "", html: B.pulso(est) };
+
+      // as telas que os blocos linkam e que, aqui, moram dentro das duas superfícies
+      if (est.tela === "plano" || est.tela === "chamada" || est.tela === "conteudo"
+        || est.tela === "aulaViva") {
+        var mapa = { plano: "plano", chamada: "chamada", conteudo: "conteudo", aulaViva: "vivo" };
+        return this.render.call(this, Object.assign(est, { tela: "aula", abaAula: mapa[est.tela] }));
+      }
+      if (est.tela === "cadernos" || est.tela === "gravacoes" || est.tela === "horas"
+        || est.tela === "substituir" || est.tela === "clubes" || est.tela === "turmas"
+        || est.tela === "particulares" || est.tela === "hoje") {
+        var m2 = { cadernos: "cadernos", gravacoes: "gravacoes", horas: "horas",
+          substituir: "substituir", clubes: "clubes", turmas: "turmas",
+          particulares: "particulares", hoje: "turmas" };
+        return this.render.call(this, Object.assign(est, { tela: "escola", abaEscola: m2[est.tela] }));
+      }
+      return { titulo: "—", html: "" };
     }
-    corpo.innerHTML = h.join("");
-    [].forEach.call(corpo.querySelectorAll("[data-aba]"), function (el) {
-      el.onclick = function () { ir({ aba: el.getAttribute("data-aba") }); };
-    });
-    [].forEach.call(corpo.querySelectorAll("[data-data]"), function (el) {
-      el.onclick = function (ev) {
-        if (ev.target.closest(".grade2")) return;
-        var d = el.getAttribute("data-data");
-        ir({ aberta: est.aberta === d ? "" : d });
-      };
-    });
-  }
-
-  // ── CLUBE ─────────────────────────────────────────────────────
-  function telaClube() {
-    var c = D.CLUBES[0];
-    var h = ['<div class="olho">meu clube</div><h1>' + esc(c.emoji + " " + c.nome) + "</h1>",
-      '<div class="sub1">' + esc(c.quando) + " · " + esc(c.nivel) + " · " + c.inscritas + " de " + c.vagas + " inscritas</div>",
-      '<div class="abas"><button class="aba on">Encontros</button>'
-      + '<button class="aba">Inscritas</button><button class="aba">Fórum</button></div>',
-      '<section class="cartao liso">'];
-    c.encontros.forEach(function (e) {
-      h.push('<div class="aulaLinha"><div class="topo"><span class="data">' + esc(e.curto) + "</span>"
-        + '<span class="tit">' + esc(e.tema) + "</span>"
-        + '<span class="selo ' + (/presentes/.test(e.estado) ? "ok" : "alerta") + '">' + esc(e.estado) + "</span></div></div>");
-    });
-    h.push("</section>");
-    h.push('<section class="cartao"><div class="cab"><h2>Fórum do clube</h2></div>');
-    c.forum.forEach(function (f) {
-      h.push('<div class="linha" style="align-items:flex-start"><span class="nome">' + esc(f.quem)
-        + '<div class="sub">' + esc(f.texto) + "</div></span>"
-        + '<span class="sub" style="flex:none">' + esc(f.quando) + "</span></div>");
-    });
-    h.push("</section>");
-    corpo.innerHTML = h.join("");
-  }
-
-  function pintar() {
-    pintarMenu();
-    ({ hoje: telaHoje, turma: telaTurma, clube: telaClube }[est.tela] || telaHoje)();
-  }
-  pintar();
+  });
 })();
 </script>
 </body>
