@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modelo B · O menu da professora</title>
+<!--
+  MODELO B — O MENU DA PROFESSORA
+
+  Um modelo para escolher, não uma tela pronta. Dados inventados.
+
+  A IDEIA: hoje a professora tem UM item no menu — "Painel do
+  professor" —, e tudo o mais fica atrás de links dentro de telas que
+  ela não abre. Daí "não consigo achar": não é que não exista, é que
+  não tem nome nem lugar.
+
+  Este modelo não inventa tela nenhuma. Dá nome e lugar ao que já
+  existe: cada coisa que a professora faz vira um item do menu dela,
+  filtrado para as turmas dela. "Tarefas de casa" e "Gravações"
+  deixam de ser passos escondidos e viram destinos.
+
+  O QUE ISSO RESOLVE: ela encontra pelo nome, sem decorar caminho. E é
+  o mais barato de construir — as telas já existem.
+
+  O QUE CUSTA: para dar uma aula ela passa por mais telas do que no
+  modelo A. O menu cresce de 1 para 6 itens.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --tinta: #164951; --tinta-fraca: #8a7465; --papel: #f2ebe3; --cartao: #ffffff;
+    --borda: #e7ded2; --marca: #348a8e; --escuro: #1d3d42;
+    --ok-bg: #e9f3e4; --ok: #3d6b22; --alerta-bg: #fdf3d6; --alerta: #7a5c00;
+    --erro-bg: #fde4df; --erro: #a3392c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--papel); color: var(--tinta);
+    font-family: Inter, system-ui, sans-serif; }
+  .tela { display: flex; min-height: 100vh; }
+  .lado { width: 218px; flex: none; background: var(--escuro); color: #fff;
+    padding: 20px 14px; display: flex; flex-direction: column; gap: 16px; }
+  .marca { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+  .quem { display: flex; gap: 10px; align-items: center; }
+  .bolha { width: 36px; height: 36px; border-radius: 999px; background: #c9e265;
+    color: var(--escuro); display: grid; place-items: center; font-weight: 800; }
+  .grupo { font-size: 10.5px; font-weight: 800; color: #c9e265; padding: 8px 11px 3px;
+    letter-spacing: .08em; text-transform: uppercase; }
+  .item { padding: 9px 11px; border-radius: 10px; font-size: 13.5px; font-weight: 600;
+    opacity: .82; display: flex; justify-content: space-between; align-items: center; }
+  .item.on { background: rgba(255,255,255,.14); opacity: 1; }
+  .pino { background: #e8846f; color: #fff; border-radius: 999px; font-size: 10.5px;
+    font-weight: 800; padding: 1px 7px; }
+  .corpo { flex: 1; padding: 22px 26px 60px; max-width: 980px; }
+  h1 { margin: 2px 0 14px; font-size: 27px; font-weight: 800; letter-spacing: -0.03em; }
+  .olho { font-size: 12px; font-weight: 700; color: var(--tinta-fraca); }
+  .cartao { background: var(--cartao); border-radius: 18px; padding: 18px 20px;
+    margin-bottom: 13px; border: 1px solid var(--borda); }
+  .intro { background: #e5f2f6; border-radius: 16px; padding: 13px 16px; font-size: 13px;
+    line-height: 1.55; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--tinta-fraca); font-weight: 600; padding: 0 10px 9px 0; }
+  td { padding: 11px 10px 11px 0; border-top: 1px solid var(--papel); font-size: 13.5px;
+    vertical-align: top; }
+  .turma { font-weight: 700; }
+  .sub { font-size: 12px; color: var(--tinta-fraca); margin-top: 2px; }
+  .selo { border-radius: 999px; padding: 4px 11px; font-size: 11.5px; font-weight: 700;
+    display: inline-block; white-space: nowrap; }
+  .selo.ok { background: var(--ok-bg); color: var(--ok); }
+  .selo.alerta { background: var(--alerta-bg); color: var(--alerta); }
+  .selo.erro { background: var(--erro-bg); color: var(--erro); }
+  .btn { border: 0; border-radius: 999px; padding: 8px 15px; font-size: 12.5px;
+    font-weight: 700; font-family: inherit; background: var(--escuro); color: #fff; }
+  .btn.claro { background: var(--cartao); color: var(--tinta); border: 1px solid var(--borda); }
+  .campo { width: 100%; border: 1px solid var(--borda); border-radius: 10px;
+    padding: 9px 12px; font-size: 13px; font-family: inherit; background: var(--papel); color: var(--tinta); }
+  @media (max-width: 760px) { .lado { display: none; } .corpo { padding: 18px 16px 60px; } }
+</style>
+</head>
+<body>
+<div class="tela">
+  <aside class="lado">
+    <div class="marca">Inglês sem Roteiro</div>
+    <div class="quem"><div class="bolha">B</div>
+      <div><div style="font-weight:700;font-size:14px">Bárbara</div>
+        <div style="font-size:11.5px;opacity:.75">professora</div></div></div>
+    <nav>
+      <div class="grupo">o meu dia</div>
+      <div class="item">Hoje <span class="pino">1</span></div>
+      <div class="grupo">as minhas aulas</div>
+      <div class="item">Minhas turmas</div>
+      <div class="item">Plano das aulas</div>
+      <div class="item on">Tarefas de casa <span class="pino">2</span></div>
+      <div class="item">Gravações <span class="pino">1</span></div>
+      <div class="grupo">comunidade</div>
+      <div class="item">Meus clubes</div>
+    </nav>
+  </aside>
+
+  <main class="corpo">
+    <div class="olho">as minhas aulas</div>
+    <h1>Tarefas de casa</h1>
+
+    <div class="intro">Uma linha por aula das suas turmas. Aqui você escreve a tarefa, vê quem entregou e cobra quem falta. A tarefa aparece no caderno da aluna assim que for salva.</div>
+
+    <section class="cartao">
+      <table>
+        <thead><tr><th style="width:30%">Aula</th><th style="width:38%">Tarefa</th><th style="width:17%">Entregas</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="turma">Basics (A1) · seg 7h</div><div class="sub">16 nov · sessão 4</div></td>
+            <td><input class="campo" value="Gravar um áudio de 1 minuto descrevendo a receita da sua família." /></td>
+            <td><span class="selo alerta">3 de 5</span><div class="sub">faltam Beatriz, Rafael</div></td>
+            <td style="text-align:right"><button class="btn">Salvar</button></td>
+          </tr>
+          <tr>
+            <td><div class="turma">Essentials (A2) · ter 13h</div><div class="sub">17 nov · sessão 4</div></td>
+            <td><input class="campo" placeholder="Escrever a tarefa desta aula…" /></td>
+            <td><span class="selo erro">sem tarefa</span><div class="sub">a aula é amanhã</div></td>
+            <td style="text-align:right"><button class="btn">Salvar</button></td>
+          </tr>
+          <tr>
+            <td><div class="turma">Speaking (B1) · qua 8h</div><div class="sub">11 nov · sessão 3</div></td>
+            <td><div style="line-height:1.5">Trazer uma notícia da semana e resumi-la em 5 frases.</div></td>
+            <td><span class="selo ok">6 de 6</span></td>
+            <td style="text-align:right"><button class="btn claro">Editar</button></td>
+          </tr>
+          <tr>
+            <td><div class="turma">Basics (A1) · seg 7h</div><div class="sub">9 nov · sessão 3</div></td>
+            <td><div style="line-height:1.5">Escrever cinco frases no passado sobre o fim de semana.</div></td>
+            <td><span class="selo ok">5 de 5</span></td>
+            <td style="text-align:right"><button class="btn claro">Editar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="olho" style="margin-top:22px">o mesmo desenho, nos outros destinos</div>
+    <section class="cartao" style="margin-top:8px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">Gravações</div>
+      <table>
+        <tbody>
+          <tr><td><div class="turma">Basics (A1)</div><div class="sub">9 nov</div></td>
+            <td><input class="campo" placeholder="Colar o link do Drive…" /></td>
+            <td style="width:140px"><span class="selo alerta">falta publicar</span></td></tr>
+          <tr><td><div class="turma">Speaking (B1)</div><div class="sub">11 nov</div></td>
+            <td><div class="sub" style="font-size:12.5px">drive.google.com/…/aula-11-nov</div></td>
+            <td><span class="selo ok">publicada</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+</body>
+</html>

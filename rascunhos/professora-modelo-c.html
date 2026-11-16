@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modelo C · A turma é a unidade</title>
+<!--
+  MODELO C — A TURMA É A UNIDADE
+
+  Um modelo para escolher, não uma tela pronta. Dados inventados.
+
+  A IDEIA: a professora não pensa em "chamadas", "gravações" e
+  "tarefas" como assuntos separados. Ela pensa em TURMAS. Então ela
+  escolhe uma turma e recebe tudo sobre ela: as aulas com chamada e
+  gravação, o plano com as tarefas, as alunas.
+
+  As aulas da turma ficam numa lista única, uma linha por data, e
+  cada linha carrega o que aquela aula precisa — chamada, tarefa,
+  gravação. Abrir a linha é abrir a aula.
+
+  O QUE ISSO RESOLVE: nada fica escondido, porque tudo pertence a
+  alguma turma. E a tarefa e a gravação sentam ao lado da aula a que
+  pertencem, que é onde a professora procura.
+
+  O QUE CUSTA: ver o dia inteiro de uma vez — três turmas em três
+  dias diferentes — exige uma tela "Hoje" por cima desta. São duas
+  telas, não uma.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --tinta: #164951; --tinta-fraca: #8a7465; --papel: #f2ebe3; --cartao: #ffffff;
+    --borda: #e7ded2; --marca: #348a8e; --escuro: #1d3d42;
+    --ok-bg: #e9f3e4; --ok: #3d6b22; --alerta-bg: #fdf3d6; --alerta: #7a5c00;
+    --erro-bg: #fde4df; --erro: #a3392c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--papel); color: var(--tinta);
+    font-family: Inter, system-ui, sans-serif; }
+  .tela { display: flex; min-height: 100vh; }
+  .lado { width: 240px; flex: none; background: var(--escuro); color: #fff;
+    padding: 20px 14px; display: flex; flex-direction: column; gap: 16px; }
+  .marca { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+  .quem { display: flex; gap: 10px; align-items: center; }
+  .bolha { width: 36px; height: 36px; border-radius: 999px; background: #c9e265;
+    color: var(--escuro); display: grid; place-items: center; font-weight: 800; }
+  .grupo { font-size: 10.5px; font-weight: 800; color: #c9e265; padding: 10px 11px 4px;
+    letter-spacing: .08em; text-transform: uppercase; }
+  .tcard { border-radius: 12px; padding: 10px 11px; margin-bottom: 4px; opacity: .78; }
+  .tcard.on { background: rgba(255,255,255,.14); opacity: 1; }
+  .tcard b { display: block; font-size: 13.5px; font-weight: 700; }
+  .tcard span { font-size: 11.5px; opacity: .8; }
+  .item { padding: 9px 11px; border-radius: 10px; font-size: 13.5px; font-weight: 600; opacity: .8; }
+  .corpo { flex: 1; padding: 22px 26px 60px; max-width: 1000px; }
+  h1 { margin: 2px 0 2px; font-size: 27px; font-weight: 800; letter-spacing: -0.03em; }
+  .olho { font-size: 12px; font-weight: 700; color: var(--tinta-fraca); }
+  .sub1 { font-size: 13px; color: var(--tinta-fraca); margin-bottom: 14px; }
+  .abas { display: flex; gap: 20px; border-bottom: 1px solid var(--borda); margin-bottom: 16px; }
+  .aba { padding: 0 0 9px; font-size: 14px; font-weight: 700; color: var(--tinta-fraca);
+    border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .aba.on { color: var(--tinta); border-bottom-color: #c9e265; }
+  .cartao { background: var(--cartao); border-radius: 18px; border: 1px solid var(--borda);
+    margin-bottom: 12px; overflow: hidden; }
+  .aula { padding: 15px 18px; border-bottom: 1px solid var(--papel); }
+  .aula:last-child { border-bottom: 0; }
+  .aula.aberta { background: #fbfaf7; }
+  .topo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .data { font-size: 13.5px; font-weight: 800; min-width: 62px; }
+  .tit { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
+  .tit span { display: block; font-size: 12px; color: var(--tinta-fraca); font-weight: 500; margin-top: 2px; }
+  .selo { border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .selo.ok { background: var(--ok-bg); color: var(--ok); }
+  .selo.alerta { background: var(--alerta-bg); color: var(--alerta); }
+  .selo.neutro { background: var(--papel); color: var(--tinta-fraca); }
+  .dentro { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .bloco { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 13px 15px; }
+  .bloco h3 { margin: 0 0 8px; font-size: 12px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--marca); }
+  .linha { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+  .linha b { flex: 1; font-weight: 600; }
+  .p { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
+    font-size: 11px; font-weight: 800; background: var(--ok-bg); color: var(--ok); }
+  .p.f { background: var(--erro-bg); color: var(--erro); }
+  .campo { width: 100%; border: 1px solid var(--borda); border-radius: 10px; padding: 9px 12px;
+    font-size: 13px; font-family: inherit; background: var(--papel); color: var(--tinta); }
+  textarea.campo { resize: vertical; min-height: 56px; line-height: 1.5; }
+  .nota { font-size: 11.5px; color: var(--tinta-fraca); margin-top: 6px; line-height: 1.45; }
+  .btn { border: 0; border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; background: var(--escuro); color: #fff; margin-top: 10px; }
+  @media (max-width: 860px) { .dentro { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { .lado { display: none; } .corpo { padding: 18px 16px 60px; } }
+</style>
+</head>
+<body>
+<div class="tela">
+  <aside class="lado">
+    <div class="marca">Inglês sem Roteiro</div>
+    <div class="quem"><div class="bolha">B</div>
+      <div><div style="font-weight:700;font-size:14px">Bárbara</div>
+        <div style="font-size:11.5px;opacity:.75">professora</div></div></div>
+    <div class="item">Hoje</div>
+    <div class="grupo">as minhas turmas</div>
+    <div class="tcard on"><b>Basics (A1)</b><span>seg 7h · 5 alunas</span></div>
+    <div class="tcard"><b>Essentials (A2)</b><span>ter 13h · 7 alunas</span></div>
+    <div class="tcard"><b>Speaking (B1)</b><span>qua 8h · 6 alunas</span></div>
+    <div class="grupo">comunidade</div>
+    <div class="item">Movie Lovers</div>
+  </aside>
+
+  <main class="corpo">
+    <div class="olho">minha turma</div>
+    <h1>Basics (A1) · seg 7h</h1>
+    <div class="sub1">Our End of Year Dishes · sessão 4 de 10 · 5 alunas · online</div>
+
+    <div class="abas">
+      <div class="aba on">Aulas</div>
+      <div class="aba">Plano do ciclo</div>
+      <div class="aba">Alunas</div>
+      <div class="aba">Materiais</div>
+    </div>
+
+    <section class="cartao">
+      <div class="aula aberta">
+        <div class="topo">
+          <span class="data">hoje<br><span style="font-weight:600;font-size:11.5px">16 nov</span></span>
+          <span class="tit">Sessão 4 · Our End of Year Dishes<span>a aula é às 7h</span></span>
+          <span class="selo alerta">chamada aberta</span>
+        </div>
+        <div class="dentro">
+          <div class="bloco">
+            <h3>Chamada</h3>
+            <div class="linha"><b>Marina Teste</b><span class="p">P</span></div>
+            <div class="linha"><b>Camila Teste</b><span class="p">P</span></div>
+            <div class="linha"><b>Beatriz Teste</b><span class="p f">F</span></div>
+            <div class="linha"><b>Rafael Teste</b><span class="p">P</span></div>
+            <div class="linha"><b>Juliana Teste</b><span class="p">P</span></div>
+            <input class="campo" style="margin-top:9px" value="Receitas de família: passos em ordem" />
+            <div class="nota">O tópico é o que faz a aula contar na folha.</div>
+            <button class="btn">Salvar a chamada</button>
+          </div>
+          <div class="bloco">
+            <h3>Tarefa de casa</h3>
+            <textarea class="campo">Gravar um áudio de 1 minuto descrevendo a receita da sua família, usando pelo menos três palavras da aula.</textarea>
+            <div class="nota">3 de 5 entregaram · faltam Beatriz e Rafael</div>
+            <h3 style="margin-top:14px">Gravação</h3>
+            <input class="campo" placeholder="Colar o link do Drive…" />
+            <div class="nota">Só as alunas desta turma veem.</div>
+            <button class="btn">Salvar os dois</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="aula">
+        <div class="topo">
+          <span class="data">9 nov</span>
+          <span class="tit">Sessão 3 · Weekend stories<span>tarefa entregue por 5 de 5</span></span>
+          <span class="selo alerta">sem gravação</span>
+          <span class="selo ok">chamada feita</span>
+        </div>
+      </div>
+      <div class="aula">
+        <div class="topo">
+          <span class="data">2 nov</span>
+          <span class="tit">Sessão 2 · Where I live<span>tarefa entregue por 4 de 5</span></span>
+          <span class="selo ok">gravação publicada</span>
+          <span class="selo ok">chamada feita</span>
+        </div>
+      </div>
+      <div class="aula">
+        <div class="topo">
+          <span class="data">23 nov</span>
+          <span class="tit">Sessão 5 · Talking about plans<span>ainda não aconteceu</span></span>
+          <span class="selo neutro">agendada</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
