@@ -27,7 +27,7 @@ const BLOCOS = [
   ["8 · clubes", "lista de espera"],
   ["9 · particulares", "aula particular"],
   ["10 · gravações", "sem link"],
-  ["11 · minhas horas", "aulas que contaram"],
+  ["11 · aulas do mês", "aula por aula"],
   ["12 · substituição", "enviar o pedido"],
   ["13 · pulso da aluna", "como ela está indo"]
 ];

@@ -301,13 +301,19 @@ window.ISR_MODELO = (function () {
       link: "drive.google.com/…/basics-2-nov" }
   ];
 
-  // ── AS HORAS DELA ────────────────────────────────────────────
-  // O que o sistema já calcula na Folha, visto do lado dela: quais
-  // aulas contaram, quais não, e por quê.
+  // ── AS AULAS DO MÊS ──────────────────────────────────────────
+  // Quais aulas contaram, quais não, e por quê.
+  //
+  // Sem valor por aula e sem total: o protótipo mostra a CONTAGEM e a
+  // razão de cada aula ter entrado ou não, que é o que a professora
+  // precisa para agir. Quanto ela recebe é assunto do contrato dela
+  // com a escola, não desta tela.
+  //
+  // As somas saem das linhas, e não de um campo à parte: número
+  // escrito à mão ao lado da lista é número que desencontra.
   var HORAS = {
-    mes: "novembro de 2026", valorAula: "€ 22",
-    contadas: 9, naoContadas: 2, total: "€ 198",
-    fechamento: "A folha fecha no dia 30. Até lá, aula corrigida entra.",
+    mes: "novembro de 2026",
+    fechamento: "O mês fecha no dia 30. Até lá, chamada corrigida volta a contar.",
     linhas: [
       { curto: "2 nov", turma: "Basics (A1)", estado: "contou", porque: "" },
       { curto: "9 nov", turma: "Basics (A1)", estado: "contou", porque: "" },
@@ -315,9 +321,9 @@ window.ISR_MODELO = (function () {
       { curto: "11 nov", turma: "Speaking (B1)", estado: "contou", porque: "" },
       { curto: "12 nov", turma: "Movie Lovers", estado: "contou", porque: "" },
       { curto: "3 nov", turma: "Essentials (A2)", estado: "não contou",
-        porque: "A chamada está salva sem tópico da aula. Escreva o tópico e ela entra." },
+        porque: "Chamada salva sem tópico da aula. Escreva o tópico para a aula entrar." },
       { curto: "4 nov", turma: "Speaking (B1)", estado: "não contou",
-        porque: "Chamada reaberta e não salva de novo. Salvar devolve a aula à folha." },
+        porque: "Chamada reaberta e não salva de novo. Salve para a aula voltar a contar." },
       { curto: "5 nov", turma: "Movie Lovers", estado: "contou", porque: "" },
       { curto: "16 nov", turma: "Basics (A1)", estado: "hoje",
         porque: "Entra quando a chamada for salva com tópico." }

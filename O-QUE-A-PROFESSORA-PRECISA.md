@@ -219,6 +219,6 @@ quantos passos custa chegar nele.
 8. Clubes: página, inscritas e espera, encontros e chamada, fórum, material
 9. Particulares: aluna, programa, sessão
 10. **Gravações: a lista, e quais aulas estão sem** (hoje fora do alcance dela)
-11. **Minhas horas: o que contou no mês e por quê** (hoje fora do alcance dela)
+11. **Aulas do mês: o que contou e por quê** (hoje fora do alcance dela)
 12. Substituição: pedir, com motivo
 13. **Pulso da aluna: nota e comentário** (hoje fora do alcance dela)
