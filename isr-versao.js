@@ -6,7 +6,7 @@
 //
 // Atualizar a cada publicação.
 window.ISR_VERSAO = {
-  numero: "2026.11.17-a",
+  numero: "2026.11.17-b",
   data: "17/11/2026",
-  nota: "O horário do clube no relógio de quem olha, em todas as telas"
+  nota: "A Érika é avisada de quem está sem clube, uma vez só"
 };

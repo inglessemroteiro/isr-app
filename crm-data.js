@@ -158,6 +158,9 @@
       corpo: "Oiê, {{primeiroNome}}! Seja MUITO bem-vinda ao Inglês sem Roteiro! 🎉\nSua turma é a {{turma}} ({{horario}}). Em breve você recebe o acesso à sua área da aluna com tudo o que precisa.\nQualquer dúvida, é só me chamar por aqui. Bora aprender inglês de verdade! 💛" },
     { id: "aluno_faltou", categoria: "Alunos", titulo: "Contato após ausência",
       corpo: "Oi, {{primeiroNome}}! Senti sua falta na última aula da {{turma}}. 🥺\nTá tudo bem? Se precisar remarcar algo ou estiver com alguma dificuldade, me conta — a gente dá um jeito juntas. 💪" },
+    // CLUBES
+    { id: "clube_convite", categoria: "Clubes", titulo: "Convite para o primeiro clube", tag: "Érika",
+      corpo: "Oi, {{primeiroNome}}! Vi que você ainda não entrou em nenhum clube — e o seu plano já inclui dois, sem custo. 💛\nOs clubes são encontros de conversa por tema, uma vez por semana, com gente de outras turmas. É onde a conversa solta de verdade.\nQuer que eu te mostre os que estão abertos agora?" },
     // CHECK-IN
     { id: "checkin_mensal", categoria: "Check-in", titulo: "Check-in mensal",
       corpo: "Oi, {{primeiroNome}}! Passando pro nosso check-in. 😊\nComo você tem se sentido com o inglês esse mês? Tem algo que está fluindo bem e algo que está travando?\nQuero entender pra te ajudar a evoluir do seu jeito. 💛" },
@@ -2151,6 +2154,15 @@
     { id: "sem_avaliacao", label: "Sem avaliação registrada", cor: "#d4a574", peso: 25,
       dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
       risco: "", toque: "sem_pulso", naCentral: false, urg: 4 },
+    // Clube não é cobrado até o terceiro, e aluna que não usa nenhum
+    // está deixando na mesa o que já pagou. Quem fala com ela sobre
+    // isso é a Érika, e a conversa vale antes de a aluna reclamar.
+    //
+    // Aparece UMA VEZ: o fato é fixo, então "feito" na fila encerra o
+    // assunto para aquela aluna. Não há como ele voltar sozinho.
+    { id: "sem_clube", label: "Sem clube", cor: "#9c6f56", peso: 24,
+      dono: "Érika", acao: "Convidar para um clube", tpl: "clube_convite", tipo: "checkin",
+      risco: "", toque: "clube", naCentral: true, urg: 4 },
     { id: "sem_contato", label: "Sem contato recente", cor: "#d4a574", peso: 20,
       dono: "Gabi", acao: "Registrar contato", tpl: "checkin_mensal", tipo: "checkin",
       risco: "sem_contato", toque: "sumida", naCentral: false, urg: 4 },
@@ -2169,7 +2181,11 @@
     diasSemContato: 21, // era 21 no acompanhamento e 30 nas alunas
     diasRenovacao: 45,  // era 45 na central e 30 nas outras duas
     diasContratoNovo: 42,
-    diasParcelaAVencer: 3
+    diasParcelaAVencer: 3,
+    // Dias de casa antes de falar de clube. Nas duas primeiras
+    // semanas quem fala com a aluna é a integração, e duas conversas
+    // ao mesmo tempo é uma a mais do que ela aguenta.
+    diasAteFalarDeClube: 14
   };
   function sinalMeta(id) { return SINAIS.filter(function (s) { return s.id === id; })[0] || null; }
   // Intervalo da cadência sem recorrer a sinaisDe — evita recursão, já que
@@ -2296,6 +2312,23 @@
       add("renovacao_aberta", "Contrato termina em " + s.diasPraRenovar
         + (s.diasPraRenovar === 1 ? " dia" : " dias"),
         "", "renov|" + ((s.contrato || {}).fim || ""));
+    // SEM CLUBE. Só depois das primeiras semanas, e só quando há
+    // clube publicado para oferecer: avisar que falta clube numa
+    // escola sem clube no ar é barulho.
+    if (p.status === "aluna" && s.diasDeCasa >= LIMIARES.diasAteFalarDeClube
+      && !(clubesPorAluna()[p.id] > 0)) {
+      var pub = clubesPublicados();
+      if (pub.total) {
+        add("sem_clube",
+          "Nenhum clube · " + CLUBES_INCLUIDOS + " inclusos no plano dela · "
+            + (pub.comVaga
+              ? pub.comVaga + (pub.comVaga === 1 ? " clube com vaga" : " clubes com vaga")
+              : "todos lotados · ela entra na lista de espera"),
+          p.desde ? somaDias(p.desde, LIMIARES.diasAteFalarDeClube) : "",
+          // FATO FIXO: uma vez dado como feito, não volta.
+          "sem_clube");
+      }
+    }
     if (!s.pulso) add("sem_avaliacao", "Nenhuma avaliação de progresso registrada");
     // o intervalo vem da cadência do segmento, não de um número fixo:
     // aluna nova cobra em 7 dias, aluna estável em 30
@@ -3872,7 +3905,7 @@
   var PERFIS = [
     { id: "gestora", label: "Gestora", regras: null }, // null = todas
     { id: "comercial", label: "Comercial", regras: ["R1", "R2", "R5", "R12", "RT"] },
-    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "RT"] },
+    { id: "operacao", label: "Operação", regras: ["R3", "R4", "R10", "R13", "RT"] },
     { id: "professora", label: "Professora", regras: ["RT"] }
   ];
   // Há quanto tempo o item espera. Três dias é o limiar em que a
@@ -3916,7 +3949,7 @@
       if (p.status === "aluna" || p.status === "mvs") {
         var mapaRegra = { parcela_atrasada: "R3", parcela_a_vencer: "R4", renovacao_aberta: "R5",
           onboarding_pendente: "R10", checkin_agendado: "RC", falta_recente: "R6",
-          avaliacao_baixa: "R7" };
+          avaliacao_baixa: "R7", sem_clube: "R13" };
         sinaisDe(p).forEach(function (sn) {
           if (!sn.naCentral) return;
           itens.push({ regra: mapaRegra[sn.id] || sn.id, sinal: sn.id, dono: sn.dono, urg: sn.urg,
@@ -14830,6 +14863,30 @@
   // está devendo o terceiro clube.
   // O que a aluna vê: os clubes dela e os que ela ainda pode entrar.
   // Só clube publicado aparece no catálogo — rascunho é da equipe.
+  // Quantos clubes cada aluna tem, numa passada só. sinaisDe roda
+  // para toda a escola a cada montagem de fila, e reler os clubes por
+  // aluna fazia a mesma lista ser destrinchada vinte vezes. O cache
+  // cai sozinho quando o armazenamento dos clubes muda.
+  var clubesPorAlunaCache = { chave: null, mapa: null };
+  function clubesPorAluna() {
+    var bruto = "";
+    try { bruto = localStorage.getItem(CLUBES_KEY) || ""; } catch (e) {}
+    if (clubesPorAlunaCache.chave === bruto && clubesPorAlunaCache.mapa) {
+      return clubesPorAlunaCache.mapa;
+    }
+    var mapa = {};
+    clubesLista().forEach(function (c) {
+      (c.membros || []).forEach(function (id) { mapa[id] = (mapa[id] || 0) + 1; });
+    });
+    clubesPorAlunaCache = { chave: bruto, mapa: mapa };
+    return mapa;
+  }
+  // Quantos clubes estão no ar, e quantos deles ainda têm vaga.
+  function clubesPublicados() {
+    var pub = clubesLista().filter(function (c) { return c.status === "publicado"; });
+    return { total: pub.length,
+      comVaga: pub.filter(function (c) { return clubeVagasLivres(c) !== 0; }).length };
+  }
   function clubesParaAluna(pessoaId) {
     var meus = clubesDaAluna(pessoaId);
     var dentro = {};
@@ -19060,6 +19117,7 @@
     FALTA_ROTULOS: FALTA_ROTULOS,
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
+    clubesPorAluna: clubesPorAluna, clubesPublicados: clubesPublicados,
     horaDoEncontro: horaDoEncontro, horaNoRelogioDe: horaNoRelogioDe,
     notaDoFuso: notaDoFuso, dataNoRelogioDe: dataNoRelogioDe,
     horaEmMinutos: horaEmMinutos, horaNormal: horaNormal,
