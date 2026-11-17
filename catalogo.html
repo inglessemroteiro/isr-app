@@ -219,12 +219,112 @@
     return "https://wa.me/" + n + "?text=" + encodeURIComponent(msg);
   }
 
+  // ── A HORA NO RELÓGIO DE QUEM ESTÁ LENDO ──────────────────────
+  //
+  // O clube guarda a hora do relógio de QUEM CONDUZ, e o fuso dela.
+  // Esta página mostrava essa hora crua, sem converter e sem dizer de
+  // onde ela era: quem lê no Brasil via "quinta · 20:00" de um clube
+  // que acontece às 20:00 em Amsterdã — 16:00 aqui. A pessoa marca o
+  // dia errado antes mesmo de falar com a escola.
+  //
+  // O mesmo cálculo do app (crm-data.js), escrito aqui porque esta
+  // página é estática e não carrega o sistema. Guardar o FUSO, e não
+  // a diferença, é o que faz o horário de verão se resolver sozinho.
+  var MEU_FUSO = (function () {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }
+    catch (e) { return ""; }
+  })();
+  function offsetMin(tz, date) {
+    var f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour12: false,
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    var parts = {};
+    f.formatToParts(date).forEach(function (x) { parts[x.type] = x.value; });
+    var asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24, parts.minute);
+    return (asUTC - date.getTime()) / 60000;
+  }
+  // Duas passadas: a primeira estima o deslocamento, a segunda o
+  // corrige para a data certa — é o que acerta a virada do horário de
+  // verão, quando a estimativa cai do lado errado.
+  // A hora do clube é texto livre, e a escola escreveu de tudo:
+  // "19:00", "7:30 PM", "5:00 pm", "18:00 pm", "19h30". Ler só os
+  // dígitos fazia "7:30 PM" virar 07:30 — doze horas antes.
+  function horaEmMinutos(texto) {
+    var t = String(texto == null ? "" : texto).trim().toLowerCase();
+    if (!t) return null;
+    // Primeiro a hora com minutos — "19:00", "7:30 pm", "19h30",
+    // "7.30pm" —, procurada em qualquer ponto do texto, porque o
+    // campo às vezes carrega o dia junto ("Tuesdays 18:30").
+    var m = /(\d{1,2})\s*[:h.]\s*(\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/.exec(t);
+    // Depois a hora redonda: "20h", "9 am", "12 pm".
+    if (!m) m = /(\d{1,2})\s*(?:(h)|(a\.?\s*m\.?|p\.?\s*m\.?))/.exec(t);
+    if (!m) return null;
+    var h = parseInt(m[1], 10);
+    var min = /^\d{2}$/.test(m[2] || "") ? parseInt(m[2], 10) : 0;
+    if (isNaN(h) || h > 23 || min > 59) return null;
+    var sufixo = String(m[3] || m[2] || "").replace(/[\s.]/g, "");
+    if (sufixo === "pm" && h < 12) h += 12;
+    else if (sufixo === "am" && h === 12) h = 0;
+    return { h: h, min: min, minutos: h * 60 + min };
+  }
+  function horaNormal(texto) {
+    var r = horaEmMinutos(texto);
+    if (!r) return String(texto == null ? "" : texto).trim();
+    return (r.h < 10 ? "0" : "") + r.h + ":" + (r.min < 10 ? "0" : "") + r.min;
+  }
+  function instante(iso, hora, fuso) {
+    var m = horaEmMinutos(hora);
+    var pd = String(iso || "").split("-").map(Number);
+    if (!m || pd.length !== 3 || isNaN(pd[0])) return null;
+    var base = Date.UTC(pd[0], pd[1] - 1, pd[2], m.h, m.min);
+    var t = base;
+    try {
+      for (var i = 0; i < 2; i++) t = base - offsetMin(fuso, new Date(t)) * 60000;
+    } catch (e) { return null; }
+    return new Date(t);
+  }
+  var DIAS_SEM = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  // Devolve a data, a hora e o dia da semana no relógio de quem lê.
+  // Sem fuso guardado, ou sem data, não há conversão possível: então
+  // devolve o que existe e marca `convertido: false`, para a tela
+  // dizer de onde a hora é em vez de fingir que é a de quem lê.
+  function noMeuRelogio(iso, hora, fuso) {
+    var cru = { iso: iso || "", hora: horaNormal(hora), dia: "", convertido: false };
+    if (!hora || !fuso || !MEU_FUSO || fuso === MEU_FUSO) return cru;
+    var inst = instante(iso, hora, fuso);
+    if (!inst) return cru;
+    try {
+      var f = new Intl.DateTimeFormat("en-GB", { timeZone: MEU_FUSO, hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+      var pp = {};
+      f.formatToParts(inst).forEach(function (x) { pp[x.type] = x.value; });
+      var isoLa = pp.year + "-" + pp.month + "-" + pp.day;
+      var d = new Date(isoLa + "T12:00:00");
+      return { iso: isoLa, hora: pp.hour + ":" + pp.minute,
+        dia: isNaN(d.getTime()) ? "" : DIAS_SEM[d.getDay()], convertido: true };
+    } catch (e) { return cru; }
+  }
+  function cidadeDoFuso(f) {
+    return String(f || "").split("/").pop().replace(/_/g, " ");
+  }
+
   function quando(c) {
+    // A conversão precisa de uma data, porque o horário de verão muda
+    // a conta: usa-se o próximo encontro, que é a data em que este
+    // horário semanal vale.
+    var ref = (proximoEncontro(c) || {}).iso || "";
+    var r = noMeuRelogio(ref, c.hora, c.fuso);
     var partes = [];
-    if (c.dia) partes.push(c.dia);
-    if (c.hora) partes.push(c.hora);
+    if (r.convertido && r.dia) partes.push(r.dia);
+    else if (c.dia) partes.push(c.dia);
+    if (r.hora) partes.push(r.hora);
     if (c.duracao) partes.push(c.duracao);
-    return partes.join(" · ");
+    var linha = partes.join(" · ");
+    if (c.hora && c.fuso && !r.convertido && c.fuso !== MEU_FUSO) {
+      linha += " (" + cidadeDoFuso(c.fuso) + ")";
+    } else if (r.convertido) {
+      linha += " · no seu horário";
+    }
+    return linha;
   }
 
   // "Quando começa" é a pergunta de quem está decidindo entrar: é o
@@ -302,11 +402,19 @@
       partes.push('<ul class="temas">');
       c.encontros.slice(0, 8).forEach(function (e) {
         var iso = dataIso(e.quando);
-        var passou = iso && iso < hojeIso2;
-        var dia = iso ? porExtenso(iso) : (e.quando || "");
+        // A data também converte. O encontro das 20:30 de Amsterdã é,
+        // em Jacarta, de madrugada do dia seguinte: mostrar a data de
+        // quem conduz ao lado da hora de quem lê é mandar a pessoa
+        // para o dia errado.
+        var r = iso ? noMeuRelogio(iso, c.hora, c.fuso) : { iso: "", hora: "", convertido: false };
+        var isoAqui = (r.convertido && r.iso) || iso;
+        var passou = isoAqui && isoAqui < hojeIso2;
+        var dia = isoAqui ? porExtenso(isoAqui) : (e.quando || "");
+        var hora = r.convertido ? r.hora : (c.hora || "");
         partes.push('<li' + (passou ? ' class="passou"' : "") + ">"
           + (dia ? '<b>' + escapar(dia) + "</b>" : "")
-          + (dia && e.tema ? " · " : "")
+          + (dia && hora ? " · " + escapar(hora) : "")
+          + ((dia || hora) && e.tema ? " · " : "")
           + escapar(e.tema || "") + "</li>");
       });
       partes.push("</ul>");

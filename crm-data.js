@@ -3687,10 +3687,10 @@
   function horaBRNL(dataIso, horaBR) {
     if (!dataIso || !horaBR) return "";
     try {
-      var m = /^(\d{1,2}):?(\d{2})?/.exec(horaBR);
+      var m = horaEmMinutos(horaBR);
       if (!m) return horaBR;
       var pd = dataIso.split("-").map(Number);
-      var base = Date.UTC(pd[0], pd[1] - 1, pd[2], parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0);
+      var base = Date.UTC(pd[0], pd[1] - 1, pd[2], m.h, m.min);
       var t = base;
       for (var i = 0; i < 2; i++) t = base - fusoOffsetMin("America/Sao_Paulo", new Date(t)) * 60000;
       var fmt = function (tz) { return new Intl.DateTimeFormat("pt-BR", { timeZone: tz,
@@ -3729,18 +3729,53 @@
     // fuso que não está na lista aparece pelo nome da cidade
     return String(id || "").split("/").pop().replace(/_/g, " ");
   }
+  // ── A HORA ESCRITA À MÃO ──────────────────────────────────────
+  //
+  // O campo da hora é texto livre, e a escola escreveu de tudo:
+  // "19:00", "18:30", "7:30 PM", "5:00 pm", "18:00 pm", "19h30".
+  // O conversor lia só os dígitos e ignorava o sufixo — "7:30 PM"
+  // virava 07:30, doze horas antes da aula, e daí saía a conversão
+  // de fuso em cima de uma hora que já estava errada.
+  //
+  // Regras: "pm" soma 12 quando a hora é menor que 12; "am" leva o
+  // 12 para o 0; e uma hora de 13 em diante ignora o sufixo, porque
+  // "18:00 pm" só pode ser 18:00.
+  function horaEmMinutos(texto) {
+    var t = String(texto == null ? "" : texto).trim().toLowerCase();
+    if (!t) return null;
+    // Primeiro a hora com minutos — "19:00", "7:30 pm", "19h30",
+    // "7.30pm" —, procurada em qualquer ponto do texto, porque o
+    // campo às vezes carrega o dia junto ("Tuesdays 18:30").
+    var m = /(\d{1,2})\s*[:h.]\s*(\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/.exec(t);
+    // Depois a hora redonda: "20h", "9 am", "12 pm".
+    if (!m) m = /(\d{1,2})\s*(?:(h)|(a\.?\s*m\.?|p\.?\s*m\.?))/.exec(t);
+    if (!m) return null;
+    var h = parseInt(m[1], 10);
+    var min = /^\d{2}$/.test(m[2] || "") ? parseInt(m[2], 10) : 0;
+    if (isNaN(h) || h > 23 || min > 59) return null;
+    var sufixo = String(m[3] || m[2] || "").replace(/[\s.]/g, "");
+    if (sufixo === "pm" && h < 12) h += 12;
+    else if (sufixo === "am" && h === 12) h = 0;
+    return { h: h, min: min, minutos: h * 60 + min };
+  }
+  // A mesma hora escrita de um jeito só: "19:30".
+  function horaNormal(texto) {
+    var r = horaEmMinutos(texto);
+    if (!r) return String(texto == null ? "" : texto).trim();
+    return (r.h < 10 ? "0" : "") + r.h + ":" + (r.min < 10 ? "0" : "") + r.min;
+  }
+
   // "2026-10-27" às "19:00" NO FUSO DO EVENTO, como instante real.
   // Duas passadas: a primeira estima o deslocamento, a segunda o
   // corrige para a data certa — é o que acerta a virada do horário
   // de verão, quando a estimativa cai do lado errado.
   function instanteDe(dataIso, hora, fuso) {
     if (!dataIso) return null;
-    var m = /^(\d{1,2})[:h]?(\d{2})?/.exec(String(hora || "0:00"));
+    var m = horaEmMinutos(hora || "0:00");
     if (!m) return null;
     var pd = String(dataIso).split("-").map(Number);
     if (pd.length !== 3) return null;
-    var base = Date.UTC(pd[0], pd[1] - 1, pd[2],
-      parseInt(m[1], 10), m[2] ? parseInt(m[2], 10) : 0);
+    var base = Date.UTC(pd[0], pd[1] - 1, pd[2], m.h, m.min);
     var t = base;
     try {
       for (var i = 0; i < 2; i++) {
@@ -14984,9 +15019,26 @@
   // quem está olhando. Serve ao encontro de clube e à aula de turma —
   // o problema é o mesmo, e duas cópias dele divergiriam na primeira
   // vez que alguém mexesse só numa.
+  // A HORA E A DATA VIAJAM JUNTAS.
+  //
+  // Antes isto devolvia só a hora convertida e um aviso "mudouDeDia",
+  // e cada tela imprimia a DATA DO EVENTO ao lado da HORA DE QUEM
+  // OLHA. Em Jacarta o encontro de quinta 20:30 em Amsterdã saía como
+  // "sáb 21/11 · 02:30 (+1)": a data é a de quem conduz, a hora é a
+  // dela, e as duas na mesma linha se contradizem. Ela precisava
+  // aplicar o "(+1)" na cabeça, a uma data impressa logo ao lado.
+  //
+  // `dataVisor` é a data no relógio de quem olha, e é ela que vai
+  // para a tela. O "mudouDeDia" continua, mas como explicação — não
+  // como conta que a aluna tem de fazer.
   function horaNoRelogioDe(hora, fusoEvento, dataIso, fusoVisor) {
-    var h = String(hora || "").trim();
+    // Normalizada já aqui: "7:30 PM" e "19h30" são a mesma hora, e
+    // mostrá-las como foram digitadas fazia a mesma aula aparecer de
+    // três jeitos em três telas.
+    var h = horaNormal(hora);
+    var dIso = String(dataIso || "");
     var vazio = { hora: h, horaVisor: h, fusoEvento: "", fusoVisor: "",
+      data: dIso, dataVisor: dIso,
       mesmoFuso: true, mudouDeDia: 0, semFuso: true };
     if (!h) return vazio;
     var fe = String(fusoEvento || "").trim();
@@ -14994,19 +15046,44 @@
     var fv = String(fusoVisor || "").trim() || fusoDoNavegador();
     if (fe === fv) {
       return { hora: h, horaVisor: h, fusoEvento: fe, fusoVisor: fv,
+        data: dIso, dataVisor: dIso,
         mesmoFuso: true, mudouDeDia: 0, semFuso: false };
     }
-    var r = dataIso ? horaNoFuso(dataIso, h, fe, fv) : null;
+    var r = dIso ? horaNoFuso(dIso, h, fe, fv) : null;
     if (!r) {
+      // Sem data não há como converter: o horário de verão depende do
+      // dia. Dizer a hora de quem conduz, com o fuso dela ao lado, é
+      // honesto; mostrá-la como se fosse a da aluna, não.
       return { hora: h, horaVisor: h, fusoEvento: fe, fusoVisor: fv,
-        mesmoFuso: true, mudouDeDia: 0, semFuso: false };
+        data: dIso, dataVisor: dIso,
+        mesmoFuso: false, semData: true, mudouDeDia: 0, semFuso: false };
     }
     return { hora: h, horaVisor: r.hora, fusoEvento: fe, fusoVisor: fv,
+      data: dIso, dataVisor: r.dia,
       mesmoFuso: false, mudouDeDia: r.mudouDeDia, semFuso: false };
   }
   function horaDoEncontro(clube, encontro, fusoVisor) {
     var c = clube || {}, e = encontro || {};
     return horaNoRelogioDe(e.hora || c.hora, c.fuso, e.data, fusoVisor);
+  }
+  // A SEGUNDA LINHA: de onde a hora veio.
+  //
+  // A primeira linha é sempre o relógio de quem olha — data e hora,
+  // as duas convertidas. Esta é a nota que diz qual era a hora de
+  // quem conduz, para a aluna reconhecer o horário que a escola
+  // anuncia. Mora aqui porque quatro telas escreviam cada uma do seu
+  // jeito, e foi assim que a data e a hora se desencontraram.
+  function notaDoFuso(r, en) {
+    if (!r || r.semFuso || r.mesmoFuso) return "";
+    var cidade = fusoLabel(r.fusoEvento).split(" · ").pop();
+    if (r.semData) {
+      return en ? "time in " + cidade : "hora de " + cidade;
+    }
+    return r.hora + " " + (en ? "in " : "em ") + cidade;
+  }
+  // A data no relógio de quem olha, com a do evento como reserva.
+  function dataNoRelogioDe(r) {
+    return (r && (r.dataVisor || r.data)) || "";
   }
   function proximoEncontroDoClube(c) {
     if (!c) return null;
@@ -15980,9 +16057,25 @@
     var r = horaDaTurma(turma, dataIso, fusoVisor);
     if (!r.hora) return "";
     if (r.semFuso || r.mesmoFuso) return r.hora;
-    var vira = r.mudouDeDia > 0 ? " (+1)" : (r.mudouDeDia < 0 ? " (−1)" : "");
-    return r.horaVisor + vira + " · " + r.hora + " "
-      + fusoLabel(r.fusoEvento).split(" · ").pop();
+    // Sem "(+1)": quem imprime o dia é quem chama, e o dia que ele
+    // imprime já é o de quem olha (ver diaNoRelogioDe).
+    if (r.semData) return r.hora + " · " + notaDoFuso(r);
+    return r.horaVisor + " · " + notaDoFuso(r);
+  }
+  // O NOME DO DIA NO RELÓGIO DE QUEM OLHA.
+  //
+  // Devolve vazio quando o dia não muda — aí o rótulo da turma ou do
+  // clube continua valendo. Quando muda, é este nome que vai para a
+  // tela: "quinta · 02:30" era o que a aluna de Jacarta lia de um
+  // clube de quinta 20:30 em Amsterdã, e para ela é sexta.
+  var DIA_CURTO_PT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  var DIA_CURTO_EN = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  function diaNoRelogioDe(r, en) {
+    if (!r || r.semFuso || r.mesmoFuso || r.semData) return "";
+    if (!r.mudouDeDia || !r.dataVisor) return "";
+    var d = parseISO(r.dataVisor);
+    if (!d) return "";
+    return (en ? DIA_CURTO_EN : DIA_CURTO_PT)[d.getDay()];
   }
 
   var DIAS_SEMANA = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 0,
@@ -18968,6 +19061,9 @@
     chamadaDoEncontro: chamadaDoEncontro, salvarChamadaDoClube: salvarChamadaDoClube,
     proximoEncontroDoClube: proximoEncontroDoClube,
     horaDoEncontro: horaDoEncontro, horaNoRelogioDe: horaNoRelogioDe,
+    notaDoFuso: notaDoFuso, dataNoRelogioDe: dataNoRelogioDe,
+    horaEmMinutos: horaEmMinutos, horaNormal: horaNormal,
+    diaNoRelogioDe: diaNoRelogioDe,
     horaDaTurma: horaDaTurma, horaBaseDaTurma: horaBaseDaTurma,
     horaDaTurmaLabel: horaDaTurmaLabel,
     forumDoClube: forumDoClube, abrirTopicoNoClube: abrirTopicoNoClube,

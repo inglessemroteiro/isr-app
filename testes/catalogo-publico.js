@@ -433,6 +433,59 @@ function carregarCom(url) {
 
   T("nenhum erro de página", erros.length === 0, erros);
   await ctx.close();
+
+  // ── A HORA NO RELÓGIO DE QUEM ESTÁ LENDO ──────────────────────
+  //
+  // Esta página mostrava a hora crua do clube: quem lê no Brasil via
+  // "sábado · 20:30" de um clube que acontece às 20:30 em Amsterdã,
+  // que aqui é 16:30. E a data do encontro era a de quem conduz, do
+  // mesmo jeito — em Jacarta o encontro de sábado à noite é domingo
+  // de madrugada.
+  console.log("\n— a hora e a data no relógio de quem lê —");
+  const CLUBE_FUSO = {
+    ok: true,
+    contato: r.d.contato,
+    clubes: [{
+      id: "cl-fuso", nome: "Movie Lovers", emoji: "🎬", nivel: "A partir do A2",
+      formato: "online", dia: "sábado", hora: "20:30", duracao: "90 min",
+      fuso: "Europe/Amsterdam", professora: "Gabi",
+      descricao: "Um filme por encontro.",
+      inscritas: 6, vagas: 8, livres: 2, lotado: false, preco: "€ 30",
+      encontros: [{ tema: "Cinema Paradiso", quando: "2031-11-22" },
+                  { tema: "Central do Brasil", quando: "2031-11-29" }]
+    }]
+  };
+  const esperado = {
+    "Europe/Amsterdam": { hora: "20:30", dia: "22 nov", rotulo: "sábado" },
+    "America/Sao_Paulo": { hora: "16:30", dia: "22 nov", rotulo: "sábado" },
+    "Asia/Jakarta": { hora: "02:30", dia: "23 nov", rotulo: "domingo" }
+  };
+  for (const tz of Object.keys(esperado)) {
+    const c2 = await P.novoContexto(b, {
+      contexto: { viewport: { width: 1100, height: 1400 }, timezoneId: tz }
+    });
+    const pg2 = await c2.newPage();
+    const err2 = [];
+    pg2.on("pageerror", (e) => err2.push(String(e).slice(0, 220)));
+    await pg2.route("**/clubes-publicos*", (rota) => rota.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify(CLUBE_FUSO) }));
+    await pg2.goto(P.endereco("catalogo.html"));
+    await pg2.waitForTimeout(1500);
+    const t2 = await pg2.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
+    const e2 = esperado[tz];
+    T(tz + " · a hora semanal é a dele", t2.indexOf(e2.hora) >= 0, t2.slice(0, 320));
+    T(tz + " · o dia da semana é o dele",
+      t2.indexOf(e2.rotulo) >= 0, t2.slice(0, 320));
+    T(tz + " · a data do encontro é a dele",
+      t2.indexOf(e2.dia) >= 0, t2.slice(0, 500));
+    if (tz !== "Europe/Amsterdam") {
+      T(tz + " · a hora de quem conduz não aparece como se fosse a dele",
+        t2.indexOf("20:30") < 0, t2.slice(0, 320));
+    }
+    T(tz + " · sem erro de página", err2.length === 0, err2);
+    await c2.close();
+  }
+
   await b.close();
   fim();
 })();
