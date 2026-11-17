@@ -1175,7 +1175,9 @@ class Component extends DCLogic {
     if (!u) return "";
     if (!u.fuso || !C.horaDaTurmaLabel) return u.turma || "";
     const hoje = C.iso ? C.iso(new Date()) : new Date().toISOString().slice(0, 10);
-    return [this.diaDaTurma(u), C.horaDaTurmaLabel(u, hoje)].filter(Boolean).join(" ");
+    const r = C.horaDaTurma ? C.horaDaTurma(u, hoje) : null;
+    const diaLa = (r && C.diaNoRelogioDe) ? C.diaNoRelogioDe(r, this.idioma() === "en") : "";
+    return [diaLa || this.diaDaTurma(u), C.horaDaTurmaLabel(u, hoje)].filter(Boolean).join(" ");
   }
   // No título só a hora de quem está olhando: o par "17:00 · 14:00
   // São Paulo" cabe na ficha, não num h1 que já carrega o nível.
@@ -1185,8 +1187,11 @@ class Component extends DCLogic {
     if (!u.fuso || !C.horaDaTurma) return u.turma || "";
     const hoje = C.iso ? C.iso(new Date()) : new Date().toISOString().slice(0, 10);
     const h = C.horaDaTurma(u, hoje);
-    const vira = h.mudouDeDia > 0 ? " (+1)" : (h.mudouDeDia < 0 ? " (−1)" : "");
-    return [this.diaDaTurma(u), (h.horaVisor || h.hora) + vira].filter(Boolean).join(" ");
+    // O dia da semana também vira: "SEG 02:30" de uma turma de
+    // segunda 20:30 em São Paulo é terça para quem está em Jacarta, e
+    // o "(+1)" ao lado do nome do dia era conta para o leitor fazer.
+    const diaLa = C.diaNoRelogioDe ? C.diaNoRelogioDe(h, this.idioma() === "en") : "";
+    return [diaLa || this.diaDaTurma(u), h.horaVisor || h.hora].filter(Boolean).join(" ");
   }
   nomeCurtoDaTurma(u) {
     if (!u) return "";

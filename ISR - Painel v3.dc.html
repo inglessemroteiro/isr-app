@@ -2457,13 +2457,42 @@ class Component extends DCLogic {
     // O horário do clube com o lugar do relógio escrito: "20:00 São
     // Paulo". A escola tem professora em quatro fusos, e uma hora sem
     // lugar é hora de lugar nenhum.
-    const clHoraComFuso = (c) => {
-      if (!c.hora) return "";
-      if (!c.fuso) return c.hora;
-      return c.hora + " " + CRM.fusoLabel(c.fuso).split(" · ").pop();
+    // A hora do clube no relógio de QUEM ESTÁ OLHANDO, com a de quem
+    // conduz ao lado. Esta tela escrevia a hora guardada e carimbava o
+    // nome do fuso dela: a professora substituta que abre isto da
+    // Indonésia lia "20:30 Amsterdã" e tinha de fazer a conta sozinha.
+    //
+    // A conversão precisa de uma data, porque o horário de verão muda
+    // a conta: o próximo encontro marcado é a data em que o horário
+    // semanal vale.
+    const clDataRef = (c) => {
+      const hojeIso = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
+      const l = ((c && c.encontros) || []).filter(e => e && e.data).map(e => e.data).sort();
+      return l.filter(d => d >= hojeIso)[0] || l[0] || hojeIso;
     };
-    const clQuando = (c) => [c.dia, clHoraComFuso(c), clDur(c.duracao)]
-      .filter(Boolean).join(" · ") || Tr("no time set", "sem horário");
+    const DIAS_CL = { pt: ["domingo","segunda-feira","terça-feira","quarta-feira",
+                           "quinta-feira","sexta-feira","sábado"],
+                      en: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] };
+    const clRelogio = (c) => {
+      const cru = { dia: String((c && c.dia) || "").trim(),
+        hora: CRM.horaNormal ? CRM.horaNormal(c && c.hora) : String((c && c.hora) || ""),
+        nota: "" };
+      if (!c || !c.hora || !c.fuso || !CRM.horaNoRelogioDe) return cru;
+      const r = CRM.horaNoRelogioDe(c.hora, c.fuso, clDataRef(c), CRM.fusoDoNavegador());
+      if (!r || r.semFuso || r.mesmoFuso) return cru;
+      if (r.semData) return { dia: cru.dia, hora: r.hora, nota: CRM.notaDoFuso(r, this.idioma() === "en") };
+      let dia = cru.dia;
+      if (r.mudouDeDia && r.dataVisor) {
+        const d = new Date(r.dataVisor + "T12:00:00");
+        if (!isNaN(d.getTime())) dia = DIAS_CL[this.idioma() === "en" ? "en" : "pt"][d.getDay()];
+      }
+      return { dia: dia, hora: r.horaVisor, nota: CRM.notaDoFuso(r, this.idioma() === "en") };
+    };
+    const clQuando = (c) => {
+      const q = clRelogio(c);
+      return [q.dia, q.hora, clDur(c.duracao), q.nota]
+        .filter(Boolean).join(" · ") || Tr("no time set", "sem horário");
+    };
     const clOnde = (c) => c.formato === "presencial"
       ? (c.local || Tr("in person · no address", "presencial · sem endereço"))
       : (c.link ? Tr("online", "online") : Tr("online · no link", "online · sem link"));
@@ -3171,10 +3200,15 @@ class Component extends DCLogic {
         : "",
       // A prévia é o cartão da aluna: a hora dela sai com o fuso
       // escrito, porque é isso que a aluna lê
+      // A prévia mostra como o cartão sai HOJE, no relógio de quem
+      // está editando. Cada aluna vê no dela — é esse o ponto, e a
+      // nota ao lado diz de onde a hora é.
       clPrevQuando: clF
-        ? ([clF.dia,
-            clF.hora + (clF.fuso ? " " + CRM.fusoLabel(clF.fuso).split(" · ").pop() : ""),
-            clDur(clF.duracao)].filter(Boolean).join(" · ") || "no time set")
+        ? (() => {
+            const q = clRelogio(clF);
+            return [q.dia, q.hora, clDur(clF.duracao), q.nota]
+              .filter(Boolean).join(" · ") || "no time set";
+          })()
         : "",
       clPrevOnde: clF
         ? (clF.formato === "presencial" ? (clF.local || "no address yet") : (clF.link ? "online room" : "no room link yet"))
@@ -3239,17 +3273,21 @@ class Component extends DCLogic {
           // A hora sai no relógio de quem está olhando, com a de quem
           // conduz ao lado. A professora substituta que abre esta tela
           // da Indonésia precisa saber a que horas é para ELA.
+          // A DATA TAMBÉM CONVERTE. Imprimia-se a data do encontro —
+          // a do relógio de quem conduz — ao lado da hora de quem
+          // olha, com um "(+1)" no fim: as duas na mesma linha
+          // diziam coisas diferentes.
           sub: e && e.data
-            ? (CRM.ddmm(e.data) + (() => {
+            ? (() => {
                 const h = CRM.horaDoEncontro
                   ? CRM.horaDoEncontro(clSel, e, CRM.fusoDoNavegador())
                   : { hora: e.hora || "", mesmoFuso: true, semFuso: true };
-                if (!h.hora) return "";
-                if (h.semFuso || h.mesmoFuso) return " · " + h.hora;
-                const vira = h.mudouDeDia > 0 ? " (+1)" : (h.mudouDeDia < 0 ? " (−1)" : "");
-                return " · " + h.horaVisor + vira + Tr(" yours", " seu") + " · "
-                  + h.hora + " " + CRM.fusoLabel(h.fusoEvento).split(" · ").pop();
-              })())
+                const dia = CRM.ddmm((h && h.dataVisor) || e.data);
+                if (!h.hora) return dia;
+                if (h.semFuso || h.mesmoFuso) return dia + " · " + h.hora;
+                if (h.semData) return dia + " · " + h.hora + " · " + CRM.notaDoFuso(h);
+                return dia + " · " + h.horaVisor + " · " + CRM.notaDoFuso(h);
+              })()
             : ((e && e.quando) || Tr("no date yet", "sem data ainda")),
           estado: ch
             ? (presentes + Tr(" present", " presentes"))

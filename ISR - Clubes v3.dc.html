@@ -681,6 +681,45 @@ class Component extends DCLogic {
     const fusoPadrao = fusos.some(x => x.v === meuFuso) ? meuFuso : "";
     const fusoCurto = (nome) => String(nome || "").split(" · ").pop();
 
+    // ── O HORÁRIO DO CLUBE, NO RELÓGIO DE QUEM ESTÁ OLHANDO ─────
+    //
+    // Esta tela mostrava c.dia + c.hora crus — a hora do relógio de
+    // QUEM CONDUZ, escrita à mão e em qualquer formato: "Tuesdays
+    // 18:30", "terça-feira 7:30 PM", "Monday 5:00 pm". Quem abria a
+    // tela da Holanda e quem abria do Brasil liam o mesmo número e
+    // apareciam com quatro horas de diferença.
+    //
+    // A conversão precisa de uma data, porque o horário de verão muda
+    // a conta: usa-se o próximo encontro marcado, que é a data em que
+    // esse horário semanal vale.
+    const dataDeReferencia = (c) => {
+      const hojeIso = CRM.iso ? CRM.iso(new Date()) : new Date().toISOString().slice(0, 10);
+      const l = ((c && c.encontros) || []).filter(e => e && e.data)
+        .map(e => e.data).sort();
+      return l.filter(d => d >= hojeIso)[0] || l[0] || hojeIso;
+    };
+    const DIAS_SEM = ["domingo", "segunda-feira", "terça-feira", "quarta-feira",
+      "quinta-feira", "sexta-feira", "sábado"];
+    // Devolve { dia, hora, nota } já no relógio de quem olha.
+    const quandoDoClube = (c) => {
+      const cru = { dia: String((c && c.dia) || "").trim(),
+        hora: CRM.horaNormal ? CRM.horaNormal(c && c.hora) : String((c && c.hora) || ""),
+        nota: "" };
+      if (!c || !c.hora || !c.fuso || !CRM.horaNoRelogioDe) return cru;
+      const r = CRM.horaNoRelogioDe(c.hora, c.fuso, dataDeReferencia(c), meuFuso);
+      if (!r || r.semFuso || r.mesmoFuso) return cru;
+      if (r.semData) return { dia: cru.dia, hora: r.hora, nota: CRM.notaDoFuso(r) };
+      // O dia da semana está em texto livre, e em duas línguas: quando
+      // a hora atravessa a meia-noite, o nome escrito deixa de valer e
+      // o certo é o nome do dia que a conversão devolve.
+      let dia = cru.dia;
+      if (r.mudouDeDia && r.dataVisor) {
+        const d = new Date(r.dataVisor + "T12:00:00");
+        if (!isNaN(d.getTime())) dia = DIAS_SEM[d.getDay()];
+      }
+      return { dia: dia, hora: r.horaVisor, nota: CRM.notaDoFuso(r) };
+    };
+
     return {
       numeros: [
         { valor: String(resumo.publicados), label: resumo.publicados === 1 ? "clube no ar" : "clubes no ar", cor: "var(--color-primary-900)" },
@@ -829,9 +868,12 @@ class Component extends DCLogic {
             nome: c.nome,
             descricao: c.descricao || "Sem descrição.",
             comQuem: c.professora ? "com " + c.professora : "sem quem conduz",
-            quando: [c.dia, c.hora + (c.fusoNome ? " " + fusoCurto(c.fusoNome) : ""),
-                     c.duracao].map(x => String(x || "").trim()).filter(Boolean).join(" · ")
-              || "sem horário",
+            quando: (() => {
+              const q = quandoDoClube(c);
+              return [q.dia, q.hora, c.duracao, q.nota]
+                .map(x => String(x || "").trim()).filter(Boolean).join(" · ")
+                || "sem horário";
+            })(),
             onde: c.formato === "presencial"
               ? (c.local || "presencial · sem endereço")
               : (c.link ? "online" : "online · sem link"),
@@ -868,9 +910,13 @@ class Component extends DCLogic {
           statusLabel: c.status === "publicado" ? "no ar" : "rascunho",
           statusBg: c.status === "publicado" ? "var(--color-secondary-100)" : "var(--color-button-secondary)",
           statusFg: c.status === "publicado" ? "var(--color-success-dark)" : "var(--color-tertiary-500)",
-          linha: [c.professora, c.dia + (c.hora ? " " + c.hora : ""), c.duracao,
-                  c.formato === "presencial" ? (c.local || "presencial") : "online"]
-            .filter(x => x && String(x).trim()).join(" · "),
+          linha: (() => {
+            const q = quandoDoClube(c);
+            return [c.professora, [q.dia, q.hora].filter(Boolean).join(" "), c.duracao,
+                    q.nota,
+                    c.formato === "presencial" ? (c.local || "presencial") : "online"]
+              .filter(x => x && String(x).trim()).join(" · ");
+          })(),
           lotacao: c.vagas ? c.membros.length + " de " + c.vagas : String(c.membros.length),
           lotacaoCor: livres === 0 ? "var(--color-error)" : "var(--color-primary-900)",
           esperaLabel: livres === 0 ? "lotado" : (livres === null ? "sem limite" : livres + (livres === 1 ? " vaga" : " vagas")),
